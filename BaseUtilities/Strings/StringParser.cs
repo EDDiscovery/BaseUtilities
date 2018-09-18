@@ -39,14 +39,11 @@ namespace BaseUtils
         public int Position { get { return pos; } }
         public string LineLeft { get { return line.Substring(pos); } }
         public bool IsEOL { get { return pos == line.Length; } }
+        public int Left { get { return Math.Max(line.Length - pos,0); } }
 
-        public bool IncSkipSpace()
-        {
-            if (pos < line.Length)
-                pos++;
+        #endregion
 
-            return SkipSpace();
-        }
+        #region Character or String related functions
 
         public bool SkipSpace()
         {
@@ -56,46 +53,113 @@ namespace BaseUtils
             return pos == line.Length;
         }
 
+        public void MoveOn(int n)       // with skip space
+        {
+            pos = Math.Min(pos + n, line.Length);
+            SkipSpace();
+        }
+
+        public void Remove(int n)       // waste N chars
+        {
+            pos = Math.Min(pos + n, line.Length);
+        }
+
         public char PeekChar()
         {
             return (pos < line.Length) ? line[pos] : ' ';
         }
 
-        public char GetChar()       // or z\0 if not EOL
+        public char GetChar(bool skipspace = false)       // minvalue if at EOL.. Default no skip for backwards compat
         {
-            return (pos < line.Length) ? line[pos++] : char.MinValue;
+            if (pos < line.Length)
+            {
+                char ch = line[pos++];
+                if ( skipspace )
+                    SkipSpace();
+                return ch;
+            }
+            else
+                return char.MinValue;
         }
 
-        public bool IsStringMoveOn(string s, StringComparison sc = StringComparison.InvariantCulture)
+        public bool IsChar(char t)
         {
-            if (line.Substring(pos).StartsWith(s,sc))
+            return pos < line.Length && line[pos] == t;
+        }
+
+        public bool IsNextChar(char t)
+        {
+            return (pos+1) < line.Length && line[pos+1] == t;
+        }
+
+        public bool IsCharOneOf(string t)   // any char in t is acceptable in second pos
+        {
+            return pos < line.Length && t.Contains(line[pos]);
+        }
+
+        public bool IsNextCharOneOf(string t)   // any char in t is acceptable in second pos
+        {
+            return (pos + 1) < line.Length && t.Contains(line[pos + 1]);
+        }
+
+        public bool IsLetter()
+        {
+            return pos < line.Length && char.IsLetter(line[pos]);
+        }
+
+        public bool IsLetterUnderscore()
+        {
+            return pos < line.Length && (char.IsLetter(line[pos]) || line[pos] == '_');
+        }
+
+        public bool IsDigit()
+        {
+            return pos < line.Length && (char.IsDigit(line[pos]));
+        }
+
+        public bool IsLetterOrDigit()
+        {
+            return pos < line.Length && (char.IsLetterOrDigit(line[pos]));
+        }
+
+        public bool IsString(string s, StringComparison sc = StringComparison.InvariantCulture)
+        {
+            return line.Substring(pos).StartsWith(s, sc);
+        }
+
+        public bool IsStringMoveOn(string s, StringComparison sc = StringComparison.InvariantCulture, bool skipspace = true)
+        {
+            if (line.Substring(pos).StartsWith(s, sc))
             {
                 pos += s.Length;
-                SkipSpace();
+                if (skipspace)
+                    SkipSpace();
                 return true;
             }
             else
                 return false;
         }
 
-        public bool IsCharMoveOn(char t)
+        public bool IsCharMoveOn(char t, bool skipspace = true)
         {
             if (pos < line.Length && line[pos] == t)
             {
                 pos++;
-                SkipSpace();
+                if (skipspace)
+                    SkipSpace();
                 return true;
             }
             else
                 return false;
         }
 
-        public bool IsAnyCharMoveOn(string t)   // any char in t is acceptable
+        public bool IsCharOneOfMoveOn(string t, bool skipspace = true)   // any char in t is acceptable, then move
         {
             if (pos < line.Length && t.Contains(line[pos]))
             {
                 pos++;
-                SkipSpace();
+                if (skipspace)
+                    SkipSpace();
                 return true;
             }
             else
@@ -107,7 +171,7 @@ namespace BaseUtils
             return IsEOL || t == ' ' || IsCharMoveOn(t);       
         }
 
-        public bool SkipUntil( char[] chars)
+        public bool SkipUntil(char[] chars)
         {
             while (pos < line.Length && Array.IndexOf(chars, line[pos]) == -1)
                 pos++;
@@ -136,12 +200,38 @@ namespace BaseUtils
 
                 SkipSpace();
 
-                if (lowercase!=null)
+                if (lowercase != null)
                     ret = ret.ToLower(lowercase);
 
                 return (replacescape) ? ret.ReplaceEscapeControlChars() : ret;
             }
         }
+
+        // WORD terminated by user test
+
+        public string NextWord(Func<char,bool> test, System.Globalization.CultureInfo lowercase = null, bool replacescape = false)
+        {
+            if (pos >= line.Length)     // null if there is nothing..
+                return null;
+            else
+            {
+                int start = pos;
+
+                while (pos < line.Length && test(line[pos]))
+                    pos++;
+
+                string ret = line.Substring(start, pos - start);
+
+                SkipSpace();
+
+                if (lowercase != null)
+                    ret = ret.ToLower(lowercase);
+
+                return (replacescape) ? ret.ReplaceEscapeControlChars() : ret;
+            }
+        }
+
+        // NextWord Invariant
 
         public string NextWordLCInvariant(string terminators = " ", bool replaceescape = false)
         {
@@ -279,9 +369,9 @@ namespace BaseUtils
 
                 if (separoptional)  // if this is set, we these are optional and if not present won't bork it.
                 {
-                    IsAnyCharMoveOn(separchars);   // remove it if its there
+                    IsCharOneOfMoveOn(separchars);   // remove it if its there
                 }
-                else if (!IsEOL && !IsAnyCharMoveOn(separchars))   // either not EOL, or its not a terminator, fail
+                else if (!IsEOL && !IsCharOneOfMoveOn(separchars))   // either not EOL, or its not a terminator, fail
                     return null;
 
             } while (!IsEOL);
@@ -438,6 +528,205 @@ namespace BaseUtils
         {
             long? res = NextLong(terminators);
             return IsCharMoveOnOrEOL(separ) ? res : null;
+        }
+
+        #endregion
+
+        #region Converters for evaluations
+
+        // 
+        // Summary:
+        //      Reads a int or fp.  Null if error. Skipped space at end to next if valid return
+        //
+
+        public Object ConvertNumber(int baseof = 10, bool allowfp = false)     
+        {
+            bool prefix = false;
+            if (IsStringMoveOn("0x", skipspace: false))
+            {
+                baseof = 16;
+                prefix = true;
+            }
+            else if (IsCharMoveOn('%', skipspace: false))
+            {
+                baseof = 2;
+                prefix = true;
+            }
+            else if (IsCharMoveOn('`', skipspace: false))
+            {
+                baseof = 10;
+                prefix = true;
+            }
+            else if (IsChar('0') && IsNextCharOneOf("01234567"))
+            {
+                baseof = 8;
+                pos++;      // waste first 0
+            }
+
+            long v = 0;
+
+            int initpos = pos;
+
+            if (baseof == 16)
+            {
+                int? n;
+
+                while (pos < line.Length && (n = line[pos].ToHex()) != null)
+                {
+                    v = (v * 16) + n.Value;
+                    pos++;
+                }
+            }
+            else
+            {
+                while (pos < line.Length && line[pos] >= '0' && line[pos] < '0' + baseof)
+                {
+                    v = (v * baseof) + (line[pos] - '0');
+                    pos++;
+                }
+            }
+                
+            bool intdigits = initpos != pos;
+
+            if (allowfp && !prefix && ( (IsChar('.') && !IsNextChar('.')) || IsCharOneOf("eE") ))
+            {
+                bool decimaldigits = false;
+                if (IsCharMoveOn('.'))      //X.X, move on and collect
+                {
+                    while (IsDigit())
+                    {
+                        pos++;
+                        decimaldigits = true;
+                    }
+                }
+
+                if (intdigits == false && decimaldigits == false)       // must have some sort of digits!
+                    return null;
+
+                if (IsCharOneOfMoveOn("eE"))                        // if E..
+                {
+                    IsCharOneOfMoveOn("+-");                        // opt +/-
+
+                    int epos = pos;
+                    while (IsDigit())                               // and digits..
+                        pos++;
+
+                    if (epos == pos)                                // no E digits
+                        return null;
+                }
+
+                string s = line.Substring(initpos, pos - initpos);
+                System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
+
+                double? dres = s.InvariantParseDoubleNull();
+
+                if (dres != null)
+                {
+                    SkipSpace();
+                    return dres.Value;
+                }
+                else
+                    return null;
+            }
+            else if (initpos != pos)            // long value
+            {
+                System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
+
+                if (IsCharOneOfMoveOn("Ll"))        // UL or LU allowed as prefix for C compatibility.
+                {
+                    IsCharOneOfMoveOn("uU");
+                }
+                else if (IsCharOneOfMoveOn("Uu"))
+                {
+                    IsCharOneOfMoveOn("lL");
+                }
+
+                SkipSpace();
+                return v;
+            }
+
+            return null;
+        }
+
+        static public Object ConvertNumber(string s, int baseof = 10, bool allowfp = false) // static version
+        {
+            StringParser sp = new StringParser(s);
+            return sp.ConvertNumber(baseof, allowfp);
+        }
+
+        public class ConvertError
+        {
+            public string ErrorValue { get; private set; }
+            public ConvertError(string s) { ErrorValue = s; }
+            override public string ToString() => "Error: " + ErrorValue;
+        }
+
+        public class ConvertSymbol
+        {
+            public string SymbolValue { get; private set; }
+            public ConvertSymbol(string s) { SymbolValue = s;  }
+        }
+
+        // Reads number, "string", symbol, char 'c' or fp. 
+        // returns long, string, double, Error or Symbol.  never null
+
+        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, Func<Object> Top = null)
+        {
+            if (IsCharMoveOn('\'', skipspace: false))    // cannot be spaced..
+            {
+                if (Left >= 2)
+                {
+                    long v = line[pos++];
+                    if (IsCharMoveOn('\''))         // space skip at end
+                        return v;
+                }
+
+                return new ConvertError("Incorrectly formatted 'c' expression");
+            }
+            else if (IsChar('"'))
+            {
+                if (allowstrings)
+                {
+                    Object v = NextQuotedWord(replaceescape: replaceescape);
+
+                    if (v == null)
+                        return new ConvertError("Missing end quote");
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Value is " + v);
+                        return v;
+                    }
+                }
+                else
+                    return new ConvertError("Strings not supported");
+            }
+            else if (IsLetterUnderscore())
+            {
+                string s = NextWord((c) => { return char.IsLetterOrDigit(c) || c=='_'; });
+
+                if (s != null && s.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Symbol Value is " + s);
+                    return new ConvertSymbol(s);
+                }
+                else
+                    return new ConvertError("Missing Symbol/Func Name");
+            }
+            else
+            {
+                Object value = ConvertNumber(baseof, allowfp);
+
+                if (value != null)
+                    return value;
+                else
+                    return new ConvertError("Badly formed or missing number");
+            }
+        }
+
+        static public Object ConvertNumberStringSymbolChar(string s, int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, Func<Object> Top = null)
+        {
+            StringParser sp = new StringParser(s);
+            return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape, Top);
         }
 
         #endregion

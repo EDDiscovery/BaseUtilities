@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
+    <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
     <Compile Include="DebugTraceAndLogs\LogClean.cs" />
@@ -76,6 +77,10 @@
     <Compile Include="CHash\FileHandles.cs" />
     <Compile Include="Keys\KeyObjectExtensions.cs" />
     <Compile Include="Misc\Maps2d.cs" />
+    <Compile Include="Numbers\BaseFunctions.cs" />
+    <Compile Include="Numbers\Eval.cs" />
+    <Compile Include="Numbers\IEval.cs" />
+    <Compile Include="Numbers\UserDefinedFunctions.cs" />
     <Compile Include="Translator\Translator.cs" />
     <Compile Include="Win32\NativeMethods.cs" />
     <Compile Include="Win32\Processes.cs" />
@@ -94,7 +99,7 @@
     <Compile Include="Files\LogToFile.cs" />
     <Compile Include="JSON\JSONObjectExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CHash\PropertyNames.cs" />
+    <Compile Include="CHash\TypeHelpers.cs" />
     <Compile Include="Strings\StringObjectExtensions.cs" />
     <Compile Include="Strings\StringParser.cs" />
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />

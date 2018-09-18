@@ -1005,5 +1005,17 @@ public static class ObjectExtensionsStrings
         return null;
     }
 
+    static public int? ToHex(this char c)
+    {
+        if (char.IsDigit(c))
+            return c - '0';
+        else if ("ABCDEF".Contains(c))
+            return c - 'A' + 10;
+        else if ("abcdef".Contains(c))
+            return c - 'a' + 10;
+        else
+            return null;
+    }
+
 }
 

@@ -98,7 +98,9 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollectionTests.cs" />
     <Compile Include="DistanceParserTests.cs" />
+    <Compile Include="EvalTests.cs" />
     <Compile Include="ObjectExtensionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
