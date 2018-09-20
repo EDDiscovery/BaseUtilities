@@ -92,7 +92,7 @@ namespace AudioExtensions
                     while (max-- > 0 && engine.AudioState != AudioState.Stopped)
                         System.Threading.Thread.Sleep(10);
                     if (max <= 0)
-                        ExtendedControls.MessageBoxTheme.Show("Voice recon did not stop", "Voice Audio Problem");
+                        System.Diagnostics.Debug.Assert(false, Environment.TickCount % 10000 + " Voice recon did not stop!");
                 }
 
                 System.Diagnostics.Debug.WriteLine(Environment.TickCount % 10000 + " Voice Recognition Stopped");
