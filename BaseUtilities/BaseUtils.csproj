@@ -49,6 +49,14 @@
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
     <Compile Include="Collections\StackOfDictionaries.cs" />
+    <Compile Include="Conditions\Condition.cs" />
+    <Compile Include="Conditions\ConditionEntry.cs" />
+    <Compile Include="Conditions\ConditionFunctionHandlers.cs" />
+    <Compile Include="Conditions\ConditionFunctions.cs" />
+    <Compile Include="Conditions\ConditionFunctionsBase.cs" />
+    <Compile Include="Conditions\ConditionLists.cs" />
+    <Compile Include="Conditions\ConditionPersistentData.cs" />
+    <Compile Include="Conditions\ConditionVariables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
     <Compile Include="DebugTraceAndLogs\LogClean.cs" />
