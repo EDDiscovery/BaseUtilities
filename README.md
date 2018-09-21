@@ -5,13 +5,15 @@ Used by EDDiscovery and other programs as a base set of c# utilities
 
 This module is the base module - it includes no other modules.
 
-It includes three projects - BaseUtilities, Audio (for audio control), DirectInput (for joystick/keyboard control)
+It includes the following projects:
 
-This module requires Newtonsoft.json (for BaseUtilities project), CSCore (for Audio project), SharpDX (for DirectInput) included in its parent packages.
+* BaseUtilities - requiring package Newtonsoft.json
+* Audio (for audio control) - requiring package CSCore, project BaseUtilities (relative ref)
+* DirectInput (for joystick/keyboard control) - requiring package SharpDX, project BaseUtilities (relative ref)
 
 Check this out and you can use the test harness via the visual studio test explorer.  The harness is not extensive.  It requires NUnit to function.
 
-The vsproj has had its HintPath (for packages) manually changed to use $(SolutionDir) as the base folder.
+The vsproj has had its Packages/HintPath manually changed to use $(SolutionDir) as the base folder.
 
 # GIT
 
