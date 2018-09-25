@@ -94,10 +94,14 @@
     <Reference Include="nunit.framework, Version=3.9.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.9.0\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OpenTKUtilsTests.cs" />
     <Compile Include="CollectionTests.cs" />
     <Compile Include="DistanceParserTests.cs" />
     <Compile Include="EvalTests.cs" />
@@ -109,11 +113,16 @@
       <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
       <Name>BaseUtils</Name>
     </ProjectReference>
+    <ProjectReference Include="..\OpenTKUtils\OpenTKUtils.csproj">
+      <Project>{4cfa37d5-4182-4cae-afc3-7563a13b44ee}</Project>
+      <Name>OpenTKUtils</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="OpenTK.dll.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
