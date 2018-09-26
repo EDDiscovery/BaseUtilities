@@ -16,7 +16,7 @@ It includes the following projects:
 
 Check this out and you can use the test harness via the visual studio test explorer.  The harness is not extensive.  
 
-The vsproj has had its Packages/HintPath manually changed to use $(SolutionDir) as the base folder.
+The vsproj has had its Packages/HintPath manually changed to use $(SolutionDir) as the base folder.  WARNING! if you NUGET them to the latest VS will replace the path back to a relative path.. which will work in here but not if its included as a submodule in another project. Manually change them back to $(SolutionDir)
 
 # GIT
 
