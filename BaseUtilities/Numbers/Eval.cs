@@ -179,6 +179,18 @@ namespace BaseUtils
             return list;
         }
 
+        public string ToString( System.Globalization.CultureInfo ci)
+        {
+            if (InError)
+                return ((StringParser.ConvertError)value).ErrorValue;
+            else if (value is double)
+                return ((double)value).ToString(ci);
+            else if (value is long)
+                return ((long)value).ToString(ci);
+            else
+                return (string)value;
+        }
+
         #endregion
 
         #region Static Helpers

@@ -304,15 +304,15 @@ namespace Conditions
 
         protected bool LowerInvariant(out string output)
         {
-            return Lower(out output, System.Globalization.CultureInfo.InvariantCulture);
+            return IntLower(out output, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         protected bool Lower(out string output)
         {
-            return Lower(out output, System.Globalization.CultureInfo.CurrentCulture);
+            return IntLower(out output, System.Globalization.CultureInfo.CurrentCulture);
         }
 
-        protected bool Lower(out string output, System.Globalization.CultureInfo ci)
+        private bool IntLower(out string output, System.Globalization.CultureInfo ci)
         {
             string value = paras[0].Value;
             string delim = (paras.Count > 1) ? paras[1].Value : "";
@@ -326,15 +326,15 @@ namespace Conditions
 
         protected bool UpperInvariant(out string output)
         {
-            return Upper(out output, System.Globalization.CultureInfo.InvariantCulture);
+            return IntUpper(out output, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         protected bool Upper(out string output)
         {
-            return Upper(out output, System.Globalization.CultureInfo.CurrentCulture);
+            return IntUpper(out output, System.Globalization.CultureInfo.CurrentCulture);
         }
 
-        protected bool Upper(out string output, System.Globalization.CultureInfo ci)
+        private bool IntUpper(out string output, System.Globalization.CultureInfo ci)
         {
             string value = paras[0].Value;
             string delim = (paras.Count > 1) ? paras[1].Value : "";
@@ -736,15 +736,18 @@ namespace Conditions
             string s = paras[0].Value;
             bool tryit = paras.Count > 1 && paras[1].Value.Equals("Try", StringComparison.InvariantCultureIgnoreCase);
 
-            bool evalstate = s.Eval(out output);      // true okay, with output, false bad, with error
+            BaseUtils.Eval ev = new BaseUtils.Eval(s, checkend: true, allowfp: true, allowstrings: false);
 
-            if (tryit && !evalstate)                   // if try and failed.. NAN without error
+            Object ret = ev.Evaluate();
+
+            if ( ev.InError && tryit )
             {
                 output = "NAN";
                 return true;
             }
 
-            return evalstate;                       // else return error and output
+            output = ev.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return ev.InError == false; 
         }
 
         const double LM = 0.000001;
