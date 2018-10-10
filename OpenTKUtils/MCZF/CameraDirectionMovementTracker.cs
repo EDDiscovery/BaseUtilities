@@ -19,7 +19,7 @@ namespace OpenTKUtils
 {
     public class CameraDirectionMovementTracker       // keeps track of previous and works out how to present bitmaps
     {
-        public Vector3 LastCameraPos;
+        public Vector3 LastPosition;
         public Vector3 LastCameraDir;
         public float LastZoom;
         public Vector3 LastCameraGrossDir;               // for gross direction camera adjustments
@@ -32,7 +32,7 @@ namespace OpenTKUtils
         public bool CameraZoomed;
         public bool AnythingChanged { get { return CameraDirChanged || CameraMoved || CameraZoomed; } }         //DIR is more sensitive than gross, so no need to use
                 
-        public void Update(Vector3 cameraDir, Vector3 cameraPos, float zoom, float grossdirchange)
+        public void Update(Vector3 cameraDir, Vector3 position, float zoom, float grossdirchange)
         {
             CameraDirChanged = Vector3.Subtract(LastCameraDir, cameraDir).LengthSquared >= 1;
 
@@ -48,10 +48,10 @@ namespace OpenTKUtils
                 LastCameraGrossDir = cameraDir;
             }
 
-            CameraMoved = Vector3.Subtract(LastCameraPos, cameraPos).LengthSquared >= 0.05; // small so you can see small slews
+            CameraMoved = Vector3.Subtract(LastPosition, position).LengthSquared >= 0.05; // small so you can see small slews
 
             if ( CameraMoved )
-                LastCameraPos = cameraPos;
+                LastPosition = position;
 
             float zoomfact = zoom / LastZoom;
 
@@ -67,7 +67,7 @@ namespace OpenTKUtils
 
         public void ForceMoveChange()
         {
-            LastCameraPos = new Vector3(float.MinValue, 0, 0);
+            LastPosition = new Vector3(float.MinValue, 0, 0);
         }
 
         public void SetGrossChanged()       // tell it that we dealt with it and move gross back to last camera

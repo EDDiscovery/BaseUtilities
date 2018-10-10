@@ -53,11 +53,17 @@
     <Compile Include="DataSets\Data3DLineData.cs" />
     <Compile Include="DataSets\Data3DTexturedQuadData.cs" />
     <Compile Include="DataSets\Data3DPolygon.cs" />
-    <Compile Include="Movement\CameraDirectionMovement.cs" />
-    <Compile Include="Keyboard\KeyboardActions.cs" />
-    <Compile Include="Movement\PositionDirection.cs" />
-    <Compile Include="Movement\Zoom.cs" />
+    <Compile Include="MCZF\Camera.cs" />
+    <Compile Include="MCZF\CameraDirectionMovementTracker.cs" />
+    <Compile Include="MCZF\Fov.cs" />
+    <Compile Include="Controller3D\MatrixCalc.cs" />
+    <Compile Include="MCZF\Position.cs" />
+    <Compile Include="Controller3D\Controller3D.cs" />
+    <Compile Include="Controller3D\StandardKeyboardHandler.cs" />
+    <Compile Include="MCZF\Zoom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Shaders\GLProgram.cs" />
+    <Compile Include="Shaders\GLShader.cs" />
     <Compile Include="Utils\Polygon.cs" />
   </ItemGroup>
   <ItemGroup>
