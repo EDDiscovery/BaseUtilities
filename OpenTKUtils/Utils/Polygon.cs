@@ -17,7 +17,7 @@ using OpenTK;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     
     static public class PolygonTriangulator

@@ -22,7 +22,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.GL1
 {
     public interface IDrawingPrimative      // a single object to draw (can of course be complex set of images/lines)
     {

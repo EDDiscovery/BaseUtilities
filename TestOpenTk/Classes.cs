@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTKUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,78 +10,14 @@ using System.Threading.Tasks;
 
 namespace TestOpenTk
 {
-    public struct Vertex
-    {
-        public const int Size = (4 + 4) * 4; // size of struct in bytes
 
-        private readonly Vector4 _position;
-        private readonly Color4 _color;
-
-        public Vertex(Vector4 position, Color4 color)
-        {
-            _position = position;
-            _color = color;
-        }
-
-        public static Vertex[] CreateSolidCube(float side, Color4 color)
-        {
-            side = side / 2f; // halv side - and other half +
-            Vertex[] vertices =
-            {
-                new Vertex(new Vector4(-side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, side, 1.0f), color),
-
-                new Vertex(new Vector4(side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, side, side, 1.0f), color),
-
-                new Vertex(new Vector4(-side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, side, 1.0f), color),
-
-                new Vertex(new Vector4(-side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, side, 1.0f), color),
-                new Vertex(new Vector4(side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, side, side, 1.0f), color),
-
-                new Vertex(new Vector4(-side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, -side, 1.0f), color),
-                new Vertex(new Vector4(side, side, -side, 1.0f), color),
-
-                new Vertex(new Vector4(-side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, side, 1.0f), color),
-                new Vertex(new Vector4(-side, side, side, 1.0f), color),
-                new Vertex(new Vector4(side, -side, side, 1.0f), color),
-                new Vertex(new Vector4(side, side, side, 1.0f), color),
-            };
-            return vertices;
-        }
-    }
-
-
-    public class RenderObject : IDisposable
+    public class BasicRenderObject : IDisposable
     {
         private bool _initialized;
         private readonly int _vertexArray;
         private readonly int _buffer;
         private readonly int _verticeCount;
-        public RenderObject(Vertex[] vertices)
+        public BasicRenderObject(OpenTKUtils.GL4.VertexColour[] vertices)
         {
             _verticeCount = vertices.Length;
             _vertexArray = GL.GenVertexArray();
@@ -92,7 +29,7 @@ namespace TestOpenTk
             // create first buffer: vertex
             GL.NamedBufferStorage(
                 _buffer,
-                Vertex.Size * vertices.Length,        // the size needed by this buffer
+                OpenTKUtils.GL4.VertexColour.Size * vertices.Length,        // the size needed by this buffer
                 vertices,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
@@ -119,7 +56,7 @@ namespace TestOpenTk
                 16);                     // relative offset after a vec4
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, Vertex.Size);
+            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, OpenTKUtils.GL4.VertexColour.Size);
             _initialized = true;
         }
         public void Render()
@@ -148,5 +85,7 @@ namespace TestOpenTk
             }
         }
     }
+
+
 
 }

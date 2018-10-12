@@ -1,7 +1,8 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-using OpenTKUtils;
+using OpenTKUtils.GL4;
+using OpenTKUtils.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,7 +22,7 @@ namespace TestOpenTk
 
         private Timer systemtimer = new Timer();
 
-        GLProgram program;
+        OpenTKUtils.GL4.Program program;
 
         public ShaderTest()
         {
@@ -38,7 +39,7 @@ namespace TestOpenTk
             systemtimer.Start();
         }
 
-        List<RenderObject> rObjects = new List<RenderObject>();
+        List<BasicRenderObject> rObjects = new List<BasicRenderObject>();
 
         protected override void OnLoad(EventArgs e)
         {
@@ -76,14 +77,14 @@ void main(void)
 
             //gltracker.Start(true, new Vector3((float)0, (float)0, (float)0), Vector3.Zero, 1F, 10F, 0, 100000);
 
-            Vertex[] vertices = Vertex.CreateSolidCube(0.2f, Color4.HotPink);
-            rObjects.Add(new RenderObject(vertices));
+            VertexColour[] vertices = CubeObjectFactory.CreateSolidCube(Vector3.Zero, 0.2f, Color4.HotPink);
+            rObjects.Add(new BasicRenderObject(vertices));
 
-            program = new GLProgram();
+            program = new OpenTKUtils.GL4.Program();
 
-            using (GLShader vertexshader = new GLShader(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextshadercode))
+            using (Shader vertexshader = new Shader(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextshadercode))
             {
-                using (GLShader fragmentshader = new GLShader(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmentshadercode))
+                using (Shader fragmentshader = new Shader(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmentshadercode))
                 {
                     string ret = program.Link( vertexshader, fragmentshader);
                     if (ret != null)

@@ -15,7 +15,7 @@
  */
 using OpenTK;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     public class CameraDirectionMovementTracker       // keeps track of previous and works out how to present bitmaps
     {

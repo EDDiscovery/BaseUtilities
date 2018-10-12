@@ -22,7 +22,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     // class brings together keyboard, mouse, posdir, zoom to provide a means to move thru the playfield and zoom.
     // handles keyboard actions and mouse actions to provide a nice method of controlling the 3d playfield

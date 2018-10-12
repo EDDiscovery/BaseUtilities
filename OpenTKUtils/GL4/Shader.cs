@@ -15,22 +15,18 @@
  */
  
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.GL4
 {
-    public class GLShader : IDisposable
+    public class Shader : IDisposable
     {
         public int Id { get; private set; }
         public bool Compiled { get { return Id != -1; } }
+        public string CompileReport { get; private set; }       // null if okay, else error
         ShaderType type;
 
-        public GLShader( ShaderType t , string source = null )
+        public Shader( ShaderType t , string source = null )
         {
             Id = -1;
             type = t;
@@ -43,21 +39,26 @@ namespace OpenTKUtils
             Id = GL.CreateShader(type);
             GL.ShaderSource(Id, source);
             GL.CompileShader(Id);
-            var info = GL.GetShaderInfoLog(Id);
+            CompileReport = GL.GetShaderInfoLog(Id);
 
-            if (info.HasChars())
+            if (CompileReport.HasChars())
             {
                 GL.DeleteShader(Id);
                 Id = -1;
-                return info;
+                return CompileReport;
             }
+
+            CompileReport = null;
             return null;
         }
 
-        public void Dispose()
+        public void Dispose()           // you can double dispose.
         {
             if (Id != -1)
+            {
                 GL.DeleteShader(Id);
+                Id = -1;
+            }
         }
     }
 }

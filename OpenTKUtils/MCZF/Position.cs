@@ -17,7 +17,7 @@ using OpenTK;
 using System;
 using System.Diagnostics;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     public class Position
     {

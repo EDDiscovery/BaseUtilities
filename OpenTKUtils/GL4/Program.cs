@@ -16,34 +16,43 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.GL4
 {
-    public class GLProgram : IDisposable
+    public class Program : IDisposable
     {
         public int Id { get; private set; }
         public bool Created { get { return Id != -1; } }
 
-        private List<GLShader> shaders;
+        private List<Shader> shaders;
 
-        public GLProgram()
+        public Program()
         {
             Id = GL.CreateProgram();
-            shaders = new List<GLShader>();
+            shaders = new List<Shader>();
         }
 
-        public void Add( GLShader s)
+        public void Add( Shader s)
         {
             System.Diagnostics.Debug.Assert(s.Compiled);
             shaders.Add(s);
         }
 
-        public string Link(params GLShader[] sh)
+        public string Compile( ShaderType t, string code )
+        {
+            Shader shader = new Shader(t, code);
+
+            if (shader.Compiled)
+            {
+                Add(shader);
+                return null;
+            }
+            else
+                return shader.CompileReport;
+        }
+
+        public string Link(params Shader[] sh)
         {
             foreach( var s in sh )
             {
@@ -55,19 +64,22 @@ namespace OpenTKUtils
             return Link();
         }
 
-        public string Link()
+        public string Link()            // Disposes of shaders
         {
             if (shaders.Count == 0)
                 return "No shaders attached";
 
-            foreach (GLShader s in shaders)
+            foreach (Shader s in shaders)
                 GL.AttachShader(Id, s.Id);
 
             GL.LinkProgram(Id);
             var info = GL.GetProgramInfoLog(Id);
 
-            foreach (GLShader s in shaders)
+            foreach (Shader s in shaders)
+            {
                 GL.DetachShader(Id, s.Id);
+                s.Dispose();
+            }
 
             return info.HasChars() ? info : null;
         }
@@ -77,10 +89,13 @@ namespace OpenTKUtils
             GL.UseProgram(Id);
         }
 
-        public void Dispose()
+        public void Dispose()               // you can double dispose
         {
-            if ( Id != -1 )
+            if (Id != -1)
+            {
                 GL.DeleteProgram(Id);
+                Id = -1;
+            }
         }
 
     }

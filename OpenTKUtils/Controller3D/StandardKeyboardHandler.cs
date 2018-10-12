@@ -19,7 +19,7 @@ using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     // standard keys used for movement in 3d programs
 

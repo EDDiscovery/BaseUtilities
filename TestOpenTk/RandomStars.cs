@@ -1,6 +1,8 @@
 ﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils;
+using OpenTKUtils.Common;
+using OpenTKUtils.GL1;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTest2 : Form
+    public partial class ShaderTest3 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
@@ -24,7 +24,7 @@ namespace TestOpenTk
 
         OpenTKUtils.GL4.Program program;
 
-        public ShaderTest2()
+        public ShaderTest3()
         {
             InitializeComponent();
 
@@ -77,18 +77,24 @@ void main(void)
 ";
             //GL.Viewport(0, 0, gltracker.glControl.Width, gltracker.glControl.Height);
 
-            gl3dcontroller.MatrixCalc.ZoomDistance = 5F;
+            gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(45f, 45f, 45f), 1F);
+            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(45f, 0, 0f), 1F);
 
             gl3dcontroller.TravelSpeed = (ms) =>
             {
                 return (float)ms / 100.0f;
             };
 
+            for (float x = -10; x < +10; x += 2)
+            {
+                for (float z = -10; z < +10; z += 2)
+                {
+                    VertexColour[] vertices = CubeObjectFactory.CreateSolidCube(new Vector3(x,0,z), 1f, Color.FromArgb(255, (int)(x+15) *10, (int)(z+15)*10, (int)(x+15) *5));
+                    rObjects.Add(new BasicRenderObject(vertices));
 
-            VertexColour[] vertices = CubeObjectFactory.CreateSolidCube(Vector3.Zero, 1f, Color4.Yellow);
-            rObjects.Add(new BasicRenderObject(vertices));
+                }
+            }
 
             program = new OpenTKUtils.GL4.Program();
 

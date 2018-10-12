@@ -32,6 +32,14 @@ namespace TestOpenTk
                 {
                     Application.Run(new ShaderTest2());
                 }
+                else if (arg1.Equals("ShaderTest3", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Application.Run(new ShaderTest3());
+                }
+                else if (arg1.Equals("ShaderTest4", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Application.Run(new ShaderTest4());
+                }
                 else
                 {
                     Application.Run(new RandomStars());
