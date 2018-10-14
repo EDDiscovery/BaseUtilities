@@ -20,20 +20,20 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class Program : IDisposable
+    public class GLProgram : IDisposable
     {
         public int Id { get; private set; }
         public bool Created { get { return Id != -1; } }
 
-        private List<Shader> shaders;
+        private List<GLShader> shaders;
 
-        public Program()
+        public GLProgram()
         {
             Id = GL.CreateProgram();
-            shaders = new List<Shader>();
+            shaders = new List<GLShader>();
         }
 
-        public void Add( Shader s)
+        public void Add( GLShader s)
         {
             System.Diagnostics.Debug.Assert(s.Compiled);
             shaders.Add(s);
@@ -41,7 +41,7 @@ namespace OpenTKUtils.GL4
 
         public string Compile( ShaderType t, string code )
         {
-            Shader shader = new Shader(t, code);
+            GLShader shader = new GLShader(t, code);
 
             if (shader.Compiled)
             {
@@ -52,7 +52,7 @@ namespace OpenTKUtils.GL4
                 return shader.CompileReport;
         }
 
-        public string Link(params Shader[] sh)
+        public string Link(params GLShader[] sh)
         {
             foreach( var s in sh )
             {
@@ -69,13 +69,13 @@ namespace OpenTKUtils.GL4
             if (shaders.Count == 0)
                 return "No shaders attached";
 
-            foreach (Shader s in shaders)
+            foreach (GLShader s in shaders)
                 GL.AttachShader(Id, s.Id);
 
             GL.LinkProgram(Id);
             var info = GL.GetProgramInfoLog(Id);
 
-            foreach (Shader s in shaders)
+            foreach (GLShader s in shaders)
             {
                 GL.DetachShader(Id, s.Id);
                 s.Dispose();

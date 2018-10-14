@@ -14,24 +14,53 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace OpenTKUtils.GL4
 {
-    
-    public class VertexTexturedObject : Renderable
+    public struct GLVertexTextured
     {
-        private Texture texture;
+        // Vertex shader must implement
+        // layout(location = 0) in vec4 position;
+        // layout(location = 1) in vec2 textureCoordinate;
 
-        public VertexTexturedObject(VertexTextured[] vertices, Program program, Texture tx) : base(vertices.Length, program, PrimitiveType.Triangles)
+        public const int Size = (4 + 2) * 4; // size of struct in bytes
+
+        private Vector4 Vertex;               // GL position on model of this vertex
+        private Vector2 TextureCoordinate;      // and its correponding point on the texture
+
+        public GLVertexTextured(Vector4 v, Vector2 textureCoordinate)
+        {
+            Vertex = v;
+            TextureCoordinate = textureCoordinate;
+        }
+
+        static public void Translate(GLVertexTextured[] vertices, Vector3 pos)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+                vertices[i].Vertex.Translate(pos);
+        }
+        static public void Transform(GLVertexTextured[] vertices, Matrix4 trans)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].Vertex = Vector4.Transform(vertices[i].Vertex, trans);
+            }
+        }
+    }
+
+    abstract public class GLVertexTexturedObject : GLRenderable
+    {
+        private GLTexture texture;
+
+        public GLVertexTexturedObject(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data , GLTexture tx, PrimitiveType pt) : base(vertices.Length, program, data, pt)
         {
             // create first buffer: vertex
             GL.NamedBufferStorage(
                 VertexBuffer,
-                VertexTextured.Size * vertices.Length,        // the size needed by this buffer
+                GLVertexTextured.Size * vertices.Length,        // the size needed by this buffer
                 vertices,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
@@ -56,22 +85,31 @@ namespace OpenTKUtils.GL4
                 16);                     // relative offset after a vec4
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(VertexArray, 0, VertexBuffer, IntPtr.Zero, VertexTextured.Size);
+            GL.VertexArrayVertexBuffer(VertexArray, 0, VertexBuffer, IntPtr.Zero, GLVertexTextured.Size);
 
             texture = tx;
         }
 
         public override void Bind()
         {
-            program.Use();
+            System.Diagnostics.Debug.WriteLine("Binding texture ");
+            base.Bind();
             GL.BindVertexArray(VertexArray);
             texture.Bind();
         }
+    }
 
-        public override void Render()
+    public class GLTexturedTriangles : GLVertexTexturedObject
+    {
+        public GLTexturedTriangles(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, GLTexture tx) : base(vertices, program, data, tx, PrimitiveType.Triangles)
         {
-            base.Render();
-       //     GL.Disable(EnableCap.Texture2D);
+        }
+    }
+
+    public class GLTexturedQuads : GLVertexTexturedObject
+    {
+        public GLTexturedQuads(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, GLTexture tx) : base(vertices, program, data, tx, PrimitiveType.Quads)
+        {
         }
     }
 }

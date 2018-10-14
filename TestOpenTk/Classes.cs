@@ -17,7 +17,7 @@ namespace TestOpenTk
         private readonly int _vertexArray;
         private readonly int _buffer;
         private readonly int _verticeCount;
-        public BasicRenderObject(OpenTKUtils.GL4.VertexColour[] vertices)
+        public BasicRenderObject(OpenTKUtils.GL4.GLVertexColour[] vertices)
         {
             _verticeCount = vertices.Length;
             _vertexArray = GL.GenVertexArray();
@@ -29,7 +29,7 @@ namespace TestOpenTk
             // create first buffer: vertex
             GL.NamedBufferStorage(
                 _buffer,
-                OpenTKUtils.GL4.VertexColour.Size * vertices.Length,        // the size needed by this buffer
+                OpenTKUtils.GL4.GLVertexColour.Size * vertices.Length,        // the size needed by this buffer
                 vertices,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
@@ -56,7 +56,7 @@ namespace TestOpenTk
                 16);                     // relative offset after a vec4
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, OpenTKUtils.GL4.VertexColour.Size);
+            GL.VertexArrayVertexBuffer(_vertexArray, 0, _buffer, IntPtr.Zero, OpenTKUtils.GL4.GLVertexColour.Size);
             _initialized = true;
         }
         public void Render()

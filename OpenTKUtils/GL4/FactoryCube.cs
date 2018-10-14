@@ -19,82 +19,79 @@ using OpenTK.Graphics;
 
 namespace OpenTKUtils.GL4
 {
-    static public class CubeObjectFactory
+    static public class GLCubeObjectFactory
     {
-        public static VertexColour[] CreateSolidCube(float side, Color4 color)
+        public static GLVertexColour[] CreateSolidCubeFromTriangles(float side, Color4 color, Vector3? pos = null )
         {
             side = side / 2f; // halv side - and other half +
-            VertexColour[] vertices =
+            GLVertexColour[] vertices =
             {
-                new VertexColour(new Vector4(-side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color),
 
-                new VertexColour(new Vector4(side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, side, 1.0f), color),
 
-                new VertexColour(new Vector4(-side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color),
 
-                new VertexColour(new Vector4(-side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, side, 1.0f), color),
 
-                new VertexColour(new Vector4(-side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, -side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f), color),
 
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, side, 1.0f), color),
-                new VertexColour(new Vector4(-side, side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), color),
-                new VertexColour(new Vector4(side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color),
+                new GLVertexColour(new Vector4(side, side, side, 1.0f), color),
             };
+
+            if (pos != null)
+                GLVertexColour.Translate(vertices, pos.Value);
 
             return vertices;
         }
 
-        public static VertexColour[] CreateSolidCube(Vector3 pos, float side, Color4 color)
-        {
-            var v = CreateSolidCube(side,color);
-            VertexColour.Translate(v, pos);
-            return v;
-        }
-
-        public static VertexColour[] CreateVertexPointCube(Vector3 pos, float side, Color4[] color)
+        public static GLVertexColour[] CreateVertexPointCube(float side, Color4[] color, Vector3? pos = null)
         {
             side = side / 2f; // halv side - and other half +
-            VertexColour[] vertices =
+            GLVertexColour[] vertices =
             {
-                new VertexColour(new Vector4(-side, side, side, 1.0f), VertexColour.ColorFrom(color,0 )),       // arranged as wound clockwise around top, then around bottom
-                new VertexColour(new Vector4(side, side, side, 1.0f), VertexColour.ColorFrom(color,1 )),
-                new VertexColour(new Vector4(side, side, -side, 1.0f),  VertexColour.ColorFrom(color,2 )),
-                new VertexColour(new Vector4(-side, side, -side, 1.0f),  VertexColour.ColorFrom(color,3 )),
-                new VertexColour(new Vector4(-side, -side, side, 1.0f), VertexColour.ColorFrom(color,4 )),
-                new VertexColour(new Vector4(side, -side, side, 1.0f), VertexColour.ColorFrom(color,5 )),
-                new VertexColour(new Vector4(side, -side, -side, 1.0f),  VertexColour.ColorFrom(color,6 )),
-                new VertexColour(new Vector4(-side, -side, -side, 1.0f),  VertexColour.ColorFrom(color,7 )),
-            };                                                          
+                new GLVertexColour(new Vector4(-side, side, side, 1.0f), color.ColorFrom(0 )),       // arranged as wound clockwise around top, then around bottom
+                new GLVertexColour(new Vector4(side, side, side, 1.0f), color.ColorFrom(1 )),
+                new GLVertexColour(new Vector4(side, side, -side, 1.0f),  color.ColorFrom(2 )),
+                new GLVertexColour(new Vector4(-side, side, -side, 1.0f),  color.ColorFrom(3 )),
+                new GLVertexColour(new Vector4(-side, -side, side, 1.0f), color.ColorFrom(4 )),
+                new GLVertexColour(new Vector4(side, -side, side, 1.0f), color.ColorFrom(5 )),
+                new GLVertexColour(new Vector4(side, -side, -side, 1.0f),  color.ColorFrom(6 )),
+                new GLVertexColour(new Vector4(-side, -side, -side, 1.0f),  color.ColorFrom(7 )),
+            };
 
-            VertexColour.Translate(vertices, pos);
+            if (pos != null)
+                GLVertexColour.Translate(vertices, pos.Value);
 
             return vertices;
         }

@@ -19,31 +19,32 @@ using OpenTK.Graphics;
 
 namespace OpenTKUtils.GL4
 {
-    public struct VertexTextured
+    public static class GL4Statics
     {
-        public const int Size = (4 + 2) * 4; // size of struct in bytes
-
-        private Vector4 Position;
-        private Vector2 TextureCoordinate;
-
-        public VertexTextured(Vector4 position, Vector2 textureCoordinate)
+        static public void Translate(this Vector4 Vertex, Vector3 offset)
         {
-            Position = position;
-            TextureCoordinate = textureCoordinate;
+            Vertex.X += offset.X;
+            Vertex.Y += offset.Y;
+            Vertex.Z += offset.Z;
         }
 
-        public void Translate(Vector3 offset)
-        {
-            Position.X += offset.X;
-            Position.Y += offset.Y;
-            Position.Z += offset.Z;
-        }
-
-        static public void Translate(VertexTextured[] vertices, Vector3 pos)
+        static public void Translate(this Vector4[] vertices, Vector3 pos)
         {
             for (int i = 0; i < vertices.Length; i++)
                 vertices[i].Translate(pos);
         }
-    }
 
+        static public void Transform(this Vector4[] vertices, Matrix4 trans)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+                vertices[i] = Vector4.Transform(vertices[i], trans);
+        }
+
+        static public Color4 ColorFrom(this Color4[] array, int index)      // helper for color arrays
+        {
+            index = index % array.Length;
+            return array[index];
+        }
+
+    }
 }

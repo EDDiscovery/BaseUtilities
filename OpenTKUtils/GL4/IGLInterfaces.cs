@@ -15,27 +15,20 @@
  */
 
 using OpenTK;
-using OpenTK.Graphics;
+using System;
 
 namespace OpenTKUtils.GL4
 {
-    static public class GLLineObjectFactory
+    public interface IGLProgramShaders : IDisposable        // ALL shaders should inherit from this
     {
-        public static GLVertexColour[] CreateLines(Vector3 startpos, Vector3 endpos, Vector3 offset, int lines, Color4[] colors)
-        {
-            GLVertexColour[] vertices = new GLVertexColour[lines * 2];
-
-            for (int i = 0; i < lines; i++)
-            {
-                vertices[i * 2] = new GLVertexColour(new Vector4(startpos.X, startpos.Y, startpos.Z, 1.0f), colors.ColorFrom(i * 2));
-                vertices[i * 2 + 1] = new GLVertexColour(new Vector4(endpos.X, endpos.Y, endpos.Z, 1.0f), colors.ColorFrom(i * 2+1));
-                startpos += offset;
-                endpos += offset;
-            }
-
-            return vertices;
-        }
-
-
+        int Id { get; }
+        void Use(Matrix4 model, Matrix4 proj);
     }
+
+    public interface IGLObjectInstanceData                  // ALL object data should inherit from this
+    {
+        void Bind();
+    }
+
+
 }

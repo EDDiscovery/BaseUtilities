@@ -19,14 +19,14 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class Shader : IDisposable
+    public class GLShader : IDisposable
     {
         public int Id { get; private set; }
         public bool Compiled { get { return Id != -1; } }
         public string CompileReport { get; private set; }       // null if okay, else error
         ShaderType type;
 
-        public Shader( ShaderType t , string source = null )
+        public GLShader( ShaderType t , string source = null )
         {
             Id = -1;
             type = t;

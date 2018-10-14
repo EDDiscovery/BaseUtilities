@@ -16,103 +16,105 @@
 
 using OpenTK;
 using OpenTK.Graphics;
+using System;
 
 namespace OpenTKUtils.GL4
 {
-    public class TexturedObjectFactory
+    public class GLTexturedObjectFactory
     {
-        public static VertexTextured[] CreateTexturedCube(float side, float textureWidth, float textureHeight)
+        public static GLVertexTextured[] CreateTexturedCubeFromTriangles(float side, GLTexture tex, Vector3? pos = null)
         {
-            float h = textureHeight;
+            return CreateTexturedCubeFromTriangles(side, tex.Width, tex.Height, pos);
+        }
+
+        public static GLVertexTextured[] CreateTexturedCubeFromTriangles(float side, float textureWidth, float textureHeight, Vector3? pos = null)
+        {
+                float h = textureHeight;
             float w = textureWidth;
             side = side / 2f; // half side - and other half
 
-            VertexTextured[] vertices =
+            GLVertexTextured[] vertices =
             {
-                new VertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(0, h)),
-                new VertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(w, 0)),
 
-                new VertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(w, 0)),
-                new VertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(0, h)),
 
-                new VertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(w, 0)),
-                new VertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(0, h)),
 
-                new VertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, 0)),
-                new VertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(0, h)),
 
-                new VertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(0, h)),
-                new VertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
-                new VertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(-side, -side, -side, 1.0f),   new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, -side, -side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-side, side, -side, 1.0f),    new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, side, -side, 1.0f),     new Vector2(w, 0)),
 
-                new VertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(0, h)),
-                new VertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
-                new VertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
-                new VertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(w, 0)),
+                new GLVertexTextured(new Vector4(-side, -side, side, 1.0f),    new Vector2(0, h)),
+                new GLVertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-side, side, side, 1.0f),     new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(side, -side, side, 1.0f),     new Vector2(w, h)),
+                new GLVertexTextured(new Vector4(side, side, side, 1.0f),      new Vector2(w, 0)),
             };
+
+            if (pos != null)
+                GLVertexTextured.Translate(vertices, pos.Value);
             return vertices;
         }
 
-        public static VertexTextured[] CreateTexturedCube(Vector3 pos, float side, float textureWidth, float textureHeight)
+        // rotation in degrees..
+        public static GLVertexTextured[] CreateTexturedQuad(float scale, Vector3 rotation, GLTexture tex, float whratio = 1.0f, Vector3? pos = null)
         {
-            var v = CreateTexturedCube(side, textureWidth, textureHeight);
-            VertexTextured.Translate(v, pos);
-            return v;
+            return CreateTexturedQuad(scale, rotation, tex.Width, tex.Height, whratio , pos);
         }
 
-        public static VertexTextured[] CreateFlatTexturedQuadImage(Vector3 pos, float side, float textureWidth, float textureHeight)
+        public static GLVertexTextured[] CreateTexturedQuad(float scale, Vector3 rotation, float textureWidth, float textureHeight, float whratio = 1.0f, Vector3? pos = null)
         {
-            float h = textureHeight;
-            float w = textureWidth;
-            side = side / 2f; // half side - and other half
+            float xsize = scale * textureWidth / 2.0f / whratio;
+            float ysize = scale * textureHeight / 2.0f;
 
-            VertexTextured[] vertices =
+            GLVertexTextured[] vertices =
             {
-                new VertexTextured(new Vector4(pos.X-side, pos.Y, pos.Z-side, 1.0f),   new Vector2(0, h)),
-                new VertexTextured(new Vector4(pos.X+side, pos.Y, pos.Z-side, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(pos.X+side, pos.Y, pos.Z+side, 1.0f),    new Vector2(w, 0)),
-                new VertexTextured(new Vector4(pos.X-side, pos.Y, pos.Z+side, 1.0f),    new Vector2(0, 0)),
+                new GLVertexTextured(new Vector4(-xsize, 0, -ysize, 1.0f),   new Vector2(0, textureHeight)),
+                new GLVertexTextured(new Vector4(+xsize, 0, -ysize, 1.0f),    new Vector2(textureWidth, textureHeight)),
+                new GLVertexTextured(new Vector4(+xsize, 0, +ysize, 1.0f),    new Vector2(textureWidth, 0)),
+                new GLVertexTextured(new Vector4(-xsize, 0, +ysize, 1.0f),    new Vector2(0, 0)),
             };
+
+            if (pos != null)
+                GLVertexTextured.Translate(vertices, pos.Value);
+
+            if (rotation.Length > 0)
+            {
+                Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
+                transform *= Matrix4.CreateRotationX((float)(rotation.X * Math.PI / 180.0f));
+                transform *= Matrix4.CreateRotationY((float)(rotation.Y * Math.PI / 180.0f));
+                transform *= Matrix4.CreateRotationZ((float)(rotation.Z * Math.PI / 180.0f));
+                GLVertexTextured.Transform(vertices, transform);
+            }
+
             return vertices;
         }
-
-        public static VertexTextured[] CreateVerticalTexturedQuadImage(Vector3 pos, float side, float textureWidth, float textureHeight)
-        {
-            float h = textureHeight;
-            float w = textureWidth;
-            side = side / 2f; // half side - and other half
-
-            VertexTextured[] vertices =
-            {
-                new VertexTextured(new Vector4(pos.X-side, pos.Y-side, pos.Z, 1.0f),   new Vector2(0, h)),
-                new VertexTextured(new Vector4(pos.X+side, pos.Y-side, pos.Z, 1.0f),    new Vector2(w, h)),
-                new VertexTextured(new Vector4(pos.X+side, pos.Y+side, pos.Z, 1.0f),    new Vector2(w, 0)),
-                new VertexTextured(new Vector4(pos.X-side, pos.Y+side, pos.Z, 1.0f),    new Vector2(0, 0)),
-            };
-            return vertices;
-        }
-
-
     }
 }

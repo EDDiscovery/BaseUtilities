@@ -124,7 +124,13 @@
   <data name="dotted2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dotted2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Logo8bpp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Logo8bpp.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="wooden" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\wooden.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="shoppinglist" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\shoppinglist.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

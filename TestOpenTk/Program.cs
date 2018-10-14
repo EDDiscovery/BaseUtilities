@@ -24,21 +24,11 @@ namespace TestOpenTk
 
                 string arg1 = args.Next();
 
-                if (arg1.Equals("ShaderTest", StringComparison.InvariantCultureIgnoreCase))
+                Type t = Type.GetType("TestOpenTk." + arg1);
+
+                if ( t != null )
                 {
-                    Application.Run(new ShaderTest());
-                }
-                else if (arg1.Equals("ShaderTest2", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Application.Run(new ShaderTest2());
-                }
-                else if (arg1.Equals("ShaderTest3", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Application.Run(new ShaderTest3());
-                }
-                else if (arg1.Equals("ShaderTest4", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Application.Run(new ShaderTest4());
+                    Application.Run((Form)Activator.CreateInstance(t));
                 }
                 else
                 {

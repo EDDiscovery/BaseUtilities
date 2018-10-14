@@ -22,7 +22,7 @@ namespace TestOpenTk
 
         private Timer systemtimer = new Timer();
 
-        OpenTKUtils.GL4.Program program;
+        OpenTKUtils.GL4.GLProgram program;
 
         public ShaderTest3()
         {
@@ -90,17 +90,17 @@ void main(void)
             {
                 for (float z = -10; z < +10; z += 2)
                 {
-                    VertexColour[] vertices = CubeObjectFactory.CreateSolidCube(new Vector3(x,0,z), 1f, Color.FromArgb(255, (int)(x+15) *10, (int)(z+15)*10, (int)(x+15) *5));
+                    GLVertexColour[] vertices = GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, Color.FromArgb(255, (int)(x+15) *10, (int)(z+15)*10, (int)(x+15) *5), new Vector3(x, 0, z));
                     rObjects.Add(new BasicRenderObject(vertices));
 
                 }
             }
 
-            program = new OpenTKUtils.GL4.Program();
+            program = new OpenTKUtils.GL4.GLProgram();
 
-            using (Shader vertexshader = new Shader(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextshadercode))
+            using (GLShader vertexshader = new GLShader(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextshadercode))
             {
-                using (Shader fragmentshader = new Shader(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmentshadercode))
+                using (GLShader fragmentshader = new GLShader(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmentshadercode))
                 {
                     string ret = program.Link( vertexshader, fragmentshader);
                     if (ret != null)
