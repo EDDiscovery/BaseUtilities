@@ -26,13 +26,17 @@ namespace OpenTKUtils.GL4
 
     public class GLObjectDataTranslationRotation : IGLObjectInstanceData
     {
+        public const int TRUniformId = 22;      // Standard used to pass object data transform to shader
+
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
 
-        public void Rotation(Vector3 rotp) { rot = rotp; Calc(); }
+        public Vector3 Rotation { get { return rot; } set { rot = value; Calc(); } }
         public float XRotDegrees { get { return rot.X; } set { rot.X = value; Calc(); } }
         public float YRotDegrees { get { return rot.Y; } set { rot.Y = value; Calc(); } }
         public float ZRotDegrees { get { return rot.Z; } set { rot.Z = value; Calc(); } }
+
+        public Matrix4 Transform { get { return transform; } }
 
         private Vector3 pos;
         Vector3 rot;
@@ -40,7 +44,15 @@ namespace OpenTKUtils.GL4
         private Matrix4 transform;
         private int uniform;
 
-        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = 22)
+        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, int uniformid = TRUniformId)
+        {
+            pos = new Vector3(0, 0, 0);
+            rot = new Vector3(rx, ry, rz);
+            uniform = uniformid;
+            Calc();
+        }
+
+        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = TRUniformId)
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
@@ -48,7 +60,7 @@ namespace OpenTKUtils.GL4
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, int uniformid = 22)
+        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, int uniformid = TRUniformId)
         {
             pos = p;
             rot = rotp;

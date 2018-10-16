@@ -59,8 +59,8 @@
     <Compile Include="GL4\IGLInterfaces.cs" />
     <Compile Include="GL4\ObjectInstanceData.cs" />
     <Compile Include="GL4\ProgramShadersList.cs" />
-    <Compile Include="GL4\ShadersTexturedObjects.cs" />
-    <Compile Include="GL4\ShadersColourObjects.cs" />
+    <Compile Include="GL4\ProgramShadersTexturedObjects.cs" />
+    <Compile Include="GL4\ProgramShadersColourObjects.cs" />
     <Compile Include="GL4\Statics.cs" />
     <Compile Include="GL4\Texture.cs" />
     <Compile Include="MCZF\Camera.cs" />

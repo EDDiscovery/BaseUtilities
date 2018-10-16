@@ -29,14 +29,16 @@ namespace OpenTKUtils.GL4
             programshaders = new Dictionary<string, IGLProgramShaders>();
         }
 
-        public void Add(string name, IGLProgramShaders r)
+        public IGLProgramShaders Add(string name, IGLProgramShaders r)
         {
             programshaders.Add(name, r);
+            return r;
         }
 
-        public void Add(IGLProgramShaders r)
+        public IGLProgramShaders Add(IGLProgramShaders r)
         {
             programshaders.Add("Unnamed_" + (unnamed++), r);
+            return r;
         }
 
         public IGLProgramShaders this[string key] { get { return programshaders[key]; } }

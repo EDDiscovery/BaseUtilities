@@ -56,7 +56,8 @@ namespace TestOpenTk
 
             rShaders.Add("COS",new GLVertexColourObjectShaderSimple(false));       // shader simple
             rShaders.Add("COST",new GLVertexColourObjectShaderSimple(true));       // shader simple with translation
-            rShaders.Add("TEX",new GLVertexTexturedObjectShaderSimple(true));       // texture simple with translation
+            rShaders.Add("TEX", new GLVertexTexturedObjectShaderSimple(true));       // texture simple with translation
+            rShaders.Add("CROT", new GLVertexTexturedObjectShaderCommonTransform());       // texture simple with translation
 
             rTexture.Add("dotted", new GLTexture(Properties.Resources.dotted));
             rTexture.Add("dotted2", new GLTexture(Properties.Resources.dotted2));
@@ -145,6 +146,25 @@ namespace TestOpenTk
                         new GLObjectDataTranslationRotation(new Vector3(-15, 0, -5)),
                         rTexture["shoppinglist"]));
 
+            rObjects.Add("woodboxc1", new GLTexturedTriangles(
+                        GLTexturedObjectFactory.CreateTexturedCubeFromTriangles(1f, rTexture["wooden"]),
+                        rShaders["CROT"],
+                        new GLObjectDataTranslationRotation(new Vector3(5, 0, -10)),
+                        rTexture["wooden"]));
+
+            rObjects.Add("woodboxc2", new GLTexturedTriangles(
+                        GLTexturedObjectFactory.CreateTexturedCubeFromTriangles(1f, rTexture["wooden"]),
+                        rShaders["CROT"],
+                        new GLObjectDataTranslationRotation(new Vector3(7, 0, -10)),
+                        rTexture["wooden"]));
+
+            rObjects.Add("woodboxc3", new GLTexturedTriangles(
+                        GLTexturedObjectFactory.CreateTexturedCubeFromTriangles(1f, rTexture["wooden"]),
+                        rShaders["CROT"],
+                        new GLObjectDataTranslationRotation(new Vector3(9, 0, -10)),
+                        rTexture["wooden"]));
+
+
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
             GL.PointSize(3);
@@ -169,6 +189,8 @@ namespace TestOpenTk
             ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
             ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
             ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0, 0));
+
+            ((GLVertexTexturedObjectShaderCommonTransform)rShaders["CROT"]).Transform.YRotDegrees = degrees;
 
             rObjects.Render(model, projection);
         }

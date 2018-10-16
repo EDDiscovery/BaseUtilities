@@ -132,14 +132,16 @@ namespace OpenTKUtils.GL4
             textures = new Dictionary<string, GLTexture>();
         }
 
-        public void Add(string name, GLTexture r)
+        public GLTexture Add(string name, GLTexture r)
         {
             textures.Add(name, r);
+            return r;
         }
 
-        public void Add(GLTexture r)
+        public GLTexture Add(GLTexture r)
         {
             textures.Add("Unnamed_" + (unnamed++), r);
+            return r;
         }
 
         public GLTexture this[string key] { get { return textures[key]; } }
