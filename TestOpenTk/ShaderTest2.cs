@@ -87,7 +87,7 @@ void main(void)
             };
 
 
-            GLVertexColour[] vertices = GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, Color4.Yellow);
+            GLVertexColour[] vertices = GLColouredObjectFactory.CreateSolidCubeFromTriangles(1f, new Color4[] { Color4.Yellow} );
             rObjects.Add(new BasicRenderObject(vertices));
 
             program = new OpenTKUtils.GL4.GLProgram();

@@ -90,7 +90,7 @@ void main(void)
             {
                 for (float z = -10; z < +10; z += 2)
                 {
-                    GLVertexColour[] vertices = GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, Color.FromArgb(255, (int)(x+15) *10, (int)(z+15)*10, (int)(x+15) *5), new Vector3(x, 0, z));
+                    GLVertexColour[] vertices = GLColouredObjectFactory.CreateSolidCubeFromTriangles(1f, new Color4[] { Color.FromArgb(255, (int)(x + 15) * 10, (int)(z + 15) * 10, (int)(x + 15) * 5) }, new Vector3(x, 0, z));
                     rObjects.Add(new BasicRenderObject(vertices));
 
                 }

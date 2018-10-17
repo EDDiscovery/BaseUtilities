@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes.cs" />
+    <Compile Include="ShaderTest5.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTest5.Designer.cs">
+      <DependentUpon>ShaderTest5.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTest4.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -84,6 +90,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ShaderTest5.resx">
+      <DependentUpon>ShaderTest5.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest4.resx">
       <DependentUpon>ShaderTest4.cs</DependentUpon>
     </EmbeddedResource>
@@ -148,6 +157,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\shoppinglist.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asteroid texture one side mipmap levels 0 to 8.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\golden.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

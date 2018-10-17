@@ -15,10 +15,14 @@
  */
 
 using System;
+using OpenTK;
+using OpenTK.Graphics.OpenGL4;
 using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
+    // Shader list - holds collections of shaders by name
+
     public class GLProgramShaderList : IDisposable
     {
         private Dictionary<string, IGLProgramShaders> programshaders;

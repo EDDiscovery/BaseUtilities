@@ -79,8 +79,37 @@ namespace OpenTKUtils.GL4
 
         public void Bind()
         {
-            System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
+           // System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
             GL.UniformMatrix4(uniform, false, ref transform);
+        }
+    }
+
+    // version of above, uses less memory by not storing anything but transform
+
+    public class GLObjectDataTranslationRotationSetOnly : IGLObjectInstanceData
+    {
+        public const int TRUniformId = 22;      // Standard used to pass object data transform to shader
+
+        public GLObjectDataTranslationRotationSetOnly(Vector3 pos, Vector3 rot)
+        {
+            Set(pos, rot);
+        }
+
+        void Set(Vector3 pos, Vector3 rot)
+        {
+            transform = Matrix4.Identity;
+            transform *= Matrix4.CreateRotationX((float)(rot.X * Math.PI / 180.0f));
+            transform *= Matrix4.CreateRotationY((float)(rot.Y * Math.PI / 180.0f));
+            transform *= Matrix4.CreateRotationZ((float)(rot.Z * Math.PI / 180.0f));
+            transform *= Matrix4.CreateTranslation(pos);
+        }
+
+        private Matrix4 transform;
+
+        public void Bind()
+        {
+            //System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
+            GL.UniformMatrix4(TRUniformId, false, ref transform);
         }
     }
 }

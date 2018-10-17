@@ -77,7 +77,7 @@ void main(void)
 
             //gltracker.Start(true, new Vector3((float)0, (float)0, (float)0), Vector3.Zero, 1F, 10F, 0, 100000);
 
-            GLVertexColour[] vertices = GLCubeObjectFactory.CreateSolidCubeFromTriangles(0.2f, Color4.HotPink);
+            GLVertexColour[] vertices = GLColouredObjectFactory.CreateSolidCubeFromTriangles(0.2f, new Color4[] { Color4.HotPink });
             rObjects.Add(new BasicRenderObject(vertices));
 
             program = new OpenTKUtils.GL4.GLProgram();

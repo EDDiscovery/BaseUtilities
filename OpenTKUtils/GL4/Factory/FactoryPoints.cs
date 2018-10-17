@@ -16,26 +16,32 @@
 
 using OpenTK;
 using OpenTK.Graphics;
+using System;
+using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    static public class GLLineObjectFactory
-    {
-        public static GLVertexColour[] CreateLines(Vector3 startpos, Vector3 endpos, Vector3 offset, int lines, Color4[] colors)
-        {
-            GLVertexColour[] vertices = new GLVertexColour[lines * 2];
+    // Factory created Vector4 shapes..
 
-            for (int i = 0; i < lines; i++)
+    static public class GLPointsFactory
+    {
+        public static Vector4[] RandomStars( int number, int seed, float left, float right, float front, float back, float top, float bottom )
+        {
+            Random rnd = new Random(seed);
+
+            Vector4[] array = new Vector4[number];
+
+            for (int s = 0; s < number; s++)
             {
-                vertices[i * 2] = new GLVertexColour(new Vector4(startpos.X, startpos.Y, startpos.Z, 1.0f), colors.ColorFrom(i * 2));
-                vertices[i * 2 + 1] = new GLVertexColour(new Vector4(endpos.X, endpos.Y, endpos.Z, 1.0f), colors.ColorFrom(i * 2+1));
-                startpos += offset;
-                endpos += offset;
+                float x = rnd.Next(100000) * (right - left) / 100000.0f + left;
+                float y = rnd.Next(100000) * (top-bottom) / 100000.0f + bottom;
+                float z = rnd.Next(100000) * (back-front) / 100000.0f + front;
+
+                array[s] = new Vector4(x, y, z,1.0f);
             }
 
-            return vertices;
+            return array;
         }
-
 
     }
 }

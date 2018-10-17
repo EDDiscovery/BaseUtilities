@@ -52,7 +52,7 @@ namespace OpenTKUtils.GL4
                 return shader.CompileReport;
         }
 
-        public string Link(params GLShader[] sh)
+        public string Link(params GLShader[] sh)        // done together, not seperable
         {
             foreach( var s in sh )
             {
@@ -61,16 +61,20 @@ namespace OpenTKUtils.GL4
                 else
                     return "Shader not compiled";
             }
-            return Link();
+
+            return Link(false);
         }
 
-        public string Link()            // Disposes of shaders
+        public string Link( bool separable = false )            // link, seperable or not.  Disposes of shaders
         {
             if (shaders.Count == 0)
                 return "No shaders attached";
 
             foreach (GLShader s in shaders)
                 GL.AttachShader(Id, s.Id);
+
+            if (separable)
+                GL.ProgramParameter(Id, ProgramParameterName.ProgramSeparable, 1);
 
             GL.LinkProgram(Id);
             var info = GL.GetProgramInfoLog(Id);

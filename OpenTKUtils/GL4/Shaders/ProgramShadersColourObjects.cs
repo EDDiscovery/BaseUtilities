@@ -85,12 +85,15 @@ void main(void)
             System.Diagnostics.Debug.Assert(ret == null);
         }
 
-        public void Use(Matrix4 model, Matrix4 projection)
+        public void Start(Matrix4 model, Matrix4 projection)
         {
-            System.Diagnostics.Debug.WriteLine("Program changed " + program.Id + " ShaderSimple");
             program.Use();
             GL.UniformMatrix4(20, false, ref projection);
             GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
+        }
+
+        public void Finish()
+        {
         }
 
         public void Dispose()

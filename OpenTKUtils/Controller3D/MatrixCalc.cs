@@ -32,6 +32,8 @@ namespace OpenTKUtils.Common
 
         public float EyeDistance(float zoom) { return ZoomDistance / zoom; }    // distance of eye from target position
 
+        public Vector3 EyePosition { get; private set; }                        // after ModelMatrix
+
         private bool perspectivemode = true;
         private Matrix4 modelmatrix;
         private Matrix4 projectionmatrix;
@@ -48,6 +50,7 @@ namespace OpenTKUtils.Common
             {
                 Vector3 eye, normal;
                 CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
+                EyePosition = eye;
                 preinverted = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
                 modelmatrix = Matrix4.Mult(flipy, preinverted);    //ORDER VERY important this one took longer to work out the order! replaces GL.Scale(1.0, -1.0, 1.0);
             }
@@ -61,6 +64,7 @@ namespace OpenTKUtils.Common
                 rotcam *= Matrix4.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
 
                 preinverted = Matrix4.Mult(offset, scale);
+                EyePosition = new Vector3(preinverted.Row0.X, preinverted.Row1.Y, preinverted.Row2.Z);          // TBD.. 
                 preinverted = Matrix4.Mult(preinverted, rotcam);
                 modelmatrix = preinverted;
             }

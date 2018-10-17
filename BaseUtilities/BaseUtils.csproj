@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
+    <Compile Include="Collections\DictionaryOfDictionaries.cs" />
     <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Conditions\Condition.cs" />
     <Compile Include="Conditions\ConditionEntry.cs" />

@@ -46,5 +46,19 @@ namespace OpenTKUtils.GL4
             return array[index];
         }
 
+        static public void Translate(this GLVertexTextured[] vertices, Vector3 pos)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+                vertices[i].Vertex.Translate(pos);
+        }
+
+        static public void Transform(this GLVertexTextured[] vertices, Matrix4 trans)
+        {
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].Vertex = Vector4.Transform(vertices[i].Vertex, trans);
+            }
+        }
+
     }
 }

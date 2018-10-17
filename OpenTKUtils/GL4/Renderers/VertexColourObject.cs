@@ -29,65 +29,56 @@ namespace OpenTKUtils.GL4
 
         public const int Size = (4 + 4) * 4; // size of struct in bytes
 
-        private Vector4 Vertex;
-        private Color4 Color;
+        public Vector4 Vertex;
+        public Color4 Color;
 
         public GLVertexColour(Vector4 position, Color4 color)
         {
             Vertex = position;
             Color = color;
         }
-
-        static public void Translate(GLVertexColour[] vertices, Vector3 pos)
-        {
-            for (int i = 0; i < vertices.Length; i++)
-                vertices[i].Vertex.Translate(pos);
-        }
-        static public void Transform(GLVertexColour[] vertices, Matrix4 trans)
-        {
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                vertices[i].Vertex = Vector4.Transform(vertices[i].Vertex, trans);
-            }
-        }
-
     }
 
     public abstract class GLVertexColourObject : GLRenderable
     {
         public GLVertexColourObject(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length, program, data, pt)
         {
-            // create first buffer: vertex
+            // one buffer holding position and colour data interspersed.
             GL.NamedBufferStorage(
                 VertexBuffer,
                 GLVertexColour.Size * vertices.Length,        // the size needed by this buffer
                 vertices,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
+            const int bindingindex = 0;
 
-            GL.VertexArrayAttribBinding(VertexArray, 0, 0);         
-            GL.EnableVertexArrayAttrib(VertexArray, 0);
+            // first position vectors, to attrib 0
+            const int attriblayoutindexposition = 0;
+            GL.VertexArrayAttribBinding(VertexArray, attriblayoutindexposition, bindingindex);         
+            GL.EnableVertexArrayAttrib(VertexArray, attriblayoutindexposition);
             GL.VertexArrayAttribFormat(
                 VertexArray,
-                0,                      // attribute index, from the shader location = 0
+                attriblayoutindexposition,  // attribute index, from the shader location = 0
                 4,                      // size of attribute, vec4
                 VertexAttribType.Float, // contains floats
                 false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
                 0);                     // relative offset, first item
 
+            // second colour, to attrib 1
+            const int attriblayoutcolour = 1;
+            GL.VertexArrayAttribBinding(VertexArray, attriblayoutcolour, bindingindex);         
+            GL.EnableVertexArrayAttrib(VertexArray, attriblayoutcolour);
 
-            GL.VertexArrayAttribBinding(VertexArray, 1, 0);         // implies 
-            GL.EnableVertexArrayAttrib(VertexArray, 1);
             GL.VertexArrayAttribFormat(
                 VertexArray,
-                1,                      // attribute index, from the shader location = 1
+                attriblayoutcolour,     // attribute index, from the shader location = 1
                 4,                      // size of attribute, vec4
                 VertexAttribType.Float, // contains floats
                 false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                16);                     // relative offset after a vec4
+                16);                    // relative offset after a vec4
 
-            // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(VertexArray, 0, VertexBuffer, IntPtr.Zero, GLVertexColour.Size);
+            // link the vertex array and buffer and provide the stride as size of VertexColour
+            GL.VertexArrayVertexBuffer(VertexArray, bindingindex, VertexBuffer, IntPtr.Zero, GLVertexColour.Size);
         }
     }
 

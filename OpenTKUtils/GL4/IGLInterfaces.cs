@@ -19,14 +19,29 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public interface IGLProgramShaders : IDisposable        // ALL shaders should inherit from this
+    public interface IGLProgramShaders : IDisposable        // shaders in the render queue should inherit from this
     {
         int Id { get; }
-        void Use(Matrix4 model, Matrix4 proj);
+        void Start(Matrix4 model, Matrix4 proj);            // Renders call this when program has just started
+        void Finish();                                      // Renders call this when program has ended
+    }
+
+    public interface IGLPipelineShaders : IDisposable       // pipeline shaders
+    {
+        int Id { get; }
+        void Start(Matrix4 model, Matrix4 proj);            // The IGLProgramShader pipeline calls this when started
+        void Finish();                                      // and when the pipeline is removed..  
     }
 
     public interface IGLObjectInstanceData                  // ALL object data should inherit from this
     {
+        void Bind();
+    }
+
+    public interface IGLTexture : IDisposable
+    {
+        int Width { get; }
+        int Height { get; }
         void Bind();
     }
 

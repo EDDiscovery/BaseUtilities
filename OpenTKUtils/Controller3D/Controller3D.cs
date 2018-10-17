@@ -197,13 +197,11 @@ namespace OpenTKUtils.Common
 
             mouseDownPos.X = e.X;
             mouseDownPos.Y = e.Y;
-            //Console.WriteLine("Mouseup down at " + e.X + "," + e.Y);
 
             if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Left))
             {
                 mouseStartRotate.X = e.X;
                 mouseStartRotate.Y = e.Y;
-                //Console.WriteLine("Mouse start left");
             }
 
             if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Right))
@@ -241,7 +239,6 @@ namespace OpenTKUtils.Common
                 if (mouseStartRotate.X != int.MinValue) // on resize double click resize, we get a stray mousemove with left, so we need to make sure we actually had a down event
                 {
                     KillSlews();
-                    //Console.WriteLine("Mouse move left");
                     int dx = e.X - mouseStartRotate.X;
                     int dy = e.Y - mouseStartRotate.Y;
 

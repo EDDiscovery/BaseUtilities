@@ -28,7 +28,7 @@ namespace OpenTKUtils.GL4
         private GLProgram program;
         public int Id { get { return program.Id; } }
 
-        string fragmenttexture =
+private static string fragmenttexture =
 @"
 #version 450 core
 in vec2 vs_textureCoordinate;
@@ -37,11 +37,11 @@ out vec4 color;
 
 void main(void)
 {
-	color = texelFetch(textureObject, ivec2(vs_textureCoordinate.x, vs_textureCoordinate.y), 0);
+    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
 
-static string vertexnotx =
+private static string vertexnotx =
 @"
 #version 450 core
 layout (location = 0) in vec4 model;
@@ -60,8 +60,7 @@ void main(void)
 }
 ";
 
-
-static string vertextx =
+private static string vertextx =
 @"
 #version 450 core
 layout (location = 0) in vec4 model;
@@ -89,12 +88,15 @@ void main(void)
             System.Diagnostics.Debug.Assert(ret == null);
         }
 
-        public void Use(Matrix4 model, Matrix4 projection)
+        public void Start(Matrix4 model, Matrix4 projection)
         {
-            System.Diagnostics.Debug.WriteLine("Program changed " + program.Id + " ShaderTexture");
             program.Use();
             GL.UniformMatrix4(20, false, ref projection);
             GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
+        }
+
+        public void Finish()
+        {
         }
 
         public void Dispose()
@@ -114,7 +116,7 @@ void main(void)
 
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
-        string fragmenttexture =
+private static string fragmenttexture =
 @"
 #version 450 core
 in vec2 vs_textureCoordinate;
@@ -123,11 +125,11 @@ out vec4 color;
 
 void main(void)
 {
-	color = texelFetch(textureObject, ivec2(vs_textureCoordinate.x, vs_textureCoordinate.y), 0);
+    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
 
-        static string vertextx =
+private static string vertextx =
         @"
 #version 450 core
 layout (location = 0) in vec4 model;
@@ -157,14 +159,17 @@ void main(void)
             Transform = new GLObjectDataTranslationRotation();
         }
 
-        public void Use(Matrix4 model, Matrix4 projection)
+        public void Start(Matrix4 model, Matrix4 projection)
         {
-            System.Diagnostics.Debug.WriteLine("Program changed " + program.Id + " ShaderTexture");
             program.Use();
             GL.UniformMatrix4(20, false, ref projection);
             GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
             Matrix4 t = Transform.Transform;
             GL.UniformMatrix4(23, false, ref t);        // pass in to program the common transform.  22 comes from the object data
+        }
+
+        public void Finish()
+        {
         }
 
         public void Dispose()
