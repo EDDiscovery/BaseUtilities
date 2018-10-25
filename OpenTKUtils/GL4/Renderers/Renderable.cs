@@ -24,57 +24,39 @@ namespace OpenTKUtils.GL4
     // All renderables inherit from this class..
     // and override bind if required.
 
-    public abstract class GLRenderable : IDisposable
+    public abstract class SingleBufferRenderable : IGLRenderable
     {
         public IGLObjectInstanceData InstanceData { get { return instancedata; } }
 
         protected int VertexArray;                  // the vertex GL Array 
         protected int VertexBuffer;                 // its buffer data
-        protected int VerticeCount;                 // and size...
-
-        private PrimitiveType primitivetype;        // Draw type
-
-        protected IGLProgramShaders iglprogramshader;        // program to use on this
+        protected int VertexCount;
+        protected PrimitiveType primitivetype;        // Draw type
         protected IGLObjectInstanceData instancedata;   // any instance data
 
-        public int PId { get { return iglprogramshader.Id; } }   // the program ID
-
-        protected GLRenderable(int vertexCount, IGLProgramShaders pn, IGLObjectInstanceData id, PrimitiveType pt)
+        protected SingleBufferRenderable(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
         {
-            iglprogramshader = pn;
             instancedata = id;
-            VerticeCount = vertexCount;
+            VertexCount = vertexCount;
+            primitivetype = pt;
+
             VertexArray = GL.GenVertexArray();
             VertexBuffer = GL.GenBuffer();
-            primitivetype = pt;
 
             GL.BindVertexArray(VertexArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBuffer);
         }
 
-        public virtual void Bind()                  // override if you need to bind other stuff
+        public virtual void Bind(IGLProgramShaders shader)
         {
             GL.BindVertexArray(VertexArray);        // Bind vertex
-            instancedata?.Bind();                   // offer any instance data bind opportunity
+            instancedata?.Bind(shader);                   // offer any instance data bind opportunity
         }
 
-        public void StartProgram(Matrix4 model, Matrix4 proj)      // Called when the 
+        public virtual void Render()
         {
-            System.Diagnostics.Debug.WriteLine("Use program " + iglprogramshader.Id);
-            iglprogramshader.Start(model, proj);
-        }
-
-        public void FinishProgram()      // override if you need to bind other stuff
-        {
-            System.Diagnostics.Debug.WriteLine("Finish program " + iglprogramshader.Id);
-            iglprogramshader.Finish();
-        }
-
-        public void BindRender()      // override if you need to bind other stuff
-        {
-            System.Diagnostics.Debug.WriteLine("Draw " + VerticeCount + " using " + primitivetype + " under " + iglprogramshader.Id);
-            Bind();
-            GL.DrawArrays(primitivetype, 0, VerticeCount);
+            //System.Diagnostics.Debug.WriteLine("Draw " + primitivetype + " using " + primitivetype);
+            GL.DrawArrays(primitivetype, 0, VertexCount);
         }
 
         public void Dispose()
@@ -92,4 +74,3 @@ namespace OpenTKUtils.GL4
         }
     }
 }
-

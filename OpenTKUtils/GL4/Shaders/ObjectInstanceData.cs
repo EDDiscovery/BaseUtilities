@@ -77,10 +77,10 @@ namespace OpenTKUtils.GL4
             transform *= Matrix4.CreateTranslation(pos);
         }
 
-        public void Bind()
+        public void Bind(IGLProgramShaders shader)
         {
-           // System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.UniformMatrix4(uniform, false, ref transform);
+            // System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
+            GL.ProgramUniformMatrix4(shader.GetVertex().Id, uniform, false, ref transform);
         }
     }
 
@@ -106,10 +106,11 @@ namespace OpenTKUtils.GL4
 
         private Matrix4 transform;
 
-        public void Bind()
+        public void Bind(IGLProgramShaders shader)
         {
             //System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.UniformMatrix4(TRUniformId, false, ref transform);
+            GL.ProgramUniformMatrix4(shader.GetVertex().Id,TRUniformId, false, ref transform);
         }
     }
+
 }

@@ -113,6 +113,29 @@ namespace OpenTKUtils.GL4
             return array;
         }
 
+        static Vector2[] tricoords = new Vector2[]
+        {
+                new Vector2(1.0f, 1.0f),      // lower right triangle
+                new Vector2(1.0f, 0),
+                new Vector2(0, 1.0f),
+                new Vector2(0, 1.0f),      // upper left triangle
+                new Vector2(1.0f, 0),
+                new Vector2(0, 0),
+        };
+
+        public static Vector2[] CreateTexTriangles(int number)
+        {
+            Vector2[] t = new Vector2[number * 6];
+            for (int i = 0; i < number * 6; i++)
+                t[i] = tricoords[i % 6];
+
+            return t;
+        }
+
+        public static Vector2[] CreateCubeTexTriangles()
+        {
+            return CreateTexTriangles(6);
+        }
 
         public static Vector4[] CreateVertexPointCube(float side, Vector3? pos = null)
         {

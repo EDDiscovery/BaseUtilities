@@ -21,119 +21,45 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    // List to hold named renderables and a Render function to send the lot to GL - issued in Add order
-
-    public class GLRenderList : IDisposable
-    {
-        private Dictionary<string, GLRenderable> renderables;
-        private int unnamed = 0;
-
-        public GLRenderList()
-        {
-            renderables = new Dictionary<string, GLRenderable>();
-        }
-
-        public void Add(string name, GLRenderable r)
-        {
-            renderables.Add(name, r);
-        }
-
-        public void Add(GLRenderable r)
-        {
-            renderables.Add("Unnamed_" + (unnamed++), r);
-        }
-
-        public GLRenderable this[string key] { get { return renderables[key]; } }
-        public bool Contains(string key) { return renderables.ContainsKey(key); }
-
-        public void Render(Matrix4 model, Matrix4 proj)
-        {
-            GLRenderable last = null;
-
-            foreach (GLRenderable r in renderables.Values)
-            {
-                if (last == null || last.PId != r.PId)
-                {
-                    if (last != null)
-                        r.FinishProgram();
-
-                    r.StartProgram(model, proj);
-                    last = r;
-                }
-
-                r.BindRender();
-            }
-
-            if (last != null)
-                last.FinishProgram();
-
-            GL.UseProgram(0);
-            GL.BindProgramPipeline(0);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                foreach (GLRenderable r in renderables.Values)
-                    r.Dispose();
-
-                renderables.Clear();
-            }
-        }
-    }
-
-
-    // List to hold named renderables and a Render function to send the lot to GL - issued in Program ID order, then Add order
+    // List to hold named renderables against programs, and a Render function to send the lot to GL - issued in Program ID order, then Add order
 
     public class GLRenderProgramSortedList : IDisposable
     {
-        private BaseUtils.DictionaryOfDictionaries<int, string, GLRenderable> renderables;
+        private BaseUtils.DictionaryOfDictionaries<IGLProgramShaders, string, IGLRenderable> renderables;
         private int unnamed = 0;
 
         public GLRenderProgramSortedList()
         {
-            renderables = new BaseUtils.DictionaryOfDictionaries<int, string, GLRenderable>();
+            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShaders, string, IGLRenderable>();
         }
 
-        public void Add(string name, GLRenderable r)
+        public void Add(IGLProgramShaders prog, string name, IGLRenderable r)
         {
-            renderables.Add(r.PId, name, r);
+            renderables.Add(prog, name, r);
         }
 
-        public void Add(GLRenderable r)
+        public void Add(IGLProgramShaders prog, IGLRenderable r)
         {
-            Add("Unnamed_" + (unnamed++), r);
+            Add(prog, "Unnamed_" + (unnamed++), r);
         }
 
-        public GLRenderable this[string key] {  get { return renderables[key]; } }
+        public IGLRenderable this[string key] {  get { return renderables[key]; } }
 
         public bool Contains(string key) { return renderables.ContainsKey(key); }
 
-        public void Render(Matrix4 model, Matrix4 proj)
+        public void Render(Common.MatrixCalc c)
         {
             foreach (var d in renderables)
             {
-                GLRenderable last = null;
+                d.Key.Start(c);       // start the program
 
-                foreach (GLRenderable g in d.Value.Values)
+                foreach (IGLRenderable g in d.Value.Values)
                 {
-                    if (last == null)
-                    {
-                        last = g;
-                        g.StartProgram(model, proj);
-                    }
-
-                    g.BindRender();
+                    g.Bind(d.Key);
+                    g.Render();
                 }
 
-                if (last != null)
-                    last.FinishProgram();
+                d.Key.Finish();
             }
 
             GL.UseProgram(0);           // final clean up
@@ -151,7 +77,7 @@ namespace OpenTKUtils.GL4
             {
                 foreach (var d in renderables)
                 {
-                    foreach (GLRenderable g in d.Value.Values)
+                    foreach (IGLRenderable g in d.Value.Values)
                         g.Dispose();
                 }
 

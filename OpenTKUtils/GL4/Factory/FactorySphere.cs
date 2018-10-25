@@ -140,6 +140,32 @@ namespace OpenTKUtils.GL4
             return array;
         }
 
+        static public Tuple<Vector4[],Vector2[]> CreateTexturedSphereFromTriangles(int recursionLevel, float size, Vector3? pos = null)
+        {
+            var faces = CreateSphereFaces(recursionLevel, size);
+            Vector4[] coords = new Vector4[faces.Count * 3];
+            Vector2[] texcoords = new Vector2[faces.Count * 3];
+
+            int p = 0;
+            foreach (var tri in faces)
+            {
+                var uv1 = GetSphereCoord(tri.V1);
+                var uv2 = GetSphereCoord(tri.V2);
+                var uv3 = GetSphereCoord(tri.V3);
+                FixColorStrip(ref uv1, ref uv2, ref uv3);
+
+                coords[p] = new Vector4(tri.V1, 1);
+                texcoords[p++] = uv1;
+                coords[p] = new Vector4(tri.V2, 1);
+                texcoords[p++] = uv2;
+                coords[p] = new Vector4(tri.V3, 1);
+                texcoords[p++] = uv3;
+            }
+
+            return new Tuple<Vector4[], Vector2[]>(coords, texcoords);
+        }
+
+
         private static int AddVertex(List<Vector3> _points, Vector3 p)
         {
             p.Normalize();
@@ -180,6 +206,31 @@ namespace OpenTKUtils.GL4
             return i;
         }
 
+        static private void FixColorStrip(ref Vector2 uv1, ref Vector2 uv2, ref Vector2 uv3)
+        {
+            if ((uv1.X - uv2.X) >= 0.8f)
+                uv1.X -= 1;
+            if ((uv2.X - uv3.X) >= 0.8f)
+                uv2.X -= 1;
+            if ((uv3.X - uv1.X) >= 0.8f)
+                uv3.X -= 1;
+
+            if ((uv1.X - uv2.X) >= 0.8f)
+                uv1.X -= 1;
+            if ((uv2.X - uv3.X) >= 0.8f)
+                uv2.X -= 1;
+            if ((uv3.X - uv1.X) >= 0.8f)
+                uv3.X -= 1;
+        }
+
+        public static Vector2 GetSphereCoord(Vector3 i)
+        {
+            var len = i.Length;
+            Vector2 uv;
+            uv.Y = (float)(Math.Acos(i.Y / len) / Math.PI);
+            uv.X = -(float)((Math.Atan2(i.Z, i.X) / Math.PI + 1.0f) * 0.5f);
+            return uv;
+        }
 
 
     }

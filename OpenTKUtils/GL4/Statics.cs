@@ -16,22 +16,25 @@
 
 using OpenTK;
 using OpenTK.Graphics;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace OpenTKUtils.GL4
 {
     public static class GL4Statics
     {
-        static public void Translate(this Vector4 Vertex, Vector3 offset)
+        static public Vector4 Translate(this Vector4 Vertex, Vector3 offset)
         {
             Vertex.X += offset.X;
             Vertex.Y += offset.Y;
             Vertex.Z += offset.Z;
+            return Vertex;
         }
 
         static public void Translate(this Vector4[] vertices, Vector3 pos)
         {
             for (int i = 0; i < vertices.Length; i++)
-                vertices[i].Translate(pos);
+                vertices[i] = vertices[i].Translate(pos);
         }
 
         static public void Transform(this Vector4[] vertices, Matrix4 trans)
@@ -46,18 +49,37 @@ namespace OpenTKUtils.GL4
             return array[index];
         }
 
-        static public void Translate(this GLVertexTextured[] vertices, Vector3 pos)
+        public static void RotPos(this Vector4[] vertices, Vector3? rotation = null, Vector3? pos = null)
         {
-            for (int i = 0; i < vertices.Length; i++)
-                vertices[i].Vertex.Translate(pos);
+            if (pos != null)
+                vertices.Translate(pos.Value);
+
+            if (rotation != null && rotation.Value.Length > 0)
+            {
+                Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
+                transform *= Matrix4.CreateRotationX((float)(rotation.Value.X * Math.PI / 180.0f));
+                transform *= Matrix4.CreateRotationY((float)(rotation.Value.Y * Math.PI / 180.0f));
+                transform *= Matrix4.CreateRotationZ((float)(rotation.Value.Z * Math.PI / 180.0f));
+                vertices.Transform(transform);
+            }
         }
 
-        static public void Transform(this GLVertexTextured[] vertices, Matrix4 trans)
+        public static void Check([CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            string errmsg = "";
+
+            OpenTK.Graphics.OpenGL4.ErrorCode ec;
+
+            while ( (ec = OpenTK.Graphics.OpenGL4.GL.GetError()) != OpenTK.Graphics.OpenGL4.ErrorCode.NoError )     // call until no error
             {
-                vertices[i].Vertex = Vector4.Transform(vertices[i].Vertex, trans);
+                if (errmsg.IsEmpty())
+                    errmsg += sourceFilePath + ":" + sourceLineNumber + Environment.NewLine;
+
+                errmsg += "Error : " + ec.ToString() + Environment.NewLine;
             }
+
+            if ( errmsg.HasChars() )
+                System.Diagnostics.Debug.Assert(false, errmsg );
         }
 
     }

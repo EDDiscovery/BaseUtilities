@@ -21,160 +21,31 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
     // Simple rendered texture
-    // with optional rot/translation per object - needs a GLObjectDataTranslationRotation per object passing transform into 22 
 
-    public class GLVertexTexturedObjectShaderSimple : IGLProgramShaders
+    public class GLTexturedObjectShaderSimple : GLProgramShaderPipeline
     {
-        private GLProgram program;
-        public int Id { get { return program.Id; } }
-
-private static string fragmenttexture =
-@"
-#version 450 core
-in vec2 vs_textureCoordinate;
-uniform sampler2D textureObject;
-out vec4 color;
-
-void main(void)
-{
-    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
-}
-";
-
-private static string vertexnotx =
-@"
-#version 450 core
-layout (location = 0) in vec4 model;
-layout (location = 1) in vec2 textureCoordinate;
-
-out vec2 vs_textureCoordinate;
-
-layout(location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
-
-void main(void)
-{
-	vs_textureCoordinate = textureCoordinate;
-
-	gl_Position = projection * modelView * model ;
-}
-";
-
-private static string vertextx =
-@"
-#version 450 core
-layout (location = 0) in vec4 model;
-layout (location = 1) in vec2 textureCoordinate;
-
-out vec2 vs_textureCoordinate;
-
-layout(location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
-layout (location = 22) uniform  mat4 transform;
-
-void main(void)
-{
-	vs_textureCoordinate = textureCoordinate;
-
-	gl_Position = projection * modelView * transform * model ;
-}
-";
-        public GLVertexTexturedObjectShaderSimple(bool withtransform)           // if with transform, object needs to pass in uniform 22 the transform
+        public GLTexturedObjectShaderSimple() : base()
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, withtransform ? vertextx : vertexnotx);
-            program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmenttexture);
-            string ret = program.Link();
-            System.Diagnostics.Debug.Assert(ret == null);
-        }
-
-        public void Start(Matrix4 model, Matrix4 projection)
-        {
-            program.Use();
-            GL.UniformMatrix4(20, false, ref projection);
-            GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
-        }
-
-        public void Finish()
-        {
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
+            AddVertex(new GLVertexShaderTransform());
+            AddFragment(new GLFragmentShaderTexture());
         }
     }
 
-    // Perfom a common transform on top of the transform per object.
-    // needs a GLObjectDataTranslationRotation per object passing transform into 22 
-    // the object can be position/rotated, and then a common translate/rotate can be placed over the top by setting Transform
-
-    public class GLVertexTexturedObjectShaderCommonTransform : IGLProgramShaders
+    public class GLTexturedObjectShaderTransformWithCommonTransform : GLProgramShaderPipeline
     {
-        private GLProgram program;
-        public int Id { get { return program.Id; } }
-
-        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
-
-private static string fragmenttexture =
-@"
-#version 450 core
-in vec2 vs_textureCoordinate;
-uniform sampler2D textureObject;
-out vec4 color;
-
-void main(void)
-{
-    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
-}
-";
-
-private static string vertextx =
-        @"
-#version 450 core
-layout (location = 0) in vec4 model;
-layout (location = 1) in vec2 textureCoordinate;
-
-out vec2 vs_textureCoordinate;
-
-layout(location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
-layout (location = 22) uniform  mat4 objecttransform;
-layout (location = 23) uniform  mat4 commontransform;
-
-void main(void)
-{
-	vs_textureCoordinate = textureCoordinate;
-
-	gl_Position = projection * modelView * objecttransform * commontransform * model ;
-}
-";
-        public GLVertexTexturedObjectShaderCommonTransform()           // if with transform, object needs to pass in uniform 22 the transform
+        public GLTexturedObjectShaderTransformWithCommonTransform() : base()
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextx );
-            program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fragmenttexture);
-            string ret = program.Link();
-            System.Diagnostics.Debug.Assert(ret == null);
-            Transform = new GLObjectDataTranslationRotation();
+            AddVertex(new GLVertexShaderTransformWithCommonTransform());
+            AddFragment(new GLFragmentShaderTexture());
         }
+    }
 
-        public void Start(Matrix4 model, Matrix4 projection)
+    public class GLTexturedObjectShader2DBlend : GLProgramShaderPipeline
+    {
+        public GLTexturedObjectShader2DBlend() : base()
         {
-            program.Use();
-            GL.UniformMatrix4(20, false, ref projection);
-            GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
-            Matrix4 t = Transform.Transform;
-            GL.UniformMatrix4(23, false, ref t);        // pass in to program the common transform.  22 comes from the object data
-        }
-
-        public void Finish()
-        {
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
+            AddVertex(new GLVertexShaderTransform());
+            AddFragment(new GLFragmentShader2DCommonBlend());
         }
     }
 

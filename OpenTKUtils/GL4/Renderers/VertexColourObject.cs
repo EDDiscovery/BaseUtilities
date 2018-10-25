@@ -21,64 +21,38 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public struct GLVertexColour
+    public abstract class GLVertexColourObject : SingleBufferRenderable
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
         // layout(location = 1) in vec4 color;
+        const int attriblayoutindexposition = 0;
+        const int attriblayoutcolour = 1;
 
-        public const int Size = (4 + 4) * 4; // size of struct in bytes
-
-        public Vector4 Vertex;
-        public Color4 Color;
-
-        public GLVertexColour(Vector4 position, Color4 color)
+        // colour data can be shorted than vertices, and will be repeated.
+        public GLVertexColourObject(Vector4[] vertices, Color4[] colours , IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length,data,pt)
         {
-            Vertex = position;
-            Color = color;
-        }
-    }
+            GL.BufferData(BufferTarget.ArrayBuffer, (16+16) * vertices.Length, (IntPtr)0, BufferUsageHint.StaticDraw);
 
-    public abstract class GLVertexColourObject : GLRenderable
-    {
-        public GLVertexColourObject(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length, program, data, pt)
-        {
-            // one buffer holding position and colour data interspersed.
-            GL.NamedBufferStorage(
-                VertexBuffer,
-                GLVertexColour.Size * vertices.Length,        // the size needed by this buffer
-                vertices,                           // data to initialize with
-                BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
+            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, 16 * vertices.Length, vertices);
+            int offset = 16 * vertices.Length;
 
-            const int bindingindex = 0;
+            int startcolourdata = offset;
+            int colstogo = vertices.Length;
 
-            // first position vectors, to attrib 0
-            const int attriblayoutindexposition = 0;
-            GL.VertexArrayAttribBinding(VertexArray, attriblayoutindexposition, bindingindex);         
+            while( colstogo > 0 )   // while more to fill in
+            {
+                int take = Math.Min(colstogo, colours.Length);      // max of colstogo and length of array
+                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 16 * take, colours);
+                colstogo -= take;
+                offset += take * 16;
+            }
+
+            GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 16, 0);
+            GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 16, startcolourdata);
+
             GL.EnableVertexArrayAttrib(VertexArray, attriblayoutindexposition);
-            GL.VertexArrayAttribFormat(
-                VertexArray,
-                attriblayoutindexposition,  // attribute index, from the shader location = 0
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                0);                     // relative offset, first item
-
-            // second colour, to attrib 1
-            const int attriblayoutcolour = 1;
-            GL.VertexArrayAttribBinding(VertexArray, attriblayoutcolour, bindingindex);         
             GL.EnableVertexArrayAttrib(VertexArray, attriblayoutcolour);
-
-            GL.VertexArrayAttribFormat(
-                VertexArray,
-                attriblayoutcolour,     // attribute index, from the shader location = 1
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                16);                    // relative offset after a vec4
-
-            // link the vertex array and buffer and provide the stride as size of VertexColour
-            GL.VertexArrayVertexBuffer(VertexArray, bindingindex, VertexBuffer, IntPtr.Zero, GLVertexColour.Size);
         }
     }
 
@@ -86,8 +60,27 @@ namespace OpenTKUtils.GL4
 
     public class GLColouredTriangles : GLVertexColourObject
     {
-        public GLColouredTriangles(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data) : base(vertices, program, data, PrimitiveType.Triangles)
+        public GLColouredTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Triangles)
         {
+        }
+
+        public override void Bind(IGLProgramShaders shader)
+        {
+            base.Bind(shader);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        }
+    }
+
+    public class GLOutlineTriangles : GLVertexColourObject
+    {
+        public GLOutlineTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Triangles)
+        {
+        }
+
+        public override void Bind(IGLProgramShaders shader)
+        {
+            base.Bind(shader);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
         }
     }
 
@@ -95,7 +88,7 @@ namespace OpenTKUtils.GL4
 
     public class GLColouredTriangleStrip : GLVertexColourObject
     {
-        public GLColouredTriangleStrip(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data) : base(vertices, program, data, PrimitiveType.TriangleStrip)
+        public GLColouredTriangleStrip(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.TriangleStrip)
         {
         }
     }
@@ -104,7 +97,7 @@ namespace OpenTKUtils.GL4
 
     public class GLColouredTriangleFan : GLVertexColourObject
     {
-        public GLColouredTriangleFan(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data) : base(vertices, program, data, PrimitiveType.TriangleFan)
+        public GLColouredTriangleFan(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.TriangleFan)
         {
         }
     }
@@ -115,15 +108,15 @@ namespace OpenTKUtils.GL4
     {
         private float pointsize;
 
-        public GLColouredLines(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, float ps) : base(vertices, program, data, PrimitiveType.Lines)
+        public GLColouredLines(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.Lines)
         {
             pointsize = ps;
         }
 
-        public override void Bind()
+        public override void Bind(IGLProgramShaders shader)
         {
+            base.Bind(shader);
             GL.PointSize(pointsize);
-            base.Bind();
         }
     }
 
@@ -131,15 +124,15 @@ namespace OpenTKUtils.GL4
     {
         private float pointsize;
 
-        public GLColouredLineStrip(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, float ps) : base(vertices, program, data, PrimitiveType.LineStrip)
+        public GLColouredLineStrip(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.LineStrip)
         {
             pointsize = ps;
         }
 
-        public override void Bind()
+        public override void Bind(IGLProgramShaders shader)
         {
+            base.Bind(shader);
             GL.PointSize(pointsize);
-            base.Bind();
         }
     }
 
@@ -148,15 +141,15 @@ namespace OpenTKUtils.GL4
     {
         private float pointsize;
 
-        public GLColouredLineLoop(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, float ps) : base(vertices, program, data, PrimitiveType.LineLoop)
+        public GLColouredLineLoop(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.LineLoop)
         {
             pointsize = ps;
         }
 
-        public override void Bind()
+        public override void Bind(IGLProgramShaders shader)
         {
+            base.Bind(shader);
             GL.PointSize(pointsize);
-            base.Bind();
         }
     }
 
@@ -165,15 +158,15 @@ namespace OpenTKUtils.GL4
     {
         private float pointsize;
 
-        public GLColouredPoints(GLVertexColour[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, float ps) : base(vertices, program, data, PrimitiveType.Points)
+        public GLColouredPoints(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.Points)
         {
             pointsize = ps;
         }
 
-        public override void Bind()
+        public override void Bind(IGLProgramShaders shader)
         {
+            base.Bind(shader);
             GL.PointSize(pointsize);
-            base.Bind();
         }
     }
 

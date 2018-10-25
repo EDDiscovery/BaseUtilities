@@ -22,11 +22,87 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLVertexShaderTranslation: IGLPipelineShaders
+    public class GLVertexShadersBase : IGLSharedProgramShaders
     {
-        private GLProgram program;
         public int Id { get { return program.Id; } }
-        static string vertextx =
+        public IGLProgramShaders GetVertex() { return this; }
+        public IGLProgramShaders GetFragment() { throw new NotImplementedException(); }
+
+        public virtual string Code() { return null; }
+
+        private GLProgram program;
+
+        public void CompileLink()     
+        {
+            program = new OpenTKUtils.GL4.GLProgram();
+            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code());
+            System.Diagnostics.Debug.Assert(ret == null, ret);
+            ret = program.Link(separable: true);
+            System.Diagnostics.Debug.Assert(ret == null, ret);
+        }
+
+        public virtual void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+        {
+            Matrix4 projection = c.ProjectionMatrix;
+            GL.ProgramUniformMatrix4(program.Id, 20, false, ref projection);
+            Matrix4 model = c.ModelMatrix;
+            GL.ProgramUniformMatrix4(program.Id, 21, false, ref model);
+        }
+
+        public virtual void Finish()
+        {
+        }
+
+        public void Dispose()
+        {
+            program.Dispose();
+        }
+    }
+
+
+    public class GLVertexShaderNoTranslation : GLVertexShadersBase
+    {
+        public override string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
+layout(location = 1) in vec4 color;
+
+out vec4 vs_color;
+
+layout (location = 20) uniform  mat4 projection;
+layout (location = 21) uniform  mat4 modelView;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+void main(void)
+{
+	gl_Position = projection * modelView * position;        // order important
+	vs_color = color;                                                   // pass to fragment shader
+}
+";
+        }
+
+        // with transform, object needs to pass in uniform 22 the transform
+
+        public GLVertexShaderNoTranslation() 
+        {
+            CompileLink();
+        }
+    }
+
+    public class GLVertexShaderTransform : GLVertexShadersBase
+    {
+        public override string Code()
+        {
+            return
+
 @"
 #version 450 core
 layout (location = 0) in vec4 position;
@@ -50,48 +126,37 @@ void main(void)
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
+        }
+
         // with transform, object needs to pass in uniform 22 the transform
 
-        public GLVertexShaderTranslation()       // seperable note - you need a pipeline
+        public GLVertexShaderTransform()
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextx);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
-            ret = program.Link(separable: true);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
-        }
-
-        public void Start(Matrix4 model, Matrix4 projection ) // seperable do not use a program - that is for the pipeline to hook up
-        {
-            GL.UniformMatrix4(20, false, ref projection);
-            GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
-        }
-
-        public void Finish()
-        {
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
+            CompileLink();
         }
     }
 
-    // Simple rendered with optional rot/translation
 
-    public class GLVertexShaderStars : IGLPipelineShaders
+    public class GLVertexShaderTransformWithCommonTransform : GLVertexShadersBase
     {
-        private GLProgram program;
-        public int Id { get { return program.Id; } }
-        static string vertextx =
+        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
+
+        public override string Code()
+        {
+            return
+
 @"
 #version 450 core
 layout (location = 0) in vec4 position;
+layout(location = 1) in vec4 color;
 
 out vec4 vs_color;
 
 layout (location = 20) uniform  mat4 projection;
 layout (location = 21) uniform  mat4 modelView;
+layout (location = 22) uniform  mat4 transform;
+layout (location = 23) uniform  mat4 commontransform;
+
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -101,39 +166,27 @@ out gl_PerVertex {
 
 void main(void)
 {
-	gl_Position = projection * modelView *  position;        // order important
-    gl_PointSize = (gl_VertexID+5)%10;
-	vs_color = vec4((gl_VertexID%5)*0.1+0.5,(gl_VertexID%5)*0.1+0.5,0.5,1.0);                                   // pass to fragment shader
+	gl_Position = projection * modelView * transform *  commontransform * position;        // order important
+	vs_color = color;                                                   // pass to fragment shader
 }
 ";
+        }
+
         // with transform, object needs to pass in uniform 22 the transform
 
-        public GLVertexShaderStars()       // seperable note - you need a pipeline
+        public GLVertexShaderTransformWithCommonTransform()
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextx);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
-            ret = program.Link(separable: true);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
+            Transform = new GLObjectDataTranslationRotation();
+            CompileLink();
         }
 
-        public void Start(Matrix4 model, Matrix4 projection) // seperable do not use a program - that is for the pipeline to hook up
+        public override void Start(Common.MatrixCalc c)
         {
-            System.Diagnostics.Debug.WriteLine("Shader model view");
-            GL.UniformMatrix4(20, false, ref projection);
-            GL.UniformMatrix4(21, false, ref model);        // pass in uniform var the model matrix
-            GL.Enable(EnableCap.ProgramPointSize);
+            base.Start(c);
+            Matrix4 t = Transform.Transform;
+            GL.ProgramUniformMatrix4(Id, 23, false, ref t);
         }
 
-        public void Finish()
-        {
-            GL.Disable(EnableCap.ProgramPointSize);
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
-        }
     }
 
 }

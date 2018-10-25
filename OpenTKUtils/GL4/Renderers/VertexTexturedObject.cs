@@ -20,93 +20,59 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public struct GLVertexTextured
+    abstract public class GLVertexTexturedObject : SingleBufferRenderable
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
         // layout(location = 1) in vec2 textureCoordinate;
 
-        public const int Size = (4 + 2) * 4; // size of struct in bytes
+        const int attriblayoutindexposition = 0;
+        const int attriblayouttexcoord = 1;
 
-        public Vector4 Vertex;               // GL position on model of this vertex
-        public Vector2 TextureCoordinate;      // and its correponding point on the texture
-
-        public GLVertexTextured(Vector4 v, Vector2 textureCoordinate)
-        {
-            Vertex = v;
-            TextureCoordinate = textureCoordinate;
-        }
-        public GLVertexTextured(Vector4 v)
-        {
-            Vertex = v;
-            TextureCoordinate = Vector2.Zero;
-        }
-    }
-
-    abstract public class GLVertexTexturedObject : GLRenderable
-    {
         private IGLTexture texture;
 
-        public GLVertexTexturedObject(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data , IGLTexture tx, PrimitiveType pt) : base(vertices.Length, program, data, pt)
+        public GLVertexTexturedObject(Vector4[] vertices, Vector2[] texcoords, IGLObjectInstanceData data, IGLTexture tx, PrimitiveType pt) :
+                    base(vertices.Length,data,pt)
         {
-            // create first buffer: vertex
-            GL.NamedBufferStorage(
-                VertexBuffer,
-                GLVertexTextured.Size * vertices.Length,        // the size needed by this buffer
-                vertices,                           // data to initialize with
-                BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
+            System.Diagnostics.Debug.Assert(vertices.Length== texcoords.Length);
+            int offset = 0;
+            GL.BufferData(BufferTarget.ArrayBuffer, 16 * vertices.Length + 8 * texcoords.Length, (IntPtr)offset, BufferUsageHint.StaticDraw);
 
-            const int bindingindex = 0;
+            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 16 * vertices.Length, vertices);
+            offset += 16 * vertices.Length;
+            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 8 * texcoords.Length, texcoords);
 
-            // first position vectors, to attrib 0
-            const int attriblayoutindexposition = 0;
-            GL.VertexArrayAttribBinding(VertexArray, attriblayoutindexposition, bindingindex);
+            GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 16, 0);
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 8, offset);
+
             GL.EnableVertexArrayAttrib(VertexArray, attriblayoutindexposition);
-            GL.VertexArrayAttribFormat(
-                VertexArray,
-                attriblayoutindexposition, // attribute index, from the shader location = 0
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                0);                     // relative offset, first item
-
-            // second texcoord, to attrib 1
-
-            const int attriblayouttexcoord = 1;
-            GL.VertexArrayAttribBinding(VertexArray, attriblayouttexcoord, bindingindex);
             GL.EnableVertexArrayAttrib(VertexArray, attriblayouttexcoord);
-            GL.VertexArrayAttribFormat(
-                VertexArray,
-                attriblayouttexcoord,   // attribute index, from the shader location = 1
-                2,                      // size of attribute, vec2
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                16);                    // relative offset after a vec4
-
-            // link the vertex array and buffer and provide the stride as size of VertexTextured
-            GL.VertexArrayVertexBuffer(VertexArray, 0, VertexBuffer, IntPtr.Zero, GLVertexTextured.Size);
 
             texture = tx;
         }
 
-        public override void Bind()
+        public override void Bind(IGLProgramShaders shader)
         {
-            base.Bind();
-            GL.BindVertexArray(VertexArray);
+            base.Bind(shader);
             texture.Bind();
         }
     }
 
     public class GLTexturedTriangles : GLVertexTexturedObject
     {
-        public GLTexturedTriangles(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, IGLTexture tx) : base(vertices, program, data, tx, PrimitiveType.Triangles)
+        public GLTexturedTriangles(Vector4[] vertices, Vector2[] tex, IGLObjectInstanceData data, IGLTexture tx) : base(vertices, tex, data, tx, PrimitiveType.Triangles)
+        {
+        }
+
+        public GLTexturedTriangles(Tuple<Vector4[], Vector2[]> verticestex, IGLObjectInstanceData data, IGLTexture tx) :
+                    base(verticestex.Item1, verticestex.Item2, data, tx, PrimitiveType.Triangles)
         {
         }
     }
 
     public class GLTexturedQuads : GLVertexTexturedObject
     {
-        public GLTexturedQuads(GLVertexTextured[] vertices, IGLProgramShaders program, IGLObjectInstanceData data, IGLTexture tx) : base(vertices, program, data, tx, PrimitiveType.Quads)
+        public GLTexturedQuads(Vector4[] vertices, Vector2[] tex, IGLObjectInstanceData data, IGLTexture tx) : base(vertices, tex, data, tx, PrimitiveType.Quads)
         {
         }
     }

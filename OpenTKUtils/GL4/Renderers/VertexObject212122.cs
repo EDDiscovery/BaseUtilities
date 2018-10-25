@@ -15,58 +15,57 @@
  */
 
 using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using System;
 
 namespace OpenTKUtils.GL4
 {
-    public abstract class GLVertexObject : SingleBufferRenderable
+    public abstract class GLVertexPackedObject212122 : SingleBufferRenderable    // packs three values to 8 bytes
     {
         // Vertex shader must implement
-        // layout(location = 0) in vec4 position;
+        // layout(location = 0) in uvec2 position;
         const int attribindex = 0;
 
-        public GLVertexObject(Vector4[] vertices, IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length, data, pt)
+        public GLVertexPackedObject212122(Vector4[] vertices, IGLObjectInstanceData data, PrimitiveType pt, float off, float mult) : base(vertices.Length, data, pt)
         {
+            int p = 0;
+            uint[] packeddata = new uint[vertices.Length * 2];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                uint z = (uint)((vertices[i].Z + off) * mult);
+                packeddata[p++] = (uint)((vertices[i].X + off) * mult) | ((z & 0x7ff) << 21);
+                packeddata[p++] = (uint)((vertices[i].Y + off) * mult) | (((z >> 11) & 0x7ff) << 21);
+            }
+
             // create first buffer: vertex
             GL.NamedBufferStorage(
                 VertexBuffer,
-                16 * vertices.Length,    // the size needed by this buffer
-                vertices,                           // data to initialize with
+                8 * vertices.Length,                // the size needed by this buffer in bytes
+                packeddata,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
             const int bindingindex = 0;
-
+           
             GL.VertexArrayAttribBinding(VertexArray, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
             GL.EnableVertexArrayAttrib(VertexArray, attribindex);         // enable attrib 0 - this is the layout number
-            GL.VertexArrayAttribFormat(
-                VertexArray,
+
+            GL.VertexArrayAttribIFormat(VertexArray,                // IFormat!  Needed to prevent auto conversion to float
                 attribindex,            // attribute index, from the shader location = 0
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                0);                     // relative offset, first item
+                2,
+                VertexAttribType.UnsignedInt,  // contains unsigned ints
+                0);
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(VertexArray, bindingindex, VertexBuffer, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
+            GL.VertexArrayVertexBuffer(VertexArray, bindingindex, VertexBuffer, IntPtr.Zero, 8);        // link Vertextarry to buffer and set stride
         }
-
     }
 
     // single points with a single defined size
-    public class GLVertexPoints : GLVertexObject
+    public class GLVertexPackedPoints212122 : GLVertexPackedObject212122
     {
-        private float pointsize;
-
-        public GLVertexPoints(Vector4[] vertices, IGLObjectInstanceData data, float ps) : base(vertices, data, PrimitiveType.Points)
+        public GLVertexPackedPoints212122(Vector4[] vertices, IGLObjectInstanceData data, float off, float mult) : base(vertices, data, PrimitiveType.Points, off, mult )
         {
-            pointsize = ps;
-        }
-
-        public override void Bind(IGLProgramShaders shader)
-        {
-            GL.PointSize(pointsize);
-            base.Bind(shader);
         }
     }
 

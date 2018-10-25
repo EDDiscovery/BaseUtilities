@@ -21,66 +21,67 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    // Pipeline of shaders
+    // Pipeline of shaders - inherit from this and install your shared shaders..
 
     public class GLProgramShaderPipeline : IGLProgramShaders
     {
-        private List<IGLPipelineShaders> programs;                      // Program 0 is always vertex
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
 
+        public IGLProgramShaders GetVertex() { return programs[ProgramStageMask.VertexShaderBit]; }
+        public IGLProgramShaders GetFragment() { return programs[ProgramStageMask.FragmentShaderBit]; }
+
         private int pipelineid;
+        private Dictionary<ProgramStageMask, IGLProgramShaders> programs;
 
         public GLProgramShaderPipeline()
         {
             pipelineid = GL.GenProgramPipeline();
-            programs = new List<IGLPipelineShaders>();
+            programs = new Dictionary<ProgramStageMask, IGLProgramShaders>();
         }
 
-        public GLProgramShaderPipeline(IGLPipelineShaders vertex, IGLPipelineShaders fragment) : this()
+        public GLProgramShaderPipeline(IGLProgramShaders vertex, IGLProgramShaders fragment) : this()
         {
             AddVertex(vertex);
             AddFragment(fragment);
         }
 
-        public void Add(IGLPipelineShaders p, ProgramStageMask m)
+        public void Add(IGLProgramShaders p, ProgramStageMask m)
         {
-            if (m == ProgramStageMask.VertexShaderBit)          // vertex goes to entry 0 so we know which active program to set
-                programs.Insert(0, p);
-            else
-                programs.Add(p);
-
+            programs[m] = p;
             GL.UseProgramStages(pipelineid, m, p.Id);
         }
-        public void AddVertex(IGLPipelineShaders p)
+        public void AddVertex(IGLProgramShaders p)
         {
             Add(p, ProgramStageMask.VertexShaderBit);
         }
-        public void AddFragment(IGLPipelineShaders p)
+        public void AddFragment(IGLProgramShaders p)
         {
             Add(p, ProgramStageMask.FragmentShaderBit);
         }
-        public void AddVertexFragment(IGLPipelineShaders vertex, IGLPipelineShaders fragment)
+        public void AddVertexFragment(IGLProgramShaders vertex, IGLProgramShaders fragment)
         {
             AddVertex(vertex);
             AddFragment(fragment);
         }
 
-        public void Start(Matrix4 model, Matrix4 projection)
+        public virtual void Start(Common.MatrixCalc c)
         {
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
-            GL.BindProgramPipeline(pipelineid);     
-            GL.ActiveShaderProgram(pipelineid, programs[0].Id);     // tell uniforms to target this one - otherwise uniforms don't go in.
-                                                                    // we always target the vertex program (took a while to find this bit)
+            GL.BindProgramPipeline(pipelineid);
+        
+            // remove for now - everyone targets uniforms at programs..
+            //    GL.ActiveShaderProgram(pipelineid, GetVertex().Id);     // tell uniforms to target this one - otherwise uniforms don't go in.
+
             System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
 
             foreach (var x in programs)                             // let any programs do any special set up
-                x.Start(model, projection);
+                x.Value.Start(c);
         }
 
-        public void Finish()                                        // and clean up afterwards
+        public virtual void Finish()                                        // and clean up afterwards
         {
             foreach (var x in programs)
-                x.Finish();
+                x.Value.Finish();
 
             GL.BindProgramPipeline(0);
             System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid + " Released");
@@ -89,7 +90,7 @@ namespace OpenTKUtils.GL4
         public void Dispose()
         {
             foreach (var x in programs)
-                x.Dispose();
+                x.Value.Dispose();
 
             GL.DeleteProgramPipeline(pipelineid);
         }

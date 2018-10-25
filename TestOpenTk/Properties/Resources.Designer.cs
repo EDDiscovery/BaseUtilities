@@ -113,6 +113,16 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap mipmap2 {
+            get {
+                object obj = ResourceManager.GetObject("mipmap2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap shoppinglist {
             get {
                 object obj = ResourceManager.GetObject("shoppinglist", resourceCulture);
