@@ -23,42 +23,41 @@ namespace OpenTKUtils.GL4
 {
     // Pipeline of shaders - inherit from this and install your shared shaders..
 
-    public class GLProgramShaderPipeline : IGLProgramShaders
+    public class GLProgramShaderPipeline : IGLProgramShader
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
 
-        public IGLProgramShaders GetVertex() { return programs[ProgramStageMask.VertexShaderBit]; }
-        public IGLProgramShaders GetFragment() { return programs[ProgramStageMask.FragmentShaderBit]; }
+        public IGLShader Get(ShaderType t) { return programs[t]; }
 
         private int pipelineid;
-        private Dictionary<ProgramStageMask, IGLProgramShaders> programs;
+        private Dictionary<ShaderType, IGLShader> programs;
 
         public GLProgramShaderPipeline()
         {
             pipelineid = GL.GenProgramPipeline();
-            programs = new Dictionary<ProgramStageMask, IGLProgramShaders>();
+            programs = new Dictionary<ShaderType, IGLShader>();
         }
 
-        public GLProgramShaderPipeline(IGLProgramShaders vertex, IGLProgramShaders fragment) : this()
+        public GLProgramShaderPipeline(IGLShader vertex, IGLShader fragment) : this()
         {
             AddVertex(vertex);
             AddFragment(fragment);
         }
 
-        public void Add(IGLProgramShaders p, ProgramStageMask m)
+        public void Add(IGLShader p, ShaderType m)
         {
             programs[m] = p;
-            GL.UseProgramStages(pipelineid, m, p.Id);
+            GL.UseProgramStages(pipelineid, convmask[m], p.Id);
         }
-        public void AddVertex(IGLProgramShaders p)
+        public void AddVertex(IGLShader p)
         {
-            Add(p, ProgramStageMask.VertexShaderBit);
+            Add(p, ShaderType.VertexShader);
         }
-        public void AddFragment(IGLProgramShaders p)
+        public void AddFragment(IGLShader p)
         {
-            Add(p, ProgramStageMask.FragmentShaderBit);
+            Add(p, ShaderType.FragmentShader);
         }
-        public void AddVertexFragment(IGLProgramShaders vertex, IGLProgramShaders fragment)
+        public void AddVertexFragment(IGLShader vertex, IGLShader fragment)
         {
             AddVertex(vertex);
             AddFragment(fragment);
@@ -72,7 +71,7 @@ namespace OpenTKUtils.GL4
             // remove for now - everyone targets uniforms at programs..
             //    GL.ActiveShaderProgram(pipelineid, GetVertex().Id);     // tell uniforms to target this one - otherwise uniforms don't go in.
 
-            System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
+            //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
 
             foreach (var x in programs)                             // let any programs do any special set up
                 x.Value.Start(c);
@@ -84,7 +83,7 @@ namespace OpenTKUtils.GL4
                 x.Value.Finish();
 
             GL.BindProgramPipeline(0);
-            System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid + " Released");
+            //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid + " Released");
         }
 
         public void Dispose()
@@ -94,6 +93,17 @@ namespace OpenTKUtils.GL4
 
             GL.DeleteProgramPipeline(pipelineid);
         }
+
+        static Dictionary<ShaderType, ProgramStageMask> convmask = new Dictionary<ShaderType, ProgramStageMask>()
+        {
+            { ShaderType.FragmentShader, ProgramStageMask.FragmentShaderBit },
+            { ShaderType.VertexShader, ProgramStageMask.VertexShaderBit },
+            { ShaderType.TessControlShader, ProgramStageMask.TessControlShaderBit },
+            { ShaderType.TessEvaluationShader, ProgramStageMask.TessEvaluationShaderBit },
+            { ShaderType.GeometryShader, ProgramStageMask.GeometryShaderBit},
+            { ShaderType.ComputeShader, ProgramStageMask.ComputeShaderBit },
+        };
+
     }
 
 }

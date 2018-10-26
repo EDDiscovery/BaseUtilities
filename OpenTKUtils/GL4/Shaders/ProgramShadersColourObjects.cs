@@ -26,8 +26,8 @@ namespace OpenTKUtils.GL4
     {
         public GLColourObjectShaderTranslation() : base()
         {
-            AddVertex(new GLVertexShaderTransform());
-            AddFragment(new GLFragmentShaderPassThru());
+            AddVertex(new GLVertexShaderColourObjectTransform());
+            AddFragment(new GLFragmentShaderColour());
         }
     }
 
@@ -35,8 +35,8 @@ namespace OpenTKUtils.GL4
     {
         public GLColourObjectShaderNoTranslation() : base()
         {
-            AddVertex(new GLVertexShaderNoTranslation());
-            AddFragment(new GLFragmentShaderPassThru());
+            AddVertex(new GLVertexShaderColourNoTranslation());
+            AddFragment(new GLFragmentShaderColour());
         }
     }
 

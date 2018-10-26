@@ -22,19 +22,18 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLVertexShaderStars : IGLPipelineShaders
+    public class GLVertexShaderStars : GLVertexShadersBase
     {
-        private GLProgram program;
-        public int Id { get { return program.Id; } }
-        static string vertextx =
+        public override string Code()
+        {
+            return
 @"
 #version 450 core
 layout (location = 0) in uvec2 positionpacked;
 
 out vec4 vs_color;
 
-layout (location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
+layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 23) uniform  vec3 eyepos;
 
 out gl_PerVertex {
@@ -61,7 +60,7 @@ void main(void)
 
     vec4 position = vec4( x, y, z, 1.0f);
 
-	gl_Position = projection * modelView * position;        // order important
+	gl_Position = projectionmodel * position;        // order important
 
     float distance = 50-pow(distance(eyepos,vec3(x,y,z)),2)/20;
 
@@ -69,56 +68,26 @@ void main(void)
     vs_color = vec4(rand1(gl_VertexID),0.5,0.5,1.0);
 }
 ";
-        // with transform, object needs to pass in uniform 22 the transform
-
-        public GLVertexShaderStars()       // seperable note - you need a pipeline
-        {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertextx);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
-            ret = program.Link(separable: true);
-            System.Diagnostics.Debug.Assert(ret == null, ret);
         }
 
-        public void Start(Matrix4 model, Matrix4 projection) // seperable do not use a program - that is for the pipeline to hook up
+        public GLVertexShaderStars()
         {
-            System.Diagnostics.Debug.WriteLine("Shader model view");
-            GL.ProgramUniformMatrix4(program.Id, 20, false, ref projection);
-            GL.ProgramUniformMatrix4(program.Id, 21, false, ref model);
+            CompileLink();
+        }
+
+        public override void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+        {
+            base.Start(c);
+            GL.ProgramUniform3(Id, 23, c.EyePosition);
             GL.Enable(EnableCap.ProgramPointSize);
         }
 
-        public void Finish()
+        public override void Finish() // seperable do not use a program - that is for the pipeline to hook up
         {
+            base.Finish();
             GL.Disable(EnableCap.ProgramPointSize);
         }
 
-        public void Dispose()
-        {
-            program.Dispose();
-        }
-    }
-
-    public class GLObjectDataEyePosition : IGLObjectInstanceData
-    {
-        public const int TRUniformId = 23;      // Standard used to pass eye pos to shader
-
-        public GLObjectDataEyePosition()
-        {
-            eyepos = Vector3.Zero;
-        }
-
-        public void Set(Vector3 pos)
-        {
-            eyepos = pos;
-        }
-
-        private Vector3 eyepos;
-
-        public void Bind()
-        {
-            GL.Uniform3(TRUniformId, ref eyepos);
-        }
     }
 
 }

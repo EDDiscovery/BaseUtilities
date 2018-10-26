@@ -21,34 +21,33 @@ namespace OpenTKUtils.GL4
 {
     public interface IGLRenderable : IDisposable            // all renderables inherit from this.
     {
-        void Bind(IGLProgramShaders shader);
+        void Bind(IGLProgramShader shader);
         void Render();
         IGLObjectInstanceData InstanceData { get; }
     }
 
-    public interface IGLProgramShaders : IDisposable        // All shaders inherit from this
+    public interface IGLShader : IDisposable                // All shaders inherit from this
     {
         int Id { get; }
         void Start(Common.MatrixCalc c);                    // Renders call this when program has just started
         void Finish();                                      // Renders call this when program has ended
-        IGLProgramShaders GetVertex();
-        IGLProgramShaders GetFragment();
     }
 
-    public interface IGLSharedProgramShaders : IGLProgramShaders    // Just to mark them as shared - no extra functionality. Just to allow you to see its a shared prog
+    public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
+        IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.
     }
 
     public interface IGLObjectInstanceData                  // ALL object data should inherit from this
     {
-        void Bind(IGLProgramShaders shader);                // callled before object is drawn
+        void Bind(IGLProgramShader shader);                // callled before object is drawn
     }
 
     public interface IGLTexture : IDisposable
     {
         int Width { get; }                                  // primary width of mipmap level 0 bitmap on first array entry
         int Height { get; }
-        void Bind();
+        void Bind(int bindingpoint);
     }
 
 

@@ -31,10 +31,11 @@ namespace OpenTKUtils.Common
         public float PerspectiveNearZDistance { get; set; } = 1f;
         public float OrthographicDistance { get; set; } = 5000.0f;              // Orthographic, give scale
 
-        public float EyeDistance(float zoom) { return ZoomDistance / zoom; }    // distance of eye from target position
+        public float CalcEyeDistance(float zoom) { return ZoomDistance / zoom; }    // distance of eye from target position
 
         public Vector3 TargetPosition { get; private set; }                     // after ModelMatrix
         public Vector3 EyePosition { get; private set; }                        // after ModelMatrix
+        public float EyeDistance { get; private set; }                          // after ModelMatrix
 
         private bool perspectivemode = true;
         private Matrix4 modelmatrix;
@@ -74,7 +75,8 @@ namespace OpenTKUtils.Common
                 modelmatrix = preinverted;
             }
 
-            projectionmodelmatrix = Matrix4.Mult(projectionmatrix, modelmatrix);
+            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);        // order order order ! so important.
+            EyeDistance = CalcEyeDistance(zoom);
         }
 
         // used for calculating positions on the screen from pixel positions
@@ -103,7 +105,7 @@ namespace OpenTKUtils.Common
                 projectionmatrix = Matrix4.CreateOrthographic(OrthographicDistance*2.0f/5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
             }
 
-            projectionmodelmatrix = Matrix4.Mult(projectionmatrix, modelmatrix);
+            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);
         }
 
         // calculate pos of eye, given position, CameraDir, zoom.
@@ -118,13 +120,13 @@ namespace OpenTKUtils.Common
 
             // calculate where eye is, relative to target. its 1000/zoom, rotated by camera rotation.  This is based on looking at 0,0,0.  
             // So this is the camera pos to look at 0,0,0
-            Vector3 eyerel = Vector3.Transform(new Vector3(0.0f, -EyeDistance(zoom), 0.0f), transform);
+            Vector3 eyerel = Vector3.Transform(new Vector3(0.0f, -CalcEyeDistance(zoom), 0.0f), transform);
 
             // rotate the up vector (0,0,1) by the eye camera dir to get a vector upwards from the current camera dir
             normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);
 
             eye = position + eyerel;              // eye is here, the target pos, plus the eye relative position
-            System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + EyeDistance(zoom) + " zoom " + zoom);
+            System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
         }
 
     }

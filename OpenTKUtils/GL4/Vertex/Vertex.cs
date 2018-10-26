@@ -21,42 +21,41 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    // All renderables inherit from this class..
-    // and override bind if required.
+    // Base Class for vertex data to vertex shader..
 
-    public abstract class SingleBufferRenderable : IGLRenderable
+    public abstract class GLVertexArrayBuffer : IGLRenderable
     {
         public IGLObjectInstanceData InstanceData { get { return instancedata; } }
 
-        protected int VertexArray;                  // the vertex GL Array 
-        protected int VertexBuffer;                 // its buffer data
-        protected int VertexCount;
-        protected PrimitiveType primitivetype;        // Draw type
+        protected int array;                            // the vertex GL Array 
+        protected int buffer;                           // its buffer data
+        protected int count;                            // num of vertexes
+        protected PrimitiveType primitivetype;          // Draw type
         protected IGLObjectInstanceData instancedata;   // any instance data
 
-        protected SingleBufferRenderable(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
+        protected GLVertexArrayBuffer(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
         {
             instancedata = id;
-            VertexCount = vertexCount;
+            count = vertexCount;
             primitivetype = pt;
 
-            VertexArray = GL.GenVertexArray();
-            VertexBuffer = GL.GenBuffer();
+            array = GL.GenVertexArray();
+            buffer = GL.GenBuffer();
 
-            GL.BindVertexArray(VertexArray);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBuffer);
+            GL.BindVertexArray(array);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer);
         }
 
-        public virtual void Bind(IGLProgramShaders shader)
+        public virtual void Bind(IGLProgramShader shader)
         {
-            GL.BindVertexArray(VertexArray);        // Bind vertex
-            instancedata?.Bind(shader);                   // offer any instance data bind opportunity
+            GL.BindVertexArray(array);                  // Bind vertex
+            instancedata?.Bind(shader);                 // offer any instance data bind opportunity
         }
 
         public virtual void Render()
         {
             //System.Diagnostics.Debug.WriteLine("Draw " + primitivetype + " using " + primitivetype);
-            GL.DrawArrays(primitivetype, 0, VertexCount);
+            GL.DrawArrays(primitivetype, 0, count);
         }
 
         public void Dispose()
@@ -68,8 +67,8 @@ namespace OpenTKUtils.GL4
         {
             if (disposing)
             {
-                GL.DeleteVertexArray(VertexArray);
-                GL.DeleteBuffer(VertexBuffer);
+                GL.DeleteVertexArray(array);
+                GL.DeleteBuffer(buffer);
             }
         }
     }

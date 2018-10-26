@@ -28,15 +28,15 @@ namespace OpenTKUtils.GL4
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4)
         {
             GL.CreateTextures(TextureTarget.Texture2D, 1, out Id);
 
             Width = bmp.Width;
-            Height = LoadMipMap(Id, bmp, mipmaplevel, internalformat);
+            Height = LoadMipMap(Id, bmp, mipmaplevel, genmipmaplevel, internalformat);
         }
 
-        static int LoadMipMap(int Id, Bitmap bmp, int mipmaplevel, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        static int LoadMipMap(int Id, Bitmap bmp, int mipmaplevel, int genmipmaplevel, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
         { 
             System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                             System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4
 
             GL.TextureStorage2D(
                 Id,
-                mipmaplevel,                          // levels of mipmapping
+                mipmaplevel == 1 ? genmipmaplevel : mipmaplevel,    // levels of mipmapping.  If we supplied one, we use that, else we use genmipmaplevel
                 internalformat,                       // format of texture - 4 floats is the normal, and is given in the constructor
                 bmp.Width,                            // width and height of mipmap level 0
                 height);
@@ -85,21 +85,29 @@ namespace OpenTKUtils.GL4
 
             bmp.UnlockBits(bmpdata);
 
+
             var textureMinFilter = (int)All.LinearMipmapLinear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMinFilter, ref textureMinFilter);
             var textureMagFilter = (int)All.Linear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
 
+            //var textureWrap = (int)All.ClampToBorder;     // for testing, keep for now.
+            //GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref textureWrap);     
+            //GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref textureWrap);
+
+
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
 
             if (mipmaplevel == 1)                                       // single level mipmaps get auto gen
                 GL.GenerateTextureMipmap(Id);
+
             return height;
         }
 
-        public void Bind()
+        public void Bind(int bindingpoint)
         {
-            GL.BindTexture(TextureTarget.Texture2D, Id);
+            //GL.BindTexture(TextureTarget.Texture2D, Id);  // not needed
+            GL.BindTextureUnit(bindingpoint, Id);
         }
 
         public void Dispose()           // you can double dispose.
@@ -118,7 +126,7 @@ namespace OpenTKUtils.GL4
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public GLTexture2DArray(Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        public GLTexture2DArray(int bindingpoint, Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
         {
             GL.CreateTextures(TextureTarget.Texture2DArray, 1, out Id);
             GL.BindTexture(TextureTarget.Texture2DArray, Id);
@@ -187,11 +195,13 @@ namespace OpenTKUtils.GL4
             var textureMagFilter = (int)All.Linear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
+            GL4Statics.Check();
         }
 
-        public void Bind()
+        public void Bind(int bindingpoint)
         {
             GL.BindTexture(TextureTarget.Texture2DArray, Id);
+            GL.BindTextureUnit(bindingpoint, Id);
             GL4Statics.Check();
         }
 

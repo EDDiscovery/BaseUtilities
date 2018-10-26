@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
+    <Compile Include="Collections\IDisposableDictionary.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
     <Compile Include="Collections\DictionaryOfDictionaries.cs" />
     <Compile Include="Collections\StackOfDictionaries.cs" />

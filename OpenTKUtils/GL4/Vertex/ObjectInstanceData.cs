@@ -42,13 +42,13 @@ namespace OpenTKUtils.GL4
         Vector3 rot;
 
         private Matrix4 transform;
-        private int uniform;
+        private int uniformid;
 
-        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, int uniformid = TRUniformId)
+        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, int uid = TRUniformId)
         {
             pos = new Vector3(0, 0, 0);
             rot = new Vector3(rx, ry, rz);
-            uniform = uniformid;
+            uniformid = uid;
             Calc();
         }
 
@@ -56,7 +56,7 @@ namespace OpenTKUtils.GL4
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
-            uniform = uniformid;
+            this.uniformid = uniformid;
             Calc();
         }
 
@@ -64,7 +64,7 @@ namespace OpenTKUtils.GL4
         {
             pos = p;
             rot = rotp;
-            uniform = uniformid;
+            this.uniformid = uniformid;
             Calc();
         }
 
@@ -77,10 +77,10 @@ namespace OpenTKUtils.GL4
             transform *= Matrix4.CreateTranslation(pos);
         }
 
-        public void Bind(IGLProgramShaders shader)
+        public void Bind(IGLProgramShader shader)
         {
             // System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.ProgramUniformMatrix4(shader.GetVertex().Id, uniform, false, ref transform);
+            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, uniformid, false, ref transform);
         }
     }
 
@@ -106,10 +106,10 @@ namespace OpenTKUtils.GL4
 
         private Matrix4 transform;
 
-        public void Bind(IGLProgramShaders shader)
+        public void Bind(IGLProgramShader shader)
         {
             //System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.ProgramUniformMatrix4(shader.GetVertex().Id,TRUniformId, false, ref transform);
+            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id,TRUniformId, false, ref transform);
         }
     }
 

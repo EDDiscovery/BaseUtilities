@@ -25,20 +25,20 @@ namespace OpenTKUtils.GL4
 
     public class GLRenderProgramSortedList : IDisposable
     {
-        private BaseUtils.DictionaryOfDictionaries<IGLProgramShaders, string, IGLRenderable> renderables;
+        private BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderable> renderables;
         private int unnamed = 0;
 
         public GLRenderProgramSortedList()
         {
-            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShaders, string, IGLRenderable>();
+            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderable>();
         }
 
-        public void Add(IGLProgramShaders prog, string name, IGLRenderable r)
+        public void Add(IGLProgramShader prog, string name, IGLRenderable r)
         {
             renderables.Add(prog, name, r);
         }
 
-        public void Add(IGLProgramShaders prog, IGLRenderable r)
+        public void Add(IGLProgramShader prog, IGLRenderable r)
         {
             Add(prog, "Unnamed_" + (unnamed++), r);
         }

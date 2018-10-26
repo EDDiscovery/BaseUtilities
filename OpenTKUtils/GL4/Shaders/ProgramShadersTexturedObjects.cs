@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     {
         public GLTexturedObjectShaderSimple() : base()
         {
-            AddVertex(new GLVertexShaderTransform());
+            AddVertex(new GLVertexShaderTextureObjectTransform());
             AddFragment(new GLFragmentShaderTexture());
         }
     }
@@ -35,7 +35,7 @@ namespace OpenTKUtils.GL4
     {
         public GLTexturedObjectShaderTransformWithCommonTransform() : base()
         {
-            AddVertex(new GLVertexShaderTransformWithCommonTransform());
+            AddVertex(new GLVertexShaderTextureTransformWithCommonTransform());
             AddFragment(new GLFragmentShaderTexture());
         }
     }
@@ -44,7 +44,7 @@ namespace OpenTKUtils.GL4
     {
         public GLTexturedObjectShader2DBlend() : base()
         {
-            AddVertex(new GLVertexShaderTransform());
+            AddVertex(new GLVertexShaderTextureObjectTransform());
             AddFragment(new GLFragmentShader2DCommonBlend());
         }
     }

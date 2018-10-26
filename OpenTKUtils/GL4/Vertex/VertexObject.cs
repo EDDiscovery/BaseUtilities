@@ -20,7 +20,9 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public abstract class GLVertexObject : SingleBufferRenderable
+    // Vertex's only, in vec4 form
+
+    public abstract class GLVertexObject : GLVertexArrayBuffer
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -30,17 +32,17 @@ namespace OpenTKUtils.GL4
         {
             // create first buffer: vertex
             GL.NamedBufferStorage(
-                VertexBuffer,
+                buffer,
                 16 * vertices.Length,    // the size needed by this buffer
                 vertices,                           // data to initialize with
                 BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
 
             const int bindingindex = 0;
 
-            GL.VertexArrayAttribBinding(VertexArray, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
-            GL.EnableVertexArrayAttrib(VertexArray, attribindex);         // enable attrib 0 - this is the layout number
+            GL.VertexArrayAttribBinding(array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
+            GL.EnableVertexArrayAttrib(array, attribindex);         // enable attrib 0 - this is the layout number
             GL.VertexArrayAttribFormat(
-                VertexArray,
+                array,
                 attribindex,            // attribute index, from the shader location = 0
                 4,                      // size of attribute, vec4
                 VertexAttribType.Float, // contains floats
@@ -48,9 +50,10 @@ namespace OpenTKUtils.GL4
                 0);                     // relative offset, first item
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(VertexArray, bindingindex, VertexBuffer, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
-        }
+            GL.VertexArrayVertexBuffer(array, bindingindex, buffer, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
 
+            GL4Statics.Check();
+        }
     }
 
     // single points with a single defined size
@@ -63,7 +66,23 @@ namespace OpenTKUtils.GL4
             pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
+        {
+            GL.PointSize(pointsize);
+            base.Bind(shader);
+        }
+    }
+
+    public class GLVertexQuad : GLVertexObject
+    {
+        private float pointsize;
+
+        public GLVertexQuad(Vector4[] vertices, IGLObjectInstanceData data, float ps) : base(vertices, data, PrimitiveType.Quads)
+        {
+            pointsize = ps;
+        }
+
+        public override void Bind(IGLProgramShader shader)
         {
             GL.PointSize(pointsize);
             base.Bind(shader);

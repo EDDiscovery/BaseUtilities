@@ -174,11 +174,11 @@ namespace OpenTKUtils.Common
             }
             if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q))
             {
-                cameraActionRotation.Y = -angle;
+                cameraActionRotation.Y = angle;
             }
             if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E))
             {
-                cameraActionRotation.Y = angle;
+                cameraActionRotation.Y = -angle;
             }
 
             if (cameraActionRotation.LengthSquared > 0)

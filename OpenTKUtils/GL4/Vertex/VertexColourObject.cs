@@ -21,7 +21,9 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public abstract class GLVertexColourObject : SingleBufferRenderable
+    // Vertex and colour data
+
+    public abstract class GLVertexColourObject : GLVertexArrayBuffer
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -51,8 +53,8 @@ namespace OpenTKUtils.GL4
             GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 16, 0);
             GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 16, startcolourdata);
 
-            GL.EnableVertexArrayAttrib(VertexArray, attriblayoutindexposition);
-            GL.EnableVertexArrayAttrib(VertexArray, attriblayoutcolour);
+            GL.EnableVertexArrayAttrib(array, attriblayoutindexposition);
+            GL.EnableVertexArrayAttrib(array, attriblayoutcolour);
         }
     }
 
@@ -64,7 +66,7 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
@@ -77,7 +79,7 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
@@ -113,7 +115,7 @@ namespace OpenTKUtils.GL4
             pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PointSize(pointsize);
@@ -129,7 +131,7 @@ namespace OpenTKUtils.GL4
             pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PointSize(pointsize);
@@ -146,7 +148,7 @@ namespace OpenTKUtils.GL4
             pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PointSize(pointsize);
@@ -163,7 +165,7 @@ namespace OpenTKUtils.GL4
             pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShaders shader)
+        public override void Bind(IGLProgramShader shader)
         {
             base.Bind(shader);
             GL.PointSize(pointsize);

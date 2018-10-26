@@ -25,11 +25,11 @@ namespace OpenTKUtils.GL4
 
     static public class GLPointsFactory
     {
-        public static Vector4[] RandomStars( int number, int seed, float left, float right, float front, float back, float top, float bottom )
+        public static Vector3[] RandomStars( int number, int seed, float left, float right, float front, float back, float top, float bottom )
         {
             Random rnd = new Random(seed);
 
-            Vector4[] array = new Vector4[number];
+            Vector3[] array = new Vector3[number];
 
             for (int s = 0; s < number; s++)
             {
@@ -37,7 +37,7 @@ namespace OpenTKUtils.GL4
                 float y = rnd.Next(100000) * (top-bottom) / 100000.0f + bottom;
                 float z = rnd.Next(100000) * (back-front) / 100000.0f + front;
 
-                array[s] = new Vector4(x, y, z,1.0f);
+                array[s] = new Vector3(x, y, z);
             }
 
             return array;

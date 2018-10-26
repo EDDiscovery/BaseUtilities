@@ -123,9 +123,29 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap moonmap1k {
+            get {
+                object obj = ResourceManager.GetObject("moonmap1k", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap shoppinglist {
             get {
                 object obj = ResourceManager.GetObject("shoppinglist", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap smile5300_256x256x8 {
+            get {
+                object obj = ResourceManager.GetObject("smile5300_256x256x8", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

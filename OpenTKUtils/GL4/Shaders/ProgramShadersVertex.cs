@@ -22,13 +22,11 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLVertexShadersBase : IGLSharedProgramShaders
+    public abstract class GLVertexShadersBase : IGLShader
     {
         public int Id { get { return program.Id; } }
-        public IGLProgramShaders GetVertex() { return this; }
-        public IGLProgramShaders GetFragment() { throw new NotImplementedException(); }
 
-        public virtual string Code() { return null; }
+        public abstract string Code();
 
         private GLProgram program;
 
@@ -41,17 +39,13 @@ namespace OpenTKUtils.GL4
             System.Diagnostics.Debug.Assert(ret == null, ret);
         }
 
-        public virtual void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+        public virtual void Start(Common.MatrixCalc c)
         {
-            Matrix4 projection = c.ProjectionMatrix;
-            GL.ProgramUniformMatrix4(program.Id, 20, false, ref projection);
-            Matrix4 model = c.ModelMatrix;
-            GL.ProgramUniformMatrix4(program.Id, 21, false, ref model);
+            Matrix4 projmodel = c.ProjectionModelMatrix;
+            GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
         }
 
-        public virtual void Finish()
-        {
-        }
+        public virtual void Finish() { }
 
         public void Dispose()
         {
@@ -60,7 +54,7 @@ namespace OpenTKUtils.GL4
     }
 
 
-    public class GLVertexShaderNoTranslation : GLVertexShadersBase
+    public class GLVertexShaderColourNoTranslation : GLVertexShadersBase
     {
         public override string Code()
         {
@@ -68,76 +62,105 @@ namespace OpenTKUtils.GL4
 @"
 #version 450 core
 layout (location = 0) in vec4 position;
-layout(location = 1) in vec4 color;
-
-out vec4 vs_color;
-
-layout (location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
-
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
+
+layout(location = 1) in vec4 color;
+out vec4 vs_color;
+
+layout (location = 20) uniform  mat4 projectionmodel;
+
 void main(void)
 {
-	gl_Position = projection * modelView * position;        // order important
+	gl_Position = projectionmodel * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
         }
 
-        // with transform, object needs to pass in uniform 22 the transform
-
-        public GLVertexShaderNoTranslation() 
+        public GLVertexShaderColourNoTranslation()
         {
             CompileLink();
         }
     }
 
-    public class GLVertexShaderTransform : GLVertexShadersBase
+    public class GLVertexShaderColourObjectTransform : GLVertexShadersBase
     {
-        public override string Code()
+        public override string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
             return
 
 @"
 #version 450 core
 layout (location = 0) in vec4 position;
-layout(location = 1) in vec4 color;
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
 
+layout(location = 1) in vec4 color;
 out vec4 vs_color;
 
-layout (location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
+layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 
+void main(void)
+{
+	gl_Position = projectionmodel * transform * position;        // order important
+	vs_color = color;                                                   // pass to fragment shader
+}
+";
+        }
+
+        public GLVertexShaderColourObjectTransform()
+        {
+            CompileLink();
+        }
+    }
+
+    public class GLVertexShaderTextureObjectTransform : GLVertexShadersBase
+    {
+        public override string Code()       // with transform, object needs to pass in uniform 22 the transform
+        {
+            return
+
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
+layout(location = 1) in vec2 texco;
+out vec2 vs_textureCoordinate;
+
+layout (location = 20) uniform  mat4 projectionmodel;
+layout (location = 22) uniform  mat4 transform;
+
 void main(void)
 {
-	gl_Position = projection * modelView * transform * position;        // order important
-	vs_color = color;                                                   // pass to fragment shader
+	gl_Position = projectionmodel * transform * position;        // order important
+    vs_textureCoordinate = texco;
 }
 ";
         }
 
-        // with transform, object needs to pass in uniform 22 the transform
-
-        public GLVertexShaderTransform()
+        public GLVertexShaderTextureObjectTransform()
         {
             CompileLink();
         }
     }
 
 
-    public class GLVertexShaderTransformWithCommonTransform : GLVertexShadersBase
+
+    public class GLVertexShaderColorTransformWithCommonTransform : GLVertexShadersBase
     {
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
@@ -148,25 +171,22 @@ void main(void)
 @"
 #version 450 core
 layout (location = 0) in vec4 position;
-layout(location = 1) in vec4 color;
-
-out vec4 vs_color;
-
-layout (location = 20) uniform  mat4 projection;
-layout (location = 21) uniform  mat4 modelView;
-layout (location = 22) uniform  mat4 transform;
-layout (location = 23) uniform  mat4 commontransform;
-
-
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
+layout(location = 1) in vec4 color;
+out vec4 vs_color;
+
+layout (location = 20) uniform  mat4 projectionmodel;
+layout (location = 22) uniform  mat4 transform;
+layout (location = 23) uniform  mat4 commontransform;
+
 void main(void)
 {
-	gl_Position = projection * modelView * transform *  commontransform * position;        // order important
+	gl_Position = projectionmodel * transform *  commontransform * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -174,7 +194,7 @@ void main(void)
 
         // with transform, object needs to pass in uniform 22 the transform
 
-        public GLVertexShaderTransformWithCommonTransform()
+        public GLVertexShaderColorTransformWithCommonTransform()
         {
             Transform = new GLObjectDataTranslationRotation();
             CompileLink();
@@ -186,8 +206,57 @@ void main(void)
             Matrix4 t = Transform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
         }
-
     }
+
+
+    public class GLVertexShaderTextureTransformWithCommonTransform : GLVertexShadersBase
+    {
+        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
+
+        public override string Code()
+        {
+            return
+
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout(location = 1) in vec2 texco;
+out vec2 vs_textureCoordinate;
+
+layout (location = 20) uniform  mat4 projectionmodel;
+layout (location = 22) uniform  mat4 transform;
+layout (location = 23) uniform  mat4 commontransform;
+
+void main(void)
+{
+	gl_Position = projectionmodel * transform *  commontransform * position;        // order important
+    vs_textureCoordinate = texco;
+}
+";
+        }
+
+        // with transform, object needs to pass in uniform 22 the transform
+
+        public GLVertexShaderTextureTransformWithCommonTransform()
+        {
+            Transform = new GLObjectDataTranslationRotation();
+            CompileLink();
+        }
+
+        public override void Start(Common.MatrixCalc c)
+        {
+            base.Start(c);
+            Matrix4 t = Transform.Transform;
+            GL.ProgramUniformMatrix4(Id, 23, false, ref t);
+        }
+    }
+
 
 }
 
