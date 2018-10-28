@@ -62,33 +62,14 @@ namespace OpenTKUtils.GL4
 
     public class GLColouredTriangles : GLVertexColourObject
     {
-        public GLColouredTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Triangles)
+        public GLColouredTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data ) : base(vertices, colours, data, PrimitiveType.Triangles)
         {
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-        }
-    }
-
-    public class GLOutlineTriangles : GLVertexColourObject
-    {
-        public GLOutlineTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Triangles)
-        {
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
         }
     }
 
     // Triangle strip, first/second/third = T1, second/third/fourth = T2, etc
 
-    public class GLColouredTriangleStrip : GLVertexColourObject
+    public class GLColouredTriangleStrip: GLVertexColourObject
     {
         public GLColouredTriangleStrip(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.TriangleStrip)
         {
@@ -108,68 +89,34 @@ namespace OpenTKUtils.GL4
     // each vertex pair defines an individual line
     public class GLColouredLines : GLVertexColourObject
     {
-        private float pointsize;
-
-        public GLColouredLines(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.Lines)
+        public GLColouredLines(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Lines)
         {
-            pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PointSize(pointsize);
-        }
     }
 
     public class GLColouredLineStrip : GLVertexColourObject
     {
-        private float pointsize;
-
-        public GLColouredLineStrip(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.LineStrip)
+        public GLColouredLineStrip(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.LineStrip)
         {
-            pointsize = ps;
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PointSize(pointsize);
         }
     }
 
     // line strips, plus vertex 0 and vertex n-1 are linked
     public class GLColouredLineLoop : GLVertexColourObject
     {
-        private float pointsize;
-
-        public GLColouredLineLoop(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.LineLoop)
+        public GLColouredLineLoop(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.LineLoop)
         {
-            pointsize = ps;
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PointSize(pointsize);
         }
     }
 
     // single points with a single defined size
     public class GLColouredPoints : GLVertexColourObject
     {
-        private float pointsize;
-
-        public GLColouredPoints(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data, float ps) : base(vertices, colours, data, PrimitiveType.Points)
+        public GLColouredPoints(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Points)
         {
-            pointsize = ps;
         }
 
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            GL.PointSize(pointsize);
-        }
     }
 
 }

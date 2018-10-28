@@ -97,6 +97,10 @@ void main(void)
             CompileLink();
         }
 
+        public override void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+        {
+            GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        }
     }
 
 
@@ -134,6 +138,7 @@ void main(void)
 
         public override void Start(Common.MatrixCalc c)
         {
+            GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
             GL.ProgramUniform1(Id, 30, Blend);
         }
     }

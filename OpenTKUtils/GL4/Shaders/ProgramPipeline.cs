@@ -26,6 +26,7 @@ namespace OpenTKUtils.GL4
     public class GLProgramShaderPipeline : IGLProgramShader
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
+        public Action<IGLProgramShader> ShaderCallBack;
 
         public IGLShader Get(ShaderType t) { return programs[t]; }
 
@@ -68,13 +69,12 @@ namespace OpenTKUtils.GL4
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
             GL.BindProgramPipeline(pipelineid);
         
-            // remove for now - everyone targets uniforms at programs..
-            //    GL.ActiveShaderProgram(pipelineid, GetVertex().Id);     // tell uniforms to target this one - otherwise uniforms don't go in.
-
             //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
 
             foreach (var x in programs)                             // let any programs do any special set up
                 x.Value.Start(c);
+
+            ShaderCallBack?.Invoke(this);                           // any shader hooks get a chance.
         }
 
         public virtual void Finish()                                        // and clean up afterwards

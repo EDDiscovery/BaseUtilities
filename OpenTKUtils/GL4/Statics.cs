@@ -16,6 +16,7 @@
 
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -81,6 +82,53 @@ namespace OpenTKUtils.GL4
             if ( errmsg.HasChars() )
                 System.Diagnostics.Debug.Assert(false, errmsg );
         }
+
+        static PolygonMode? LastPolygonMode = null;
+        static MaterialFace? LastMaterialFace = null;
+
+        public static void PolygonMode(MaterialFace m, PolygonMode p)          // cache polygon mode for speed
+        {
+            if (LastPolygonMode == null || LastPolygonMode.Value != p || LastMaterialFace != m)
+            {
+                GL.PolygonMode(m, p);
+                LastPolygonMode = p;
+                LastMaterialFace = m;
+            }
+        }
+
+        static int? LastPatchSize = null;
+
+        public static void PatchSize(int p)          // cache size for speed
+        {
+            if (LastPatchSize == null || LastPatchSize.Value != p)
+            {
+                GL.PatchParameter(PatchParameterInt.PatchVertices, p);
+                LastPatchSize = p;
+            }
+        }
+
+        static float? LastPointSize = null;
+
+        public static void PointSize(float p)          // cache size for speed
+        {
+            if (LastPointSize == null || LastPointSize.Value != p)
+            {
+                GL.PointSize(p);
+                LastPointSize = p;
+            }
+        }
+
+        static float? LastLineWidth = null;
+
+        public static void LineWidth(float p)          // cache size for speed
+        {
+            if (LastLineWidth == null || LastLineWidth.Value != p)
+            {
+                GL.LineWidth(p);
+                LastLineWidth = p;
+            }
+        }
+
 
     }
 }

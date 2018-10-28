@@ -1,0 +1,212 @@
+﻿/*
+ * Copyright © 2015 - 2018 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
+
+using OpenTK;
+using OpenTK.Graphics.OpenGL4;
+
+namespace OpenTKUtils.GL4
+{
+    // local data block, writable in Vectors etc, supports std140 and std430
+
+    public abstract class GLLayoutStandards
+    {
+        public int Size { get; protected set; } = 0;
+        protected byte[] bufferdata = null;
+
+        // std140 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is vec4, stride vec4
+        // std430 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is same as left, stride is as per left.
+
+        private int arraystridealignment;
+
+        public GLLayoutStandards(int isz = 64, bool std430 = false)
+        {
+            Size = 0;
+            if ( isz>0)
+                bufferdata = new byte[isz];
+            arraystridealignment = std430 ? 4 : 16;               // if in std130, arrays have vec4 alignment and strides are vec4
+        }
+
+        protected abstract void WriteAreaToBuffer(int fillpos, int datasize);
+
+        // Write to the local copy - pos = -1 place at end, else place at position (for update)
+        // Set writebuf to write to buffer as well - only use for updating
+
+        public int Write(float f, int pos = -1, bool writebuffer = false)
+        {
+            float[] fa = new float[] { f };
+            int fillpos = Start(sizeof(float), pos, 4);                 // this is purposely done on another statement as writebuffer may change during this function
+            return Finish(fa, fillpos, sizeof(float), writebuffer);
+        }
+
+        //TBD not sure they are not separ by vec4 in strides
+
+        public int Write(float[] v, int pos = -1, bool writebuffer = false)
+        {
+            int sz = sizeof(float) * v.Length;
+            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float)), pos, sz);
+            return Finish(v, fillpos, sz, writebuffer);
+        }
+
+        public int Write(int i, int pos = -1, bool writebuffer = false)
+        {
+            int sz = sizeof(int);
+            int[] ia = new int[] { i };
+            int fillpos = Start(sz, pos, sz);
+            return Finish(ia, fillpos, sz, writebuffer);
+        }
+
+        public int Write(Vector2 v, int pos = -1, bool writebuffer = false)
+        {
+            int sz = sizeof(float) * 2;
+            float[] fa = new float[] { v.X, v.Y };
+            int fillpos = Start(sz, pos, sz);
+            return Finish(fa, fillpos, sz, writebuffer);
+        }
+
+        public int Write(Vector2[] vec, int pos = -1, bool writebuffer = false)
+        {
+            float[] array = new float[vec.Length * 2];
+            int fill = 0;
+            foreach (var v in vec)
+            {
+                array[fill++] = v.X;
+                array[fill++] = v.Y;
+                if (arraystridealignment == 16)
+                    fill += 2;                     // std130 has vec2 padded to vec4 length - page 123 last paragraph
+            }
+
+            int sz = sizeof(float) * array.Length;
+            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 2), pos, sz);
+            return Finish(array, fillpos, sz, writebuffer);
+        }
+
+        public int Write(Vector3 v, int pos = -1, bool writebuffer = false)
+        {
+            float[] fa = new float[] { v.X, v.Y, v.Z };
+            int fillpos = Start(sizeof(float) * 4, pos, sizeof(float) * 3);
+            return Finish(fa, fillpos, sizeof(float) * 3, writebuffer);
+        }
+
+        public int Write(Vector3[] vec, int pos = -1, bool writebuffer = false)
+        {
+            float[] array = new float[vec.Length * 4];
+            int fill = 0;
+            foreach (var v in vec)
+            {
+                array[fill++] = v.X;
+                array[fill++] = v.Y;
+                array[fill++] = v.Z;
+                fill++;                     // vec3 padded to vec4 length always - page 123 last paragraph, opengl page 138
+            }
+
+            int sz = sizeof(float) * array.Length;
+            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 4), pos, sz);
+            return Finish(array, fillpos, sz, writebuffer);
+        }
+
+        public int Write(Vector4 v, int pos = -1, bool writebuffer = false)
+        {
+            int sz = sizeof(float) * 4;
+            float[] fa = new float[] { v.X, v.Y, v.Z, v.W };
+            int fillpos = Start(sz, pos, sz);
+            return Finish(fa, fillpos, sz, writebuffer);
+        }
+
+        public int Write(Vector4[] vec, int pos = -1, bool writebuffer = false)
+        {
+            float[] array = new float[vec.Length * 4];
+            int fill = 0;
+            foreach (var v in vec)
+            {
+                array[fill++] = v.X;
+                array[fill++] = v.Y;
+                array[fill++] = v.Z;
+                array[fill++] = v.W;
+            }
+
+            int sz = 4 * array.Length;
+            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 4), pos, sz);
+            return Finish(array, fillpos, sz, writebuffer);
+        }
+
+        protected int Start(int align, int pos, int datasize)       // if pos == -1 move size to alignment of N, else just return pos
+        {
+            //initialsize size incr
+            if (pos == -1)
+            {
+                Size = (Size + align - 1) & (~(align - 1));
+
+                if (bufferdata == null || Size + datasize > bufferdata.Length)
+                {
+                    int nextsize = Size + datasize + 512;
+                    byte[] buf2 = new byte[nextsize];
+                    Array.Copy(bufferdata, buf2, Size);
+                    bufferdata = buf2;
+                }
+
+                pos = Size;
+                Size += datasize;
+            }
+
+            return pos;
+        }
+
+        protected int Finish(Array data, int fillpos, int datasize, bool writebuffer)
+        {
+            System.Buffer.BlockCopy(data, 0, bufferdata, fillpos, datasize);
+
+            if (writebuffer)
+                WriteAreaToBuffer(fillpos, datasize);
+
+            return fillpos;
+        }
+    }
+
+    public class GLBuffer : GLLayoutStandards, IDisposable
+    {
+        public int Id { get; private set; } = -1;
+
+        public GLBuffer(bool std430 = false, int isz = 0) : base(isz,std430)
+        {
+            Id = GL.GenBuffer();
+        }
+
+        public void WriteCacheToBuffer()
+        {
+            IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateBufferBit);
+            System.Runtime.InteropServices.Marshal.Copy(bufferdata, 0, ptr, Size);
+            GL.UnmapNamedBuffer(Id);
+        }
+
+        protected override void WriteAreaToBuffer(int fillpos, int datasize)
+        {
+            IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
+            System.Runtime.InteropServices.Marshal.Copy(bufferdata, fillpos, ptr, datasize);
+            GL.UnmapNamedBuffer(Id);
+        }
+
+        public void Dispose()           // you can double dispose.
+        {
+            if (Id != -1)
+            {
+                GL.DeleteBuffer(Id);
+                Id = -1;
+            }
+        }
+    }
+}

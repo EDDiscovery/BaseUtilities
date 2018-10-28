@@ -59,33 +59,22 @@ namespace OpenTKUtils.GL4
     // single points with a single defined size
     public class GLVertexPoints : GLVertexObject
     {
-        private float pointsize;
-
-        public GLVertexPoints(Vector4[] vertices, IGLObjectInstanceData data, float ps) : base(vertices, data, PrimitiveType.Points)
+        public GLVertexPoints(Vector4[] vertices, IGLObjectInstanceData data) : base(vertices, data, PrimitiveType.Points)
         {
-            pointsize = ps;
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            GL.PointSize(pointsize);
-            base.Bind(shader);
         }
     }
 
     public class GLVertexQuad : GLVertexObject
     {
-        private float pointsize;
-
-        public GLVertexQuad(Vector4[] vertices, IGLObjectInstanceData data, float ps) : base(vertices, data, PrimitiveType.Quads)
+        public GLVertexQuad(Vector4[] vertices, IGLObjectInstanceData data): base(vertices, data, PrimitiveType.Quads)
         {
-            pointsize = ps;
         }
+    }
 
-        public override void Bind(IGLProgramShader shader)
+    public class GLVertexPatches : GLVertexObject
+    {
+        public GLVertexPatches(Vector4[] vertices, IGLObjectInstanceData data) : base(vertices, data, PrimitiveType.Patches)
         {
-            GL.PointSize(pointsize);
-            base.Bind(shader);
         }
     }
 

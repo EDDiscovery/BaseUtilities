@@ -109,13 +109,18 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
+            GL.Enable(EnableCap.DepthTest);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+            GL.Enable(EnableCap.CullFace);
 
-            items.Add("COS", new GLColourObjectShaderNoTranslation());
+
+            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GL4Statics.LineWidth(1); }));
+            items.Add("COS-10P", new GLColourObjectShaderNoTranslation((a) => { GL4Statics.PointSize(10); }));
             items.Add("COST", new GLColourObjectShaderTranslation());
             items.Add("TEX", new GLTexturedObjectShaderSimple());
             items.Add("CROT", new GLTexturedObjectShaderTransformWithCommonTransform());
             items.Add("PIPE1", new GLProgramShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderColour()));
-            items.Add("TES1", new GLTesselationShadersExample());
+            items.Add("TESx1", new GLTesselationShadersExample());
 
             items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
             items.Add("logo8bpp", new GLTexture2D(Properties.Resources.Logo8bpp));
@@ -126,11 +131,56 @@ void main(void)
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
 
-            rObjects.Add(items.Shader("COS"), "O-TES1",  new GLVertexPoints(   GLShapeObjectFactory.CreateQuad(2.0f), null, 2.0f));
+            #region coloured lines
+
+            rObjects.Add(items.Shader("COS-1L"), new GLColouredLines(
+                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
+                        null));     // lines are positioned directly.. no need for object data binding
+
+            rObjects.Add(items.Shader("COS-1L"), new GLColouredLines(
+                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
+                        null));     // lines are positioned directly.. no need for object data binding
+
+            rObjects.Add(items.Shader("COS-1L"), new GLColouredLines(
+                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
+                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
+                        null));     // lines are positioned directly.. no need for object data binding
+
+            rObjects.Add(items.Shader("COS-1L"), new GLColouredLines(
+                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
+                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
+                        null));     // lines are positioned directly.. no need for object data binding
+
+            #endregion
 
 
 
-#if false
+            rObjects.Add(items.Shader("TESx1"), "O-TES1",  new GLVertexPatches(   GLShapeObjectFactory.CreateQuad2(10.0f,10.0f), null));
+
+            rObjects.Add(items.Shader("TEX"), new GLTexturedTriangles(
+                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
+                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, 0)),
+                        items.Tex("dotted2"), 1));
+
+            rObjects.Add(items.Shader("TEX"), "EDDCube", new GLTexturedTriangles(
+                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
+                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -2)),
+                        items.Tex("logo8bpp"), 1));
+
+            rObjects.Add(items.Shader("TEX"), "woodbox", new GLTexturedTriangles(
+                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
+                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -4)),
+                        items.Tex("wooden"), 1));
+
+
+            rObjects.Add(items.Shader("TEX"), new GLTexturedQuads(
+                        GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
+                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -6)),
+                        items.Tex("dotted2"), 1));
+
+
             #region Uniform Block test
             //GLUniformBlock b5 = new GLUniformBlock(5);        // keep test
             //items.Add("UB5", b5);
@@ -159,6 +209,7 @@ void main(void)
 
             #endregion
 
+#if false
 
             #region MipMaps
 
@@ -261,34 +312,6 @@ void main(void)
 
             #endregion
 
-            #region coloured lines
-
-            rObjects.Add(items.Shader("COS"), new GLColouredLines(
-                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
-                        null,       // lines are positioned directly.. no need for object data binding
-                        1f));
-
-            rObjects.Add(items.Shader("COS"), new GLColouredLines(
-                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
-                        null,       // lines are positioned directly.. no need for object data binding
-                        1f));
-
-            rObjects.Add(items.Shader("COS"), new GLColouredLines(
-                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
-                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
-                        null,       // lines are positioned directly.. no need for object data binding
-                        1f));
-
-            rObjects.Add(items.Shader("COS"), new GLColouredLines(
-                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
-                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
-                        null,       // lines are positioned directly.. no need for object data binding
-                        1f));
-
-            #endregion
-
             #region textures
 
             rObjects.Add(items.Shader("TEX"), new GLTexturedTriangles(
@@ -370,10 +393,6 @@ void main(void)
 
             #endregion
 #endif
-            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.Enable(EnableCap.DepthTest);
-          //  GL.FrontFace(FrontFaceDirection.Ccw);
-            //GL.Enable(EnableCap.CullFace);
 
             Closed += ShaderTest_Closed;
         }
@@ -410,7 +429,7 @@ void main(void)
             //((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
             ////items.UB("UB5").Write((int)(zeroone * 99f), 0, true);
-            //items.SB("SB6").Write(zeroone, 4, true);
+            items.SB("SB6").Write(zeroone, 4, true);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 

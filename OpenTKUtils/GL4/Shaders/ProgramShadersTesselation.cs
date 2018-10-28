@@ -36,12 +36,9 @@ namespace OpenTKUtils.GL4
 layout (location = 0) in vec4 position;
 layout (location = 20) uniform  mat4 projectionmodel;
 
-out vec4 vs_color;
-
 void main(void)
 {
-	gl_Position = projectionmodel * position;        // order important
-    vs_color = vec4(0.5,0.5,0.5,1.0);
+	gl_Position =position;        // order important
 }
 ";
 
@@ -49,12 +46,11 @@ void main(void)
 
 @"
 #version 450 core
-in vec4 vs_color;
 out vec4 color;
 
 void main(void)
 {
-	color = vs_color;
+    color = vec4(0.9,0.9,0.9,1.0);
 }
 ";
 
@@ -70,6 +66,11 @@ void main(void)
 {
     if ( gl_InvocationID == 0 )
     {
+        // gl_TessLevelInner[0] = 5.0;      
+        // gl_TessLevelOuter[0] = 8.0;      
+        //gl_TessLevelOuter[1] = 8.0;      
+        //gl_TessLevelOuter[2] = 8.0;      
+
         gl_TessLevelInner[0] =  9.0;
         gl_TessLevelInner[1] =  7.0;
         gl_TessLevelOuter[0] =  3.0;
@@ -87,16 +88,27 @@ void main(void)
 @"
 #version 450 core
 
-layout (quads) in;
+layout (quads) in; 
 
 layout (location = 20) uniform  mat4 projectionmodel;
 
 void main(void)
 {
-    vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);       
-    vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);      
-    gl_Position = mix(p1, p2, gl_TessCoord.y);                                     
-    gl_Position = projectionmodel * gl_Position;
+    vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);  
+    vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x); 
+
+    //vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);       
+    //vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);      
+    vec4 pos = mix(p1, p2, gl_TessCoord.y);                                     
+    //gl_Position = projectionmodel * gl_Position;
+    
+    //gl_Position = projectionmodel * gl_in[0].gl_Position;
+
+    //vec4 pos = (gl_TessCoord.x * gl_in[0].gl_Position) +   
+    //          (gl_TessCoord.y * gl_in[1].gl_Position) +   
+    //          (gl_TessCoord.z * gl_in[2].gl_Position);    
+
+    gl_Position = projectionmodel * pos;
 
 }
 ";
@@ -107,23 +119,32 @@ void main(void)
             program = new OpenTKUtils.GL4.GLProgram();
             string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vert);
             System.Diagnostics.Debug.Assert(ret == null, "Vertex", ret);
-           // ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs);
+
+            ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs);
             System.Diagnostics.Debug.Assert(ret == null, "TCS", ret);
-         //   ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes);
+            ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes);
             System.Diagnostics.Debug.Assert(ret == null, "TES", ret);
+
             ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag);
             System.Diagnostics.Debug.Assert(ret == null, "Frag", ret);
+
             ret = program.Link();
             System.Diagnostics.Debug.Assert(ret == null, "Link", ret);
         }
 
         public virtual void Start(Common.MatrixCalc c)
         {
+            GL.UseProgram(Id);           // ensure no active program - otherwise the stupid thing picks it
             Matrix4 projmodel = c.ProjectionModelMatrix;
             GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
+            GL4Statics.PatchSize(4);
+            GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+
         }
 
-        public virtual void Finish() { }
+        public virtual void Finish()
+        {
+        }
 
         public void Dispose()
         {

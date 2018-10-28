@@ -54,6 +54,7 @@
     <Compile Include="GL1\Data3DLineData.cs" />
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL1\Data3DPolygon.cs" />
+    <Compile Include="GL4\Buffer\Buffer.cs" />
     <Compile Include="GL4\Factory\FactoryShapes.cs" />
     <Compile Include="GL4\Factory\FactoryPoints.cs" />
     <Compile Include="GL4\Factory\FactorySphere.cs" />
@@ -64,7 +65,6 @@
     <Compile Include="GL4\Shaders\ProgramShadersTesselation.cs" />
     <Compile Include="GL4\Vertex\VertexTexturedObject.cs" />
     <Compile Include="GL4\StorageBlocks\StorageBlocks.cs" />
-    <Compile Include="GL4\UnknownColourObject.cs" />
     <Compile Include="GL4\Vertex\VertexObject212122.cs" />
     <Compile Include="GL4\Vertex\ObjectInstanceData.cs" />
     <Compile Include="GL4\Shaders\ProgramPipeline.cs" />

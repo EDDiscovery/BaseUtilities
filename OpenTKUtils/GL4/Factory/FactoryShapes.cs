@@ -73,7 +73,7 @@ namespace OpenTKUtils.GL4
             width = width / 2.0f * scale;
             height = height / 2.0f * scale;
 
-            Vector4[] vertices =
+            Vector4[] vertices1 =
             {
                 new Vector4(-width, 0, -height, 1.0f),
                 new Vector4(+width, 0, -height, 1.0f),
@@ -81,18 +81,37 @@ namespace OpenTKUtils.GL4
                 new Vector4(-width, 0, +height, 1.0f),
             };
 
-            vertices.RotPos(rotation, pos);
+            vertices1.RotPos(rotation, pos);
 
-            return vertices;
+            return vertices1;
         }
 
         static public Vector2[] TexQuad = new Vector2[]
         {
-            new Vector2(0, 1.0f),      
-            new Vector2(1.0f, 1.0f),   
+            new Vector2(0, 1.0f),
+            new Vector2(1.0f, 1.0f),
             new Vector2(1.0f, 0),
             new Vector2(0, 0),
         };
 
-   }
+        public static Vector4[] CreateQuad2(float width, float height, Vector3? rotation = null, Vector3? pos = null, float scale = 1.0f)
+        {
+            width = width / 2.0f * scale;
+            height = height / 2.0f * scale;
+
+            Vector4[] vertices2 =
+            {
+               new Vector4(-width, 0, -height, 1.0f),      //BL
+               new Vector4(+width, 0, -height, 1.0f),      //BR
+               new Vector4(-width, 0, +height, 1.0f),      //TL
+               new Vector4(+width, 0, +height, 1.0f),      //TR
+            };
+
+            vertices2.RotPos(rotation, pos);
+
+            return vertices2;
+        }
+
+
+    }
 }

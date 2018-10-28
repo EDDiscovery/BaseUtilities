@@ -60,23 +60,21 @@ namespace TestOpenTk
             items.Add("TEX", new GLTexturedObjectShaderSimple());
 
             rObjects.Add(items.Shader("COS"), new GLColouredLines(
-                        GLShapeObjectFactory.CreateBox(400,200,40, new Vector3(0, 0, 0), new Vector3(0,0,0)),
+                        GLShapeObjectFactory.CreateBox(400, 200, 40, new Vector3(0, 0, 0), new Vector3(0, 0, 0)),
                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green },
-                        null,       // lines are positioned directly.. no need for object data binding
-                        1f));
+                        null      // lines are positioned directly.. no need for object data binding
+                        ));
 
 
             rObjects.Add(items.Shader("COST"), "dot2-1", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f),
                          new Color4[] { Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Yellow, Color.Yellow, Color.Yellow, Color.Yellow },
-                         new GLObjectDataTranslationRotation(new Vector3(0, 0, -100)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(0, 0, -100))));
 
             rObjects.Add(items.Shader("COST"), "dot2-2", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f),
                          new Color4[] { Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Yellow, Color.Yellow, Color.Yellow, Color.Yellow },
-                         new GLObjectDataTranslationRotation(new Vector3(0, 20, 0)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(0, 20, 0))));
 
             Vector3[] stars = GLPointsFactory.RandomStars(10000, 12322, -200, 200, -100, 100, 20, -20);
 
