@@ -52,18 +52,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes.cs" />
-    <Compile Include="ShaderTest2.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ShaderTest2.Designer.cs">
-      <DependentUpon>ShaderTest2.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ShaderTest.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ShaderTest.Designer.cs">
-      <DependentUpon>ShaderTest.cs</DependentUpon>
-    </Compile>
     <Compile Include="RandomStars.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -72,12 +60,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="ShaderTest2.resx">
-      <DependentUpon>ShaderTest2.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTest.resx">
-      <DependentUpon>ShaderTest.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </EmbeddedResource>

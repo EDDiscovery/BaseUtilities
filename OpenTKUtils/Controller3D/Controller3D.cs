@@ -5,12 +5,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
@@ -22,7 +22,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     // class brings together keyboard, mouse, posdir, zoom to provide a means to move thru the playfield and zoom.
     // handles keyboard actions and mouse actions to provide a nice method of controlling the 3d playfield
@@ -114,12 +114,12 @@ namespace OpenTKUtils
 
         // Zoom
         public void StartZoom(float z, float timetozoom = 0) { zoom.GoTo(z, timetozoom); }
-        
+
         // misc
 
         public void Redraw() { glControl.Invalidate(); }
 
-        #region Implementation        
+        #region Implementation
 
         private void GlControl_Resize(object sender, EventArgs e)           // there was a gate in the original around OnShown.. not sure why.
         {
@@ -197,13 +197,11 @@ namespace OpenTKUtils
 
             mouseDownPos.X = e.X;
             mouseDownPos.Y = e.Y;
-            //Console.WriteLine("Mouseup down at " + e.X + "," + e.Y);
 
             if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Left))
             {
                 mouseStartRotate.X = e.X;
                 mouseStartRotate.Y = e.Y;
-                //Console.WriteLine("Mouse start left");
             }
 
             if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Right))
@@ -241,7 +239,6 @@ namespace OpenTKUtils
                 if (mouseStartRotate.X != int.MinValue) // on resize double click resize, we get a stray mousemove with left, so we need to make sure we actually had a down event
                 {
                     KillSlews();
-                    //Console.WriteLine("Mouse move left");
                     int dx = e.X - mouseStartRotate.X;
                     int dy = e.Y - mouseStartRotate.Y;
 

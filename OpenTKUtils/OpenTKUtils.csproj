@@ -62,8 +62,6 @@
     <Compile Include="Controller3D\StandardKeyboardHandler.cs" />
     <Compile Include="MCZF\Zoom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Shaders\GLProgram.cs" />
-    <Compile Include="Shaders\GLShader.cs" />
     <Compile Include="Utils\Polygon.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -11,6 +11,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OpenTKUtils.Common;
+using OpenTKUtils.GL1;
 
 namespace TestOpenTk
 {

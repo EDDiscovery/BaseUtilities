@@ -5,17 +5,17 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     public class CameraDirectionMovementTracker       // keeps track of previous and works out how to present bitmaps
     {
@@ -31,7 +31,7 @@ namespace OpenTKUtils
         public bool CameraMoved;
         public bool CameraZoomed;
         public bool AnythingChanged { get { return CameraDirChanged || CameraMoved || CameraZoomed; } }         //DIR is more sensitive than gross, so no need to use
-                
+
         public void Update(Vector3 cameraDir, Vector3 position, float zoom, float grossdirchange)
         {
             CameraDirChanged = Vector3.Subtract(LastCameraDir, cameraDir).LengthSquared >= 1;

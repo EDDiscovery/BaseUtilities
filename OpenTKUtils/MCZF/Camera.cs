@@ -5,19 +5,19 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
 using System;
 using System.Diagnostics;
 
-namespace OpenTKUtils
+namespace OpenTKUtils.Common
 {
     public class Camera
     {
@@ -25,7 +25,7 @@ namespace OpenTKUtils
 
         public bool InSlew { get { return (cameraDirSlewProgress < 1.0F); } }
 
-        private Vector3 cameraDir = Vector3.Zero;               // X = up/down, Y = rotate, Z = yaw, in degrees. 
+        private Vector3 cameraDir = Vector3.Zero;               // X = up/down, Y = rotate, Z = yaw, in degrees.
         private float cameraDirSlewProgress = 1.0f;             // 0 -> 1 slew progress
         private float cameraDirSlewTime;                        // how long to take to do the slew
         private Vector3 cameraDirSlewPosition;                  // where to slew to.
@@ -79,7 +79,7 @@ namespace OpenTKUtils
             }
         }
 
-        public void LookAt(Vector3 curpos, Vector3 target, float zoom, float time = 0)            // real world 
+        public void LookAt(Vector3 curpos, Vector3 target, float zoom, float time = 0)            // real world
         {
             Vector3 targetinv = new Vector3(target.X, -target.Y, target.Z);
             Vector3 eye = curpos;
@@ -148,4 +148,3 @@ namespace OpenTKUtils
     }
 }
 
-  

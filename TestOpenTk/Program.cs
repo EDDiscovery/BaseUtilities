@@ -24,15 +24,6 @@ namespace TestOpenTk
 
                 string arg1 = args.Next();
 
-                if (arg1.Equals("ShaderTest", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Application.Run(new ShaderTest());
-                }
-                else if (arg1.Equals("ShaderTest2", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Application.Run(new ShaderTest2());
-                }
-                else
                 {
                     Application.Run(new RandomStars());
                 }
