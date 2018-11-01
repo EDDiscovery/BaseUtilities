@@ -40,11 +40,16 @@ namespace BaseUtils
             return keyspressed.Contains(key);
         }
 
-        public bool IsAnyPressed( params Keys[] keys) // is currently pressed
+        public bool IsAnyPressed()                  // is any keys pressed..
+        {
+            return keyspressed.Count > 0;
+        }
+
+        public bool IsAnyPressed( params Keys[] keys) // is one of these currently pressed
         {
             foreach (var k in keys)
             {
-                if (IsPressed(k))
+                if (keyspressed.Contains(k))
                     return true;
             }
 

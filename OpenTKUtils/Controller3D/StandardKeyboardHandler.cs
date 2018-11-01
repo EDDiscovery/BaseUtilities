@@ -23,9 +23,9 @@ namespace OpenTKUtils.Common
 {
     // standard keys used for movement in 3d programs
 
-    static class StandardKeyboardHandler
+    public static class StandardKeyboardHandler
     {
-        static public bool Movement(KeyboardState kbd, Position pos, bool inperspectivemode, Vector3 cameraDir, int msticks, float distance, bool elitemovement)
+        static public bool Movement(KeyboardState kbd, Position pos, bool inperspectivemode, Vector3 cameraDir, float distance, bool elitemovement)
         {
             Vector3 cameraActionMovement = Vector3.Zero;
 

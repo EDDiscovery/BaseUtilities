@@ -163,7 +163,7 @@ namespace OpenTKUtils.Common
                 if (StandardKeyboardHandler.Camera(keyboard, camera, LastHandleInterval))       // moving the camera around kills the pos slew (as well as its own slew)
                     pos.KillSlew();
 
-                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, LastHandleInterval, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, true))
+                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, true))
                     camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
 
                 StandardKeyboardHandler.Zoom(keyboard, zoom, LastHandleInterval);      // zoom slew is not affected by the above

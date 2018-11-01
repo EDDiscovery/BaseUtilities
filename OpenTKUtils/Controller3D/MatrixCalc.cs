@@ -84,8 +84,7 @@ namespace OpenTKUtils.Common
         {
             get
             {
-                Matrix4 resmat = Matrix4.Mult(modelmatrix, projectionmatrix);
-                return resmat;
+                return projectionmodelmatrix;
             }
         }
 
@@ -126,7 +125,7 @@ namespace OpenTKUtils.Common
             normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);
 
             eye = position + eyerel;              // eye is here, the target pos, plus the eye relative position
-            System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
+            //System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
         }
 
     }
