@@ -50,7 +50,7 @@ namespace OpenTKUtils.Common
         {
             if (!float.IsNaN(normpos.X))
             {
-                System.Diagnostics.Debug.WriteLine("Goto " + normpos + " in " + timeslewsec + " at " + unitspersecond);
+                //System.Diagnostics.Debug.WriteLine("Goto " + normpos + " in " + timeslewsec + " at " + unitspersecond);
 
                 Vector3 pos = new Vector3(normpos);
                 pos.Y = -pos.Y;     // invert to internal Y
@@ -69,7 +69,7 @@ namespace OpenTKUtils.Common
                         targetposSlewPosition = pos;
                         targetposSlewProgress = 0.0f;
                         targetposSlewTime = (timeslewsec < 0) ? ((float)Math.Max(1.0, dist / unitspersecond)) : timeslewsec;            //10000 ly/sec, with a minimum slew
-                        System.Diagnostics.Debug.WriteLine("{0} Slew start to {1} in {2}",  Environment.TickCount % 10000 , targetposSlewPosition , targetposSlewTime);
+                        //System.Diagnostics.Debug.WriteLine("{0} Slew start to {1} in {2}",  Environment.TickCount % 10000 , targetposSlewPosition , targetposSlewTime);
                     }
                 }
             }
@@ -90,7 +90,7 @@ namespace OpenTKUtils.Common
                 if (newprogress >= 1.0f)
                 {
                     position = new Vector3(targetposSlewPosition.X, targetposSlewPosition.Y, targetposSlewPosition.Z);
-                    System.Diagnostics.Debug.WriteLine("{0} Slew complete at {1}", Environment.TickCount % 10000, position);
+                    //System.Diagnostics.Debug.WriteLine("{0} Slew complete at {1}", Environment.TickCount % 10000, position);
                 }
                 else
                 {
@@ -101,7 +101,7 @@ namespace OpenTKUtils.Common
 
                     var totvector = new Vector3((float)(targetposSlewPosition.X - position.X), (float)(targetposSlewPosition.Y - position.Y), (float)(targetposSlewPosition.Z - position.Z));
                     position += Vector3.Multiply(totvector, (float)slewfact);
-                    System.Diagnostics.Debug.WriteLine("{0} Slew to {1} prog {2}", Environment.TickCount % 10000, position, newprogress);
+                    //System.Diagnostics.Debug.WriteLine("{0} Slew to {1} prog {2}", Environment.TickCount % 10000, position, newprogress);
                 }
 
                 targetposSlewProgress = (float)newprogress;
