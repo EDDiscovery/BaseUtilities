@@ -22,38 +22,18 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLTesselationShadersExample : IGLProgramShader
+    public class GLTesselationShadersExample : GLShaderProgramBase
     {
-        public int Id { get { return program.Id; } }
-
-        public IGLShader Get(ShaderType t) { return this; }
-
-        private GLProgram program;
-
         string vert =
         @"
 #version 450 core
 layout (location = 0) in vec4 position;
-layout (location = 20) uniform  mat4 projectionmodel;
 
 void main(void)
 {
 	gl_Position =position;        // order important
 }
 ";
-
-        string frag =
-
-@"
-#version 450 core
-out vec4 color;
-
-void main(void)
-{
-    color = vec4(0.9,0.9,0.9,1.0);
-}
-";
-
 
         string tcs =
 
@@ -113,42 +93,32 @@ void main(void)
 }
 ";
 
+        string frag =
+
+@"
+#version 450 core
+out vec4 color;
+
+void main(void)
+{
+    color = vec4(0.9,0.9,0.9,1.0);
+}
+";
+
+
 
         public GLTesselationShadersExample()
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vert);
-            System.Diagnostics.Debug.Assert(ret == null, "Vertex", ret);
-
-            ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs);
-            System.Diagnostics.Debug.Assert(ret == null, "TCS", ret);
-            ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes);
-            System.Diagnostics.Debug.Assert(ret == null, "TES", ret);
-
-            ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag);
-            System.Diagnostics.Debug.Assert(ret == null, "Frag", ret);
-
-            ret = program.Link();
-            System.Diagnostics.Debug.Assert(ret == null, "Link", ret);
+            Compile(vertex: vert, tcs: tcs, tes: tes, frag: frag);
         }
 
-        public virtual void Start(Common.MatrixCalc c)
+        public override void Start(Common.MatrixCalc c)
         {
-            GL.UseProgram(Id);           // ensure no active program - otherwise the stupid thing picks it
+            GL.UseProgram(Id);           // use this
             Matrix4 projmodel = c.ProjectionModelMatrix;
             GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
             GL4Statics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-
-        }
-
-        public virtual void Finish()
-        {
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
         }
     }
 }

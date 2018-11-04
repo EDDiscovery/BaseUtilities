@@ -20,39 +20,8 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLFragmentShadersBase : IGLShader
-    {
-        public int Id { get { return program.Id; } }
-
-        public virtual string Code() { return null; }
-
-        private GLProgram program;
-
-        public void CompileLink()
-        {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code());
-            System.Diagnostics.Debug.Assert(ret == null, GetType().Name, ret);
-            ret = program.Link(separable: true);
-            System.Diagnostics.Debug.Assert(ret == null, GetType().Name, ret );
-        }
-
-        public virtual void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
-        {
-        }
-
-        public virtual void Finish()
-        {
-        }
-
-        public void Dispose()
-        {
-            program.Dispose();
-        }
-    }
-
-    // Fragment, requires vs_color
-    public class GLFragmentShaderColour : GLFragmentShadersBase
+   // Fragment, requires vs_color
+    public class GLFragmentShaderColour : GLShaderPipelineFragmentBase
     {
         public override string Code()
         {
@@ -65,6 +34,7 @@ out vec4 color;
 void main(void)
 {
 	color = vs_color;
+//color = vec4(1.0,1.0,0,1.0);
 }
 ";
         }
@@ -75,7 +45,7 @@ void main(void)
         }
     }
 
-    public class GLFragmentShaderTexture : GLFragmentShadersBase
+    public class GLFragmentShaderTexture : GLShaderPipelineFragmentBase
     {
         public override string Code()
         {
@@ -105,7 +75,7 @@ void main(void)
 
 
 
-    public class GLFragmentShader2DCommonBlend : GLFragmentShadersBase
+    public class GLFragmentShader2DCommonBlend : GLShaderPipelineFragmentBase
     {
         public float Blend { get; set; } = 0.0f;
         public override string Code()

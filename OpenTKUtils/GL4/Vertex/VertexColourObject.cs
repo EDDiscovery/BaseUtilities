@@ -23,39 +23,45 @@ namespace OpenTKUtils.GL4
 {
     // Vertex and colour data
 
-    public abstract class GLVertexColourObject : GLVertexArrayBuffer
+    public abstract class GLVertexColourObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
         // layout(location = 1) in vec4 color;
         const int attriblayoutindexposition = 0;
         const int attriblayoutcolour = 1;
+        const int bindingindex = 0;
+
+        GLBuffer buffer;
 
         // colour data can be shorted than vertices, and will be repeated.
         public GLVertexColourObject(Vector4[] vertices, Color4[] colours , IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length,data,pt)
         {
-            GL.BufferData(BufferTarget.ArrayBuffer, (16+16) * vertices.Length, (IntPtr)0, BufferUsageHint.StaticDraw);
+            buffer = new GLBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, 16 * vertices.Length, vertices);
-            int offset = 16 * vertices.Length;
+            var pos = buffer.Write(vertices, colours);
 
-            int startcolourdata = offset;
-            int colstogo = vertices.Length;
+            GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 0);        // tell Array that binding index comes from this buffer.
 
-            while( colstogo > 0 )   // while more to fill in
-            {
-                int take = Math.Min(colstogo, colours.Length);      // max of colstogo and length of array
-                GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 16 * take, colours);
-                colstogo -= take;
-                offset += take * 16;
-            }
+            GL.VertexArrayAttribBinding(Array, attriblayoutindexposition, bindingindex);     // bind atrib index to binding index
+            GL.VertexArrayAttribBinding(Array, attriblayoutcolour, bindingindex);     // bind atrib index to binding index
 
-            GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 16, 0);
-            GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 16, startcolourdata);
+            GL.VertexAttribPointer(attriblayoutindexposition, 4, VertexAttribPointerType.Float, false, 16, pos.Item1);  // set where in the buffer the attrib data comes from
+            GL.VertexAttribPointer(attriblayoutcolour, 4, VertexAttribPointerType.Float, false, 16, pos.Item2);
 
-            GL.EnableVertexArrayAttrib(array, attriblayoutindexposition);
-            GL.EnableVertexArrayAttrib(array, attriblayoutcolour);
+            GL.EnableVertexArrayAttrib(Array, attriblayoutindexposition);
+            GL.EnableVertexArrayAttrib(Array, attriblayoutcolour);
+
+            GL4Statics.Check();
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            buffer.Dispose();
+        }
+
     }
 
     // Triangles, so vertex's come in 3's

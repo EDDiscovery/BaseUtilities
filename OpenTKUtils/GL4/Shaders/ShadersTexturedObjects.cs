@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered texture
 
-    public class GLTexturedObjectShaderSimple : GLProgramShaderPipeline
+    public class GLTexturedObjectShaderSimple : GLShaderPipelineBase
     {
         public GLTexturedObjectShaderSimple() : base()
         {
@@ -31,7 +31,7 @@ namespace OpenTKUtils.GL4
         }
     }
 
-    public class GLTexturedObjectShaderTransformWithCommonTransform : GLProgramShaderPipeline
+    public class GLTexturedObjectShaderTransformWithCommonTransform : GLShaderPipelineBase
     {
         public GLTexturedObjectShaderTransformWithCommonTransform() : base()
         {
@@ -40,7 +40,7 @@ namespace OpenTKUtils.GL4
         }
     }
 
-    public class GLTexturedObjectShader2DBlend : GLProgramShaderPipeline
+    public class GLTexturedObjectShader2DBlend : GLShaderPipelineBase
     {
         public GLTexturedObjectShader2DBlend() : base()
         {

@@ -24,12 +24,14 @@ namespace OpenTKUtils.GL4
     // Vertex only, in Packed form
     // packs three values to 8 bytes
 
-    public abstract class GLVertexPackedObject212122 : GLVertexArrayBuffer    
+    public abstract class GLVertexPackedObject212122 : GLVertexArray    
     {
         // Vertex shader must implement
         // layout(location = 0) in uvec2 position;
         const int attribindex = 0;
         const int bindingindex = 0;
+
+        GLBuffer buffer;
 
         public GLVertexPackedObject212122(Vector3[] vertices, IGLObjectInstanceData data, PrimitiveType pt, Vector3 offsets, float mult) : base(vertices.Length, data, pt)
         {
@@ -42,29 +44,29 @@ namespace OpenTKUtils.GL4
                 packeddata[p++] = (uint)((vertices[i].Y + offsets.Y) * mult) | (((z >> 11) & 0x7ff) << 21);
             }
 
-            SetUpBuffer(packeddata);
-        }
+            buffer = new GLBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-        void SetUpBuffer( uint[] packeddata )
-        { 
-            // create first buffer: vertex
-            GL.NamedBufferStorage(
-                buffer,
-                4 * packeddata.Length,              // the size needed by this buffer in bytes
-                packeddata,                         // data to initialize with
-                BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
-           
-            GL.VertexArrayAttribBinding(array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
-            GL.EnableVertexArrayAttrib(array, attribindex);         // enable attrib 0 - this is the layout number
+            int pos = buffer.Write(packeddata);
 
-            GL.VertexArrayAttribIFormat(array,                // IFormat!  Needed to prevent auto conversion to float
+            GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 8);        // link Vertextarry to buffer and set stride
+
+            GL.VertexArrayAttribBinding(Array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
+            GL.EnableVertexArrayAttrib(Array, attribindex);         // enable attrib 0 - this is the layout number
+
+            GL.VertexArrayAttribIFormat(Array,                // IFormat!  Needed to prevent auto conversion to float
                 attribindex,            // attribute index, from the shader location = 0
                 2,                      // 2 entries per vertex
                 VertexAttribType.UnsignedInt,  // contains unsigned ints
-                0);                     // 0 offset into item data
+                pos);                     // 0 offset into item data
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(array, bindingindex, buffer, IntPtr.Zero, 8);        // link Vertextarry to buffer and set stride
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            buffer.Dispose();
         }
     }
 

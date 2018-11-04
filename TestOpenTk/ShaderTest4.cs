@@ -40,7 +40,7 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
-        public class GLFragmentShaderUniformTest : GLFragmentShadersBase
+        public class GLFragmentShaderUniformTest : GLShaderPipelineFragmentBase
         {
             private int bindingpoint;
 
@@ -115,11 +115,14 @@ void main(void)
 
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GL4Statics.LineWidth(1); }));
-            items.Add("COS-10P", new GLColourObjectShaderNoTranslation((a) => { GL4Statics.PointSize(10); }));
-            items.Add("COST", new GLColourObjectShaderTranslation());
             items.Add("TEX", new GLTexturedObjectShaderSimple());
+            items.Add("COST-FP", new GLColourObjectShaderTranslation((a) => { GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill); }));
+            items.Add("COST-LP", new GLColourObjectShaderTranslation((a) => { GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Line); }));
+            items.Add("COST-1P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(1.0F); }));
+            items.Add("COST-2P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(2.0F); }));
+            items.Add("COST-10P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(10.0F); }));
             items.Add("CROT", new GLTexturedObjectShaderTransformWithCommonTransform());
-            items.Add("PIPE1", new GLProgramShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderColour()));
+            //items.Add("PIPE1", new GLProgramShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderColour()));
             items.Add("TESx1", new GLTesselationShadersExample());
 
             items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
@@ -159,29 +162,7 @@ void main(void)
 
             rObjects.Add(items.Shader("TESx1"), "O-TES1",  new GLVertexPatches(   GLShapeObjectFactory.CreateQuad2(10.0f,10.0f), null));
 
-            rObjects.Add(items.Shader("TEX"), new GLTexturedTriangles(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, 0)),
-                        items.Tex("dotted2"), 1));
-
-            rObjects.Add(items.Shader("TEX"), "EDDCube", new GLTexturedTriangles(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -2)),
-                        items.Tex("logo8bpp"), 1));
-
-            rObjects.Add(items.Shader("TEX"), "woodbox", new GLTexturedTriangles(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -4)),
-                        items.Tex("wooden"), 1));
-
-
-            rObjects.Add(items.Shader("TEX"), new GLTexturedQuads(
-                        GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotation(new Vector3(-2, 0, -6)),
-                        items.Tex("dotted2"), 1));
-
-
-            #region Uniform Block test
+                  #region Uniform Block test
             //GLUniformBlock b5 = new GLUniformBlock(5);        // keep test
             //items.Add("UB5", b5);
             //b5.Write(0);
@@ -200,7 +181,7 @@ void main(void)
             b6.Write(0.0f);
             b6.Complete();
 
-            items.Add("UT-1", new GLProgramShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
+            items.Add("UT-1", new GLShaderPipelineBase(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
 
             rObjects.Add(items.Shader("UT-1"), "UT1", new GLColouredTriangles(
                     GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f),
@@ -209,7 +190,6 @@ void main(void)
 
             #endregion
 
-#if false
 
             #region MipMaps
 
@@ -251,17 +231,17 @@ void main(void)
 
             #region Coloured triangles
 
-            rObjects.Add(items.Shader("COST"), "scopen", new GLColouredTriangles(
+            rObjects.Add(items.Shader("COST-FP"), "scopen", new GLColouredTriangles(
                     GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, new GLCubeObjectFactory.Sides[] { GLCubeObjectFactory.Sides.Bottom, GLCubeObjectFactory.Sides.Top, GLCubeObjectFactory.Sides.Left, GLCubeObjectFactory.Sides.Right }),
                     new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange },
                     new GLObjectDataTranslationRotation(new Vector3(-6, 0, 0))));
 
-            rObjects.Add(items.Shader("COST"), "scopen-op", new GLOutlineTriangles(
+            rObjects.Add(items.Shader("COST-LP"), "scopen-op", new GLColouredTriangles(
                     GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, new GLCubeObjectFactory.Sides[] { GLCubeObjectFactory.Sides.Bottom, GLCubeObjectFactory.Sides.Top, GLCubeObjectFactory.Sides.Left, GLCubeObjectFactory.Sides.Right }), 
                     new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange }, 
                     new GLObjectDataTranslationRotation(new Vector3(-6, 0, -2))));
 
-            rObjects.Add(items.Shader("COST"), "sphere1", new GLColouredTriangles(
+            rObjects.Add(items.Shader("COST-FP"), "sphere1", new GLColouredTriangles(
                         GLSphereObjectFactory.CreateSphereFromTriangles(3, 2.0f),
                         new Color4[] { Color4.Red, Color4.Green, Color4.Blue, },
                         new GLObjectDataTranslationRotation(new Vector3(-6, 0, -4))));
@@ -270,45 +250,45 @@ void main(void)
 
             #region coloured points
 
-            rObjects.Add(items.Shader("COST"), "pc", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "pc", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f)
                          , new Color4[] { Color4.Yellow },
-                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, 0)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, 0))
+                         ));
 
-            rObjects.Add(items.Shader("PIPE1"), "pc2", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "pc2", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f),
                          new Color4[] { Color4.Green, Color4.White, Color4.Purple, Color4.Blue },
-                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -2)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -2))
+                         ));
 
-            rObjects.Add(items.Shader("COST"), "cp", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "cp", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f),
                          new Color4[] { Color4.Red },
-                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -4)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -4))
+                         ));
 
-            rObjects.Add(items.Shader("COST"), "dot2-1", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "dot2-1", new GLColouredPoints(
                          GLCubeObjectFactory.CreateVertexPointCube(1f),
                          new Color4[] { Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Yellow, Color.Yellow, Color.Yellow, Color.Yellow },
-                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -6)),
-                         10f));
+                         new GLObjectDataTranslationRotation(new Vector3(-4, 0, -6))
+                         ));
 
 
-            rObjects.Add(items.Shader("COST"), "sphere2", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "sphere2", new GLColouredPoints(
                         GLSphereObjectFactory.CreateSphereFromTriangles(3, 1.0f),
                         new Color4[] { Color4.Red, Color4.Green, Color4.Blue, },
-                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -8)), 5.0f));
+                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -8))));
 
-            rObjects.Add(items.Shader("COST"), "sphere3", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-10P"), "sphere3", new GLColouredPoints(
                         GLSphereObjectFactory.CreateSphereFromTriangles(1, 1.0f),
                         new Color4[] { Color4.Red, Color4.Green, Color4.Blue, },
-                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -10)), 5.0f));
+                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -10))));
 
-            rObjects.Add(items.Shader("COST"), "sphere4", new GLColouredPoints(
+            rObjects.Add(items.Shader("COST-2P"), "sphere4", new GLColouredPoints(
                         GLSphereObjectFactory.CreateSphereFromTriangles(2, 1.0f),
                         new Color4[] { Color4.Red, Color4.Green, Color4.Blue, },
-                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -12)), 5.0f));
+                        new GLObjectDataTranslationRotation(new Vector3(-4, 0, -12))));
 
             #endregion
 
@@ -392,7 +372,6 @@ void main(void)
                         items.Tex("moon"), 1));
 
             #endregion
-#endif
 
             Closed += ShaderTest_Closed;
         }

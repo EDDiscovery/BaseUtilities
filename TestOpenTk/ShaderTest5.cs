@@ -53,7 +53,7 @@ namespace TestOpenTk
                 return (float)ms / 20.0f;
             };
 
-            items.Add("STARS", new GLProgramShaderPipeline(new GLVertexShaderStars(), new GLFragmentShaderColour()));
+            items.Add("STARS", new GLShaderPipelineBase(new GLShaderStars(), new GLFragmentShaderColour()));
 
             items.Add("COS", new GLColourObjectShaderNoTranslation());
             items.Add("COST", new GLColourObjectShaderTranslation());

@@ -23,7 +23,7 @@ namespace OpenTKUtils.GL4
 {
     // Pipeline of shaders - inherit from this and install your shared shaders..
 
-    public class GLProgramShaderPipeline : IGLProgramShader
+    public class GLShaderPipelineBase : IGLProgramShader
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
         public Action<IGLProgramShader> ShaderCallBack;
@@ -33,13 +33,13 @@ namespace OpenTKUtils.GL4
         private int pipelineid;
         private Dictionary<ShaderType, IGLShader> programs;
 
-        public GLProgramShaderPipeline()
+        public GLShaderPipelineBase()
         {
             pipelineid = GL.GenProgramPipeline();
             programs = new Dictionary<ShaderType, IGLShader>();
         }
 
-        public GLProgramShaderPipeline(IGLShader vertex, IGLShader fragment) : this()
+        public GLShaderPipelineBase(IGLShader vertex, IGLShader fragment) : this()
         {
             AddVertex(vertex);
             AddFragment(fragment);

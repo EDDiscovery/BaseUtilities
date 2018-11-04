@@ -22,37 +22,46 @@ namespace OpenTKUtils.GL4
 {
     // Vertex's only, in vec4 form
 
-    public abstract class GLVertexObject : GLVertexArrayBuffer
+    public abstract class GLVertexObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
         const int attribindex = 0;
+        const int bindingindex = 0;
+
+        GLBuffer buffer;
 
         public GLVertexObject(Vector4[] vertices, IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length, data, pt)
         {
-            // create first buffer: vertex
-            GL.NamedBufferStorage(
-                buffer,
-                16 * vertices.Length,    // the size needed by this buffer
-                vertices,                           // data to initialize with
-                BufferStorageFlags.MapWriteBit);    // at this point we will only write to the buffer
+            buffer = new GLBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-            const int bindingindex = 0;
+            int pos = buffer.Write(vertices);
 
-            GL.VertexArrayAttribBinding(array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
-            GL.EnableVertexArrayAttrib(array, attribindex);         // enable attrib 0 - this is the layout number
+            GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 16);        // tell Array that binding index comes from this buffer.
+
+            GL.VertexArrayAttribBinding(Array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0
+
             GL.VertexArrayAttribFormat(
-                array,
+                Array,
                 attribindex,            // attribute index, from the shader location = 0
                 4,                      // size of attribute, vec4
                 VertexAttribType.Float, // contains floats
                 false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                0);                     // relative offset, first item
+                pos);                     // relative offset, first item
+
+            GL.EnableVertexArrayAttrib(Array, attribindex);         // enable attrib 0 - this is the layout number
 
             // link the vertex array and buffer and provide the stride as size of Vertex
-            GL.VertexArrayVertexBuffer(array, bindingindex, buffer, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
+            // removed GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
 
             GL4Statics.Check();
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            buffer.Dispose();
         }
     }
 

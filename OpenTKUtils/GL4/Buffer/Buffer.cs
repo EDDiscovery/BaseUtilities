@@ -155,7 +155,8 @@ namespace OpenTKUtils.GL4
                 {
                     int nextsize = Size + datasize + 512;
                     byte[] buf2 = new byte[nextsize];
-                    Array.Copy(bufferdata, buf2, Size);
+                    if ( bufferdata != null )
+                        Array.Copy(bufferdata, buf2, Size);
                     bufferdata = buf2;
                 }
 
@@ -175,15 +176,24 @@ namespace OpenTKUtils.GL4
 
             return fillpos;
         }
+
+        protected int Align(int align, int datasize )
+        {
+            Size = (Size + align - 1) & (~(align - 1));
+            int pos = Size;
+            Size += datasize;
+            return pos;
+        }
     }
 
     public class GLBuffer : GLLayoutStandards, IDisposable
     {
         public int Id { get; private set; } = -1;
 
-        public GLBuffer(bool std430 = false, int isz = 0) : base(isz,std430)
+        public GLBuffer(bool std430 = false, int isz = 0) : base(isz, std430)
         {
-            Id = GL.GenBuffer();
+            GL.CreateBuffers(1, out int id);     // this actually makes the buffer, GenBuffer does not - just gets a name
+            Id = id;
         }
 
         public void WriteCacheToBuffer()
@@ -192,6 +202,70 @@ namespace OpenTKUtils.GL4
             System.Runtime.InteropServices.Marshal.Copy(bufferdata, 0, ptr, Size);
             GL.UnmapNamedBuffer(Id);
         }
+
+        #region Direct Writes - cache is not involved, so you can't use the other write functions 
+
+        public Tuple<int,int> Write(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        {
+            int datasize = vertices.Length * sizeof(float) * 4;
+            int posv = Align(sizeof(float) * 4, datasize);
+            int posc = Align(sizeof(float) * 4, datasize);
+
+            GL.NamedBufferData(Id,Size,(IntPtr)0, uh);              // set size
+            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
+
+            int colstogo = vertices.Length;
+            int colp = posc;
+
+            while (colstogo > 0)   // while more to fill in
+            {
+                int take = Math.Min(colstogo, colours.Length);      // max of colstogo and length of array
+                GL.NamedBufferSubData(Id, (IntPtr)colp, 16 * take, colours);
+                GL4Statics.Check();
+                colstogo -= take;
+                colp += take * 16;
+            }
+
+            GL4Statics.Check();
+            return new Tuple<int, int>(posv, posc);
+        }
+
+
+        public Tuple<int, int> Write(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        {
+            int datasizeV = vertices.Length * sizeof(float) * 4;
+            int datasizeC = coords.Length * sizeof(float) * 2;
+            int posv = Align(sizeof(float) * 4, datasizeV);
+            int posc = Align(sizeof(float) * 4, datasizeC);
+
+            GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
+            GL.NamedBufferSubData(Id, (IntPtr)posv, datasizeV, vertices);
+            GL.NamedBufferSubData(Id, (IntPtr)posc, datasizeC, coords);
+            GL4Statics.Check();
+            return new Tuple<int, int>(posv, posc);
+        }
+
+        public int Write(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        {
+            int datasize = vertices.Length * sizeof(float) * 4;
+            int pos = Align(sizeof(float) * 4, datasize);
+
+            GL.NamedBufferStorage(Id, Size, vertices, uh);
+            GL4Statics.Check();
+            return pos;
+        }
+
+        public int Write(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        {
+            int datasize = data.Length * sizeof(uint);
+            int pos = Align(sizeof(uint), datasize);
+
+            GL.NamedBufferStorage(Id, Size, data, uh);
+            GL4Statics.Check();
+            return pos;
+        }
+
+        #endregion
 
         protected override void WriteAreaToBuffer(int fillpos, int datasize)
         {

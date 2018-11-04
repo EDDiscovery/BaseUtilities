@@ -23,53 +23,42 @@ namespace OpenTKUtils.GL4
 {
     // Base Class for vertex data to vertex shader..
 
-    public abstract class GLVertexArrayBuffer : IGLRenderable
+    public abstract class GLVertexArray : IGLRenderable
     {
         public IGLObjectInstanceData InstanceData { get { return instancedata; } }
 
-        protected int array;                            // the vertex GL Array 
-        protected int buffer;                           // its buffer data
-        protected int count;                            // num of vertexes
+        protected int Array;                            // the vertex GL Array 
+        protected int Count;                            // num of vertexes
         protected PrimitiveType primitivetype;          // Draw type
         protected IGLObjectInstanceData instancedata;   // any instance data
 
-        protected GLVertexArrayBuffer(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
+        // tbd instance count
+
+        protected GLVertexArray(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
         {
             instancedata = id;
-            count = vertexCount;
+            Count = vertexCount;
             primitivetype = pt;
 
-            array = GL.GenVertexArray();
-            buffer = GL.GenBuffer();
-
-            GL.BindVertexArray(array);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer);
+            Array = GL.GenVertexArray();        // get the handle
+            GL.BindVertexArray(Array);          // creates the array
         }
 
         public virtual void Bind(IGLProgramShader shader)
         {
-            GL.BindVertexArray(array);                  // Bind vertex
+            GL.BindVertexArray(Array);                  // Bind vertex
             instancedata?.Bind(shader);                 // offer any instance data bind opportunity
         }
 
         public virtual void Render()
         {
             //System.Diagnostics.Debug.WriteLine("Draw " + primitivetype + " using " + primitivetype);
-            GL.DrawArrays(primitivetype, 0, count);
+            GL.DrawArrays(primitivetype, 0, Count);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                GL.DeleteVertexArray(array);
-                GL.DeleteBuffer(buffer);
-            }
+            GL.DeleteVertexArray(Array);
         }
     }
 }

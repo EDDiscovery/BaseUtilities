@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Vertex and texture co-ords
 
-    abstract public class GLVertexTexturedObject : GLVertexArrayBuffer
+    abstract public class GLVertexTexturedObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -30,28 +30,36 @@ namespace OpenTKUtils.GL4
 
         const int attriblayoutindexposition = 0;
         const int attriblayouttexcoord = 1;
+        const int bindingindex = 0;
 
         int texturebindingpoint;
 
         private IGLTexture texture;
+
+        GLBuffer buffer;
 
         public GLVertexTexturedObject(Vector4[] vertices, Vector2[] texcoords, IGLObjectInstanceData data, IGLTexture tx, int texbindingpoint, PrimitiveType pt) :
                     base(vertices.Length,data,pt)
         {
             System.Diagnostics.Debug.Assert(vertices.Length== texcoords.Length);
 
-            int offset = 0;                                                     // buffer size is enough to hold vertices and tex coords
-            GL.BufferData(BufferTarget.ArrayBuffer, 16 * vertices.Length + 8 * texcoords.Length, (IntPtr)offset, BufferUsageHint.StaticDraw);
+            buffer = new GLBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 16 * vertices.Length, vertices);     // first plug in the vertices
-            offset += 16 * vertices.Length;                 
-            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offset, 8 * texcoords.Length, texcoords);    // then copy in the colours
+            var pos = buffer.Write(vertices, texcoords);
 
-            GL.VertexAttribPointer(attriblayoutindexposition, 4, VertexAttribPointerType.Float, false, 16, 0);  // attrib 0, vertices, 4 entries, float, 16 long, at 0 in buffer
-            GL.VertexAttribPointer(attriblayouttexcoord, 2, VertexAttribPointerType.Float, false, 8, offset); // attrib 1, 2 entries, float, 8 long, at offset in buffer
+            GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 0);        // tell Array that binding index comes from this buffer.
 
-            GL.EnableVertexArrayAttrib(array, attriblayoutindexposition);       // go for attrib launch!
-            GL.EnableVertexArrayAttrib(array, attriblayouttexcoord);
+            GL.VertexArrayAttribBinding(Array, attriblayoutindexposition, bindingindex);     // bind atrib index to binding index
+            GL.VertexArrayAttribBinding(Array, attriblayouttexcoord, bindingindex);     // bind atrib index to binding index
+
+            GL.VertexAttribPointer(attriblayoutindexposition, 4, VertexAttribPointerType.Float, false, 16, pos.Item1);  // attrib 0, vertices, 4 entries, float, 16 long, at 0 in buffer
+            GL.VertexAttribPointer(attriblayouttexcoord, 2, VertexAttribPointerType.Float, false, 8, pos.Item2); // attrib 1, 2 entries, float, 8 long, at offset in buffer
+
+            GL.EnableVertexArrayAttrib(Array, attriblayoutindexposition);       // go for attrib launch!
+            GL.EnableVertexArrayAttrib(Array, attriblayouttexcoord);
+
+            GL4Statics.Check();
 
             texture = tx;
             texturebindingpoint = texbindingpoint;
@@ -62,6 +70,13 @@ namespace OpenTKUtils.GL4
             base.Bind(shader);
             texture.Bind(texturebindingpoint);
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            buffer.Dispose();
+        }
+
     }
 
     public class GLTexturedTriangles : GLVertexTexturedObject

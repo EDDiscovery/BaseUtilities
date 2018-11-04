@@ -22,25 +22,36 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLColourObjectShaderTranslation : GLProgramShaderPipeline
+    public abstract class GLShaderPipelineVertexBase : IGLShader
     {
-        public GLColourObjectShaderTranslation( Action<IGLProgramShader> action = null ) : base()
+        public int Id { get { return program.Id; } }
+
+        public abstract string Code();
+
+        private GLProgram program;
+
+        public void CompileLink()     
         {
-            AddVertex(new GLVertexShaderColourObjectTransform());
-            AddFragment(new GLFragmentShaderColour());
-            ShaderCallBack = action;
+            program = new OpenTKUtils.GL4.GLProgram();
+            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code());
+            System.Diagnostics.Debug.Assert(ret == null, ret);
+            ret = program.Link(separable: true);
+            System.Diagnostics.Debug.Assert(ret == null, ret);
+        }
+
+        public virtual void Start(Common.MatrixCalc c)
+        {
+            Matrix4 projmodel = c.ProjectionModelMatrix;
+            GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
+        }
+
+        public virtual void Finish() { }
+
+        public void Dispose()
+        {
+            program.Dispose();
         }
     }
-
-    public class GLColourObjectShaderNoTranslation : GLProgramShaderPipeline
-    {
-        public GLColourObjectShaderNoTranslation(Action<IGLProgramShader> action = null) : base()
-        {
-            AddVertex(new GLVertexShaderColourNoTranslation());
-            AddFragment(new GLFragmentShaderColour());
-            ShaderCallBack = action;
-        }
-    }
-
 
 }
+

@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLVertexShaderStars : GLVertexShadersBase
+    public class GLShaderStars : GLShaderPipelineVertexBase
     {
         public override string Code()
         {
@@ -70,7 +70,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderStars()
+        public GLShaderStars()
         {
             CompileLink();
         }
