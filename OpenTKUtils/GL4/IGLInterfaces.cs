@@ -44,6 +44,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLTexture : IDisposable
     {
+        int Id { get; }
         int Width { get; }                                  // primary width of mipmap level 0 bitmap on first array entry
         int Height { get; }
         void Bind(int bindingpoint);

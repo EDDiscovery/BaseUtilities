@@ -109,7 +109,7 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
-            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.DepthTest);         // standard - depth, ccw, cull
             GL.FrontFace(FrontFaceDirection.Ccw);
             GL.Enable(EnableCap.CullFace);
 
@@ -133,54 +133,40 @@ void main(void)
             items.Add("golden", new GLTexture2D(Properties.Resources.golden));
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
-#if false
+
             #region coloured lines
 
-            //rObjects.Add(items.Shader("COS-1L"),
-            //             new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-            //                   new GLVertexColourObject(
-            //                                                GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-            //                                                new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-            //                   ));
+            rObjects.Add(items.Shader("COS-1L"),
+                         new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                               new GLVertexColourObject(
+                                                            GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                            new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                               ));
 
 
-            //rObjects.Add(items.Shader("COS-1L"),
-            //             new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-            //                   new GLVertexColourObject(
-            //                       GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-            //                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-            //                   ));
-            //rObjects.Add(items.Shader("COS-1L"),
-            //             new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-            //                   new GLVertexColourObject(
-            //                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
-            //                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-            //                   ));
-            //rObjects.Add(items.Shader("COS-1L"),
-            //             new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-            //                   new GLVertexColourObject(
-            //                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
-            //                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-            //                   ));
+            rObjects.Add(items.Shader("COS-1L"),
+                         new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                               new GLVertexColourObject(
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                               ));
+            rObjects.Add(items.Shader("COS-1L"),
+                         new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                               new GLVertexColourObject(
+                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
+                                                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                               ));
+            rObjects.Add(items.Shader("COS-1L"),
+                         new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                               new GLVertexColourObject(
+                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
+                                                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                               ));
 
             #endregion
 
-
-
-            //rObjects.Add(items.Shader("TESx1"), "O-TES1",  new GLVertexPatches(   GLShapeObjectFactory.CreateQuad2(10.0f,10.0f), null));
-
             #region Uniform Block test
-            //GLUniformBlock b5 = new GLUniformBlock(5);        // keep test
-            //items.Add("UB5", b5);
-            //b5.Write(0);
-
-            //Vector3[] cvalues = new Vector3[100];
-            //for (int i = 0; i < 100; i++)
-            //    cvalues[i] = new Vector3(((float)i)/100.0f, 0.2f, ((float)i)/100.0f);
-
-            //b5.Write(cvalues );
-            //b5.Complete();
-
+            
             GLStorageBlock b6 = new GLStorageBlock(6);
             items.Add("SB6", b6);
             b6.Write(0.9f);
@@ -190,10 +176,11 @@ void main(void)
 
             items.Add("UT-1", new GLShaderPipelineBase(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
 
-            //rObjects.Add(items.Shader("UT-1"), "UT1", new GLColouredTriangles(
-            //        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f),
-            //        new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange },
-            //        new GLObjectDataTranslationRotation(new Vector3(-12, 0, 0))));
+            rObjects.Add(items.Shader("UT-1"), "UT1",
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                    new GLVertexColourObject(GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange }),
+                    new GLObjectDataTranslationRotation(new Vector3(-12, 0, 0))
+                    ));
 
             #endregion
 
@@ -201,12 +188,12 @@ void main(void)
             #region MipMaps
 
             items.Add("mipmap1", new GLTexture2D(Properties.Resources.mipmap, 9));
-            //items.Add("mipmap2", new GLTexture2D(Properties.Resources.mipmap2, 9));
 
-            //rObjects.Add(items.Shader("TEX"), "mipmap1", new GLTexturedTriangles(
-            //            GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-            //            new GLObjectDataTranslationRotation(new Vector3(-10, 0, 0)),
-            //            items.Tex("mipmap1"),1));
+            rObjects.Add(items.Shader("TEX"), "mipmap1",
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                    new GLVertexCoordsObject(GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                        new GLObjectDataTranslationRotationTexture(items.Tex("mipmap1"), new Vector3(-10, 0, 0))
+                        ));
 
             #endregion
 
@@ -215,25 +202,21 @@ void main(void)
 
             items.Add("2DArray2", new GLTexture2DArray(1,new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2 }, 9));
 
-            //items.Add("2DArray1", new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }, 1));
+            rObjects.Add(items.Shader("TEX2DA"), "2DA",
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                    new GLVertexCoordsObject(GLShapeObjectFactory.CreateQuad(2.0f), GLShapeObjectFactory.TexQuad),
+                        new GLObjectDataTranslationRotationTexture(items.Tex("2DArray2"), new Vector3(-8, 0, 0))
+                        ));
 
-            //rObjects.Add(items.Shader("TEX2DA"), "2DA",
-            //    new GLTexturedQuads(
-            //            GLShapeObjectFactory.CreateQuad(2.0f),
-            //            GLShapeObjectFactory.TexQuad,
-            //            new GLObjectDataTranslationRotation(new Vector3(-8, 0, 0)),
-            //            items.Tex("2DArray2"),1));
 
             items.Add("2DArray2-1", new GLTexture2DArray(1,new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }));
 
-            //items.Add("2DArray1", new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }, 1));
+            rObjects.Add(items.Shader("TEX2DA"), "2DA-1",
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                    new GLVertexCoordsObject(GLShapeObjectFactory.CreateQuad(2.0f), GLShapeObjectFactory.TexQuad),
+                        new GLObjectDataTranslationRotationTexture(items.Tex("2DArray2-1"), new Vector3(-8, 0, -2))
+                        ));
 
-            //rObjects.Add(items.Shader("TEX2DA"), "2DA-1",
-            //    new GLTexturedQuads(
-            //            GLShapeObjectFactory.CreateQuad(2.0f),
-            //            GLShapeObjectFactory.TexQuad,
-            //            new GLObjectDataTranslationRotation(new Vector3(-8, 0, -2)),
-            //            items.Tex("2DArray2-1"),1));
             #endregion
 
             #region Coloured triangles
@@ -310,74 +293,70 @@ void main(void)
             #region textures
 
             rObjects.Add(items.Shader("TEX"),
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                            GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                    new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                             new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"),new Vector3(-2, 0, 0))
                             ));
 
             //            items.Tex("dotted2"),1));
 
             rObjects.Add(items.Shader("TEX"), "EDDCube",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                         new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"),new Vector3(-2, 0, -2))
                         ));
 
             rObjects.Add(items.Shader("TEX"), "woodbox",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                         new GLObjectDataTranslationRotationTexture(items.Tex("wooden"), new Vector3(-2, 0, -4))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads, new GLVertexCoordsObject(
                         GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad),
                         new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"),new Vector3(-2, 0, -6))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads, 
+                    new GLVertexCoordsObject( GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad),
                         new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"),new Vector3(-2, 0, -8))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads, 
+                new GLVertexCoordsObject( GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad),
                         new GLObjectDataTranslationRotationTexture(items.Tex("dotted"),new Vector3(-2, 0, -10))
                         ));
 
             rObjects.Add(items.Shader("TEX"), "EDDFlat",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLShapeObjectFactory.CreateQuad(2.0f, items.Tex("logo8bpp").Width, items.Tex("logo8bpp").Height, new Vector3(-0, 0, 0)),
-                        GLShapeObjectFactory.TexQuad),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads, 
+                new GLVertexCoordsObject( GLShapeObjectFactory.CreateQuad(2.0f, items.Tex("logo8bpp").Width, items.Tex("logo8bpp").Height, new Vector3(-0, 0, 0)),  GLShapeObjectFactory.TexQuad),
                         new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(0, 0, 0))
                         ));
 
-
-
             rObjects.Add(items.Shader("TEX"),
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLShapeObjectFactory.CreateQuad(1.5f, new Vector3(-90, 0, 0)),
-                        GLShapeObjectFactory.TexQuad),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads, 
+                new GLVertexCoordsObject( GLShapeObjectFactory.CreateQuad(1.5f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad),
                         new GLObjectDataTranslationRotationTexture(items.Tex("smile"),new Vector3(0, 0, -2))
                        ));
 
             rObjects.Add(items.Shader("CROT"), "woodboxc1",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                    new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                         new GLObjectDataTranslationRotationTexture(items.Tex("wooden"),new Vector3(0, 0, -4))
                         ));
 
             rObjects.Add(items.Shader("CROT"), "woodboxc2",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                    new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                         new GLObjectDataTranslationRotationTexture(items.Tex("wooden"),new Vector3(0, 0, -6))
                        ));
 
             rObjects.Add(items.Shader("CROT"), "woodboxc3",
-                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, new GLVertexCoordsObject(
-                        GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
+                    new GLVertexCoordsObject(  GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                         new GLObjectDataTranslationRotationTexture(items.Tex("wooden"),new Vector3(0, 0, -8))
                         ));
 
@@ -389,12 +368,12 @@ void main(void)
 
             rObjects.Add(items.Shader("CROT"), "sphere6",
                 new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
-                    new GLVertexCoordsObject( GLSphereObjectFactory.CreateTexturedSphereFromTriangles(3, 1.0f)),
+                    new GLVertexCoordsObject( GLSphereObjectFactory.CreateTexturedSphereFromTriangles(3, 1.5f)),
                         new GLObjectDataTranslationRotationTexture(items.Tex("golden"), new Vector3(0, 0, -12))
                         ));
 
             #endregion
-#endif
+
             #region Sphere mapping 
             rObjects.Add(items.Shader("TEX"), "sphere7",
                 new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 
@@ -422,24 +401,23 @@ void main(void)
             float degreesd4 = ((float)time / 20000.0f * 360.0f) % 360f;
             float zeroone = (degrees >= 180) ? (1.0f - (degrees - 180.0f) / 180.0f) : (degrees / 180f);
 
-            //((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
-            //((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).ZRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).ZRotDegrees = degrees;
 
-            //((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0.01f, 0));
-            //((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).YRotDegrees = degrees;
-            //((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).ZRotDegrees = degreesd2;
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0.01f, 0));
+            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).ZRotDegrees = degreesd2;
 
-            //((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).XRotDegrees = -degrees;
-            //((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).YRotDegrees = degrees;
-            //((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).YRotDegrees = degrees;
-            //((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).ZRotDegrees = -degreesd2;
-            //((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceData)).YRotDegrees = degreesd4;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).XRotDegrees = -degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).ZRotDegrees = -degreesd2;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceData)).YRotDegrees = degreesd4;
 
-            //((GLVertexShaderTextureTransformWithCommonTransform)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
-            //((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
+            ((GLVertexShaderTextureTransformWithCommonTransform)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
+            ((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
-            ////items.UB("UB5").Write((int)(zeroone * 99f), 0, true);
-            //items.SB("SB6").Write(zeroone, 4, true);
+           items.SB("SB6").Write(zeroone, 4, true);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 

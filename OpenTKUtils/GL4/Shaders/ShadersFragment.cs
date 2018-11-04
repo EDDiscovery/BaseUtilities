@@ -49,6 +49,8 @@ void main(void)
 
     public class GLFragmentShaderTexture : GLShaderPipelineFragmentBase
     {
+        const int BindingPoint = 1;
+
         public override string Code()
         {
             return
@@ -69,7 +71,7 @@ void main(void)
             CompileLink();
         }
 
-        public override void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+        public override void Start(Common.MatrixCalc c) 
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
         }
@@ -79,6 +81,8 @@ void main(void)
 
     public class GLFragmentShader2DCommonBlend : GLShaderPipelineFragmentBase
     {
+        const int BindingPoint = 1;
+
         public float Blend { get; set; } = 0.0f;
         public override string Code()
         {

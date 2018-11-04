@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLRenderableItem : IDisposable            // all renderables inherit from this.
+    public class GLRenderableItem : IDisposable           
     {
         public int DrawCount { get; private set; }                                  // Draw count
         public int InstanceCount { get; private set; }                              // Instances

@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
 
     public class GLObjectDataTranslationRotation : IGLInstanceData
     {
-        public const int TRUniformId = 22;      // Standard used to pass object data transform to shader
+        public const int DefaultTRUniformId = 22;      // Standard used to pass object data transform to shader
 
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
@@ -44,7 +44,7 @@ namespace OpenTKUtils.GL4
         private Matrix4 transform;
         private int uniformid;
 
-        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, int uid = TRUniformId)
+        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, int uid = DefaultTRUniformId)
         {
             pos = new Vector3(0, 0, 0);
             rot = new Vector3(rx, ry, rz);
@@ -52,7 +52,7 @@ namespace OpenTKUtils.GL4
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = TRUniformId)
+        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = DefaultTRUniformId)
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
@@ -60,7 +60,7 @@ namespace OpenTKUtils.GL4
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, int uniformid = TRUniformId)
+        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, int uniformid = DefaultTRUniformId)
         {
             pos = p;
             rot = rotp;
@@ -92,7 +92,7 @@ namespace OpenTKUtils.GL4
 
     public class GLObjectDataTranslationRotationSetOnly : IGLInstanceData
     {
-        public const int TRUniformId = 22;      // Standard used to pass object data transform to shader
+        public const int DefaultTRUniformId = 22;      // Standard used to pass object data transform to shader
 
         public GLObjectDataTranslationRotationSetOnly(Vector3 pos, Vector3 rot)
         {
@@ -113,7 +113,7 @@ namespace OpenTKUtils.GL4
         public virtual void Bind(IGLProgramShader shader)
         {
             //System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id,TRUniformId, false, ref transform);
+            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id,DefaultTRUniformId, false, ref transform);
         }
 
         public void Dispose()
@@ -124,22 +124,24 @@ namespace OpenTKUtils.GL4
 
     public class GLObjectDataTranslationRotationTexture : GLObjectDataTranslationRotation
     {
-        private int texbind = 0;
+        const int DefaultTextureBindingPoint = 1;
+
+        private int texbind;
         private IGLTexture texture;
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, float rx = 0, float ry = 0, float rz = 0, int uid = TRUniformId, int tind = 0) : base(rx,ry,rx,uid)
+        public GLObjectDataTranslationRotationTexture(IGLTexture tex, float rx = 0, float ry = 0, float rz = 0, int uid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(rx,ry,rx,uid)
         {
             texture = tex;
             texbind = tind;
         }
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = TRUniformId, int tind = 0) : base(p,rx,ry,rx,uniformid)
+        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, int uniformid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(p,rx,ry,rx,uniformid)
         {
             texture = tex;
             texbind = tind;
         }
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, int uniformid = TRUniformId, int tind = 0) : base(p,rotp,uniformid)
+        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, int uniformid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(p,rotp,uniformid)
         {
             texture = tex;
             texbind = tind;

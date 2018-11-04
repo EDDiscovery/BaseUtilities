@@ -68,7 +68,7 @@
     <Compile Include="GL4\Shaders\ShaderPipelineVertexBase.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\Vertex\VertexTexCoords.cs" />
-    <Compile Include="GL4\StorageBlocks\StorageBlocks.cs" />
+    <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\Vertex\VertexObject212122.cs" />
     <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
     <Compile Include="GL4\Shaders\ShaderPipelineBase.cs" />

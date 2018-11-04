@@ -24,13 +24,14 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture2D : IGLTexture          // load a texture into open gl
     {
-        private int Id;
+        public int Id { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
 
         public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4)
         {
-            GL.CreateTextures(TextureTarget.Texture2D, 1, out Id);
+            GL.CreateTextures(TextureTarget.Texture2D, 1, out int id);
+            Id = id;
 
             Width = bmp.Width;
             Height = LoadMipMap(Id, bmp, mipmaplevel, genmipmaplevel, internalformat);

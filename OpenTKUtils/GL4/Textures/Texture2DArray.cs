@@ -24,13 +24,14 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture2DArray : IGLTexture          // load a 2D set of textures into open gl
     {
-        private int Id;
+        public int Id { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
 
         public GLTexture2DArray(int bindingpoint, Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
         {
-            GL.CreateTextures(TextureTarget.Texture2DArray, 1, out Id);
+            GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
+            Id = id;
             GL.BindTexture(TextureTarget.Texture2DArray, Id);
             GL4Statics.Check();
 
