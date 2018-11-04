@@ -23,7 +23,7 @@ namespace OpenTKUtils.GL4
 {
     // Vertex and colour data
 
-    public abstract class GLVertexColourObject : GLVertexArray
+    public class GLVertexColourObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -32,11 +32,15 @@ namespace OpenTKUtils.GL4
         const int attriblayoutcolour = 1;
         const int bindingindex = 0;
 
+        public override int Count { get; set; }
+
         GLBuffer buffer;
 
         // colour data can be shorted than vertices, and will be repeated.
-        public GLVertexColourObject(Vector4[] vertices, Color4[] colours , IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length,data,pt)
+        public GLVertexColourObject(Vector4[] vertices, Color4[] colours) 
         {
+            Count = vertices.Length;
+
             buffer = new GLBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
@@ -61,68 +65,5 @@ namespace OpenTKUtils.GL4
             base.Dispose();
             buffer.Dispose();
         }
-
     }
-
-    // Triangles, so vertex's come in 3's
-
-    public class GLColouredTriangles : GLVertexColourObject
-    {
-        public GLColouredTriangles(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data ) : base(vertices, colours, data, PrimitiveType.Triangles)
-        {
-        }
-    }
-
-    // Triangle strip, first/second/third = T1, second/third/fourth = T2, etc
-
-    public class GLColouredTriangleStrip: GLVertexColourObject
-    {
-        public GLColouredTriangleStrip(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.TriangleStrip)
-        {
-        }
-    }
-
-    // Triangle fan, first = fixed pos, each pair then defines a triangle from that vertex
-
-    public class GLColouredTriangleFan : GLVertexColourObject
-    {
-        public GLColouredTriangleFan(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.TriangleFan)
-        {
-        }
-    }
-
-
-    // each vertex pair defines an individual line
-    public class GLColouredLines : GLVertexColourObject
-    {
-        public GLColouredLines(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Lines)
-        {
-        }
-
-    }
-
-    public class GLColouredLineStrip : GLVertexColourObject
-    {
-        public GLColouredLineStrip(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.LineStrip)
-        {
-        }
-    }
-
-    // line strips, plus vertex 0 and vertex n-1 are linked
-    public class GLColouredLineLoop : GLVertexColourObject
-    {
-        public GLColouredLineLoop(Vector4[] vertices, Color4[] colours,  IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.LineLoop)
-        {
-        }
-    }
-
-    // single points with a single defined size
-    public class GLColouredPoints : GLVertexColourObject
-    {
-        public GLColouredPoints(Vector4[] vertices, Color4[] colours, IGLObjectInstanceData data) : base(vertices, colours, data, PrimitiveType.Points)
-        {
-        }
-
-    }
-
 }

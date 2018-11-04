@@ -23,23 +23,14 @@ namespace OpenTKUtils.GL4
 {
     // Base Class for vertex data to vertex shader..
 
-    public abstract class GLVertexArray : IGLRenderable
+    public abstract class GLVertexArray : IGLVertexArray
     {
-        public IGLObjectInstanceData InstanceData { get { return instancedata; } }
+        public abstract int Count { get; set; }
 
         protected int Array;                            // the vertex GL Array 
-        protected int Count;                            // num of vertexes
-        protected PrimitiveType primitivetype;          // Draw type
-        protected IGLObjectInstanceData instancedata;   // any instance data
-
-        // tbd instance count
-
-        protected GLVertexArray(int vertexCount, IGLObjectInstanceData id, PrimitiveType pt)
+        
+        protected GLVertexArray()
         {
-            instancedata = id;
-            Count = vertexCount;
-            primitivetype = pt;
-
             Array = GL.GenVertexArray();        // get the handle
             GL.BindVertexArray(Array);          // creates the array
         }
@@ -47,18 +38,12 @@ namespace OpenTKUtils.GL4
         public virtual void Bind(IGLProgramShader shader)
         {
             GL.BindVertexArray(Array);                  // Bind vertex
-            instancedata?.Bind(shader);                 // offer any instance data bind opportunity
-        }
-
-        public virtual void Render()
-        {
-            //System.Diagnostics.Debug.WriteLine("Draw " + primitivetype + " using " + primitivetype);
-            GL.DrawArrays(primitivetype, 0, Count);
         }
 
         public virtual void Dispose()
         {
             GL.DeleteVertexArray(Array);
         }
+
     }
 }

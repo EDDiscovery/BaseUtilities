@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Vertex's only, in vec4 form
 
-    public abstract class GLVertexObject : GLVertexArray
+    public class GLVertexObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -31,8 +31,12 @@ namespace OpenTKUtils.GL4
 
         GLBuffer buffer;
 
-        public GLVertexObject(Vector4[] vertices, IGLObjectInstanceData data, PrimitiveType pt) : base(vertices.Length, data, pt)
+        public override int Count { get; set; }
+
+        public GLVertexObject(Vector4[] vertices)
         {
+            Count = vertices.Length;
+
             buffer = new GLBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
@@ -64,27 +68,4 @@ namespace OpenTKUtils.GL4
             buffer.Dispose();
         }
     }
-
-    // single points with a single defined size
-    public class GLVertexPoints : GLVertexObject
-    {
-        public GLVertexPoints(Vector4[] vertices, IGLObjectInstanceData data) : base(vertices, data, PrimitiveType.Points)
-        {
-        }
-    }
-
-    public class GLVertexQuad : GLVertexObject
-    {
-        public GLVertexQuad(Vector4[] vertices, IGLObjectInstanceData data): base(vertices, data, PrimitiveType.Quads)
-        {
-        }
-    }
-
-    public class GLVertexPatches : GLVertexObject
-    {
-        public GLVertexPatches(Vector4[] vertices, IGLObjectInstanceData data) : base(vertices, data, PrimitiveType.Patches)
-        {
-        }
-    }
-
 }

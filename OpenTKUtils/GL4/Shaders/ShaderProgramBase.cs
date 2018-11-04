@@ -26,10 +26,17 @@ namespace OpenTKUtils.GL4
     {
         public int Id { get { return program.Id; } }
         public IGLShader Get(ShaderType t) { return this; }
+        public Action<IGLProgramShader> StartAction { get; set; }
+
         private GLProgram program;
 
         public GLShaderProgramBase()
         {
+        }
+
+        public GLShaderProgramBase(Action<IGLProgramShader> sa) : this()
+        {
+            StartAction = sa;
         }
 
         public void Compile( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null )
@@ -73,9 +80,10 @@ namespace OpenTKUtils.GL4
             GL4Statics.Check();
         }
 
-        public virtual void Start(MatrixCalc c)     // override! do not call back if you don't want to
+        public virtual void Start(MatrixCalc c)     // override, but you must call these two
         {
-            GL.UseProgram(Id);           // use this
+            GL.UseProgram(Id);
+            StartAction?.Invoke(this);
         }
 
         public virtual void Finish()                // override if required

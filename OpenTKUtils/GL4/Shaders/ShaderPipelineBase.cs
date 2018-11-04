@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     public class GLShaderPipelineBase : IGLProgramShader
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
-        public Action<IGLProgramShader> ShaderCallBack;
+        public Action<IGLProgramShader> StartAction { get; set; }
 
         public IGLShader Get(ShaderType t) { return programs[t]; }
 
@@ -37,6 +37,11 @@ namespace OpenTKUtils.GL4
         {
             pipelineid = GL.GenProgramPipeline();
             programs = new Dictionary<ShaderType, IGLShader>();
+        }
+
+        public GLShaderPipelineBase(Action<IGLProgramShader> sa) : this()
+        {
+            StartAction = sa;
         }
 
         public GLShaderPipelineBase(IGLShader vertex, IGLShader fragment) : this()
@@ -74,7 +79,7 @@ namespace OpenTKUtils.GL4
             foreach (var x in programs)                             // let any programs do any special set up
                 x.Value.Start(c);
 
-            ShaderCallBack?.Invoke(this);                           // any shader hooks get a chance.
+            StartAction?.Invoke(this);                           // any shader hooks get a chance.
         }
 
         public virtual void Finish()                                        // and clean up afterwards

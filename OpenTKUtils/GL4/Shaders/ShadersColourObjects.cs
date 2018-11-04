@@ -24,21 +24,19 @@ namespace OpenTKUtils.GL4
 
     public class GLColourObjectShaderTranslation : GLShaderPipelineBase
     {
-        public GLColourObjectShaderTranslation( Action<IGLProgramShader> action = null ) : base()
+        public GLColourObjectShaderTranslation( Action<IGLProgramShader> action = null ) : base(action)
         {
             AddVertex(new GLVertexShaderColourObjectTransform());
             AddFragment(new GLFragmentShaderColour());
-            ShaderCallBack = action;
         }
     }
 
     public class GLColourObjectShaderNoTranslation : GLShaderPipelineBase
     {
-        public GLColourObjectShaderNoTranslation(Action<IGLProgramShader> action = null) : base()
+        public GLColourObjectShaderNoTranslation(Action<IGLProgramShader> action = null) : base(action)
         {
             AddVertex(new GLVertexShaderColourNoTranslation());
             AddFragment(new GLFragmentShaderColour());
-            ShaderCallBack = action;
         }
     }
 

@@ -45,6 +45,8 @@ void main(void)
         }
     }
 
+    // Requires a 2D texture bound
+
     public class GLFragmentShaderTexture : GLShaderPipelineFragmentBase
     {
         public override string Code()
@@ -73,7 +75,7 @@ void main(void)
         }
     }
 
-
+    // Requires a 2D texture array bound
 
     public class GLFragmentShader2DCommonBlend : GLShaderPipelineFragmentBase
     {

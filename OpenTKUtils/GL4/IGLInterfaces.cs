@@ -14,16 +14,19 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using OpenTK;
 using System;
 
 namespace OpenTKUtils.GL4
 {
-    public interface IGLRenderable : IDisposable            // all renderables inherit from this.
+    public interface IGLVertexArray : IDisposable       
     {
+        int Count { get; }
         void Bind(IGLProgramShader shader);
-        void Render();
-        IGLObjectInstanceData InstanceData { get; }
+    }
+
+    public interface IGLInstanceData : IDisposable   
+    {
+        void Bind(IGLProgramShader shader);          
     }
 
     public interface IGLShader : IDisposable                // All shaders inherit from this
@@ -36,11 +39,7 @@ namespace OpenTKUtils.GL4
     public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
         IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.
-    }
-
-    public interface IGLObjectInstanceData                  // ALL object data should inherit from this
-    {
-        void Bind(IGLProgramShader shader);                // callled before object is drawn
+        Action<IGLProgramShader> StartAction { get; }       // On bind, optional call to bind other data
     }
 
     public interface IGLTexture : IDisposable

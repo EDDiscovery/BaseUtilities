@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Vertex and texture co-ords
 
-    abstract public class GLVertexTexturedObject : GLVertexArray
+    public class GLVertexCoordsObject : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -32,15 +32,14 @@ namespace OpenTKUtils.GL4
         const int attriblayouttexcoord = 1;
         const int bindingindex = 0;
 
-        int texturebindingpoint;
-
-        private IGLTexture texture;
-
         GLBuffer buffer;
 
-        public GLVertexTexturedObject(Vector4[] vertices, Vector2[] texcoords, IGLObjectInstanceData data, IGLTexture tx, int texbindingpoint, PrimitiveType pt) :
-                    base(vertices.Length,data,pt)
+        public override int Count { get; set; }
+
+        public GLVertexCoordsObject(Vector4[] vertices, Vector2[] texcoords)
         {
+                Count = vertices.Length;
+
             System.Diagnostics.Debug.Assert(vertices.Length== texcoords.Length);
 
             buffer = new GLBuffer();
@@ -60,41 +59,17 @@ namespace OpenTKUtils.GL4
             GL.EnableVertexArrayAttrib(Array, attriblayouttexcoord);
 
             GL4Statics.Check();
-
-            texture = tx;
-            texturebindingpoint = texbindingpoint;
         }
 
-        public override void Bind(IGLProgramShader shader)
+        public GLVertexCoordsObject(Tuple<Vector4[], Vector2[]> item) : this(item.Item1, item.Item2)
         {
-            base.Bind(shader);
-            texture.Bind(texturebindingpoint);
+
         }
 
         public override void Dispose()
         {
             base.Dispose();
             buffer.Dispose();
-        }
-
-    }
-
-    public class GLTexturedTriangles : GLVertexTexturedObject
-    {
-        public GLTexturedTriangles(Vector4[] vertices, Vector2[] tex, IGLObjectInstanceData data, IGLTexture tx, int texbindingpoint) : base(vertices, tex, data, tx, texbindingpoint, PrimitiveType.Triangles)
-        {
-        }
-
-        public GLTexturedTriangles(Tuple<Vector4[], Vector2[]> verticestex, IGLObjectInstanceData data, IGLTexture tx, int texbindingpoint) :
-                    base(verticestex.Item1, verticestex.Item2, data, tx, texbindingpoint, PrimitiveType.Triangles)
-        {
-        }
-    }
-
-    public class GLTexturedQuads : GLVertexTexturedObject
-    {
-        public GLTexturedQuads(Vector4[] vertices, Vector2[] tex, IGLObjectInstanceData data, IGLTexture tx, int texbindingpoint ) : base(vertices, tex, data, tx, texbindingpoint, PrimitiveType.Quads)
-        {
         }
     }
 }

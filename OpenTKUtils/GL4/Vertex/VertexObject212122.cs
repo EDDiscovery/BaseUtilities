@@ -24,7 +24,7 @@ namespace OpenTKUtils.GL4
     // Vertex only, in Packed form
     // packs three values to 8 bytes
 
-    public abstract class GLVertexPackedObject212122 : GLVertexArray    
+    public class GLVertexPackedObject212122 : GLVertexArray    
     {
         // Vertex shader must implement
         // layout(location = 0) in uvec2 position;
@@ -33,8 +33,12 @@ namespace OpenTKUtils.GL4
 
         GLBuffer buffer;
 
-        public GLVertexPackedObject212122(Vector3[] vertices, IGLObjectInstanceData data, PrimitiveType pt, Vector3 offsets, float mult) : base(vertices.Length, data, pt)
+        public override int Count { get; set; }
+
+        public GLVertexPackedObject212122(Vector3[] vertices, Vector3 offsets, float mult) 
         {
+            Count = vertices.Length;
+
             int p = 0;
             uint[] packeddata = new uint[vertices.Length * 2];
             for (int i = 0; i < vertices.Length; i++)
@@ -69,13 +73,4 @@ namespace OpenTKUtils.GL4
             buffer.Dispose();
         }
     }
-
-    // single points with a single defined size
-    public class GLVertexPackedPoints212122 : GLVertexPackedObject212122
-    {
-        public GLVertexPackedPoints212122(Vector3[] vertices, IGLObjectInstanceData data, Vector3 offsets, float mult) : base(vertices, data, PrimitiveType.Points, offsets, mult )
-        {
-        }
-    }
-
 }
