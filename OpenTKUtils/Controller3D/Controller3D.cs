@@ -246,7 +246,7 @@ namespace OpenTKUtils.Common
                     mouseStartRotate.Y = mouseStartTranslateXZ.Y = e.Y;
                     //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
-                    camera.Rotate(new Vector3((float)(-dy / 4.0f), (float)(dx / 4.0f), 0));
+                    camera.Rotate(new Vector3((float)(dy / 4.0f), (float)(dx / 4.0f), 0));
                 }
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
@@ -279,7 +279,7 @@ namespace OpenTKUtils.Common
                     //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
                     Matrix3 transform = Matrix3.CreateRotationZ((float)(-camera.Current.Y * Math.PI / 180.0f));
-                    Vector3 translation = new Vector3(-dx * (1.0f / zoom.Current) * 2.0f, dy * (1.0f / zoom.Current) * 2.0f, 0.0f);
+                    Vector3 translation = new Vector3(dx * (1.0f / zoom.Current) * 2.0f, -dy * (1.0f / zoom.Current) * 2.0f, 0.0f);
                     translation = Vector3.Transform(translation, transform);
 
                     pos.Translate(new Vector3(translation.X, 0, translation.Y));

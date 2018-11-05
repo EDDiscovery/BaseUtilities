@@ -100,9 +100,7 @@ void main(void)
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(45f, 0, 0f), 1F);
-           // gl3dcontroller.MatrixCalc.ZoomDistance = 5F;
-           // gl3dcontroller.Start(new Vector3(10, 0, 0), new Vector3(90f, 0, 0f), 1F);
+            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
             gl3dcontroller.TravelSpeed = (ms) =>
             {
