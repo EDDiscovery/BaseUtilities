@@ -5,12 +5,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
@@ -25,7 +25,7 @@ namespace OpenTKUtils.Common
 
         public bool InSlew { get { return (cameraDirSlewProgress < 1.0F); } }
 
-        private Vector3 cameraDir = Vector3.Zero;               // X = up/down, Y = rotate, Z = yaw, in degrees. 
+        private Vector3 cameraDir = Vector3.Zero;               // X = up/down, Y = rotate, Z = yaw, in degrees.
         private float cameraDirSlewProgress = 1.0f;             // 0 -> 1 slew progress
         private float cameraDirSlewTime;                        // how long to take to do the slew
         private Vector3 cameraDirSlewPosition;                  // where to slew to.
@@ -40,24 +40,13 @@ namespace OpenTKUtils.Common
         {
             KillSlew();
 
-            cameraDir.X = BoundedAngle(cameraDir.X + offset.X);
-            cameraDir.Y = BoundedAngle(cameraDir.Y + offset.Y);
-            cameraDir.Z = BoundedAngle(cameraDir.Z + offset.Z);        // rotate camera by asked value
+            cameraDir.X = cameraDir.X.BoundedAngle(offset.X);
+            cameraDir.Y = cameraDir.Y.BoundedAngle(offset.Y);
+            cameraDir.Z = cameraDir.Z.BoundedAngle(offset.Z);        // rotate camera by asked value
 
             // Limit camera pitch
             if (cameraDir.X < 0 && cameraDir.X > -90)
                 cameraDir.X = 0;
-            if (cameraDir.X > 180 || cameraDir.X <= -90)
-                cameraDir.X = 180;
-        }
-
-        public void RotateTBD(Vector3 rot)
-        {
-            cameraDir += rot;
-
-            if (cameraDir.X < 0 && cameraDir.X > -90)
-                cameraDir.X = 0;
-
             if (cameraDir.X > 180 || cameraDir.X <= -90)
                 cameraDir.X = 180;
         }
@@ -79,12 +68,10 @@ namespace OpenTKUtils.Common
             }
         }
 
-        public void LookAt(Vector3 curpos, Vector3 target, float zoom, float time = 0)            // real world 
+        public void LookAt(Vector3 eyepos, Vector3 target, float zoom, float time = 0)            // real world
         {
-            Vector3 targetinv = new Vector3(target.X, -target.Y, target.Z);
-            Vector3 eye = curpos;
-            Vector3 camera = AzEl(eye, targetinv);
-            camera.Y = 180 - camera.Y;      // adjust to this system
+            Vector3 camera = eyepos.AzEl(target,true);
+            System.Diagnostics.Debug.WriteLine("...Eyepos " + eyepos + " target " + target + " Camera dir cur " + cameraDir + " to " + camera);
             Pan(camera, time);
         }
 
@@ -118,34 +105,6 @@ namespace OpenTKUtils.Common
             }
         }
 
-        private static Vector3 AzEl(Vector3 curpos, Vector3 target)     // az and elevation between curpos and target
-        {
-            Vector3 delta = Vector3.Subtract(target, curpos);
-            //Console.WriteLine("{0}->{1} d {2}", curpos, target, delta);
-
-            float radius = delta.Length;
-
-            if (radius < 0.1)
-                return new Vector3(180, 0, 0);     // point forward, level
-
-            float inclination = (float)Math.Acos(delta.Y / radius);
-            float azimuth = (float)Math.Atan(delta.Z / delta.X);
-
-            inclination *= (float)(180 / Math.PI);
-            azimuth *= (float)(180 / Math.PI);
-
-            if (delta.X < 0)      // atan wraps -90 (south)->+90 (north), then -90 to +90 around the y axis, going anticlockwise
-                azimuth += 180;
-            azimuth += 90;        // adjust to 0 at bottom, 180 north, to 360
-
-            return new Vector3(inclination, azimuth, 0);
-        }
-
-        private float BoundedAngle(float angle)
-        {
-            return ((angle + 360 + 180) % 360) - 180;
-        }
     }
 }
 
-  

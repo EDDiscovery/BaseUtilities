@@ -33,7 +33,7 @@ namespace OpenTKUtils.GL4
             GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
             Id = id;
             GL.BindTexture(TextureTarget.Texture2DArray, Id);
-            GL4Statics.Check();
+            GLStatics.Check();
 
             for (int bitmapnumber = 0; bitmapnumber < bmps.Length; bitmapnumber++)
             {
@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4
                             Width,
                             Height,
                             bmps.Length);       // number of bitmaps depth
-                    GL4Statics.Check();
+                    GLStatics.Check();
                 }
 
                 System.Drawing.Imaging.BitmapData bmpdata = bmps[bitmapnumber].LockBits(new Rectangle(0, 0, bmps[bitmapnumber].Width, bmps[bitmapnumber].Height),
@@ -74,7 +74,7 @@ namespace OpenTKUtils.GL4
                         PixelFormat.Bgra,
                         PixelType.UnsignedByte, // unsigned bytes in BGRA.  PixelStore above indicated the stride across 1 row
                         ptr);
-                    GL4Statics.Check();
+                    GLStatics.Check();
 
                     if (m == 0)             // at 0, we jump down the whole first image.  4 is the bytes/pixel
                         ptr += Width * Height * 4;
@@ -98,14 +98,14 @@ namespace OpenTKUtils.GL4
             var textureMagFilter = (int)All.Linear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public void Bind(int bindingpoint)
         {
             GL.BindTexture(TextureTarget.Texture2DArray, Id);
             GL.BindTextureUnit(bindingpoint, Id);
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public void Dispose()           // you can double dispose.

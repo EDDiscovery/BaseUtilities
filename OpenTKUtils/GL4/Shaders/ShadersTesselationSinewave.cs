@@ -123,7 +123,7 @@ void main(void)
             Matrix4 projmodel = c.ProjectionModelMatrix;
             GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
             GL.ProgramUniform1(Id, 26, Phase);
-            GL4Statics.PatchSize(4);
+            GLStatics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             if ( nocull)
                 GL.Disable(EnableCap.CullFace);

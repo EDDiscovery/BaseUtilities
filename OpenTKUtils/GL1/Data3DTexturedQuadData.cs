@@ -5,12 +5,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using System;
@@ -32,7 +32,7 @@ namespace OpenTKUtils.GL1
         public Color Color { get; set; }            // use Color to set Alpha only
         public float Size { get; set; }     // not used
         public PrimitiveType Type { get { return PrimitiveType.Quads; } }
-        public Object Tag { get; set; }     // optional tag 
+        public Object Tag { get; set; }     // optional tag
         public Object Tag2 { get; set; }     // optional tag
 
         private Bitmap _texture;                    // and texture
@@ -271,7 +271,7 @@ namespace OpenTKUtils.GL1
             {
                 _control = control;
 
-                if (TextureVboID == 0)                                  
+                if (TextureVboID == 0)
                     CreateTexture();
                 if (VtxVboID == 0)
                     CreateVerticesTri();
@@ -296,7 +296,7 @@ namespace OpenTKUtils.GL1
         }
 
         // rotation (0,0,0) selects a bitmap lying flat on the y axis, looking up
-        // rotation (90,0,0) selected a vertical bitmap, upside down 
+        // rotation (90,0,0) selected a vertical bitmap, upside down
         // rotation (-90,0,0) selected a vertical bitmap, upright
         // rotation (0,90,0) flat spins the bitmap facing right
         // rotation (0,0,90) spins the bitmap along its y axis, facing left.
@@ -317,7 +317,7 @@ namespace OpenTKUtils.GL1
             width /= 2;
             height /= 2;
 
-            Vector3[] points = new Vector3[]      // bitmap is placed on map, centred if hoff,voff=0. 
+            Vector3[] points = new Vector3[]      // bitmap is placed on map, centred if hoff,voff=0.
             {
                 Vector3.Transform(new Vector3(-width + hoffset, 0, height + voffset), rm) + centre,           // top left, rotate and transform
                 Vector3.Transform(new Vector3(width + hoffset, 0, height + voffset), rm) + centre,            // top right
@@ -333,7 +333,7 @@ namespace OpenTKUtils.GL1
         {
             Vector4[] texcoords = new Vector4[]
             {
-                new Vector4(left * 1.0F / width, bottom * 1.0F / height, 0, 1),      // order botleft,botright,topright,topleft 
+                new Vector4(left * 1.0F / width, bottom * 1.0F / height, 0, 1),      // order botleft,botright,topright,topleft
                 new Vector4(right * 1.0F / width, bottom * 1.0F / height, 0, 1),     // paints bitmap correctly
                 new Vector4(right * 1.0F / width, top * 1.0F / height, 0, 1),
                 new Vector4(left * 1.0F / width, top * 1.0F / height, 0, 1)
@@ -473,7 +473,7 @@ namespace OpenTKUtils.GL1
     {
         public HashSet<TexturedQuadData> BaseTextures = new HashSet<TexturedQuadData>();
 
-        public TexturedQuadDataCollection(string name, Color color, float pointsize)       
+        public TexturedQuadDataCollection(string name, Color color, float pointsize)
             : base(name, color, pointsize)
         {
         }

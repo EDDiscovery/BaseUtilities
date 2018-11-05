@@ -24,61 +24,112 @@ namespace BaseUtils
 
     public class KeyboardState
     {
-        public bool IsPressedRemove(Keys key)       // is pressed, remove from list to say you've processed it
+        public enum ShiftState
         {
-            if (hasbeenpressed.Contains(key))
+            None = 0,
+            Shift = 1,
+            Ctrl = 2,
+            Alt = 4,
+        };
+
+        public ShiftState SetShift(bool ctrl, bool shift, bool alt)
+        {
+            return (ShiftState)((ctrl ? ShiftState.Ctrl : 0) | (shift ? ShiftState.Shift : 0) | (alt ? ShiftState.Alt : 0));
+        }
+
+        public bool IsPressedRemove(Keys key, ShiftState state)       // is pressed, remove from list saying it has been pressed.  Only true if shift state matches
+        {
+            bool ret = false;
+            if (hasbeenpressed.ContainsKey(key))
             {
+                ret = state == hasbeenpressed[key];
                 hasbeenpressed.Remove(key);
-                return true;
             }
-            else
-                return false;
+
+            return ret;
         }
 
-        public bool IsPressed(Keys key)             // is currently pressed
+        public bool IsPressedRemove(Keys key)                       // is pressed, remove from list saying it has been pressed.  True if no shift state
         {
-            return keyspressed.Contains(key);
+            bool ret = false;
+            if (hasbeenpressed.ContainsKey(key) )
+            {
+                ret = hasbeenpressed[key] == ShiftState.None;
+                hasbeenpressed.Remove(key);
+            }
+
+            return ret;
         }
 
-        public bool IsAnyPressed( params Keys[] keys) // is currently pressed
+        public void ClearPressed()                                    // all has been checked, clear them
+        {
+            hasbeenpressed.Clear();
+        }
+
+        public bool IsPressed(ShiftState state, Keys key)             // is currently pressed and in this shift state
+        {
+            return keyspressed.ContainsKey(key) && keyspressed[key] == state;
+        }
+
+        public ShiftState? IsPressed(Keys key)                                 // is currently pressed and in any shift state
+        {
+            if (keyspressed.ContainsKey(key))
+                return keyspressed[key];
+            else
+                return null;
+        }
+
+        public bool IsAnyPressed(ShiftState state, params Keys[] keys)  // is currently pressed and in this shift state
         {
             foreach (var k in keys)
             {
-                if (IsPressed(k))
+                if (IsPressed(state, k))
                     return true;
             }
 
             return false;
         }
 
-        public bool Shift { get { return shiftpressed; } }              // is shift pressed?
-        public bool Ctrl { get { return ctrlpressed; } }                // is ctrl pressed?
+        public ShiftState? IsAnyPressed(params Keys[] keys)  // is currently pressed and in this shift state
+        {
+            foreach (var k in keys)
+            {
+                ShiftState? s = IsPressed(k);
+                if (s != null)
+                    return s;
+            }
 
-        private HashSet<Keys> keyspressed = new HashSet<Keys>();        // set of current keys pressed...
-        private HashSet<Keys> hasbeenpressed = new HashSet<Keys>();        // set of current not yet processed
-        private bool shiftpressed = false;
-        private bool ctrlpressed = false;
+            return null;
+        }
+
+        private Dictionary<Keys, ShiftState> keyspressed = new Dictionary<Keys, ShiftState>();
+        private Dictionary<Keys, ShiftState> hasbeenpressed = new Dictionary<Keys, ShiftState>();
+
+        public bool Ctrl { get; private set; } = false;
+        public bool Alt { get; private set; } = false;
+        public bool Shift { get; private set; } = false;
 
         public void Reset()
         {
-            shiftpressed = false;
-            ctrlpressed = false;
+            Ctrl = Alt = Shift = false;
             keyspressed.Clear();
             hasbeenpressed.Clear();
         }
 
         public void KeyDown(object sender, KeyEventArgs e)      // hook to handler
         {
-            ctrlpressed = e.Control;
-            shiftpressed = e.Shift;
-            keyspressed.Add(e.KeyCode);
-            hasbeenpressed.Add(e.KeyCode);                      // yes its pressed - add to queue
+            Ctrl = e.Control;
+            Alt = e.Alt;
+            Shift = e.Shift;
+            keyspressed[e.KeyCode] = SetShift(e.Control, e.Shift, e.Alt);
+            hasbeenpressed[e.KeyCode] = SetShift(e.Control, e.Shift, e.Alt);
         }
 
         public void KeyUp(object sender, KeyEventArgs e)        // hook to handler
         {
-            ctrlpressed = e.Control;
-            shiftpressed = e.Shift;
+            Ctrl = e.Control;
+            Alt = e.Alt;
+            Shift = e.Shift;
             keyspressed.Remove(e.KeyCode);
         }
     }

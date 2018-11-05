@@ -77,7 +77,7 @@ namespace OpenTKUtils.GL4
             ret = program.Link();
             System.Diagnostics.Debug.Assert(ret == null, "Link", ret);
 
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public virtual void Start(MatrixCalc c)     // override, but you must call these two

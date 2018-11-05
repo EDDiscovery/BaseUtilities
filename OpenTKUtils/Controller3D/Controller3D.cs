@@ -5,12 +5,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
@@ -50,6 +50,8 @@ namespace OpenTKUtils.Common
         public Position Pos { get { return pos; } }
         public Camera Camera { get { return camera; } }
 
+        public bool EliteMovement { get; set; } = true;
+
         private Position pos = new Position();
         private Camera camera = new Camera();
         private MatrixCalc matrix = new MatrixCalc();
@@ -86,7 +88,7 @@ namespace OpenTKUtils.Common
 
         public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
         {
-            pos.Set(lookat);
+            pos.Current = lookat;
             camera.Set(cameradir);
             zoom.Default = zoomn;
             zoom.SetDefault();
@@ -101,25 +103,26 @@ namespace OpenTKUtils.Common
 
         // Pos Direction interface
         // don't want direct class access, via this wrapper
-        public void SetPosition(Vector3 posx) { pos.Set(posx); }
+        public void SetPosition(Vector3 posx) { pos.Current = posx; }
         public void TranslatePosition(Vector3 posx) { pos.Translate(posx); }
         public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F ) { pos.GoTo(normpos, timeslewsec, unitspersecond); }
 
         public void SetCameraDir(Vector3 pos) { camera.Set(pos); }
         public void RotateCameraDir(Vector3 rot) { camera.Rotate(rot); }
         public void StartCameraPan(Vector3 pos, float timeslewsec = 0) { camera.Pan(pos, timeslewsec);     }
-        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0)          { camera.LookAt(pos.Current, normtarget, zoom, time);        }
+        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0, float unitspersecond = 1000F)
+                    { pos.GoTo(normtarget,time,unitspersecond); camera.LookAt(matrix.EyePosition, normtarget, zoom, time);    }
 
         public void KillSlews() { pos.KillSlew(); camera.KillSlew(); zoom.KillSlew(); }
 
         // Zoom
         public void StartZoom(float z, float timetozoom = 0) { zoom.GoTo(z, timetozoom); }
-        
+
         // misc
 
         public void Redraw() { glControl.Invalidate(); }
 
-        #region Implementation        
+        #region Implementation
 
         private void GlControl_Resize(object sender, EventArgs e)           // there was a gate in the original around OnShown.. not sure why.
         {
@@ -163,10 +166,13 @@ namespace OpenTKUtils.Common
                 if (StandardKeyboardHandler.Camera(keyboard, camera, LastHandleInterval))       // moving the camera around kills the pos slew (as well as its own slew)
                     pos.KillSlew();
 
-                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, LastHandleInterval, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, true))
+                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, EliteMovement))
                     camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
 
                 StandardKeyboardHandler.Zoom(keyboard, zoom, LastHandleInterval);      // zoom slew is not affected by the above
+
+                if (keyboard.IsPressedRemove(Keys.M, BaseUtils.KeyboardState.ShiftState.Ctrl))
+                    EliteMovement = !EliteMovement;
 
                 handleotherkeys?.Invoke(keyboard);
             }

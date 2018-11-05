@@ -53,7 +53,7 @@ namespace OpenTKUtils.GL4
                 internalformat,                       // format of texture - 4 floats is the normal, and is given in the constructor
                 bmp.Width,                            // width and height of mipmap level 0
                 height);
-            GL4Statics.Check();
+            GLStatics.Check();
 
             int curwidth = bmp.Width;
             int curheight = height;
@@ -71,7 +71,7 @@ namespace OpenTKUtils.GL4
                     PixelFormat.Bgra,
                     PixelType.UnsignedByte,     // and we asked above for Bgra data as unsigned bytes
                     ptr);
-                GL4Statics.Check();
+                GLStatics.Check();
 
                 if (m == 0)             // at 0, we jump down the whole image.  4 is the bytes/pixel
                     ptr += bmp.Width * height * 4;

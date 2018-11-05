@@ -16,13 +16,13 @@
 
 using OpenTK;
 using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace OpenTKUtils.GL4
+namespace OpenTKUtils
 {
-    public static class GL4Statics
+    public static class GLStatics
     {
         static public Vector4 Translate(this Vector4 Vertex, Vector3 offset)
         {
@@ -83,19 +83,6 @@ namespace OpenTKUtils.GL4
                 System.Diagnostics.Debug.Assert(false, errmsg );
         }
 
-        static PolygonMode? LastPolygonMode = null;
-        static MaterialFace? LastMaterialFace = null;
-
-        public static void PolygonMode(MaterialFace m, PolygonMode p)          // cache polygon mode for speed
-        {
-            if (LastPolygonMode == null || LastPolygonMode.Value != p || LastMaterialFace != m)
-            {
-                GL.PolygonMode(m, p);
-                LastPolygonMode = p;
-                LastMaterialFace = m;
-            }
-        }
-
         static int? LastPatchSize = null;
 
         public static void PatchSize(int p)          // cache size for speed
@@ -127,6 +114,36 @@ namespace OpenTKUtils.GL4
                 GL.LineWidth(p);
                 LastLineWidth = p;
             }
+        }
+
+        public static Vector3 AzEl(this Vector3 curpos, Vector3 target, bool degrees)     // az and elevation between curpos and target
+        {
+            Vector3 delta = Vector3.Subtract(target, curpos);
+            //Console.WriteLine("{0}->{1} d {2}", curpos, target, delta);
+
+            float radius = delta.Length;
+
+            if (radius < 0.1)
+                return new Vector3(180, 0, 0);     // point forward, level
+
+            float inclination = (float)Math.Acos(delta.Y / radius);
+            float azimuth = (float)Math.Atan(delta.Z / delta.X);
+
+            if (degrees)
+            {
+                inclination = inclination.Degrees();
+                azimuth = azimuth.Degrees();
+            }
+
+            //System.Diagnostics.Debug.WriteLine("inc " + inclination + " az " + azimuth + " delta" + delta);
+
+            if (delta.X >= 0)      // atan wraps -90 (south)->+90 (north), then -90 to +90 around the y axis, going anticlockwise
+                azimuth = 90 - azimuth;     // adjust
+            else
+                azimuth = -90 - azimuth;
+
+            //System.Diagnostics.Debug.WriteLine(" -> inc " + inclination + " az " + azimuth);
+            return new Vector3(inclination, azimuth, 0);
         }
 
 

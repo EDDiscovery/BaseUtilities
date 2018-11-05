@@ -59,7 +59,7 @@ namespace OpenTKUtils.GL4
             // link the vertex array and buffer and provide the stride as size of Vertex
             // removed GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 16);        // link Vertextarry to buffer and set stride
 
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public override void Dispose()

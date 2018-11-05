@@ -221,12 +221,12 @@ namespace OpenTKUtils.GL4
             {
                 int take = Math.Min(colstogo, colours.Length);      // max of colstogo and length of array
                 GL.NamedBufferSubData(Id, (IntPtr)colp, 16 * take, colours);
-                GL4Statics.Check();
+                GLStatics.Check();
                 colstogo -= take;
                 colp += take * 16;
             }
 
-            GL4Statics.Check();
+            GLStatics.Check();
             return new Tuple<int, int>(posv, posc);
         }
 
@@ -241,7 +241,7 @@ namespace OpenTKUtils.GL4
             GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasizeV, vertices);
             GL.NamedBufferSubData(Id, (IntPtr)posc, datasizeC, coords);
-            GL4Statics.Check();
+            GLStatics.Check();
             return new Tuple<int, int>(posv, posc);
         }
 
@@ -251,7 +251,7 @@ namespace OpenTKUtils.GL4
             int pos = Align(sizeof(float) * 4, datasize);
 
             GL.NamedBufferStorage(Id, Size, vertices, uh);
-            GL4Statics.Check();
+            GLStatics.Check();
             return pos;
         }
 
@@ -261,7 +261,7 @@ namespace OpenTKUtils.GL4
             int pos = Align(sizeof(uint), datasize);
 
             GL.NamedBufferStorage(Id, Size, data, uh);
-            GL4Statics.Check();
+            GLStatics.Check();
             return pos;
         }
 

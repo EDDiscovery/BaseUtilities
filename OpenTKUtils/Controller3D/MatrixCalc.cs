@@ -44,6 +44,7 @@ namespace OpenTKUtils.Common
 
         // Calculate the model matrix, which is the view onto the model
         // model matrix rotates and scales the model to the eye position
+        // Model matrix does not have any Y inversion..
 
         public void CalculateModelMatrix(Vector3 position, Vector3 cameraDir, float zoom)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
@@ -53,7 +54,7 @@ namespace OpenTKUtils.Common
             {
                 Vector3 eye, normal;
                 CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
-                EyePosition = new Vector3(eye.X, -eye.Y, eye.Z);      // correct for Y inversion.. some day we should fix this
+                EyePosition = eye;
                 modelmatrix = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
             }
             else
@@ -85,6 +86,7 @@ namespace OpenTKUtils.Common
         }
 
         // Projection matrix - projects the 3d model space to the 2D screen
+        // Has a Y flip so that +Y is going up.
 
         public void CalculateProjectionMatrix(float fov, int w, int h, out float znear)
         {
@@ -102,6 +104,7 @@ namespace OpenTKUtils.Common
 
             Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
             projectionmatrix = flipy * projectionmatrix;                                // Flip Y to correct for openGL Y orientation
+
             projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);
         }
 
@@ -114,16 +117,16 @@ namespace OpenTKUtils.Common
             transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
             transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
             // transform ends as the camera direction vector
+            // calculate where eye is, relative to target. its ZoomDistance/zoom, rotated by camera rotation.  This is based on looking at 0,0,0.  
+            // the 0,-1,0 means (0,0,0) is looking down on the target pos, (90,0,0) is on the plane looking towards +Z.
 
-            // calculate where eye is, relative to target. its 1000/zoom, rotated by camera rotation.  This is based on looking at 0,0,0.  
-            // So this is the camera pos to look at 0,0,0
             Vector3 eyerel = Vector3.Transform(new Vector3(0.0f, -CalcEyeDistance(zoom), 0.0f), transform);
 
             // rotate the up vector (0,0,1) by the eye camera dir to get a vector upwards from the current camera dir
             normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);
 
             eye = position + eyerel;              // eye is here, the target pos, plus the eye relative position
-            System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
+            System.Diagnostics.Debug.WriteLine("Eye " + eye + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
         }
 
     }

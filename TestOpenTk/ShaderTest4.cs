@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OpenTKUtils;
 
 namespace TestOpenTk
 {
@@ -112,13 +113,13 @@ void main(void)
             GL.Enable(EnableCap.CullFace);
 
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GL4Statics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("TEX", new GLTexturedObjectShaderSimple());
             items.Add("COST-FP", new GLColourObjectShaderTranslation((a) => { GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill); }));
             items.Add("COST-LP", new GLColourObjectShaderTranslation((a) => { GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Line); }));
-            items.Add("COST-1P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(1.0F); }));
-            items.Add("COST-2P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(2.0F); }));
-            items.Add("COST-10P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(10.0F); }));
+            items.Add("COST-1P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(1.0F); }));
+            items.Add("COST-2P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(2.0F); }));
+            items.Add("COST-10P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(10.0F); }));
             items.Add("CROT", new GLTexturedObjectShaderTransformWithCommonTransform());
 
             items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
@@ -408,7 +409,7 @@ void main(void)
             ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
             ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).ZRotDegrees = degrees;
 
-            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0.01f, 0));
+            //((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0.01f, 0));
             ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).YRotDegrees = degrees;
             ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).ZRotDegrees = degreesd2;
 
@@ -422,6 +423,8 @@ void main(void)
             ((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
            items.SB("SB6").Write(zeroone, 4, true);
+
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Position = gl3dcontroller.Pos.Current;
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees/360.0f;
 
@@ -438,6 +441,21 @@ void main(void)
 
         private void OtherKeys( BaseUtils.KeyboardState kb )
         {
+            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
+            {
+                gl3dcontroller.CameraLookAt(new Vector3(0, 0, 0), 1, 2);
+            }
+
+            if (kb.IsPressedRemove(Keys.F2, BaseUtils.KeyboardState.ShiftState.None))
+            {
+                gl3dcontroller.CameraLookAt(new Vector3(4, 0, 0), 1, 2);
+            }
+
+            if (kb.IsPressedRemove(Keys.F3, BaseUtils.KeyboardState.ShiftState.None))
+            {
+                gl3dcontroller.CameraLookAt(new Vector3(10, 0, -10), 1, 2);
+            }
+
         }
 
     }

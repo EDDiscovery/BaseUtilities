@@ -54,12 +54,20 @@ namespace BaseUtils
             precomma = true;
         }
 
+        public QuickJSONFormatter V(string name)
+        {
+            Prefix();
+            json += "\"" + name + "\"";
+            return this;
+        }
+
         public QuickJSONFormatter V(string name, string data)
         {
             Prefix();
             json += "\"" + name + "\":\"" + data + "\"";
             return this;
         }
+
 
         public QuickJSONFormatter V(string name, double v)
         {
@@ -115,6 +123,24 @@ namespace BaseUtils
                     s += ", ";
 
                 s += a.ToString();
+            }
+
+            json += "\"" + name + "\":[" + s + "] ";
+
+            return this;
+        }
+
+        public QuickJSONFormatter V(string name, string[] array)
+        {
+            Prefix();
+
+            string s = "";
+            foreach (string a in array)
+            {
+                if (s.Length > 0)
+                    s += ", ";
+
+                s += "\"" + a  + "\"";
             }
 
             json += "\"" + name + "\":[" + s + "] ";

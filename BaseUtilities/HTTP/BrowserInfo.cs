@@ -75,29 +75,63 @@ namespace BaseUtils
 
         public static bool LaunchBrowser(string uri)
         {
-            string browser = GetDefault();
-
-            if (browser != null)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                string path = BaseUtils.BrowserInfo.GetPath(browser);
+                string browser = GetDefault();
 
-                if (path != null)
+                if (browser != null)
+                {
+                    string path = BaseUtils.BrowserInfo.GetPath(browser);
+
+                    if (path != null)
+                    {
+                        try
+                        {
+                            System.Diagnostics.ProcessStartInfo p = new System.Diagnostics.ProcessStartInfo(path, uri);
+                            p.UseShellExecute = false;
+                            System.Diagnostics.Process.Start(p);
+                            return true;
+                        }
+                        catch (Exception)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return false;
+            }
+            else if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                if (Environment.OSVersion.Version.Major >= 12 || Environment.OSVersion.Platform == PlatformID.MacOSX)
                 {
                     try
                     {
-                        System.Diagnostics.ProcessStartInfo p = new System.Diagnostics.ProcessStartInfo(path, uri);
-                        p.UseShellExecute = false;
-                        System.Diagnostics.Process.Start(p);
+                        System.Diagnostics.Process.Start("open", uri);
                         return true;
                     }
-                    catch (Exception)
+                    catch
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start("xdg-open", uri);
+                        return true;
+                    }
+                    catch
                     {
                         return false;
                     }
                 }
             }
-
-            return false;
+            else
+            {
+                return false;
+            }
         }
     }
 }

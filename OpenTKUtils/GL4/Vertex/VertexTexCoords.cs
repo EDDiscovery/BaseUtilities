@@ -58,7 +58,7 @@ namespace OpenTKUtils.GL4
             GL.EnableVertexArrayAttrib(Array, attriblayoutindexposition);       // go for attrib launch!
             GL.EnableVertexArrayAttrib(Array, attriblayouttexcoord);
 
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public GLVertexCoordsObject(Tuple<Vector4[], Vector2[]> item) : this(item.Item1, item.Item2)

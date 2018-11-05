@@ -43,7 +43,7 @@ namespace OpenTKUtils.GL4
             GL.NamedBufferData(Id, Size, (IntPtr)0, BufferUsageHint.DynamicDraw);
             // want to write, and the previous contents may be thrown away https://www.khronos.org/registry/OpenGL-Refpages/gl4/
             WriteCacheToBuffer();
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         // rewrite the whole thing.. Complete must be called first.  Use after Writes without the immediate write buffer

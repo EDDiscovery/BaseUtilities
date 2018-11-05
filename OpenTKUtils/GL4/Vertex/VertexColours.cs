@@ -57,7 +57,7 @@ namespace OpenTKUtils.GL4
             GL.EnableVertexArrayAttrib(Array, attriblayoutindexposition);
             GL.EnableVertexArrayAttrib(Array, attriblayoutcolour);
 
-            GL4Statics.Check();
+            GLStatics.Check();
         }
 
         public override void Dispose()
