@@ -27,6 +27,7 @@ namespace OpenTKUtils.GL4
         public int Id { get { return program.Id; } }
         public IGLShader Get(ShaderType t) { return this; }
         public Action<IGLProgramShader> StartAction { get; set; }
+        public Action<IGLProgramShader> FinishAction { get; set; }
 
         private GLProgram program;
 
@@ -88,6 +89,7 @@ namespace OpenTKUtils.GL4
 
         public virtual void Finish()                // override if required
         {
+            FinishAction?.Invoke(this);                           // any shader hooks get a chance.
         }
 
         public virtual void Dispose()

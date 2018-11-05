@@ -131,6 +131,41 @@ void main(void)
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
 
+            #region Instancing
+
+            items.Add("IC-1", new GLShaderPipelineBase(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderFixedColour(new Color4(0.5F, 0.5F, 0.0F, 1.0F))));
+
+            Matrix4[] pos1 = new Matrix4[3];
+            pos1[0] = Matrix4.CreateTranslation(new Vector3(10, 0, 10));
+            pos1[1] = Matrix4.CreateTranslation(new Vector3(10, 5, 10));
+            pos1[2] = Matrix4.CreateRotationX(45f.Radians());
+            pos1[2] *= Matrix4.CreateTranslation(new Vector3(10, 10, 10));
+
+            var tvi = new GLVertexInstancedTransformObject(GLShapeObjectFactory.CreateQuad(2.0f), pos1);
+            rObjects.Add(items.Shader("IC-1"), "1-a",
+                                    new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
+                                            tvi,
+                                            null, pos1.Length));
+            Matrix4[] pos2 = new Matrix4[3];
+            pos2[0] = Matrix4.CreateRotationX(-80f.Radians());
+            pos2[0] *= Matrix4.CreateTranslation(new Vector3(20, 0, 10));
+            pos2[1] = Matrix4.CreateRotationX(-70f.Radians());
+            pos2[1] *= Matrix4.CreateTranslation(new Vector3(20, 5, 10));
+            pos2[2] = Matrix4.CreateRotationX(-60f.Radians());
+            pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
+
+
+            items.Add("IC-2", new GLShaderPipelineBase(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture()));
+            items.Shader("IC-2").StartAction += (s) => { items.Tex("wooden").Bind(1); GL.Disable(EnableCap.CullFace); };
+            items.Shader("IC-2").FinishAction += (s) => { items.Tex("wooden").Bind(1); GL.Enable(EnableCap.CullFace); };
+
+            var tvi2 = new GLVertexInstancedTexCoordsTransformObject(GLShapeObjectFactory.CreateQuad(2.0f), GLShapeObjectFactory.TexQuad, pos2);
+            rObjects.Add(items.Shader("IC-2"), "1-b",
+                                    new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                            tvi2,
+                                            null, pos2.Length));
+            #endregion
+
             #region Tesselation
             items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,true));
             rObjects.Add(items.Shader("TESx1"), "O-TES1",
@@ -140,9 +175,7 @@ void main(void)
                                     ));
 
             #endregion
-
-
-
+            
             #region coloured lines
 
             rObjects.Add(items.Shader("COS-1L"),
@@ -302,8 +335,6 @@ void main(void)
                     new GLVertexCoordsObject( GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles()),
                             new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"),new Vector3(-2, 0, 0))
                             ));
-
-            //            items.Tex("dotted2"),1));
 
             rObjects.Add(items.Shader("TEX"), "EDDCube",
                 new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, 

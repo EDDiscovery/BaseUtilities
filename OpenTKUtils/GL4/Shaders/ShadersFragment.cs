@@ -20,7 +20,34 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-   // Fragment, requires vs_color
+    // Fragment, requires vs_color
+
+    public class GLFragmentShaderFixedColour : GLShaderPipelineFragmentBase
+    {
+        OpenTK.Graphics.Color4 col;
+
+        public override string Code()
+        {
+            return
+@"
+#version 450 core
+in vec4 vs_color;
+out vec4 color;
+
+void main(void)
+{
+    color = vec4(" + col.R + "," + col.G + "," + col.B + "," + col.A + @");
+}
+";
+        }
+
+        public GLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
+        {
+            col = c;
+            CompileLink();
+        }
+    }
+
     public class GLFragmentShaderColour : GLShaderPipelineFragmentBase
     {
         public override string Code()

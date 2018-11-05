@@ -27,6 +27,7 @@ namespace OpenTKUtils.GL4
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
         public Action<IGLProgramShader> StartAction { get; set; }
+        public Action<IGLProgramShader> FinishAction { get; set; }
 
         public IGLShader Get(ShaderType t) { return programs[t]; }
 
@@ -89,6 +90,8 @@ namespace OpenTKUtils.GL4
 
             GL.BindProgramPipeline(0);
             //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid + " Released");
+
+            FinishAction?.Invoke(this);                           // any shader hooks get a chance.
         }
 
         public void Dispose()

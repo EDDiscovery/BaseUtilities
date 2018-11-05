@@ -265,6 +265,40 @@ namespace OpenTKUtils.GL4
             return pos;
         }
 
+        public Tuple<int, int> Write(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        {
+            int vertsize = vertices.Length * sizeof(float) * 4;
+            int matsize = transforms.Length * sizeof(float) * 16;
+            int posv = Align(sizeof(float) * 4, vertsize);
+            int posc = Align(sizeof(float) * 4, matsize);
+
+            GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
+            GL.NamedBufferSubData(Id, (IntPtr)posv, vertsize, vertices);
+            GL.NamedBufferSubData(Id, (IntPtr)posc, matsize, transforms);
+
+            GLStatics.Check();
+            return new Tuple<int, int>(posv, posc);
+        }
+
+        public Tuple<int, int, int> Write(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        {
+            int vertsize = vertices.Length * sizeof(float) * 4;
+            int texsize = texcoords.Length * sizeof(float) * 2;
+            int matsize = transforms.Length * sizeof(float) * 16;
+            int posv = Align(sizeof(float) * 4, vertsize);
+            int post = Align(sizeof(float) * 2, texsize);
+            int posc = Align(sizeof(float) * 4, matsize);
+
+            GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
+            GL.NamedBufferSubData(Id, (IntPtr)posv, vertsize, vertices);
+            GL.NamedBufferSubData(Id, (IntPtr)post, texsize, texcoords);
+            GL.NamedBufferSubData(Id, (IntPtr)posc, matsize, transforms);
+
+            GLStatics.Check();
+            return new Tuple<int, int, int>(posv, post, posc);
+        }
+
+
         #endregion
 
         protected override void WriteAreaToBuffer(int fillpos, int datasize)

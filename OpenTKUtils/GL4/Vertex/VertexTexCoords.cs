@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4
 
         public GLVertexCoordsObject(Vector4[] vertices, Vector2[] texcoords)
         {
-                Count = vertices.Length;
+            Count = vertices.Length;
 
             System.Diagnostics.Debug.Assert(vertices.Length== texcoords.Length);
 

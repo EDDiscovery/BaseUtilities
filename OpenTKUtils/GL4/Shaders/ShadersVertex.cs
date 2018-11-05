@@ -20,6 +20,104 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
+
+    public class GLVertexShaderNoTranslation : GLShaderPipelineVertexBase
+    {
+        public override string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 20) uniform  mat4 projectionmodel;
+
+void main(void)
+{
+	gl_Position = projectionmodel * position;        // order important
+}
+";
+        }
+
+        public GLVertexShaderNoTranslation()
+        {
+            CompileLink();
+        }
+    }
+
+
+    public class GLVertexShaderMatrixTranslation : GLShaderPipelineVertexBase
+    {
+        public override string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
+layout (location = 4) in mat4 transform;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 20) uniform  mat4 projectionmodel;
+
+void main(void)
+{
+	gl_Position = projectionmodel * transform * position;        // order important
+}
+";
+        }
+
+        public GLVertexShaderMatrixTranslation()
+        {
+            CompileLink();
+        }
+    }
+
+    public class GLVertexShaderTextureMatrixTranslation : GLShaderPipelineVertexBase
+    {
+        public override string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location = 0) in vec4 position;
+layout (location = 4) in mat4 transform;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout(location = 1) in vec2 texco;
+out vec2 vs_textureCoordinate;
+
+layout (location = 20) uniform  mat4 projectionmodel;
+
+void main(void)
+{
+	gl_Position = projectionmodel * transform * position;        // order important
+    vs_textureCoordinate = texco;
+}
+";
+        }
+
+        public GLVertexShaderTextureMatrixTranslation()
+        {
+            CompileLink();
+        }
+    }
+
+
     public class GLVertexShaderColourNoTranslation : GLShaderPipelineVertexBase
     {
         public override string Code()

@@ -55,7 +55,7 @@ namespace OpenTKUtils.GL4
 
         public void Render()
         {
-            GL.DrawArrays(PrimitiveType, 0, DrawCount);
+            GL.DrawArraysInstanced(PrimitiveType, 0, DrawCount,InstanceCount);
         }
 
         public void Dispose()
