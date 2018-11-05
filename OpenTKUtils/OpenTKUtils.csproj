@@ -64,7 +64,7 @@
     <Compile Include="GL4\Shaders\ShaderProgramBase.cs" />
     <Compile Include="GL4\Shaders\ShaderPipelineFragmentBase.cs" />
     <Compile Include="GL4\Shaders\ShadersStars.cs" />
-    <Compile Include="GL4\Shaders\ShadersTesselation.cs" />
+    <Compile Include="GL4\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Shaders\ShaderPipelineVertexBase.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\Vertex\VertexTexCoords.cs" />

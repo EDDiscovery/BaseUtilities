@@ -122,8 +122,6 @@ void main(void)
             items.Add("COST-2P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(2.0F); }));
             items.Add("COST-10P", new GLColourObjectShaderTranslation((a) => { GL4Statics.PointSize(10.0F); }));
             items.Add("CROT", new GLTexturedObjectShaderTransformWithCommonTransform());
-            //items.Add("PIPE1", new GLProgramShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderColour()));
-            items.Add("TESx1", new GLTesselationShadersExample());
 
             items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
             items.Add("logo8bpp", new GLTexture2D(Properties.Resources.Logo8bpp));
@@ -134,32 +132,40 @@ void main(void)
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
 
+            #region Tesselation
+            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,true));
+            rObjects.Add(items.Shader("TESx1"), "O-TES1",
+                new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Patches,
+                                    new GLVertexObject(GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f)),
+                                    new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3(-90,0,0))
+                                    ));
+
+            #endregion
+
+
+
             #region coloured lines
 
             rObjects.Add(items.Shader("COS-1L"),
                          new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               new GLVertexColourObject(
-                                                            GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                               new GLVertexColourObject(  GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                ));
 
 
             rObjects.Add(items.Shader("COS-1L"),
                          new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               new GLVertexColourObject(
-                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                               new GLVertexColourObject( GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
                                                          new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                ));
             rObjects.Add(items.Shader("COS-1L"),
                          new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               new GLVertexColourObject(
-                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
+                               new GLVertexColourObject( GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
                                                          new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                ));
             rObjects.Add(items.Shader("COS-1L"),
                          new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               new GLVertexColourObject(
-                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
+                               new GLVertexColourObject( GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
                                                          new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                ));
 
@@ -418,6 +424,8 @@ void main(void)
             ((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
            items.SB("SB6").Write(zeroone, 4, true);
+
+            ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees/360.0f;
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 
