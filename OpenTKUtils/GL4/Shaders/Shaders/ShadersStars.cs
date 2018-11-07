@@ -22,9 +22,9 @@ namespace OpenTKUtils.GL4
 {
     // Simple rendered with optional rot/translation
 
-    public class GLShaderStars : GLShaderPipelineVertexBase
+    public class GLShaderStars : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -72,7 +72,8 @@ void main(void)
 
         public GLShaderStars()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
 
         public override void Start(Common.MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up

@@ -20,25 +20,21 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLShaderPipelineFragmentBase : IGLShader
+    // base class for all pipeline shaders
+
+    public class GLShaderPipelineShadersBase : IGLShader
     {
-        public int Id { get { return program.Id; } }
+        public int Id { get { return Program.Id; } }
+        protected GLProgram Program;
+        protected bool SetupProjMatrix = false;
 
-        public virtual string Code() { return null; }
-
-        private GLProgram program;
-
-        public void CompileLink()
+        public virtual void Start(Common.MatrixCalc c)
         {
-            program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code());
-            System.Diagnostics.Debug.Assert(ret == null, GetType().Name, ret);
-            ret = program.Link(separable: true);
-            System.Diagnostics.Debug.Assert(ret == null, GetType().Name, ret );
-        }
-
-        public virtual void Start(Common.MatrixCalc c) 
-        {
+            if (SetupProjMatrix)
+            {
+                Matrix4 projmodel = c.ProjectionModelMatrix;
+                GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
+            }
         }
 
         public virtual void Finish()
@@ -47,7 +43,7 @@ namespace OpenTKUtils.GL4
 
         public void Dispose()
         {
-            program.Dispose();
+            Program.Dispose();
         }
     }
 }

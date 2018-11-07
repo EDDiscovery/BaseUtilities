@@ -21,9 +21,9 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
 
-    public class GLVertexShaderNoTranslation : GLShaderPipelineVertexBase
+    public class GLVertexShaderNoTranslation : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -46,14 +46,15 @@ void main(void)
 
         public GLVertexShaderNoTranslation()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
     }
 
 
-    public class GLVertexShaderMatrixTranslation : GLShaderPipelineVertexBase
+    public class GLVertexShaderMatrixTranslation : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -78,13 +79,15 @@ void main(void)
 
         public GLVertexShaderMatrixTranslation()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
+
         }
     }
 
-    public class GLVertexShaderTextureMatrixTranslation : GLShaderPipelineVertexBase
+    public class GLVertexShaderTextureMatrixTranslation : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -113,14 +116,15 @@ void main(void)
 
         public GLVertexShaderTextureMatrixTranslation()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
     }
 
 
-    public class GLVertexShaderColourNoTranslation : GLShaderPipelineVertexBase
+    public class GLVertexShaderColourNoTranslation : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -148,13 +152,14 @@ void main(void)
 
         public GLVertexShaderColourNoTranslation()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
     }
 
-    public class GLVertexShaderColourObjectTransform : GLShaderPipelineVertexBase
+    public class GLVertexShaderColourObjectTransform : GLShaderPipelineShadersBase
     {
-        public override string Code()       // with transform, object needs to pass in uniform 22 the transform
+        public string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
             return
 
@@ -183,13 +188,14 @@ void main(void)
 
         public GLVertexShaderColourObjectTransform()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
     }
 
-    public class GLVertexShaderTextureObjectTransform : GLShaderPipelineVertexBase
+    public class GLVertexShaderTextureObjectTransform : GLShaderPipelineShadersBase
     {
-        public override string Code()       // with transform, object needs to pass in uniform 22 the transform
+        public string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
             return
 
@@ -218,17 +224,18 @@ void main(void)
 
         public GLVertexShaderTextureObjectTransform()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
     }
 
 
 
-    public class GLVertexShaderColorTransformWithCommonTransform : GLShaderPipelineVertexBase
+    public class GLVertexShaderColorTransformWithCommonTransform : GLShaderPipelineShadersBase
     {
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
-        public override string Code()
+        public string Code()
         {
             return
 
@@ -261,7 +268,8 @@ void main(void)
         public GLVertexShaderColorTransformWithCommonTransform()
         {
             Transform = new GLObjectDataTranslationRotation();
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
 
         public override void Start(Common.MatrixCalc c)
@@ -273,11 +281,11 @@ void main(void)
     }
 
 
-    public class GLVertexShaderTextureTransformWithCommonTransform : GLShaderPipelineVertexBase
+    public class GLVertexShaderTextureTransformWithCommonTransform : GLShaderPipelineShadersBase
     {
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
-        public override string Code()
+        public string Code()
         {
             return
 
@@ -310,7 +318,8 @@ void main(void)
         public GLVertexShaderTextureTransformWithCommonTransform()
         {
             Transform = new GLObjectDataTranslationRotation();
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            SetupProjMatrix = true;
         }
 
         public override void Start(Common.MatrixCalc c)

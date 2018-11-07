@@ -62,7 +62,7 @@ void main(void)
 ";
         }
 
-        string TES(float amplitude)
+        string TES(float amplitude,float repeats)
         {
             return
 
@@ -80,13 +80,13 @@ out vec2 vs_textureCoordinate;
 void main(void)
 {
     float amp = " + amplitude + @";
-    vs_textureCoordinate = vec2(gl_TessCoord.x,1.0-gl_TessCoord.y);
+    vs_textureCoordinate = vec2(gl_TessCoord.x,1.0-gl_TessCoord.y);         //1.0-y is due to the project model turning Y upside down so Y points upwards on screen
 
     vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);  
     vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x); 
     vec4 pos = mix(p1, p2, gl_TessCoord.y);                                     
 
-    pos.y += amp*sin((phase+gl_TessCoord.x)*3.142*2);
+    pos.y += amp*sin((phase+gl_TessCoord.x)*3.142*2*" + repeats + @");           // .x goes 0-1, phase goes 0-1, convert to radians
 
     gl_Position = projectionmodel * transform * pos;
 
@@ -111,17 +111,15 @@ void main(void)
 
         public float Phase { get; set; } = 0;                   // set to animate.
 
-        public GLTesselationShaderSinewave(float tesselation,float amplitude, bool nocullface)
+        public GLTesselationShaderSinewave(float tesselation,float amplitude, float repeats, bool nocullface)
         {
-            Compile(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude), frag: frag);
+            Compile(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude,repeats), frag: frag);
             nocull = nocullface;
         }
 
         public override void Start(Common.MatrixCalc c)
         {
-            GL.UseProgram(Id);           // use this
-            Matrix4 projmodel = c.ProjectionModelMatrix;
-            GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
+            base.Start(c);
             GL.ProgramUniform1(Id, 26, Phase);
             GLStatics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);

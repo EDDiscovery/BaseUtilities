@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     public abstract class GLLayoutStandards
     {
         public int Size { get; protected set; } = 0;
-        protected byte[] bufferdata = null;
+        protected byte[] cachebufferdata = null;
 
         // std140 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is vec4, stride vec4
         // std430 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is same as left, stride is as per left.
@@ -37,11 +37,9 @@ namespace OpenTKUtils.GL4
         {
             Size = 0;
             if ( isz>0)
-                bufferdata = new byte[isz];
+                cachebufferdata = new byte[isz];
             arraystridealignment = std430 ? 4 : 16;               // if in std130, arrays have vec4 alignment and strides are vec4
         }
-
-        protected abstract void WriteAreaToBuffer(int fillpos, int datasize);
 
         // Write to the local copy - pos = -1 place at end, else place at position (for update)
         // Set writebuf to write to buffer as well - only use for updating
@@ -144,20 +142,20 @@ namespace OpenTKUtils.GL4
             return Finish(array, fillpos, sz, writebuffer);
         }
 
-        protected int Start(int align, int pos, int datasize)       // if pos == -1 move size to alignment of N, else just return pos
+        private int Start(int align, int pos, int datasize)       // if pos == -1 move size to alignment of N, else just return pos
         {
             //initialsize size incr
             if (pos == -1)
             {
                 Size = (Size + align - 1) & (~(align - 1));
 
-                if (bufferdata == null || Size + datasize > bufferdata.Length)
+                if (cachebufferdata == null || Size + datasize > cachebufferdata.Length)
                 {
                     int nextsize = Size + datasize + 512;
                     byte[] buf2 = new byte[nextsize];
-                    if ( bufferdata != null )
-                        Array.Copy(bufferdata, buf2, Size);
-                    bufferdata = buf2;
+                    if ( cachebufferdata != null )
+                        Array.Copy(cachebufferdata, buf2, Size);
+                    cachebufferdata = buf2;
                 }
 
                 pos = Size;
@@ -167,9 +165,9 @@ namespace OpenTKUtils.GL4
             return pos;
         }
 
-        protected int Finish(Array data, int fillpos, int datasize, bool writebuffer)
+        private int Finish(Array data, int fillpos, int datasize, bool writebuffer)
         {
-            System.Buffer.BlockCopy(data, 0, bufferdata, fillpos, datasize);
+            System.Buffer.BlockCopy(data, 0, cachebufferdata, fillpos, datasize);
 
             if (writebuffer)
                 WriteAreaToBuffer(fillpos, datasize);
@@ -184,6 +182,8 @@ namespace OpenTKUtils.GL4
             Size += datasize;
             return pos;
         }
+
+        protected abstract void WriteAreaToBuffer(int fillpos, int datasize);       // implement to write
     }
 
     public class GLBuffer : GLLayoutStandards, IDisposable
@@ -196,22 +196,26 @@ namespace OpenTKUtils.GL4
             Id = id;
         }
 
-        public void WriteCacheToBuffer()
+        #region Set Direct - cache is not involved, so you can't use the other write functions 
+
+        public void SetSize(int size, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
-            IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateBufferBit);
-            System.Runtime.InteropServices.Marshal.Copy(bufferdata, 0, ptr, Size);
-            GL.UnmapNamedBuffer(Id);
+            Size = size;
+            GL.NamedBufferData(Id,Size, (IntPtr)0, uh);              // set size no data
         }
 
-        #region Direct Writes - cache is not involved, so you can't use the other write functions 
+        public void ZeroBuffer()
+        {
+            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, Size, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
+        }
 
-        public Tuple<int,int> Write(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public Tuple<int,int> Set(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int datasize = vertices.Length * sizeof(float) * 4;
             int posv = Align(sizeof(float) * 4, datasize);
             int posc = Align(sizeof(float) * 4, datasize);
 
-            GL.NamedBufferData(Id,Size,(IntPtr)0, uh);              // set size
+            GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
 
             int colstogo = vertices.Length;
@@ -231,7 +235,7 @@ namespace OpenTKUtils.GL4
         }
 
 
-        public Tuple<int, int> Write(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public Tuple<int, int> Set(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int datasizeV = vertices.Length * sizeof(float) * 4;
             int datasizeC = coords.Length * sizeof(float) * 2;
@@ -245,7 +249,7 @@ namespace OpenTKUtils.GL4
             return new Tuple<int, int>(posv, posc);
         }
 
-        public int Write(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public int Set(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
         {
             int datasize = vertices.Length * sizeof(float) * 4;
             int pos = Align(sizeof(float) * 4, datasize);
@@ -255,7 +259,7 @@ namespace OpenTKUtils.GL4
             return pos;
         }
 
-        public int Write(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public int Set(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
         {
             int datasize = data.Length * sizeof(uint);
             int pos = Align(sizeof(uint), datasize);
@@ -265,7 +269,7 @@ namespace OpenTKUtils.GL4
             return pos;
         }
 
-        public Tuple<int, int> Write(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public Tuple<int, int> Set(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int vertsize = vertices.Length * sizeof(float) * 4;
             int matsize = transforms.Length * sizeof(float) * 16;
@@ -280,7 +284,7 @@ namespace OpenTKUtils.GL4
             return new Tuple<int, int>(posv, posc);
         }
 
-        public Tuple<int, int, int> Write(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public Tuple<int, int, int> Set(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int vertsize = vertices.Length * sizeof(float) * 4;
             int texsize = texcoords.Length * sizeof(float) * 2;
@@ -298,13 +302,65 @@ namespace OpenTKUtils.GL4
             return new Tuple<int, int, int>(posv, post, posc);
         }
 
+        public byte[] ReadBuffer(int offset, int size )         // read into a byte array
+        {
+            byte[] data = new byte[size];
+            IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapReadBit);
+            System.Runtime.InteropServices.Marshal.Copy(ptr,data,offset, size);
+            GL.UnmapNamedBuffer(Id);
+            return data;
+        }
+
+        public int ReadInt(int offset)                          // read a UINT
+        {
+            byte[] d = ReadBuffer(offset, sizeof(uint));
+            return BitConverter.ToInt32(d, 0);
+
+        }
+
+        public float[] ReadFloats(int offset, int number)                          // read a UINT
+        {
+            float[] d = new float[number];
+            byte[] bytes = ReadBuffer(offset, sizeof(float) * number);
+
+            for (int i = 0; i < number; i++)
+                d[i] = BitConverter.ToSingle(bytes, offset + i * 4);
+
+            return d;
+        }
+
+        public Vector4[] ReadVector4(int offset, int number)                          // read a UINT
+        {
+            byte[] bytes = ReadBuffer(offset, sizeof(float) * 4 * number);
+            Vector4[] d = new Vector4[number];
+
+            for (int i = 0; i < number; i++)
+            {
+                int p = i * 16;
+                d[i] = new Vector4(BitConverter.ToSingle(bytes, p),
+                    BitConverter.ToSingle(bytes, p + 4),
+                    BitConverter.ToSingle(bytes, p + 8),
+                    BitConverter.ToSingle(bytes, p + 12));
+            }
+
+            return d;
+        }
 
         #endregion
 
-        protected override void WriteAreaToBuffer(int fillpos, int datasize)
+        #region Implementation
+
+        protected void WriteCacheToBuffer()     // update the buffer with the cache.
+        {
+            IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateBufferBit);
+            System.Runtime.InteropServices.Marshal.Copy(cachebufferdata, 0, ptr, Size);
+            GL.UnmapNamedBuffer(Id);
+        }
+
+        protected override void WriteAreaToBuffer(int fillpos, int datasize)        // update the buffer with an area of updated cache
         {
             IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
-            System.Runtime.InteropServices.Marshal.Copy(bufferdata, fillpos, ptr, datasize);
+            System.Runtime.InteropServices.Marshal.Copy(cachebufferdata, fillpos, ptr, datasize);
             GL.UnmapNamedBuffer(Id);
         }
 
@@ -316,5 +372,7 @@ namespace OpenTKUtils.GL4
                 Id = -1;
             }
         }
+
+        #endregion
     }
 }

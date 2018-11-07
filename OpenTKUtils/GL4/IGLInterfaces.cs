@@ -20,13 +20,13 @@ namespace OpenTKUtils.GL4
 {
     public interface IGLVertexArray : IDisposable       
     {
-        int Count { get; }
-        void Bind(IGLProgramShader shader);
+        int Count { get; }                                  // Vertex data to the vertex shader.. count is used for construction purposes
+        void Bind(IGLProgramShader shader);                 // called just before the item is drawn
     }
 
     public interface IGLInstanceData : IDisposable   
     {
-        void Bind(IGLProgramShader shader);          
+        void Bind(IGLProgramShader shader);                 // called just before the item is drawn
     }
 
     public interface IGLShader : IDisposable                // All shaders inherit from this
@@ -39,17 +39,24 @@ namespace OpenTKUtils.GL4
     public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
         IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.
-        Action<IGLProgramShader> StartAction { get; set; }       
+        Action<IGLProgramShader> StartAction { get; set; }       // allow start and finish actions to be added to the shader..
         Action<IGLProgramShader> FinishAction { get; set; }      
     }
 
-    public interface IGLTexture : IDisposable
+    public interface IGLTexture : IDisposable               // all textures from this..
     {
         int Id { get; }
         int Width { get; }                                  // primary width of mipmap level 0 bitmap on first array entry
         int Height { get; }
-        void Bind(int bindingpoint);
+        void Bind(int bindingpoint);                        // textures have a chance to bind themselves, called either by instance data (if per object texture) or by shader (either internally or via StartAction)
     }
 
+    public interface IGLRenderableItem : IDisposable        // a renderable item inherits from this..
+    {
+        void Bind(IGLProgramShader shader);                 // Bind to context
+        void Render();                                      // and render - do the Draw.
+        IGLInstanceData InstanceData { get; set; }          // may be null - no instance data.  Allows instance data to be modified in the main program
+        OpenTK.Graphics.OpenGL4.PrimitiveType PrimitiveType { get; set; }       // Draw type
 
+    }
 }

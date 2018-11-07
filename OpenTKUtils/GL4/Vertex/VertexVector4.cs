@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Vertex's only, in vec4 form
 
-    public class GLVertexObject : GLVertexArray
+    public class GLVertexVector4 : GLVertexArray
     {
         // Vertex shader must implement
         // layout(location = 0) in vec4 position;
@@ -33,15 +33,29 @@ namespace OpenTKUtils.GL4
 
         public override int Count { get; set; }
 
-        public GLVertexObject(Vector4[] vertices)
+        public GLVertexVector4(Vector4[] vertices)          // with these vertices, with a new buffer
         {
             Count = vertices.Length;
-
             buffer = new GLBuffer();
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
+            int pos = buffer.Set(vertices);
 
-            int pos = buffer.Write(vertices);
+            Common(pos);
+        }
 
+        public GLVertexVector4(GLBuffer extbuf, int pos)    // from this buffer, at this pos..
+        {
+            Count = 0;
+            buffer = extbuf;
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
+            
+            Common(pos);
+        }
+
+        private void Common(int pos)
+        { 
             GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 16);        // tell Array that binding index comes from this buffer.
 
             GL.VertexArrayAttribBinding(Array, attribindex, bindingindex);     // bind atrib index 0 to binding index 0

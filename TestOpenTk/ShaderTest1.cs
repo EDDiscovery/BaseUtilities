@@ -17,13 +17,13 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTest4 : Form
+    public partial class ShaderTest1 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTest4()
+        public ShaderTest1()
         {
             InitializeComponent();
 
@@ -41,11 +41,11 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
-        public class GLFragmentShaderUniformTest : GLShaderPipelineFragmentBase
+        public class GLFragmentShaderUniformTest : GLShaderPipelineShadersBase
         {
             private int bindingpoint;
 
-            public override string Code()
+            public string Code()
             {
                 return
     @"
@@ -87,7 +87,7 @@ void main(void)
             public GLFragmentShaderUniformTest(int bp)
             {
                 bindingpoint = bp;
-                CompileLink();
+                Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(), GetType().Name);
             }
 
             public override void Start(MatrixCalc c)
@@ -107,11 +107,6 @@ void main(void)
             {
                 return (float)ms / 100.0f;
             };
-
-            GL.Enable(EnableCap.DepthTest);         // standard - depth, ccw, cull
-            GL.FrontFace(FrontFaceDirection.Ccw);
-            GL.Enable(EnableCap.CullFace);
-
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("TEX", new GLTexturedObjectShaderSimple());
@@ -133,7 +128,7 @@ void main(void)
 
             #region Instancing
 
-            items.Add("IC-1", new GLShaderPipelineBase(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderFixedColour(new Color4(0.5F, 0.5F, 0.0F, 1.0F))));
+            items.Add("IC-1", new GLShaderPipeline(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderFixedColour(new Color4(0.5F, 0.5F, 0.0F, 1.0F))));
 
             Matrix4[] pos1 = new Matrix4[3];
             pos1[0] = Matrix4.CreateTranslation(new Vector3(10, 0, 10));
@@ -155,7 +150,7 @@ void main(void)
             pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
 
 
-            items.Add("IC-2", new GLShaderPipelineBase(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture()));
+            items.Add("IC-2", new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture()));
             items.Shader("IC-2").StartAction += (s) => { items.Tex("wooden").Bind(1); GL.Disable(EnableCap.CullFace); };
             items.Shader("IC-2").FinishAction += (s) => { items.Tex("wooden").Bind(1); GL.Enable(EnableCap.CullFace); };
 
@@ -167,10 +162,10 @@ void main(void)
             #endregion
 
             #region Tesselation
-            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,true));
+            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,2f,true));
             rObjects.Add(items.Shader("TESx1"), "O-TES1",
                 new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Patches,
-                                    new GLVertexObject(GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f)),
+                                    new GLVertexVector4(GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f)),
                                     new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3(-90,0,0))
                                     ));
 
@@ -212,7 +207,7 @@ void main(void)
             b6.Write(0.0f);
             b6.Complete();
 
-            items.Add("UT-1", new GLShaderPipelineBase(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
+            items.Add("UT-1", new GLShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
 
             rObjects.Add(items.Shader("UT-1"), "UT1",
                 new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,

@@ -21,73 +21,27 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLRenderableItem : IDisposable           
-    {
-        public int DrawCount { get; private set; }                                  // Draw count
-        public int InstanceCount { get; private set; }                              // Instances
-        public PrimitiveType PrimitiveType { get; private set; }   // Draw type
-        public IGLVertexArray VertexArray { get; private set; }                // may be null - if so no vertex data
-        public IGLInstanceData InstanceData { get; private set; }             // may be null - no instance data
-
-        public GLRenderableItem(PrimitiveType pt, int drawcount, IGLVertexArray va = null, IGLInstanceData id = null, int ic = 1)
-        {
-            PrimitiveType = pt;
-            DrawCount = drawcount;
-            VertexArray = va;
-            InstanceData = id;
-            InstanceCount = ic;
-        }
-
-        public GLRenderableItem(PrimitiveType pt, IGLVertexArray va, IGLInstanceData id = null, int ic = 1)
-        {
-            PrimitiveType = pt;
-            DrawCount = va.Count;
-            VertexArray = va;
-            InstanceData = id;
-            InstanceCount = ic;
-        }
-
-        public void Bind(IGLProgramShader shader)
-        {
-            VertexArray?.Bind(shader);
-            InstanceData?.Bind(shader);
-        }
-
-        public void Render()
-        {
-            GL.DrawArraysInstanced(PrimitiveType, 0, DrawCount,InstanceCount);
-        }
-
-        public void Dispose()
-        {
-            VertexArray?.Dispose();
-            InstanceData?.Dispose();
-        }
-    }
-
-    // List to hold named renderables against programs, and a Render function to send the lot to GL - issued in Program ID order, then Add order
-
     public class GLRenderProgramSortedList : IDisposable
     {
-        private BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, GLRenderableItem> renderables;
+        private BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderableItem> renderables;
         private int unnamed = 0;
 
         public GLRenderProgramSortedList()
         {
-            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, GLRenderableItem>();
+            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderableItem>();
         }
 
-        public void Add(IGLProgramShader prog, string name, GLRenderableItem r)
+        public void Add(IGLProgramShader prog, string name, IGLRenderableItem r)
         {
             renderables.Add(prog, name, r);
         }
 
-        public void Add(IGLProgramShader prog, GLRenderableItem r)
+        public void Add(IGLProgramShader prog, IGLRenderableItem r)
         {
             Add(prog, "Unnamed_" + (unnamed++), r);
         }
 
-        public GLRenderableItem this[string key] {  get { return renderables[key]; } }
+        public IGLRenderableItem this[string key] {  get { return renderables[key]; } }
 
         public bool Contains(string key) { return renderables.ContainsKey(key); }
 
@@ -98,7 +52,7 @@ namespace OpenTKUtils.GL4
                 d.Key.Start(c);       // start the program
                 d.Key.StartAction?.Invoke(d.Key);       // optional bind
 
-                foreach (GLRenderableItem g in d.Value.Values)
+                foreach (IGLRenderableItem g in d.Value.Values)
                 {
                     g.Bind(d.Key);
                     g.Render();
@@ -122,7 +76,7 @@ namespace OpenTKUtils.GL4
             {
                 foreach (var d in renderables)
                 {
-                    foreach (GLRenderableItem g in d.Value.Values)
+                    foreach (IGLRenderableItem g in d.Value.Values)
                         g.Dispose();
                 }
 

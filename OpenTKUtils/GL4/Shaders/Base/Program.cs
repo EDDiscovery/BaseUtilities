@@ -102,5 +102,16 @@ namespace OpenTKUtils.GL4
             }
         }
 
+        static public GLProgram CompileLink(OpenTK.Graphics.OpenGL4.ShaderType st, string code, string auxname = "")
+        {
+            GLProgram program = new OpenTKUtils.GL4.GLProgram();
+            string ret = program.Compile(st, code);
+            System.Diagnostics.Debug.Assert(ret == null, auxname, ret);
+            ret = program.Link(separable: true);
+            System.Diagnostics.Debug.Assert(ret == null, auxname, ret);
+            return program;
+        }
+
+
     }
 }

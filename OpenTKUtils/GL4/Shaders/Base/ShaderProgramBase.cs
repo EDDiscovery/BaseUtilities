@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Single program base.. inherit and use. Provides compile func.
 
-    public class GLShaderProgramBase : IGLProgramShader
+    public abstract class GLShaderProgramBase : IGLProgramShader
     {
         public int Id { get { return program.Id; } }
         public IGLShader Get(ShaderType t) { return this; }
@@ -84,6 +84,8 @@ namespace OpenTKUtils.GL4
         public virtual void Start(MatrixCalc c)     // override, but you must call these two
         {
             GL.UseProgram(Id);
+            OpenTK.Matrix4 projmodel = c.ProjectionModelMatrix;
+            GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
             StartAction?.Invoke(this);
         }
 

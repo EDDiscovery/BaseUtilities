@@ -45,7 +45,7 @@ namespace OpenTKUtils.GL4
             buffer = new GLBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-            var pos = buffer.Write(vertices, texcoords);
+            var pos = buffer.Set(vertices, texcoords);
 
             GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 0);        // tell Array that binding index comes from this buffer.
 

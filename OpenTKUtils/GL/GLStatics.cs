@@ -96,11 +96,20 @@ namespace OpenTKUtils
 
         static float? LastPointSize = null;
 
-        public static void PointSize(float p)          // cache size for speed
+        public static void PointSize(float p)          // cache size for speed - 0 means use shader point size
         {
             if (LastPointSize == null || LastPointSize.Value != p)
             {
-                GL.PointSize(p);
+                if (p > 0)
+                {
+                    if ( LastPointSize == null || LastPointSize == 0 )  // if last was 0, turn off point size
+                        GL.Disable(EnableCap.ProgramPointSize);
+
+                    GL.PointSize(p);
+                }
+                else
+                    GL.Enable(EnableCap.ProgramPointSize);
+
                 LastPointSize = p;
             }
         }

@@ -22,11 +22,11 @@ namespace OpenTKUtils.GL4
 {
     // Fragment, requires vs_color
 
-    public class GLFragmentShaderFixedColour : GLShaderPipelineFragmentBase
+    public class GLFragmentShaderFixedColour : GLShaderPipelineShadersBase
     {
         OpenTK.Graphics.Color4 col;
 
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -44,13 +44,13 @@ void main(void)
         public GLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
         {
             col = c;
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
     }
 
-    public class GLFragmentShaderColour : GLShaderPipelineFragmentBase
+    public class GLFragmentShaderColour : GLShaderPipelineShadersBase
     {
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -68,17 +68,17 @@ void main(void)
 
         public GLFragmentShaderColour()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
     }
 
     // Requires a 2D texture bound
 
-    public class GLFragmentShaderTexture : GLShaderPipelineFragmentBase
+    public class GLFragmentShaderTexture : GLShaderPipelineShadersBase
     {
         const int BindingPoint = 1;
 
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -95,7 +95,7 @@ void main(void)
 
         public GLFragmentShaderTexture()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
         public override void Start(Common.MatrixCalc c) 
@@ -106,12 +106,12 @@ void main(void)
 
     // Requires a 2D texture array bound
 
-    public class GLFragmentShader2DCommonBlend : GLShaderPipelineFragmentBase
+    public class GLFragmentShader2DCommonBlend : GLShaderPipelineShadersBase
     {
         const int BindingPoint = 1;
 
         public float Blend { get; set; } = 0.0f;
-        public override string Code()
+        public string Code()
         {
             return
 @"
@@ -136,7 +136,7 @@ void main(void)
 
         public GLFragmentShader2DCommonBlend()
         {
-            CompileLink();
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
         public override void Start(Common.MatrixCalc c)

@@ -51,7 +51,7 @@ namespace OpenTKUtils.GL4
             buffer = new GLBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Id);
 
-            int pos = buffer.Write(packeddata);
+            int pos = buffer.Set(packeddata);
 
             GL.VertexArrayVertexBuffer(Array, bindingindex, buffer.Id, IntPtr.Zero, 8);        // link Vertextarry to buffer and set stride
 

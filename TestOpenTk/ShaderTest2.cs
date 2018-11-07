@@ -16,13 +16,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTest5 : Form
+    public partial class ShaderTest2 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTest5()
+        public ShaderTest2()
         {
             InitializeComponent();
 
@@ -53,7 +53,7 @@ namespace TestOpenTk
                 return (float)ms / 20.0f;
             };
 
-            items.Add("STARS", new GLShaderPipelineBase(new GLShaderStars(), new GLFragmentShaderColour()));
+            items.Add("STARS", new GLShaderPipeline(new GLShaderStars(), new GLFragmentShaderColour()));
 
             items.Add("COS", new GLColourObjectShaderNoTranslation());
             items.Add("COST", new GLColourObjectShaderTranslation());
@@ -109,10 +109,6 @@ namespace TestOpenTk
 
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-
-            GL.Enable(EnableCap.DepthTest);
-            GL.FrontFace(FrontFaceDirection.Ccw);
-            GL.Enable(EnableCap.CullFace);
 
             Closed += ShaderTest_Closed;
         }
