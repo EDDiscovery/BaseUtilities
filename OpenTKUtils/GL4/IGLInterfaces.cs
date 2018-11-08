@@ -18,13 +18,18 @@ using System;
 
 namespace OpenTKUtils.GL4
 {
-    public interface IGLVertexArray : IDisposable       
+    public interface IGLVertexArray : IDisposable
     {
-        int Count { get; }                                  // Vertex data to the vertex shader.. count is used for construction purposes
-        void Bind(IGLProgramShader shader);                 // called just before the item is drawn
+        int Id { get; }
+        void Bind();                 // called just before the item is drawn
     }
 
-    public interface IGLInstanceData : IDisposable   
+    public interface IGLVertexBuffer : IDisposable
+    {
+        int Count { get; }
+    }
+
+    public interface IGLInstanceData                        // should not need to be disposable..
     {
         void Bind(IGLProgramShader shader);                 // called just before the item is drawn
     }
@@ -51,7 +56,7 @@ namespace OpenTKUtils.GL4
         void Bind(int bindingpoint);                        // textures have a chance to bind themselves, called either by instance data (if per object texture) or by shader (either internally or via StartAction)
     }
 
-    public interface IGLRenderableItem : IDisposable        // a renderable item inherits from this..
+    public interface IGLRenderableItem               // a renderable item inherits from this..
     {
         void Bind(IGLProgramShader shader);                 // Bind to context
         void Render();                                      // and render - do the Draw.

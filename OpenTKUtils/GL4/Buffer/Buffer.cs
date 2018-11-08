@@ -15,7 +15,7 @@
  */
 
 using System;
-
+using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
@@ -26,6 +26,8 @@ namespace OpenTKUtils.GL4
     public abstract class GLLayoutStandards
     {
         public int Size { get; protected set; } = 0;
+        public List<int> Positions = new List<int>();           // at each alignment
+
         protected byte[] cachebufferdata = null;
 
         // std140 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is vec4, stride vec4
@@ -162,6 +164,7 @@ namespace OpenTKUtils.GL4
                 Size += datasize;
             }
 
+            Positions.Add(pos);
             return pos;
         }
 
@@ -180,6 +183,7 @@ namespace OpenTKUtils.GL4
             Size = (Size + align - 1) & (~(align - 1));
             int pos = Size;
             Size += datasize;
+            Positions.Add(pos);
             return pos;
         }
 
@@ -209,7 +213,7 @@ namespace OpenTKUtils.GL4
             GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, Size, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
         }
 
-        public Tuple<int,int> Set(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public void Set(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int datasize = vertices.Length * sizeof(float) * 4;
             int posv = Align(sizeof(float) * 4, datasize);
@@ -231,11 +235,10 @@ namespace OpenTKUtils.GL4
             }
 
             GLStatics.Check();
-            return new Tuple<int, int>(posv, posc);
         }
 
 
-        public Tuple<int, int> Set(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public void Set(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int datasizeV = vertices.Length * sizeof(float) * 4;
             int datasizeC = coords.Length * sizeof(float) * 2;
@@ -246,30 +249,27 @@ namespace OpenTKUtils.GL4
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasizeV, vertices);
             GL.NamedBufferSubData(Id, (IntPtr)posc, datasizeC, coords);
             GLStatics.Check();
-            return new Tuple<int, int>(posv, posc);
         }
 
-        public int Set(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void Set(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
         {
             int datasize = vertices.Length * sizeof(float) * 4;
             int pos = Align(sizeof(float) * 4, datasize);
 
             GL.NamedBufferStorage(Id, Size, vertices, uh);
             GLStatics.Check();
-            return pos;
         }
 
-        public int Set(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void Set(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
         {
             int datasize = data.Length * sizeof(uint);
             int pos = Align(sizeof(uint), datasize);
 
             GL.NamedBufferStorage(Id, Size, data, uh);
             GLStatics.Check();
-            return pos;
         }
 
-        public Tuple<int, int> Set(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public void Set(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int vertsize = vertices.Length * sizeof(float) * 4;
             int matsize = transforms.Length * sizeof(float) * 16;
@@ -281,10 +281,9 @@ namespace OpenTKUtils.GL4
             GL.NamedBufferSubData(Id, (IntPtr)posc, matsize, transforms);
 
             GLStatics.Check();
-            return new Tuple<int, int>(posv, posc);
         }
 
-        public Tuple<int, int, int> Set(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public void Set(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
             int vertsize = vertices.Length * sizeof(float) * 4;
             int texsize = texcoords.Length * sizeof(float) * 2;
@@ -299,8 +298,25 @@ namespace OpenTKUtils.GL4
             GL.NamedBufferSubData(Id, (IntPtr)posc, matsize, transforms);
 
             GLStatics.Check();
-            return new Tuple<int, int, int>(posv, post, posc);
         }
+
+        public void Set(Vector3[] vertices, Vector3 offsets, float mult)
+        {
+            int p = 0;                                                                  // probably change to write directly into buffer..
+            uint[] packeddata = new uint[vertices.Length * 2];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                uint z = (uint)((vertices[i].Z + offsets.Z) * mult);
+                packeddata[p++] = (uint)((vertices[i].X + offsets.X) * mult) | ((z & 0x7ff) << 21);
+                packeddata[p++] = (uint)((vertices[i].Y + offsets.Y) * mult) | (((z >> 11) & 0x7ff) << 21);
+            }
+
+            Set(packeddata);
+        }
+
+        #endregion
+
+        #region Reads
 
         public byte[] ReadBuffer(int offset, int size )         // read into a byte array
         {
@@ -346,8 +362,11 @@ namespace OpenTKUtils.GL4
             return d;
         }
 
+
         #endregion
 
+
+        
         #region Implementation
 
         protected void WriteCacheToBuffer()     // update the buffer with the cache.

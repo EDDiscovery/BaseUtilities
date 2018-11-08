@@ -83,9 +83,6 @@ namespace OpenTKUtils.GL4
             GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, uniformid, false, ref transform);
         }
 
-        public void Dispose()
-        {
-        }
     }
 
     // version of above, uses less memory by not storing anything but transform
@@ -116,9 +113,6 @@ namespace OpenTKUtils.GL4
             GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id,DefaultTRUniformId, false, ref transform);
         }
 
-        public void Dispose()
-        {
-        }
     }
 
 

@@ -72,7 +72,7 @@ void main(void)
 
         public GLShaderStars()
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
             SetupProjMatrix = true;
         }
 

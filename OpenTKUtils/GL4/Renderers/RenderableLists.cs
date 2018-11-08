@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLRenderProgramSortedList : IDisposable
+    public class GLRenderProgramSortedList 
     {
         private BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderableItem> renderables;
         private int unnamed = 0;
@@ -63,25 +63,6 @@ namespace OpenTKUtils.GL4
 
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                foreach (var d in renderables)
-                {
-                    foreach (IGLRenderableItem g in d.Value.Values)
-                        g.Dispose();
-                }
-
-                renderables.Clear();
-            }
         }
     }
 }

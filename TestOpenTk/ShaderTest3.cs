@@ -165,6 +165,14 @@ void main(void)
 
             items.Add("ResultShader", new GLShaderPipeline(new GLVertexShaderNoTranslation(), new GLFragmentShaderFixedColour(new Color4(0.9f, 0.9f, 0.9f, 1.0f))));
 
+            //rObjects.Add(items.Shader("COS-1L"), GLRenderableItem.CreateVertex4Color4( items,
+            //                                            OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+            //                                            GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+            //                                            new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
+
+
+
+
             GLStorageBlock storagebuffer = new GLStorageBlock(5);           // new storage block on binding index
             Vector4[] vertexes = new Vector4[16];
             for (int v = 0; v < vertexes.Length; v++)
@@ -180,8 +188,8 @@ void main(void)
 
             rObjects.Add(items.Shader("Shader"), "T1", new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vertexes.Length, null, null, 1));
 
-            // Unknown count at this point.. use another buffer for vec4s not a new one
-            redraw = new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, 0, new GLVertexVector4(vecoutbuffer, 0), null, 1);
+            //Unknown count at this point.. use another buffer for vec4s not a new one
+            redraw = GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vecoutbuffer);
 
             rObjects2.Add(items.Shader("ResultShader"), redraw);
 
@@ -194,7 +202,6 @@ void main(void)
 
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
-            rObjects.Dispose();
             items.Dispose();
         }
 

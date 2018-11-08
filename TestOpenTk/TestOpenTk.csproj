@@ -51,12 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ShaderTest1.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ShaderTest1.Designer.cs">
-      <DependentUpon>ShaderTest1.cs</DependentUpon>
-    </Compile>
     <Compile Include="RandomStars.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -65,11 +59,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ShaderTest3.cs">
+    <Compile Include="ShaderTest1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest3.Designer.cs">
-      <DependentUpon>ShaderTest3.cs</DependentUpon>
+    <Compile Include="ShaderTest1.Designer.cs">
+      <DependentUpon>ShaderTest1.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTest2.cs">
       <SubType>Form</SubType>
@@ -77,9 +71,12 @@
     <Compile Include="ShaderTest2.Designer.cs">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="ShaderTest1.resx">
-      <DependentUpon>ShaderTest1.cs</DependentUpon>
-    </EmbeddedResource>
+    <Compile Include="ShaderTest3.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTest3.Designer.cs">
+      <DependentUpon>ShaderTest3.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </EmbeddedResource>
@@ -93,11 +90,14 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="ShaderTest3.resx">
-      <DependentUpon>ShaderTest3.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTest1.resx">
+      <DependentUpon>ShaderTest1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest2.resx">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTest3.resx">
+      <DependentUpon>ShaderTest3.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />

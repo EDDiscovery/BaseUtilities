@@ -68,8 +68,6 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
-    <Compile Include="GL4\Vertex\VertexInstancedTransform.cs" />
-    <Compile Include="GL4\Vertex\VertexTexCoords.cs" />
     <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\Vertex\VertexObject212122.cs" />
     <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
@@ -80,7 +78,6 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersColourObjects.cs" />
     <Compile Include="GL4\GL4Statics.cs" />
     <Compile Include="GL4\Textures\Texture2DArray.cs" />
-    <Compile Include="GL4\Vertex\VertexVector4.cs" />
     <Compile Include="GL\GLStatics.cs" />
     <Compile Include="MCZF\Camera.cs" />
     <Compile Include="MCZF\CameraDirectionMovementTracker.cs" />
@@ -92,7 +89,6 @@
     <Compile Include="MCZF\Zoom.cs" />
     <Compile Include="GL4\Factory\FactoryCube.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GL4\Vertex\VertexColours.cs" />
     <Compile Include="GL4\Vertex\VertexArray.cs" />
     <Compile Include="GL4\Shaders\Base\Program.cs" />
     <Compile Include="GL4\Shaders\Base\Shader.cs" />
