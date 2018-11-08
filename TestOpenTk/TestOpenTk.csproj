@@ -71,6 +71,12 @@
     <Compile Include="ShaderTest2.Designer.cs">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTest4.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTest4.Designer.cs">
+      <DependentUpon>ShaderTest4.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTest3.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,6 +101,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest2.resx">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTest4.resx">
+      <DependentUpon>ShaderTest4.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest3.resx">
       <DependentUpon>ShaderTest3.cs</DependentUpon>

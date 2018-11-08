@@ -28,6 +28,9 @@ namespace OpenTKUtils.GL4
         public int Size { get; protected set; } = 0;
         public List<int> Positions = new List<int>();           // at each alignment
 
+        public const int Vec4size = 4 * sizeof(float);
+        public const int Vec2size = 2 * sizeof(float);
+
         protected byte[] cachebufferdata = null;
 
         // std140 alignment: scalars are N, 2Vec = 2N, 3Vec = 4N, 4Vec = 4N. Array alignment is vec4, stride vec4
@@ -40,7 +43,7 @@ namespace OpenTKUtils.GL4
             Size = 0;
             if ( isz>0)
                 cachebufferdata = new byte[isz];
-            arraystridealignment = std430 ? 4 : 16;               // if in std130, arrays have vec4 alignment and strides are vec4
+            arraystridealignment = std430 ? sizeof(float) : Vec4size;               // if in std130, arrays have vec4 alignment and strides are vec4
         }
 
         // Write to the local copy - pos = -1 place at end, else place at position (for update)
@@ -49,7 +52,7 @@ namespace OpenTKUtils.GL4
         public int Write(float f, int pos = -1, bool writebuffer = false)
         {
             float[] fa = new float[] { f };
-            int fillpos = Start(sizeof(float), pos, 4);                 // this is purposely done on another statement as writebuffer may change during this function
+            int fillpos = Start(sizeof(float), pos, sizeof(float));                 // this is purposely done on another statement as writebuffer may change during this function
             return Finish(fa, fillpos, sizeof(float), writebuffer);
         }
 
@@ -72,10 +75,9 @@ namespace OpenTKUtils.GL4
 
         public int Write(Vector2 v, int pos = -1, bool writebuffer = false)
         {
-            int sz = sizeof(float) * 2;
             float[] fa = new float[] { v.X, v.Y };
-            int fillpos = Start(sz, pos, sz);
-            return Finish(fa, fillpos, sz, writebuffer);
+            int fillpos = Start(Vec2size, pos, Vec2size);
+            return Finish(fa, fillpos, Vec2size, writebuffer);
         }
 
         public int Write(Vector2[] vec, int pos = -1, bool writebuffer = false)
@@ -86,20 +88,21 @@ namespace OpenTKUtils.GL4
             {
                 array[fill++] = v.X;
                 array[fill++] = v.Y;
-                if (arraystridealignment == 16)
+                if (arraystridealignment == Vec4size)
                     fill += 2;                     // std130 has vec2 padded to vec4 length - page 123 last paragraph
             }
 
             int sz = sizeof(float) * array.Length;
-            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 2), pos, sz);
+            int fillpos = Start(Math.Max(arraystridealignment, Vec2size), pos, sz);
             return Finish(array, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector3 v, int pos = -1, bool writebuffer = false)
         {
+            int sz = sizeof(float) * 3;
             float[] fa = new float[] { v.X, v.Y, v.Z };
-            int fillpos = Start(sizeof(float) * 4, pos, sizeof(float) * 3);
-            return Finish(fa, fillpos, sizeof(float) * 3, writebuffer);
+            int fillpos = Start(Vec4size, pos, sz);
+            return Finish(fa, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector3[] vec, int pos = -1, bool writebuffer = false)
@@ -115,16 +118,15 @@ namespace OpenTKUtils.GL4
             }
 
             int sz = sizeof(float) * array.Length;
-            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 4), pos, sz);
+            int fillpos = Start(Math.Max(arraystridealignment, Vec4size), pos, sz);
             return Finish(array, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector4 v, int pos = -1, bool writebuffer = false)
         {
-            int sz = sizeof(float) * 4;
             float[] fa = new float[] { v.X, v.Y, v.Z, v.W };
-            int fillpos = Start(sz, pos, sz);
-            return Finish(fa, fillpos, sz, writebuffer);
+            int fillpos = Start(Vec4size, pos, Vec4size);
+            return Finish(fa, fillpos, Vec4size, writebuffer);
         }
 
         public int Write(Vector4[] vec, int pos = -1, bool writebuffer = false)
@@ -139,8 +141,8 @@ namespace OpenTKUtils.GL4
                 array[fill++] = v.W;
             }
 
-            int sz = 4 * array.Length;
-            int fillpos = Start(Math.Max(arraystridealignment, sizeof(float) * 4), pos, sz);
+            int sz = sizeof(float) * array.Length;
+            int fillpos = Start(Math.Max(arraystridealignment, Vec4size), pos, sz);
             return Finish(array, fillpos, sz, writebuffer);
         }
 
@@ -190,6 +192,7 @@ namespace OpenTKUtils.GL4
         protected abstract void WriteAreaToBuffer(int fillpos, int datasize);       // implement to write
     }
 
+    [System.Diagnostics.DebuggerDisplay("Id {Id}")]
     public class GLBuffer : GLLayoutStandards, IDisposable
     {
         public int Id { get; private set; } = -1;
@@ -215,9 +218,9 @@ namespace OpenTKUtils.GL4
 
         public void Set(Vector4[] vertices, OpenTK.Graphics.Color4[] colours, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
-            int datasize = vertices.Length * sizeof(float) * 4;
-            int posv = Align(sizeof(float) * 4, datasize);
-            int posc = Align(sizeof(float) * 4, datasize);
+            int datasize = vertices.Length * Vec4size;
+            int posv = Align(Vec4size, datasize);
+            int posc = Align(Vec4size, datasize);
 
             GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
@@ -237,13 +240,49 @@ namespace OpenTKUtils.GL4
             GLStatics.Check();
         }
 
-
-        public void Set(Vector4[] vertices,Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        public void Set(Vector4[] v1, Vector4[] v2, bool interlace = false, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
-            int datasizeV = vertices.Length * sizeof(float) * 4;
-            int datasizeC = coords.Length * sizeof(float) * 2;
-            int posv = Align(sizeof(float) * 4, datasizeV);
-            int posc = Align(sizeof(float) * 4, datasizeC);
+            int datasize1 = v1.Length * Vec4size;
+            int datasize2 = v2.Length * Vec4size;
+
+            if (interlace)
+            {
+                System.Diagnostics.Debug.Assert(datasize1 == datasize2);
+                int pos = Align(Vec4size, datasize1+datasize2);
+
+                GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
+
+                IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapWriteBit);
+                for( int i = 0; i < v1.Length; i++ )
+                {
+                    float[] f = new float[8];
+                    f[0] = v1[i].X;                    f[1] = v1[i].Y;                    f[2] = v1[i].Z;                    f[3] = v1[i].W;
+                    f[4] = v2[i].X;                    f[5] = v2[i].Y;                    f[6] = v2[i].Z;                    f[7] = v2[i].W;
+
+                    System.Runtime.InteropServices.Marshal.Copy(f, 0, ptr, 8);
+                    ptr += Vec4size * 2;
+                }
+
+                GL.UnmapNamedBuffer(Id);
+            }
+            else
+            {
+                int pos1 = Align(Vec4size, datasize1);
+                int pos2 = Align(Vec4size, datasize2);
+
+                GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
+                GL.NamedBufferSubData(Id, (IntPtr)pos1, datasize1, v1);
+                GL.NamedBufferSubData(Id, (IntPtr)pos2, datasize2, v2);
+            }
+            GLStatics.Check();
+        }
+
+        public void Set(Vector4[] vertices, Vector2[] coords, BufferUsageHint uh = BufferUsageHint.StaticDraw)
+        {
+            int datasizeV = vertices.Length * Vec4size;
+            int datasizeC = coords.Length * Vec2size;
+            int posv = Align(Vec4size, datasizeV);
+            int posc = Align(Vec4size, datasizeC);
 
             GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasizeV, vertices);
@@ -251,10 +290,11 @@ namespace OpenTKUtils.GL4
             GLStatics.Check();
         }
 
+
         public void Set(Vector4[] vertices, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
         {
-            int datasize = vertices.Length * sizeof(float) * 4;
-            int pos = Align(sizeof(float) * 4, datasize);
+            int datasize = vertices.Length * Vec4size;
+            int pos = Align(Vec4size, datasize);
 
             GL.NamedBufferStorage(Id, Size, vertices, uh);
             GLStatics.Check();
@@ -271,10 +311,10 @@ namespace OpenTKUtils.GL4
 
         public void Set(Vector4[] vertices, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
-            int vertsize = vertices.Length * sizeof(float) * 4;
+            int vertsize = vertices.Length * Vec4size;
             int matsize = transforms.Length * sizeof(float) * 16;
-            int posv = Align(sizeof(float) * 4, vertsize);
-            int posc = Align(sizeof(float) * 4, matsize);
+            int posv = Align(Vec4size, vertsize);
+            int posc = Align(Vec4size, matsize);
 
             GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, vertsize, vertices);
@@ -285,12 +325,12 @@ namespace OpenTKUtils.GL4
 
         public void Set(Vector4[] vertices, Vector2[] texcoords, Matrix4[] transforms, BufferUsageHint uh = BufferUsageHint.StaticDraw)
         {
-            int vertsize = vertices.Length * sizeof(float) * 4;
-            int texsize = texcoords.Length * sizeof(float) * 2;
+            int vertsize = vertices.Length * Vec4size;
+            int texsize = texcoords.Length * Vec2size;
             int matsize = transforms.Length * sizeof(float) * 16;
-            int posv = Align(sizeof(float) * 4, vertsize);
-            int post = Align(sizeof(float) * 2, texsize);
-            int posc = Align(sizeof(float) * 4, matsize);
+            int posv = Align(Vec4size, vertsize);
+            int post = Align(Vec2size, texsize);
+            int posc = Align(Vec4size, matsize);
 
             GL.NamedBufferData(Id, Size, (IntPtr)0, uh);              // set size
             GL.NamedBufferSubData(Id, (IntPtr)posv, vertsize, vertices);
@@ -322,7 +362,7 @@ namespace OpenTKUtils.GL4
         {
             byte[] data = new byte[size];
             IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, Size, BufferAccessMask.MapReadBit);
-            System.Runtime.InteropServices.Marshal.Copy(ptr,data,offset, size);
+            System.Runtime.InteropServices.Marshal.Copy(ptr, data, offset, size);
             GL.UnmapNamedBuffer(Id);
             return data;
         }
@@ -347,7 +387,7 @@ namespace OpenTKUtils.GL4
 
         public Vector4[] ReadVector4(int offset, int number)                          // read a UINT
         {
-            byte[] bytes = ReadBuffer(offset, sizeof(float) * 4 * number);
+            byte[] bytes = ReadBuffer(offset, Vec4size * number);
             Vector4[] d = new Vector4[number];
 
             for (int i = 0; i < number; i++)
@@ -366,7 +406,14 @@ namespace OpenTKUtils.GL4
         #endregion
 
 
-        
+        public void Bind(int bindingindex, int start, int stride, int divisor = 0)
+        {
+            GL.BindVertexBuffer(bindingindex, Id, (IntPtr)start, stride);      // this buffer to binding index
+            GL.VertexBindingDivisor(bindingindex, divisor);
+            GLStatics.Check();
+        }
+
+
         #region Implementation
 
         protected void WriteCacheToBuffer()     // update the buffer with the cache.

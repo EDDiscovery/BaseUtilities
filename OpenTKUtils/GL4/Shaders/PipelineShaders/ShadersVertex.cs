@@ -70,8 +70,11 @@ out gl_PerVertex {
 
 layout (location = 20) uniform  mat4 projectionmodel;
 
+out vec4 vs_color;
+
 void main(void)
 {
+    vs_color = vec4(gl_InstanceID*0.2+0.2,gl_InstanceID*0.2+0.2,0.5+gl_VertexID*0.1,1.0);       // colour may be thrown away if required..
 	gl_Position = projectionmodel * transform * position;        // order important
 }
 ";
@@ -81,7 +84,6 @@ void main(void)
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
             SetupProjMatrix = true;
-
         }
     }
 
@@ -109,6 +111,7 @@ layout (location = 20) uniform  mat4 projectionmodel;
 void main(void)
 {
 	gl_Position = projectionmodel * transform * position;        // order important
+	//gl_Position = projectionmodel * position;        // order important
     vs_textureCoordinate = texco;
 }
 ";

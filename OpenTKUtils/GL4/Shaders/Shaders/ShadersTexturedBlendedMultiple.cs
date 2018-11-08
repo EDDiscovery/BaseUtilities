@@ -27,22 +27,36 @@ namespace OpenTKUtils.GL4
         string vert =
         @"
 #version 450 core
-layout (location = 0) in vec4 position;
-
+layout (location = 0) in vec4 position;     // from buffer1
 layout(location = 1) in vec2 texco;
 
-layout(location = 2) in vec4 instancepos;
-
-layout(location = 3) in vec4 instancerotation;
+layout(location = 2) in vec4 instancepos;       // from buffer2
+//layout(location = 3) in vec4 instancerotation;
 
 layout (location = 20) uniform  mat4 projectionmodel;
-layout (location = 23) uniform  mat4 crot;
+//layout (location = 23) uniform  mat4 commontransform;
 
 out vec2 vs_textureCoordinate;
 
+mat4 rotationMatrix(vec3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+    
+    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+
 void main(void)
 {
-	gl_Position = projectionmodel * crot * position;       
+    vec4 p = position;
+    p = p + instancepos;
+//gl_Position = projectionmodel * commontransform * position;       
+	gl_Position = projectionmodel  * p;       
     vs_textureCoordinate = texco;
 }
 ";
@@ -56,8 +70,7 @@ in vec2 vs_textureCoordinate;
 out vec4 color;
 
 layout (binding=1) uniform sampler2D textureObject;
-
-layout (location = 25) uniform  float blend;
+//layout (location = 30) uniform  float blend;
 
 void main(void)
 {

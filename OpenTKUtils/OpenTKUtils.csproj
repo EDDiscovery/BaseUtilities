@@ -69,7 +69,6 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
-    <Compile Include="GL4\Vertex\VertexObject212122.cs" />
     <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipeline.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertex.cs" />
@@ -104,6 +103,9 @@
     <None Include="app.config" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="GL4\Shaders\Base\PlanShaders.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

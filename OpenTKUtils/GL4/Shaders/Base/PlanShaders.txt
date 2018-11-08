@@ -1,0 +1,17 @@
+﻿Vertex
+
+0 = vec4 positions
+1 = vec4 colour | vec2 texcoord
+4 = mat4 transforms
+
+Textures
+
+1 = Texture Object
+
+Uniforms
+
+20 = projmodel
+22 = object transform
+23 = common transform
+26 = phase
+30 = blend

@@ -98,6 +98,7 @@ void main(void)
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+            Closed += ShaderTest_Closed;
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
@@ -125,7 +126,6 @@ void main(void)
             items.Add("golden", new GLTexture2D(Properties.Resources.golden));
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
-
 
             #region coloured lines
 
@@ -342,16 +342,26 @@ void main(void)
 
             #region Instancing
 
-            items.Add("IC-1", new GLShaderPipeline(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderFixedColour(new Color4(0.5F, 0.5F, 0.0F, 1.0F))));
+            items.Add("IC-1", new GLShaderPipeline(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderColour()));
 
+            GLStatics.PointSize(10);
             Matrix4[] pos1 = new Matrix4[3];
             pos1[0] = Matrix4.CreateTranslation(new Vector3(10, 0, 10));
             pos1[1] = Matrix4.CreateTranslation(new Vector3(10, 5, 10));
             pos1[2] = Matrix4.CreateRotationX(45f.Radians());
             pos1[2] *= Matrix4.CreateTranslation(new Vector3(10, 10, 10));
 
+            //pos1[0] = Matrix4.Zero;
+            //pos1[1] = Matrix4.Zero;
+            //pos1[2] = Matrix4.Zero;
+
+            //pos1[0].Column0 = new Vector4(0, 11, 12, 13);
+            //pos1[1].Column0 = new Vector4(0, 0, 0, 0);
+            //pos1[2].Column0 = new Vector4(40, 0, 0, 0);
+            //pos1[2].Column3 = new Vector4(0, 35, 36, 37);
+
             rObjects.Add(items.Shader("IC-1"), "1-a",
-                                    GLRenderableItem.CreateVector4Matrix4(items , OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
+                                    GLRenderableItem.CreateVector4Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
                                             GLShapeObjectFactory.CreateQuad(2.0f), pos1,
                                             null, pos1.Length));
 
@@ -361,7 +371,7 @@ void main(void)
             pos2[0] *= Matrix4.CreateTranslation(new Vector3(20, 0, 10));
             pos2[1] = Matrix4.CreateRotationX(-70f.Radians());
             pos2[1] *= Matrix4.CreateTranslation(new Vector3(20, 5, 10));
-            pos2[2] = Matrix4.CreateRotationX(-60f.Radians());
+            pos2[2] = Matrix4.CreateRotationY(-60f.Radians());
             pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
 
 
@@ -374,6 +384,7 @@ void main(void)
                                             GLShapeObjectFactory.CreateQuad(2.0f), GLShapeObjectFactory.TexQuad, pos2,
                                             null, pos2.Length));
             #endregion
+
 
             #region Tesselation
             items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,2f,true));
@@ -417,8 +428,6 @@ void main(void)
                         ));
 
             #endregion
-
-            Closed += ShaderTest_Closed;
         }
 
         private void ShaderTest_Closed(object sender, EventArgs e)
