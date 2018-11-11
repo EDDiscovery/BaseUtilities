@@ -16,7 +16,7 @@ namespace BaseUtils
         {
             try
             {
-                FileStream file = File.Open(f, fm, ac);
+                FileStream file = File.Open(f, fm, ac, ac == FileAccess.Read ? FileShare.ReadWrite : FileShare.Read);
 
                 if (ac == FileAccess.Read)
                     reader = new StreamReader(file);
