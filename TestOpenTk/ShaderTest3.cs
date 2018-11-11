@@ -181,10 +181,10 @@ void main(void)
             storagebuffer.Set(vertexes);
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index
-            vecoutbuffer.SetSize(sizeof(float)*4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            vecoutbuffer.Allocate(sizeof(float)*4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             countbuffer = new GLStorageBlock(2);           // new storage block on binding index
-            countbuffer.SetSize(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.
+            countbuffer.Allocate(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.
 
             rObjects.Add(items.Shader("Shader"), "T1", new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vertexes.Length, null, null, 1));
 

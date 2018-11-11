@@ -83,6 +83,21 @@ namespace OpenTKUtils
                 System.Diagnostics.Debug.Assert(false, errmsg );
         }
 
+        static bool? LastCullface = null;
+
+        public static void CullFace(bool on)
+        {
+            if ( LastCullface == null || LastCullface.Value != on)
+            {
+                if ( on )
+                    GL.Enable(EnableCap.CullFace);
+                else
+                    GL.Disable(EnableCap.CullFace);
+                LastCullface = on;
+            }
+        }
+
+
         static int? LastPatchSize = null;
 
         public static void PatchSize(int p)          // cache size for speed

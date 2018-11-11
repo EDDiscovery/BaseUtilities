@@ -39,5 +39,22 @@ namespace BaseUtils
 
             Clear();
         }
+
+        public IDisposable Last(Type t, int c = 1)      // give me the last of type t, with a count..
+        {
+            var v = Values.ToList();        // horrible.. only way i could think of doing this
+
+            for (int i = v.Count - 1; i >= 0; i--)
+            {
+                if (v[i].GetType() == t)
+                {
+                    if (--c == 0)
+                        return v[i];
+                }
+            }
+
+            return null;
+        }
+
     }
 }

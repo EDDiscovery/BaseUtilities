@@ -22,41 +22,46 @@ namespace OpenTKUtils.GL4
 {
     // Shader, with tesselation, and Y change in amp using sin
 
+        2DArray next and blend..
+
     public class GLMultipleTexturedBlended : GLShaderProgramBase
     {
-        string vert =
+        string vertpos =
         @"
 #version 450 core
-layout (location = 0) in vec4 position;     // from buffer1
-layout(location = 1) in vec2 texco;
-
-layout(location = 2) in vec4 instancepos;       // from buffer2
-//layout(location = 3) in vec4 instancerotation;
+layout (location = 0) in vec4 position;     
+layout (location = 1) in vec2 texco;
+layout(location = 2) in vec4 instancepos;       
 
 layout (location = 20) uniform  mat4 projectionmodel;
-//layout (location = 23) uniform  mat4 commontransform;
+layout (location = 23) uniform  mat4 commontransform;
 
 out vec2 vs_textureCoordinate;
 
-mat4 rotationMatrix(vec3 axis, float angle)
+void main(void)
 {
-    axis = normalize(axis);
-    float s = sin(angle);
-    float c = cos(angle);
-    float oc = 1.0 - c;
-    
-    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
-                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
-                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
-                0.0,                                0.0,                                0.0,                                1.0);
+    vec4 p = commontransform * position;
+    p = p + instancepos;
+	gl_Position = projectionmodel  * p;       
+    vs_textureCoordinate = texco;
 }
+";
+        string vertmat =
+        @"
+#version 450 core
+layout (location = 0) in vec4 position;     // from buffer1
+layout (location = 1) in vec2 texco;
+layout(location = 4) in mat4 mat;       // from buffer2
+
+layout (location = 20) uniform  mat4 projectionmodel;
+layout (location = 23) uniform  mat4 commontransform;
+
+out vec2 vs_textureCoordinate;
 
 void main(void)
 {
     vec4 p = position;
-    p = p + instancepos;
-//gl_Position = projectionmodel * commontransform * position;       
-	gl_Position = projectionmodel  * p;       
+	gl_Position = projectionmodel  * mat * commontransform * p;       
     vs_textureCoordinate = texco;
 }
 ";
@@ -77,16 +82,13 @@ void main(void)
     color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
-        private bool nocull = false;
-
         public float Blend { get; set; } = 0;                   // set to animate.
-        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
+        public GLObjectDataTranslationRotation CommonTransform { get; set; }           // only use this for rotation - position set by object data
 
-        public GLMultipleTexturedBlended(bool nocullface)
+        public GLMultipleTexturedBlended(bool matrix)
         {
-            Compile(vertex: vert, frag: frag);
-            nocull = nocullface;
-            Transform = new GLObjectDataTranslationRotation();
+            Compile(vertex: (matrix ? vertmat : vertpos), frag: frag);
+            CommonTransform = new GLObjectDataTranslationRotation();
         }
 
         public override void Start(Common.MatrixCalc c)
@@ -95,19 +97,15 @@ void main(void)
 
             GL.ProgramUniform1(Id, 25, Blend);
 
-            Matrix4 t = Transform.Transform;
+            Matrix4 t = CommonTransform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
 
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            if ( nocull)
-                GL.Disable(EnableCap.CullFace);
         }
 
         public override void Finish()
         {
             base.Finish();
-            if ( nocull )
-                GL.Enable(EnableCap.CullFace);
         }
     }
 }

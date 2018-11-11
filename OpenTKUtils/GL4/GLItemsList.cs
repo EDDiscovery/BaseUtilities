@@ -58,6 +58,11 @@ namespace OpenTKUtils.GL4
             return (GLBuffer)items[name];
         }
 
+        public GLBuffer LastBuffer(int c= 1)
+        {
+            return (GLBuffer)items.Last(typeof(GLBuffer), c);
+        }
+
         public GLVertexArray NewArray(string name = null)
         {
             if (name == null)

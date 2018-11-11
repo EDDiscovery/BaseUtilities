@@ -100,7 +100,7 @@ namespace OpenTKUtils.Common
 
             GL.Enable(EnableCap.DepthTest);         // standard - depth, ccw, cull
             GL.FrontFace(FrontFaceDirection.Ccw);
-            GL.Enable(EnableCap.CullFace);
+            GLStatics.CullFace(true);
             GLStatics.PointSize(1);                 // default is controlled by external not shaders
 
             sysinterval.Start();

@@ -28,7 +28,7 @@ namespace OpenTKUtils.GL4
         public int BindingIndex { get; private set; }
 
         //public GLDataBlock(int bp, bool std430, int isz, BufferTarget tg = BufferTarget.UniformBuffer, BufferRangeTarget tgr = BufferRangeTarget.UniformBuffer) : base(isz)
-        public GLDataBlock(int bindingindex, bool std430, int startsize, BufferTarget target, BufferRangeTarget tgr) : base(std430,startsize)
+        public GLDataBlock(int bindingindex, bool std430, BufferTarget target, BufferRangeTarget tgr) : base(std430)
         {
             BindingIndex = bindingindex;
 
@@ -36,27 +36,13 @@ namespace OpenTKUtils.GL4
             GL.BindBufferBase(tgr, BindingIndex, Id);            // binding point
             GL.BindBuffer(target, 0);
         }
-
-        // must call at least one.. from then on you can update using writes..
-        public void Complete()
-        {
-            GL.NamedBufferData(Id, Size, (IntPtr)0, BufferUsageHint.DynamicDraw);
-            // want to write, and the previous contents may be thrown away https://www.khronos.org/registry/OpenGL-Refpages/gl4/
-            WriteCacheToBuffer();
-            GLStatics.Check();
-        }
-
-        // rewrite the whole thing.. Complete must be called first.  Use after Writes without the immediate write buffer
-        public void Update()
-        {
-            WriteCacheToBuffer();
-        }
+       
     }
 
     // uniform blocks - std140 only
     public class GLUniformBlock : GLDataBlock
     {
-        public GLUniformBlock(int bindingindex, int defaultsize = 64) : base(bindingindex, false, defaultsize, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        public GLUniformBlock(int bindingindex) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
         {
 
         }
@@ -66,7 +52,7 @@ namespace OpenTKUtils.GL4
     // storage blocks - std140 and 430
     public class GLStorageBlock : GLDataBlock
     {
-        public GLStorageBlock(int bindingindex, bool std430 = false, int defaultsize = 64) : base(bindingindex, std430, defaultsize, BufferTarget.ShaderStorageBuffer, BufferRangeTarget.ShaderStorageBuffer)
+        public GLStorageBlock(int bindingindex, bool std430 = false): base(bindingindex, std430, BufferTarget.ShaderStorageBuffer, BufferRangeTarget.ShaderStorageBuffer)
         {
         }
     }

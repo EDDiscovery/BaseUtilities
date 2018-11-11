@@ -107,14 +107,12 @@ void main(void)
     color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
-        private bool nocull = false;
 
         public float Phase { get; set; } = 0;                   // set to animate.
 
-        public GLTesselationShaderSinewave(float tesselation,float amplitude, float repeats, bool nocullface)
+        public GLTesselationShaderSinewave(float tesselation,float amplitude, float repeats)
         {
             Compile(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude,repeats), frag: frag);
-            nocull = nocullface;
         }
 
         public override void Start(Common.MatrixCalc c)
@@ -123,15 +121,11 @@ void main(void)
             GL.ProgramUniform1(Id, 26, Phase);
             GLStatics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            if ( nocull)
-                GL.Disable(EnableCap.CullFace);
         }
 
         public override void Finish()
         {
             base.Finish();
-            if ( nocull )
-                GL.Enable(EnableCap.CullFace);
         }
     }
 }

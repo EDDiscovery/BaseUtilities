@@ -351,15 +351,6 @@ void main(void)
             pos1[2] = Matrix4.CreateRotationX(45f.Radians());
             pos1[2] *= Matrix4.CreateTranslation(new Vector3(10, 10, 10));
 
-            //pos1[0] = Matrix4.Zero;
-            //pos1[1] = Matrix4.Zero;
-            //pos1[2] = Matrix4.Zero;
-
-            //pos1[0].Column0 = new Vector4(0, 11, 12, 13);
-            //pos1[1].Column0 = new Vector4(0, 0, 0, 0);
-            //pos1[2].Column0 = new Vector4(40, 0, 0, 0);
-            //pos1[2].Column3 = new Vector4(0, 35, 36, 37);
-
             rObjects.Add(items.Shader("IC-1"), "1-a",
                                     GLRenderableItem.CreateVector4Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
                                             GLShapeObjectFactory.CreateQuad(2.0f), pos1,
@@ -371,13 +362,12 @@ void main(void)
             pos2[0] *= Matrix4.CreateTranslation(new Vector3(20, 0, 10));
             pos2[1] = Matrix4.CreateRotationX(-70f.Radians());
             pos2[1] *= Matrix4.CreateTranslation(new Vector3(20, 5, 10));
-            pos2[2] = Matrix4.CreateRotationY(-60f.Radians());
+            pos2[2] = Matrix4.CreateRotationZ(-60f.Radians());
             pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
-
 
             items.Add("IC-2", new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture()));
             items.Shader("IC-2").StartAction += (s) => { items.Tex("wooden").Bind(1); GL.Disable(EnableCap.CullFace); };
-            items.Shader("IC-2").FinishAction += (s) => { items.Tex("wooden").Bind(1); GL.Enable(EnableCap.CullFace); };
+            items.Shader("IC-2").FinishAction += (s) => {  GL.Enable(EnableCap.CullFace); };
 
             rObjects.Add(items.Shader("IC-2"), "1-b",
                                     GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
@@ -387,7 +377,7 @@ void main(void)
 
 
             #region Tesselation
-            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,2f,true));
+            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,2f));
             rObjects.Add(items.Shader("TESx1"), "O-TES1",
                 GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Patches,
                                     GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f),
