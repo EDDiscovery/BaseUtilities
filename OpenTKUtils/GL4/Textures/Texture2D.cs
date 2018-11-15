@@ -53,7 +53,6 @@ namespace OpenTKUtils.GL4
                 internalformat,                       // format of texture - 4 floats is the normal, and is given in the constructor
                 bmp.Width,                            // width and height of mipmap level 0
                 height);
-            GLStatics.Check();
 
             int curwidth = bmp.Width;
             int curheight = height;
@@ -71,7 +70,6 @@ namespace OpenTKUtils.GL4
                     PixelFormat.Bgra,
                     PixelType.UnsignedByte,     // and we asked above for Bgra data as unsigned bytes
                     ptr);
-                GLStatics.Check();
 
                 if (m == 0)             // at 0, we jump down the whole image.  4 is the bytes/pixel
                     ptr += bmp.Width * height * 4;
@@ -96,19 +94,19 @@ namespace OpenTKUtils.GL4
             //GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref textureWrap);     
             //GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref textureWrap);
 
-
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
 
             if (mipmaplevel == 1)                                       // single level mipmaps get auto gen
                 GL.GenerateTextureMipmap(Id);
 
+            GLStatics.Check();
             return height;
         }
 
         public void Bind(int bindingpoint)
         {
-            //GL.BindTexture(TextureTarget.Texture2D, Id);  // not needed
             GL.BindTextureUnit(bindingpoint, Id);
+            GLStatics.Check();
         }
 
         public void Dispose()           // you can double dispose.

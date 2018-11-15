@@ -65,6 +65,7 @@ namespace OpenTKUtils
             }
         }
 
+        [System.Diagnostics.Conditional("DEBUG")]
         public static void Check([CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
         {
             string errmsg = "";
@@ -168,6 +169,47 @@ namespace OpenTKUtils
 
             //System.Diagnostics.Debug.WriteLine(" -> inc " + inclination + " az " + azimuth);
             return new Vector3(inclination, azimuth, 0);
+        }
+
+        public static Vector2 Floor(this Vector2 a)
+        {
+            return new Vector2((float)Math.Floor(a.X), (float)Math.Floor(a.Y));
+        }
+
+        public static Vector2 Fract(this Vector2 a)
+        {
+            float x = (float)(a.X - Math.Floor(a.X));
+            float y = (float)(a.Y - Math.Floor(a.Y));
+            return new Vector2(x, y);
+        }
+
+        public static Vector2 Mix(Vector2 a, Vector2 b, float mix)
+        {
+            float x = (float)(a.X + (b.X - a.X) * mix);
+            float y = (float)(a.Y - (b.Y - a.Y) * mix);
+            return new Vector2(x, y);
+        }
+
+        public static float randA(Vector2 n)
+        {
+            Vector2 i0 = new Vector2(12.9898f, 4.1414f);
+            float i1 = Vector2.Dot(n, i0);
+            float i2 = (float)Math.Sin(i1) * 43758.5453f;
+            return i2.Fract();
+        }
+
+        public static float noiseA(Vector2 p)
+        {
+            Vector2 ip = p.Floor();
+            Vector2 u = p.Fract();
+            u = u * u * (new Vector2(3, 3) - 2.0f * u);
+
+            float res =
+                ObjectExtensionsNumbersBool.Mix(
+                    ObjectExtensionsNumbersBool.Mix(GLStatics.randA(ip), GLStatics.randA(ip + new Vector2(1.0f, 0.0f)), u.X),
+                    ObjectExtensionsNumbersBool.Mix(GLStatics.randA(ip + new Vector2(0.0f, 1.0f)), GLStatics.randA(ip + new Vector2(1.0f, 1.0f)), u.X),
+                    u.Y);
+            return res * res;
         }
 
 

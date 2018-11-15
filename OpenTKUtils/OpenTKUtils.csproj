@@ -64,6 +64,7 @@
     <Compile Include="GL4\Renderers\RenderableLists.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderProgramBase.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipelineShadersBase.cs" />
+    <Compile Include="GL4\Shaders\Functions\FunctionsNoise.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersStars.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />

@@ -312,7 +312,7 @@ void main(void)
 
             #region 2dArrays
             items.Add("TEX2DA", new GLTexturedObjectShader2DBlend());
-            items.Add("2DArray2", new GLTexture2DArray(1, new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2 }, 9));
+            items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2 }, 9));
 
             rObjects.Add(items.Shader("TEX2DA"), "2DA",
                 GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
@@ -321,7 +321,7 @@ void main(void)
                         ));
 
 
-            items.Add("2DArray2-1", new GLTexture2DArray(1, new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }));
+            items.Add("2DArray2-1", new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }));
 
             rObjects.Add(items.Shader("TEX2DA"), "2DA-1",
                 GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,

@@ -445,6 +445,16 @@ public static class ObjectExtensionsNumbersBool
         return ((angle + add + 360 + 180) % 360) - 180;
     }
 
+    public static float Fract(this float a)
+    {
+        return a - (float)Math.Floor(a);
+    }
+
+    public static float Mix(float a, float b , float mix)
+    {
+        return a + (b - a) * mix;
+    }
+
     #endregion
 }
 

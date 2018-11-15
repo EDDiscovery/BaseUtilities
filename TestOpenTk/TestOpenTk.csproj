@@ -71,6 +71,12 @@
     <Compile Include="ShaderTest2.Designer.cs">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTest5.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTest5.Designer.cs">
+      <DependentUpon>ShaderTest5.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTest4.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -101,6 +107,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest2.resx">
       <DependentUpon>ShaderTest2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTest5.resx">
+      <DependentUpon>ShaderTest5.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTest4.resx">
       <DependentUpon>ShaderTest4.cs</DependentUpon>
@@ -156,6 +165,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\asteroid 2 texture one side mipmap levels 0 to 8.bmp" />
+    <None Include="Resources\asteroid 4 texture one side mipmap levels 0 to 8 - Copy.bmp" />
+    <None Include="Resources\asteroid 3 texture one side mipmap levels 0 to 8.bmp" />
     <None Include="Resources\moonmap1k.jpg" />
     <None Include="Resources\smile5300-256x256x8.png" />
   </ItemGroup>

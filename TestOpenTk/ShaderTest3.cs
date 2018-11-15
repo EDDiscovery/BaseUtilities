@@ -78,7 +78,6 @@ layout (binding = 2, std430) buffer Count
 
 layout (location = 20) uniform  mat4 projectionmodel;
 
-
 void main(void)
 {
     int i;

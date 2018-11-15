@@ -48,31 +48,31 @@ namespace OpenTKUtils.GL4
             if (vertex != null)
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertex);
-                System.Diagnostics.Debug.Assert(ret == null, "Vertex", ret);
+                System.Diagnostics.Debug.Assert(ret == null, "Vertex Shader", ret);
             }
 
             if (tcs != null)
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs);
-                System.Diagnostics.Debug.Assert(ret == null, "TCS", ret);
+                System.Diagnostics.Debug.Assert(ret == null, "Tesselation Control Shader", ret);
             }
 
             if (tes != null)
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes);
-                System.Diagnostics.Debug.Assert(ret == null, "TES", ret);
+                System.Diagnostics.Debug.Assert(ret == null, "Tesselation Evaluation Shader", ret);
             }
 
             if (geo != null)
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader, geo);
-                System.Diagnostics.Debug.Assert(ret == null, "GEO", ret);
+                System.Diagnostics.Debug.Assert(ret == null, "Geometry shader", ret);
             }
 
             if (frag != null)
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag);
-                System.Diagnostics.Debug.Assert(ret == null, "Frag", ret);
+                System.Diagnostics.Debug.Assert(ret == null, "Fragment Shader", ret);
             }
 
             ret = program.Link();
@@ -81,12 +81,13 @@ namespace OpenTKUtils.GL4
             GLStatics.Check();
         }
 
-        public virtual void Start(MatrixCalc c)     // override, but you must call these two
+        public virtual void Start(MatrixCalc c)     // override.. but call back.
         {
             GL.UseProgram(Id);
             OpenTK.Matrix4 projmodel = c.ProjectionModelMatrix;
             GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
             StartAction?.Invoke(this);
+            GLStatics.Check();
         }
 
         public virtual void Finish()                // override if required

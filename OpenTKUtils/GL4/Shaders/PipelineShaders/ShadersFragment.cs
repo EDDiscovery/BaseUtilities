@@ -101,6 +101,7 @@ void main(void)
         public override void Start(Common.MatrixCalc c) 
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GLStatics.Check();
         }
     }
 
@@ -125,10 +126,6 @@ void main(void)
 {
     vec4 col1 = texture(textureObject, vec3(vs_textureCoordinate,0));
     vec4 col2 = texture(textureObject, vec3(vs_textureCoordinate,1));
-
-    //color = vec4(vs_textureCoordinate.x,vs_textureCoordinate.y,0.5,1.0f);
-    //color = vec4(blend, blend,0.5,1.0f);
-    //color = vec4( mix(col1.x,col2.x,blend), mix(col1.y,col2.y,blend), mix(col1.z,col2.z,blend), 1.0f);
     color = mix(col1,col2,blend);
 }
 ";
@@ -143,6 +140,68 @@ void main(void)
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
             GL.ProgramUniform1(Id, 30, Blend);
+            GLStatics.Check();
+        }
+    }
+
+    //  
+
+    public class GLFragmentShaderStarTexture : GLShaderPipelineShadersBase
+    {
+        const int BindingPoint = 1;
+
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+in vec2 vs_textureCoordinate;
+in vec3 modelpos;
+out vec4 pColor;
+
+" + GLShaderFunctionsNoise.NoiseFunctions3 +
+@"
+void main(void)
+{
+    vec3 position = modelpos/20;
+    float n = (noise(position, 4, 40.0, 0.7) + 1.0) * 0.5;
+
+    //float unRadius = 1000.0;
+
+    // Get worldspace position
+    //vec3 sPosition = position * unRadius;
+    
+    // Sunspots
+    //float s = 0.36;
+    //float frequency = 0.00001;
+    //float t1 = snoise(sPosition * frequency) - s;
+    //float t2 = snoise((sPosition + unRadius) * frequency) - s;
+	//float ss = (max(t1, 0.0) * max(t2, 0.0)) * 2.0;
+    // Accumulate total noise
+
+    //float total = n - ss;
+    float total = n;
+
+    vec3 unCenterDir = vec3(1,0,0);
+	float theta = 0.0;//- dot(unCenterDir, modelpos);
+
+    float mag = 0.3;
+	
+    vec3 unColor = vec3(0.5, 0.5 ,0.0);
+    pColor = vec4(unColor + (total - 0.0)*mag - theta, 1.0);
+}
+";
+        }
+
+        public GLFragmentShaderStarTexture()
+        {
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+        }
+
+        public override void Start(Common.MatrixCalc c)
+        {
+            GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
+            GLStatics.Check();
         }
     }
 }

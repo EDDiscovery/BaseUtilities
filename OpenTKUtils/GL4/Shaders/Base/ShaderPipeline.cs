@@ -47,6 +47,8 @@ namespace OpenTKUtils.GL4
 
         public GLShaderPipeline(IGLShader vertex, IGLShader fragment) : this()
         {
+            //System.Diagnostics.Debug.WriteLine()
+
             AddVertex(vertex);
             AddFragment(fragment);
         }

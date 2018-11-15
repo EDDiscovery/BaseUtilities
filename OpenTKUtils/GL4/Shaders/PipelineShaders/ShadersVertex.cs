@@ -213,12 +213,14 @@ out gl_PerVertex {
 
 layout(location = 1) in vec2 texco;
 out vec2 vs_textureCoordinate;
+out vec3 modelpos;
 
 layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 
 void main(void)
 {
+    modelpos = position.xyz;
 	gl_Position = projectionmodel * transform * position;        // order important
     vs_textureCoordinate = texco;
 }
@@ -280,6 +282,7 @@ void main(void)
             base.Start(c);
             Matrix4 t = Transform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
+            GLStatics.Check();
         }
     }
 
@@ -330,6 +333,7 @@ void main(void)
             base.Start(c);
             Matrix4 t = Transform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
+            GLStatics.Check();
         }
     }
 

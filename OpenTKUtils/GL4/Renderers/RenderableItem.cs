@@ -110,9 +110,18 @@ namespace OpenTKUtils.GL4
             return CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic);
         }
 
-        // in 0,1,4 set up.  if instanceposition is null, it makes a buffer for you to fill up externally.
-        public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, PrimitiveType pt, 
-                                                                   Vector4[] vectors, Vector2[] coords,  Vector4[] instanceposition, 
+        public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, PrimitiveType pt,
+                                                                   Tuple<Vector4[],Vector2[]> pos, 
+                                                                    Vector4[] instanceposition,
+                                                                   IGLInstanceData id = null, int ic = 1,
+                                                                   bool separbuf = false, int divisorinstance = 1)
+        {
+            return CreateVector4Vector2Vector4(items, pt, pos.Item1, pos.Item2, instanceposition, id, ic, separbuf, divisorinstance);
+        }
+
+        // in 0,1,4 set up.  if separbuffer = true and instanceposition is null, it makes a buffer for you to fill up externally.
+        public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, PrimitiveType pt,
+                                                                   Vector4[] vectors, Vector2[] coords, Vector4[] instanceposition,
                                                                    IGLInstanceData id = null, int ic = 1,
                                                                    bool separbuf = false, int divisorinstance = 1)
         {
@@ -152,7 +161,7 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        // in 0,1,4-7 set up.  if instancematrix is null, it makes a buffer for you to fill up externally.
+        // in 0,1,4-7 set up.  if separbuffer = true and instancematrix is null, it makes a buffer for you to fill up externally.
         public static GLRenderableItem CreateVector4Vector2Matrix4(GLItemsList items, PrimitiveType pt, 
                                                                     Vector4[] vectors, Vector2[] coords, Matrix4[] instancematrix, 
                                                                     IGLInstanceData id = null, int ic = 1, 

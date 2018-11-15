@@ -28,12 +28,10 @@ namespace OpenTKUtils.GL4
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public GLTexture2DArray(int bindingpoint, Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        public GLTexture2DArray(Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4)
         {
             GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
             Id = id;
-            GL.BindTexture(TextureTarget.Texture2DArray, Id);
-            GLStatics.Check();
 
             for (int bitmapnumber = 0; bitmapnumber < bmps.Length; bitmapnumber++)
             {
@@ -42,13 +40,12 @@ namespace OpenTKUtils.GL4
                     Width = bmps[0].Width;
                     Height = (mipmaplevel == 1) ? bmps[0].Height : (bmps[0].Height / 3) * 2;
 
-                    GL.TexStorage3D(TextureTarget3d.Texture2DArray,
-                            mipmaplevel, // miplevels
+                    GL.TextureStorage3D(Id,
+                            mipmaplevel == 1 ? genmipmaplevel : mipmaplevel,        // miplevels
                             internalformat,         // format of texture - 4 floats is normal, given in constructor
                             Width,
                             Height,
-                            bmps.Length);       // number of bitmaps depth
-                    GLStatics.Check();
+                            bmps.Length);       // depth = number of bitmaps depth
                 }
 
                 System.Drawing.Imaging.BitmapData bmpdata = bmps[bitmapnumber].LockBits(new Rectangle(0, 0, bmps[bitmapnumber].Width, bmps[bitmapnumber].Height),
@@ -63,8 +60,8 @@ namespace OpenTKUtils.GL4
 
                 for (int m = 0; m < mipmaplevel; m++)
                 {
-                    GL.TexSubImage3D(TextureTarget.Texture2DArray,
-                        m,  // miplevel
+                    GL.TextureSubImage3D(Id,
+                        m,      // mipmaplevel
                         0,      // xoff into target
                         0,      // yoff into target
                         bitmapnumber,  // zoffset, which is the bitmap depth
@@ -74,7 +71,6 @@ namespace OpenTKUtils.GL4
                         PixelFormat.Bgra,
                         PixelType.UnsignedByte, // unsigned bytes in BGRA.  PixelStore above indicated the stride across 1 row
                         ptr);
-                    GLStatics.Check();
 
                     if (m == 0)             // at 0, we jump down the whole first image.  4 is the bytes/pixel
                         ptr += Width * Height * 4;
@@ -87,6 +83,8 @@ namespace OpenTKUtils.GL4
                         curheight /= 2;
                 }
 
+                GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
+
                 if (mipmaplevel == 1)                                       // single level mipmaps get auto gen
                     GL.GenerateTextureMipmap(Id);
 
@@ -98,12 +96,12 @@ namespace OpenTKUtils.GL4
             var textureMagFilter = (int)All.Linear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
+
             GLStatics.Check();
         }
 
         public void Bind(int bindingpoint)
         {
-            GL.BindTexture(TextureTarget.Texture2DArray, Id);
             GL.BindTextureUnit(bindingpoint, Id);
             GLStatics.Check();
         }

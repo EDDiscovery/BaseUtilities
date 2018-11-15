@@ -352,10 +352,10 @@ namespace OpenTKUtils.GL4
             {
                 int take = Math.Min(colstogo, colours.Length);      // max of colstogo and length of array
                 GL.NamedBufferSubData(Id, (IntPtr)colp, 16 * take, colours);
-                GLStatics.Check();
                 colstogo -= take;
                 colp += take * 16;
             }
+            GLStatics.Check();
         }
 
         public void Fill(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)

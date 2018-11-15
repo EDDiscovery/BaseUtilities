@@ -121,6 +121,7 @@ void main(void)
             GL.ProgramUniform1(Id, 26, Phase);
             GLStatics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GLStatics.Check();
         }
 
         public override void Finish()

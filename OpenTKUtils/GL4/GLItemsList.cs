@@ -18,9 +18,10 @@ namespace OpenTKUtils.GL4
             items.Dispose();
         }
 
-        public void Add( string name, IDisposable disp )
+        public IGLTexture Add(string name, IGLTexture disp)
         {
             items.Add(name, disp);
+            return disp;
         }
 
         public IGLTexture Tex(string name)
@@ -28,9 +29,22 @@ namespace OpenTKUtils.GL4
             return (IGLTexture)items[name];
         }
 
+
+        public IGLProgramShader Add(string name, IGLProgramShader disp)
+        {
+            items.Add(name, disp);
+            return disp;
+        }
+
         public IGLProgramShader Shader(string name)
         {
             return (IGLProgramShader)items[name];
+        }
+
+        public GLUniformBlock Add(string name, GLUniformBlock disp)
+        {
+            items.Add(name, disp);
+            return disp;
         }
 
         public GLUniformBlock UB(string name)
@@ -38,9 +52,21 @@ namespace OpenTKUtils.GL4
             return (GLUniformBlock)items[name];
         }
 
+        public GLStorageBlock Add(string name, GLStorageBlock disp)
+        {
+            items.Add(name, disp);
+            return disp;
+        }
+
         public GLStorageBlock SB(string name)
         {
             return (GLStorageBlock)items[name];
+        }
+
+        public GLBuffer Add(string name, GLBuffer disp)
+        {
+            items.Add(name, disp);
+            return disp;
         }
 
         public GLBuffer NewBuffer(string name = null)
