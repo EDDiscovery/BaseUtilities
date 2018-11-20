@@ -73,9 +73,9 @@ namespace OpenTKUtils.Common
                 if (!inperspectivemode)
                     elitemovement = false;
 
-                var rotZ = Matrix4.CreateRotationZ(DegreesToRadians(cameraDir.Z));
-                var rotX = Matrix4.CreateRotationX(DegreesToRadians(cameraDir.X));
-                var rotY = Matrix4.CreateRotationY(DegreesToRadians(cameraDir.Y));
+                var rotZ = Matrix4.CreateRotationZ(cameraDir.Z.Radians());
+                var rotX = Matrix4.CreateRotationX(cameraDir.X.Radians());
+                var rotY = Matrix4.CreateRotationY(cameraDir.Y.Radians());
 
                 Vector3 requestedmove = new Vector3(cameraActionMovement.X, cameraActionMovement.Y, (elitemovement) ? 0 : cameraActionMovement.Z);
 
@@ -190,9 +190,5 @@ namespace OpenTKUtils.Common
                 return false;
         }
 
-        static private float DegreesToRadians(float angle)
-        {
-            return (float)(Math.PI * angle / 180.0);
-        }
     }
 }

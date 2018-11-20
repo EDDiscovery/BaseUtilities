@@ -67,7 +67,7 @@
     <Compile Include="GL4\Shaders\Functions\FunctionsNoise.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />
-    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationIn.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />

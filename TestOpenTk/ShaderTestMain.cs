@@ -192,6 +192,16 @@ void main(void)
 
             #endregion
 
+            #region view marker
+
+            rObjects.Add(items.Shader("COST-2P"), "viewpoint",
+                GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
+                               GLCubeObjectFactory.CreateVertexPointCube(0.25f), new Color4[] { Color.Yellow },
+                         new GLObjectDataTranslationRotation(new Vector3(-100,-100,-100))
+                         ));
+
+            #endregion
+
 
             #region coloured points
 
@@ -249,31 +259,31 @@ void main(void)
             rObjects.Add(items.Shader("TEX"), "EDDCube",
                         GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
                         GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                        new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(-2, 0, -2))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(-2, 1, -2))
                         ));
 
             rObjects.Add(items.Shader("TEX"), "woodbox",
-                        GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                        GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
                         GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                        new GLObjectDataTranslationRotationTexture(items.Tex("wooden"), new Vector3(-2, 0, -4))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("wooden"), new Vector3(-2, 2, -4))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
                         GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                         GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 0, -6))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 3, -6))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
                     GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                         GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 0, -8))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 4, -8))
                         ));
 
             rObjects.Add(items.Shader("TEX"),
                 GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                         GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted"), new Vector3(-2, 0, -10))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("dotted"), new Vector3(-2, 5, -10))
                         ));
 
             rObjects.Add(items.Shader("TEX"), "EDDFlat",
@@ -455,13 +465,13 @@ void main(void)
 
             items.SB("SB6").Write(zeroone, 4, true);
 
-            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Position = gl3dcontroller.Pos.Current;
+            ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceData)).Position = gl3dcontroller.Pos.Current;
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
         }
 
         private void SystemTick(object sender, EventArgs e )

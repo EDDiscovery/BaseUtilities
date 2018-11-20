@@ -63,7 +63,7 @@ namespace OpenTKUtils.GL4
             GL.EnableVertexArrayAttrib(Id, attribindex);
 
             GLStatics.Check();
-            System.Diagnostics.Debug.WriteLine("ATTR " + attribindex + " to " + bindingindex + " Components " + components + " +" + reloffset + " divisor " + divisor);
+           // System.Diagnostics.Debug.WriteLine("ATTR " + attribindex + " to " + bindingindex + " Components " + components + " +" + reloffset + " divisor " + divisor);
         }
 
         public void AttributeI(int bindingindex, int attribindex, int components, VertexAttribType vat, int reloffset = 0, int divisor = -1)
@@ -82,7 +82,7 @@ namespace OpenTKUtils.GL4
             GL.EnableVertexArrayAttrib(Id, attribindex);                    // enable attrib
 
             GLStatics.Check();
-            System.Diagnostics.Debug.WriteLine("ATTRI " + attribindex + " to " + bindingindex + " Components " + components + " +" + reloffset + " divisor " + divisor);
+           // System.Diagnostics.Debug.WriteLine("ATTRI " + attribindex + " to " + bindingindex + " Components " + components + " +" + reloffset + " divisor " + divisor);
         }
         
         public void MatrixAttribute(int bindingindex, int attribstart, int divisor = 0)      // bind a matrix..

@@ -49,13 +49,37 @@ namespace OpenTKUtils.Common
 
             if (InPerspectiveMode)
             {
-                Vector3 eye, normal;
-                CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
-                EyePosition = eye;
-                ModelMatrix = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
+                Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+                // we rotate the identity matrix by the camera direction
+                // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+                // .y translates around thwe y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+                // .z rotates the camera.
+
+                transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
+                transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
+                transform *= Matrix3.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
+
+                //System.Diagnostics.Debug.WriteLine("XY transform " + transform);
+
+                EyeDistance = CalcEyeDistance(zoom);
+
+                Vector3 eyerel = Vector3.Transform(new Vector3(0,-EyeDistance,0), transform);       // the 0,-E,0 sets the axis of the system..
+
+                Vector3 normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);       // 0,0,1 also sets the axis - this whats make .x/.y address the x/y rotations
+
+                EyePosition = position + eyerel;              // eye is here, the target pos, plus the eye relative position
+
+                System.Diagnostics.Debug.WriteLine("Eye " + EyePosition + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom + " normal "+ normal);
+
+                ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with up giving the rotation of the look
+                    
+                System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
             }
             else
-            {                                                               // replace open gl computation with our own.
+            {            
+
+                // TBD.. 
                 Matrix4 scale = Matrix4.CreateScale(zoom);
                 Matrix4 offset = Matrix4.CreateTranslation(-position.X, -position.Y, -position.Z);
                 Matrix4 rotcam = Matrix4.Identity;
@@ -70,17 +94,16 @@ namespace OpenTKUtils.Common
             }
 
             ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);        // order order order ! so important.
-            EyeDistance = CalcEyeDistance(zoom);
 
 
-            Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
+            //Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
             //transform *= Matrix4.CreateRotationX(90f.Radians());
             //transform *= Matrix4.CreateRotationX((-cameraDir.X).Radians());
             //transform *= Matrix4.CreateRotationY((-cameraDir.Y).Radians());
             //transform *= Matrix4.CreateRotationZ((-cameraDir.Y).Radians());
             //transform *= Matrix4.CreateRotationZ((float)(-cameraDir.Z * Math.PI / 180.0f));
             //System.Diagnostics.Debug.WriteLine("Dir " + cameraDir);
-            InvEyeRotate = transform;
+            //InvEyeRotate = transform;
         }
 
         // used for calculating positions on the screen from pixel positions
@@ -109,32 +132,16 @@ namespace OpenTKUtils.Common
                 ProjectionMatrix = Matrix4.CreateOrthographic(OrthographicDistance*2.0f/5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
             }
 
-            Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
-            ProjectionMatrix = flipy * ProjectionMatrix;                                // Flip Y to correct for openGL Y orientation
+            // we want the axis orientation with +z away from us, +x to right, +y upwards.
+            // this means we need to rotate the normal opengl model (+z towards us) 180 degrees around x - therefore flip y
+            // we do it here since its the end of the chain - easier to keep the rest in the other method
+            // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
+            // to make the ccw cull test work.
+
+            Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));     
+            ProjectionMatrix = flipy * ProjectionMatrix;                                
 
             ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);
         }
-
-        // calculate pos of eye, given position, CameraDir, zoom.
-
-        private void CalculateEyePosition(Vector3 position, Vector3 cameraDir, float zoom, out Vector3 eye, out Vector3 normal)
-        {
-            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
-            transform *= Matrix3.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
-            // transform ends as the camera direction vector
-            // calculate where eye is, relative to target. its ZoomDistance/zoom, rotated by camera rotation.  This is based on looking at 0,0,0.  
-            // the 0,-1,0 means (0,0,0) is looking down on the target pos, (90,0,0) is on the plane looking towards +Z.
-
-            Vector3 eyerel = Vector3.Transform(new Vector3(0.0f, -CalcEyeDistance(zoom), 0.0f), transform);
-
-            // rotate the up vector (0,0,1) by the eye camera dir to get a vector upwards from the current camera dir
-            normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);
-
-            eye = position + eyerel;              // eye is here, the target pos, plus the eye relative position
-            System.Diagnostics.Debug.WriteLine("Eye " + eye + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
-        }
-
     }
 }

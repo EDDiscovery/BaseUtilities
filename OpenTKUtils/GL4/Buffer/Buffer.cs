@@ -451,7 +451,7 @@ namespace OpenTKUtils.GL4
             GL.BindVertexBuffer(bindingindex, Id, (IntPtr)start, stride);      // this buffer to binding index
             GL.VertexBindingDivisor(bindingindex, divisor);
             GLStatics.Check();
-            System.Diagnostics.Debug.WriteLine("BUFBIND " + bindingindex + " To B" + Id + " pos " + start + " stride " + stride + " divisor " + divisor);
+            //System.Diagnostics.Debug.WriteLine("BUFBIND " + bindingindex + " To B" + Id + " pos " + start + " stride " + stride + " divisor " + divisor);
         }
         #endregion
 
