@@ -112,6 +112,8 @@ void main(void)
             {
                 GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 GLStatics.Check();
+                System.Diagnostics.Debug.WriteLine("Star draw");
+
             }
         }
 
@@ -215,9 +217,10 @@ void main(void)
                 GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
                 OpenTK.Matrix4 inveye = c.InvEyeRotate;
                 GL.ProgramUniformMatrix4(Id, 10, false, ref inveye);
-                System.Diagnostics.Debug.WriteLine("DIR " + inveye);
+                //System.Diagnostics.Debug.WriteLine("DIR " + inveye);
                 GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 GLStatics.Check();
+                System.Diagnostics.Debug.WriteLine("Corona draw");
             }
         }
 
@@ -275,12 +278,12 @@ void main(void)
             items.Add("STAR", new GLShaderPipeline(new GLVertexShaderObjectTransform(),
                         new GLFragmentShaderStarTexture()));
 
-            //rObjects.Add(items.Shader("STAR"),
-            //           GLRenderableItem.CreateVector4(items,
-            //                   OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
-            //                   GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
-            //                   new GLObjectDataTranslationRotation(new Vector3(0, 0, 0)),
-            //                   ic: 1));
+            rObjects.Add(items.Shader("STAR"),
+                       GLRenderableItem.CreateVector4(items,
+                               OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                               GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
+                               new GLObjectDataTranslationRotation(new Vector3(0, 0, 0)),
+                               ic: 1));
 
             items.Add("BCK", new GLShaderPipeline(new GLVertexShaderObjectTransform(), new GLFragmentShaderFixedColour(new Color4(0.5f,0,0,0.5f))));
 
@@ -292,7 +295,7 @@ void main(void)
 
             items.Add("CORONA", new GLShaderStarCorona());
 
-            rObjects2.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+            rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                                         GLShapeObjectFactory.CreateQuad(1f),
                                         new GLObjectDataTranslationRotation(new Vector3(0, 0, 0), new Vector3(0,0,0), 35f)));
 

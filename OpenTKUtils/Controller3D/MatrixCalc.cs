@@ -39,9 +39,10 @@ namespace OpenTKUtils.Common
         public Vector3 EyePosition { get; private set; }                        // after ModelMatrix
         public float EyeDistance { get; private set; }                          // after ModelMatrix
 
-        // Calculate the model matrix, which is the view onto the model
-        // model matrix rotates and scales the model to the eye position
-        // Model matrix does not have any Y inversion..
+        // Calculate the model matrix, which is the model translated to world space then to view space..
+        // Model matrix does not have any Y inversion(axis flip around x).
+        // opengl normal model has +z towards viewer, y up, x to right.  We want +z away, y up, x to right
+        // we use the normal in lookup to position the axis to +z away, y down, x to right (180 rot).  then use the projection model to flip y.
 
         public void CalculateModelMatrix(Vector3 position, Vector3 cameraDir, float zoom)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
@@ -52,8 +53,9 @@ namespace OpenTKUtils.Common
                 Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
 
                 // we rotate the identity matrix by the camera direction
+                // .x and .y values are set by our axis orientations..
                 // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
-                // .y translates around thwe y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+                // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
                 // .z rotates the camera.
 
                 transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
@@ -75,6 +77,14 @@ namespace OpenTKUtils.Common
                 ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with up giving the rotation of the look
                     
                 System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
+
+                InvEyeRotate = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
+                float xrot = -(180f - cameraDir.X);                // 180-cameradir, but inveye is applied before model/projection flips axis, so needs to be backwards
+                float yrot = cameraDir.Y;                          // y maps directly
+
+                System.Diagnostics.Debug.WriteLine("Inv rot x:" + xrot + " y:" + yrot);
+                InvEyeRotate *= Matrix4.CreateRotationX(xrot.Radians());
+                InvEyeRotate *= Matrix4.CreateRotationY(yrot.Radians());
             }
             else
             {            
@@ -94,16 +104,6 @@ namespace OpenTKUtils.Common
             }
 
             ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);        // order order order ! so important.
-
-
-            //Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
-            //transform *= Matrix4.CreateRotationX(90f.Radians());
-            //transform *= Matrix4.CreateRotationX((-cameraDir.X).Radians());
-            //transform *= Matrix4.CreateRotationY((-cameraDir.Y).Radians());
-            //transform *= Matrix4.CreateRotationZ((-cameraDir.Y).Radians());
-            //transform *= Matrix4.CreateRotationZ((float)(-cameraDir.Z * Math.PI / 180.0f));
-            //System.Diagnostics.Debug.WriteLine("Dir " + cameraDir);
-            //InvEyeRotate = transform;
         }
 
         // used for calculating positions on the screen from pixel positions
