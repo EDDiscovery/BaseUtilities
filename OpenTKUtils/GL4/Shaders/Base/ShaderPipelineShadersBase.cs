@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // base class for all pipeline shaders
 
-    public abstract class GLShaderPipelineShadersBase : IGLShader
+    public abstract class GLShaderPipelineShadersBase : IGLPipelineShader
     {
         public int Id { get { return Program.Id; } }
         protected GLProgram Program;
@@ -45,8 +45,5 @@ namespace OpenTKUtils.GL4
         {
             Program.Dispose();
         }
-
-        //abstract public string InParas { get; }
-        //abstract public string OutParas { get; }
     }
 }

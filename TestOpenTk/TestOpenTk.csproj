@@ -59,35 +59,41 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ShaderTest1.cs">
+    <Compile Include="ShaderTestMain.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest1.Designer.cs">
-      <DependentUpon>ShaderTest1.cs</DependentUpon>
+    <Compile Include="ShaderTestMain.Designer.cs">
+      <DependentUpon>ShaderTestMain.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTest2.cs">
+    <Compile Include="ShaderTestStarPoints.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest2.Designer.cs">
-      <DependentUpon>ShaderTest2.cs</DependentUpon>
+    <Compile Include="ShaderTestStarPoints.Designer.cs">
+      <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTest5.cs">
+    <Compile Include="ShaderTestVertexCompute.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest5.Designer.cs">
-      <DependentUpon>ShaderTest5.cs</DependentUpon>
+    <Compile Include="ShaderTestVertexCompute.Designer.cs">
+      <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTest4.cs">
+    <Compile Include="ShaderTestBlendedShaderMultImages.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest4.Designer.cs">
-      <DependentUpon>ShaderTest4.cs</DependentUpon>
+    <Compile Include="ShaderTestBlendedShaderMultImages.Designer.cs">
+      <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTest3.cs">
+    <Compile Include="ShaderTestStarDiscs.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTest3.Designer.cs">
-      <DependentUpon>ShaderTest3.cs</DependentUpon>
+    <Compile Include="ShaderTestStarDiscs.Designer.cs">
+      <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestGeoTest1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestGeoTest1.Designer.cs">
+      <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
@@ -102,20 +108,23 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="ShaderTest1.resx">
-      <DependentUpon>ShaderTest1.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTestMain.resx">
+      <DependentUpon>ShaderTestMain.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTest2.resx">
-      <DependentUpon>ShaderTest2.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTestStarPoints.resx">
+      <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTest5.resx">
-      <DependentUpon>ShaderTest5.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTestVertexCompute.resx">
+      <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTest4.resx">
-      <DependentUpon>ShaderTest4.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
+      <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTest3.resx">
-      <DependentUpon>ShaderTest3.cs</DependentUpon>
+    <EmbeddedResource Include="ShaderTestStarDiscs.resx">
+      <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestGeoTest1.resx">
+      <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />

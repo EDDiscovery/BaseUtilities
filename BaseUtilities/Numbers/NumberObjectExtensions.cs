@@ -435,6 +435,16 @@ public static class ObjectExtensionsNumbersBool
         return x * (float)(180.0 / Math.PI);
     }
 
+    public static double Radians(this double x)
+    {
+        return x * (Math.PI / 180.0);
+    }
+
+    public static double Degrees(this double x)
+    {
+        return x * (180.0 / Math.PI);
+    }
+
     public static float BoundedAngle(this float angle)
     {
         return ((angle + 360 + 180) % 360) - 180;
@@ -454,6 +464,12 @@ public static class ObjectExtensionsNumbersBool
     {
         return a + (b - a) * mix;
     }
+
+    public static float Abs(this float a)
+    {
+        return (a < 0) ? -a : a;
+    }
+
 
     #endregion
 }

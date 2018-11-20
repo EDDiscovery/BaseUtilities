@@ -419,7 +419,7 @@ namespace OpenTKUtils.GL4
             byte[] bytes = ReadBuffer(offset, sizeof(float) * number);
 
             for (int i = 0; i < number; i++)
-                d[i] = BitConverter.ToSingle(bytes, offset + i * 4);
+                d[i] = BitConverter.ToSingle(bytes, i * 4);
 
             return d;
         }

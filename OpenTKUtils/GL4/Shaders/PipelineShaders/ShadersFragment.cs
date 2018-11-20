@@ -31,7 +31,6 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-in vec4 vs_color;
 out vec4 color;
 
 void main(void)
@@ -61,7 +60,6 @@ out vec4 color;
 void main(void)
 {
 	color = vs_color;
-//color = vec4(1.0,1.0,0,1.0);
 }
 ";
         }
@@ -83,22 +81,23 @@ void main(void)
             return
 @"
 #version 450 core
-in vec2 vs_textureCoordinate;
+layout (location=0) in vec2 vs_textureCoordinate2;
 layout (binding=1) uniform sampler2D textureObject;
 out vec4 color;
 
 void main(void)
 {
-    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
+    color = texture(textureObject, vs_textureCoordinate2);       // vs_texture coords normalised 0 to 1.0f
 }
-";      }
+";
+        }
 
         public GLFragmentShaderTexture()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
-        public override void Start(Common.MatrixCalc c) 
+        public override void Start(Common.MatrixCalc c)
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GLStatics.Check();
@@ -111,7 +110,6 @@ void main(void)
     {
         const int BindingPoint = 1;
 
-        public float Blend { get; set; } = 0.0f;
         public string Code()
         {
             return
@@ -131,6 +129,8 @@ void main(void)
 ";
         }
 
+        public float Blend { get; set; } = 0.0f;
+
         public GLFragmentShader2DCommonBlend()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
@@ -144,64 +144,5 @@ void main(void)
         }
     }
 
-    //  
 
-    public class GLFragmentShaderStarTexture : GLShaderPipelineShadersBase
-    {
-        const int BindingPoint = 1;
-
-        public string Code()
-        {
-            return
-@"
-#version 450 core
-in vec2 vs_textureCoordinate;
-in vec3 modelpos;
-out vec4 pColor;
-
-" + GLShaderFunctionsNoise.NoiseFunctions3 +
-@"
-void main(void)
-{
-    vec3 position = modelpos/20;
-    float n = (noise(position, 4, 40.0, 0.7) + 1.0) * 0.5;
-
-    //float unRadius = 1000.0;
-
-    // Get worldspace position
-    //vec3 sPosition = position * unRadius;
-    
-    // Sunspots
-    //float s = 0.36;
-    //float frequency = 0.00001;
-    //float t1 = snoise(sPosition * frequency) - s;
-    //float t2 = snoise((sPosition + unRadius) * frequency) - s;
-	//float ss = (max(t1, 0.0) * max(t2, 0.0)) * 2.0;
-    // Accumulate total noise
-
-    //float total = n - ss;
-    float total = n;
-
-    vec3 unCenterDir = vec3(1,0,0);
-	float theta = 0.0;//- dot(unCenterDir, modelpos);
-
-    float mag = 0.3;
-	
-    vec3 unColor = vec3(0.5, 0.5 ,0.0);
-    pColor = vec4(unColor + (total - 0.0)*mag - theta, 1.0);
-}
-";
-        }
-
-        public GLFragmentShaderStarTexture()
-        {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
-        }
-
-        public override void Start(Common.MatrixCalc c)
-        {
-            GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
-            GLStatics.Check();
-        }
-    }
 }

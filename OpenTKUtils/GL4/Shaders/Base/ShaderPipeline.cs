@@ -32,12 +32,12 @@ namespace OpenTKUtils.GL4
         public IGLShader Get(ShaderType t) { return programs[t]; }
 
         private int pipelineid;
-        private Dictionary<ShaderType, IGLShader> programs;
+        private Dictionary<ShaderType, IGLPipelineShader> programs;
 
         public GLShaderPipeline()
         {
             pipelineid = GL.GenProgramPipeline();
-            programs = new Dictionary<ShaderType, IGLShader>();
+            programs = new Dictionary<ShaderType, IGLPipelineShader>();
         }
 
         public GLShaderPipeline(Action<IGLProgramShader> sa) : this()
@@ -45,36 +45,31 @@ namespace OpenTKUtils.GL4
             StartAction = sa;
         }
 
-        public GLShaderPipeline(IGLShader vertex, IGLShader fragment) : this()
+        public GLShaderPipeline(IGLPipelineShader vertex, IGLPipelineShader fragment) : this()
         {
-            //System.Diagnostics.Debug.WriteLine()
-
-            AddVertex(vertex);
-            AddFragment(fragment);
+            AddVertexFragment(vertex,fragment);
         }
 
-        public GLShaderPipeline(IGLShader vertex) : this()
+        public GLShaderPipeline(IGLPipelineShader vertex) : this()
         {
             AddVertex(vertex);
         }
 
-        public void Add(IGLShader p, ShaderType m)
-        {
-            programs[m] = p;
-            GL.UseProgramStages(pipelineid, convmask[m], p.Id);
-        }
-        public void AddVertex(IGLShader p)
+        public void AddVertex(IGLPipelineShader p)
         {
             Add(p, ShaderType.VertexShader);
         }
-        public void AddFragment(IGLShader p)
+
+        public void AddVertexFragment(IGLPipelineShader p, IGLPipelineShader f)
         {
-            Add(p, ShaderType.FragmentShader);
+            Add(p, ShaderType.VertexShader);
+            Add(f, ShaderType.FragmentShader);
         }
-        public void AddVertexFragment(IGLShader vertex, IGLShader fragment)
+
+        private void Add(IGLPipelineShader p, ShaderType m)
         {
-            AddVertex(vertex);
-            AddFragment(fragment);
+            programs[m] = p;
+            GL.UseProgramStages(pipelineid, convmask[m], p.Id);
         }
 
         public virtual void Start(Common.MatrixCalc c)

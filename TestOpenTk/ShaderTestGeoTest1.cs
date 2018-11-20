@@ -16,13 +16,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTest3 : Form
+    public partial class ShaderTestGeoTest1 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTest3()
+        public ShaderTestGeoTest1()
         {
             InitializeComponent();
 
@@ -180,7 +180,7 @@ void main(void)
             storagebuffer.Set(vertexes);
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index
-            vecoutbuffer.Allocate(sizeof(float)*4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            vecoutbuffer.Allocate(sizeof(float) * 4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             countbuffer = new GLStorageBlock(2);           // new storage block on binding index
             countbuffer.Allocate(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.

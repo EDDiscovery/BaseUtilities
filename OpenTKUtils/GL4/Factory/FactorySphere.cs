@@ -25,7 +25,65 @@ namespace OpenTKUtils.GL4
 
     static public class GLSphereObjectFactory
     {
-        public struct Face
+        // sphere co-ords
+        public static Vector4[] CreateSphereFromTriangles(int recursion, float size, Vector3? pos = null, bool ccw = true)
+        {
+            var faces = CreateSphereFaces(recursion,size);
+            List<Vector4> vertices = new List<Vector4>();
+
+            float zcorr = ccw ? -1 : 1;
+
+            foreach (var tri in faces)
+            {
+                vertices.Add(new Vector4(tri.V1.X, tri.V1.Y, zcorr * tri.V1.Z, 1.0f));
+                vertices.Add(new Vector4(tri.V2.X, tri.V2.Y, zcorr * tri.V2.Z, 1.0f));
+                vertices.Add(new Vector4(tri.V3.X, tri.V3.Y, zcorr * tri.V3.Z, 1.0f));
+            }
+
+            var array = vertices.ToArray();
+            if (pos != null)
+                array.Translate(pos.Value);
+
+            return array;
+        }
+
+        // Sphere co-ords and triangles
+        static public Tuple<Vector4[],Vector2[]> CreateTexturedSphereFromTriangles(int recursionLevel, float size, Vector3? pos = null, bool ccw = true)
+        {
+            var faces = CreateSphereFaces(recursionLevel, size);
+            Vector4[] coords = new Vector4[faces.Count * 3];
+            Vector2[] texcoords = new Vector2[faces.Count * 3];
+
+            float zcorr = ccw ? -1 : 1;
+
+            int p = 0;
+            foreach (var tri in faces)
+            {
+                var uv1 = GetSphereCoord(tri.V1);
+                var uv2 = GetSphereCoord(tri.V2);
+                var uv3 = GetSphereCoord(tri.V3);
+                FixColorStrip(ref uv1, ref uv2, ref uv3);
+
+                //System.Diagnostics.Debug.WriteLine(tri.V1 + "->" + uv1 + " " +
+                //    tri.V2 + "->" + uv2 + " " +
+                //    tri.V3 + "->" + uv3 + " "
+                //    );
+
+                coords[p] = new Vector4(new Vector3(tri.V1.X, tri.V1.Y, zcorr * tri.V1.Z), 1);     // we swap Z for CCW winding order
+                texcoords[p++] = uv1;
+                coords[p] = new Vector4(new Vector3(tri.V2.X, tri.V2.Y, zcorr * tri.V2.Z), 1);
+                texcoords[p++] = uv2;
+                coords[p] = new Vector4(new Vector3(tri.V3.X, tri.V3.Y, zcorr * tri.V3.Z), 1);
+                texcoords[p++] = uv3;
+            }
+
+            if (pos != null)
+                coords.Translate(pos.Value);
+
+            return new Tuple<Vector4[], Vector2[]>(coords, texcoords);
+        }
+
+        private struct Face
         {
             public Vector3 V1;
             public Vector3 V2;
@@ -39,7 +97,7 @@ namespace OpenTKUtils.GL4
             }
         }
 
-        public static List<Face> CreateSphereFaces(int recursion, float size)
+        private static List<Face> CreateSphereFaces(int recursion, float size)
         {
             var middlePointIndexCache = new Dictionary<long, int>();
             List<Vector3> points = new List<Vector3>();
@@ -121,75 +179,12 @@ namespace OpenTKUtils.GL4
             return faces;
         }
 
-        public static Vector4[] CreateSphereFromTriangles(int recursion, float size, Vector3? pos = null)
-        {
-            var faces = CreateSphereFaces(recursion,size);
-            List<Vector4> vertices = new List<Vector4>();
-
-            foreach (var tri in faces)
-            {
-                vertices.Add(new Vector4(tri.V1, 1.0f));
-                vertices.Add(new Vector4(tri.V2, 1.0f));
-                vertices.Add(new Vector4(tri.V3, 1.0f));
-            }
-
-            var array = vertices.ToArray();
-            if ( pos != null )
-                array.Translate(pos.Value);
-
-            return array;
-        }
-
-        // Sphere co-ords and triangles are for CCW culling
-
-        static public Tuple<Vector4[],Vector2[]> CreateTexturedSphereFromTriangles(int recursionLevel, float size, Vector3? pos = null)
-        {
-            var faces = CreateSphereFaces(recursionLevel, size);
-            Vector4[] coords = new Vector4[faces.Count * 3];
-            Vector2[] texcoords = new Vector2[faces.Count * 3];
-
-            int p = 0;
-            foreach (var tri in faces)
-            {
-                var uv1 = GetSphereCoord(tri.V1);
-                var uv2 = GetSphereCoord(tri.V2);
-                var uv3 = GetSphereCoord(tri.V3);
-                FixColorStrip(ref uv1, ref uv2, ref uv3);
-
-                //System.Diagnostics.Debug.WriteLine(tri.V1 + "->" + uv1 + " " +
-                //    tri.V2 + "->" + uv2 + " " +
-                //    tri.V3 + "->" + uv3 + " "
-                //    );
-
-                coords[p] = new Vector4(new Vector3(tri.V1.X, tri.V1.Y, -tri.V1.Z), 1);     // we swap Z for CCW winding order
-                texcoords[p++] = uv1;
-                coords[p] = new Vector4(new Vector3(tri.V2.X, tri.V2.Y, -tri.V2.Z), 1);
-                texcoords[p++] = uv2;
-                coords[p] = new Vector4(new Vector3(tri.V3.X, tri.V3.Y, -tri.V3.Z), 1);
-                texcoords[p++] = uv3;
-            }
-
-            //float minx = float.MaxValue;
-            //float maxx = float.MinValue;
-
-            //foreach ( var v in texcoords )        // debug
-            //{
-            //    if (v.X > maxx)
-            //        maxx = v.X;
-            //    if (v.X < minx)
-            //        minx = v.X;
-            //}
-
-            return new Tuple<Vector4[], Vector2[]>(coords, texcoords);
-        }
-
-        public static Vector2 GetSphereCoord(Vector3 i)
+        private static Vector2 GetSphereCoord(Vector3 i)
         {
             var len = i.Length;
             Vector2 uv;
             uv.Y = (float)(Math.Acos(i.Y / len) / Math.PI);
             uv.X = -(float)((Math.Atan2(i.Z, i.X) / Math.PI + 1.0f) * 0.5f);        
-            //uv.X = (uv.X < 0) ? (uv.X + 1.0f) : (uv.X > 1.0f) ? (uv.X - 1.0f) : uv.X;       // normalise to 0-1 by wrapping
             return uv;
         }
 
@@ -199,7 +194,6 @@ namespace OpenTKUtils.GL4
             _points.Add(p);
             return _points.Count - 1;
         }
-
 
         // return index of point in the middle of p1 and p2
         static private int GetMiddlePoint(List<Vector3> _points, Dictionary<long, int> _middlePointIndexCache, Vector3 point1, Vector3 point2)

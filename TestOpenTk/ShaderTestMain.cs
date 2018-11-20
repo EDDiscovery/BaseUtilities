@@ -17,13 +17,13 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTest1 : Form
+    public partial class ShaderTestMain : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTest1()
+        public ShaderTestMain()
         {
             InitializeComponent();
 
@@ -126,6 +126,16 @@ void main(void)
             items.Add("golden", new GLTexture2D(Properties.Resources.golden));
             items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+
+
+            #region Sphere mapping 
+            rObjects.Add(items.Shader("TEX"), "sphere7",
+                GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                        GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 4.0f),
+                        new GLObjectDataTranslationRotationTexture(items.Tex("moon"), new Vector3(4, 0, 0))
+                        ));
+
+            #endregion
 
             #region coloured lines
 
@@ -331,14 +341,6 @@ void main(void)
 
             #endregion
 
-            #region Sphere mapping 
-            rObjects.Add(items.Shader("TEX"), "sphere7",
-                GLRenderableItem.CreateVector4Vector2( items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
-                        GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 4.0f),
-                        new GLObjectDataTranslationRotationTexture(items.Tex("moon"), new Vector3(4, 0, 0))
-                        ));
-
-            #endregion
 
             #region Instancing
 
@@ -418,6 +420,7 @@ void main(void)
                         ));
 
             #endregion
+
         }
 
         private void ShaderTest_Closed(object sender, EventArgs e)

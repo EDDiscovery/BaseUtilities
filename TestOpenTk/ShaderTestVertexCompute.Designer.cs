@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class ShaderTest3
+    partial class ShaderTestVertexCompute
     {
         /// <summary>
         /// Required designer variable.

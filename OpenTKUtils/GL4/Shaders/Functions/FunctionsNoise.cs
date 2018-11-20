@@ -12,6 +12,7 @@
  * governing permissions and limitations under the License.
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
+ * Noise from the seeds of andromeda MIT licence.
  */
 
 using System;

@@ -21,10 +21,12 @@ namespace OpenTKUtils.Common
 {
     public class MatrixCalc
     {
-        public bool InPerspectiveMode { get { return perspectivemode; } set { perspectivemode = value; } }
-        public Matrix4 ModelMatrix { get { return modelmatrix; } }
-        public Matrix4 ProjectionMatrix { get { return projectionmatrix; } }
-        public Matrix4 ProjectionModelMatrix { get { return projectionmodelmatrix; } }
+        public bool InPerspectiveMode { get; set; } = true;
+        public Matrix4 ModelMatrix { get; private set; }
+        public Matrix4 ProjectionMatrix { get; private set; }
+        public Matrix4 ProjectionModelMatrix { get; private set; }
+
+        public Matrix4 InvEyeRotate { get; private set; }
 
         public float ZoomDistance { get; set; } = 1000F;       // distance that zoom=1 will be from the Position, in the direction of the camera.
         public float PerspectiveFarZDistance { get; set; } = 1000000.0f;        // perspective, set Z's for clipping
@@ -36,11 +38,6 @@ namespace OpenTKUtils.Common
         public Vector3 TargetPosition { get; private set; }                     // after ModelMatrix
         public Vector3 EyePosition { get; private set; }                        // after ModelMatrix
         public float EyeDistance { get; private set; }                          // after ModelMatrix
-
-        private bool perspectivemode = true;
-        private Matrix4 modelmatrix;
-        private Matrix4 projectionmatrix;
-        private Matrix4 projectionmodelmatrix;
 
         // Calculate the model matrix, which is the view onto the model
         // model matrix rotates and scales the model to the eye position
@@ -55,7 +52,7 @@ namespace OpenTKUtils.Common
                 Vector3 eye, normal;
                 CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
                 EyePosition = eye;
-                modelmatrix = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
+                ModelMatrix = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
             }
             else
             {                                                               // replace open gl computation with our own.
@@ -69,11 +66,21 @@ namespace OpenTKUtils.Common
                 Matrix4 preinverted = Matrix4.Mult(offset, scale);
                 EyePosition = new Vector3(preinverted.Row0.X, preinverted.Row1.Y, preinverted.Row2.Z);          // TBD.. 
                 preinverted = Matrix4.Mult(preinverted, rotcam);
-                modelmatrix = preinverted;
+                ModelMatrix = preinverted;
             }
 
-            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);        // order order order ! so important.
+            ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);        // order order order ! so important.
             EyeDistance = CalcEyeDistance(zoom);
+
+
+            Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
+            //transform *= Matrix4.CreateRotationX(90f.Radians());
+            //transform *= Matrix4.CreateRotationX((-cameraDir.X).Radians());
+            //transform *= Matrix4.CreateRotationY((-cameraDir.Y).Radians());
+            //transform *= Matrix4.CreateRotationZ((-cameraDir.Y).Radians());
+            //transform *= Matrix4.CreateRotationZ((float)(-cameraDir.Z * Math.PI / 180.0f));
+            //System.Diagnostics.Debug.WriteLine("Dir " + cameraDir);
+            InvEyeRotate = transform;
         }
 
         // used for calculating positions on the screen from pixel positions
@@ -81,7 +88,7 @@ namespace OpenTKUtils.Common
         {
             get
             {
-                return projectionmodelmatrix;
+                return ProjectionModelMatrix;
             }
         }
 
@@ -93,19 +100,19 @@ namespace OpenTKUtils.Common
             if (InPerspectiveMode)
             {                                                                   // Fov, perspective, znear, zfar
                 znear = 1.0F;
-                projectionmatrix = Matrix4.CreatePerspectiveFieldOfView(fov, (float)w / h, PerspectiveNearZDistance, PerspectiveFarZDistance);
+                ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, (float)w / h, PerspectiveNearZDistance, PerspectiveFarZDistance);
             }
             else
             {
                 znear = -OrthographicDistance;
                 float orthoheight = (OrthographicDistance / 5.0f) * h / w;
-                projectionmatrix = Matrix4.CreateOrthographic(OrthographicDistance*2.0f/5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
+                ProjectionMatrix = Matrix4.CreateOrthographic(OrthographicDistance*2.0f/5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
             }
 
             Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
-            projectionmatrix = flipy * projectionmatrix;                                // Flip Y to correct for openGL Y orientation
+            ProjectionMatrix = flipy * ProjectionMatrix;                                // Flip Y to correct for openGL Y orientation
 
-            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);
+            ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);
         }
 
         // calculate pos of eye, given position, CameraDir, zoom.

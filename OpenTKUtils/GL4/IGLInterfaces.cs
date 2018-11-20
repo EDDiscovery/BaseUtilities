@@ -41,6 +41,10 @@ namespace OpenTKUtils.GL4
         void Finish();                                      // Renders call this when program has ended
     }
 
+    public interface IGLPipelineShader : IGLShader          // All pipeline shaders come from this
+    {
+    }
+
     public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
         IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.

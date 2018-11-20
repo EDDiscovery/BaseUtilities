@@ -90,6 +90,12 @@ namespace OpenTKUtils.GL4
             GLStatics.Check();
         }
 
+        public virtual void Start()                 // call from override if you don't want the Proj matrix set
+        {
+            GL.UseProgram(Id);
+            StartAction?.Invoke(this);
+        }
+
         public virtual void Finish()                // override if required
         {
             FinishAction?.Invoke(this);                           // any shader hooks get a chance.

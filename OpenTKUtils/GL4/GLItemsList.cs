@@ -18,6 +18,11 @@ namespace OpenTKUtils.GL4
             items.Dispose();
         }
 
+        public bool Contains(string name )
+        {
+            return items.ContainsKey(name);
+        }
+
         public IGLTexture Add(string name, IGLTexture disp)
         {
             items.Add(name, disp);
