@@ -57,17 +57,13 @@ namespace TestOpenTk
 layout (location = 1) in vec3 modelpos;
 out vec4 color;
 
-layout (binding = 1, std430) buffer Positions
-{
-    int count;
-    float noisebuf[];
-};
-
 layout (location = 10) uniform float frequency;
 layout (location = 11) uniform float unRadius;      // km
 layout (location = 12) uniform float s;
 layout (location = 13) uniform float blackdeepness;
 layout (location = 14) uniform float concentrationequator;
+layout (location = 15) uniform float unDTsurface;
+layout (location = 16) uniform float unDTspots;
 
 
 " + GLShaderFunctionsNoise.NoiseFunctions3 +
@@ -79,29 +75,23 @@ void main(void)
     float theta = dot(vec3(0,1,0),position);    // dotp between cur pos and up -1 to +1, 0 at equator
     theta = abs(theta);                         // uniform around equator.
 
-    float clip = s + (theta/concentrationequator);               // 
-
-    vec3 sPosition = position * unRadius;
+    float clip = s + (theta/concentrationequator);               // clip sets the pass criteria to do the sunspots
+    vec3 sPosition = (position + unDTspots) * unRadius;
     float t1 = snoise(sPosition * frequency) -clip;
     float t2 = snoise((sPosition + unRadius) * frequency) -clip;
 	float ss = (max(t1, 0.0) * max(t2, 0.0)) * blackdeepness;
 
-    float n = (noise(position, 4, 40.0, 0.7) + 1.0) * 0.5;
+    float n = (noise(position + unDTsurface, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
 
     vec3 baseColor = vec3(0.9, 0.9 ,0.0);
     baseColor = baseColor - ss - n/4;
     color = vec4(baseColor, 1.0);
-
-    if ( ss != 0 )
-    {
-        uint ipos = atomicAdd(count,1);
-        if ( ipos < 1024 )
-            noisebuf[ipos] = clip;
-    }
-
 }
 ";
             }
+
+            public float TimeDeltaSurface { get; set; } = 0;
+            public float TimeDeltaSpots { get; set; } = 0;
 
             public GLFragmentShaderStarTexture()
             {
@@ -110,6 +100,8 @@ void main(void)
 
             public override void Start(MatrixCalc c)
             {
+                GL.ProgramUniform1(Id, 15, TimeDeltaSurface);
+                GL.ProgramUniform1(Id, 16, TimeDeltaSpots);
                 GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 GLStatics.Check();
                 System.Diagnostics.Debug.WriteLine("Star draw");
@@ -156,21 +148,22 @@ void main(void)
 layout (location =0 ) in vec3 fposition;
 out vec4 color;
 
+layout (location = 15) uniform float unDT;
+
 void main(void)
 {
 	const float brightnessMultiplier = 0.9;   // The higher the number, the brighter the corona will be.
 	const float smootheningMultiplier = 0.15; // How smooth the irregular effect is, the higher the smoother.
-	const float ringIntesityMultiplier = 2.8; // The higher the number, the smaller the solid ring inside
+	const float ringIntesityMultiplier = 4.8; // The higher the number, the smaller the solid ring inside
 	const float coronaSizeMultiplier = 2.0;  // The higher the number, the smaller the corona. 2.0
 	const float frequency = 1.5;              // The frequency of the irregularities.
 	const float fDetail = 0.7;                // The higher the number, the more detail the corona will have. (Might be more GPU intensive when higher, 0.7 seems fine for the normal PC)
 	const int iDetail = 10;                   // The higher the number, the more detail the corona will have.
 	const float irregularityMultiplier = 4;   // The higher the number, the more irregularities and bigger ones. (Might be more GPU intensive when higher, 4 seems fine for the normal PC)
-    float unDT = 0.0001;                      // time constant..
 
 	/* Don't edit these */
 
-    float t = unDT * 10.0 - length(fposition);
+    float t = unDT - length(fposition);
 
     // Offset normal with noise
     float ox = snoise(vec4(fposition, t) * frequency);
@@ -209,9 +202,13 @@ void main(void)
                 Compile(vertex: Vertex(), frag: Fragment());
             }
 
+            public float TimeDelta{ get; set; } = 0.00001f*10;
+
             public override void Start(MatrixCalc c)
             {
                 base.Start();
+
+                GL.ProgramUniform1(Id, 15, TimeDelta);
 
                 OpenTK.Matrix4 projmodel = c.ProjectionModelMatrix;
                 GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
@@ -278,7 +275,7 @@ void main(void)
             items.Add("STAR", new GLShaderPipeline(new GLVertexShaderObjectTransform(),
                         new GLFragmentShaderStarTexture()));
 
-            rObjects.Add(items.Shader("STAR"),
+            rObjects.Add(items.Shader("STAR"), "sun",
                        GLRenderableItem.CreateVector4(items,
                                OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
                                GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
@@ -297,18 +294,14 @@ void main(void)
 
             rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                                         GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLObjectDataTranslationRotation(new Vector3(0, 0, 0), new Vector3(0,0,0), 35f)));
+                                        new GLObjectDataTranslationRotation(new Vector3(0, 0, 0), new Vector3(0,0,0), 30f)));
 
 
-
-            vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index
-            vecoutbuffer.Allocate(sizeof(float) * 2048, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             OpenTKUtils.GLStatics.Check();
             //GL.Enable(EnableCap.DepthClamp);
         }
 
-        GLStorageBlock vecoutbuffer;
 
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
@@ -319,12 +312,16 @@ void main(void)
         {
             // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
 
+            float zeroone10000s = ((float)(time % 10000000)) / 10000000.0f;
+            float zeroone5000s = ((float)(time % 5000000)) / 5000000.0f;
+            float zeroone1000s = ((float)(time % 1000000)) / 1000000.0f;
+            float zeroone500s = ((float)(time % 500000)) / 500000.0f;
+            float zeroone100s = ((float)(time % 100000)) / 100000.0f;
             float zeroone10s = ((float)(time % 10000)) / 10000.0f;
             float zeroone5s = ((float)(time % 5000)) / 5000.0f;
             float zerotwo5s = ((float)(time % 5000)) / 2500.0f;
-            float degrees = zeroone10s * 360;
 
-            vecoutbuffer.ZeroBuffer();
+
 
             if (items.Contains("STAR"))
             {
@@ -337,17 +334,19 @@ void main(void)
                 GL.ProgramUniform1(vid, 14, concentrationequator);
             }
 
+            ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+
+            var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+
+            stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
+            stellarsurfaceshader.TimeDeltaSurface = zeroone500s;
+
+            var coronashader = ((GLShaderStarCorona)items.Shader("CORONA")).TimeDelta = (float)time / 100000f;
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
             rObjects2.Render(gl3dcontroller.MatrixCalc);
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
 
-            int count = vecoutbuffer.ReadInt(0);
-            if (count > 0)
-            {
-                float[] values = vecoutbuffer.ReadFloats(4, Math.Min(2000, count));
-                System.Diagnostics.Debug.WriteLine("Count " + count + " min " + values.Min() + " max " + values.Max());
-            }
 
             //this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
             this.Text = "Freq " + frequency.ToString("#.#########") + " unRadius " + unRadius + " scutoff" + scutoff + " BD " + blackdeepness + " CE " + concentrationequator
