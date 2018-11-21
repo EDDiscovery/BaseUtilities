@@ -431,6 +431,12 @@ void main(void)
 
             #endregion
 
+            #region Matrix Calc Uniform
+
+            items.Add( "MCUB" , new GLMatrixCalcUniformBlock());     // def binding of 0
+
+            #endregion
+
         }
 
         private void ShaderTest_Closed(object sender, EventArgs e)
@@ -468,6 +474,9 @@ void main(void)
             ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceData)).Position = gl3dcontroller.Pos.Current;
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
+
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 

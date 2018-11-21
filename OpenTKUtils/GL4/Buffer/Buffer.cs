@@ -395,6 +395,58 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
+        #region Map then write..
+
+        public IntPtr Map(int fillpos, int datasize)        // update the buffer with an area of updated cache on a write..
+        {
+            IntPtr p = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
+            GLStatics.Check();
+            return p;
+        }
+
+        public void UnMap()
+        { 
+            GL.UnmapNamedBuffer(Id);
+        }
+
+        public void MapWrite(ref IntPtr pos, Matrix4 mat)
+        {
+            MapWrite(ref pos, mat.Row0);
+            MapWrite(ref pos, mat.Row1);
+            MapWrite(ref pos, mat.Row2);
+            MapWrite(ref pos, mat.Row3);
+        }
+
+        public void MapWrite(ref IntPtr pos, Vector4 mat)
+        {
+            float[] a = new float[] { mat.X, mat.Y, mat.Z, mat.W };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            pos += Vec4size;
+        }
+
+        public void MapWrite(ref IntPtr pos, Vector3 mat, float vec4other)      // write vec3 as vec4.
+        {
+            float[] a = new float[] { mat.X, mat.Y, mat.Z, vec4other };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            pos += Vec4size;
+        }
+
+        public void MapWrite(ref IntPtr pos, float v)      
+        {
+            float[] a= new float[] { v };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += sizeof(float);
+        }
+
+        public void MapWrite(ref IntPtr pos, float[] a)     
+        {
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);       // number of units, not byte length!
+            pos += sizeof(float) * a.Length;
+        }
+
+        #endregion
+
+
         #region Reads
 
         public byte[] ReadBuffer(int offset, int size )         // read into a byte array

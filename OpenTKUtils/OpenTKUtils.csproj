@@ -71,6 +71,7 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
+    <Compile Include="GL4\UniformsStorageBlocks\MatrixCalcUniformsBlock.cs" />
     <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipeline.cs" />
