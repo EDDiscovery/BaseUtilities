@@ -110,6 +110,8 @@ namespace TestOpenTk
                         GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
                         pos2, ic: 3, separbuf: false
                         ));
+
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
         }
 
         private void ShaderTest_Closed(object sender, EventArgs e)
@@ -133,6 +135,10 @@ namespace TestOpenTk
             ((GLMultipleTexturedBlended)items.Shader("ShaderPos")).Blend = zerotwo5s;
             ((GLMultipleTexturedBlended)items.Shader("ShaderMat")).CommonTransform.ZRotDegrees = degrees;
             ((GLMultipleTexturedBlended)items.Shader("ShaderMat")).Blend = zerotwo5s;
+
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
+
             rObjects.Render(gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;

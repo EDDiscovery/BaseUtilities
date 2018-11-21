@@ -37,7 +37,7 @@ namespace OpenTKUtils.GL4
     public interface IGLShader : IDisposable                // All shaders inherit from this
     {
         int Id { get; }
-        void Start(Common.MatrixCalc c);                    // Renders call this when program has just started
+        void Start();                                       // Renders call this when program has just started
         void Finish();                                      // Renders call this when program has ended
     }
 

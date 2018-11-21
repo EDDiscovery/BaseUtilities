@@ -47,12 +47,10 @@ namespace TestOpenTk
                 return
     @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in uvec2 positionpacked;
 
 out vec4 vs_color;
-
-layout (location = 20) uniform  mat4 projectionmodel;
-layout (location = 23) uniform  vec3 eyepos;
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -78,9 +76,9 @@ void main(void)
 
     vec4 position = vec4( x, y, z, 1.0f);
 
-	gl_Position = projectionmodel * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
 
-    float distance = 50-pow(distance(eyepos,vec3(x,y,z)),2)/20;
+    float distance = 50-pow(distance(mc.EyePosition,vec4(x,y,z,0)),2)/20;
 
     gl_PointSize = clamp(distance,1.0,63.0);
     vs_color = vec4(rand1(gl_VertexID),0.5,0.5,1.0);
@@ -91,13 +89,11 @@ void main(void)
             public GLShaderStars()
             {
                 Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), GetType().Name);
-                SetupProjMatrix = true;
             }
 
-            public override void Start(MatrixCalc c) // seperable do not use a program - that is for the pipeline to hook up
+            public override void Start() // seperable do not use a program - that is for the pipeline to hook up
             {
-                base.Start(c);
-                GL.ProgramUniform3(Id, 23, c.EyePosition);
+                base.Start();
                 GL.Enable(EnableCap.ProgramPointSize);
             }
 
@@ -156,7 +152,8 @@ void main(void)
                         GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
                         new GLObjectDataTranslationRotationTexture(items.Tex("-200,-100"), new Vector3(-200, 0, -100))));
 
-           
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+
             Closed += ShaderTest_Closed;
         }
 
@@ -169,6 +166,9 @@ void main(void)
         {
             float degrees = ((float)time / 5000.0f * 360.0f) % 360f;
             float degreesd2 = ((float)time / 10000.0f * 360.0f) % 360f;
+
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
 
             System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
             rObjects.Render(gl3dcontroller.MatrixCalc);

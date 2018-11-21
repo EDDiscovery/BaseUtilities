@@ -81,16 +81,7 @@ namespace OpenTKUtils.GL4
             GLStatics.Check();
         }
 
-        public virtual void Start(MatrixCalc c)     // override.. but call back.
-        {
-            GL.UseProgram(Id);
-            OpenTK.Matrix4 projmodel = c.ProjectionModelMatrix;
-            GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
-            StartAction?.Invoke(this);
-            GLStatics.Check();
-        }
-
-        public virtual void Start()                 // call from override if you don't want the Proj matrix set
+        public virtual void Start()                 // override.. but call back.
         {
             GL.UseProgram(Id);
             StartAction?.Invoke(this);

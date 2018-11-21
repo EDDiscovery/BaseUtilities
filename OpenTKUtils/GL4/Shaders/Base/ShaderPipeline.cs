@@ -72,7 +72,7 @@ namespace OpenTKUtils.GL4
             GL.UseProgramStages(pipelineid, convmask[m], p.Id);
         }
 
-        public virtual void Start(Common.MatrixCalc c)
+        public virtual void Start()
         {
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
             GL.BindProgramPipeline(pipelineid);
@@ -80,7 +80,7 @@ namespace OpenTKUtils.GL4
             //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
 
             foreach (var x in programs)                             // let any programs do any special set up
-                x.Value.Start(c);
+                x.Value.Start();
 
             StartAction?.Invoke(this);                           // any shader hooks get a chance.
         }

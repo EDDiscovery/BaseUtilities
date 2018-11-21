@@ -90,7 +90,7 @@ void main(void)
                 Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(), GetType().Name);
             }
 
-            public override void Start(MatrixCalc c)
+            public override void Start()
             {
             }
         }
@@ -433,7 +433,7 @@ void main(void)
 
             #region Matrix Calc Uniform
 
-            items.Add( "MCUB" , new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
             #endregion
 

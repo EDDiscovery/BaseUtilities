@@ -97,7 +97,7 @@ void main(void)
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GLStatics.Check();
@@ -136,7 +136,7 @@ void main(void)
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
             GL.ProgramUniform1(Id, 30, Blend);

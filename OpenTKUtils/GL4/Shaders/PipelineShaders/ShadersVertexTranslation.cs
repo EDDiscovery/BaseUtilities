@@ -28,6 +28,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 layout (location = 4) in mat4 transform;
 
@@ -37,14 +38,12 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-layout (location = 20) uniform  mat4 projectionmodel;
-
 out vec4 vs_color;
 
 void main(void)
 {
     vs_color = vec4(gl_InstanceID*0.2+0.2,gl_InstanceID*0.2+0.2,0.5+gl_VertexID*0.1,1.0);       // colour may be thrown away if required..
-	gl_Position = projectionmodel * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
 }
 ";
         }
@@ -52,7 +51,6 @@ void main(void)
         public GLVertexShaderMatrixTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 
@@ -64,6 +62,7 @@ void main(void)
             return
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 layout (location = 4) in mat4 transform;
 
@@ -76,12 +75,9 @@ out gl_PerVertex {
 layout(location = 1) in vec2 texco;
 out vec2 vs_textureCoordinate;
 
-layout (location = 20) uniform  mat4 projectionmodel;
-
 void main(void)
 {
-	gl_Position = projectionmodel * transform * position;        // order important
-	//gl_Position = projectionmodel * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
     vs_textureCoordinate = texco;
 }
 ";
@@ -90,7 +86,6 @@ void main(void)
         public GLVertexShaderTextureMatrixTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 
@@ -106,6 +101,7 @@ void main(void)
 
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -116,13 +112,12 @@ out gl_PerVertex {
 layout(location = 1) in vec4 color;
 out vec4 vs_color;
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 layout (location = 23) uniform  mat4 commontransform;
 
 void main(void)
 {
-	gl_Position = projectionmodel * transform *  commontransform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform *  commontransform * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -134,12 +129,11 @@ void main(void)
         {
             Transform = new GLObjectDataTranslationRotation();
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
-            base.Start(c);
+            base.Start();
             Matrix4 t = Transform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
             GLStatics.Check();
@@ -157,6 +151,7 @@ void main(void)
 
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -167,13 +162,12 @@ out gl_PerVertex {
 layout(location = 1) in vec2 texco;
 out vec2 vs_textureCoordinate;
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 layout (location = 23) uniform  mat4 commontransform;
 
 void main(void)
 {
-	gl_Position = projectionmodel * transform *  commontransform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform *  commontransform * position;        // order important
     vs_textureCoordinate = texco;
 }
 ";
@@ -185,12 +179,11 @@ void main(void)
         {
             Transform = new GLObjectDataTranslationRotation();
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
-            base.Start(c);
+            base.Start();
             Matrix4 t = Transform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);
             GLStatics.Check();

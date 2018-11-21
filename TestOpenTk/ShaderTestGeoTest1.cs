@@ -61,6 +61,7 @@ void main(void)
 
             string gcode = @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (points) in;
 layout (points) out;
 layout (max_vertices=2) out;
@@ -76,8 +77,6 @@ layout (binding = 2, std430) buffer Count
     uint count;
 };
 
-layout (location = 20) uniform  mat4 projectionmodel;
-
 void main(void)
 {
     int i;
@@ -87,7 +86,7 @@ void main(void)
             gl_PointSize = 5;
         else
             gl_PointSize = gl_PrimitiveIDIn+5;
-        gl_Position = projectionmodel * gl_in[i].gl_Position;
+        gl_Position = mc.ProjectionModelMatrix * gl_in[i].gl_Position;
         vs_color = vec4(gl_PrimitiveIDIn*0.05,0.4,gl_PrimitiveIDIn*0.05,1.0);
 
         if (gl_PrimitiveIDIn != 9 && gl_PrimitiveIDIn != 13 )
@@ -106,7 +105,7 @@ void main(void)
         {
             gl_PointSize = 50;
             vec4 p = gl_in[i].gl_Position;
-            gl_Position = projectionmodel *  vec4(p.x-2,p.y,p.z,1.0);
+            gl_Position = mc.ProjectionModelMatrix *  vec4(p.x-2,p.y,p.z,1.0);
             vs_color = vec4(1.0-gl_PrimitiveIDIn*0.05,0.4,gl_PrimitiveIDIn*0.05,1.0);
             EmitVertex();
         }
@@ -134,9 +133,9 @@ void main(void)
                 Compile(vertex: vcode, frag:fcode, geo:gcode);
             }
 
-            public override void Start(MatrixCalc c)
+            public override void Start()
             {
-                base.Start(c);
+                base.Start();
                 OpenTKUtils.GLStatics.PointSize(0);     // ensure program is in charge
             }
             public override void Finish()
@@ -192,6 +191,8 @@ void main(void)
 
             rObjects2.Add(items.Shader("ResultShader"), redraw);
 
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+
             Closed += ShaderTest_Closed;
         }
 
@@ -222,6 +223,9 @@ void main(void)
 
             redraw.DrawCount = count;
             OpenTKUtils.GLStatics.PointSize(30);
+
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
 
             rObjects2.Render(gl3dcontroller.MatrixCalc);
         }

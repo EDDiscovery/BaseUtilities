@@ -8,9 +8,11 @@ Textures
 
 1 = Texture Object
 
+Uniform blocks
+0 = MatrixCalc - see the MatrixCalcUniformBlock.cs
+
 Uniforms
 
-20 = projmodel
 22 = object transform
 23 = common transform
 26 = phase

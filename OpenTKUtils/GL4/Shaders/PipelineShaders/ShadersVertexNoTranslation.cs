@@ -27,6 +27,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -34,11 +35,9 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-layout (location = 20) uniform  mat4 projectionmodel;
-
 void main(void)
 {
-	gl_Position = projectionmodel * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
 }
 ";
         }
@@ -46,7 +45,6 @@ void main(void)
         public GLVertexShaderNoTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 
@@ -58,6 +56,7 @@ void main(void)
             return
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -69,11 +68,9 @@ out gl_PerVertex {
 layout(location = 1) in vec4 color;
 out vec4 vs_color;
 
-layout (location = 20) uniform  mat4 projectionmodel;
-
 void main(void)
 {
-	gl_Position = projectionmodel * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -82,7 +79,6 @@ void main(void)
         public GLVertexShaderColourNoTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 

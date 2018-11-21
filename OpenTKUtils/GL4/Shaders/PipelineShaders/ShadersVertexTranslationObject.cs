@@ -27,6 +27,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -36,13 +37,12 @@ out gl_PerVertex {
 
 layout (location = 1) out vec3 modelpos;
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 
 void main(void)
 {
     modelpos = position.xyz;
-	gl_Position = projectionmodel * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
 }
 ";
         }
@@ -50,7 +50,6 @@ void main(void)
         public GLVertexShaderObjectTransform()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 
@@ -65,6 +64,7 @@ void main(void)
 
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -75,12 +75,11 @@ out gl_PerVertex {
 layout(location = 1) in vec4 color;
 out vec4 vs_color;
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 
 void main(void)
 {
-	gl_Position = projectionmodel * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -89,7 +88,6 @@ void main(void)
         public GLVertexShaderColourObjectTransform()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 
@@ -102,6 +100,7 @@ void main(void)
 
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -114,13 +113,12 @@ layout(location = 1) in vec2 texco;
 layout(location = 0) out vec2 vs_textureCoordinate;
 layout(location = 1) out vec3 modelpos;
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 22) uniform  mat4 transform;
 
 void main(void)
 {
     modelpos = position.xyz;
-	gl_Position = projectionmodel * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
     vs_textureCoordinate = texco;
 }
 ";
@@ -129,7 +127,6 @@ void main(void)
         public GLVertexShaderTextureObjectTransform()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
-            SetupProjMatrix = true;
         }
     }
 

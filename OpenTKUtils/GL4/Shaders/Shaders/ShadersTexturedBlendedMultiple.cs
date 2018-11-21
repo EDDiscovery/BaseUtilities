@@ -28,11 +28,11 @@ namespace OpenTKUtils.GL4
         string vertpos =
         @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;     
 layout (location = 1) in vec2 texco;
 layout(location = 2) in vec4 instancepos;       
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 23) uniform  mat4 commontransform;
 
 out vec2 tc;
@@ -43,7 +43,7 @@ void main(void)
     vec4 p = commontransform * position;
     p = p + vec4(instancepos.x,instancepos.y,instancepos.z,0);
     imagebase = int(instancepos.w);
-	gl_Position = projectionmodel  * p;       
+	gl_Position = mc.ProjectionModelMatrix  * p;       
     tc = texco;
 }
 ";
@@ -51,11 +51,11 @@ void main(void)
         string vertmat =
 @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (location = 0) in vec4 position;     // from buffer1
 layout (location = 1) in vec2 texco;
 layout(location = 4) in mat4 mat;       // from buffer2
 
-layout (location = 20) uniform  mat4 projectionmodel;
 layout (location = 23) uniform  mat4 commontransform;
 
 out vec2 tc;
@@ -66,7 +66,7 @@ void main(void)
     mat4 transform = mat;
     imagebase = int(mat[3][3]);     // mat[3][3] which is w in effect holds image number
     transform[3][3] = 1;
-	gl_Position = projectionmodel  * transform * commontransform * position;       
+	gl_Position = mc.ProjectionModelMatrix * transform * commontransform * position;       
     tc = texco;
 }
 ";
@@ -104,9 +104,9 @@ void main(void)
             CommonTransform = new GLObjectDataTranslationRotation();
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
-            base.Start(c);
+            base.Start();
 
             Matrix4 t = CommonTransform.Transform;
             GL.ProgramUniformMatrix4(Id, 23, false, ref t);

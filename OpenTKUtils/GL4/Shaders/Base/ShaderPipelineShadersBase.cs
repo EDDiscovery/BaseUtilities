@@ -26,15 +26,9 @@ namespace OpenTKUtils.GL4
     {
         public int Id { get { return Program.Id; } }
         protected GLProgram Program;
-        protected bool SetupProjMatrix = false;
 
-        public virtual void Start(Common.MatrixCalc c)
+        public virtual void Start()
         {
-            if (SetupProjMatrix)
-            {
-                Matrix4 projmodel = c.ProjectionModelMatrix;
-                GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
-            }
         }
 
         public virtual void Finish()

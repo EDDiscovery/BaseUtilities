@@ -68,7 +68,7 @@ void main(void)
 
 @"
 #version 450 core
-
+" + GLMatrixCalcUniformBlock.GLSL + @"
 layout (quads) in; 
 
 layout (location = 20) uniform  mat4 projectionmodel;
@@ -88,7 +88,7 @@ void main(void)
 
     pos.y += amp*sin((phase+gl_TessCoord.x)*3.142*2*" + repeats + @");           // .x goes 0-1, phase goes 0-1, convert to radians
 
-    gl_Position = projectionmodel * transform * pos;
+    gl_Position = mc.ProjectionModelMatrix * transform * pos;
 
 }
 ";
@@ -115,9 +115,9 @@ void main(void)
             Compile(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude,repeats), frag: frag);
         }
 
-        public override void Start(Common.MatrixCalc c)
+        public override void Start()
         {
-            base.Start(c);
+            base.Start();
             GL.ProgramUniform1(Id, 26, Phase);
             GLStatics.PatchSize(4);
             GL4Statics.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);

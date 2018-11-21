@@ -98,7 +98,7 @@ void main(void)
                 Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Fragment(), GetType().Name);
             }
 
-            public override void Start(MatrixCalc c)
+            public override void Start()
             {
                 GL.ProgramUniform1(Id, 15, TimeDeltaSurface);
                 GL.ProgramUniform1(Id, 16, TimeDeltaSpots);
@@ -120,11 +120,10 @@ void main(void)
                 return
     @"
 #version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
 
 layout (location = 0) in vec4 position;
 
-layout (location = 20) uniform  mat4 projectionmodel;
-layout (location = 10) uniform  mat4 inveye;
 layout (location = 22) uniform  mat4 transform;
 
 layout (location =0) out vec3 fposition;
@@ -132,8 +131,8 @@ layout (location =0) out vec3 fposition;
 void main(void)
 {
     fposition =vec3(position.xz,0);
-    vec4 p1 = inveye * position;
-	gl_Position = projectionmodel * transform * p1;        // order important
+    vec4 p1 = mc.InvEyeRotate * position;
+	gl_Position = mc.ProjectionModelMatrix * transform * p1;        // order important
 }
 ";
             }
@@ -204,16 +203,12 @@ void main(void)
 
             public float TimeDelta{ get; set; } = 0.00001f*10;
 
-            public override void Start(MatrixCalc c)
+            public override void Start()
             {
                 base.Start();
 
                 GL.ProgramUniform1(Id, 15, TimeDelta);
 
-                OpenTK.Matrix4 projmodel = c.ProjectionModelMatrix;
-                GL.ProgramUniformMatrix4(Id, 20, false, ref projmodel);
-                OpenTK.Matrix4 inveye = c.InvEyeRotate;
-                GL.ProgramUniformMatrix4(Id, 10, false, ref inveye);
                 //System.Diagnostics.Debug.WriteLine("DIR " + inveye);
                 GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 GLStatics.Check();
@@ -245,6 +240,8 @@ void main(void)
             {
                 return (float)ms / 20.0f;
             };
+
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("TEX", new GLTexturedObjectShaderSimple());
@@ -342,6 +339,9 @@ void main(void)
             stellarsurfaceshader.TimeDeltaSurface = zeroone500s;
 
             var coronashader = ((GLShaderStarCorona)items.Shader("CORONA")).TimeDelta = (float)time / 100000f;
+
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
             rObjects2.Render(gl3dcontroller.MatrixCalc);
