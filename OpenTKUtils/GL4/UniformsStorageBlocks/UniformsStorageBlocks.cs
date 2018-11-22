@@ -21,13 +21,10 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Class supports writing to local data then to the buffer object.
-
     public abstract class GLDataBlock : GLBuffer
     {
         public int BindingIndex { get; private set; }
 
-        //public GLDataBlock(int bp, bool std430, int isz, BufferTarget tg = BufferTarget.UniformBuffer, BufferRangeTarget tgr = BufferRangeTarget.UniformBuffer) : base(isz)
         public GLDataBlock(int bindingindex, bool std430, BufferTarget target, BufferRangeTarget tgr) : base(std430)
         {
             BindingIndex = bindingindex;

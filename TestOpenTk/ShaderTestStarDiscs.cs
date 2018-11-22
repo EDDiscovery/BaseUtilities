@@ -190,7 +190,7 @@ void main(void)
     float alpha = clamp(brightness, 0.0, 1.0) * (cos(clamp(brightness, 0.0, 0.5)) / (cos(clamp(brightness2 / ringIntesityMultiplier, 0.0, 1.5)) * 2));
     vec3 starcolor = unColor * brightness;
 
-    alpha = pow(alpha,1.7);             // exp roll of of alpha so it does go to 0, and therefore it does not show box
+    alpha = pow(alpha,1.8);             // exp roll of of alpha so it does go to 0, and therefore it does not show box
     color = vec4(starcolor, alpha );
 }
 ";
@@ -282,7 +282,7 @@ void main(void)
 
             rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                                         GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLObjectDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0,0,0), 35f, calclookat:true )));
+                                        new GLObjectDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0,0,0), 40f, calclookat:true )));
 
 
 

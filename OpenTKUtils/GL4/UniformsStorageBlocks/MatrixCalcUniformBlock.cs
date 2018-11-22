@@ -22,17 +22,15 @@ using OpenTKUtils.Common;
 
 namespace OpenTKUtils.GL4
 {
-    // Class supports writing to local data then to the buffer object.
+    // Matrix calc UB block at 0 fixed
 
-
-    // uniform blocks - std140 only
     public class GLMatrixCalcUniformBlock : GLUniformBlock 
     {
         public GLMatrixCalcUniformBlock() : base(0)         // 0 is the fixed binding block for matrixcalc
         {
         }
 
-        public static string GLSL =
+        public static string GLSL =                         // code to include in your shader..
         @"
             layout(std140, binding=0) uniform MatrixCalc
             {
@@ -45,7 +43,7 @@ namespace OpenTKUtils.GL4
 
         public void Set( MatrixCalc c, bool full = true)
         {
-            if (BufferSize == 0)
+            if (NotAllocated)
                 Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float), BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang

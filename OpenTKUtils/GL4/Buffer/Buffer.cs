@@ -27,7 +27,9 @@ namespace OpenTKUtils.GL4
     {
         public int CurrentPos { get; protected set; } = 0;
         public int BufferSize { get; protected set; } = 0;      // 0 means not complete and allocated, otherwise allocated to this size.
-        public List<int> Positions = new List<int>();           // at each alignment
+        public bool IsAllocated { get { return BufferSize != 0; } }
+        public bool NotAllocated { get { return BufferSize == 0; } }
+        public List<int> Positions = new List<int>();           // at each alignment, a position is stored
 
         public const int Vec4size = 4 * sizeof(float);
         public const int Vec2size = 2 * sizeof(float);
@@ -49,7 +51,7 @@ namespace OpenTKUtils.GL4
         }
 
 
-        #region Write to cache area..
+        #region Write to cache area..  then call Complete() to store to GL buffer.
 
         // Write to the local copy - pos = -1 place at end, else place at position (for update)
         // Set writebuf to write to buffer as well - only use for updating
@@ -57,8 +59,8 @@ namespace OpenTKUtils.GL4
         public int Write(float f, int pos = -1, bool writebuffer = false)
         {
             float[] fa = new float[] { f };
-            int fillpos = WriteStart(sizeof(float), pos, sizeof(float));                 // this is purposely done on another statement as writebuffer may change during this function
-            return WriteFinish(fa, fillpos, sizeof(float), writebuffer);
+            int fillpos = WriteCacheStart(sizeof(float), pos, sizeof(float));                 // this is purposely done on another statement as writebuffer may change during this function
+            return WriteCacheFinish(fa, fillpos, sizeof(float), writebuffer);
         }
 
         //TBD not sure they are not separ by vec4 in strides
@@ -66,23 +68,23 @@ namespace OpenTKUtils.GL4
         public int Write(float[] v, int pos = -1, bool writebuffer = false)
         {
             int sz = sizeof(float) * v.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, sizeof(float)), pos, sz);
-            return WriteFinish(v, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, sizeof(float)), pos, sz);
+            return WriteCacheFinish(v, fillpos, sz, writebuffer);
         }
 
         public int Write(int i, int pos = -1, bool writebuffer = false)
         {
             int sz = sizeof(int);
             int[] ia = new int[] { i };
-            int fillpos = WriteStart(sz, pos, sz);
-            return WriteFinish(ia, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(sz, pos, sz);
+            return WriteCacheFinish(ia, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector2 v, int pos = -1, bool writebuffer = false)
         {
             float[] fa = new float[] { v.X, v.Y };
-            int fillpos = WriteStart(Vec2size, pos, Vec2size);
-            return WriteFinish(fa, fillpos, Vec2size, writebuffer);
+            int fillpos = WriteCacheStart(Vec2size, pos, Vec2size);
+            return WriteCacheFinish(fa, fillpos, Vec2size, writebuffer);
         }
 
         public int Write(Vector2[] vec, int pos = -1, bool writebuffer = false)
@@ -98,16 +100,16 @@ namespace OpenTKUtils.GL4
             }
 
             int sz = sizeof(float) * array.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, Vec2size), pos, sz);
-            return WriteFinish(array, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, Vec2size), pos, sz);
+            return WriteCacheFinish(array, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector3 v, int pos = -1, bool writebuffer = false)
         {
             int sz = sizeof(float) * 3;
             float[] fa = new float[] { v.X, v.Y, v.Z };
-            int fillpos = WriteStart(Vec4size, pos, sz);
-            return WriteFinish(fa, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Vec4size, pos, sz);
+            return WriteCacheFinish(fa, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector3[] vec, int pos = -1, bool writebuffer = false)
@@ -123,15 +125,15 @@ namespace OpenTKUtils.GL4
             }
 
             int sz = sizeof(float) * array.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
-            return WriteFinish(array, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
+            return WriteCacheFinish(array, fillpos, sz, writebuffer);
         }
 
         public int Write(Vector4 v, int pos = -1, bool writebuffer = false)
         {
             float[] fa = new float[] { v.X, v.Y, v.Z, v.W };
-            int fillpos = WriteStart(Vec4size, pos, Vec4size);
-            return WriteFinish(fa, fillpos, Vec4size, writebuffer);
+            int fillpos = WriteCacheStart(Vec4size, pos, Vec4size);
+            return WriteCacheFinish(fa, fillpos, Vec4size, writebuffer);
         }
 
         public int Write(Vector4[] vec, int pos = -1, bool writebuffer = false)
@@ -147,8 +149,8 @@ namespace OpenTKUtils.GL4
             }
 
             int sz = sizeof(float) * array.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
-            return WriteFinish(array, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
+            return WriteCacheFinish(array, fillpos, sz, writebuffer);
         }
 
         private void Write(float[] array, int pos, Matrix4 mat)
@@ -163,8 +165,8 @@ namespace OpenTKUtils.GL4
             float[] array = new float[4 * 4];
             Write(array, 0, mat);
             int sz = sizeof(float) * array.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
-            return WriteFinish(array, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
+            return WriteCacheFinish(array, fillpos, sz, writebuffer);
         }
 
         public int WriteTranslationMatrix(Vector3 trans, int pos = -1, bool writebuffer = false)
@@ -203,32 +205,32 @@ namespace OpenTKUtils.GL4
             }
                 
             int sz = sizeof(float) * array.Length;
-            int fillpos = WriteStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
-            return WriteFinish(array, fillpos, sz, writebuffer);
+            int fillpos = WriteCacheStart(Math.Max(arraystridealignment, Vec4size), pos, sz);
+            return WriteCacheFinish(array, fillpos, sz, writebuffer);
         }
 
         #endregion
 
         #region Implementation
 
-        private int WriteStart(int align, int pos, int datasize)       // if pos == -1 move size to alignment of N, else just return pos
+        private int WriteCacheStart(int align, int pos, int datasize)       // if pos == -1 move size to alignment of N, else just return pos
         {
             if (pos == -1)                  
             {
-                CurrentPos = (CurrentPos + align - 1) & (~(align - 1));
+                CurrentPos = (CurrentPos + align - 1) & (~(align - 1));     // align..
 
                 System.Diagnostics.Debug.Assert(BufferSize == 0 || CurrentPos + datasize <= BufferSize); // need either an uncommitted buffer, or within buffersize
 
-                if (cachebufferdata == null || CurrentPos + datasize > cachebufferdata.Length)
+                if (cachebufferdata == null || CurrentPos + datasize > cachebufferdata.Length)  // if need to make or grow cache
                 {
-                    int newsize = CurrentPos + datasize + 512;
+                    int newsize = CurrentPos + datasize + 512;      // 512 is extra..
                     byte[] buf2 = new byte[newsize];
                     if ( cachebufferdata != null )
                         Array.Copy(cachebufferdata, buf2, CurrentPos);
                     cachebufferdata = buf2;
                 }
 
-                pos = CurrentPos;
+                pos = CurrentPos;                                   // move curpos on.
                 CurrentPos += datasize;
 
                 Positions.Add(pos);
@@ -241,7 +243,7 @@ namespace OpenTKUtils.GL4
             return pos;
         }
 
-        private int WriteFinish(Array data, int fillpos, int datasize, bool writebuffer)
+        private int WriteCacheFinish(Array data, int fillpos, int datasize, bool writebuffer)
         {
             System.Buffer.BlockCopy(data, 0, cachebufferdata, fillpos, datasize);
 
@@ -251,7 +253,7 @@ namespace OpenTKUtils.GL4
             return fillpos;
         }
 
-        protected int Align(int align, int datasize )           // use After BufferAllocation
+        protected int Align(int align, int datasize )           // for use after allocation by sub classes, align and return pos
         {
             CurrentPos = (CurrentPos + align - 1) & (~(align - 1));
             int pos = CurrentPos;
@@ -288,6 +290,7 @@ namespace OpenTKUtils.GL4
 
         public void Update()        // rewrite the whole thing.. Complete must be called first.  Use after Writes without the immediate write buffer
         {
+            System.Diagnostics.Debug.Assert(IsAllocated);
             IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)0, BufferSize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateBufferBit);
             System.Runtime.InteropServices.Marshal.Copy(cachebufferdata, 0, ptr, BufferSize);
             GL.UnmapNamedBuffer(Id);
@@ -296,6 +299,7 @@ namespace OpenTKUtils.GL4
 
         protected override void WriteAreaToBuffer(int fillpos, int datasize)        // update the buffer with an area of updated cache on a write..
         {
+            System.Diagnostics.Debug.Assert(IsAllocated);
             IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
             System.Runtime.InteropServices.Marshal.Copy(cachebufferdata, fillpos, ptr, datasize);
             GL.UnmapNamedBuffer(Id);
@@ -303,7 +307,7 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
-        #region Set Size and Fill Direct - cache is not involved, so you can't use the other write functions 
+        #region Allocate first, then Fill Direct - cache is not involved, so you can't use the cache write functions 
         
         public void Allocate(int size, BufferUsageHint uh = BufferUsageHint.StaticDraw)  // call first to set buffer size.. allow for alignment in your size
         {                                                                    // can call twice - get fresh buffer each time

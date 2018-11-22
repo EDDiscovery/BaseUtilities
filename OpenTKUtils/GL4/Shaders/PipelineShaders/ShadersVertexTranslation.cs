@@ -112,12 +112,12 @@ out gl_PerVertex {
 layout(location = 1) in vec4 color;
 out vec4 vs_color;
 
-layout (location = 22) uniform  mat4 transform;
+layout (location = 22) uniform  mat4 objecttransform;
 layout (location = 23) uniform  mat4 commontransform;
 
 void main(void)
 {
-	gl_Position = mc.ProjectionModelMatrix * transform *  commontransform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * objecttransform *  commontransform * position;        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -162,12 +162,12 @@ out gl_PerVertex {
 layout(location = 1) in vec2 texco;
 out vec2 vs_textureCoordinate;
 
-layout (location = 22) uniform  mat4 transform;
+layout (location = 22) uniform  mat4 objecttransform;
 layout (location = 23) uniform  mat4 commontransform;
 
 void main(void)
 {
-	gl_Position = mc.ProjectionModelMatrix * transform *  commontransform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * objecttransform *  commontransform * position;        // order important
     vs_textureCoordinate = texco;
 }
 ";

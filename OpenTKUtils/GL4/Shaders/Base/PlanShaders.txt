@@ -14,8 +14,8 @@ Uniform blocks
 Uniforms
 
 21 = transform to look at eye position
-22 = object transform
-23 = common transform
+22 = object transform position/rotation
+23 = common transform - rotation
 26 = phase
 30 = blend
 
