@@ -22,11 +22,15 @@ namespace OpenTKUtils.GL4
 {
     // Called per object, to bind any data needed to place/rotate the object etc
 
-    // Translation and rotation of object, placed at 0,0,0, to position.
+    // Translation,scaling and rotation of object, placed at 0,0,0, to position.
+    // optional Lookat to look at viewer
+    // optional texture bind
 
     public class GLObjectDataTranslationRotation : IGLInstanceData
     {
-        public const int DefaultTRUniformId = 22;      // Standard used to pass object data transform to shader
+        public int LookAtUniform = 21;    
+        public int TransformUniform = 22;  
+        public int TextureBind = 1;
 
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
@@ -43,32 +47,34 @@ namespace OpenTKUtils.GL4
         float scale = 1.0f;
 
         private Matrix4 transform;
-        private int uniformid;
+        protected IGLTexture Texture;                      // set to bind texture.
 
-        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, int uid = DefaultTRUniformId)
+        bool lookatangle = false;
+
+        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
         {
             pos = new Vector3(0, 0, 0);
             rot = new Vector3(rx, ry, rz);
             scale = sc;
-            uniformid = uid;
+            lookatangle = calclookat;
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, int uniformid = DefaultTRUniformId)
+        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
             scale = sc;
-            this.uniformid = uniformid;
+            lookatangle = calclookat;
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, float sc = 1.0f , int uniformid = DefaultTRUniformId)
+        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, float sc = 1.0f , bool calclookat = false)
         {
             pos = p;
             rot = rotp;
             scale = sc;
-            this.uniformid = uniformid;
+            lookatangle = calclookat;
             Calc();
         }
 
@@ -80,77 +86,43 @@ namespace OpenTKUtils.GL4
             transform *= Matrix4.CreateRotationY((float)(rot.Y * Math.PI / 180.0f));
             transform *= Matrix4.CreateRotationZ((float)(rot.Z * Math.PI / 180.0f));
             transform *= Matrix4.CreateTranslation(pos);
+
+            System.Diagnostics.Debug.WriteLine("Transform " + transform);
         }
 
-        public virtual void Bind(IGLProgramShader shader)
+        public virtual void Bind(IGLProgramShader shader, Common.MatrixCalc c)
         {
-            // System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, uniformid, false, ref transform);
-        }
+            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, TransformUniform, false, ref transform);
 
+            if (lookatangle)
+            {
+                Vector3 res = GLStatics.AzEl(pos, c.EyePosition, false);
+                System.Diagnostics.Debug.WriteLine("Object Bind eye " + c.EyePosition + " to " + pos + " az " + res.Y.Degrees() + " inc " + res.X.Degrees());
+                Matrix4 tx2 = Matrix4.Identity;
+                tx2 *= Matrix4.CreateRotationX((-res.X));
+                tx2 *= Matrix4.CreateRotationY(((float)Math.PI+res.Y));
+                GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, LookAtUniform, false, ref tx2);
+            }
+
+            Texture?.Bind(TextureBind);
+
+        }
     }
 
-    // version of above, uses less memory by not storing anything but transform
-
-    public class GLObjectDataTranslationRotationSetOnly : IGLInstanceData
-    {
-        public const int DefaultTRUniformId = 22;      // Standard used to pass object data transform to shader
-
-        public GLObjectDataTranslationRotationSetOnly(Vector3 pos, Vector3 rot)
-        {
-            Set(pos, rot);
-        }
-
-        void Set(Vector3 pos, Vector3 rot)
-        {
-            transform = Matrix4.Identity;
-            transform *= Matrix4.CreateRotationX((float)(rot.X * Math.PI / 180.0f));
-            transform *= Matrix4.CreateRotationY((float)(rot.Y * Math.PI / 180.0f));
-            transform *= Matrix4.CreateRotationZ((float)(rot.Z * Math.PI / 180.0f));
-            transform *= Matrix4.CreateTranslation(pos);
-        }
-
-        private Matrix4 transform;
-
-        public virtual void Bind(IGLProgramShader shader)
-        {
-            //System.Diagnostics.Debug.WriteLine("Object Bind " + transform);
-            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id,DefaultTRUniformId, false, ref transform);
-        }
-
-    }
-
+    // class to use above easily with textures
 
     public class GLObjectDataTranslationRotationTexture : GLObjectDataTranslationRotation
     {
-        const int DefaultTextureBindingPoint = 1;
-
-        private int texbind;
-        private IGLTexture texture;
-
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, int uid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(rx,ry,rx,scale,uid)
+        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f) : base(p, rx, ry, rx, scale)
         {
-            texture = tex;
-            texbind = tind;
+            Texture = tex;
         }
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, int uniformid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(p,rx,ry,rx,scale,uniformid)
+        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, float scale = 1.0f) : base(p, rotp, scale)
         {
-            texture = tex;
-            texbind = tind;
+            Texture = tex;
         }
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, float scale = 1.0f, int uniformid = DefaultTRUniformId, int tind = DefaultTextureBindingPoint) : base(p,rotp,scale,uniformid)
-        {
-            texture = tex;
-            texbind = tind;
-        }
-
-        public override void Bind(IGLProgramShader shader)
-        {
-            base.Bind(shader);
-            texture.Bind(texbind);
-        }
     }
 
 

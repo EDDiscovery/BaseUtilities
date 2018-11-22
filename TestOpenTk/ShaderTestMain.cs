@@ -506,6 +506,11 @@ void main(void)
                 gl3dcontroller.CameraLookAt(new Vector3(10, 0, -10), 1, 2);
             }
 
+            if (kb.IsPressedRemove(Keys.F4, BaseUtils.KeyboardState.ShiftState.None))
+            {
+                gl3dcontroller.CameraLookAt(new Vector3(50, 0, 50), 1, 2);
+            }
+
         }
 
     }

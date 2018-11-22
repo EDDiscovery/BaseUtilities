@@ -77,8 +77,6 @@ namespace OpenTKUtils.GL4
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
             GL.BindProgramPipeline(pipelineid);
 
-            //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid);
-
             foreach (var x in programs)                             // let any programs do any special set up
                 x.Value.Start();
 
@@ -90,10 +88,9 @@ namespace OpenTKUtils.GL4
             foreach (var x in programs)
                 x.Value.Finish();
 
-            GL.BindProgramPipeline(0);
-            //System.Diagnostics.Debug.WriteLine("Pipeline " + pipelineid + " Released");
-
             FinishAction?.Invoke(this);                           // any shader hooks get a chance.
+
+            GL.BindProgramPipeline(0);
         }
 
         public void Dispose()

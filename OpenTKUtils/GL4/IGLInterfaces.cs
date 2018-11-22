@@ -31,7 +31,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLInstanceData                        // should not need to be disposable..
     {
-        void Bind(IGLProgramShader shader);                 // called just before the item is drawn
+        void Bind(IGLProgramShader shader, Common.MatrixCalc c);  // called just before the item is drawn
     }
 
     public interface IGLShader : IDisposable                // All shaders inherit from this
@@ -62,7 +62,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLRenderableItem               // a renderable item inherits from this..
     {
-        void Bind(IGLProgramShader shader);                 // Bind to context
+        void Bind(IGLProgramShader shader, Common.MatrixCalc c );                 // Bind to context
         void Render();                                      // and render - do the Draw.
         IGLInstanceData InstanceData { get; set; }          // may be null - no instance data.  Allows instance data to be modified in the main program
         OpenTK.Graphics.OpenGL4.PrimitiveType PrimitiveType { get; set; }       // Draw type

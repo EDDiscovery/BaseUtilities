@@ -54,7 +54,7 @@ namespace OpenTKUtils.GL4
 
                 foreach (IGLRenderableItem g in d.Value.Values)
                 {
-                    g.Bind(d.Key);
+                    g.Bind(d.Key,c);
                     g.Render();
                 }
 

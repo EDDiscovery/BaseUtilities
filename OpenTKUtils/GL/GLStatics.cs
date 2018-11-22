@@ -141,7 +141,7 @@ namespace OpenTKUtils
             }
         }
 
-        public static Vector3 AzEl(this Vector3 curpos, Vector3 target, bool degrees)     // az and elevation between curpos and target
+        public static Vector3 AzEl(this Vector3 curpos, Vector3 target, bool returndegrees)     // az and elevation between curpos and target
         {
             Vector3 delta = Vector3.Subtract(target, curpos);
             //Console.WriteLine("{0}->{1} d {2}", curpos, target, delta);
@@ -154,18 +154,18 @@ namespace OpenTKUtils
             float inclination = (float)Math.Acos(delta.Y / radius);
             float azimuth = (float)Math.Atan(delta.Z / delta.X);
 
-            if (degrees)
+            if (delta.X >= 0)      // atan wraps -90 (south)->+90 (north), then -90 to +90 around the y axis, going anticlockwise
+                azimuth = (float)(Math.PI / 2) - azimuth;     // adjust
+            else
+                azimuth = -(float)(Math.PI / 2) - azimuth;
+
+            if (returndegrees)
             {
                 inclination = inclination.Degrees();
                 azimuth = azimuth.Degrees();
             }
 
             //System.Diagnostics.Debug.WriteLine("inc " + inclination + " az " + azimuth + " delta" + delta);
-
-            if (delta.X >= 0)      // atan wraps -90 (south)->+90 (north), then -90 to +90 around the y axis, going anticlockwise
-                azimuth = 90 - azimuth;     // adjust
-            else
-                azimuth = -90 - azimuth;
 
             //System.Diagnostics.Debug.WriteLine(" -> inc " + inclination + " az " + azimuth);
             return new Vector3(inclination, azimuth, 0);

@@ -81,7 +81,8 @@ void main(void)
     float t2 = snoise((sPosition + unRadius) * frequency) -clip;
 	float ss = (max(t1, 0.0) * max(t2, 0.0)) * blackdeepness;
 
-    float n = (noise(position + unDTsurface, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
+    vec3 p1 = vec3(position.x+unDTsurface,position.y,position.z);   // moving the noise across x produces a more realistic look
+    float n = (noise(p1, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
 
     vec3 baseColor = vec3(0.9, 0.9 ,0.0);
     baseColor = baseColor - ss - n/4;
@@ -124,6 +125,7 @@ void main(void)
 
 layout (location = 0) in vec4 position;
 
+layout (location = 21) uniform  mat4 rotate;
 layout (location = 22) uniform  mat4 transform;
 
 layout (location =0) out vec3 fposition;
@@ -131,7 +133,7 @@ layout (location =0) out vec3 fposition;
 void main(void)
 {
     fposition =vec3(position.xz,0);
-    vec4 p1 = mc.InvEyeRotate * position;
+    vec4 p1 = rotate * position;
 	gl_Position = mc.ProjectionModelMatrix * transform * p1;        // order important
 }
 ";
@@ -153,7 +155,7 @@ void main(void)
 {
 	const float brightnessMultiplier = 0.9;   // The higher the number, the brighter the corona will be.
 	const float smootheningMultiplier = 0.15; // How smooth the irregular effect is, the higher the smoother.
-	const float ringIntesityMultiplier = 4.8; // The higher the number, the smaller the solid ring inside
+	const float ringIntesityMultiplier = 2.8; // The higher the number, the smaller the solid ring inside
 	const float coronaSizeMultiplier = 2.0;  // The higher the number, the smaller the corona. 2.0
 	const float frequency = 1.5;              // The frequency of the irregularities.
 	const float fDetail = 0.7;                // The higher the number, the more detail the corona will have. (Might be more GPU intensive when higher, 0.7 seems fine for the normal PC)
@@ -185,13 +187,11 @@ void main(void)
     // Calculate color
     vec3 unColor = vec3(0.9,0.9,0);
 
-    vec3 starcolor = unColor * brightness;
     float alpha = clamp(brightness, 0.0, 1.0) * (cos(clamp(brightness, 0.0, 0.5)) / (cos(clamp(brightness2 / ringIntesityMultiplier, 0.0, 1.5)) * 2));
+    vec3 starcolor = unColor * brightness;
+
+    alpha = pow(alpha,1.7);             // exp roll of of alpha so it does go to 0, and therefore it does not show box
     color = vec4(starcolor, alpha );
-
-//if ( color.length < 1 )
-  //  color = vec4(fposition.x/20+0.5,fposition.y/20+0.5,0,1.0);
-
 }
 ";
             }
@@ -212,7 +212,6 @@ void main(void)
                 //System.Diagnostics.Debug.WriteLine("DIR " + inveye);
                 GL4Statics.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 GLStatics.Check();
-                System.Diagnostics.Debug.WriteLine("Corona draw");
             }
         }
 
@@ -276,10 +275,18 @@ void main(void)
                        GLRenderableItem.CreateVector4(items,
                                OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
                                GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
-                               new GLObjectDataTranslationRotation(new Vector3(0, 0, 0)),
+                               new GLObjectDataTranslationRotation(new Vector3(1, 1, 1)),
                                ic: 1));
 
-            items.Add("BCK", new GLShaderPipeline(new GLVertexShaderObjectTransform(), new GLFragmentShaderFixedColour(new Color4(0.5f,0,0,0.5f))));
+            items.Add("CORONA", new GLShaderStarCorona());
+
+            rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                        GLShapeObjectFactory.CreateQuad(1f),
+                                        new GLObjectDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0,0,0), 35f, calclookat:true )));
+
+
+
+            //items.Add("BCK", new GLShaderPipeline(new GLVertexShaderObjectTransform(), new GLFragmentShaderFixedColour(new Color4(0.5f,0,0,0.5f))));
 
             //rObjects.Add(items.Shader("BCK"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
             //                            GLShapeObjectFactory.CreateQuad(20.0f),
@@ -287,16 +294,9 @@ void main(void)
 
             //                            ));
 
-            items.Add("CORONA", new GLShaderStarCorona());
-
-            rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                                        GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLObjectDataTranslationRotation(new Vector3(0, 0, 0), new Vector3(0,0,0), 30f)));
-
-
-
             OpenTKUtils.GLStatics.Check();
-            //GL.Enable(EnableCap.DepthClamp);
+
+            GL.Enable(EnableCap.DepthClamp);
         }
 
 
@@ -317,7 +317,8 @@ void main(void)
             float zeroone10s = ((float)(time % 10000)) / 10000.0f;
             float zeroone5s = ((float)(time % 5000)) / 5000.0f;
             float zerotwo5s = ((float)(time % 5000)) / 2500.0f;
-
+            float timediv10s = (float)time / 10000.0f;
+            float timediv100s = (float)time / 100000.0f;
 
 
             if (items.Contains("STAR"))
@@ -329,16 +330,18 @@ void main(void)
                 GL.ProgramUniform1(vid, 12, scutoff);
                 GL.ProgramUniform1(vid, 13, blackdeepness);
                 GL.ProgramUniform1(vid, 14, concentrationequator);
+
+                ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+
+                var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+                stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
+                stellarsurfaceshader.TimeDeltaSurface = timediv100s;
             }
 
-            ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
-
-            var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
-
-            stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
-            stellarsurfaceshader.TimeDeltaSurface = zeroone500s;
-
-            var coronashader = ((GLShaderStarCorona)items.Shader("CORONA")).TimeDelta = (float)time / 100000f;
+            if (items.Contains("CORONA"))
+            {
+                ((GLShaderStarCorona)items.Shader("CORONA")).TimeDelta = (float)time / 100000f;
+            }
 
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.Set(gl3dcontroller.MatrixCalc);

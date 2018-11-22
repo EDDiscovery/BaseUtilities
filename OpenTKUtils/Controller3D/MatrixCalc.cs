@@ -26,8 +26,6 @@ namespace OpenTKUtils.Common
         public Matrix4 ProjectionMatrix { get; private set; }
         public Matrix4 ProjectionModelMatrix { get; private set; }
 
-        public Matrix4 InvEyeRotate { get; private set; }
-
         public float ZoomDistance { get; set; } = 1000F;       // distance that zoom=1 will be from the Position, in the direction of the camera.
         public float PerspectiveFarZDistance { get; set; } = 1000000.0f;        // perspective, set Z's for clipping
         public float PerspectiveNearZDistance { get; set; } = 1f;
@@ -78,13 +76,7 @@ namespace OpenTKUtils.Common
                     
                 System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
 
-                InvEyeRotate = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
-                float xrot = -(180f - cameraDir.X);                // 180-cameradir, but inveye is applied before model/projection flips axis, so needs to be backwards
-                float yrot = cameraDir.Y;                          // y maps directly
-
-                System.Diagnostics.Debug.WriteLine("Inv rot x:" + xrot + " y:" + yrot);
-                InvEyeRotate *= Matrix4.CreateRotationX(xrot.Radians());
-                InvEyeRotate *= Matrix4.CreateRotationY(yrot.Radians());
+                // inveye rotation, if ever needed, would be : xrot = -(180f - cameraDir.X), yrot = cameraDir.Y
             }
             else
             {            

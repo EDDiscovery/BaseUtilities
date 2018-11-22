@@ -40,10 +40,10 @@ namespace OpenTKUtils.GL4
             InstanceCount = ic;
         }
 
-        public void Bind(IGLProgramShader shader)
+        public void Bind(IGLProgramShader shader, Common.MatrixCalc c)
         {
             VertexArray?.Bind();
-            InstanceData?.Bind(shader);
+            InstanceData?.Bind(shader,c);
         }
 
         public void Render()

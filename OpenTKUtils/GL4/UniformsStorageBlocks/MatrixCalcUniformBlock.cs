@@ -36,27 +36,27 @@ namespace OpenTKUtils.GL4
         @"
             layout(std140, binding=0) uniform MatrixCalc
             {
-                mat4 ModelMatrix;
                 mat4 ProjectionModelMatrix;
-                mat4 InvEyeRotate;
                 vec4 TargetPosition;
                 vec4 EyePosition;
                 float EyeDistance;
             } mc;
         ";
 
-        public void Set( MatrixCalc c)
+        public void Set( MatrixCalc c, bool full = true)
         {
             if (BufferSize == 0)
                 Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float), BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
-            MapWrite(ref ptr, c.ModelMatrix);
             MapWrite(ref ptr, c.ProjectionModelMatrix);
-            MapWrite(ref ptr, c.InvEyeRotate);
-            MapWrite(ref ptr, c.TargetPosition,0);
-            MapWrite(ref ptr, c.EyePosition, 0);
-            MapWrite(ref ptr, c.EyeDistance);
+
+            if (full)
+            {
+                MapWrite(ref ptr, c.TargetPosition, 0);
+                MapWrite(ref ptr, c.EyePosition, 0);
+                MapWrite(ref ptr, c.EyeDistance);
+            }
             UnMap();                                // and complete..
         }
 
