@@ -160,6 +160,8 @@ namespace BaseUtils
 
         public QuickJSONFormatter Object()                  // call, add elements, call close
         {
+            Prefix();
+
             json += "{ ";
             stack.Add(new StackEntry(StackType.Object, precomma));
             precomma = false;
