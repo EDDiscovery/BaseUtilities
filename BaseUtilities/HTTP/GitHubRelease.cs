@@ -31,6 +31,37 @@ namespace BaseUtils
             this.jo = jo;
         }
 
+        // For debugging it!
+
+        public GitHubRelease(string name, string tag, string url, string created, string descr, string exe, string msi, string zip) 
+        {
+            jo = new JObject();
+            jo["name"] = name;
+            jo["tag_name"] = tag;
+            jo["html_url"] = url;
+            jo["created_at"] = created;
+            jo["body"] = descr;
+
+            JArray aa = new JArray();
+            JObject a1 = new JObject();
+            JObject a2 = new JObject();
+            JObject a3 = new JObject();
+
+            aa.Add(a1);
+            aa.Add(a2);
+            aa.Add(a3);
+
+            a1["name"] = exe;
+            a1["browser_download_url"] = "http://www.bbc.co.uk";
+            a2["name"] = msi;
+            a2["browser_download_url"] = "http://google.co.uk";
+            a3["name"] = zip;
+            a3["browser_download_url"] = "http://news.bbc.co.uk";
+
+            jo["assets"] = aa;
+            System.Diagnostics.Debug.WriteLine("Jo is " + jo.ToString(Newtonsoft.Json.Formatting.Indented));
+        }
+
         public string ReleaseName { get { return  jo["name"].Str(); } }
 
         public string ReleaseVersion {
@@ -55,7 +86,7 @@ namespace BaseUtils
         {
             get
             {
-                var asset = jo["assets"].FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".exe"));
+                var asset = jo["assets"]?.FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".exe"));
                 if (asset != null)
                 {
                     string url = asset["browser_download_url"].Str();
@@ -68,7 +99,7 @@ namespace BaseUtils
         {
             get
             {
-                var asset = jo["assets"].FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".msi"));
+                var asset = jo["assets"]?.FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".msi"));
                 if (asset != null)
                 {
                     string url = asset["browser_download_url"].Str();
@@ -81,7 +112,7 @@ namespace BaseUtils
         {
             get
             {
-                var asset = jo["assets"].FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".zip") && j["name"].Str().ToLowerInvariant().Contains("portable"));
+                var asset = jo["assets"]?.FirstOrDefault(j => j["name"].Str().ToLowerInvariant().EndsWith(".zip") && j["name"].Str().ToLowerInvariant().Contains("portable"));
                 if (asset != null)
                 {
                     string url = asset["browser_download_url"].Str();
