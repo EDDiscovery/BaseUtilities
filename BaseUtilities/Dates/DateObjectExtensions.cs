@@ -169,6 +169,14 @@ public static class ObjectExtensionsDates
         return (weeks>0 ? $"{weeks} weeks " : "" ) + (days>0 ? $"{days} days " : "") + 
                           $"{s.Hours} hours" + (weeks==0 ? $" {s.Minutes} minutes {s.Seconds} seconds" : "");
     }
+
+    static public DateTime ParseDateTime(this string s, DateTime def, CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)
+    {
+        DateTime ret;
+        if (!DateTime.TryParse(s, ci, ds, out ret))
+            ret = def;
+        return ret;
+    }
 }
 
 
