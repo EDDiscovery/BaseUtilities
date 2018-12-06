@@ -64,6 +64,7 @@ namespace BaseUtils
         LogToFile logger = null;
 
         Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
+        Dictionary<string, string> originalenglish = null;      // optional load
         List<string> ExcludedControls = new List<string>();
 
         private Translator()
@@ -72,9 +73,17 @@ namespace BaseUtils
 
         public bool Translating { get { return translations != null; } }
 
+        public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
+        public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
+        public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
+
         // You can call this multiple times if required for debugging purposes
 
-        public void LoadTranslation(string language, CultureInfo uicurrent, string[] txfolders, int includesearchupdepth, string logdir)
+        public void LoadTranslation(string language, CultureInfo uicurrent, 
+                                    string[] txfolders, int includesearchupdepth, 
+                                    string logdir, 
+                                    string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
+                                    bool loadorgenglish = false )       // optional load original english and store
         {
 #if DEBUG
             if (logger != null)
@@ -84,6 +93,7 @@ namespace BaseUtils
             logger.SetFile(logdir, "translator-ids.log", false);
 #endif
             translations = null;        // forget any
+            originalenglish = null;
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
@@ -114,6 +124,7 @@ namespace BaseUtils
                 if (lr.Open(Path.Combine(langsel.Item1,langsel.Item2)))
                 {
                     translations = new Dictionary<string, string>();
+                    originalenglish = new Dictionary<string, string>();
 
                     string prefix = "";
 
@@ -137,9 +148,14 @@ namespace BaseUtils
 
                                 try
                                 {
-                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName, line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
-                                    if (allFiles.Length == 1)
-                                        filename = allFiles[0].FullName;
+                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName , line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
+
+                                    if (allFiles.Length > 0)
+                                    {
+                                        var selected = allFiles.Where((x) => !x.DirectoryName.Contains(includefolderreject));       // reject folders with this pattern..files
+                                        if ( selected.Count() > 0 )
+                                            filename = selected.First().FullName;
+                                    }
                                 }
                                 catch { }
                             }
@@ -162,7 +178,7 @@ namespace BaseUtils
 
                             if (s.IsCharMoveOn(':'))
                             {
-                                s.NextQuotedWord(replaceescape: true);  // ignore the english for ref purposes only
+                                string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
 
                                 string foreign = null;
                                 bool err = false;
@@ -188,6 +204,8 @@ namespace BaseUtils
                                     {
                                         //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
                                         translations[id] = foreign;
+                                        if ( loadorgenglish )
+                                            originalenglish[id] = orgenglish;
                                     }
                                     else
                                     {
