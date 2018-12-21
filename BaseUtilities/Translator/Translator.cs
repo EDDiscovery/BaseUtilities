@@ -65,9 +65,12 @@ namespace BaseUtils
 
         Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
         Dictionary<string, string> originalenglish = null;      // optional load
+        Dictionary<string, string> originalfile = null;         // optional load
         List<string> ExcludedControls = new List<string>();
 
-        private Translator()
+        public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
+
+        public Translator() // only use via debugging
         {
         }
 
@@ -76,14 +79,17 @@ namespace BaseUtils
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
         public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
-
+        public string GetOriginalFile (string fullid) => originalfile[fullid];         // ensure its there first!
+        public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
         // You can call this multiple times if required for debugging purposes
 
         public void LoadTranslation(string language, CultureInfo uicurrent, 
                                     string[] txfolders, int includesearchupdepth, 
                                     string logdir, 
                                     string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
-                                    bool loadorgenglish = false )       // optional load original english and store
+                                    bool loadorgenglish = false,                // optional load original english and store
+                                    bool loadfile = false                       // remember file where it came from
+                                    )       
         {
 #if DEBUG
             if (logger != null)
@@ -94,6 +100,7 @@ namespace BaseUtils
 #endif
             translations = null;        // forget any
             originalenglish = null;
+            originalfile = null;
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
@@ -125,6 +132,7 @@ namespace BaseUtils
                 {
                     translations = new Dictionary<string, string>();
                     originalenglish = new Dictionary<string, string>();
+                    originalfile = new Dictionary<string, string>();
 
                     string prefix = "";
 
@@ -171,49 +179,56 @@ namespace BaseUtils
 
                             string id = s.NextWord(" :");
 
-                            if (id.StartsWith(".") && prefix.HasChars())
-                                id = prefix + id;
-                            else
-                                prefix = id.Word(new char[] { '.' });
-
-                            if (s.IsCharMoveOn(':'))
+                            if ( id.Equals("SECTION"))
                             {
-                                string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
-
-                                string foreign = null;
-                                bool err = false;
-
-                                if (s.IsStringMoveOn("=>"))
-                                {
-                                    foreign = s.NextQuotedWord(replaceescape: true);
-                                    err = foreign == null;
-                                }
-                                else if (s.IsCharMoveOn('@'))
-                                    foreign = null;
+                                prefix = s.NextQuotedWord(" /");
+                            }
+                            else
+                            { 
+                                if (id.StartsWith(".") && prefix.HasChars())
+                                    id = prefix + id;
                                 else
-                                    err = false;
+                                    prefix = id.Word(new char[] { '.' });
 
-                                if (err == true)
+                                if (s.IsCharMoveOn(':'))
                                 {
-                                    logger?.WriteLine(string.Format("*** Translator ID but no translation {0}", id));
-                                    System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation {0}", id);
-                                }
-                                else
-                                {
-                                    if (!translations.ContainsKey(id))
+                                    string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
+
+                                    string foreign = null;
+                                    bool err = false;
+
+                                    if (s.IsStringMoveOn("=>"))
                                     {
-                                        //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
-                                        translations[id] = foreign;
-                                        if ( loadorgenglish )
-                                            originalenglish[id] = orgenglish;
+                                        foreign = s.NextQuotedWord(replaceescape: true);
+                                        err = foreign == null;
+                                    }
+                                    else if (s.IsCharMoveOn('@'))
+                                        foreign = null;
+                                    else
+                                        err = false;
+
+                                    if (err == true)
+                                    {
+                                        logger?.WriteLine(string.Format("*** Translator ID but no translation {0}", id));
+                                        System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation {0}", id);
                                     }
                                     else
                                     {
-                                        logger?.WriteLine(string.Format("*** Translator Repeat {0}", id));
+                                        if (!translations.ContainsKey(id))
+                                        {
+                                            //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
+                                            translations[id] = foreign;
+                                            if (loadorgenglish)
+                                                originalenglish[id] = orgenglish;
+                                            if (loadfile)
+                                                originalfile[id] = lr.CurrentFile;
+                                        }
+                                        else
+                                        {
+                                            logger?.WriteLine(string.Format("*** Translator Repeat {0}", id));
+                                        }
                                     }
-
                                 }
-
                             }
                         }
                     }

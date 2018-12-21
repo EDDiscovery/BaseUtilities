@@ -23,7 +23,25 @@ namespace BaseUtils
 {
     public class LineReader : IDisposable
     {
-        private List<StreamReader> filestack = new List<StreamReader>();
+        class Stack : IDisposable
+        {
+            public Stack( StreamReader s, string p )
+            {
+                SR = s; Path=p;
+            }
+
+            public StreamReader SR;
+            public string Path;
+
+            public void Dispose()
+            {
+                SR.Dispose();
+            }
+        };
+
+        private List<Stack> filestack = new List<Stack>();
+
+        public string CurrentFile { get { return filestack.Count > 0 ? filestack.Last().Path : null; } }
 
         public bool Open(string path)       // can open on top to produce a include file stack
         {
@@ -35,7 +53,7 @@ namespace BaseUtils
 
                 if ( sr != null )
                 {
-                    filestack.Add(sr);
+                    filestack.Add(new Stack(sr,path));
                     return true;
                 }
             }
@@ -52,7 +70,7 @@ namespace BaseUtils
             {
                 while (filestack.Count > 0)
                 {
-                    string s = filestack.Last().ReadLine();
+                    string s = filestack.Last().SR.ReadLine();
 
                     if (s == null)
                     {
@@ -75,7 +93,7 @@ namespace BaseUtils
         {
             if (filestack != null)
             {
-                foreach (StreamReader s in filestack)
+                foreach (var s in filestack)
                 {
                     s.Dispose();
                 }
