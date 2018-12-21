@@ -64,10 +64,11 @@
     <Compile Include="GL4\Renderers\RenderableLists.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderProgramBase.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipelineShadersBase.cs" />
-    <Compile Include="GL4\Shaders\Functions\FunctionsNoise.cs" />
+    <Compile Include="GL4\Shaders\FunctionsData\FunctionsNoise.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersStarPoints.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />

@@ -41,15 +41,16 @@ namespace OpenTKUtils.GL4
 
         public string Compile( ShaderType t, string code )
         {
-            GLShader shader = new GLShader(t, code);
+            GLShader shader = new GLShader(t);
+            string ret = shader.Compile(code);
 
-            if (shader.Compiled)
+            if (ret == null)
             {
                 Add(shader);
                 return null;
             }
             else
-                return shader.CompileReport;
+                return ret;
         }
 
         public string Link(params GLShader[] sh)        // done together, not seperable

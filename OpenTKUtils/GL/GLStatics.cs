@@ -112,6 +112,11 @@ namespace OpenTKUtils
 
         static float? LastPointSize = null;
 
+        public static void PointSizeByProgram()          // cache size for speed - 0 means use shader point size
+        {
+            PointSize(0);
+        }
+
         public static void PointSize(float p)          // cache size for speed - 0 means use shader point size
         {
             if (LastPointSize == null || LastPointSize.Value != p)

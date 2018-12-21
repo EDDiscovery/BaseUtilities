@@ -23,15 +23,12 @@ namespace OpenTKUtils.GL4
     {
         public int Id { get; private set; }
         public bool Compiled { get { return Id != -1; } }
-        public string CompileReport { get; private set; }       // null if okay, else error
         ShaderType type;
 
-        public GLShader( ShaderType t , string source = null )
+        public GLShader( ShaderType t )
         {
             Id = -1;
             type = t;
-            if (source != null)
-                Compile(source);
         }
 
         public string Compile(string source)                // string return gives any errors
@@ -39,16 +36,29 @@ namespace OpenTKUtils.GL4
             Id = GL.CreateShader(type);
             GL.ShaderSource(Id, source);
             GL.CompileShader(Id);
-            CompileReport = GL.GetShaderInfoLog(Id);
+            string CompileReport = GL.GetShaderInfoLog(Id);
 
             if (CompileReport.HasChars())
             {
                 GL.DeleteShader(Id);
                 Id = -1;
+
+                int opos = CompileReport.IndexOf("0(");
+                int opose = CompileReport.IndexOf(")", opos);
+                if ( opos != -1 && opose != -1)     // lets help ourselves by reporting the source.. since the source can be obscure.
+                {
+                    int? lineno = CompileReport.Substring(opos + 2, opose-opos-2).InvariantParseIntNull();
+
+                    if ( lineno.HasValue )
+                    {
+                        CompileReport = CompileReport + Environment.NewLine + source.Lines(lineno.Value-5, 10, "000", lineno.Value);
+                    }
+
+                }
+
                 return CompileReport;
             }
 
-            CompileReport = null;
             return null;
         }
 

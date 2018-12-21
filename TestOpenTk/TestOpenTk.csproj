@@ -65,6 +65,12 @@
     <Compile Include="ShaderTestMain.Designer.cs">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTestStarPointsDiscs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestStarPointsDiscs.Designer.cs">
+      <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTestStarPoints.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +116,9 @@
     </Compile>
     <EmbeddedResource Include="ShaderTestMain.resx">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestStarPointsDiscs.resx">
+      <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestStarPoints.resx">
       <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>

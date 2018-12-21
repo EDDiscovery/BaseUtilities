@@ -99,12 +99,14 @@ namespace TestOpenTk
         //var distance = LastHandleInterval * (1.0f / zoomlimited);
         }
     
-        private void Draw(Matrix4 modelmatrix, Matrix4 projmatrix, long time)
+        private void Draw(MatrixCalc mc, long time)
         {
             GL.MatrixMode(MatrixMode.Projection);           // Select the project matrix for the following operations (current matrix)
-            GL.LoadMatrix(ref projmatrix);                   // replace projection matrix with this perspective matrix
+            Matrix4 pm = mc.ProjectionMatrix;
+            GL.LoadMatrix(ref pm);                   // replace projection matrix with this perspective matrix
+            Matrix4 mm = mc.ModelMatrix;
             GL.MatrixMode(MatrixMode.Modelview);            // select the current matrix to the model view
-            GL.LoadMatrix(ref modelmatrix);                          // set the model view to this matrix.
+            GL.LoadMatrix(ref mm);                          // set the model view to this matrix.
 
             foreach (var ds in datasets)
                 ds.DrawAll(gltracker.glControl);

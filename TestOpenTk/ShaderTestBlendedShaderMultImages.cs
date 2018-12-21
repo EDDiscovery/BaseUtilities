@@ -119,7 +119,7 @@ namespace TestOpenTk
             items.Dispose();
         }
 
-        private void ControllerDraw(Matrix4 model, Matrix4 projection, long time)
+        private void ControllerDraw(MatrixCalc mc, long time)
         {
             // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
 

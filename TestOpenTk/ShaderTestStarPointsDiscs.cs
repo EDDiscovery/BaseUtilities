@@ -16,13 +16,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestStarPoints : Form
+    public partial class ShaderTestStarPointsDiscs : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestStarPoints()
+        public ShaderTestStarPointsDiscs()
         {
             InitializeComponent();
 
@@ -40,72 +40,6 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
-        public class GLShaderStars : GLShaderPipelineShadersBase
-        {
-            public string Code()
-            {
-                return
-    @"
-#version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
-layout (location = 0) in uvec2 positionpacked;
-
-out vec4 vs_color;
-
-out gl_PerVertex {
-        vec4 gl_Position;
-        float gl_PointSize;
-        float gl_ClipDistance[];
-    };
-
-
-float rand1(float n)
-{
-return fract(sin(n) * 43758.5453123);
-}
-
-void main(void)
-{
-    uint xcoord = positionpacked.x & 0x1fffff;
-    uint ycoord = positionpacked.y & 0x1fffff;
-    float x = float(xcoord)/16.0-50000;
-    float y = float(ycoord)/16.0-50000;
-    uint zcoord = positionpacked.x >> 21;
-    zcoord = zcoord | ( ((positionpacked.y >> 21) & 0x7ff) << 11);
-    float z = float(zcoord)/16.0-50000;
-
-    vec4 position = vec4( x, y, z, 1.0f);
-
-	gl_Position = mc.ProjectionModelMatrix * position;        // order important
-
-    float distance = 50-pow(distance(mc.EyePosition,vec4(x,y,z,0)),2)/20;
-
-    gl_PointSize = clamp(distance,1.0,63.0);
-    vs_color = vec4(rand1(gl_VertexID),0.5,0.5,1.0);
-}
-";
-            }
-
-            public GLShaderStars()
-            {
-                Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), GetType().Name);
-            }
-
-            public override void Start() // seperable do not use a program - that is for the pipeline to hook up
-            {
-                base.Start();
-                GL.Enable(EnableCap.ProgramPointSize);
-            }
-
-            public override void Finish() // seperable do not use a program - that is for the pipeline to hook up
-            {
-                base.Finish();
-                GL.Disable(EnableCap.ProgramPointSize);
-            }
-
-        }
-
-
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -119,8 +53,8 @@ void main(void)
                 return (float)ms / 20.0f;
             };
 
-            items.Add("STARS", new GLShaderPipeline(new GLShaderStars(), new GLFragmentShaderColour()));
-
+            items.Add("STARS", new GLStarPoints());
+             
             items.Add("COS", new GLColourObjectShaderNoTranslation());
             items.Add("COST", new GLColourObjectShaderTranslation());
             items.Add("TEX", new GLTexturedObjectShaderSimple());

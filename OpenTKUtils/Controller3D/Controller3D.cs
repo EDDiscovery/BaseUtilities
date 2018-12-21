@@ -36,7 +36,7 @@ namespace OpenTKUtils.Common
 
         public Color BackColour { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");
 
-        public Action<Matrix4,Matrix4, long> PaintObjects;  // madatory if you actually want to see anything
+        public Action<MatrixCalc, long> PaintObjects;  // madatory if you actually want to see anything
 
         public Action<MouseEventArgs> MouseDown;            // optional - set to handle more mouse actions if required
         public Action<MouseEventArgs> MouseUp;
@@ -152,7 +152,7 @@ namespace OpenTKUtils.Common
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            PaintObjects?.Invoke(matrix.ModelMatrix, matrix.ProjectionMatrix, sysinterval.ElapsedMilliseconds);
+            PaintObjects?.Invoke(matrix, sysinterval.ElapsedMilliseconds);
 
             glControl.SwapBuffers();
         }
