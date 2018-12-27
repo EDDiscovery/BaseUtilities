@@ -18,24 +18,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Conditions
+namespace BaseUtils
 {
-    public class ConditionVariables
+    public class Variables
     {
         private Dictionary<string, string> values = new Dictionary<string, string>();
 
         #region Init
 
-        public ConditionVariables()
+        public Variables()
         {
         }
 
-        public ConditionVariables(ConditionVariables other)
+        public Variables(Variables other)
         {
             values = new Dictionary<string, string>(other.values);
         }
 
-        public ConditionVariables(ConditionVariables other, ConditionVariables other2)      // other can be null, other2 must not be
+        public Variables(Variables other, Variables other2)      // other can be null, other2 must not be
         {
             if (other == null)
                 values = new Dictionary<string, string>(other2.values);
@@ -46,31 +46,31 @@ namespace Conditions
             }
         }
 
-        public ConditionVariables(ConditionVariables other, ConditionVariables other2, ConditionVariables other3)
+        public Variables(Variables other, Variables other2, Variables other3)
         {
             values = new Dictionary<string, string>(other.values);
             Add(other2);
             Add(other3);
         }
 
-        public ConditionVariables(string s, FromMode fm)     //v=1,v=2 no brackets
+        public Variables(string s, FromMode fm)     //v=1,v=2 no brackets
         {
             FromString(s, fm);
         }
 
-        public ConditionVariables(string s, string value)
+        public Variables(string s, string value)
         {
             values[s] = value;
         }
 
-        public ConditionVariables(string[] s) // name,value,name,value..
+        public Variables(string[] s) // name,value,name,value..
         {
             System.Diagnostics.Debug.Assert(s.Length % 2 == 0);
             for (int i = 0; i < s.Length; i += 2)
                 values[s[i]] = s[i + 1];
         }
 
-        public ConditionVariables(ConditionVariables other, string name, string value)
+        public Variables(Variables other, string name, string value)
         {
             values = new Dictionary<string, string>(other.values);
             values[name] = value;
@@ -114,21 +114,21 @@ namespace Conditions
                 values.Remove(k);
         }
 
-        public void Add(List<ConditionVariables> varlist)
+        public void Add(List<Variables> varlist)
         {
             if (varlist != null)
-                foreach (ConditionVariables d in varlist)
+                foreach (Variables d in varlist)
                     Add(d);
         }
 
-        public void Add(ConditionVariables[] varlist)
+        public void Add(Variables[] varlist)
         {
             if (varlist != null)
-                foreach (ConditionVariables d in varlist)
+                foreach (Variables d in varlist)
                     Add(d);
         }
 
-        public void Add(ConditionVariables d)
+        public void Add(Variables d)
         {
             if (d != null)
                 Add(d.values);
@@ -187,13 +187,13 @@ namespace Conditions
 
         // return a list just with the names matching filter, or filter*
 
-        public ConditionVariables FilterVars(string filter)
+        public Variables FilterVars(string filter)
         {
             int wildcard = filter.IndexOf('*');
             if (wildcard >= 0)
                 filter = filter.Substring(0, wildcard);
 
-            ConditionVariables ret = new ConditionVariables();
+            Variables ret = new Variables();
 
             foreach (KeyValuePair<string, string> k in values)
             {
@@ -376,12 +376,12 @@ namespace Conditions
                 if (comma == -1)      // no comma, no flags, all vars
                 {
                     flag = "";
-                    FromString(ad, ConditionVariables.FromMode.MultiEntryComma);
+                    FromString(ad, Variables.FromMode.MultiEntryComma);
                 }
                 else
                 {
                     flag = ad.Substring(0, comma);
-                    FromString(ad.Substring(comma + 1), ConditionVariables.FromMode.MultiEntryComma);
+                    FromString(ad.Substring(comma + 1), Variables.FromMode.MultiEntryComma);
                 }
             }
         }

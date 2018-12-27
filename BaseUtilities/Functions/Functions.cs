@@ -20,17 +20,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Conditions
+namespace BaseUtils
 {
-    public class ConditionFunctions
+    public class Functions
     {
-        public ConditionVariables vars;
-        public ConditionPersistentData persistentdata;
+        public Variables vars;
+        public FunctionPersistentData persistentdata;
 
-        public delegate ConditionFunctionHandlers delegateGetCFH(ConditionFunctions c, ConditionVariables vars, ConditionPersistentData handles, int recdepth);
+        public delegate FunctionHandlers delegateGetCFH(Functions c, Variables vars, FunctionPersistentData handles, int recdepth);
         public static delegateGetCFH GetCFH;            // SET this to override and add on more functions
 
-        public ConditionFunctions(ConditionVariables v, ConditionPersistentData f)
+        public Functions(Variables v, FunctionPersistentData f)
         {
             vars = v;
             persistentdata = f;
@@ -62,15 +62,15 @@ namespace Conditions
             return ExpandResult.Expansion;
         }
 
-        public ConditionVariables ExpandVars(ConditionVariables vars, out string errlist)       // expand all variables to new list
+        public Variables ExpandVars(Variables vars, out string errlist)       // expand all variables to new list
         {
             errlist = null;
 
-            ConditionVariables exp = new ConditionVariables();
+            Variables exp = new Variables();
 
             foreach (string k in vars.NameEnumuerable)
             {
-                if (ExpandString(vars[k], out errlist) == ConditionFunctions.ExpandResult.Failed)
+                if (ExpandString(vars[k], out errlist) == Functions.ExpandResult.Failed)
                     return null;
 
                 exp[k] = errlist;
@@ -116,7 +116,7 @@ namespace Conditions
                         string funcname = line.Substring(pos, apos - pos);
                         apos++;     // past the (
 
-                        ConditionFunctionHandlers cfh = GetCFH(this, vars, persistentdata, recdepth);
+                        FunctionHandlers cfh = GetCFH(this, vars, persistentdata, recdepth);
 
                         string errprefix = "";
                         if (funcname.Length > 0)
@@ -262,9 +262,9 @@ namespace Conditions
         }
 
         // backstop standard functions
-        static public ConditionFunctionHandlers DefaultGetCFH(ConditionFunctions c, ConditionVariables vars, ConditionPersistentData handles, int recdepth)
+        static public FunctionHandlers DefaultGetCFH(Functions c, Variables vars, FunctionPersistentData handles, int recdepth)
         {
-            return new ConditionFunctionsBase(c, vars, handles, recdepth);
+            return new FunctionsBasic(c, vars, handles, recdepth);
         }
 
         #endregion

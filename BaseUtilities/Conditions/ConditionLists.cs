@@ -21,7 +21,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BaseUtils;
 
-namespace Conditions
+namespace BaseUtils
 { 
     public class ConditionLists
     {
@@ -66,7 +66,7 @@ namespace Conditions
 
 
         // check all conditions against these values.
-        public bool? CheckAll(ConditionVariables values, out string errlist, List<Condition> passed = null, ConditionFunctions cf = null)            // Check all conditions..
+        public bool? CheckAll(Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)            // Check all conditions..
         {
             if (conditionlist.Count == 0)            // no filters match, null
             {
@@ -77,7 +77,7 @@ namespace Conditions
             return CheckConditions(conditionlist, values, out errlist, passed, cf);
         }
 
-        public bool? CheckConditions(List<Condition> fel, ConditionVariables values, out string errlist, List<Condition> passed = null, ConditionFunctions cf = null)
+        public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)
         {
             errlist = null;
 
@@ -108,13 +108,13 @@ namespace Conditions
                     else
                     {
                         string leftside = null;
-                        ConditionFunctions.ExpandResult er = ConditionFunctions.ExpandResult.NoExpansion;
+                        Functions.ExpandResult er = Functions.ExpandResult.NoExpansion;
 
                         if (cf != null)     // if we have a string expander, try the left side
                         {
                             er = cf.ExpandString(f.itemname, out leftside);
 
-                            if (er == ConditionFunctions.ExpandResult.Failed)        // stop on error
+                            if (er == Functions.ExpandResult.Failed)        // stop on error
                             {
                                 errlist += leftside;     // add on errors..
                                 innerres = false;   // stop loop, false
@@ -124,7 +124,7 @@ namespace Conditions
 
                         if (f.matchtype == ConditionEntry.MatchType.IsPresent)         // these use f.itemname without any expansion
                         {
-                            if (leftside == null || er == ConditionFunctions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
+                            if (leftside == null || er == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
                                 leftside = values.Qualify(f.itemname);                 // its a straight variable name, allow any special formatting
 
                             if (values.Exists(leftside) && values[leftside] != null)
@@ -132,7 +132,7 @@ namespace Conditions
                         }
                         else if (f.matchtype == ConditionEntry.MatchType.IsNotPresent)
                         {
-                            if (leftside == null || er == ConditionFunctions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
+                            if (leftside == null || er == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
                                 leftside = values.Qualify(f.itemname);                 // its a straight variable name, allow any special formatting
 
                             if (!values.Exists(leftside) || values[leftside] == null)
@@ -140,7 +140,7 @@ namespace Conditions
                         }
                         else
                         {
-                            if (er == ConditionFunctions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
+                            if (er == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
                             {
                                 string qualname = values.Qualify(f.itemname);
                                 leftside = values.Exists(qualname) ? values[qualname] : null;   // then lookup.. lookup may also be null if its a pre-def
@@ -159,7 +159,7 @@ namespace Conditions
                             {
                                 er = cf.ExpandString(f.matchstring, out rightside);
 
-                                if (er == ConditionFunctions.ExpandResult.Failed)        //  if error, abort
+                                if (er == Functions.ExpandResult.Failed)        //  if error, abort
                                 {
                                     errlist += rightside;     // add on errors..
                                     innerres = false;   // stop loop, false
@@ -660,13 +660,13 @@ namespace Conditions
         // take conditions and JSON, decode it, execute..
         public bool? CheckCondition(   List<Condition> fel, 
                                         Object cls , // object with data in it
-                                        ConditionVariables[] othervars,   // any other variables to present to the condition, in addition to the class variables
+                                        Variables[] othervars,   // any other variables to present to the condition, in addition to the class variables
                                         out string errlist,     // null if okay..
                                         List<Condition> passed)            // null or conditions passed
         {
             errlist = null;
 
-            ConditionVariables valuesneeded = new ConditionVariables();
+            Variables valuesneeded = new Variables();
 
             foreach (Condition fe in fel)        // find all values needed
                 fe.IndicateValuesNeeded(ref valuesneeded);
@@ -686,7 +686,7 @@ namespace Conditions
 
         // TRUE if filter is True and has value
 
-        public bool CheckFilterTrue(Object cls, ConditionVariables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
+        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
         {                                                                                         // only if the filter passes do we get a false..
             bool? v = CheckCondition(conditionlist, cls, othervars, out errlist, passed);
             return (v.HasValue && v.Value);     // true IF we have a positive result
@@ -694,7 +694,7 @@ namespace Conditions
 
         // Filter OUT if condition matches..
 
-        public bool CheckFilterFalse(Object cls, string eventname, ConditionVariables[] othervars, out string errlist , List<Condition> passed)      // if none, true, if false, true.. 
+        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist , List<Condition> passed)      // if none, true, if false, true.. 
         {
             List<Condition> fel = GetConditionListByEventName(eventname);       // first find conditions applicable, filtered by eventname
 

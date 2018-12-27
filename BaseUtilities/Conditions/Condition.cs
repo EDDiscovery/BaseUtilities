@@ -19,7 +19,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Conditions
+namespace BaseUtils
 {
     public class Condition
     {
@@ -154,7 +154,7 @@ namespace Conditions
 
         // list into CV the variables needed for the condition entry list
 
-        public void IndicateValuesNeeded(ref ConditionVariables vr)
+        public void IndicateValuesNeeded(ref Variables vr)
         {
             foreach (ConditionEntry fd in fields)
             {

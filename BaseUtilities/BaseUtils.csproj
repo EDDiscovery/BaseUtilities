@@ -51,12 +51,12 @@
     <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Conditions\Condition.cs" />
     <Compile Include="Conditions\ConditionEntry.cs" />
-    <Compile Include="Conditions\ConditionFunctionHandlers.cs" />
-    <Compile Include="Conditions\ConditionFunctions.cs" />
-    <Compile Include="Conditions\ConditionFunctionsBase.cs" />
+    <Compile Include="Functions\FunctionHandlers.cs" />
+    <Compile Include="Functions\Functions.cs" />
+    <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
-    <Compile Include="Conditions\ConditionPersistentData.cs" />
-    <Compile Include="Conditions\ConditionVariables.cs" />
+    <Compile Include="Functions\FunctionPersistentData.cs" />
+    <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
     <Compile Include="DebugTraceAndLogs\LogClean.cs" />

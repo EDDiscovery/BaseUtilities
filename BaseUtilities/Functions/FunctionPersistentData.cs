@@ -21,14 +21,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Conditions
+namespace BaseUtils
 {
-    public class ConditionPersistentData
+    public class FunctionPersistentData
     {
         public BaseUtils.FileHandles fh;
         public BaseUtils.Processes procs;
 
-        public ConditionPersistentData()
+        public FunctionPersistentData()
         {
             fh = new BaseUtils.FileHandles();
             procs = new BaseUtils.Processes();

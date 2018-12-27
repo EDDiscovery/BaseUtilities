@@ -18,11 +18,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Conditions
+namespace BaseUtils
 {
-    public class ConditionFunctionsBase : ConditionFunctionHandlers
+    public class FunctionsBasic : FunctionHandlers
     {
-        public ConditionFunctionsBase(ConditionFunctions c, ConditionVariables v, ConditionPersistentData h, int recd) : base(c, v, h, recd)
+        public FunctionsBasic(Functions c, Variables v, FunctionPersistentData h, int recd) : base(c, v, h, recd)
         {
             if (functions == null)        // one time init, done like this cause can't do it in {}
             {
@@ -204,7 +204,7 @@ namespace Conditions
 
             foreach (Parameter p in paras)          // output been expanded by ME to get macro contents, now expand them out
             {
-                if (caller.ExpandStringFull(p.Value, out string res, recdepth + 1) == ConditionFunctions.ExpandResult.Failed)
+                if (caller.ExpandStringFull(p.Value, out string res, recdepth + 1) == Functions.ExpandResult.Failed)
                 {
                     output = res;
                     return false;
@@ -224,7 +224,7 @@ namespace Conditions
             {
                 if (vars.Exists(p.Value))         // if macro name, expand..
                 {
-                    if (caller.ExpandStringFull(vars[p.Value], out string res, recdepth + 1) == ConditionFunctions.ExpandResult.Failed)
+                    if (caller.ExpandStringFull(vars[p.Value], out string res, recdepth + 1) == Functions.ExpandResult.Failed)
                     {
                         output = res;
                         return false;
@@ -253,9 +253,9 @@ namespace Conditions
             if (vars.Exists(mname))
             {
                 string value = vars[mname];
-                ConditionFunctions.ExpandResult result = caller.ExpandStringFull(value, out output, recdepth + 1);
+                Functions.ExpandResult result = caller.ExpandStringFull(value, out output, recdepth + 1);
 
-                return result != ConditionFunctions.ExpandResult.Failed;
+                return result != Functions.ExpandResult.Failed;
             }
             else
                 output = "Indirect Variable '" + mname + "' does not exist";

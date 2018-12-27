@@ -4,15 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Conditions
+namespace BaseUtils
 {
     // Class holding parameters and can call functions.  inherit from this, and override find function to add on functions
     // done this way for historical reasons instead of having a set of ptrs to classes handling functions.
 
 
-    public class ConditionFunctionHandlers
+    public class FunctionHandlers
     {
-        public ConditionFunctionHandlers(ConditionFunctions c, ConditionVariables v, ConditionPersistentData h, int recd)
+        public FunctionHandlers(Functions c, Variables v, FunctionPersistentData h, int recd)
         {
             caller = c;
             vars = v;
@@ -94,9 +94,9 @@ namespace Conditions
                     if (fe.Expandstring(paras.Count))
                     {
                         string resexp;          // expand out any strings.. recursion
-                        ConditionFunctions.ExpandResult sexpresult = caller.ExpandStringFull(t, out resexp, recdepth + 1);
+                        Functions.ExpandResult sexpresult = caller.ExpandStringFull(t, out resexp, recdepth + 1);
 
-                        if (sexpresult == ConditionFunctions.ExpandResult.Failed)
+                        if (sexpresult == Functions.ExpandResult.Failed)
                             return resexp;
 
                         t = resexp;
@@ -107,9 +107,9 @@ namespace Conditions
                     if ( t.Contains("%"))   // expand out any function ones..
                     {
                         string resexp;          // expand out any strings.. recursion
-                        ConditionFunctions.ExpandResult sexpresult = caller.ExpandStringFull(t, out resexp, recdepth + 1);
+                        Functions.ExpandResult sexpresult = caller.ExpandStringFull(t, out resexp, recdepth + 1);
 
-                        if (sexpresult == ConditionFunctions.ExpandResult.Failed)
+                        if (sexpresult == Functions.ExpandResult.Failed)
                             return resexp;
 
                         t = resexp;
@@ -251,16 +251,16 @@ namespace Conditions
 
                 if (paras[parano].IsString)     // if its a string..
                 {
-                    ConditionFunctions.ExpandResult sexpresult = caller.ExpandStringFull(value, out output, recdepth + 1);
+                    Functions.ExpandResult sexpresult = caller.ExpandStringFull(value, out output, recdepth + 1);
 
-                    if (sexpresult == ConditionFunctions.ExpandResult.Failed)
+                    if (sexpresult == Functions.ExpandResult.Failed)
                         return false;
                 }
                 else if (vars.Exists(value))        // if macro exists.. expand it
                 {
-                    ConditionFunctions.ExpandResult sexpresult = caller.ExpandStringFull(vars[value], out output, recdepth + 1);
+                    Functions.ExpandResult sexpresult = caller.ExpandStringFull(vars[value], out output, recdepth + 1);
 
-                    if (sexpresult == ConditionFunctions.ExpandResult.Failed)
+                    if (sexpresult == Functions.ExpandResult.Failed)
                         return false;
                 }
                 else
@@ -334,9 +334,9 @@ namespace Conditions
         static public void SetRandom(Random r) { rnd = r; }
         protected static Random rnd = new Random();
         protected List<Parameter> paras;
-        protected ConditionFunctions caller;
-        protected ConditionVariables vars;
-        protected ConditionPersistentData persistentdata;
+        protected Functions caller;
+        protected Variables vars;
+        protected FunctionPersistentData persistentdata;
         protected int recdepth;
         protected FuncEntry fe;
         protected delegate bool func(out string output);
