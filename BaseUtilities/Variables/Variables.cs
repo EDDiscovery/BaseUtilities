@@ -441,7 +441,7 @@ namespace BaseUtils
             if (depth < 0)      // 0, list, class, object, .. limit depth
                 return;
 
-            //System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
+            System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
 
             System.Globalization.CultureInfo ct = System.Globalization.CultureInfo.InvariantCulture;
 

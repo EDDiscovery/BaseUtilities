@@ -21,13 +21,14 @@ namespace BaseUtils
 {
     public static class TypeHelpers
     {
-        static public List<string> GetPropertyFieldNames(Type jtype, string prefix = "")       // give a list of properties for a given name
+        // bf default is DefaultLookup in the .net code for GetProperties()
+        static public List<string> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public)       // give a list of properties for a given name
         {
             if (jtype != null)
             {
                 List<string> ret = new List<string>();
 
-                foreach (PropertyInfo pi in jtype.GetProperties())
+                foreach (PropertyInfo pi in jtype.GetProperties(bf))
                 {
                     if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                         ret.Add(prefix + pi.Name);

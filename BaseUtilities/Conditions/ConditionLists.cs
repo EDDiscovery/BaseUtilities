@@ -28,6 +28,8 @@ namespace BaseUtils
         private List<Condition> conditionlist = new List<Condition>();
         private List<string> groupname = new List<string>();    // used to associate a group name with a condition..
 
+        #region Condition List setup and read/write
+
         public ConditionLists()
         {
         }
@@ -64,6 +66,264 @@ namespace BaseUtils
 
         public int Count { get { return conditionlist.Count; } }
 
+        public string GetJSON()
+        {
+            return GetJSONObject().ToString();
+        }
+
+        public JObject GetJSONObject()
+        {
+            JObject evt = new JObject();
+
+            JArray jf = new JArray();
+
+            foreach (Condition f in conditionlist)
+            {
+                JObject j1 = new JObject();
+                j1["EventName"] = f.eventname;
+                if (f.innercondition != ConditionEntry.LogicalCondition.Or)
+                    j1["ICond"] = f.innercondition.ToString();
+                if (f.outercondition != ConditionEntry.LogicalCondition.Or)
+                    j1["OCond"] = f.outercondition.ToString();
+                if (f.action.Length > 0)
+                    j1["Actions"] = f.action;
+                if (f.actiondata.Length > 0)
+                    j1["ActionData"] = f.actiondata;
+
+                JArray jfields = new JArray();
+
+                foreach (ConditionEntry fd in f.fields)
+                {
+                    JObject j2 = new JObject();
+                    j2["Item"] = fd.itemname;
+                    j2["Content"] = fd.matchstring;
+                    j2["Matchtype"] = fd.matchtype.ToString();
+                    jfields.Add(j2);
+                }
+
+                j1["Filters"] = jfields;
+
+                jf.Add(j1);
+            }
+
+            evt["FilterSet"] = jf;
+
+            return evt;
+        }
+
+        public bool FromJSON(string s)
+        {
+            Clear();
+
+            try
+            {
+                JObject jo = (JObject)JObject.Parse(s);
+                return FromJSON(jo);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool FromJSON(JObject jo)
+        {
+            try
+            {
+                Clear();
+
+                JArray jf = (JArray)jo["FilterSet"];
+
+                foreach (JObject j in jf)
+                {
+                    string evname = (string)j["EventName"];
+                    ConditionEntry.LogicalCondition ftinner = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["ICond"].Str("Or"));
+                    ConditionEntry.LogicalCondition ftouter = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["OCond"].Str("Or"));
+                    string act = j["Actions"].Str();
+                    string actd = j["ActionData"].Str();
+
+                    JArray filset = (JArray)j["Filters"];
+
+                    List<ConditionEntry> fieldlist = new List<ConditionEntry>();
+
+                    foreach (JObject j2 in filset)
+                    {
+                        string item = (string)j2["Item"];
+                        string content = (string)j2["Content"];
+                        string matchtype = (string)j2["Matchtype"];
+
+                        fieldlist.Add(new ConditionEntry()
+                        {
+                            itemname = item,
+                            matchstring = content,
+                            matchtype = (ConditionEntry.MatchType)Enum.Parse(typeof(ConditionEntry.MatchType), matchtype)
+                        });
+                    }
+
+                    conditionlist.Add(new Condition()
+                    {
+                        eventname = evname,
+                        innercondition = ftinner,
+                        outercondition = ftouter,
+                        fields = fieldlist,
+                        action = act,
+                        actiondata = actd
+                    });
+                }
+
+                return true;
+            }
+            catch { }
+
+            return false;
+        }
+
+        public override string ToString()
+        {
+            string ret = "";
+            bool multi = conditionlist.Count > 1;
+
+            if (multi)
+                ret += "(";
+
+            for (int j = 0; j < conditionlist.Count; j++)       // First outer is NOT used, second on is..
+            {
+                Condition f = conditionlist[j];
+
+                if (j > 0)
+                    ret += ") " + f.outercondition.ToString() + " (";
+
+                ret += f.ToString(multi: multi);
+            }
+
+            if (multi)
+                ret += ")";
+
+            return ret;
+        }
+
+        public string Read(string line)         // decode a set of multi conditions (<cond> Or <cond>) Outer (<cond> And <cond>) etc 
+        {
+            StringParser sp = new StringParser(line);
+
+            bool multi = false;
+
+            string delimchars = " ";
+            if (sp.IsCharMoveOn('('))
+            {
+                multi = true;
+                delimchars = ") ";
+            }
+
+            List<Condition> cllist = new List<Condition>();
+
+            ConditionEntry.LogicalCondition outercond = ConditionEntry.LogicalCondition.Or;         // first outer condition is ignored in a list.  Or is the default.
+
+            while (true)
+            {
+                Condition c = new Condition();
+
+                string err = c.Read(sp, delimchars: delimchars);
+                if (err.Length > 0)
+                    return err;
+
+                c.outercondition = outercond;
+                cllist.Add(c);      // add..
+
+                if (sp.IsCharMoveOn(')'))      // if closing bracket..
+                {
+                    if (!multi)
+                        return "Closing condition bracket found but no opening bracket present";
+
+                    if (sp.IsEOL)  // EOL, end of  (cond..cond) outercond ( cond cond)
+                    {
+                        conditionlist = cllist;
+                        return null;
+                    }
+                    else
+                    {
+                        err = ConditionEntry.GetLogicalCondition(sp, delimchars, out outercond);
+                        if (err.Length > 0)
+                            return err + " for outer condition";
+
+                        if (!sp.IsCharMoveOn('(')) // must have another (
+                            return "Missing opening bracket in multiple condition list after " + outercond.ToString();
+                    }
+                }
+                else if (sp.IsEOL) // last condition
+                {
+                    if (multi)
+                        return "Missing closing braket in multiple condition list";
+
+                    conditionlist = cllist;
+                    return null;
+                }
+                else
+                    return "Extra characters beyond expression";
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
+        // is condition flag in actiondata set
+
+        public bool IsConditionFlagSet(string flagstart)
+        {
+            foreach (Condition l in conditionlist)
+            {
+                if (l.actiondata.StartsWith(flagstart))
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Event name.. give me conditions which match that name or ALL
+        // flagstart, if not null ,compare with start of action data and include only if matches
+
+        public List<Condition> GetConditionListByEventName(string eventname, string flagstart = null)
+        {
+            List<Condition> fel;
+
+            if (flagstart != null)
+                fel = (from fil in conditionlist
+                       where
+                     (fil.eventname.Equals("All") || fil.eventname.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
+                     fil.actiondata.StartsWith(flagstart)
+                       select fil).ToList();
+
+            else
+                fel = (from fil in conditionlist
+                       where
+                     (fil.eventname.Equals("All") || fil.eventname.Equals(eventname, StringComparison.InvariantCultureIgnoreCase))
+                       select fil).ToList();
+
+            return (fel.Count == 0) ? null : fel;
+        }
+
+        // give back all conditions which match itemname and have a compatible matchtype.. used for key presses/voice input to compile a list of condition data to check for
+
+        public List<Tuple<string, ConditionEntry.MatchType>> ReturnValuesOfSpecificConditions(string itemname, List<ConditionEntry.MatchType> matchtypes)      // given itemname, give me a list of values it is matched against
+        {
+            List<Tuple<string, ConditionEntry.MatchType>> ret = new List<Tuple<string, ConditionEntry.MatchType>>();
+
+            foreach (Condition fe in conditionlist)        // find all values needed
+            {
+                foreach (ConditionEntry ce in fe.fields)
+                {
+                    if (ce.itemname.Equals(itemname) && matchtypes.Contains(ce.matchtype))
+                        ret.Add(new Tuple<string, ConditionEntry.MatchType>(ce.matchstring, ce.matchtype));
+                }
+            }
+
+            return ret;
+        }
+
+        #endregion
+
+        #region Check Condition
 
         // check all conditions against these values.
         public bool? CheckAll(Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)            // Check all conditions..
@@ -77,7 +337,71 @@ namespace BaseUtils
             return CheckConditions(conditionlist, values, out errlist, passed, cf);
         }
 
-        public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)
+        #endregion
+
+
+        #region Filtering system using the filter set up in this class
+
+        // take conditions and JSON, decode it, execute..
+        static public bool? CheckCondition(   List<Condition> fel, 
+                                        Object cls , // object with data in it
+                                        Variables[] othervars,   // any other variables to present to the condition, in addition to the class variables
+                                        out string errlist,     // null if okay..
+                                        List<Condition> passed)            // null or conditions passed
+        {
+            errlist = null;
+
+            Variables valuesneeded = new Variables();
+
+            foreach (Condition fe in fel)        // find all values needed
+                fe.IndicateValuesNeeded(ref valuesneeded);
+
+            try
+            {
+                valuesneeded.GetValuesIndicated(cls);       // given the class data, and the list of values needed, add it
+                valuesneeded.Add(othervars);
+                return CheckConditions(fel, valuesneeded, out errlist, passed);    // and check, passing in the values collected against the conditions to test.
+            }
+            catch (Exception)
+            {
+                errlist = "CL:669 class failed to parse";
+                return null;
+            }
+        }
+
+        // TRUE if filter is True and has value
+
+        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
+        {                                                                                         // only if the filter passes do we get a false..
+            bool? v = CheckCondition(conditionlist, cls, othervars, out errlist, passed);
+            return (v.HasValue && v.Value);     // true IF we have a positive result
+        }
+
+        // Filter OUT if condition matches..
+
+        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist , List<Condition> passed)      // if none, true, if false, true.. 
+        {
+            List<Condition> fel = GetConditionListByEventName(eventname);       // first find conditions applicable, filtered by eventname
+
+            if (fel != null)        // if we have matching filters..
+            {
+                bool? v = CheckCondition(fel, cls, othervars, out errlist, passed);  // true means filter matched
+                bool res = !v.HasValue || v.Value == false;
+                //System.Diagnostics.Debug.WriteLine("Event " + eventname + " res " + res + " v " + v + " v.hv " + v.HasValue);
+                return res; // no value, true .. false did not match, thus true
+            }
+            else
+            {
+                errlist = null;
+                return true;
+            }
+        }
+
+        #endregion
+
+        #region Condition Logic
+
+        static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)
         {
             errlist = null;
 
@@ -93,9 +417,9 @@ namespace BaseUtils
 
                     if (f.matchtype == ConditionEntry.MatchType.AlwaysTrue || f.matchtype == ConditionEntry.MatchType.AlwaysFalse)
                     {
-                        if ( f.itemname.Length == 0 || f.itemname.Equals("Condition", StringComparison.InvariantCultureIgnoreCase))     // empty (legacy) or 
+                        if (f.itemname.Length == 0 || f.itemname.Equals("Condition", StringComparison.InvariantCultureIgnoreCase))     // empty (legacy) or 
                         {
-                            if ( f.matchtype == ConditionEntry.MatchType.AlwaysTrue )
+                            if (f.matchtype == ConditionEntry.MatchType.AlwaysTrue)
                                 matched = true;         // matched, else if false, leave as false.
                         }
                         else
@@ -400,318 +724,7 @@ namespace BaseUtils
             return outerres;
         }
 
-        public string GetJSON()
-        {
-            return GetJSONObject().ToString();
-        }
-
-        public JObject GetJSONObject()
-        {
-            JObject evt = new JObject();
-
-            JArray jf = new JArray();
-
-            foreach (Condition f in conditionlist)
-            {
-                JObject j1 = new JObject();
-                j1["EventName"] = f.eventname;
-                if (f.innercondition != ConditionEntry.LogicalCondition.Or)
-                    j1["ICond"] = f.innercondition.ToString();
-                if (f.outercondition != ConditionEntry.LogicalCondition.Or)
-                    j1["OCond"] = f.outercondition.ToString();
-                if (f.action.Length > 0)
-                    j1["Actions"] = f.action;
-                if (f.actiondata.Length > 0)
-                    j1["ActionData"] = f.actiondata;
-
-                JArray jfields = new JArray();
-
-                foreach (ConditionEntry fd in f.fields)
-                {
-                    JObject j2 = new JObject();
-                    j2["Item"] = fd.itemname;
-                    j2["Content"] = fd.matchstring;
-                    j2["Matchtype"] = fd.matchtype.ToString();
-                    jfields.Add(j2);
-                }
-
-                j1["Filters"] = jfields;
-
-                jf.Add(j1);
-            }
-
-            evt["FilterSet"] = jf;
-
-            return evt;
-        }
-
-        public bool FromJSON(string s)
-        {
-            Clear();
-
-            try
-            {
-                JObject jo = (JObject)JObject.Parse(s);
-                return FromJSON(jo);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool FromJSON(JObject jo)
-        {
-            try
-            {
-                Clear();
-
-                JArray jf = (JArray)jo["FilterSet"];
-
-                foreach (JObject j in jf)
-                {
-                    string evname = (string)j["EventName"];
-                    ConditionEntry.LogicalCondition ftinner = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["ICond"].Str("Or"));
-                    ConditionEntry.LogicalCondition ftouter = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["OCond"].Str("Or"));
-                    string act = j["Actions"].Str();
-                    string actd = j["ActionData"].Str();
-
-                    JArray filset = (JArray)j["Filters"];
-
-                    List<ConditionEntry> fieldlist = new List<ConditionEntry>();
-
-                    foreach (JObject j2 in filset)
-                    {
-                        string item = (string)j2["Item"];
-                        string content = (string)j2["Content"];
-                        string matchtype = (string)j2["Matchtype"];
-
-                        fieldlist.Add(new ConditionEntry()
-                        {
-                            itemname = item,
-                            matchstring = content,
-                            matchtype = (ConditionEntry.MatchType)Enum.Parse(typeof(ConditionEntry.MatchType), matchtype)
-                        });
-                    }
-
-                    conditionlist.Add(new Condition()
-                    {
-                        eventname = evname,
-                        innercondition = ftinner,
-                        outercondition = ftouter,
-                        fields = fieldlist,
-                        action = act,
-                        actiondata = actd
-                    });
-                }
-
-                return true;
-            }
-            catch { }
-
-            return false;
-        }
-
-        public override string ToString()
-        {
-            string ret = "";
-            bool multi = conditionlist.Count > 1;
-
-            if (multi)
-                ret += "(";
-
-            for (int j = 0; j < conditionlist.Count; j++)       // First outer is NOT used, second on is..
-            {
-                Condition f = conditionlist[j];
-
-                if (j > 0)
-                    ret += ") " + f.outercondition.ToString() + " (";
-
-                ret += f.ToString(multi: multi);
-            }
-
-            if (multi)
-                ret += ")";
-
-            return ret;
-        }
-
-        public string Read(string line)         // decode a set of multi conditions (<cond> Or <cond>) Outer (<cond> And <cond>) etc 
-        {
-            StringParser sp = new StringParser(line);
-
-            bool multi = false;
-
-            string delimchars = " ";
-            if (sp.IsCharMoveOn('('))
-            {
-                multi = true;
-                delimchars = ") ";
-            }
-
-            List<Condition> cllist = new List<Condition>();
-
-            ConditionEntry.LogicalCondition outercond = ConditionEntry.LogicalCondition.Or;         // first outer condition is ignored in a list.  Or is the default.
-
-            while (true)
-            {
-                Condition c = new Condition();
-
-                string err = c.Read(sp, delimchars: delimchars);
-                if (err.Length > 0)
-                    return err;
-
-                c.outercondition = outercond;
-                cllist.Add(c);      // add..
-
-                if (sp.IsCharMoveOn(')'))      // if closing bracket..
-                {
-                    if (!multi)
-                        return "Closing condition bracket found but no opening bracket present";
-
-                    if (sp.IsEOL)  // EOL, end of  (cond..cond) outercond ( cond cond)
-                    {
-                        conditionlist = cllist;
-                        return null;
-                    }
-                    else
-                    {
-                        err = ConditionEntry.GetLogicalCondition(sp, delimchars, out outercond);
-                        if (err.Length > 0)
-                            return err + " for outer condition";
-
-                        if (!sp.IsCharMoveOn('(')) // must have another (
-                            return "Missing opening bracket in multiple condition list after " + outercond.ToString();
-                    }
-                }
-                else if (sp.IsEOL) // last condition
-                {
-                    if (multi)
-                        return "Missing closing braket in multiple condition list";
-
-                    conditionlist = cllist;
-                    return null;
-                }
-                else
-                    return "Extra characters beyond expression";
-            }
-        }
-
-        #region Helpers
-
-        // is condition flag in actiondata set
-
-        public bool IsConditionFlagSet(string flagstart)
-        {
-            foreach (Condition l in conditionlist)
-            {
-                if (l.actiondata.StartsWith(flagstart))
-                    return true;
-            }
-
-            return false;
-        }
-
-        // Event name.. give me conditions which match that name or ALL
-        // flagstart, if not null ,compare with start of action data and include only if matches
-
-        public List<Condition> GetConditionListByEventName(string eventname, string flagstart = null)
-        {
-            List<Condition> fel;
-
-            if (flagstart != null)
-                fel = (from fil in conditionlist
-                       where
-                     (fil.eventname.Equals("All") || fil.eventname.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
-                     fil.actiondata.StartsWith(flagstart)
-                       select fil).ToList();
-
-            else
-                fel = (from fil in conditionlist
-                       where
-                     (fil.eventname.Equals("All") || fil.eventname.Equals(eventname, StringComparison.InvariantCultureIgnoreCase))
-                       select fil).ToList();
-
-            return (fel.Count == 0) ? null : fel;
-        }
-
-        // give back all conditions which match itemname and have a compatible matchtype.. used for key presses/voice input to compile a list of condition data to check for
-
-        public List<Tuple<string, ConditionEntry.MatchType>> ReturnValuesOfSpecificConditions(string itemname, List<ConditionEntry.MatchType> matchtypes)      // given itemname, give me a list of values it is matched against
-        {
-            List<Tuple<string, ConditionEntry.MatchType>> ret = new List<Tuple<string, ConditionEntry.MatchType>>();
-
-            foreach (Condition fe in conditionlist)        // find all values needed
-            {
-                foreach (ConditionEntry ce in fe.fields)
-                {
-                    if (ce.itemname.Equals(itemname) && matchtypes.Contains(ce.matchtype))
-                        ret.Add(new Tuple<string, ConditionEntry.MatchType>(ce.matchstring, ce.matchtype));
-                }
-            }
-
-            return ret;
-        }
-
         #endregion
 
-        #region Filtering system using the filter set up in this class
-
-        // take conditions and JSON, decode it, execute..
-        public bool? CheckCondition(   List<Condition> fel, 
-                                        Object cls , // object with data in it
-                                        Variables[] othervars,   // any other variables to present to the condition, in addition to the class variables
-                                        out string errlist,     // null if okay..
-                                        List<Condition> passed)            // null or conditions passed
-        {
-            errlist = null;
-
-            Variables valuesneeded = new Variables();
-
-            foreach (Condition fe in fel)        // find all values needed
-                fe.IndicateValuesNeeded(ref valuesneeded);
-
-            try
-            {
-                valuesneeded.GetValuesIndicated(cls);       // given the class data, and the list of values needed, add it
-                valuesneeded.Add(othervars);
-                return CheckConditions(fel, valuesneeded, out errlist, passed);    // and check, passing in the values collected against the conditions to test.
-            }
-            catch (Exception)
-            {
-                errlist = "CL:669 class failed to parse";
-                return null;
-            }
-        }
-
-        // TRUE if filter is True and has value
-
-        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
-        {                                                                                         // only if the filter passes do we get a false..
-            bool? v = CheckCondition(conditionlist, cls, othervars, out errlist, passed);
-            return (v.HasValue && v.Value);     // true IF we have a positive result
-        }
-
-        // Filter OUT if condition matches..
-
-        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist , List<Condition> passed)      // if none, true, if false, true.. 
-        {
-            List<Condition> fel = GetConditionListByEventName(eventname);       // first find conditions applicable, filtered by eventname
-
-            if (fel != null)        // if we have matching filters..
-            {
-                bool? v = CheckCondition(fel, cls, othervars, out errlist, passed);  // true means filter matched
-                bool res = !v.HasValue || v.Value == false;
-                //System.Diagnostics.Debug.WriteLine("Event " + eventname + " res " + res + " v " + v + " v.hv " + v.HasValue);
-                return res; // no value, true .. false did not match, thus true
-            }
-            else
-            {
-                errlist = null;
-                return true;
-            }
-        }
-
-        #endregion
     }
 }
