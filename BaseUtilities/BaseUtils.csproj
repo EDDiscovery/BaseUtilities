@@ -114,6 +114,7 @@
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
+    <Compile Include="WinForms\FontLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DebugTraceAndLogs\ExceptionForm.resx">
