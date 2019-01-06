@@ -559,6 +559,10 @@ public static class ControlHelpersStaticFunc
         vw.ResumeLayout();
     }
 
+    public static bool IsNullOrEmpty( this DataGridViewCell cell)
+    {
+        return cell.Value == null || cell.Value.ToString().Length == 0;
+    }
 
     #endregion
 }
