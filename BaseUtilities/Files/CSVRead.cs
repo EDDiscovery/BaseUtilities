@@ -22,11 +22,11 @@ using System.Threading.Tasks;
 
 namespace BaseUtils
 {
-    public class CVSRead
+    public class CSVRead
     {
         StreamReader indata;
 
-        public CVSRead(StreamReader s)
+        public CSVRead(StreamReader s)
         {
             indata = s;
         }
@@ -93,8 +93,8 @@ namespace BaseUtils
         }
     }
 
-    [System.Diagnostics.DebuggerDisplay("CVS File Rows {Rows.Count}")]
-    public class CVSFile
+    [System.Diagnostics.DebuggerDisplay("CSV File Rows {Rows.Count}")]
+    public class CSVFile
     {
         public class Row
         {
@@ -190,18 +190,18 @@ namespace BaseUtils
                 {
                     using (StreamReader sr = new StreamReader(s))
                     {
-                        CVSRead cvs = new CVSRead(sr);
+                        CSVRead csv = new CSVRead(sr);
 
-                        CVSRead.State st;
+                        CSVRead.State st;
 
                         Row l = new Row();
 
                         string str;
-                        while ((st = cvs.Next(out str)) != CVSRead.State.EOF)
+                        while ((st = csv.Next(out str)) != CSVRead.State.EOF)
                         {
                             l.Cells.Add(str);
 
-                            if (st == CVSRead.State.ItemEOL)
+                            if (st == CSVRead.State.ItemEOL)
                             {
                                 Rows.Add(l);
                                 l = new Row();
