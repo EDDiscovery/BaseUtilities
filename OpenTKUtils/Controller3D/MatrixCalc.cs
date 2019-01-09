@@ -47,6 +47,8 @@ namespace OpenTKUtils.Common
 
         public void CalculateModelMatrix(Vector3 position, Vector3 cameraDir, float zoom)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
+            position = new Vector3(position.X, -position.Y, position.Z);      // correct for Y inversion.. some day we should fix this
+
             TargetPosition = position;      // record for shader use
 
             Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
@@ -56,7 +58,7 @@ namespace OpenTKUtils.Common
             {
                 Vector3 eye, normal;
                 CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
-                EyePosition = new Vector3(eye.X, -eye.Y, eye.Z);      // correct for Y inversion.. some day we should fix this
+                EyePosition = eye;
                 preinverted = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
                 modelmatrix = Matrix4.Mult(flipy, preinverted);    //ORDER VERY important this one took longer to work out the order! replaces GL.Scale(1.0, -1.0, 1.0);
             }
