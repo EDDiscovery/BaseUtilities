@@ -91,7 +91,7 @@ namespace BaseUtils
             {
                 // if frmt, we measure the string within the maxsize bounding box.
                 SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
-                System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
+                //System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
 
                 int width = Math.Min((int)(sizef.Width + 1), maxsize.Width);
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
