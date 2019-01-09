@@ -77,15 +77,22 @@ namespace BaseUtils
             }
         }
 
-        // you set the maxsize, which the text is clipped to.  if b != Transparent, a back box is drawn.
+        // if b != Transparent, a back box is drawn.
+        // bitmap never bigger than maxsize
+        // setting frmt allows you to word wrap etc into a bitmap, maximum of maxsize.  
+        // no frmt means a single line across the bitmap unless there are \n in it.
 
-        public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b, float backscale = 1.0F)
+        public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b, 
+                                            float backscale = 1.0F, StringFormat frmt = null)
         {
             Bitmap t = new Bitmap(1, 1);
 
             using (Graphics bgr = Graphics.FromImage(t))
             {
-                SizeF sizef = bgr.MeasureString(text, dp);
+                // if frmt, we measure the string within the maxsize bounding box.
+                SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
+                System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
+
                 int width = Math.Min((int)(sizef.Width + 1), maxsize.Width);
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
                 Bitmap img = new Bitmap(width, height);
@@ -102,7 +109,12 @@ namespace BaseUtils
                     }
 
                     using (Brush textb = new SolidBrush(c))
-                        dgr.DrawString(text, dp, textb, 0, 0);
+                    {
+                        if (frmt != null)
+                            dgr.DrawString(text, dp, textb, new Rectangle(0,0,width,height), frmt); // use the draw into rectangle with formatting function
+                        else
+                            dgr.DrawString(text, dp, textb, 0, 0);
+                    }
 
                     dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
 
@@ -111,7 +123,12 @@ namespace BaseUtils
             }
         }
 
-        public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b, float backscale = 1.0F , bool centertext = false)
+        // draw into fixed sized bitmap. 
+        // centretext overrided frmt and just centres it
+        // frmt provides full options and draws text into bitmap
+
+        public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b, 
+                                                    float backscale = 1.0F , bool centertext = false, StringFormat frmt = null)
         {
             Bitmap img = new Bitmap(size.Width, size.Height);
 
@@ -135,6 +152,8 @@ namespace BaseUtils
                         int h = (int)(sizef.Height + 1);
                         dgr.DrawString(text, dp, textb, size.Width / 2 - w / 2, size.Height / 2 - h / 2);
                     }
+                    else if (frmt != null)
+                        dgr.DrawString(text, dp, textb, new Rectangle(0, 0, size.Width, size.Height), frmt);
                     else
                         dgr.DrawString(text, dp, textb, 0, 0);
                 }
