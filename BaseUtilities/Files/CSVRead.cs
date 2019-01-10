@@ -104,6 +104,7 @@ namespace BaseUtils
             }
 
             public List<string> Cells;
+            public int nextcell = 0;        // next cell to Next()
 
             static public int CellNameToIndex(string s)
             {
@@ -118,11 +119,17 @@ namespace BaseUtils
                 return col;
             }
 
-            public string this[int cell]
+            public string this[int cell]    // root of all..
             {
                 get
                 {
-                    return (cell < Cells.Count) ? Cells[cell] : null;
+                    if (cell>=0 && cell < Cells.Count)
+                    {
+                        nextcell = cell + 1;
+                        return Cells[cell];
+                    }
+                    else
+                        return null;
                 }
             }
 
@@ -130,8 +137,7 @@ namespace BaseUtils
             {
                 get
                 {
-                    int cell = CellNameToIndex(cellname);
-                    return (cell < Cells.Count) ? Cells[cell] : null;
+                    return this[CellNameToIndex(cellname)];
                 }
             }
 
@@ -139,29 +145,59 @@ namespace BaseUtils
             {
                 get
                 {
-                    int cell = CellNameToIndex(cellname) + offset;
-                    return (cell < Cells.Count) ? Cells[cell] : null;
+                    return this[CellNameToIndex(cellname) + offset];
                 }
             }
 
             public int? GetInt(int cell)
             {
-                return cell < Cells.Count ? Cells[cell].InvariantParseIntNull() : null;
+                string v = this[cell];
+                return v != null ? v.InvariantParseIntNull() : null;
             }
+
             public int? GetInt(string cellname)
             {
-                int cell = CellNameToIndex(cellname);
-                return cell < Cells.Count ? Cells[cell].InvariantParseIntNull() : null;
+                string v = this[cellname];
+                return v != null ? v.InvariantParseIntNull() : null;
             }
 
             public long? GetLong(int cell)
             {
-                return cell < Cells.Count ? Cells[cell].InvariantParseLongNull() : null;
+                string v = this[cell];
+                return v != null ? v.InvariantParseLongNull() : null;
             }
+
             public long? GetLong(string cellname)
             {
-                int cell = CellNameToIndex(cellname);
-                return cell < Cells.Count ? Cells[cell].InvariantParseLongNull() : null;
+                string v = this[cellname];
+                return v != null ? v.InvariantParseLongNull() : null;
+            }
+
+            public void SetPosition(int cell)           // set position to N
+            {
+                nextcell = cell;
+            }
+
+            public void SetPosition(string cellname)    // set position to name
+            {
+                nextcell = CellNameToIndex(cellname);
+            }
+
+            public string Next()
+            {
+                return this[nextcell++];
+            }
+
+            public int? NextInt()
+            {
+                string v = this[nextcell++];
+                return v != null ? v.InvariantParseIntNull() : null;
+            }
+
+            public long? NextLong()
+            {
+                string v = this[nextcell++];
+                return v != null ? v.InvariantParseLongNull() : null;
             }
         }
 
