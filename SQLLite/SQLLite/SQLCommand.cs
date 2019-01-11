@@ -1,32 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/*
+ * Copyright © 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Data;
 using System.Data.Common;
-using System.Data.SQLite;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SQLLiteExtensions
 {
     // This class wraps a DbCommand so it can take the
-    // above transaction wrapper, and to work around
+    // transaction wrapper, and to work around
     // SQLite not using a monitor or mutex when locking
     // the database
     public class SQLExtCommand<TConn> : DbCommand where TConn : SQLExtConnection
     {
         // This is the wrapped transaction
-        protected SQLExtTransaction<TConn> _transaction;
-        protected SQLExtConnection _connection;
-        protected SQLExtTransactionLock<TConn> _txnlock;
+        protected SQLExtTransaction<TConn> transaction;
+        protected SQLExtConnection connection;
+        protected SQLExtTransactionLock<TConn> txnlock;
 
         public SQLExtCommand(DbCommand cmd, SQLExtConnection conn, SQLExtTransactionLock<TConn> txnlock, DbTransaction txn = null)
         {
-            _connection = conn;
-            _txnlock = txnlock;
+            connection = conn;
+            this.txnlock = txnlock;
             InnerCommand = cmd;
             if (txn != null)
             {
@@ -42,7 +52,7 @@ namespace SQLLiteExtensions
         public override CommandType CommandType { get { return InnerCommand.CommandType; } set { InnerCommand.CommandType = value; } }
         protected override DbConnection DbConnection { get { return InnerCommand.Connection; } set { throw new InvalidOperationException("Cannot change connection of command"); } }
         protected override DbParameterCollection DbParameterCollection { get { return InnerCommand.Parameters; } }
-        protected override DbTransaction DbTransaction { get { return _transaction; } set { SetTransaction(value); } }
+        protected override DbTransaction DbTransaction { get { return transaction; } set { SetTransaction(value); } }
         public override bool DesignTimeVisible { get { return InnerCommand.DesignTimeVisible; } set { InnerCommand.DesignTimeVisible = value; } }
         public override UpdateRowSource UpdatedRowSource { get { return InnerCommand.UpdatedRowSource; } set { InnerCommand.UpdatedRowSource = value; } }
 
@@ -57,14 +67,14 @@ namespace SQLLiteExtensions
 
             while (true)
             {
-                _txnlock.OpenReader();
+                txnlock.OpenReader();
                 try
                 {
-                    return new SQLExtDataReader<TConn>(this.InnerCommand, behavior, txnlock: _txnlock);
+                    return new SQLExtDataReader<TConn>(this.InnerCommand, behavior, txnlock: txnlock);
                 }
                 catch (Exception ex)
                 {
-                    _txnlock.CloseReader();
+                    txnlock.CloseReader();
 
                     if (retries > 0)
                     {
@@ -88,43 +98,43 @@ namespace SQLLiteExtensions
         {
             try
             {
-                _txnlock.OpenReader();
-                _txnlock.BeginCommand(this);
+                txnlock.OpenReader();
+                txnlock.BeginCommand(this);
                 return InnerCommand.ExecuteScalar();
             }
             finally
             {
-                _txnlock.EndCommand();
-                _txnlock.CloseReader();
+                txnlock.EndCommand();
+                txnlock.CloseReader();
             }
         }
 
         public override int ExecuteNonQuery()
         {
-            if (_transaction != null)
+            if (transaction != null)
             {
                 try
                 {
-                    _transaction.BeginCommand(this);
+                    transaction.BeginCommand(this);
                     return InnerCommand.ExecuteNonQuery();
                 }
                 finally
                 {
-                    _transaction.EndCommand();
+                    transaction.EndCommand();
                 }
             }
             else
             {
                 try
                 {
-                    _txnlock.OpenWriter();
-                    _txnlock.BeginCommand(this);
+                    txnlock.OpenWriter();
+                    txnlock.BeginCommand(this);
                     return InnerCommand.ExecuteNonQuery();
                 }
                 finally
                 {
-                    _txnlock.EndCommand();
-                    _txnlock.CloseWriter();
+                    txnlock.EndCommand();
+                    txnlock.CloseWriter();
                 }
             }
         }
@@ -150,8 +160,8 @@ namespace SQLLiteExtensions
             // We only accept wrapped transactions in order to avoid deadlocks
             if (txn == null || txn is SQLExtTransaction<TConn>)
             {
-                _transaction = (SQLExtTransaction<TConn>)txn;
-                InnerCommand.Transaction = _transaction.InnerTransaction;
+                transaction = (SQLExtTransaction<TConn>)txn;
+                InnerCommand.Transaction = transaction.InnerTransaction;
             }
             else
             {

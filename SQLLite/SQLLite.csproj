@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SQLLite\SQLConnectionLockRegister.cs" />
     <Compile Include="SQLLite\SQLRegister.cs" />
     <Compile Include="SQLLite\SQLExtensions.cs" />
     <Compile Include="SQLLite\SQLCommand.cs">
@@ -63,7 +64,7 @@
     <Compile Include="SQLLite\SQLTransaction.cs" />
     <Compile Include="SQLLite\SQLReader.cs" />
     <Compile Include="SQLLite\SQLTransactionLock.cs" />
-    <Compile Include="SQLLite\SQLConnectionRegister.cs" />
+    <Compile Include="SQLLite\SQLConnectionLock.cs" />
     <Compile Include="SQLLite\SQLConnection.cs" />
   </ItemGroup>
   <ItemGroup>

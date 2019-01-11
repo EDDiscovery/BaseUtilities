@@ -1,27 +1,37 @@
-﻿using System;
+﻿/*
+ * Copyright © 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
-using System.Data.SQLite;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SQLLiteExtensions
 {
-    class SQLExtRegister
+    // operates a register and gets/sets values from it.
+
+    public class SQLExtRegister
     {
         SQLExtConnection cn;
 
-        SQLExtRegister(SQLExtConnection cn)
+        public SQLExtRegister(SQLExtConnection cn)
         {
             this.cn = cn;
         }
 
-        public bool keyExistsCN(string sKey)
+        public bool keyExists(string sKey)
         {
             using (DbCommand cmd = cn.CreateCommand("select ID from Register WHERE ID=@key"))
             {
@@ -30,7 +40,7 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool DeleteKeyCN(string sKey)        // SQL wildcards
+        public bool DeleteKey(string sKey)        // SQL wildcards
         {
             using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key"))
             {
@@ -39,7 +49,7 @@ namespace SQLLiteExtensions
             }
         }
 
-        public int GetSettingIntCN(string key, int defaultvalue)
+        public int GetSettingInt(string key, int defaultvalue)
         {
             try
             {
@@ -63,11 +73,11 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool PutSettingIntCN(string key, int intvalue)
+        public bool PutSettingInt(string key, int intvalue)
         {
             try
             {
-                if (keyExistsCN(key))
+                if (keyExists(key))
                 {
                     using (DbCommand cmd = cn.CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID"))
                     {
@@ -94,7 +104,7 @@ namespace SQLLiteExtensions
             }
         }
 
-        public double GetSettingDoubleCN(string key, double defaultvalue)
+        public double GetSettingDouble(string key, double defaultvalue)
         {
             try
             {
@@ -118,11 +128,11 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool PutSettingDoubleCN(string key, double doublevalue)
+        public bool PutSettingDouble(string key, double doublevalue)
         {
             try
             {
-                if (keyExistsCN(key))
+                if (keyExists(key))
                 {
                     using (DbCommand cmd = cn.CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID"))
                     {
@@ -149,17 +159,17 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool GetSettingBoolCN(string key, bool defaultvalue)
+        public bool GetSettingBool(string key, bool defaultvalue)
         {
-            return GetSettingIntCN(key, defaultvalue ? 1 : 0) != 0;
+            return GetSettingInt(key, defaultvalue ? 1 : 0) != 0;
         }
 
-        public bool PutSettingBoolCN(string key, bool boolvalue)
+        public bool PutSettingBool(string key, bool boolvalue)
         {
-            return PutSettingIntCN(key, boolvalue ? 1 : 0);
+            return PutSettingInt(key, boolvalue ? 1 : 0);
         }
 
-        public string GetSettingStringCN(string key, string defaultvalue)
+        public string GetSettingString(string key, string defaultvalue)
         {
             try
             {
@@ -182,11 +192,11 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool PutSettingStringCN(string key, string strvalue)
+        public bool PutSettingString(string key, string strvalue)
         {
             try
             {
-                if (keyExistsCN(key))
+                if (keyExists(key))
                 {
                     using (DbCommand cmd = cn.CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID"))
                     {
@@ -213,5 +223,53 @@ namespace SQLLiteExtensions
             }
         }
 
+        public class Entry
+        {
+            public string ValueString { get; private set; }
+            public long ValueInt { get; private set; }
+            public double ValueDouble { get; private set; }
+            public byte[] ValueBlob { get; private set; }
+
+            protected Entry()
+            {
+            }
+
+            public Entry(string stringval = null, byte[] blobval = null, long intval = 0, double floatval = Double.NaN)
+            {
+                ValueString = stringval;
+                ValueBlob = blobval;
+                ValueInt = intval;
+                ValueDouble = floatval;
+            }
+        }
+
+
+        public Dictionary<string, Entry> GetRegister()
+        {
+            Dictionary<string, Entry> regs = new Dictionary<string, Entry>();
+
+            using (DbCommand cmd = cn.CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register"))
+            {
+                using (DbDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        string id = (string)rdr["Id"];
+                        object valint = rdr["ValueInt"];
+                        object valdbl = rdr["ValueDouble"];
+                        object valblob = rdr["ValueBlob"];
+                        object valstr = rdr["ValueString"];
+                        regs[id] = new Entry(
+                            valstr as string,
+                            valblob as byte[],
+                            (valint as long?) ?? 0L,
+                            (valdbl as double?) ?? Double.NaN
+                        );
+                    }
+                }
+            }
+
+            return regs;
+        }
     }
 }

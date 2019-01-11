@@ -1,14 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿/*
+ * Copyright © 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Data.Common;
-using System.Data.SQLite;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SQLLiteExtensions
 {
@@ -20,25 +29,25 @@ namespace SQLLiteExtensions
         {
             get
             {
-                return _lock.IsWriteLockHeld && _readsWaiting > 0;
+                return rwlock.IsWriteLockHeld && readsWaiting > 0;
             }
         }
-        private static ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-        private static SQLExtTransactionLock<TConn> _writeLockOwner;
-        private static int _readsWaiting;
-        private Thread _owningThread;
-        public DbCommand _executingCommand;
-        public bool _commandExecuting = false;
-        private bool _isLongRunning = false;
-        private string _commandText = null;
-        private bool _longRunningLogged = false;
-        private bool _isWriter = false;
-        private bool _isReader = false;
+        private static ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private static SQLExtTransactionLock<TConn> writeLockOwner;
+        private static int readsWaiting;
+        private Thread owningThread;
+        public DbCommand executingCommand;
+        public bool commandExecuting = false;
+        private bool isLongRunning = false;
+        private string commandText = null;
+        private bool longRunningLogged = false;
+        private bool isWriter = false;
+        private bool isReader = false;
 
         #region Constructor and Destructor
         public SQLExtTransactionLock()
         {
-            _owningThread = Thread.CurrentThread;
+            owningThread = Thread.CurrentThread;
         }
 
         ~SQLExtTransactionLock()
@@ -64,15 +73,15 @@ namespace SQLLiteExtensions
         {
             if (txnlock != null)
             {
-                txnlock._isLongRunning = true;
+                txnlock.isLongRunning = true;
 
-                if (txnlock._commandExecuting)
+                if (txnlock.commandExecuting)
                 {
-                    if (txnlock._isLongRunning)
+                    if (txnlock.isLongRunning)
                     {
-                        Trace.WriteLine($"{Environment.TickCount % 10000} The following command is taking a long time to execute:\n{txnlock._commandText}");
+                        Trace.WriteLine($"{Environment.TickCount % 10000} The following command is taking a long time to execute:\n{txnlock.commandText}");
                     }
-                    if (txnlock._owningThread == Thread.CurrentThread)
+                    if (txnlock.owningThread == Thread.CurrentThread)
                     {
                         StackTrace trace = new StackTrace(1, true);
                         Trace.WriteLine(trace.ToString());
@@ -82,9 +91,9 @@ namespace SQLLiteExtensions
                 {
                     Trace.WriteLine($"{Environment.TickCount % 10000} The transaction lock has been held for a long time.");
 
-                    if (txnlock._commandText != null)
+                    if (txnlock.commandText != null)
                     {
-                        Trace.WriteLine($"{Environment.TickCount % 10000} Last command to execute:\n{txnlock._commandText}");
+                        Trace.WriteLine($"{Environment.TickCount % 10000} Last command to execute:\n{txnlock.commandText}");
                     }
                 }
             }
@@ -92,45 +101,45 @@ namespace SQLLiteExtensions
 
         public void BeginCommand(DbCommand cmd)
         {
-            this._executingCommand = cmd;
-            this._commandText = cmd.CommandText;
-            this._commandExecuting = true;
+            this.executingCommand = cmd;
+            this.commandText = cmd.CommandText;
+            this.commandExecuting = true;
 
-            if (this._isLongRunning && !this._longRunningLogged)
+            if (this.isLongRunning && !this.longRunningLogged)
             {
-                this._isLongRunning = false;
+                this.isLongRunning = false;
                 DebugLongRunningOperation(this);
-                this._longRunningLogged = true;
+                this.longRunningLogged = true;
             }
         }
 
         public void EndCommand()
         {
-            this._commandExecuting = false;
+            this.commandExecuting = false;
         }
 
         public void OpenReader()
         {
-            if (_owningThread != Thread.CurrentThread)
+            if (owningThread != Thread.CurrentThread)
             {
                 throw new InvalidOperationException("Transaction lock passed between threads");
             }
 
-            if (!_lock.IsWriteLockHeld)
+            if (!rwlock.IsWriteLockHeld)
             {
-                if (!_isReader)
+                if (!isReader)
                 {
                     try
                     {
-                        Interlocked.Increment(ref _readsWaiting);
+                        Interlocked.Increment(ref readsWaiting);
                         bool warned = false;
-                        while (!_lock.TryEnterReadLock(1000))
+                        while (!rwlock.TryEnterReadLock(1000))
                         {
-                            SQLExtTransactionLock<TConn> lockowner = _writeLockOwner;
+                            SQLExtTransactionLock<TConn> lockowner = writeLockOwner;
                             if (lockowner != null)
                             {
                                 warned = true;
-                                Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to finish writer");
+                                Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} waiting for thread {lockowner.owningThread.Name} to finish writer");
                                 DebugLongRunningOperation(lockowner);
                             }
                         }
@@ -138,11 +147,11 @@ namespace SQLLiteExtensions
                         if (warned)
                             Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} Released for read");
 
-                        _isReader = true;
+                        isReader = true;
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref _readsWaiting);
+                        Interlocked.Decrement(ref readsWaiting);
                     }
                 }
             }
@@ -150,31 +159,31 @@ namespace SQLLiteExtensions
 
         public void OpenWriter()
         {
-            if (_owningThread != Thread.CurrentThread)
+            if (owningThread != Thread.CurrentThread)
             {
                 throw new InvalidOperationException("Transaction lock passed between threads");
             }
 
-            if (_lock.IsReadLockHeld)
+            if (rwlock.IsReadLockHeld)
             {
                 throw new InvalidOperationException("Write attempted in read-only connection");
             }
 
-            if (!_isWriter)
+            if (!isWriter)
             {
                 try
                 {
-                    if (!_lock.IsUpgradeableReadLockHeld)
+                    if (!rwlock.IsUpgradeableReadLockHeld)
                     {
                         bool warned = false;
 
-                        while (!_lock.TryEnterUpgradeableReadLock(1000))
+                        while (!rwlock.TryEnterUpgradeableReadLock(1000))
                         {
-                            SQLExtTransactionLock<TConn> lockowner = _writeLockOwner;
+                            SQLExtTransactionLock<TConn> lockowner = writeLockOwner;
                             if (lockowner != null)
                             {
                                 warned = true;
-                                Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to finish writer");
+                                Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} waiting for thread {lockowner.owningThread.Name} to finish writer");
                                 DebugLongRunningOperation(lockowner);
                             }
                         }
@@ -182,27 +191,27 @@ namespace SQLLiteExtensions
                         if (warned)
                             Trace.WriteLine($"{Environment.TickCount % 10000} Thread {Thread.CurrentThread.Name} Released for write");
 
-                        _isWriter = true;
-                        _writeLockOwner = this;
+                        isWriter = true;
+                        writeLockOwner = this;
                     }
 
-                    while (!_lock.TryEnterWriteLock(1000))
+                    while (!rwlock.TryEnterWriteLock(1000))
                     {
                         Trace.WriteLine($"{Environment.TickCount % 10000}Thread {Thread.CurrentThread.Name} waiting for readers to finish");
                     }
                 }
                 catch
                 {
-                    if (_isWriter)
+                    if (isWriter)
                     {
-                        if (_lock.IsWriteLockHeld)
+                        if (rwlock.IsWriteLockHeld)
                         {
-                            _lock.ExitWriteLock();
+                            rwlock.ExitWriteLock();
                         }
 
-                        if (_lock.IsUpgradeableReadLockHeld)
+                        if (rwlock.IsUpgradeableReadLockHeld)
                         {
-                            _lock.ExitUpgradeableReadLock();
+                            rwlock.ExitUpgradeableReadLock();
                         }
                     }
                 }
@@ -211,22 +220,22 @@ namespace SQLLiteExtensions
 
         public void CloseWriter()
         {
-            if (_lock.IsWriteLockHeld)
+            if (rwlock.IsWriteLockHeld)
             {
-                _lock.ExitWriteLock();
+                rwlock.ExitWriteLock();
 
-                if (!_lock.IsWriteLockHeld && _lock.IsUpgradeableReadLockHeld)
+                if (!rwlock.IsWriteLockHeld && rwlock.IsUpgradeableReadLockHeld)
                 {
-                    _lock.ExitUpgradeableReadLock();
+                    rwlock.ExitUpgradeableReadLock();
                 }
             }
         }
 
         public void CloseReader()
         {
-            if (_lock.IsReadLockHeld)
+            if (rwlock.IsReadLockHeld)
             {
-                _lock.ExitReadLock();
+                rwlock.ExitReadLock();
             }
         }
 
@@ -245,17 +254,17 @@ namespace SQLLiteExtensions
         // if being finalized by the garbage collector
         protected void Dispose(bool disposing)
         {
-            if (_owningThread != Thread.CurrentThread)
+            if (owningThread != Thread.CurrentThread)
             {
                 Trace.WriteLine("ERROR: Transaction lock leaked");
             }
             else
             {
-                if (_isWriter)
+                if (isWriter)
                 {
                     CloseWriter();
                 }
-                else if (_isReader)
+                else if (isReader)
                 {
                     CloseReader();
                 }

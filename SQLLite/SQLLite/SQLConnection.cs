@@ -1,32 +1,51 @@
-﻿using System;
+﻿/*
+ * Copyright © 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SQLLiteExtensions
 {
+    // Base class
+    // Its a connection class which has a DB factory and delegates the connection/transactions to its derived classes.
+    // has a upgrade function 
+
     public abstract class SQLExtConnection : IDisposable              // USE this for connections.. 
     {
-        //static Object monitor = new Object();                 // monitor disabled for now - it will prevent SQLite DB locked errors but 
-        // causes the program to become unresponsive during big DB updates
-        protected DbConnection _cn;
-        protected Thread _owningThread;
-        protected static List<SQLExtConnection> _openConnections = new List<SQLExtConnection>();
-        protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();
+        // note access mode is not currently used, but its kept for future use in case we can optimise the DB for a particular mode
+        public enum AccessMode { Reader, Writer, ReaderWriter };           
 
-        protected SQLExtConnection(bool initializing)
+        protected DbConnection connection;      // the connection
+        protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
+        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging mostly, track connections
+        protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();  
+        public string DBFile { get; protected set; }
+
+        protected SQLExtConnection( AccessMode mode )
         {
-            lock (_openConnections)
+            lock (openConnections)
             {
-                _openConnections.Add(this);
+                openConnections.Add(this);
             }
-            _owningThread = Thread.CurrentThread;
+            owningThread = Thread.CurrentThread;
         }
 
         private static DbProviderFactory GetSqliteProviderFactory()
@@ -123,19 +142,35 @@ namespace SQLLiteExtensions
 
         protected void AssertThreadOwner()
         {
-            if (Thread.CurrentThread != _owningThread)
+            if (Thread.CurrentThread != owningThread)
             {
-                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {_owningThread.Name} ({_owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
+                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {owningThread.Name} ({owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
             }
         }
 
-        public string DBFile { get; protected set; }
+        // subbed to derived class to implement..
 
-        protected static void PerformUpgrade(SQLExtConnection conn, int newVersion, bool catchErrors, bool backupDbFile, string[] queries, Action doAfterQueries = null)
+        public abstract DbCommand CreateCommand(string cmd, DbTransaction tn = null);
+        public abstract DbTransaction BeginTransaction(IsolationLevel isolevel);
+        public abstract DbTransaction BeginTransaction();
+        public abstract void Dispose();
+        public abstract DbDataAdapter CreateDataAdapter(DbCommand cmd);
+
+        protected virtual void Dispose(bool disposing)
+        {
+            lock (openConnections)
+            {
+                SQLExtConnection.openConnections.Remove(this);
+            }
+        }
+
+        // provided for DB upgrade operations at the basic level..
+
+        public void PerformUpgrade( int newVersion, bool catchErrors, bool backupDbFile, string[] queries, Action doAfterQueries = null)
         {
             if (backupDbFile)
             {
-                string dbfile = conn.DBFile;
+                string dbfile = DBFile;
 
                 try
                 {
@@ -152,7 +187,7 @@ namespace SQLLiteExtensions
             {
                 foreach (var query in queries)
                 {
-                    ExecuteQuery(conn, query);
+                    ExecuteQuery(query);
                 }
             }
             catch (Exception ex)
@@ -167,224 +202,16 @@ namespace SQLLiteExtensions
 
             doAfterQueries?.Invoke();
 
-            conn.PutSettingIntCN("DBVer", newVersion);
+            SQLExtRegister reg = new SQLExtRegister(this);
+            reg.PutSettingInt("DBVer", newVersion);
         }
 
-        protected static void ExecuteQuery(SQLExtConnection conn, string query)
-        {
-            conn.ExecuteQuery(query);
-        }
+        // Query operator
 
         public void ExecuteQuery(string query)
         {
             using (DbCommand command = CreateCommand(query))
                 command.ExecuteNonQuery();
-        }
-
-        public abstract DbCommand CreateCommand(string cmd, DbTransaction tn = null);
-        public abstract DbTransaction BeginTransaction(IsolationLevel isolevel);
-        public abstract DbTransaction BeginTransaction();
-        public abstract void Dispose();
-        public abstract DbDataAdapter CreateDataAdapter(DbCommand cmd);
-
-        protected virtual void Dispose(bool disposing)
-        {
-            lock (_openConnections)
-            {
-                SQLExtConnection._openConnections.Remove(this);
-            }
-        }
-
-        public bool keyExistsCN(string sKey)
-        {
-            using (DbCommand cmd = CreateCommand("select ID from Register WHERE ID=@key"))
-            {
-                cmd.AddParameterWithValue("@key", sKey);
-                return cmd.ExecuteScalar() != null;
-            }
-        }
-
-        public bool DeleteKeyCN(string sKey)        // SQL wildcards
-        {
-            using (DbCommand cmd = CreateCommand("Delete from Register WHERE ID like @key"))
-            {
-                cmd.AddParameterWithValue("@key", sKey);
-                return cmd.ExecuteScalar() != null;
-            }
-        }
-
-        public int GetSettingIntCN(string key, int defaultvalue)
-        {
-            try
-            {
-                using (DbCommand cmd = CreateCommand("SELECT ValueInt from Register WHERE ID = @ID"))
-                {
-                    cmd.AddParameterWithValue("@ID", key);
-
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    int val = Convert.ToInt32(ob);
-
-                    return val;
-                }
-            }
-            catch
-            {
-                return defaultvalue;
-            }
-        }
-
-        public bool PutSettingIntCN(string key, int intvalue)
-        {
-            try
-            {
-                if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueInt", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @valint)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public double GetSettingDoubleCN(string key, double defaultvalue)
-        {
-            try
-            {
-                using (DbCommand cmd = CreateCommand("SELECT ValueDouble from Register WHERE ID = @ID"))
-                {
-                    cmd.AddParameterWithValue("@ID", key);
-
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    double val = Convert.ToDouble(ob);
-
-                    return val;
-                }
-            }
-            catch
-            {
-                return defaultvalue;
-            }
-        }
-
-        public bool PutSettingDoubleCN(string key, double doublevalue)
-        {
-            try
-            {
-                if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueDouble", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @valdbl)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valdbl", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool GetSettingBoolCN(string key, bool defaultvalue)
-        {
-            return GetSettingIntCN(key, defaultvalue ? 1 : 0) != 0;
-        }
-
-        public bool PutSettingBoolCN(string key, bool boolvalue)
-        {
-            return PutSettingIntCN(key, boolvalue ? 1 : 0);
-        }
-
-        public string GetSettingStringCN(string key, string defaultvalue)
-        {
-            try
-            {
-                using (DbCommand cmd = CreateCommand("SELECT ValueString from Register WHERE ID = @ID"))
-                {
-                    cmd.AddParameterWithValue("@ID", key);
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    string val = (string)ob;
-
-                    return val;
-                }
-            }
-            catch
-            {
-                return defaultvalue;
-            }
-        }
-
-        public bool PutSettingStringCN(string key, string strvalue)
-        {
-            try
-            {
-                if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueString", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }
