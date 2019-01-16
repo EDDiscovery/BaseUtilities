@@ -226,10 +226,10 @@ namespace BaseUtils
                     HttpWebResponse httpResponse = (HttpWebResponse)response;
                     System.Diagnostics.Trace.WriteLine(ex.StackTrace);
                     System.Diagnostics.Trace.WriteLine("WebException : " + ex.Message);
-                    System.Diagnostics.Trace.WriteLine("Response code : " + httpResponse.StatusCode);
+                    System.Diagnostics.Trace.WriteLine("Response code : " + httpResponse?.StatusCode);
                     System.Diagnostics.Trace.WriteLine(ex.StackTrace);
                     WriteLog("WebException" + ex.Message, "");
-                    WriteLog($"HTTP Error code: {httpResponse.StatusCode}", "");
+                    WriteLog($"HTTP Error code: {httpResponse?.StatusCode}", "");
 
                     return false;
                 }
