@@ -37,6 +37,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -56,6 +57,10 @@
     <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
+    <Compile Include="WebServer\SimpleWebServerFileNode.cs" />
+    <Compile Include="WebServer\SimpleWebServerDynamicNode.cs" />
+    <Compile Include="WebServer\SimpleWebServerDispatcher.cs" />
+    <Compile Include="WebServer\SimpleWebServer.cs" />
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
