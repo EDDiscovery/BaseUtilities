@@ -98,7 +98,7 @@ namespace BaseUtils
             if (!InError && checkend && !sp.IsEOL)
                 value = new StringParser.ConvertError("Extra characters after expression: " + sp.LineLeft);
 
-            System.Diagnostics.Debug.WriteLine("Evaluate Value is " + value + " : of type " + value.GetType().Name);
+            //System.Diagnostics.Debug.WriteLine("Evaluate Value is " + value + " : of type " + value.GetType().Name);
             return value;
         }
 
