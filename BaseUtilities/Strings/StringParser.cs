@@ -616,7 +616,7 @@ namespace BaseUtils
                 }
 
                 string s = line.Substring(initpos, pos - initpos);
-                System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
+                //System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
 
                 double? dres = s.InvariantParseDoubleNull();
 
@@ -630,7 +630,7 @@ namespace BaseUtils
             }
             else if (initpos != pos)            // long value
             {
-                System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
+                //System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
 
                 if (IsCharOneOfMoveOn("Ll"))        // UL or LU allowed as prefix for C compatibility.
                 {
@@ -693,7 +693,7 @@ namespace BaseUtils
                         return new ConvertError("Missing end quote");
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("Value is " + v);
+                        //System.Diagnostics.Debug.WriteLine("Value is " + v);
                         return v;
                     }
                 }
@@ -706,7 +706,7 @@ namespace BaseUtils
 
                 if (s != null && s.Length > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("Symbol Value is " + s);
+                    //System.Diagnostics.Debug.WriteLine("Symbol Value is " + s);
                     return new ConvertSymbol(s);
                 }
                 else
