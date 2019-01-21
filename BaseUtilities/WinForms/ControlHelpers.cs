@@ -280,9 +280,19 @@ public static class ControlHelpersStaticFunc
         {
             int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
             int curDist = sp.SplitterDistance;
+            System.Diagnostics.Debug.WriteLine("Size is " + a);
             if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
                 a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-            sp.SplitterDistance = Math.Min(Math.Max((int)Math.Round(a * value), sp.Panel1MinSize), a - sp.Panel2MinSize);
+            System.Diagnostics.Debug.WriteLine("Now Size is " + a + " " + sp.Panel1MinSize + " " + (sp.Height - sp.Panel2MinSize));
+
+            try
+            {       // protect it against excepting because even with the careful protection above and below, it can still mess up if the window is completely small
+                sp.SplitterDistance = Math.Min(Math.Max((int)Math.Round(a * value), sp.Panel1MinSize), a - sp.Panel2MinSize);
+            }
+            catch
+            {
+                System.Diagnostics.Debug.WriteLine("Splitter failed to set in " + sp.GetType().Name);
+            }
             //System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.Panel1MinSize}-{sp.Panel2MinSize} Set SplitterDistance to {value:N2} (was {curDist}, now {sp.SplitterDistance})");
         }
         else
