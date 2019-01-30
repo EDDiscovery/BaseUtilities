@@ -99,9 +99,20 @@ public static class ObjectExtensionsStrings
             return string.Empty;
     }
 
-    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture )        //extend for case
+    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
     {
         return data.IndexOf(comparision, c) >= 0;
+    }
+
+    public static int Contains(this List<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].Contains(comparision, c))
+                return i;
+        }
+
+        return -1;
     }
 
     public static string Alt(this string obj, string alt)
@@ -1015,6 +1026,28 @@ public static class ObjectExtensionsStrings
             return c - 'a' + 10;
         else
             return null;
+    }
+
+    static public string[] SplitNoEmptyStartFinish(this string s, char splitchar)
+    {
+        string[] array = s.Split(splitchar);
+        int start = array[0].Length > 0 ? 0 : 1;
+        int end = array.Last().Length > 0 ? array.Length - 1 : array.Length - 2;
+        int length = end - start + 1;
+        return length == array.Length ? array : array.RangeSubset(start, length);
+    }
+
+    static public List<string> SplitNoEmptyStrings(this string s, char splitchar)
+    {
+        string[] array = s.Split(splitchar);
+        List<string> entries = new List<string>();
+        for(int i = 0; i < array.Length; i++ )
+        {
+            if (array[i].Length > 0)
+                entries.Add(array[i]);
+        }
+
+        return entries;
     }
 
 }

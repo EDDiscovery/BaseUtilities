@@ -94,6 +94,15 @@ public static class ObjectExtensionsColours
             (byte)Math.Max(Math.Min(Math.Round((float)c.B * val), 255), 0));
     }
 
+    public static Color MultiplyAdd(this Color c, float redamount = 1.0f, float greenamount = 1.0f, float blueamount = 1.0f, 
+                                                  float redoffset = 0f, float greenoffset = 0f, float blueoffset = 0f)
+    {
+        return Color.FromArgb(c.A,
+            (byte)Math.Max(Math.Min(Math.Round((float)c.R * redamount + redoffset), 255), 0),
+            (byte)Math.Max(Math.Min(Math.Round((float)c.G * greenamount + greenoffset), 255), 0),
+            (byte)Math.Max(Math.Min(Math.Round((float)c.B * blueamount + blueoffset), 255), 0));
+    }
+
     public static Color MultiplyBrightness(this Color c, float amount = 1.0f)        // if too dark, multiple white.
     {
         if (float.IsNaN(amount))

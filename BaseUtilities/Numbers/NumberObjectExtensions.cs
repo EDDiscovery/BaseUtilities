@@ -5,12 +5,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using Newtonsoft.Json.Linq;
@@ -408,7 +408,7 @@ public static class ObjectExtensionsNumbersBool
             return compare <= 0;    //-1 less or 0 equal good
         else if (code == 2)
             return compare >= 0;
-        else 
+        else
             return compare == code; // must be the same
     }
 
@@ -416,13 +416,13 @@ public static class ObjectExtensionsNumbersBool
 
     #region stuff that should have been in Math
 
-    static int Range(this int a, int min, int max)
+    static public int Range(this int a, int min, int max)
     {
-        return Math.Max(Math.Min(a, min), max);
+        return Math.Min(Math.Max(a, min), max);
     }
-    static long Range(this long a, long min, long max)
+    static public long Range(this long a, long min, long max)
     {
-        return Math.Max(Math.Min(a, min), max);
+        return Math.Min(Math.Max(a, min), max);
     }
 
     #endregion

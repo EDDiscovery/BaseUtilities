@@ -56,6 +56,7 @@
     <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
+    <Compile Include="Misc\TemplateObjectExtensions.cs" />
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />

@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+ * Copyright © 2016 - 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -501,6 +518,55 @@ public static class ControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    static public void SortDataGridViewColumnTagsAsStringsLists(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
+    {
+        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
+        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
+
+        var lleft = left.Tag as List<string>;
+        var lright = right.Tag as List<string>;
+
+        if (lleft != null)
+        {
+            if (lright != null)
+            {
+                string sleft = string.Join(";", left.Tag as List<string>);
+                string sright = string.Join(";", right.Tag as List<string>);
+                e.SortResult = sleft.CompareTo(sright);
+            }
+            else
+                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
+        }
+        else
+            e.SortResult = lright != null ? -1 : 0;
+
+        e.Handled = true;
+    }
+
+    static public void SortDataGridViewColumnTagsAsStrings(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
+    {
+        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
+        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
+
+        var sleft = left.Tag as string;
+        var sright = right.Tag as string;
+
+        if (sleft != null)
+        {
+            if (sright != null)
+            {
+                e.SortResult = sleft.CompareTo(sright);
+            }
+            else
+                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
+        }
+        else
+            e.SortResult = sright != null ? -1 : 0;
+
+        e.Handled = true;
+    }
+
+
     // try and force this row to centre or top
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
     {
@@ -515,7 +581,7 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    public static void FilterGridView(this DataGridView vw, string searchstr)       // can be VERY SLOW for large grids
+    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
     {
         vw.SuspendLayout();
         vw.Enabled = false;
@@ -539,6 +605,29 @@ public static class ControlHelpersStaticFunc
                         {
                             found = true;
                             break;
+                        }
+                    }
+
+                    if (checktags)
+                    {
+                        List<string> slist = cell.Tag as List<string>;
+                        if (slist != null)
+                        {
+                            if (slist.Contains(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        string str = cell.Tag as string;
+                        if (str != null)
+                        {
+                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
                         }
                     }
                 }
