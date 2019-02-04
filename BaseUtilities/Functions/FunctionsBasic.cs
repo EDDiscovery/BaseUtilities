@@ -92,6 +92,7 @@ namespace BaseUtils
                 functions.Add("rv", new FuncEntry(ReplaceVar, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // var/string, literal/var/string
                 functions.Add("rs", new FuncEntry(ReplaceVarSC, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // var/string, literal/var/string
                 functions.Add("replaceescapechar", new FuncEntry(ReplaceEscapeChar, FuncEntry.PT.MESE));
+                functions.Add("replaceifstartswith", new FuncEntry(ReplaceIfStartsWith, 2, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE ));
 
                 functions.Add("sc", new FuncEntry(SplitCaps, FuncEntry.PT.MESE));
                 functions.Add("splitcaps", new FuncEntry(SplitCaps, FuncEntry.PT.MESE));
@@ -382,6 +383,17 @@ namespace BaseUtils
             return true;
         }
 
+        protected bool ReplaceIfStartsWith(out string output)
+        {
+            if (paras[0].Value.StartsWith(paras[1].Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                output = ((paras.Count >= 3) ? paras[2].Value : "") + paras[0].Value.Substring(paras[1].Value.Length);
+            }
+            else
+                output = paras[0].Value;
+            return true;
+        }
+
         protected bool WordOf(out string output)
         {
             string s = paras[0].Value;
@@ -651,12 +663,12 @@ namespace BaseUtils
                 }
                 else if (order >= 4)        // 10000+ thousands, say X thousands
                 {
-                    value /= 1E3;
-                    output = prefix + value.ToStringInvariant("0") + " " + postfixes[4];
+                    value = Math.Round(value / 1E3 * 10.0) / 10.0;   // in thousands
+                    output = prefix + value.ToStringInvariant("0.#") + " " + postfixes[4];
                 }
                 else if (order == 3)        // 1000-9999, say xx hundred
                 {
-                    value /= 1E2;           // hundreds.
+                    value = Math.Round(value / 1E2 * 10.0) / 10.0;   // in hundreds
                     int hundreds = (int)value;  // thousand parts
                     output = prefix + (hundreds / 10).ToStringInvariant() + " " + postfixes[4];
                     if (hundreds % 10 != 0) // hundred parts
