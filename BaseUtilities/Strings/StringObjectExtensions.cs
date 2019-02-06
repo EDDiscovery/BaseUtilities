@@ -142,6 +142,15 @@ public static class ObjectExtensionsStrings
         }
     }
 
+    // if it starts with start, and if extra is there (configurable), replace it with replacestring..
+    public static string ReplaceIfStartsWith(this string obj, string start, string replacestring = "", bool musthaveextra = true, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+    {
+        if (start != null && obj.StartsWith(start, sc) && (!musthaveextra || obj.Length > start.Length))
+            return replacestring + obj.Substring(start.Length).TrimStart();
+        else
+            return obj;
+    }
+
     public static string FirstAlphaNumericText(this string obj)     // skip to find first alpha text ignoring whitespace
     {
         if (obj == null)
