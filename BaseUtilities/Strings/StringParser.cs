@@ -15,6 +15,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -528,6 +529,17 @@ namespace BaseUtils
         {
             long? res = NextLong(terminators);
             return IsCharMoveOnOrEOL(separ) ? res : null;
+        }
+
+        public DateTime? NextDateTime(CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, string terminators = " ")
+        {
+            string s = NextQuotedWord(terminators);
+            if (s != null && DateTime.TryParse(s, ci, ds, out DateTime ret))
+            {
+                return ret;
+            }
+            else
+                return null;
         }
 
         #endregion
