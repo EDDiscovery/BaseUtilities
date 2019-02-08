@@ -501,6 +501,13 @@ namespace BaseUtils
             return s?.InvariantParseDoubleNull();
         }
 
+        public double NextDouble(double def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            double? v = s?.InvariantParseDoubleNull();
+            return v ?? def;
+        }
+
         public double? NextDoubleComma(string terminators = " ", char separ = ',')
         {
             double? res = NextDouble(terminators);
@@ -513,6 +520,13 @@ namespace BaseUtils
             return s?.InvariantParseIntNull();
         }
 
+        public int NextInt(int def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            int? v = s?.InvariantParseIntNull();
+            return v ?? def;
+        }
+
         public int? NextIntComma(string terminators = " ", char separ = ',')
         {
             int? res = NextInt(terminators);
@@ -523,6 +537,13 @@ namespace BaseUtils
         {
             string s = NextWord(terminators);
             return s?.InvariantParseLongNull();
+        }
+
+        public long NextLong(long def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            long? v = s?.InvariantParseLongNull();
+            return v ?? def;
         }
 
         public long? NextLongComma(string terminators = " ", char separ = ',')
