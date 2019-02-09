@@ -116,7 +116,7 @@ public static class ObjectExtensionsStrings
     }
 
     // both are separ strings (ssksk;skjsks; etc) is all of contains in semilist.
-    public static bool ContainsAllItems(this string semilist, string contains, char separ)
+    public static bool ContainsAllItemsInList(this string semilist, string contains, char separ)
     {
         string[] sl = semilist.SplitNoEmptyStartFinish(separ);
         string[] cl = contains.SplitNoEmptyStartFinish(separ);
@@ -128,6 +128,25 @@ public static class ObjectExtensionsStrings
 
         return true;
 
+    }
+
+    public static bool MatchesAllItemsInList(this string semilist, string contains, char separ)
+    {
+        string[] sl = semilist.SplitNoEmptyStartFinish(separ);
+        string[] cl = contains.SplitNoEmptyStartFinish(separ);
+
+        if (sl.Length == cl.Length)
+        {
+            foreach (var s in cl)
+            {
+                if (Array.IndexOf(sl, s) < 0)
+                    return false;
+            }
+
+            return true;
+        }
+        else
+            return false;
     }
 
     public static string Alt(this string obj, string alt)
