@@ -115,6 +115,21 @@ public static class ObjectExtensionsStrings
         return -1;
     }
 
+    // both are separ strings (ssksk;skjsks; etc) is all of contains in semilist.
+    public static bool ContainsAllItems(this string semilist, string contains, char separ)
+    {
+        string[] sl = semilist.SplitNoEmptyStartFinish(separ);
+        string[] cl = contains.SplitNoEmptyStartFinish(separ);
+        foreach (var s in cl)
+        {
+            if (Array.IndexOf(sl, s) < 0)
+                return false;
+        }
+
+        return true;
+
+    }
+
     public static string Alt(this string obj, string alt)
     {
         return (obj == null || obj.Length == 0) ? alt : obj;
