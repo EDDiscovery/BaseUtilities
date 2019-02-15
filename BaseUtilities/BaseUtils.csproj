@@ -57,6 +57,12 @@
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="Misc\TemplateObjectExtensions.cs" />
+    <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
+    <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
+    <Compile Include="Strings\StringObjectExtensionsQuotes.cs" />
+    <Compile Include="Strings\StringObjectExtensionsEscape.cs" />
+    <Compile Include="Strings\StringObjectExtensionsOneOf.cs" />
+    <Compile Include="Strings\StringObjectExtensionsLists.cs" />
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
