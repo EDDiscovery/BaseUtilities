@@ -663,5 +663,17 @@ public static class ControlHelpersStaticFunc
         return cell.Value == null || cell.Value.ToString().Length == 0;
     }
 
+    public static int GetNumberOfVisibleRowsAbove( this DataGridViewRowCollection table, int rowindex )
+    {
+        int visible = 0;
+        for( int i = 0; i < rowindex; i++ )
+        {
+            if (table[i].Visible)
+                visible++;
+        }
+        return visible;
+    }
+
+
     #endregion
 }
