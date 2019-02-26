@@ -322,10 +322,10 @@ public static class ControlHelpersStaticFunc
         {
             int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
             int curDist = sp.SplitterDistance;
-            System.Diagnostics.Debug.WriteLine("Size is " + a);
+            //System.Diagnostics.Debug.WriteLine("Size is " + a);
             if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
                 a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-            System.Diagnostics.Debug.WriteLine("Now Size is " + a + " " + sp.Panel1MinSize + " " + (sp.Height - sp.Panel2MinSize));
+            //System.Diagnostics.Debug.WriteLine("Now Size is " + a + " " + sp.Panel1MinSize + " " + (sp.Height - sp.Panel2MinSize));
 
             try
             {       // protect it against excepting because even with the careful protection above and below, it can still mess up if the window is completely small
