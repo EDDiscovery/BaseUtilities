@@ -281,6 +281,31 @@ public static class ControlHelpersStaticFunc
         return new Point(x, y);
     }
 
+    // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16)
+    {
+        Screen scr = Screen.FromControl(p);
+        Rectangle scrb = scr.Bounds;
+
+        int top = p.Top;
+        int left = p.Left;
+
+        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin*2);       // ensure within screen
+        int x = Math.Min(Math.Max(left, scrb.Left), scrb.Right - calcwidth - margin);
+
+        int calcheight = Math.Min(wantedheight, scrb.Height - (lockY ? p.Top : margin) - margin);
+        if (lockY && calcheight < scrb.Height / 5)   // if small and we locked to Y, Y is too low.
+        {
+            calcheight = scrb.Height - margin * 2;
+            top = scrb.Top + margin;
+        }
+
+        int y = Math.Min(Math.Max(top, scrb.Top), scrb.Bottom - calcheight - margin);
+
+        p.Location = new Point(x, y);
+        p.Size = new Size(calcwidth, calcheight);
+    }
+
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
     {
         return new Point(Math.Min(p.X, other.Width - ps.Width),                   // respecting size, ensure we are within the rectangle of another
@@ -672,6 +697,56 @@ public static class ControlHelpersStaticFunc
                 visible++;
         }
         return visible;
+    }
+
+    public static string GetToolStripState( this ContextMenuStrip cms )     // semi colon list of checked items
+    {
+        string s = "";
+        foreach( ToolStripItem c in cms.Items)
+        {
+            var t = c as ToolStripMenuItem;
+            if (t != null)
+            {
+                if (t.CheckState == CheckState.Checked)
+                    s += t.Name + ";";
+
+                foreach (ToolStripItem d in t.DropDownItems)
+                {
+                    var dt = d as ToolStripMenuItem;
+                    if (dt != null)
+                    {
+                        if (dt.CheckState == CheckState.Checked)
+                            s += dt.Name + ";";
+                    }
+                }
+            }
+        }
+
+        return s;
+    }
+
+    public static void SetToolStripState(this ContextMenuStrip cms, string ss)  // semi colon list of items to check
+    {
+        string[] s = ss.Split(';');
+
+        foreach (ToolStripItem c in cms.Items)
+        {
+            var t = c as ToolStripMenuItem;
+            if (t != null)
+            {
+                t.CheckState = s.Contains(t.Name) ? CheckState.Checked : CheckState.Unchecked;
+
+                foreach (ToolStripItem d in t.DropDownItems)
+                {
+                    var dt = d as ToolStripMenuItem;
+                    if (dt != null)
+                    {
+                        CheckState cs = s.Contains(dt.Name) ? CheckState.Checked : CheckState.Unchecked;
+                        dt.CheckState = cs;
+                    }
+                }
+            }
+        }
     }
 
 
