@@ -20,12 +20,31 @@ using System.Linq;
 
 public static class ObjectExtensionsStringsLists
 {
-    public static int Contains(this List<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    // does comparision exists in list
+    public static int ContainsIn(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
     {
-        for (int i = 0; i < list.Count; i++)
+        int i = 0;
+        foreach (var s in list)
         {
-            if (list[i].Contains(comparision, c))
+            if (s.Contains(comparision, c))
                 return i;
+
+            i++;
+        }
+
+        return -1;
+    }
+
+    // does comparision starts with any in list
+    public static int StartsWith(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    {
+        int i = 0;
+        foreach (var s in list)
+        {
+            if (comparision.StartsWith(s, c))
+                return i;
+
+            i++;
         }
 
         return -1;

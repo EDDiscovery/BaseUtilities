@@ -638,7 +638,7 @@ public static class ControlHelpersStaticFunc
                         List<string> slist = cell.Tag as List<string>;
                         if (slist != null)
                         {
-                            if (slist.Contains(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
                             {
                                 found = true;
                                 break;
