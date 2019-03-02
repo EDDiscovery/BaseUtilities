@@ -635,6 +635,18 @@ namespace BaseUtils
             {
                 output = "Need prefixes and postfixes";
             }
+            else if (double.IsNaN(value))
+            {
+                output = "Not a Number";
+            }
+            else if (double.IsNegativeInfinity(value))
+            {
+                output = "Negative Infinity";
+            }
+            else if (double.IsPositiveInfinity(value))
+            {
+                output = "Positive Infinity";
+            }
             else 
             {
                 string prefix = "";
