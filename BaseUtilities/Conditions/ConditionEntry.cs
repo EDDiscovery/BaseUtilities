@@ -85,6 +85,23 @@ namespace BaseUtils
             "AlwaysTrue","AlwaysFalse"
          };
 
+        public enum Classification { String, Numeric, Logical, Date, Macro }
+        public static Classification Classify(MatchType mt)                         // indicates which class of operator
+        {
+            if (mt <= MatchType.IsNotEmpty)
+                return Classification.String;
+            else if (mt <= MatchType.IsFalse || mt >= MatchType.AlwaysTrue)
+                return Classification.Logical;
+            else if (mt <= MatchType.NumericLessThanEqual)
+                return Classification.Numeric;
+            else if (mt <= MatchType.DateBefore)
+                return Classification.Date;
+            else if (mt <= MatchType.IsNotPresent)
+                return Classification.Macro;
+            else
+                return Classification.String;
+        }
+
         public static bool IsNullOperation(MatchType matchtype) { return matchtype == MatchType.AlwaysTrue || matchtype == MatchType.AlwaysFalse; }
         public static bool IsUnaryOperation(MatchType matchtype) { return matchtype == MatchType.IsNotPresent || matchtype == MatchType.IsPresent || matchtype == MatchType.IsTrue || matchtype == MatchType.IsFalse || matchtype == MatchType.IsEmpty || matchtype == MatchType.IsNotEmpty; }
 
