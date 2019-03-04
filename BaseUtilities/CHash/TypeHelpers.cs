@@ -36,7 +36,7 @@ namespace BaseUtils
         }
 
         // bf default is DefaultLookup in the .net code for GetProperties()
-        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, bool fields = false)       // give a list of properties for a given name
+        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, bool fields = false, int linelen = 80)       // give a list of properties for a given name
         {
             if (jtype != null)
             {
@@ -46,7 +46,7 @@ namespace BaseUtils
                 {
                     if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                     {
-                        PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType);
+                        PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType , linelen);
                         ret.Add(pni);
                     //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
                     }
@@ -56,7 +56,7 @@ namespace BaseUtils
                 {
                     foreach (FieldInfo fi in jtype.GetFields())
                     {
-                        PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType);
+                        PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen);
                         ret.Add(pni);
                     //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
                     }
@@ -68,13 +68,13 @@ namespace BaseUtils
                 return null;
         }
 
-        static public PropertyNameInfo PNI( string name, Type t )
+        static public PropertyNameInfo PNI( string name, Type t , int ll)
         {
             string pname = t.FullName;
             if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
-                return new PropertyNameInfo(name, "Enumeration:" + String.Join(Environment.NewLine, enums), ConditionEntry.MatchType.Equals);
+                return new PropertyNameInfo(name, "Enumeration:" + enums.FormatIntoLines(ll), ConditionEntry.MatchType.Equals);
             }
             else if (pname.Contains("System.Double"))
                 return new PropertyNameInfo(name, "Floating point value", ConditionEntry.MatchType.NumericGreaterEqual);

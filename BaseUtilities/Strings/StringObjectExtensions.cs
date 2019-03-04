@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public static class ObjectExtensionsStrings
 {
@@ -610,6 +611,28 @@ public static class ObjectExtensionsStrings
         else
             return null;
     }
+
+    // Format into lines, breaking at linelimit.
+    public static string FormatIntoLines(this IEnumerable<string> list, int linelimit = 80)     
+    {
+        StringBuilder res = new StringBuilder();
+        int lastlf = 0;
+
+        foreach (var s in list)
+        {
+            if (res.Length != lastlf)
+                res.Append(",");
+            res.Append(s);
+            if (res.Length - lastlf >= linelimit)
+            {
+                res.Append(Environment.NewLine);
+                lastlf = res.Length;
+            }
+        }
+
+        return res.ToNullSafeString();
+    }
+
 
 }
 
