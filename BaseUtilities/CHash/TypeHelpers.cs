@@ -27,16 +27,18 @@ namespace BaseUtils
 
             public ConditionEntry.MatchType? DefaultCondition;      // null if don't force, else condition
             public string Help;
+            public string Comment;
 
             public PropertyNameInfo() { }
-            public PropertyNameInfo(string name, string help, ConditionEntry.MatchType? defcondition = null)
+            public PropertyNameInfo(string name, string help, ConditionEntry.MatchType? defcondition = null, string comment = null)
             {
-                Name = name; DefaultCondition = defcondition; Help = help;
+                Name = name; DefaultCondition = defcondition; Help = help; Comment = comment;
             }
         }
 
         // bf default is DefaultLookup in the .net code for GetProperties()
-        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, bool fields = false, int linelen = 80)       // give a list of properties for a given name
+        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
+                                    bool fields = false, int linelen = 80, string comment = null)       // give a list of properties for a given name
         {
             if (jtype != null)
             {
@@ -46,7 +48,7 @@ namespace BaseUtils
                 {
                     if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                     {
-                        PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType , linelen);
+                        PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType , linelen , comment);
                         ret.Add(pni);
                     //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
                     }
@@ -56,7 +58,7 @@ namespace BaseUtils
                 {
                     foreach (FieldInfo fi in jtype.GetFields())
                     {
-                        PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen);
+                        PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen , comment);
                         ret.Add(pni);
                     //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
                     }
@@ -68,24 +70,24 @@ namespace BaseUtils
                 return null;
         }
 
-        static public PropertyNameInfo PNI( string name, Type t , int ll)
+        static public PropertyNameInfo PNI( string name, Type t , int ll, string comment)
         {
             string pname = t.FullName;
             if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
-                return new PropertyNameInfo(name, "Enumeration:" + enums.FormatIntoLines(ll), ConditionEntry.MatchType.Equals);
+                return new PropertyNameInfo(name, "Enumeration:" + enums.FormatIntoLines(ll), ConditionEntry.MatchType.Equals, comment);
             }
             else if (pname.Contains("System.Double"))
-                return new PropertyNameInfo(name, "Floating point value", ConditionEntry.MatchType.NumericGreaterEqual);
+                return new PropertyNameInfo(name, "Floating point value", ConditionEntry.MatchType.NumericGreaterEqual, comment);
             else if (pname.Contains("System.Boolean"))
-                return new PropertyNameInfo(name, "Boolean value, 1 = true, 0 = false", ConditionEntry.MatchType.IsTrue);
+                return new PropertyNameInfo(name, "Boolean value, 1 = true, 0 = false", ConditionEntry.MatchType.IsTrue, comment);
             else if (pname.Contains("System.Int"))
-                return new PropertyNameInfo(name, "Integer value", ConditionEntry.MatchType.NumericEquals);
+                return new PropertyNameInfo(name, "Integer value", ConditionEntry.MatchType.NumericEquals, comment);
             else if (pname.Contains("System.DateTime"))
-                return new PropertyNameInfo(name, "Date Time Value, US format", ConditionEntry.MatchType.DateAfter);
+                return new PropertyNameInfo(name, "Date Time Value, US format", ConditionEntry.MatchType.DateAfter, comment);
             else
-                return new PropertyNameInfo(name, "String value", ConditionEntry.MatchType.Contains);
+                return new PropertyNameInfo(name, "String value", ConditionEntry.MatchType.Contains, comment);
         }
 
         static public MethodInfo FindMember(this MemberInfo[] methods, Type[] paras)    // Must be MethodInfo's, find matching these paras..
