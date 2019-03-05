@@ -425,20 +425,26 @@ namespace BaseUtils
                 {
                     string name = prefix + pi.Name;
                     System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth);
+                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded);
                 }
             }
 
             foreach (System.Reflection.FieldInfo fi in jtype.GetFields())
             {
-                string name = prefix + fi.Name;
-                AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth);
+                if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
+                {
+                    string name = prefix + fi.Name;
+                    AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded);
+                }
             }
         }
 
-        public void AddDataOfType(Object o, Type rettype, string name, int depth )
+        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null )
         {
             if (depth < 0)      // 0, list, class, object, .. limit depth
+                return;
+
+            if (classtypeexcluded != null && classtypeexcluded.Contains(rettype))
                 return;
 
             //System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
@@ -462,7 +468,7 @@ namespace BaseUtils
                             if (k is string)
                             {
                                 Object v = data[k as string];
-                                AddDataOfType(v, v.GetType(), name + "_" + (string)k, depth-1);
+                                AddDataOfType(v, v.GetType(), name + "_" + (string)k, depth-1, classtypeexcluded);
                             }
                         }
                     }
@@ -479,7 +485,7 @@ namespace BaseUtils
 
                         for (int i = 0; i < data.Count; i++)
                         { 
-                            AddDataOfType(data[i], data[i].GetType(), name + "[" + (i + 1).ToString(ct) + "]" , depth-1);
+                            AddDataOfType(data[i], data[i].GetType(), name + "[" + (i + 1).ToString(ct) + "]" , depth-1, classtypeexcluded);
                         }
                     }
                 }
@@ -497,7 +503,7 @@ namespace BaseUtils
                             for (int i = 0; i < b.Length; i++)
                             {
                                 object oa = b.GetValue(i);
-                                AddDataOfType(oa, oa.GetType(), name + "[" + i.ToString(ct) + "]", depth - 1);
+                                AddDataOfType(oa, oa.GetType(), name + "[" + i.ToString(ct) + "]", depth - 1, classtypeexcluded);
                             }
                         }
                     }
@@ -514,16 +520,16 @@ namespace BaseUtils
                 {
                     foreach (System.Reflection.PropertyInfo pi in rettype.GetProperties())
                     {
-                        if (pi.GetIndexParameters().GetLength(0) == 0 && pi.PropertyType.IsPublic)      // only properties with zero parameters are called
+                        if (pi.GetIndexParameters().GetLength(0) == 0 && pi.PropertyType.IsPublic )      // only properties with zero parameters are called
                         {
                             System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + "_" + pi.Name , depth-1);
+                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + "_" + pi.Name , depth-1, classtypeexcluded);
                         }
                     }
 
                     foreach (System.Reflection.FieldInfo fi in rettype.GetFields())
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1 , classtypeexcluded);
                     }
                 }
                 else if (o is bool)
