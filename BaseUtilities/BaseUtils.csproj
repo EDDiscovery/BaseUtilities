@@ -57,6 +57,7 @@
     <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
+    <Compile Include="HTTP\HttpDownloadFile.cs" />
     <Compile Include="Misc\TemplateObjectExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
     <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
