@@ -54,7 +54,7 @@ namespace BaseUtils
             request.UserAgent = BrowserInfo.UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
-            if (etagFilename != null && File.Exists(etagFilename))                                      // if we want to etag it, and we have it
+            if (etagFilename != null && File.Exists(etagFilename) && File.Exists(filename))   // if we want to etag it, and we have it, and we have the file, we can do a check
             {
                 var etag = File.ReadAllText(etagFilename);
                 if (etag != "")
