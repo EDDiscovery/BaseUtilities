@@ -29,7 +29,7 @@ namespace BaseUtils
     public static class DownloadFile
     {
         static public bool HTTPDownloadFile(string url,
-                                        string filename,                                // if non null, store filename, else just stream to processor
+                                        string filename,                                // if non null, store filename
                                         bool alwaysnewfile,                             // if true, etag is not used, always downloaded 
                                         out bool newfile,                               // returns if new file if storing file
                                         Action<bool, Stream> externalprocessor = null,  // processor, gets newfile and the stream. 
@@ -47,7 +47,6 @@ namespace BaseUtils
             }
 
             var etagFilename = filename == null || alwaysnewfile ? null : filename + ".etag";           // if we give a filename and we are not always asking for a new file, we get a .etag file
-            var tmpEtagFilename = etagFilename == null ? null : etagFilename + ".tmp";
 
             BaseUtils.HttpCom.WriteLog("DownloadFile", url + ": ->" + filename + ":" + etagFilename);
 
@@ -55,7 +54,7 @@ namespace BaseUtils
             request.UserAgent = BrowserInfo.UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
-            if (etagFilename != null && File.Exists(etagFilename))                                      // if we have a previous etag, send its data to 
+            if (etagFilename != null && File.Exists(etagFilename))                                      // if we want to etag it, and we have it
             {
                 var etag = File.ReadAllText(etagFilename);
                 if (etag != "")
@@ -73,29 +72,42 @@ namespace BaseUtils
                 if (cancelRequested?.Invoke() == true)
                     return false;
 
-                if (tmpEtagFilename != null)
-                {
-                    File.WriteAllText(tmpEtagFilename, response.Headers[HttpResponseHeader.ETag]);
-                    File.SetLastWriteTimeUtc(tmpEtagFilename, response.LastModified.ToUniversalTime());
-                }
-
                 using (var httpStream = response.GetResponseStream())
                 {
                     newfile = true;
 
-                    externalprocessor?.Invoke(true, httpStream);            // let the external processor see it
-
-                    if (cancelRequested?.Invoke() == true)
-                        return false;
-
-                    if (tmpEtagFilename != null)                            // if we are using etag
+                    if (filename != null)               // if write to file..
                     {
-                        File.Delete(etagFilename);
-                        File.Move(tmpEtagFilename, etagFilename);
-                    }
+                        var tmpFilename = filename + ".tmp";        // copy thru tmp
+                        using (var destFileStream = File.Open(tmpFilename, FileMode.Create, FileAccess.Write))
+                        {
+                            httpStream.CopyTo(destFileStream);
+                        }
 
-                    return true;
+                        File.Delete(filename);
+                        File.Move(tmpFilename, filename);
+
+                        if (etagFilename != null)
+                        {
+                            File.WriteAllText(etagFilename, response.Headers[HttpResponseHeader.ETag]);
+                            File.SetLastWriteTimeUtc(etagFilename, response.LastModified.ToUniversalTime());
+                        }
+
+                        if ( externalprocessor != null )
+                        {
+                            using (var cacheStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                externalprocessor.Invoke(true, cacheStream);            // let the external processor see it
+                            }
+                        }
+                    }
+                    else if ( externalprocessor != null)
+                    {
+                        externalprocessor.Invoke(true, httpStream);            // let the external processor see it
+                    }
                 }
+
+                return true;
             }
             catch (WebException ex)
             {
@@ -112,7 +124,7 @@ namespace BaseUtils
                     System.Diagnostics.Trace.WriteLine("DownloadFile: " + filename + " up to date (etag).");
                     BaseUtils.HttpCom.WriteLog(filename, "up to date (etag).");
 
-                    if (externalprocessor != null)
+                    if (externalprocessor != null)          // feed thru processor..
                     {
                         using (FileStream stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
