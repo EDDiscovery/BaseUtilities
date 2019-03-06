@@ -54,7 +54,7 @@ namespace BaseUtils
             {
                 File.Delete(path);
             }
-            catch (Exception ex)
+            catch
             {       // on purpose no error - thats the point of it
                 //System.Diagnostics.Debug.WriteLine("Exception " + ex);
             }
