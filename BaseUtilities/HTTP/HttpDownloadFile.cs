@@ -24,8 +24,6 @@ using System.Net;
 
 namespace BaseUtils
 {
-    // this is the non stomach churning version of HTTP download that you can understand
-
     public static class DownloadFile
     {
         static public bool HTTPDownloadFile(string url,
@@ -81,7 +79,25 @@ namespace BaseUtils
                         var tmpFilename = filename + ".tmp";        // copy thru tmp
                         using (var destFileStream = File.Open(tmpFilename, FileMode.Create, FileAccess.Write))
                         {
-                            httpStream.CopyTo(destFileStream);
+                            byte[] buffer = new byte[64 * 1024];
+                            do
+                            {
+                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks, so a long download can be cancelled
+
+                                if (numread > 0)
+                                {
+                                    destFileStream.Write(buffer, 0, numread);
+
+                                    if ( cancelRequested != null && cancelRequested() )
+                                    {
+                                        destFileStream.Close();
+                                        File.Delete(tmpFilename);
+                                        return false;
+                                    }
+                                }
+                                else
+                                    break;
+                            } while (true);
                         }
 
                         File.Delete(filename);
@@ -151,6 +167,8 @@ namespace BaseUtils
 
             return false;
         }
+
+
     }
 }
 
