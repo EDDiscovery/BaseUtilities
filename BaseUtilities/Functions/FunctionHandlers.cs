@@ -212,7 +212,7 @@ namespace BaseUtils
                     {
                         double? l = t.InvariantParseDoubleNull();
 
-                        if (l != null)
+                        if (l != null && !double.IsInfinity(l.Value) && !double.IsNaN(l.Value))     
                         {
                             paras.Add(new Parameter() { Value = t, Fractional = l.Value });
                             return null;

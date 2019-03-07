@@ -647,7 +647,12 @@ namespace BaseUtils
             {
                 output = "Positive Infinity";
             }
-            else 
+            else if (value == 0)// like, doh.  can't log zero
+            {
+                output = "0";
+                return true;
+            }
+            else
             {
                 string prefix = "";
                 if (value < 0)
@@ -658,7 +663,11 @@ namespace BaseUtils
 
                 double order = Math.Log10(value);
 
-                if (order >= 12)        // trillions, say X.Y trillion
+                if ( double.IsInfinity(order))
+                {
+                    output = "Log10(0) Something badly wrong, should have been caught - report";
+                }
+                else if (order >= 12)        // trillions, say X.Y trillion
                 {
                     value /= 1E12;
                     output = prefix + value.ToStringInvariant("0.##") + " " + postfixes[1];
@@ -697,7 +706,7 @@ namespace BaseUtils
                 else if (order >= 0)      //1-9
                     output = prefix + value.ToStringInvariant("0.#");
                 else
-                {
+                {                         // order is <0.  so minimum digits is 1
                     int digits = (int)(-order) + 1;
                     string s = "0." + new string('#', digits);
                     output = prefix + value.ToStringInvariant(s);
