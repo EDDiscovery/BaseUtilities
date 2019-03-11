@@ -102,13 +102,13 @@ namespace EliteDangerousCore.DB
             return null;
         }
 
-        public static List<Star> FindStars(string match = null)
+        public static List<Star> FindStars(string extraconditions = null)
         {
             List<Star> ret = new List<Star>();
 
             using (SQLiteConnectionEDSM cn = new SQLiteConnectionEDSM(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer))
             {
-                DbCommand selectSysCmd = cn.CreateCommand("SELECT name,x,y,z,edsmid FROM Systems" + (match.HasChars() ? (" Where " + match) : ""));
+                DbCommand selectSysCmd = cn.CreateCommand("SELECT name,x,y,z,edsmid FROM Systems" + (extraconditions.HasChars() ? (" " + extraconditions) : ""));
 
                 using (DbDataReader reader = selectSysCmd.ExecuteReader())
                 {
@@ -126,29 +126,30 @@ namespace EliteDangerousCore.DB
 
         #region Table Update
 
-        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false)
+        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (StreamReader sr = new StreamReader(filename))         // read directly from file..
-                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty);
+                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false)
+        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (StringReader sr = new StringReader(data))         // read directly from file..
-                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty);
+                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tablepostfix = "", bool presumeempty = false)
+        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tablepostfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (JsonTextReader jr = new JsonTextReader(sr))
-                return ParseEDSMJSON(jr, grididallow, ref date, cancelRequested, tablepostfix, presumeempty);
+                return ParseEDSMJSON(jr, grididallow, ref date, cancelRequested, tablepostfix, presumeempty, debugoutputfile);
         }
 
         // set tempostfix to use another set of tables
 
         public static long ParseEDSMJSON(JsonTextReader jr, bool[] grididallowed, ref DateTime maxdate, Func<bool> cancelRequested, 
                                         string tablepostfix = "",        // set to add on text to table names to redirect to another table
-                                        bool tablesareempty = false     // set to presume table is empty, so we don't have to do look up queries
+                                        bool tablesareempty = false,     // set to presume table is empty, so we don't have to do look up queries
+                                        string debugoutputfile = null
                                         )
         {
             long updates = 0;
@@ -173,12 +174,14 @@ namespace EliteDangerousCore.DB
                     nextsectorid = (long)cn.SQLScalar(querySectorCmd) + 1;     // get next ID we would make..
             }
 
-            StreamWriter sw = new StreamWriter(@"c:\code\process.lst");
+            StreamWriter sw = null;
+            if ( debugoutputfile != null )
+                sw = new StreamWriter(debugoutputfile);
 
             DbCommand selectSectorCmd = cn.CreateCommand("SELECT id,minx,minz,maxx,maxz FROM Sectors" + tablepostfix + " WHERE name = @sname");
             selectSectorCmd.AddParameter("@sname", DbType.String);
 
-            DbCommand selectSysCmd = cn.CreateCommand("SELECT id,name,x,y,z FROM Systems" + tablepostfix + " WHERE edsmid == @nedsm");
+            DbCommand selectSysCmd = cn.CreateCommand("SELECT name,x,y,z FROM Systems" + tablepostfix + " WHERE edsmid == @nedsm");
             selectSysCmd.AddParameter("@nedsm", DbType.Int64);
 
             DbCommand updateSysCmd = cn.CreateCommand("UPDATE Systems" + tablepostfix + " SET name=@name, x=@XP, y=@YP, z=@ZP WHERE edsmid == @nedsm");
@@ -405,18 +408,35 @@ namespace EliteDangerousCore.DB
                                         insertNameCmd.ExecuteNonQuery();
                                     }
 
-                                    insertSysCmd.Parameters[0].Value = data.classifier.ID;
-                                    insertSysCmd.Parameters[1].Value = data.edsm.id;
-                                    insertSysCmd.Parameters[2].Value = data.edsm.x;
-                                    insertSysCmd.Parameters[3].Value = data.edsm.y;
-                                    insertSysCmd.Parameters[4].Value = data.edsm.z;
-                                    insertSysCmd.ExecuteNonQuery();
+                                    try
+                                    {
+                                        insertSysCmd.Parameters[0].Value = data.classifier.ID;
+                                        insertSysCmd.Parameters[1].Value = data.edsm.id;
+                                        insertSysCmd.Parameters[2].Value = data.edsm.x;
+                                        insertSysCmd.Parameters[3].Value = data.edsm.y;
+                                        insertSysCmd.Parameters[4].Value = data.edsm.z;
+                                        insertSysCmd.ExecuteNonQuery();
 
-                                    if (sw != null)
-                                        sw.WriteLine(data.classifier.ToString() + " " + data.edsm.x + " " + data.edsm.y + " " + data.edsm.z + " " + data.edsm.id);
+                                        if (sw != null)
+                                            sw.WriteLine(data.classifier.ToString() + " " + data.edsm.x + " " + data.edsm.y + " " + data.edsm.z + " " + data.edsm.id);
+
+                                        updates++;
+                                    }
+                                    catch (System.Data.SQLite.SQLiteException sqex)
+                                    {
+                                        if ( sqex.ErrorCode == 19 ) // unique constraint failed
+                                        {
+                                            System.Diagnostics.Debug.WriteLine("Database contains multiple EDSM ID " + data.edsm.name + " " + data.edsm.id);
+                                        }
+                                        else
+                                            System.Diagnostics.Debug.WriteLine("SQL general exception during insert - ignoring " + sqex.ToString());
+                                    }
+                                    catch( Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine("general exception during insert - ignoring " + ex.ToString());
+                                    }
 
                                    // System.Diagnostics.Debug.WriteLine("Made Sys Entry " + t.Name + ":" + data.classifier.StarName + " " + data.classifier.ID.ToString("x"));
-                                    updates++;
                                 }
                             }
                         }

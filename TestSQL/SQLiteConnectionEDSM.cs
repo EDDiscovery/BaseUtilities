@@ -68,8 +68,8 @@ namespace EliteDangerousCore.DB
 
             string query4 = "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , " +
                                 "name TEXT, minx INTEGER, minz INTEGER, maxx INTEGER, maxz INTEGER, gridid INTEGER )";
-            string query5 = "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , " +
-                                "name INTEGER, x INTEGER, y INTEGER, z INTEGER,  edsmid INTEGER )";
+            string query5 = "CREATE TABLE Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE , " +
+                                "name INTEGER, x INTEGER, y INTEGER, z INTEGER )";
             string query6 = "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , " +
                             "Name TEXT NOT NULL )";
 

@@ -21,11 +21,11 @@ namespace TestSQL
             SQLiteConnectionEDSM.Initialize();
 
             //string infile = @"c:\code\edsm\input.json";
-            string infile = @"c:\code\edsm\edsmsystems.10000.json";
+            string infile = @"c:\code\edsm\edsmsystems.10000.error.json";
             DateTime maxdate = DateTime.MinValue;
-            EDSMDB.ParseEDSMJSONFile(infile, new bool[] { false, false, false }, ref maxdate, () => false, presumeempty: true);
+            EDSMDB.ParseEDSMJSONFile(infile, new bool[] { false, false, false }, ref maxdate, () => false, presumeempty: true, debugoutputfile:@"c:\code\process.lst");
 
-            List<EDSMDB.Star> stars = EDSMDB.FindStars();
+            List<EDSMDB.Star> stars = EDSMDB.FindStars(" ORDER BY edsmid");
             using (StreamWriter wr = new StreamWriter(@"c:\code\starlist.lst"))
             {
                 foreach (var s in stars)
