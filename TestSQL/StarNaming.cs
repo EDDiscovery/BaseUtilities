@@ -10,7 +10,7 @@ namespace EliteDangerousCore
     {
         public const string NonStandard = "NonStandard";
 
-        public enum NameType { NonStandard, Identifier, Masscode, N1, N2 };
+        public enum NameType { NonStandard, Identifier, Masscode, NValue, N1ValueOnly };
         public NameType EntryType = NameType.NonStandard;   // 0 non standard, 1 CQ-L, 2 mass code, 3 N1, 4 N2
 
         public string SectorName = null;    // for string inputs, set always, the sector name or "NonStandard".            For numbers, null
@@ -18,32 +18,61 @@ namespace EliteDangerousCore
         public string StarName = null;      // for string inputs, set for surveys and non standard names                   For numbers, null
         public long NameId = 0;             // set for number inputs
 
-        public uint L1, L2, L3, MassCode, N1, N2;
+        public uint L1, L2, L3, MassCode, NValue;
 
         // ID Standard
         //      ID Bit 42 = 1
         //      ID Bit 37 = L1 (1 = A, 26=Z)
         //      ID Bit 32 = L2 (1 = A, 26=Z)
-        //      ID Bit 27 = L3 (1 = A, 26=Z)
+        //      ID Bit 27 = L3 (1 = A, 26=Z)   
         //      ID Bit 24 = mass code (0=A,7=H)
-        //      ID Bit 16 = N1
-        //      ID Bit 0 = N2
+        //      ID Bit 0 = N2 + N1<<16     
         // Non standard:
         //      ID Bit 42 = 0
         //      ID Bit 0..41 = ID from name table
 
-        public const int StandardPosMarker = 42;
+        private const int StandardPosMarker = 44;
+        private const int L1Marker = 38;
+        private const int L2Marker = 33;
+        private const int L3Marker = 28;
+        private const int MassMarker = 24;
+        private const int NMarker = 0;
 
-        public bool IsStandard { get { return EntryType>=NameType.N1; } }
+        public bool IsStandard { get { return EntryType>=NameType.NValue; } }
 
         public ulong ID
         {
-            get      // without the sector code
+            get      
             {
-                if (IsStandard)
+                if (EntryType != NameType.NonStandard)
                 {
-                    System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && N1 < 256 && N2 < 65536 && MassCode < 8);
-                    return ((ulong)N2 << 0) | ((ulong)N1 << 16) | ((ulong)(MassCode) << 24) | ((ulong)(L3) << 27) | ((ulong)(L2) << 32) | ((ulong)(L1) << 37) | (1UL << StandardPosMarker);
+                    System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && NValue < 0xffffff && MassCode < 8);
+                    return ((ulong)NValue << NMarker) | ((ulong)(MassCode) << MassMarker) | ((ulong)(L3) << L3Marker) | ((ulong)(L2) << L2Marker) | ((ulong)(L1) << L1Marker) | (1UL << StandardPosMarker);
+                }
+                else
+                    return (ulong)(NameId);
+            }
+        }
+        public ulong IDHigh
+        {
+            get      
+            {
+                if (EntryType != NameType.NonStandard)
+                {
+                    ulong lcodes = ((ulong)(L3) << L3Marker) | ((ulong)(L2) << L2Marker) | ((ulong)(L1) << L1Marker) | (1UL << StandardPosMarker);
+
+                    if (EntryType == NameType.Identifier)
+                        return ((1UL << L3Marker) - 1) | lcodes;
+
+                    lcodes |= ((ulong)(MassCode) << MassMarker);
+
+                    if (EntryType == NameType.Masscode)
+                        return ((1UL << MassMarker) - 1) | lcodes;
+
+                    if (EntryType == NameType.N1ValueOnly)
+                        return lcodes | ((ulong)NValue << NMarker) | 0xffff; // N1 explicit (d23-) then we can assume a wildcard in the bottom N2
+                    else 
+                        return lcodes | ((ulong)NValue << NMarker); // no wild card here
                 }
                 else
                     return (ulong)(NameId);
@@ -58,7 +87,7 @@ namespace EliteDangerousCore
         public override string ToString()
         {
             if (IsStandard)
-                return (SectorName!=null ? (SectorName + " "):"") + (char)(L1+'A'-1) + (char)(L2+'A'-1) + "-" + (char)(L3+'A'-1) + " " + (char)(MassCode+'a') + (N1>0?(N1.ToStringInvariant()+"-"):"") + N2.ToStringInvariant();
+                return (SectorName!=null ? (SectorName + " "):"") + (char)(L1+'A'-1) + (char)(L2+'A'-1) + "-" + (char)(L3+'A'-1) + " " + (char)(MassCode+'a') + (NValue>0xffff?((NValue/0x10000).ToStringInvariant()+"-"):"") + (NValue&0xffff).ToStringInvariant();
             else
                 return (SectorName != null && SectorName != NonStandard ? (SectorName + " ") : "") + StarName;
         }
@@ -81,18 +110,17 @@ namespace EliteDangerousCore
         {
             if (IsIDStandard(id))
             {
-                N2 = (uint)(id >> 0) & 0xffff;
-                N1 = (uint)(id >> 16) & 0xff;
-                MassCode = (char)(((id >> 24) & 7));
-                L3 = (char)(((id >> 27) & 31));
-                L2 = (char)(((id >> 32) & 31));
-                L1 = (char)(((id >> 37) & 31));
-                EntryType = NameType.N2;
-                System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && N1 < 256 && N2 < 65536 && MassCode < 8);
+                NValue = (uint)(id >> NMarker) & 0xffffff;
+                MassCode = (char)(((id >> MassMarker) & 7));
+                L3 = (char)(((id >> L3Marker) & 31));
+                L2 = (char)(((id >> L2Marker) & 31));
+                L1 = (char)(((id >> L1Marker) & 31));
+                EntryType = NameType.NValue;
+                System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && NValue < 0xffffff && MassCode < 8);
             }
             else
             {
-                NameId = (long)((id>>0) & 0xffffff);
+                NameId = (long)(id & 0xffffff);
                 EntryType = NameType.NonStandard;
             }
 
@@ -105,7 +133,9 @@ namespace EliteDangerousCore
 
             string[] nameparts = starname.Split(' ');
 
-            for (int i = 0; i < nameparts.Length - 1; i++)
+            L1 = L2 = L3 = MassCode = NValue = 0;      // unused parts are zero
+
+            for (int i = 0; i < nameparts.Length; i++)
             {
                 if (i > 0 && nameparts[i].Length == 4 && nameparts[i][2] == '-' && char.IsLetter(nameparts[i][0]) && char.IsLetter(nameparts[i][1]) && char.IsLetter(nameparts[i][3]))
                 {
@@ -140,23 +170,20 @@ namespace EliteDangerousCore
                                         System.Diagnostics.Debug.Assert(second < 65536);
                                         if (second >= 0)
                                         {
-                                            N1 = (uint)first;
-                                            N2 = (uint)second;
-                                            EntryType = NameType.N2;
+                                            NValue = (uint)first * 0x10000 + (uint)second;
+                                            EntryType = NameType.NValue;
                                         }
                                         else
                                         {               // thats d29-
-                                            N1 = (uint)first;
-                                            N2 = 0;
-                                            EntryType = NameType.N1;
+                                            NValue = (uint)first * 0x10000;
+                                            EntryType = NameType.N1ValueOnly;
                                         }
                                     }
                                     else
                                     {       // got to presume its the whole monty, d23
                                         System.Diagnostics.Debug.Assert(first < 65536);
-                                        N1 = 0;
-                                        N2 = (uint)first;
-                                        EntryType = NameType.N2;
+                                        NValue = (uint)first;
+                                        EntryType = NameType.NValue;
                                     }
                                 }
                             }
@@ -178,7 +205,7 @@ namespace EliteDangerousCore
                 if (surveys.Contains(nameparts[0]))
                 {
                     SectorName = nameparts[0];
-                    StarName = starname.Substring(nameparts[0].Length + 1);
+                    StarName = starname.Mid(nameparts[0].Length + 1);
                 }
                 else
                 {

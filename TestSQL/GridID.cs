@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EliteDangerousCore
+namespace EliteDangerousCore.SystemDB
 {
     public class GridId
     {
@@ -41,6 +41,17 @@ namespace EliteDangerousCore
 
         public static int Id(float x, float z)
         {
+            x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
+            z = Math.Min(Math.Max(z - zbot, 0), ztop - zbot);           // 70500
+            x /= 1000;                                                  // 0-40.5 inc
+            z /= 1000;                                                  // 0-70.5 inc
+            return compresstablex[(int)x] + ZMult * compresstablez[(int)z];
+        }
+
+        public static int Id(int x128, int z128)
+        {
+            float x = (float)x128 / 128.0f;
+            float z = (float)z128 / 128.0f;
             x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
             z = Math.Min(Math.Max(z - zbot, 0), ztop - zbot);           // 70500
             x /= 1000;                                                  // 0-40.5 inc

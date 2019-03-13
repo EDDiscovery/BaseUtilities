@@ -6,21 +6,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EliteDangerousCore.DB
+namespace EliteDangerousCore.SystemDB
 {
-    public class SQLiteConnectionEDSM : SQLExtConnectionWithLockRegister<SQLiteConnectionEDSM>
+    public class SQLiteConnectionSystem : SQLExtConnectionWithLockRegister<SQLiteConnectionSystem>
     {
         static public string dbFile = @"c:\code\EDSM\edsm.sql";
 
-        public SQLiteConnectionEDSM() : base(dbFile, false, Initialize, AccessMode.ReaderWriter)
+        public SQLiteConnectionSystem() : base(dbFile, false, Initialize, AccessMode.ReaderWriter)
         {
         }
 
-        public SQLiteConnectionEDSM(AccessMode mode = AccessMode.ReaderWriter) : base(dbFile, false, Initialize, mode)
+        public SQLiteConnectionSystem(AccessMode mode = AccessMode.ReaderWriter) : base(dbFile, false, Initialize, mode)
         {
         }
 
-        private SQLiteConnectionEDSM(bool utc, Action init) : base(dbFile, utc, init, AccessMode.ReaderWriter)
+        private SQLiteConnectionSystem(bool utc, Action init) : base(dbFile, utc, init, AccessMode.ReaderWriter)
         {
         }
 
@@ -28,7 +28,7 @@ namespace EliteDangerousCore.DB
         {
             InitializeIfNeeded(() =>
             {
-                using (SQLiteConnectionEDSM conn = new SQLiteConnectionEDSM(false, null))       // use this special one so we don't get double init.
+                using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(false, null))       // use this special one so we don't get double init.
                 {
                     System.Diagnostics.Debug.WriteLine("Initialise EDSM DB");
                     UpgradeSystemsDB(conn);
@@ -36,7 +36,7 @@ namespace EliteDangerousCore.DB
             });
         }
 
-        protected static bool UpgradeSystemsDB(SQLiteConnectionEDSM conn)
+        protected static bool UpgradeSystemsDB(SQLiteConnectionSystem conn)
         {
             int dbver;
             try
@@ -47,7 +47,7 @@ namespace EliteDangerousCore.DB
                 dbver = reg.GetSettingInt("DBVer", 0);        // use the constring one, as don't want to go back into ConnectionString code
 
                 //if (dbver < 1)
-                    CreateTables(conn,1,"");
+                    CreateTables(conn,100,"");
 
                 CreateSystemDBTableIndexes(conn);
 
@@ -67,12 +67,9 @@ namespace EliteDangerousCore.DB
                 "DROP TABLE IF EXISTS Sectors" + postfix,
                 "DROP TABLE IF EXISTS Systems" + postfix,
                 "DROP TABLE IF EXISTS Names" + postfix,
-                "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , " +
-                                            "name TEXT, minx INTEGER, minz INTEGER, maxx INTEGER, maxz INTEGER, gridlist TEXT )",
-                "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , " +
-                                "sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
-                "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , " +
-                            "Name TEXT NOT NULL )",
+                "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , gridid INTEGER, name TEXT)",
+                "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
+                "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , Name TEXT NOT NULL )",
             };
 
             conn.PerformUpgrade(dbver, false, false, queries);
@@ -84,7 +81,7 @@ namespace EliteDangerousCore.DB
             {
                 "DROP INDEX IF EXISTS SystemsIndex",
             };
-            using (SQLiteConnectionEDSM conn = new SQLiteConnectionEDSM())
+            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem())
             {
                 foreach (string query in queries)
                 {
@@ -96,7 +93,7 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        private static void CreateSystemDBTableIndexes(SQLiteConnectionEDSM conn)     // UPGRADE
+        private static void CreateSystemDBTableIndexes(SQLiteConnectionSystem conn)     // UPGRADE
         {
             //string[] queries = new[]
             //{
