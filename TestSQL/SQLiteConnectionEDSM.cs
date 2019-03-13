@@ -62,18 +62,20 @@ namespace EliteDangerousCore.DB
 
         private static void CreateTables(SQLExtConnection conn, int dbver, string postfix)
         {
-            string query1 = "DROP TABLE IF EXISTS Sectors" + postfix;
-            string query2 = "DROP TABLE IF EXISTS Systems" + postfix;
-            string query3 = "DROP TABLE IF EXISTS Names" + postfix;
+            string[] queries = new []
+            {
+                "DROP TABLE IF EXISTS Sectors" + postfix,
+                "DROP TABLE IF EXISTS Systems" + postfix,
+                "DROP TABLE IF EXISTS Names" + postfix,
+                "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , " +
+                                            "name TEXT, minx INTEGER, minz INTEGER, maxx INTEGER, maxz INTEGER, gridlist TEXT )",
+                "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , " +
+                                "sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
+                "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , " +
+                            "Name TEXT NOT NULL )",
+            };
 
-            string query4 = "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , " +
-                                "name TEXT, minx INTEGER, minz INTEGER, maxx INTEGER, maxz INTEGER, gridid INTEGER )";
-            string query5 = "CREATE TABLE Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE , " +
-                                "name INTEGER, x INTEGER, y INTEGER, z INTEGER )";
-            string query6 = "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , " +
-                            "Name TEXT NOT NULL )";
-
-            conn.PerformUpgrade(dbver, false, false, new[] { query1, query2, query3, query4, query5, query6 });
+            conn.PerformUpgrade(dbver, false, false, queries);
         }
 
         public static void DropSystemsTableIndexes()        // PERFORM during full table replacement

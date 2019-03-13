@@ -10,16 +10,18 @@ namespace EliteDangerousCore
     {
         public const string NonStandard = "NonStandard";
 
-        public string SectorName = null;    // for string inputs, set always, the sector name or "NonStandard".            For numbers, null
-        public string StarName = null;      // for string inputs, set for surveys and non standard names                   For numbers, null
+        public enum NameType { NonStandard, Identifier, Masscode, N1, N2 };
+        public NameType EntryType = NameType.NonStandard;   // 0 non standard, 1 CQ-L, 2 mass code, 3 N1, 4 N2
 
-        public long SectorId = 0;       // set for number inputs
-        public long NameId = 0;         // set for number inputs
+        public string SectorName = null;    // for string inputs, set always, the sector name or "NonStandard".            For numbers, null
+
+        public string StarName = null;      // for string inputs, set for surveys and non standard names                   For numbers, null
+        public long NameId = 0;             // set for number inputs
+
         public uint L1, L2, L3, MassCode, N1, N2;
 
         // ID Standard
-        //      ID bit 44 = sector ID from db. >=1
-        //      ID Bit 42+43 = 0
+        //      ID Bit 42 = 1
         //      ID Bit 37 = L1 (1 = A, 26=Z)
         //      ID Bit 32 = L2 (1 = A, 26=Z)
         //      ID Bit 27 = L3 (1 = A, 26=Z)
@@ -27,31 +29,30 @@ namespace EliteDangerousCore
         //      ID Bit 16 = N1
         //      ID Bit 0 = N2
         // Non standard:
-        //      ID Bit 44..63 = sector ID
-        //      Bits 24-43 = zero
-        //      Bits 0-23 = ID from name table
+        //      ID Bit 42 = 0
+        //      ID Bit 0..41 = ID from name table
 
-        public const int SectorPos = 44;
+        public const int StandardPosMarker = 42;
 
-        public bool IsValidID { get { return SectorId > 0; } }
-        public void SetInvalid() { SectorId = 0; }
-
-        public bool IsStandard { get { return L1 != 0; } }
+        public bool IsStandard { get { return EntryType>=NameType.N1; } }
 
         public ulong ID
         {
             get      // without the sector code
             {
                 if (IsStandard)
-                    return (ulong)N2 | ((ulong)N1 << 16) | ((ulong)(MassCode) << 24) | ((ulong)(L3) << 27) | ((ulong)(L2) << 32) | ((ulong)(L1) << 37) | ((ulong)(SectorId) << SectorPos);
+                {
+                    System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && N1 < 256 && N2 < 65536 && MassCode < 8);
+                    return ((ulong)N2 << 0) | ((ulong)N1 << 16) | ((ulong)(MassCode) << 24) | ((ulong)(L3) << 27) | ((ulong)(L2) << 32) | ((ulong)(L1) << 37) | (1UL << StandardPosMarker);
+                }
                 else
-                    return (ulong)NameId | ((ulong)(SectorId) << SectorPos);
+                    return (ulong)(NameId);
             }
         }
 
         public static bool IsIDStandard( ulong id)
-        {                   //27
-            return (id & 0xfff8000000UL) != 0;
+        {                
+            return (id & (1UL<<StandardPosMarker)) != 0;
         }
 
         public override string ToString()
@@ -73,25 +74,34 @@ namespace EliteDangerousCore
 
         public EliteNameClassifier(ulong id)
         {
+            Classify(id);
+        }
+
+        public void Classify( ulong id)
+        {
             if (IsIDStandard(id))
             {
+                N2 = (uint)(id >> 0) & 0xffff;
                 N1 = (uint)(id >> 16) & 0xff;
-                N2 = (uint)id & 0xffff;
                 MassCode = (char)(((id >> 24) & 7));
                 L3 = (char)(((id >> 27) & 31));
                 L2 = (char)(((id >> 32) & 31));
                 L1 = (char)(((id >> 37) & 31));
+                EntryType = NameType.N2;
+                System.Diagnostics.Debug.Assert(L1 < 31 && L2 < 32 && L3 < 32 && N1 < 256 && N2 < 65536 && MassCode < 8);
             }
             else
-                NameId = (long)(id & 0xffffff);
+            {
+                NameId = (long)((id>>0) & 0xffffff);
+                EntryType = NameType.NonStandard;
+            }
 
             SectorName = StarName = null;
-            SectorId = (long)(id >> SectorPos);
         }
 
         public void Classify(string starname)
         {
-            L1 = 0;
+            EntryType = NameType.NonStandard;
 
             string[] nameparts = starname.Split(' ');
 
@@ -99,40 +109,69 @@ namespace EliteDangerousCore
             {
                 if (i > 0 && nameparts[i].Length == 4 && nameparts[i][2] == '-' && char.IsLetter(nameparts[i][0]) && char.IsLetter(nameparts[i][1]) && char.IsLetter(nameparts[i][3]))
                 {
-                    string p = nameparts[i + 1];
-                    int slash = nameparts[i + 1].IndexOf("-");
+                    L1 = (uint)(char.ToUpper(nameparts[i][0]) - 'A' + 1);
+                    L2 = (uint)(char.ToUpper(nameparts[i][1]) - 'A' + 1);
+                    L3 = (uint)(char.ToUpper(nameparts[i][3]) - 'A' + 1);
 
-                    int n1,n2;
+                    EntryType = NameType.Identifier;
 
-                    if (slash >= 0)
+                    if (nameparts.Length > i + 1)
                     {
-                        n1 = p.Substring(1, slash - 1).InvariantParseInt(-1);
-                        n2 = p.Substring(slash + 1).InvariantParseInt(-1);
-                    }
-                    else
-                    {
-                        n1 = 0;
-                        n2 = p.Substring(1).InvariantParseInt(-1);
+                        string p = nameparts[i + 1];
+
+                        if (p.Length > 0)
+                        {
+                            char mc = char.ToLower(p[0]);
+                            if (mc >= 'a' && mc <= 'h')
+                            {
+                                MassCode = (uint)(mc - 'a');
+                                EntryType = NameType.Masscode;
+
+                                int slash = p.IndexOf("-");
+
+                                int first = (slash >= 0 ? p.Substring(1, slash - 1) : p.Substring(1)).InvariantParseInt(-1);
+
+                                if (first >= 0)
+                                {
+                                    if (slash >= 0)
+                                    {
+                                        System.Diagnostics.Debug.Assert(first < 256);
+                                        int second = p.Substring(slash + 1).InvariantParseInt(-1);
+                                        System.Diagnostics.Debug.Assert(second < 65536);
+                                        if (second >= 0)
+                                        {
+                                            N1 = (uint)first;
+                                            N2 = (uint)second;
+                                            EntryType = NameType.N2;
+                                        }
+                                        else
+                                        {               // thats d29-
+                                            N1 = (uint)first;
+                                            N2 = 0;
+                                            EntryType = NameType.N1;
+                                        }
+                                    }
+                                    else
+                                    {       // got to presume its the whole monty, d23
+                                        System.Diagnostics.Debug.Assert(first < 65536);
+                                        N1 = 0;
+                                        N2 = (uint)first;
+                                        EntryType = NameType.N2;
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    if (N1 >= 0 && N2 >= 0)     // accept
-                    {
-                        MassCode = (uint)(char.ToLower(p[0])-'a');
-                        L1 = (uint)(char.ToUpper(nameparts[i][0]) - 'A' + 1);
-                        L2 = (uint)(char.ToUpper(nameparts[i][1]) - 'A' + 1);
-                        L3 = (uint)(char.ToUpper(nameparts[i][3]) - 'A' + 1);
-                        N1 = (uint)n1;
-                        N2 = (uint)n2;
-                        SectorName = nameparts[0];
-                        for (int j = 1; j < i; j++)
-                            SectorName = SectorName + " " + nameparts[j];
-                    }
+                    SectorName = nameparts[0];
+                    for (int j = 1; j < i; j++)
+                        SectorName = SectorName + " " + nameparts[j];
 
                     break;
                 }
             }
 
-            if (L1 == 0)
+            if (EntryType == 0)
             {
                 string[] surveys = new string[] { "HIP", "2MASS", "HD", "LTT", "TYC", "NGC", "HR", "LFT", "LHS", "LP", "Wolf" };
 

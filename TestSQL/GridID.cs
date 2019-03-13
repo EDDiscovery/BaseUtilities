@@ -39,7 +39,7 @@ namespace EliteDangerousCore
 
         private const int ZMult = 100;
 
-        public static int Id(double x, double z)
+        public static int Id(float x, float z)
         {
             x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
             z = Math.Min(Math.Max(z - zbot, 0), ztop - zbot);           // 70500
@@ -142,6 +142,19 @@ namespace EliteDangerousCore
             zlines[GridZRange] = endentry;
 
             return zlines;
+        }
+
+        public static string Grids(float minx, float maxx, float minz, float maxz)
+        {
+            int botleft = Id(minx, minz);
+            int topright = Id(maxx, maxz);
+            string grids = "";
+            for (int x = botleft % ZMult; x <= topright % ZMult; x++)
+            {
+                for (int z = botleft / ZMult; z <= topright / ZMult; z++)
+                    grids = grids + IdFromComponents(x, z) + ";";
+            }
+            return grids;
         }
 
         public static List<int> FromString(string s)

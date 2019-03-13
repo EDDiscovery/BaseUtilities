@@ -70,11 +70,9 @@ namespace EliteDangerousCore.DB
 
                 if (t != null)
                 {
-                    ec.SectorId = t.id;                             
-
                     if (ec.IsStandard)                              // standard is easy - code is just the sectorid + the classifer from the name
                     {
-                        Star s = GetStar(ec.ID, cn);
+                        Star s = GetStar(t.id, ec.ID, cn);
 
                         if (s != null)
                         {
@@ -84,17 +82,17 @@ namespace EliteDangerousCore.DB
                     }
                     else
                     {
-                        List<long> names = GetNames(ec.StarName, cn);     // all the nid of the names called starname.. there may be >1 since names are not unique in the name table
+                        //List<long> names = GetNames(ec.StarName, cn);     // all the nid of the names called starname.. there may be >1 since names are not unique in the name table
 
-                        foreach (long id in names)
-                        {
-                            Star s = GetStar((ulong)id | ((ulong)(t.id) << EliteNameClassifier.SectorPos), cn);     // they will be unique by sectoreid+nameid.
-                            if (s != null)
-                            {
-                                s.Name = ec.ToString();
-                                return s;
-                            }
-                        }
+                        //foreach (long id in names)
+                        //{
+                        //    Star s = GetStar((ulong)id | ((ulong)(t.id) << EliteNameClassifier.SectorPos), cn);     // they will be unique by sectoreid+nameid.
+                        //    if (s != null)
+                        //    {
+                        //        s.Name = ec.ToString();
+                        //        return s;
+                        //    }
+                        //}
                     }
                 }
             }
@@ -108,19 +106,92 @@ namespace EliteDangerousCore.DB
 
             using (SQLiteConnectionEDSM cn = new SQLiteConnectionEDSM(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer))
             {
-                DbCommand selectSysCmd = cn.CreateCommand("SELECT name,x,y,z,edsmid FROM Systems" + (extraconditions.HasChars() ? (" " + extraconditions) : ""));
+                DbCommand selectSysCmd = cn.CreateCommand("SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name FROM Systems s LEFT OUTER JOIN Names n On s.name=n.id  LEFT OUTER JOIN Sectors c on c.id=s.sector " + (extraconditions.HasChars() ? (" " + extraconditions) : ""));
+
 
                 using (DbDataReader reader = selectSysCmd.ExecuteReader())
                 {
-                    while( reader.Read())      // if there..
+                    while (reader.Read())      // if there..
                     {
-                        ret.Add(MakeStar((ulong)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (long)reader[4], cn));
+                        string sectorname = (string)reader[0];
+                        EliteNameClassifier ec = new EliteNameClassifier((ulong)(long)reader[1]);
+                        string name = sectorname + (ec.IsStandard ? ec.ToString() : (string)reader[6]);
+                        Star s = new Star(name, (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5]);
+                        ret.Add(s);
                     }
                 }
             }
 
             return ret;
         }
+
+        //public static List<Star> FindStarsWildcard(string name)     // partial name
+        //{
+        //    List<Star> ret = new List<Star>();
+
+        //    EliteNameClassifier ec = new EliteNameClassifier(name);
+
+        //    using (SQLiteConnectionEDSM cn = new SQLiteConnectionEDSM(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+        //    {
+        //        if (ec.PartsComplete >= EliteNameClassifier.NameType.Identifier)  // if its def a standard name
+        //        {
+        //            Sector t = GetSector(ec.SectorName, cn);            // get the sector - selection if from this sector
+
+        //            if (t != null)
+        //            {
+        //                ec.SectorId = t.id;
+
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (ec.SectorName != EliteNameClassifier.NonStandard)
+        //            {
+        //                List<Sector> seclist = GetSectors(ec.SectorName, cn);       // sectors named like this - all stars in them named
+        //            }
+        //            else
+        //            {
+        //                Sector t = GetSector(ec.SectorName, cn);            // get the standard sector - selection if from this sector
+
+        //                List<long> names = GetNames(ec.StarName, cn, true);       // all the nid of the names like starname
+
+        //                foreach (long id in names)
+        //                {
+        //                    Star s = GetStar((ulong)id | ((ulong)(t.id) << EliteNameClassifier.SectorPos), cn);   
+
+        //                    if (s != null)
+        //                    {
+        //                        s.Name = ec.ToString();
+        //                        return s;
+        //                    }
+        //                }
+
+
+        //            }
+        //        }
+        //    }
+
+        //    return ret;
+        //}
+
+        // public enum SystemAskType { AnyStars, PopulatedStars, UnPopulatedStars };            -- this is mixing EDDB and EDSM, belongs in another class
+        //public static int GetSystemVector<V>(int gridid, ref V[] vertices, ref uint[] colours,
+        //SystemAskType ask, int percentage,
+        //Func<float, float, float, V> tovect)
+
+        //public static List<Point3D> GetStarPositions(int percentage)  // return star positions.. whole galaxy, of this percentage, 2dmap... hmmm
+
+
+        // public static List<long> GetEdsmIdsFromName(string name, SQLiteConnectionSystem cn = null, bool uselike = false)
+        //public static List<ISystem> GetSystemsByName(string name, SQLiteConnectionSystem cn = null, bool uselike = false)
+
+
+
+
+
+
+
+
 
         #endregion
 
@@ -184,12 +255,13 @@ namespace EliteDangerousCore.DB
             DbCommand selectSysCmd = cn.CreateCommand("SELECT name,x,y,z FROM Systems" + tablepostfix + " WHERE edsmid == @nedsm");
             selectSysCmd.AddParameter("@nedsm", DbType.Int64);
 
-            DbCommand updateSysCmd = cn.CreateCommand("UPDATE Systems" + tablepostfix + " SET name=@name, x=@XP, y=@YP, z=@ZP WHERE edsmid == @nedsm");
+            DbCommand updateSysCmd = cn.CreateCommand("UPDATE Systems" + tablepostfix + " SET sector=@sec, name=@name, x=@XP, y=@YP, z=@ZP WHERE edsmid == @nedsm");
+            updateSysCmd.AddParameter("@sec", DbType.Int64);
             updateSysCmd.AddParameter("@name", DbType.Int64);
-            updateSysCmd.AddParameter("@nedsm", DbType.Int64);
             updateSysCmd.AddParameter("@XP", DbType.Int32);
             updateSysCmd.AddParameter("@YP", DbType.Int32);
             updateSysCmd.AddParameter("@ZP", DbType.Int32);
+            updateSysCmd.AddParameter("@nedsm", DbType.Int64);
 
             while (!cancelRequested() && jr_eof == false)
             {
@@ -211,10 +283,7 @@ namespace EliteDangerousCore.DB
                                     TableWriteData data = new TableWriteData() { edsm = d, classifier = new EliteNameClassifier(d.name) };
 
                                     if (d.date > maxdate)                                   // for all, record last recorded date processed
-                                    {
-                                        data.mustbenew = true;                              // this must be new, so don't bother looking it up if we are doing an insert
                                         maxdate = d.date;
-                                    }
 
                                     Sector t;
 
@@ -306,36 +375,32 @@ namespace EliteDangerousCore.DB
                         {
                             foreach (var data in t.edsmdatalist)            // now write the star list in this sector
                             {
-                                data.classifier.SectorId = t.id;            // we now know the sector ID allocated
-
                                 if (!data.classifier.IsStandard)            // standard names use the ID field and sector ID.  If not, its a name entry
                                     data.classifier.NameId = nextnameid++;  // get next name ID - we always allocate a new one each time, because its unlikely its exactly the same name as one in there
 
-                                // debate on if we can use if (!data.mustbenew)     // if its not new, i.e newer than the last data in the db, need to check to find it
+                                selectSysCmd.Parameters[0].Value = data.edsm.id;
+
+                                using (DbDataReader reader = selectSysCmd.ExecuteReader())
                                 {
-                                    selectSysCmd.Parameters[0].Value = data.edsm.id;
-
-                                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                                    if (reader.Read())      // if there..
                                     {
-                                        if (reader.Read())      // if there..
+                                        ulong dbname = (ulong)(long)reader[1];
+
+                                        if (dbname != data.classifier.ID ||
+                                            Math.Abs((int)(long)reader[2] - data.edsm.x) >= 4 ||
+                                            Math.Abs((int)(long)reader[3] - data.edsm.y) >= 4 ||
+                                            Math.Abs((int)(long)reader[4] - data.edsm.z) >= 4)
                                         {
-                                            ulong dbname = (ulong)(long)reader[1];
-
-                                            if (dbname != data.classifier.ID ||
-                                                Math.Abs((int)(long)reader[2] - data.edsm.x) >= 4 ||
-                                                Math.Abs((int)(long)reader[3] - data.edsm.y) >= 4 ||
-                                                Math.Abs((int)(long)reader[4] - data.edsm.z) >= 4)
-                                            {
-                                                updateSysCmd.Parameters[0].Value = data.classifier.ID;
-                                                updateSysCmd.Parameters[1].Value = data.edsm.id;
-                                                updateSysCmd.Parameters[2].Value = data.edsm.x;
-                                                updateSysCmd.Parameters[3].Value = data.edsm.y;
-                                                updateSysCmd.Parameters[4].Value = data.edsm.z;
-                                                updateSysCmd.ExecuteNonQuery();
-                                            }
-
-                                            data.alreadyupdated = true;
+                                            updateSysCmd.Parameters[0].Value = t.id;
+                                            updateSysCmd.Parameters[1].Value = data.classifier.ID;
+                                            updateSysCmd.Parameters[2].Value = data.edsm.x;
+                                            updateSysCmd.Parameters[3].Value = data.edsm.y;
+                                            updateSysCmd.Parameters[4].Value = data.edsm.z;
+                                            updateSysCmd.Parameters[5].Value = data.edsm.id;
+                                            updateSysCmd.ExecuteNonQuery();
                                         }
+
+                                        data.alreadyupdated = true;
                                     }
                                 }
                             }
@@ -349,19 +414,21 @@ namespace EliteDangerousCore.DB
                     SQLExtTransactionLock<SQLiteConnectionEDSM> tl = new SQLExtTransactionLock<SQLiteConnectionEDSM>();     // not using on purpose.
                     tl.OpenWriter();
                     DbTransaction txn = cn.BeginTransaction();
-                    DbCommand insertSectorCmd = cn.CreateCommand("INSERT INTO Sectors" + tablepostfix + " (name,minx,minz,maxx,maxz) VALUES (@sname, @minx,@minz,@maxx,@maxz)", txn);
+                    DbCommand insertSectorCmd = cn.CreateCommand("INSERT INTO Sectors" + tablepostfix + " (name,minx,minz,maxx,maxz,gridlist) VALUES (@sname, @minx,@minz,@maxx,@maxz,@gridlist)", txn);
                     insertSectorCmd.AddParameter("@sname", DbType.String);
                     insertSectorCmd.AddParameter("@minx", DbType.Int32);
                     insertSectorCmd.AddParameter("@minz", DbType.Int32);
                     insertSectorCmd.AddParameter("@maxx", DbType.Int32);
                     insertSectorCmd.AddParameter("@maxz", DbType.Int32);
+                    insertSectorCmd.AddParameter("@gridlist", DbType.String);
 
-                    DbCommand insertSysCmd = cn.CreateCommand("INSERT INTO Systems" + tablepostfix + " (name,edsmid, x, y, z) VALUES (@name,@nedsm, @XP, @YP, @ZP)", txn);
+                    DbCommand insertSysCmd = cn.CreateCommand("INSERT INTO Systems" + tablepostfix + " (sector,name, x, y, z, edsmid) VALUES (@sec,@name, @XP, @YP, @ZP, @nedsm)", txn);
+                    insertSysCmd.AddParameter("@sec", DbType.Int64);
                     insertSysCmd.AddParameter("@name", DbType.Int64);
-                    insertSysCmd.AddParameter("@nedsm", DbType.Int64);
                     insertSysCmd.AddParameter("@XP", DbType.Int32);
                     insertSysCmd.AddParameter("@YP", DbType.Int32);
                     insertSysCmd.AddParameter("@ZP", DbType.Int32);
+                    insertSysCmd.AddParameter("@nedsm", DbType.Int64);
 
                     DbCommand insertNameCmd = cn.CreateCommand("INSERT INTO Names" + tablepostfix + " (name) VALUES (@sname)", txn);
                     insertNameCmd.AddParameter("@sname", DbType.String);
@@ -383,6 +450,7 @@ namespace EliteDangerousCore.DB
                             insertSectorCmd.Parameters[2].Value = t.minz;
                             insertSectorCmd.Parameters[3].Value = t.maxx;
                             insertSectorCmd.Parameters[4].Value = t.maxz;
+                            insertSectorCmd.Parameters[5].Value = GridId.Grids((float)t.minx / XYZScalar, (float)t.maxx / XYZScalar, (float)t.minz / XYZScalar, (float)t.maxz / XYZScalar);
                             insertSectorCmd.ExecuteNonQuery();
                             //System.Diagnostics.Debug.WriteLine("Written sector " + t.id + " " +t.Name + " now clean");
                             t.insertsec = false;
@@ -397,7 +465,6 @@ namespace EliteDangerousCore.DB
                                 {
                                     if (tablesareempty)
                                     {
-                                        data.classifier.SectorId = t.id;    // if in table empty mode, we won't have updated the sector ID of the classifier, so do so
                                         if (!data.classifier.IsStandard)    // if non standard, we assign a new ID
                                             data.classifier.NameId = nextnameid++;
                                     }
@@ -410,26 +477,18 @@ namespace EliteDangerousCore.DB
 
                                     try
                                     {
-                                        insertSysCmd.Parameters[0].Value = data.classifier.ID;
-                                        insertSysCmd.Parameters[1].Value = data.edsm.id;
+                                        insertSysCmd.Parameters[0].Value = t.id;
+                                        insertSysCmd.Parameters[1].Value = data.classifier.ID;
                                         insertSysCmd.Parameters[2].Value = data.edsm.x;
                                         insertSysCmd.Parameters[3].Value = data.edsm.y;
                                         insertSysCmd.Parameters[4].Value = data.edsm.z;
+                                        insertSysCmd.Parameters[5].Value = data.edsm.id;
                                         insertSysCmd.ExecuteNonQuery();
 
                                         if (sw != null)
                                             sw.WriteLine(data.classifier.ToString() + " " + data.edsm.x + " " + data.edsm.y + " " + data.edsm.z + " " + data.edsm.id);
 
                                         updates++;
-                                    }
-                                    catch (System.Data.SQLite.SQLiteException sqex)
-                                    {
-                                        if ( sqex.ErrorCode == 19 ) // unique constraint failed
-                                        {
-                                            System.Diagnostics.Debug.WriteLine("Database contains multiple EDSM ID " + data.edsm.name + " " + data.edsm.id);
-                                        }
-                                        else
-                                            System.Diagnostics.Debug.WriteLine("SQL general exception during insert - ignoring " + sqex.ToString());
                                     }
                                     catch( Exception ex)
                                     {
@@ -467,12 +526,13 @@ namespace EliteDangerousCore.DB
                 SQLExtTransactionLock<SQLiteConnectionEDSM> tl = new SQLExtTransactionLock<SQLiteConnectionEDSM>();     // using with its forced indentation is a PINA with so many 
                 tl.OpenWriter();
                 DbTransaction txn = cn.BeginTransaction();
-                DbCommand updateSectorCmd = cn.CreateCommand("UPDATE Sectors" + tablepostfix + " SET minx= @minx, minz=@minz, maxx=@maxx, maxz=@maxz WHERE name = @sname", txn);
+                DbCommand updateSectorCmd = cn.CreateCommand("UPDATE Sectors" + tablepostfix + " SET minx= @minx, minz=@minz, maxx=@maxx, maxz=@maxz, gridlist=@gridlist WHERE name = @sname", txn);
                 updateSectorCmd.AddParameter("@sname", DbType.String);
                 updateSectorCmd.AddParameter("@minx", DbType.Double);
                 updateSectorCmd.AddParameter("@minz", DbType.Double);
                 updateSectorCmd.AddParameter("@maxx", DbType.Double);
                 updateSectorCmd.AddParameter("@maxz", DbType.Double);
+                updateSectorCmd.AddParameter("@gridlist", DbType.String);
 
                 foreach (var kvp in sectornamecache)
                 {
@@ -487,6 +547,7 @@ namespace EliteDangerousCore.DB
                         updateSectorCmd.Parameters[2].Value = t.minz;
                         updateSectorCmd.Parameters[3].Value = t.maxx;
                         updateSectorCmd.Parameters[4].Value = t.maxz;
+                        updateSectorCmd.Parameters[5].Value = GridId.Grids((float)t.minx / XYZScalar, (float)t.maxx / XYZScalar, (float)t.minz / XYZScalar, (float)t.maxz / XYZScalar);
                         updateSectorCmd.ExecuteNonQuery();
                         t.dirty = false;
                     }
@@ -518,23 +579,42 @@ namespace EliteDangerousCore.DB
 
         #region Helpers
 
-        public static Star MakeStar(ulong nameid, int x, int y, int z, long edsmid, SQLiteConnectionEDSM cn)
-        {
-            EliteNameClassifier ec = new EliteNameClassifier(nameid);
+        //public static Star MakeStar(long sector, ulong nameid, int x, int y, int z, long edsmid, SQLiteConnectionEDSM cn)
+        //{
+        //    EliteNameClassifier ec = new EliteNameClassifier(nameid);
 
-            string name = "";
-            if (ec.IsStandard)
-                name = ec.ToString();
-            else
-                name = GetName(ec.NameId, cn);
+        //    if (ec.IsStandard)
+        //    {
+        //        if (sectoridcache.ContainsKey(sector))
+        //            return new Star(sectoridcache[sector].Name + " " + ec.ToString(), x, y, z, edsmid);
+        //        else
+        //        {
+        //            // get name and sector..
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (sectoridcache.ContainsKey(sector))
+        //        {
+        //            string name = GetName(ec.NameId, cn);
+        //            return new Star(name, x, y, z, edsmid);
+        //        }
+        //        else
+        //        {
+        //            // get name and sector
+        //        }
 
-            Sector s = GetSector(ec.SectorId, cn);
+        //    }
 
-            if (s.Name != EliteNameClassifier.NonStandard)            // if we looked up NonStandard, its not used, else add it to name
-                name = s.Name + " " + name;
+            
 
-            return new Star(name, x, y, z, edsmid);
-        }
+        //    Sector s = GetSector(sector, cn);
+
+        //    if (s.Name != EliteNameClassifier.NonStandard)            // if we looked up NonStandard, its not used, else add it to name
+        //        name = s.Name + " " + name;
+
+        //    return new Star(name, x, y, z, edsmid);
+        //}
 
         private static Sector GetSector(long id, SQLiteConnectionEDSM cn)
         {
@@ -542,7 +622,7 @@ namespace EliteDangerousCore.DB
                 return sectoridcache[id];
             else
             {
-                using (DbCommand selectSectorCmd = cn.CreateCommand("SELECT name,minx,minz,maxx,maxz FROM Sectors WHERE id = @nid"))
+                using (DbCommand selectSectorCmd = cn.CreateCommand("SELECT name,minx,minz,maxx,maxz,gridlist FROM Sectors WHERE id = @nid"))
                 {
                     selectSectorCmd.AddParameterWithValue("@nid", id);
 
@@ -550,7 +630,7 @@ namespace EliteDangerousCore.DB
                     {
                         if (reader.Read())      // if there..
                         {
-                            Sector t = new Sector((string)reader[0], (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4],id);
+                            Sector t = new Sector((string)reader[0], (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4],id, (string)reader[5]);
                             sectoridcache[t.id] = t;
                             sectornamecache[t.Name] = t;
                             return t;
@@ -568,7 +648,7 @@ namespace EliteDangerousCore.DB
                 return sectornamecache[name];
             else
             {
-                using (DbCommand selectSectorCmd = cn.CreateCommand("SELECT id,minx,minz,maxx,maxz FROM Sectors WHERE name = @sname"))
+                using (DbCommand selectSectorCmd = cn.CreateCommand("SELECT id,minx,minz,maxx,maxz,gridlist FROM Sectors WHERE name = @sname"))
                 {
                     selectSectorCmd.AddParameterWithValue("@sname", name);
 
@@ -576,7 +656,7 @@ namespace EliteDangerousCore.DB
                     {
                         if (reader.Read())      // if there..
                         {
-                            Sector t = new Sector(name, (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[0]);
+                            Sector t = new Sector(name, (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[0], (string)reader[5]);
                             sectoridcache[t.id] = t;
                             sectornamecache[t.Name] = t;
                             return t;
@@ -584,6 +664,29 @@ namespace EliteDangerousCore.DB
                         else
                             return null;
                     }
+                }
+            }
+        }
+
+        private static List<Sector> GetSectors(string wildcardname, SQLiteConnectionEDSM cn)
+        {
+            using (DbCommand selectSectorCmd = cn.CreateCommand("SELECT name,minx,minz,maxx,maxz,id,gridlist FROM Sectors WHERE name like @sname"))
+            {
+                selectSectorCmd.AddParameterWithValue("@sname", wildcardname);
+
+                List<Sector> ret = new List<Sector>();
+
+                using (DbDataReader reader = selectSectorCmd.ExecuteReader())
+                {
+                    while (reader.Read())      // if there..
+                    {
+                        Sector t = new Sector((string)reader[0], (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5], (string)reader[6]);
+                        sectoridcache[t.id] = t;
+                        sectornamecache[t.Name] = t;
+                        ret.Add(t);
+                    }
+
+                    return ret;
                 }
             }
         }
@@ -614,31 +717,32 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        private static List<long> GetNames(string name, SQLiteConnectionEDSM cn)  // names are not unique
+        //private static List<Star> GetNames(long sector, string name, SQLiteConnectionEDSM cn, bool like = false)  // names are not unique
+        //{
+        //    List<Star> ret = new List<Star>();
+
+        //    using (DbCommand selectNameCmd = cn.CreateCommand("SELECT n.id,s.x,s.y,s.z FROM Names n inner join Systems s On )==n.id where name " + (like ? "like" : "=") + " @nname"))
+        //    {
+        //        selectNameCmd.AddParameterWithValue("@nname", name);
+
+        //        using (DbDataReader reader = selectNameCmd.ExecuteReader())
+        //        {
+        //            while (reader.Read())      // if there..
+        //            {
+        //                ret.Add((long)reader[0]);
+        //            }
+        //        }
+        //    }
+
+        //    return ret;
+        //}
+
+        private static Star GetStar(long sector, ulong nameid, SQLiteConnectionEDSM cn)       // name is returned blank
         {
-            List<long> ret = new List<long>();
-
-            using (DbCommand selectNameCmd = cn.CreateCommand("SELECT id FROM Names WHERE name=@nname"))
-            {
-                selectNameCmd.AddParameterWithValue("@nname", name);
-
-                using (DbDataReader reader = selectNameCmd.ExecuteReader())
-                {
-                    while (reader.Read())      // if there..
-                    {
-                        ret.Add((long)reader[0]);
-                    }
-                }
-            }
-
-            return ret;
-        }
-
-        private static Star GetStar(ulong nameid, SQLiteConnectionEDSM cn)       // name is returned blank
-        {
-            using (DbCommand selectNameCmd = cn.CreateCommand("SELECT x,y,z,edsmid FROM Systems WHERE name = @nid"))
+            using (DbCommand selectNameCmd = cn.CreateCommand("SELECT x,y,z,edsmid FROM Systems WHERE name = @nid AND sector=@sec"))
             {
                 selectNameCmd.AddParameterWithValue("@nid", nameid);
+                selectNameCmd.AddParameterWithValue("@sec", sector);
 
                 using (DbDataReader reader = selectNameCmd.ExecuteReader())
                 {
@@ -671,13 +775,15 @@ namespace EliteDangerousCore.DB
             public int minx;
             public int maxz;
             public int minz;
+            public string gridlist;
 
-            public Sector(string name, int minx = int.MaxValue, int minz = int.MaxValue, int maxx = int.MinValue, int maxz = int.MinValue, long id = -1 )
+            public Sector(string name, int minx = int.MaxValue, int minz = int.MaxValue, int maxx = int.MinValue, int maxz = int.MinValue, long id = -1, string gridlist="" )
             {
                 Name = name;
                 this.maxx = maxx; this.maxz = maxz;
                 this.minx = minx; this.minz = minz;
                 this.id = id;
+                this.gridlist = gridlist;
             }
 
             // for write table purposes only
@@ -691,7 +797,6 @@ namespace EliteDangerousCore.DB
         {
             public EDSMDumpSystem edsm;
             public EliteNameClassifier classifier;
-            public bool mustbenew;
             public bool alreadyupdated;
         }
 
