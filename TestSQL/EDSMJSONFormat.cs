@@ -1,10 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EliteDangerousCore.SystemDB
 {
@@ -12,35 +8,6 @@ namespace EliteDangerousCore.SystemDB
     {
         public bool Deserialize(JsonReader rdr)
         {
-            //rdr.Read();
-            //id = rdr.ReadAsInt32() ?? 0;
-            //rdr.Read();
-            //rdr.Read();
-            //rdr.Read();
-            //name = rdr.ReadAsString();
-            //rdr.Read();
-            //rdr.Read();
-            //if ( rdr.TokenType == JsonToken.StartObject)
-            //{
-            //    rdr.Read();
-            //    x = (int)(rdr.ReadAsDouble() * 128.0);
-            //    rdr.Read();
-            //    y = (int)(rdr.ReadAsDouble() * 128.0);
-            //    rdr.Read();
-            //    z = (int)(rdr.ReadAsDouble() * 128.0);
-
-            //    if ( rdr.Read() && rdr.TokenType == JsonToken.EndObject)
-            //    {
-            //        rdr.Read();
-            //        date = rdr.ReadAsDateTime() ?? DateTime.MinValue;
-            //        return true;
-            //    }
-            //}
-
-            //return false;
-
-
-
             while (rdr.Read() && rdr.TokenType == JsonToken.PropertyName)
             {
                 string field = rdr.Value as string;

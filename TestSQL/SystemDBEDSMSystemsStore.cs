@@ -2,38 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SQLLiteExtensions;
 using System.Data.Common;
 using System.Data;
 
-/*
- * measured 10e6 entries at 468mbytes or 46.8 bytes/entry
- * no indexes
- * 
- * plan is:
- * fill out this class with most of the accessors
- * we need to add back in the EDDB table
- * and the alias table handling and properly integrate this time
- * 
- * 
- * * when integrating with ed, this becomes the core system class, using the same db file
- * we uprev to 100 with the new tables
- * we have a check function which looks at the old tables and if present, moves the data to these new tables
- * then deletes the old ones
- * we need a function to organise the upreving of the system tables - that would be in the SQL file
- * 
- * place in a new folder  - systemDB, the other one becomes the userdb
- * 
- * remove some really old stuff such as assignsystems
- * 
- */
- 
 namespace EliteDangerousCore.SystemDB
 {
-    public partial class SystemClassDB
+    public partial class EDSMSystems
     {
         public static void DeleteCache()    // for debugging mostly
         {
@@ -66,7 +41,10 @@ namespace EliteDangerousCore.SystemDB
         // set tempostfix to use another set of tables
 
 
-        public static long ParseEDSMJSON(JsonTextReader jr, bool[] grididallowed, ref DateTime maxdate, Func<bool> cancelRequested,
+        public static long ParseEDSMJSON(JsonTextReader jr, 
+                                        bool[] grididallowed,       // null = all, else grid bool value
+                                        ref DateTime maxdate,       // updated with latest date
+                                        Func<bool> cancelRequested,
                                         string tablepostfix = "",        // set to add on text to table names to redirect to another table
                                         bool tablesareempty = false,     // set to presume table is empty, so we don't have to do look up queries
                                         string debugoutputfile = null
@@ -81,7 +59,7 @@ namespace EliteDangerousCore.SystemDB
 
             long updates = 0;
             const int BlockSize = 100000;
-            int Limit = 1000000000;// int.MaxValue;
+            int Limit = int.MaxValue;
             bool jr_eof = false;
 
             DbCommand selectSectorCmd = cn.CreateCommand("SELECT id FROM Sectors" + tablepostfix + " WHERE name = @sname AND gridid = @gid");
@@ -104,8 +82,12 @@ namespace EliteDangerousCore.SystemDB
 
                                 if (d.Deserialize(jr) && d.id >= 0 && d.name.HasChars() && d.z != int.MinValue)     // if we have a valid record
                                 {
-                                    CreateNewUpdate(selectSectorCmd, d, tablesareempty, ref maxdate, ref nextsectorid);
-                                    recordstostore++;
+                                    int gridid = GridId.Id(d.x, d.y);
+                                    if (grididallowed == null || ( grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
+                                    {
+                                        CreateNewUpdate(selectSectorCmd, d, gridid, tablesareempty, ref maxdate, ref nextsectorid);
+                                        recordstostore++;
+                                    }
                                 }
 
                                 if (--Limit == 0)
@@ -161,9 +143,9 @@ namespace EliteDangerousCore.SystemDB
         }
 
         // create a new entry for insert in the sector tables 
-        public static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMDumpSystem d, bool tablesareempty, ref DateTime maxdate, ref long nextsectorid)
+        public static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMDumpSystem d, int gid, bool tablesareempty, ref DateTime maxdate, ref long nextsectorid)
         {
-            TableWriteData data = new TableWriteData() { edsm = d, classifier = new EliteNameClassifier(d.name), gridid = GridId.Id(d.x,d.y) };
+            TableWriteData data = new TableWriteData() { edsm = d, classifier = new EliteNameClassifier(d.name), gridid = gid };
 
             if (d.date > maxdate)                                   // for all, record last recorded date processed
                 maxdate = d.date;
@@ -418,10 +400,8 @@ namespace EliteDangerousCore.SystemDB
 
         #region Internal Vars and Classes
 
-        static Dictionary<long, Sector> sectoridcache = new Dictionary<long, Sector>();         // used during store.. not sure about get
-        static Dictionary<string, Sector> sectornamecache = new Dictionary<string, Sector>();   // used during store.. not sure about get
-
-        private const float XYZScalar = 128.0F;     // scaling between DB stored values and floats
+        static Dictionary<long, Sector> sectoridcache = new Dictionary<long, Sector>();         // used during store.. 
+        static Dictionary<string, Sector> sectornamecache = new Dictionary<string, Sector>();   // used during store.. 
 
         private class Sector
         {

@@ -57,11 +57,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SystemDBGet.cs" />
+    <Compile Include="SystemClass.cs" />
+    <Compile Include="ISystem.cs" />
+    <Compile Include="SystemDBEDDB.cs" />
+    <Compile Include="SystemDBEDSMSystemsGet.cs" />
     <Compile Include="EDSMJSONFormat.cs" />
     <Compile Include="GridID.cs" />
-    <Compile Include="StarNaming.cs" />
-    <Compile Include="SystemDBStore.cs" />
+    <Compile Include="EliteNameClassifier.cs" />
+    <Compile Include="SystemDBEDSMSystemsStore.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
