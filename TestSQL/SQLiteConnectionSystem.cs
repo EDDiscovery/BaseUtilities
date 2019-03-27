@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EliteDangerousCore.SystemDB
+namespace EliteDangerousCore.DB
 {
     public class SQLiteConnectionSystem : SQLExtConnectionWithLockRegister<SQLiteConnectionSystem>
     {
@@ -47,10 +47,10 @@ namespace EliteDangerousCore.SystemDB
 
                 dbver = reg.GetSettingInt("DBVer", 0);        // use the constring one, as don't want to go back into ConnectionString code
 
-                if (dbver < 100)
-                    UpdateDB100(conn);
+                if (dbver < 200)                        // 200 
+                    UpdateDB200(conn);
 
-                CreateSystemDBTableIndexes(conn);
+//                CreateSystemDBTableIndexes(conn);
 
                 return true;
             }
@@ -61,20 +61,28 @@ namespace EliteDangerousCore.SystemDB
             }
         }
 
-        private static void UpdateDB100(SQLExtConnection conn)
+        private static void UpdateDB200(SQLExtConnection conn)
         {
-            CreateEDSMTables(conn, 100, "");
-            conn.ExecuteNonQueries(new string[] 
+            CreateStarTables(conn, "");
+            conn.ExecuteNonQueries(new string[]
                 {
+                    "DROP TABLE IF EXISTS EddbSystems",
+                    "DROP TABLE IF EXISTS Distances",
+                    "DROP TABLE IF EXISTS Stations",
+                    "DROP TABLE IF EXISTS SystemAliases",
+                    "DROP TABLE IF EXISTS station_commodities",
                     "DROP TABLE IF EXISTS EDDB",
                     "CREATE TABLE EDDB (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE, eddbupdatedat INTEGER, properties TEXT)"
                 });
+            SQLExtRegister reg = new SQLExtRegister(conn);
+            reg.DeleteKey("EDDBSystemsTime");       // force a reload
+            reg.PutSettingInt("DBVer", 200);
         }
 
 
-        private static void CreateEDSMTables(SQLExtConnection conn, int dbver, string postfix)
+        private static void CreateStarTables(SQLExtConnection conn, string postfix)
         {
-            string[] queries = new []
+            conn.ExecuteNonQueries(new string[]
             {
                 "DROP TABLE IF EXISTS Sectors" + postfix,
                 "DROP TABLE IF EXISTS Systems" + postfix,
@@ -82,24 +90,35 @@ namespace EliteDangerousCore.SystemDB
                 "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , gridid INTEGER, name TEXT)",
                 "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
                 "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , Name TEXT NOT NULL )",
-            };
-
-            conn.PerformUpgrade(dbver, false, false, queries);
+            });
         }
 
-        private static void CreateEDDBTables(SQLExtConnection conn, int dbver, string postfix)
+        public static void UpgradeFrom102TypeDB(Action<string> reportProgress )
         {
-            string[] queries = new[]
+            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
             {
-                "DROP TABLE IF EXISTS Sectors" + postfix,
-                "DROP TABLE IF EXISTS Systems" + postfix,
-                "DROP TABLE IF EXISTS Names" + postfix,
-                "CREATE TABLE Sectors" + postfix + " (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , gridid INTEGER, name TEXT)",
-                "CREATE TABLE Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
-                "CREATE TABLE Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , Name TEXT NOT NULL )",
-            };
+                var list = conn.Tables();
 
-            conn.PerformUpgrade(dbver, false, false, queries);
+                if ( list.Contains("EdsmSystems"))
+                {
+                    CreateStarTables(conn, "");     // in case its run again, lets again start with an empty set of new DBs
+
+                    if ( SystemsDB.UpgradeDB102to200(() => false, reportProgress, "") > 0 )
+                    {
+                        string[] queries = new[]
+                        {
+                            "DROP TABLE IF EXISTS EdsmSystems",
+                            "DROP TABLE IF EXISTS SystemNames",
+                        };
+
+                        reportProgress("Removing old system tables");
+                        conn.ExecuteNonQueries(queries);
+
+                        reportProgress("Shrinking database");
+                        conn.Vacuum();
+                    }
+                }
+            }
         }
 
         public static void DropSystemsTableIndexes()        // PERFORM during full table replacement

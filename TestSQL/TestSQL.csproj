@@ -57,14 +57,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EDTypesFromJSON.cs" />
+    <Compile Include="SystemCache.cs" />
     <Compile Include="SystemClass.cs" />
     <Compile Include="ISystem.cs" />
-    <Compile Include="SystemDBEDDB.cs" />
-    <Compile Include="SystemDBEDSMSystemsGet.cs" />
-    <Compile Include="EDSMJSONFormat.cs" />
-    <Compile Include="GridID.cs" />
+    <Compile Include="SystemsDBEDDBStore.cs" />
+    <Compile Include="SystemsDBGet.cs" />
+    <Compile Include="SystemGridID.cs" />
     <Compile Include="EliteNameClassifier.cs" />
-    <Compile Include="SystemDBEDSMSystemsStore.cs" />
+    <Compile Include="SystemsDBEDSMStore.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

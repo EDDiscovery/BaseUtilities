@@ -7,35 +7,10 @@ using System.Data.Common;
 using System.Data;
 using Newtonsoft.Json.Linq;
 
-namespace EliteDangerousCore.SystemDB
+namespace EliteDangerousCore.DB
 {
-    public class EDDB
+    public partial class SystemsDB
     {
-        public class EDDBInfo : EliteDangerousCore.ISystemEDDB
-        {
-            public EDDBInfo()
-            {
-            }
-
-            public long EDDBID { get; set; }
-            public string Faction { get; set; }
-            public long Population { get; set; }
-            public EDGovernment Government { get; set; }
-            public EDAllegiance Allegiance { get; set; }
-            public EDState State { get; set; }
-            public EDSecurity Security { get; set; }
-            public EDEconomy PrimaryEconomy { get; set; }
-            public int NeedsPermit { get; set; }
-            public int EDDBUpdatedAt { get; set; }
-            public bool HasEDDBInformation { get; }
-            public long EdsmId;
-
-            public override string ToString()
-            {
-                return "";// + " (" + Xf.ToString("N1") + "," + Yf.ToString("N1") + "," + Zf.ToString("N1") + ") " + EDSMId + ":" + GridId;
-            }
-        }
-
         public static long ParseEDDBJSONFile(string filename, Func<bool> cancelRequested)
         {
             using (StreamReader sr = new StreamReader(filename))         // read directly from file..
@@ -146,9 +121,6 @@ namespace EliteDangerousCore.SystemDB
 
             return updated + inserted;
         }
-
-
-
     }
 }
 

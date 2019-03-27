@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
+using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
 
@@ -23,14 +24,26 @@ namespace EliteDangerousCore
     // Useful for creation of test doubles
     public class SystemClassBase : ISystemBase
     {
+        public const float XYZScalar = 128.0F;     // scaling between DB stored values and floats
+
+        static public float IntToFloat(int pos) { return (float)pos / XYZScalar; }
+        static public int DoubleToInt(double pos) { return (int)(pos * XYZScalar); }
+        static public double IntToDoubleSq(int pos) { double p = (float)pos / XYZScalar; return p * p; }
+
         public long EDSMID { get; set; }
 
         public string Name { get; set; }
-        public double X { get; set; } = double.NaN;
-        public double Y { get; set; } = double.NaN;
-        public double Z { get; set; } = double.NaN;
 
-        public bool HasCoordinate { get { return (!double.IsNaN(X)); } }
+        public int Xi { get; set; }
+        public int Yi { get; set; }
+        public int Zi { get; set; }
+
+        public double X { get { return Xi >= int.MinValue ? (double)Xi / XYZScalar : double.NaN; } set { Xi = double.IsNaN(value) ? int.MinValue : (int)(value / XYZScalar); } }
+        public double Y { get { return Xi >= int.MinValue ? (double)Yi / XYZScalar : double.NaN; } set { Yi = (int)(value / XYZScalar); } }
+        public double Z { get { return Xi >= int.MinValue ? (double)Zi / XYZScalar : double.NaN; } set { Zi = (int)(value / XYZScalar); } }
+
+        public bool HasCoordinate { get { return Xi != int.MinValue; } }
+
         public int GridID { get; set; }
         public long? SystemAddress { get; set; }
 
@@ -71,6 +84,14 @@ namespace EliteDangerousCore
                 return -1;
         }
 
+        public double DistanceSq(double x, double y, double z)
+        {
+            if (HasCoordinate)
+                return (X - x) * (X - x) + (Y - y) * (Y - y) + (Z - z) * (Z - z);
+            else
+                return -1;
+        }
+
         public bool Cuboid(ISystemBase s2, double min, double max)
         {
             if (s2 != null && HasCoordinate && s2.HasCoordinate)
@@ -92,9 +113,9 @@ namespace EliteDangerousCore
         {
         }
 
-        public SystemClass(string Name)
+        public SystemClass(string name)
         {
-            base.Name = Name;
+            Name = name;
             status = SystemStatusEnum.Unknown;
         }
 
@@ -102,6 +123,7 @@ namespace EliteDangerousCore
         {
             Name = "UnKnown";
             EDSMID = id;
+            status = SystemStatusEnum.Unknown;
         }
 
         public SystemClass(string Name, double vx, double vy, double vz)
@@ -109,6 +131,37 @@ namespace EliteDangerousCore
             base.Name = Name;
             status = SystemStatusEnum.Unknown;
             X = vx; Y = vy; Z = vz;
+        }
+
+        public SystemClass(string Name, int xi, int yi, int zi, long edsmid, int gridid = -1, string eddbproperties = null)
+        {
+            base.Name = Name;
+            Xi = xi; Yi = yi; Zi = zi;
+            EDSMID = edsmid;
+            GridID = gridid == -1 ? EliteDangerousCore.DB.GridId.Id(xi, zi) : gridid;
+            status = SystemStatusEnum.Unknown;
+
+            if ( eddbproperties != null )
+            {
+                try
+                {
+                    JObject jo = JObject.Parse(eddbproperties);
+                    EDDBID = jo["id"].Long();
+                    Faction = jo["controlling_minor_faction"].Str();
+                    Population = jo["population"].Long();
+                    Government = EliteDangerousTypesFromJSON.Government2ID(jo["government"]);
+                    Allegiance = EliteDangerousTypesFromJSON.Allegiance2ID(jo["allegiance"]);
+                    State = EliteDangerousTypesFromJSON.EDState2ID(jo["state"]);
+                    Security = EliteDangerousTypesFromJSON.EDSecurity2ID(jo["security"]);
+                    PrimaryEconomy = EliteDangerousTypesFromJSON.EDEconomy2ID(jo["primary_economy"]);
+                    NeedsPermit = jo["needs_permit"].Int();
+                    EDDBUpdatedAt = jo["updated_at"].Int();
+                }
+                catch ( Exception ex )
+                {
+                    System.Diagnostics.Debug.WriteLine("EDDB Info stored in db failed " + eddbproperties);
+                }
+            }
         }
 
         public SystemStatusEnum status { get; set; }

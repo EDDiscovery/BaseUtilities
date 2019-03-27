@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EliteDangerousCore.SystemDB
+namespace EliteDangerousCore.DB
 {
     public class GridId
     {

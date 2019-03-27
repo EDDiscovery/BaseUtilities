@@ -5,37 +5,31 @@ using System.IO;
 using SQLLiteExtensions;
 using System.Data.Common;
 using System.Data;
+using Newtonsoft.Json.Linq;
+using System.Globalization;
 
-namespace EliteDangerousCore.SystemDB
+namespace EliteDangerousCore.DB
 {
-    public partial class EDSMSystems
+    public partial class SystemsDB
     {
-        public static void DeleteCache()    // for debugging mostly
-        {
-            sectoridcache = null;
-            sectornamecache = null;
-            sectoridcache = new Dictionary<long, Sector>();           // speeds up access, less than 20k of sector names
-            sectornamecache = new Dictionary<string, Sector>();   // speeds up access, less than 20k of sector names
-        }
-
         #region Table Update
 
-        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (StreamReader sr = new StreamReader(filename))         // read directly from file..
-                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty, debugoutputfile);
+                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, reportProgress, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (StringReader sr = new StringReader(data))         // read directly from file..
-                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, tableposfix, presumeempty, debugoutputfile);
+                return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, reportProgress, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, string tablepostfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tablepostfix = "", bool presumeempty = false, string debugoutputfile = null)
         {
             using (JsonTextReader jr = new JsonTextReader(sr))
-                return ParseEDSMJSON(jr, grididallow, ref date, cancelRequested, tablepostfix, presumeempty, debugoutputfile);
+                return ParseEDSMJSON(jr, grididallow, ref date, cancelRequested, reportProgress, tablepostfix, presumeempty, debugoutputfile);
         }
 
         // set tempostfix to use another set of tables
@@ -45,11 +39,14 @@ namespace EliteDangerousCore.SystemDB
                                         bool[] grididallowed,       // null = all, else grid bool value
                                         ref DateTime maxdate,       // updated with latest date
                                         Func<bool> cancelRequested,
+                                        Action<string> reportProgress,
                                         string tablepostfix = "",        // set to add on text to table names to redirect to another table
                                         bool tablesareempty = false,     // set to presume table is empty, so we don't have to do look up queries
                                         string debugoutputfile = null
                                         )
         {
+            sectoridcache = new Dictionary<long, Sector>();     
+            sectornamecache = new Dictionary<string, Sector>(); 
 
             SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer);
 
@@ -66,6 +63,8 @@ namespace EliteDangerousCore.SystemDB
             selectSectorCmd.AddParameter("@sname", DbType.String);
             selectSectorCmd.AddParameter("@gid", DbType.Int32);
 
+            reportProgress?.Invoke("Being EDSM Download");
+
             while (!cancelRequested() && jr_eof == false)
             {
                 int recordstostore = 0;
@@ -78,7 +77,7 @@ namespace EliteDangerousCore.SystemDB
                         {
                             if (jr.TokenType == JsonToken.StartObject)
                             {
-                                EDSMDumpSystem d = new EDSMDumpSystem();
+                                EDSMFileEntry d = new EDSMFileEntry();
 
                                 if (d.Deserialize(jr) && d.id >= 0 && d.name.HasChars() && d.z != int.MinValue)     // if we have a valid record
                                 {
@@ -121,6 +120,8 @@ namespace EliteDangerousCore.SystemDB
                         updates += ProcessUpdates(cn, ref nextnameid, tablepostfix, sw);
 
                    updates += StoreNewEntries(cn,  ref nextnameid, tablepostfix, tablesareempty, sw);
+
+                    reportProgress?.Invoke("EDSM Download updated " + updates);
                 }
 
                 if (jr_eof)
@@ -133,17 +134,25 @@ namespace EliteDangerousCore.SystemDB
             }
 
             System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("L1") + "   " + updates);
+            reportProgress?.Invoke( "EDSM Download finished, updated " + updates);
+
             if (sw != null)
                 sw.Close();
 
             selectSectorCmd.Dispose();
             cn.Dispose();
 
+            sectoridcache = null;
+            sectornamecache = null;
+
             return updates;
         }
 
+
+
+
         // create a new entry for insert in the sector tables 
-        public static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMDumpSystem d, int gid, bool tablesareempty, ref DateTime maxdate, ref long nextsectorid)
+        private static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMFileEntry d, int gid, bool tablesareempty, ref DateTime maxdate, ref long nextsectorid)
         {
             TableWriteData data = new TableWriteData() { edsm = d, classifier = new EliteNameClassifier(d.name), gridid = gid };
 
@@ -211,7 +220,7 @@ namespace EliteDangerousCore.SystemDB
 
         // used only when updating existing tables - see if any entries are there..
 
-        public static long ProcessUpdates(SQLiteConnectionSystem cn,
+        private static long ProcessUpdates(SQLiteConnectionSystem cn,
                                            ref long nextnameid,
                                            string tablepostfix = "",       // set to add on text to table names to redirect to another table
                                            StreamWriter sw = null
@@ -282,7 +291,7 @@ namespace EliteDangerousCore.SystemDB
             return updates;
         }
 
-        public static long StoreNewEntries(SQLiteConnectionSystem cn,
+        private static long StoreNewEntries(SQLiteConnectionSystem cn,
                                            ref long nextnameid,
                                            string tablepostfix = "",        // set to add on text to table names to redirect to another table
                                            bool tablesareempty = false,     // set to presume table is empty, so we don't have to do look up queries
@@ -398,10 +407,112 @@ namespace EliteDangerousCore.SystemDB
 
         #endregion
 
+        #region Upgrade from 102
+
+        public static long UpgradeDB102to200( Func<bool> cancelRequested, Action<string> reportProgress, string tablepostfix)
+        {
+            sectoridcache = new Dictionary<long, Sector>();
+            sectornamecache = new Dictionary<string, Sector>();
+
+            SQLiteConnectionSystem cn1 = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.ReaderWriter);
+            SQLiteConnectionSystem cn2 = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer);
+
+            long nextnameid = 1;                // tables are empty..
+            long nextsectorid = 1;
+
+            long recordpos = 0;
+            long updates = 0;
+            const int BlockSize = 100000;
+            long Limit = long.MaxValue;
+
+            DbCommand selectSectorCmd = cn2.CreateCommand("SELECT id FROM Sectors" + tablepostfix + " WHERE name = @sname AND gridid = @gid");
+            selectSectorCmd.AddParameter("@sname", DbType.String);
+            selectSectorCmd.AddParameter("@gid", DbType.Int32);
+
+            DateTime maxdate = DateTime.MinValue;       // we don't pass this back due to using the same date
+            reportProgress?.Invoke("Being System DB upgrade");
+
+            while ( !cancelRequested() )
+            { 
+                DbCommand selectPrev = cn1.CreateCommand(
+                    "Select s.EdsmId,s.x,s.y,s.z,n.Name,s.UpdateTimeStamp " +
+                    "From EdsmSystems s left Outer Join SystemNames n On n.EdsmId=s.EdsmId " + 
+                    "LIMIT " + BlockSize.ToStringInvariant() + " OFFSET " + recordpos.ToStringInvariant() );
+
+                BaseUtils.AppTicks.TickCountLap("U1");
+
+                int recordstostore = 0;
+
+                using (DbDataReader reader = selectPrev.ExecuteReader())       // find name:gid
+                {
+                    while (reader.Read())      // if found name:gid
+                    {
+                        try
+                        {
+                            EDSMFileEntry d = new EDSMFileEntry();
+                            d.id = (long)reader[0];
+                            d.x = (int)(long)reader[1];
+                            d.y = (int)(long)reader[2];
+                            d.z = (int)(long)reader[3];
+                            d.name = (string)reader[4];
+                            d.date = new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromSeconds((long)reader["UpdateTimestamp"]);
+
+                            int gridid = GridId.Id(d.x, d.y);
+                            CreateNewUpdate(selectSectorCmd, d, gridid, true, ref maxdate, ref nextsectorid);
+                            recordstostore++;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Reading prev table" + ex);
+                        }
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("Reader took " + BaseUtils.AppTicks.TickCountLap("U1") + "   " + recordpos);
+                selectPrev.Dispose();
+
+                if (recordstostore >= 0) 
+                {
+                    updates += StoreNewEntries(cn2, ref nextnameid, tablepostfix, true, null);
+                    reportProgress?.Invoke("System DB upgrade processed " + updates);
+
+                    recordpos += recordstostore;
+
+                    Limit -= recordstostore;
+
+                    if (Limit <= 0)
+                        break;
+
+                    if (SQLiteConnectionSystem.IsReadWaiting)
+                    {
+                        System.Threading.Thread.Sleep(20);      // just sleepy for a bit to let others use the db
+                    }
+
+                    if (recordstostore < BlockSize)             // must have run out
+                        break;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Writer took " + BaseUtils.AppTicks.TickCountLap("U1") + "   " + recordpos);
+            }
+
+            reportProgress?.Invoke("System DB complete, processed " + updates);
+
+            selectSectorCmd.Dispose();
+            cn1.Dispose();
+            cn2.Dispose();
+
+            sectoridcache = null;
+            sectornamecache = null;
+
+            return updates;
+        }
+
+        #endregion
+
         #region Internal Vars and Classes
 
-        static Dictionary<long, Sector> sectoridcache = new Dictionary<long, Sector>();         // used during store.. 
-        static Dictionary<string, Sector> sectornamecache = new Dictionary<string, Sector>();   // used during store.. 
+        static Dictionary<long, Sector> sectoridcache;          // only used during store operation
+        static Dictionary<string, Sector> sectornamecache;
 
         private class Sector
         {
@@ -427,10 +538,75 @@ namespace EliteDangerousCore.SystemDB
 
         private class TableWriteData
         {
-            public EDSMDumpSystem edsm;
+            public EDSMFileEntry edsm;
             public EliteNameClassifier classifier;
             public int gridid;
             public bool alreadyupdated;
+        }
+
+        public class EDSMFileEntry
+        {
+            public bool Deserialize(JsonReader rdr)
+            {
+                while (rdr.Read() && rdr.TokenType == JsonToken.PropertyName)
+                {
+                    string field = rdr.Value as string;
+                    switch (field)
+                    {
+                        case "name":
+                            name = rdr.ReadAsString();
+                            break;
+                        case "id":
+                            id = rdr.ReadAsInt32() ?? 0;
+                            break;
+                        case "date":
+                            date = rdr.ReadAsDateTime() ?? DateTime.MinValue;
+                            break;
+                        case "coords":
+                            {
+                                if (rdr.TokenType != JsonToken.StartObject)
+                                    rdr.Read();
+
+                                while (rdr.Read() && rdr.TokenType == JsonToken.PropertyName)
+                                {
+                                    field = rdr.Value as string;
+                                    double? v = rdr.ReadAsDouble();
+                                    if (v == null)
+                                        return false;
+                                    int vi = (int)(v * 128.0);
+
+                                    switch (field)
+                                    {
+                                        case "x":
+                                            x = vi;
+                                            break;
+                                        case "y":
+                                            y = vi;
+                                            break;
+                                        case "z":
+                                            z = vi;
+                                            break;
+                                    }
+                                }
+
+                                break;
+                            }
+                        default:
+                            rdr.Read();
+                            JToken.Load(rdr);
+                            break;
+                    }
+                }
+
+                return true;
+            }
+
+            public string name;
+            public long id = -1;
+            public DateTime date;
+            public int x = int.MinValue;
+            public int y = int.MinValue;
+            public int z = int.MinValue;
         }
 
         #endregion

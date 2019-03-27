@@ -16,6 +16,7 @@
 
 using SQLLiteExtensions;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 
@@ -89,4 +90,38 @@ public static class SQLiteCommandExtensions
             throw;
         }
     }
+
+    static public T ConvertTo<T>(this DbDataReader r, int index)
+    {
+        Object v = r[index];
+        if (v is System.DBNull)
+            return default(T);
+        else
+            return (T)v;
+    }
+
+    static public List<string> Tables(this SQLExtConnection r)
+    {
+        List<string> tables = new List<string>();
+
+        using (DbCommand cmd = r.CreateCommand("select name From sqlite_master Where type='table'"))
+        {
+            using (DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                    tables.Add((string)reader[0]);
+            }
+        }
+
+        return tables;
+    }
+
+    public static void Vacuum(this SQLExtConnection r)
+    {
+        using (DbCommand cmd = r.CreateCommand("VACUUM"))
+        {
+            cmd.ExecuteNonQuery();
+        }
+    }
+
 }

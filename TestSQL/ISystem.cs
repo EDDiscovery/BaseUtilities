@@ -113,7 +113,6 @@ namespace EliteDangerousCore
         Unknown = 0,
         EDSM = 1,
         EDDiscovery = 3,
-        EDDB = 4,
     }
 
     public interface ISystemBase : IEquatable<ISystemBase>
@@ -122,8 +121,11 @@ namespace EliteDangerousCore
 
         string Name { get; set; }
         double X { get; set; }
+        int Xi { get; set; }
         double Y { get; set; }
+        int Yi { get; set; }
         double Z { get; set; }
+        int Zi { get; set; }
         bool HasCoordinate { get; }
         int GridID { get; set; }
         long? SystemAddress { get; set; }
