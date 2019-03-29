@@ -38,6 +38,12 @@ public static class SQLiteCommandExtensions
         cmd.Parameters.Add(par);
     }
 
+    public static void AddParamsWithValue(this DbCommand cmd, string[] paras, Object[] values)
+    {
+        for (int i = 0; i < paras.Length; i++)
+            cmd.AddParameterWithValue("@" + paras[i], values[i]);
+    }
+
     public static void SetParameterValue(this DbCommand cmd, string name, object val)
     {
         cmd.Parameters[name].Value = val;
@@ -160,6 +166,47 @@ public static class SQLiteCommandExtensions
     {
         var ret = ExplainQueryPlan(r, cmdexplain);
         return "SQL Query:" + Environment.NewLine + ">" + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
+    }
+
+    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null)
+    {
+        string plist = "";
+        string atlist = "";
+        foreach (string s in paras)
+        {
+            plist = plist.AppendPrePad(s, ",");
+            atlist = atlist.AppendPrePad("@" + s, ",");
+        }
+
+        string cmdtext = "INSERT INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
+
+        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        cmd.CreateParams(paras, types);
+        return cmd;
+    }
+
+    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
+    {
+        System.Diagnostics.Debug.Assert(paras.Length == types.Length);
+        for (int i = 0; i < paras.Length; i++)
+        {
+            cmd.AddParameter("@" + paras[i], types[i]);
+        }
+    }
+
+    public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string[] paras, DbType[] types, string where, DbTransaction tx = null)
+    {
+        string plist = "";
+        foreach (string s in paras)
+        {
+            plist = plist.AppendPrePad(s + "=@" + s, ",");
+        }
+
+        string cmdtext = "UPDATE " + table + " SET " + plist + " " + where;
+
+        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        cmd.CreateParams(paras, types);
+        return cmd;
     }
 
 }

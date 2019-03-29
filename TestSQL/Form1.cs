@@ -46,7 +46,7 @@ namespace TestSQL
             }
 
 
-            bool reloadeddb = true;
+            bool reloadeddb = false;
 
             if ( reloadeddb )
             {
@@ -121,6 +121,7 @@ namespace TestSQL
 
             { // 10:1997, 2379 with EDDB lookup, 2557 ascii parse, 2724 minor parse, 4317 primary, 4431 with EDDB JO parse.
                 // 3554 with string format parse.
+                // 2801 with new system of discrete fields
                 List<ISystem> slist;
                 BaseUtils.AppTicks.TickCountLap();
 
@@ -199,8 +200,27 @@ namespace TestSQL
                 BaseUtils.AppTicks.TickCountLap();
                 uint[] colours = null;
                 Vector3[] vertices = null;
-                int v = SystemsDB.GetSystemVector(810, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                int v = SystemsDB.GetSystemVector(810, ref vertices, ref colours, SystemsDB.SystemAskType.AnyStars, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.WriteLine("810 load : " + BaseUtils.AppTicks.TickCountLap());
+
+            }
+
+
+            {
+                BaseUtils.AppTicks.TickCountLap();
+                uint[] colours = null;
+                Vector3[] vertices = null;
+                int v = SystemsDB.GetSystemVector(810, ref vertices, ref colours, SystemsDB.SystemAskType.PopulatedStars, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                System.Diagnostics.Debug.WriteLine("810 load pop : " + BaseUtils.AppTicks.TickCountLap());
+
+            }
+
+            {
+                BaseUtils.AppTicks.TickCountLap();
+                uint[] colours = null;
+                Vector3[] vertices = null;
+                int v = SystemsDB.GetSystemVector(810, ref vertices, ref colours, SystemsDB.SystemAskType.PopulatedStars, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                System.Diagnostics.Debug.WriteLine("810 load un pop : " + BaseUtils.AppTicks.TickCountLap());
 
             }
 

@@ -51,8 +51,10 @@ namespace EliteDangerousCore.DB
 
                 if (ec.IsStandard)
                 {
+                    // TBD EDDB
+
                     using (DbCommand selectSysCmd = cn.CreateCommand(
-                        "SELECT s.x,s.y,s.z,s.edsmid,e.properties " + 
+                        "SELECT s.x,s.y,s.z,s.edsmid " + 
                         "FROM Systems s " +
                         "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +
                         "WHERE s.name = @nid AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
@@ -65,16 +67,17 @@ namespace EliteDangerousCore.DB
                         {
                             if (reader.Read())
                             {
-                                var x = reader[4];
-                                return new SystemClass(ec.ToString(), (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3], eddbproperties: reader.ConvertTo<string>(4));
+                                return new SystemClass(ec.ToString(), (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3]);
                             }
                         }
                     }
                 }
                 else
                 {
+                    // TBD EDDB
+
                     using (DbCommand selectSysCmd = cn.CreateCommand(
-                        "SELECT s.x,s.y,s.z,s.edsmid,e.properties " +
+                        "SELECT s.x,s.y,s.z,s.edsmid " +
                         "FROM Systems s " +
                         "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +
                         "WHERE s.name IN (Select id FROM Names WHERE name=@starname) AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
@@ -86,7 +89,7 @@ namespace EliteDangerousCore.DB
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
                         {
                             if (reader.Read())
-                                return new SystemClass(ec.ToString(), (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3], eddbproperties: reader.ConvertTo<string>(4));
+                                return new SystemClass(ec.ToString(), (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3]);
                         }
                     }
                 }
@@ -118,10 +121,10 @@ namespace EliteDangerousCore.DB
                         // and requires CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name) for fast lookup of nameid on star list
 
                         using (DbCommand selectSysCmd = cn.CreateCommand(
-                                "SELECT s.x,s.y,s.z,s.edsmid,n.name,e.properties " +
+                                "SELECT s.x,s.y,s.z,s.edsmid,n.name," + eddbParameterList + " " +
                                 "FROM Systems s " +
                                 "JOIN Names n ON n.id = s.name " +
-                                "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +  // e.properites is optional return
+                                "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +  
                                 "WHERE s.name IN (Select id FROM Names WHERE name LIKE @starname) AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
                                 ))
                         {
@@ -133,7 +136,8 @@ namespace EliteDangerousCore.DB
                                 while (reader.Read())
                                 {
                                     string nameout = (ec.SectorName != EliteNameClassifier.NonStandard ? ec.SectorName + " " : "") + (string)reader[4];
-                                    ret.Add(new SystemClass(nameout, (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3], eddbproperties: reader.ConvertTo<string>(5)));
+                                    SystemClass sc = MakeSystem(nameout, (int)(long)reader[0], (int)(long)reader[1], (int)(long)reader[2], (long)reader[3], reader, 5);
+                                    ret.Add(sc);
                                 }
                             }
                         }
@@ -145,7 +149,8 @@ namespace EliteDangerousCore.DB
                         // Requires CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sector) (Big cost)
 
                         using (DbCommand selectSysCmd = cn.CreateCommand(
-                            "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.name,e.properties " +
+                            //      0      1      2   3   4   5        6            7       
+                            "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.name," + eddbParameterList + " " +
                             "FROM Systems s " +
                             "JOIN Sectors c ON s.sector = c.id " +
                             "LEFT OUTER JOIN Names n ON s.name=n.id " +     // n.Name is optional return
@@ -164,7 +169,8 @@ namespace EliteDangerousCore.DB
                                         ecs.StarName = (string)r6;
                                     ecs.SectorName = (string)reader[0];
 
-                                    ret.Add(new SystemClass(ecs.ToString(), (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5], eddbproperties: reader.ConvertTo<string>(7)));
+                                    SystemClass s = MakeSystem(ecs.ToString(), (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5], reader, 7);
+                                    ret.Add(s);
                                 }
                             }
                         }
@@ -175,7 +181,7 @@ namespace EliteDangerousCore.DB
                     // Requires CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name) Big cost
 
                     using (DbCommand selectSysCmd = cn.CreateCommand(
-                            "SELECT s.name,s.x,s.y,s.z,s.edsmid,e.properties " + 
+                            "SELECT s.name,s.x,s.y,s.z,s.edsmid," + eddbParameterList + " " +
                             "FROM Systems s " +
                             "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " + // e.properties is optional return
                             "WHERE s.name >= @nidlow AND s.name <= @nidhigh AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
@@ -193,7 +199,8 @@ namespace EliteDangerousCore.DB
                             {
                                 EliteNameClassifier s = new EliteNameClassifier((ulong)(long)reader[0]);
                                 s.SectorName = ec.SectorName;
-                                ret.Add(new SystemClass(s.ToString(), (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (long)reader[4], eddbproperties: reader.ConvertTo<string>(5)));
+                                SystemClass sc = MakeSystem(s.ToString(), (int)(long)reader[1], (int)(long)reader[2], (int)(long)reader[3], (long)reader[4], reader, 5);
+                                ret.Add(sc);
                             }
                         }
                     }
@@ -223,8 +230,10 @@ namespace EliteDangerousCore.DB
             {
                 // Requires index on Sector(gridid), Systems(sector)
 
+                // TBD EDDB
+
                 using (DbCommand cmd = cn.CreateCommand(
-                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid,e.properties " +
+                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid " +
                     "FROM Systems s " +
                     "JOIN Sectors c ON c.id = s.sector " +
                     "LEFT OUTER JOIN Names n ON s.name=n.id " +     // n.Name is optional return
@@ -255,7 +264,7 @@ namespace EliteDangerousCore.DB
                     {
                         while (reader.Read())// && distlist.Count < maxitems)           // already sorted, and already limited to max items
                         {
-                            SystemClass s = FromReaderDBInStdOrder(reader, reader.ConvertTo<string>(8));
+                            SystemClass s = FromReaderDBInStdOrder(reader);
                             double distsq = s.DistanceSq(x, y, z);
                             if ((!spherical || distsq <= maxdist * maxdist))// MUST use duplicate double list to protect against EDSM having two at the same point
                             {
@@ -286,8 +295,9 @@ namespace EliteDangerousCore.DB
 
                 // Requires Systems (sector), Sectors(Gridid)
 
+                // TBD EDDB
                 using (DbCommand cmd = cn.CreateCommand(
-                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid,e.properties " +
+                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid " +
                     "FROM Systems s " +
                     "JOIN Sectors c ON c.id = s.sector " +
                     "LEFT OUTER JOIN Names n ON s.name=n.id " +     // n.Name is optional return
@@ -311,7 +321,7 @@ namespace EliteDangerousCore.DB
                     {
                         while (reader.Read())
                         {
-                            return FromReaderDBInStdOrder(reader, reader.ConvertTo<string>(8));
+                            return FromReaderDBInStdOrder(reader);
                         }
                     }
                 }
@@ -338,8 +348,10 @@ namespace EliteDangerousCore.DB
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
+                // TBD EDDB
+
                 using (DbCommand cmd = cn.CreateCommand(
-                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid,e.properties " +
+                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid " +
                     "FROM Systems s " +
                     "JOIN Sectors c on c.id = s.sector " +
                     "LEFT OUTER JOIN Names n on s.name=n.id " + //n.name is optional return
@@ -374,7 +386,7 @@ namespace EliteDangerousCore.DB
                     {
                         while (reader.Read())
                         {
-                            SystemClass s = FromReaderDBInStdOrder(reader, reader.ConvertTo<string>(8));
+                            SystemClass s = FromReaderDBInStdOrder(reader);
 
                             Point3D syspos = new Point3D(s.X, s.Y, s.Z);
                             double distancefromwantedx2 = Point3D.DistanceBetweenX2(wantedpos, syspos); // range between the wanted point and this, ^2
@@ -423,7 +435,12 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        public static int GetSystemVector<V>(int gridid, ref V[] vertices, ref uint[] colours, int percentage, Func<int,int,int, V> tovect)
+        public enum SystemAskType { AnyStars, PopulatedStars, UnPopulatedStars };
+
+
+       // rethink - in stead of two queries, have a version which returns two arrays
+
+        public static int GetSystemVector<V>(int gridid, ref V[] vertices, ref uint[] colours, SystemAskType ask, int percentage, Func<int,int,int, V> tovect)
         {
             int numvertices = 0;
 
@@ -438,12 +455,20 @@ namespace EliteDangerousCore.DB
 
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
+                string cmdtext = ( ask != SystemAskType.AnyStars ) ?
+                    "SELECT s.id,s.x,s.y,s.z,e.eddbid " + 
+                    "FROM Systems s " +
+                    "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid "+
+                    "WHERE s.sector IN (Select id FROM Sectors c WHERE c.gridid=@gridid) " + 
+                    "AND e.eddbid " + (ask == SystemAskType.PopulatedStars ? "IS NOT NULL " : "IS NULL ")
+                    :
+                    "SELECT s.id,s.x,s.y,s.z " +
+                    "FROM Systems s " +
+                    "WHERE s.sector IN (Select id FROM Sectors c WHERE c.gridid=@gridid)";
+
                 // Requires Systems(sector) index
 
-                using (DbCommand cmd = cn.CreateCommand(
-                    "SELECT id,x,y,z " + 
-                    "FROM Systems s " + 
-                    "WHERE s.sector IN (Select id FROM Sectors c WHERE c.gridid=@gridid)"))
+                using (DbCommand cmd = cn.CreateCommand(cmdtext))
                 {
                     cmd.AddParameterWithValue("@gridid", gridid);
 
@@ -451,7 +476,6 @@ namespace EliteDangerousCore.DB
 
                     if (percentage < 100)
                         cmd.CommandText += " AND ((s.id*2331)%100) <" + percentage.ToStringInvariant();     // bit of random mult in id to mix it up
-
                     vertices = new V[250000];
                     colours = new uint[250000];
 
@@ -485,7 +509,7 @@ namespace EliteDangerousCore.DB
 
                     if (gridid == GridId.SolGrid && vertices != null)    // BODGE do here, better once on here than every star for every grid..
                     {                       // replace when we have a better naming system
-                        int solindex = Array.IndexOf(vertices, tovect(0,0,0));
+                        int solindex = Array.IndexOf(vertices, tovect(0, 0, 0));
                         if (solindex >= 0)
                             colours[solindex] = 0x00ffff;   //yellow
                     }
@@ -524,16 +548,36 @@ namespace EliteDangerousCore.DB
         }
 
 
-        //helper function - order of paras must be SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid .  EDDB prop is optional
-        private static SystemClass FromReaderDBInStdOrder(DbDataReader reader, string eddbproperties = null)
+        //helper function - order of paras must be SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid(7)
+        private static SystemClass FromReaderDBInStdOrder(DbDataReader reader)
         {
             EliteNameClassifier ec = new EliteNameClassifier((ulong)(long)reader[1]);
             Object r6 = reader[6];
             if (!Convert.IsDBNull(r6))
                 ec.StarName = (string)r6;
             ec.SectorName = (string)reader[0];
-            return new SystemClass(ec.ToString(), (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5], (int)(long)reader[7], eddbproperties);
+            return new SystemClass(ec.ToString(), (int)(long)reader[2], (int)(long)reader[3], (int)(long)reader[4], (long)reader[5], (int)(long)reader[7]);
         }
+
+        //                                   0        1               2            3         4            5            6       7          8                9            10      11
+        const string eddbParameterList = "e.eddbid,e.eddbupdatedat,e.population,e.faction,e.government,e.allegiance,e.state,e.security,e.primaryeconomy,e.power,e.powerstate,e.needspermit";
+
+        static SystemClass MakeSystem(string name, int xi, int yi, int zi, long edsmid, DbDataReader reader, int offset, int gridid = -1)
+        {
+            if (reader[offset] is System.DBNull)
+            {
+                return new SystemClass(name, xi, yi, zi, gridid);
+            }
+            else
+            {
+                return new SystemClass(name, xi, yi, zi, edsmid,
+                                (long)reader[offset], (int)(long)reader[offset + 1], (long)reader[offset + 2], (string)reader[offset + 3],
+                                (EDGovernment)(long)reader[offset + 4], (EDAllegiance)(long)reader[offset + 5], (EDState)(long)reader[offset + 6], (EDSecurity)(long)reader[offset + 7],
+                                (EDEconomy)(long)reader[offset + 8], (string)reader[offset + 9], (string)reader[offset + 10], (int)(long)reader[offset + 11],
+                                gridid);
+            }
+        }
+
 
 
     }

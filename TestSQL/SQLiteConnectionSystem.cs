@@ -52,7 +52,7 @@ namespace EliteDangerousCore.DB
                     "DROP TABLE IF EXISTS Stations",
                     "DROP TABLE IF EXISTS SystemAliases",
                     "DROP TABLE IF EXISTS station_commodities",
-                    "CREATE TABLE IF NOT EXISTS EDDB (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE, eddbupdatedat INTEGER, properties TEXT)",
+                    "CREATE TABLE IF NOT EXISTS EDDB (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE, eddbid INTEGER, eddbupdatedat INTEGER, population INTEGER, faction TEXT, government INTEGER, allegiance INTEGER, state INTEGER, security INTEGER, primaryeconomy INTEGER, needspermit INTEGER, power TEXT, powerstate TEXT, properties TEXT)",
                     });
 
                 CreateStarTables(conn);                     // ensure we have

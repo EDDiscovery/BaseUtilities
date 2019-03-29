@@ -146,6 +146,8 @@ namespace EliteDangerousCore
         EDState State { get; set; }
         EDSecurity Security { get; set; }
         EDEconomy PrimaryEconomy { get; set; }
+        string Power { get; set; }
+        string PowerState { get; set; }
         int NeedsPermit { get; set; }
         int EDDBUpdatedAt { get; set; }
         bool HasEDDBInformation { get; }

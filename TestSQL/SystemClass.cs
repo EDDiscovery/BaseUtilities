@@ -133,7 +133,20 @@ namespace EliteDangerousCore
             X = vx; Y = vy; Z = vz;
         }
 
-        public SystemClass(string Name, int xi, int yi, int zi, long edsmid, int gridid = -1, string eddbproperties = null)
+        public SystemClass(string Name, int xi, int yi, int zi, long edsmid, int gridid = -1)
+        {
+            base.Name = Name;
+            Xi = xi; Yi = yi; Zi = zi;
+            EDSMID = edsmid;
+            GridID = gridid == -1 ? EliteDangerousCore.DB.GridId.Id(xi, zi) : gridid;
+            status = SystemStatusEnum.Unknown;
+        }
+
+        public SystemClass(string Name, int xi, int yi, int zi, long edsmid, 
+                            long eddbid, int eddbupdateat, long population, string faction , 
+                            EDGovernment g, EDAllegiance a, EDState s, EDSecurity security, 
+                            EDEconomy eco, string power, string powerstate, int needspermit,
+                            int gridid = -1)
         {
             base.Name = Name;
             Xi = xi; Yi = yi; Zi = zi;
@@ -141,39 +154,32 @@ namespace EliteDangerousCore
             GridID = gridid == -1 ? EliteDangerousCore.DB.GridId.Id(xi, zi) : gridid;
             status = SystemStatusEnum.Unknown;
 
-            if (eddbproperties != null)
-            {
-                try
-                {
-                    string[] items = eddbproperties.Split('\u2B94');
-                    EDDBID = items[0].InvariantParseLong(0);
-                    Faction = items[1];
-                    Population = items[2].InvariantParseLong(1);
-                    Government = EliteDangerousTypesFromJSON.Government2ID(items[3]);
-                    Allegiance = EliteDangerousTypesFromJSON.Allegiance2ID(items[4]);
-                    State = EliteDangerousTypesFromJSON.EDState2ID(items[5]);
-                    Security = EliteDangerousTypesFromJSON.EDSecurity2ID(items[6]);
-                    PrimaryEconomy = EliteDangerousTypesFromJSON.EDEconomy2ID(items[7]);
-                    NeedsPermit = items[8].InvariantParseInt(0);
-                    EDDBUpdatedAt = items[9].InvariantParseInt(0);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("EDDB Info stored in db failed " + eddbproperties);
-                }
-            }
+            EDDBID = eddbid;
+            Population = population;
+            Faction = faction;
+            Government = g;
+            Allegiance = a;
+            State = s;
+            Security = security;
+            PrimaryEconomy = eco;
+            Power = power;
+            PowerState = powerstate;
+            NeedsPermit = needspermit;
+            EDDBUpdatedAt = eddbupdateat;
         }
 
         public SystemStatusEnum status { get; set; }
 
         public long EDDBID { get; set; }
+        public long Population { get; set; }        // may be 0 and still be in eddb pop list
         public string Faction { get; set; }
-        public long Population { get; set; }
         public EDGovernment Government { get; set; }
         public EDAllegiance Allegiance { get; set; }
         public EDState State { get; set; }
         public EDSecurity Security { get; set; }
         public EDEconomy PrimaryEconomy { get; set; }
+        public string Power { get; set; }
+        public string PowerState { get; set; }
         public int NeedsPermit { get; set; }
         public int EDDBUpdatedAt { get; set; }
 
@@ -181,7 +187,7 @@ namespace EliteDangerousCore
         {
             get
             {
-                return Population != 0 || Government != EDGovernment.Unknown || NeedsPermit != 0 || Allegiance != EDAllegiance.Unknown ||
+                return Government != EDGovernment.Unknown || NeedsPermit != 0 || Allegiance != EDAllegiance.Unknown ||
                        State != EDState.Unknown || Security != EDSecurity.Unknown || PrimaryEconomy != EDEconomy.Unknown || (Faction != null && Faction.Length > 0);
             }
         }

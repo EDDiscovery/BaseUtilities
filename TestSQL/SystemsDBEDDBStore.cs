@@ -27,7 +27,6 @@ namespace EliteDangerousCore.DB
         public static long ParseEDDBJSON(TextReader tr, Func<bool> cancelRequested)
         {
             long updated = 0;
-            long inserted = 0;
             long processed = 0;
 
             bool eof = false;
@@ -43,15 +42,14 @@ namespace EliteDangerousCore.DB
                 DbCommand selectCmd = cn.CreateCommand("SELECT eddbupdatedat FROM EDDB WHERE edsmid = @edsmid LIMIT 1", txn);   // 1 return matching ID
                 selectCmd.AddParameter("@Edsmid", DbType.Int64);
 
-                DbCommand insertCmd = cn.CreateCommand("INSERT INTO EDDB (edsmid, eddbupdatedat,properties) VALUES (@edsmid, @eddbupdatedat, @properties)", txn);
-                insertCmd.AddParameter("@edsmid", DbType.Int64);
-                insertCmd.AddParameter("@eddbupdatedat", DbType.Int64);
-                insertCmd.AddParameter("@properties", DbType.String);
+                string[] dbfields = { "edsmid", "eddbid", "eddbupdatedat", "population",
+                                        "faction", "government", "allegiance", "state",
+                                        "security", "primaryeconomy", "needspermit", "power",
+                                        "powerstate" , "properties" };
+                DbType[] dbfieldtypes = { DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.String, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.String ,DbType.String ,DbType.String };
 
-                DbCommand updateCmd = cn.CreateCommand("UPDATE EDDB SET eddbupdatedat=@eddbupdatedat, properties=@properties WHERE edsmid=@edsmid", txn);
-                updateCmd.AddParameter("@edsmid", DbType.Int64);
-                updateCmd.AddParameter("@eddbupdatedat", DbType.Int64);
-                updateCmd.AddParameter("@properties", DbType.String);
+                DbCommand insertCmd = cn.CreateInsert("EDDB", dbfields, dbfieldtypes, txn);
+                DbCommand updateCmd = cn.CreateUpdate("EDDB", dbfields, dbfieldtypes, "WHERE edsmid=@edsmid", txn);
 
                 while (!SQLiteConnectionSystem.IsReadWaiting)
                 {
@@ -84,30 +82,49 @@ namespace EliteDangerousCore.DB
                                 }
                             }
 
-                            if (dbupdated_at != 0)
+                           // if (dbupdated_at == 0 || jsonupdatedat != dbupdated_at)
                             {
-                                //if (jsonupdatedat != dbupdated_at)
+                                DbCommand cmd = dbupdated_at != 0 ? updateCmd : insertCmd;
+
+                                cmd.Parameters["@edsmid"].Value = jsonedsmid;
+                                cmd.Parameters["@eddbid"].Value = jo["id"].Long();
+                                cmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
+                                cmd.Parameters["@population"].Value = jo["population"].Long();
+                                cmd.Parameters["@faction"].Value = jo["controlling_minor_faction"].Str("Unknown");
+                                cmd.Parameters["@government"].Value = EliteDangerousTypesFromJSON.Government2ID(jo["government"].Str("Unknown"));
+                                cmd.Parameters["@allegiance"].Value = EliteDangerousTypesFromJSON.Allegiance2ID(jo["allegiance"].Str("Unknown"));
+
+                                EDState edstate = EDState.Unknown;
+
+                                try
                                 {
-                                    updateCmd.Parameters["@edsmid"].Value = jsonedsmid;
-                                    updateCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
-                                    updateCmd.Parameters["@properties"].Value = RemoveStuff(jo);
-                                    updateCmd.ExecuteNonQuery();
-                                    updated++;
+                                    if (jo["states"] != null && jo["states"].HasValues)
+                                    {
+                                        JToken tk = jo["states"].First;     // we take the first one whatever
+                                        JObject jostate = (JObject)tk;
+                                        edstate = EliteDangerousTypesFromJSON.EDState2ID(jostate["name"].Str("Unknown"));
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                insertCmd.Parameters["@edsmid"].Value = jsonedsmid;
-                                insertCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
-                                insertCmd.Parameters["@properties"].Value = RemoveStuff(jo);
-                                insertCmd.ExecuteNonQuery();
-                                inserted++;
+                                catch ( Exception ex )
+                                {
+                                    System.Diagnostics.Debug.WriteLine("EDDB JSON file exception for states " + ex.ToString());
+                                }
+
+                                cmd.Parameters["@state"].Value = edstate;
+                                cmd.Parameters["@security"].Value = EliteDangerousTypesFromJSON.EDSecurity2ID(jo["security"].Str("Unknown"));
+                                cmd.Parameters["@primaryeconomy"].Value = EliteDangerousTypesFromJSON.EDEconomy2ID(jo["primary_economy"].Str("Unknown"));
+                                cmd.Parameters["@needspermit"].Value = jo["needs_permit"].Int(0);
+                                cmd.Parameters["@power"].Value = jo["power"].Str("None");
+                                cmd.Parameters["@powerstate"].Value = jo["power_state"].Str("N/A");
+                                cmd.Parameters["@properties"].Value = RemoveFieldsFromJSON(jo);
+                                cmd.ExecuteNonQuery();
+                                updated++;
                             }
 
                             processed++;
                             if (processed % 1000 == 0)
                             {
-                                System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("EDDB") + "   " + updated + " " + inserted);
+                                System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("EDDB") + "   " + updated);
                             }
                         }
                     }
@@ -125,36 +142,37 @@ namespace EliteDangerousCore.DB
                 cn.Dispose();
             }
 
-            return updated + inserted;
+            return updated;
         }
 
-        const string splitchar = "\u2B94";
-
-        static private string RemoveStuff(JObject jo)
+        static private string RemoveFieldsFromJSON(JObject jo)
         {
-            return jo["id"].Long().ToStringInvariant() +
-            splitchar + jo["controlling_minor_faction"].Str() +
-            splitchar + jo["population"].Long().ToStringInvariant() +
-            splitchar + jo["government"].Str() +
-            splitchar + jo["allegiance"].Str() +
-            splitchar + jo["state"].Str() +
-            splitchar + jo["security"].Str() +
-            splitchar + jo["primary_economy"].Str() +
-            splitchar + jo["needs_permit"].Int().ToStringInvariant() +
-            splitchar + jo["updated_at"].Int().ToStringInvariant();
-       }
+            jo.Remove("x");
+            jo.Remove("y");
+            jo.Remove("z");
+            jo.Remove("edsm_id");
+            jo.Remove("id");
+            jo.Remove("name");
+            jo.Remove("is_populated");
+            jo.Remove("population");
+            jo.Remove("government");
+            jo.Remove("government_id");
+            jo.Remove("allegiance");
+            jo.Remove("allegiance_id");
+            jo.Remove("state");
+            jo.Remove("security");
+            jo.Remove("security_id");
+            jo.Remove("primary_economy");
+            jo.Remove("primary_economy_id");
+            jo.Remove("power");
+            jo.Remove("power_state");
+            jo.Remove("power_state_id");
+            jo.Remove("needs_permit");
+            jo.Remove("updated_at");
+            jo.Remove("controlling_minor_faction");
 
-
-
-
-        //    jo.Remove("x");
-        //    jo.Remove("y");
-        //    jo.Remove("z");
-        //    jo.Remove("edsm_id");
-        //    jo.Remove("name");
-        //    jo.Remove("is_populated");
-        //    return jo.ToString(Formatting.None);
-        //}
+            return jo.ToString(Formatting.None);
+        }
     }
 }
 
