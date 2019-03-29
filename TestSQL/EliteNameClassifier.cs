@@ -4,17 +4,23 @@ namespace EliteDangerousCore
 {
     public class EliteNameClassifier
     {
-        public const string NonStandard = "NonStandard";
+        public const string NonStandard = "NonStandard";        // meaning the sector name of HIP x or Sol - so its not one of the standard names
 
-        public enum NameType { NonStandard, Identifier, Masscode, NValue, N1ValueOnly };
-        public NameType EntryType = NameType.NonStandard;   // 0 non standard, 1 CQ-L, 2 mass code, 3 N1, 4 N2
+        public enum NameType
+        {
+            //                                                              String Inputs                                             
+            NonStandard,    // like HIP 6 or Sol.                           SectorName = NonStandard, StarName = full text of name, Lx,MassCode,Nvalue = 0
+            Identifier,     // Pru Eurk CQ-L                                SectorName = sector, StarName = null, L1L2L3 set
+            Masscode,       // Pru Eurk CQ-L d                              SectorName = sector, StarName = null, L1L2L3 set, MassCode set
+            NValue,         // Pru Eurk CQ-L d2-3 or Pru Eurk CQ-L d2       SectorName = sector, StarName = null, L1L2L3 set, MassCode set, NValue set
+            N1ValueOnly     // Pru Eurk CQ-L d2-                            SectorName = sector, StarName = null, L1L2L3 set, MassCode set, NValue set
+        };
 
-        public string SectorName = null;    // for string inputs, set always, the sector name or "NonStandard".            For numbers, null
-
-        public string StarName = null;      // for string inputs, set for surveys and non standard names                   For numbers, null
+        public NameType EntryType = NameType.NonStandard;    
+        public string SectorName = null;    // for string inputs, set always, the sector name (Pru Eurk or HIP) or "NonStandard" (Sol).            For numbers, null
+        public string StarName = null;      // for string inputs, set for HIP type names and non standard names, else                    For numbers, null
+        public uint L1, L2, L3, MassCode, NValue;   // set for standard names
         public long NameId = 0;             // set for number inputs
-
-        public uint L1, L2, L3, MassCode, NValue;
 
         // ID Standard
         //      ID Bit 42 = 1
@@ -34,9 +40,10 @@ namespace EliteDangerousCore
         private const int MassMarker = 24;
         private const int NMarker = 0;
 
-        public bool IsStandard { get { return EntryType>=NameType.NValue; } }
+        public bool IsStandard { get { return EntryType >= NameType.NValue; } }     // meaning L1L2L3 MassCode NValue is set..
+        public bool IsNonStandard { get { return EntryType == NameType.NonStandard; } } // meaning SectorName/StarName is set if string input, or NameId if not.
 
-        public ulong ID
+        public ulong ID // get the ID code
         {
             get      
             {
@@ -49,7 +56,8 @@ namespace EliteDangerousCore
                     return (ulong)(NameId);
             }
         }
-        public ulong IDHigh
+
+        public ulong IDHigh // get the ID code, giving parts not set the maximum value.  Useful for wildcard searches when code has been set by a string
         {
             get      
             {
@@ -102,7 +110,7 @@ namespace EliteDangerousCore
             Classify(id);
         }
 
-        public void Classify( ulong id)
+        public void Classify( ulong id)     // classify an ID.
         {
             if (IsIDStandard(id))
             {
@@ -123,7 +131,7 @@ namespace EliteDangerousCore
             SectorName = StarName = null;
         }
 
-        public void Classify(string starname)
+        public void Classify(string starname)   // classify a string
         {
             EntryType = NameType.NonStandard;
 
@@ -190,23 +198,24 @@ namespace EliteDangerousCore
                     for (int j = 1; j < i; j++)
                         SectorName = SectorName + " " + nameparts[j];
 
+                    StarName = null;
                     break;
-                }
+                } // end if
             }
 
-            if (EntryType == 0)
+            if (EntryType == NameType.NonStandard)
             {
                 string[] surveys = new string[] { "HIP", "2MASS", "HD", "LTT", "TYC", "NGC", "HR", "LFT", "LHS", "LP", "Wolf" };
 
                 if (surveys.Contains(nameparts[0]))
                 {
                     SectorName = nameparts[0];
-                    StarName = starname.Mid(nameparts[0].Length + 1);
+                    StarName = starname.Mid(nameparts[0].Length + 1).Trim();
                 }
                 else
                 {
                     SectorName = NonStandard;
-                    StarName = starname;
+                    StarName = starname.Trim();
                 }
             }
         }

@@ -141,23 +141,23 @@ namespace EliteDangerousCore
             GridID = gridid == -1 ? EliteDangerousCore.DB.GridId.Id(xi, zi) : gridid;
             status = SystemStatusEnum.Unknown;
 
-            if ( eddbproperties != null )
+            if (eddbproperties != null)
             {
                 try
                 {
-                    JObject jo = JObject.Parse(eddbproperties);
-                    EDDBID = jo["id"].Long();
-                    Faction = jo["controlling_minor_faction"].Str();
-                    Population = jo["population"].Long();
-                    Government = EliteDangerousTypesFromJSON.Government2ID(jo["government"]);
-                    Allegiance = EliteDangerousTypesFromJSON.Allegiance2ID(jo["allegiance"]);
-                    State = EliteDangerousTypesFromJSON.EDState2ID(jo["state"]);
-                    Security = EliteDangerousTypesFromJSON.EDSecurity2ID(jo["security"]);
-                    PrimaryEconomy = EliteDangerousTypesFromJSON.EDEconomy2ID(jo["primary_economy"]);
-                    NeedsPermit = jo["needs_permit"].Int();
-                    EDDBUpdatedAt = jo["updated_at"].Int();
+                    string[] items = eddbproperties.Split('\u2B94');
+                    EDDBID = items[0].InvariantParseLong(0);
+                    Faction = items[1];
+                    Population = items[2].InvariantParseLong(1);
+                    Government = EliteDangerousTypesFromJSON.Government2ID(items[3]);
+                    Allegiance = EliteDangerousTypesFromJSON.Allegiance2ID(items[4]);
+                    State = EliteDangerousTypesFromJSON.EDState2ID(items[5]);
+                    Security = EliteDangerousTypesFromJSON.EDSecurity2ID(items[6]);
+                    PrimaryEconomy = EliteDangerousTypesFromJSON.EDEconomy2ID(items[7]);
+                    NeedsPermit = items[8].InvariantParseInt(0);
+                    EDDBUpdatedAt = items[9].InvariantParseInt(0);
                 }
-                catch ( Exception ex )
+                catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine("EDDB Info stored in db failed " + eddbproperties);
                 }

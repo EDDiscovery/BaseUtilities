@@ -8,6 +8,8 @@ namespace EliteDangerousCore.DB
 {
     public class GridId
     {
+        private const int GridSize = 1000;              // based on 1000x1000 min size
+
         public const int GridXRange = 20;
         static private int[] compresstablex = {
                                                 0,1,1,1,1, 2,2,2,2,2,                   // 0   -20
@@ -39,74 +41,31 @@ namespace EliteDangerousCore.DB
 
         private const int ZMult = 100;
 
-        public static int Id(float x, float z)
+        public static int Id(double x, double z)
         {
             x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
             z = Math.Min(Math.Max(z - zbot, 0), ztop - zbot);           // 70500
-            x /= 1000;                                                  // 0-40.5 inc
-            z /= 1000;                                                  // 0-70.5 inc
+            x /= (float)GridSize;                                       // 0-40.5 inc
+            z /= (float)GridSize;                                       // 0-70.5 inc
             return compresstablex[(int)x] + ZMult * compresstablez[(int)z];
         }
 
         public static int Id(int x128, int z128)
         {
-            float x = (float)x128 / 128.0f;
-            float z = (float)z128 / 128.0f;
-            x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
-            z = Math.Min(Math.Max(z - zbot, 0), ztop - zbot);           // 70500
-            x /= 1000;                                                  // 0-40.5 inc
-            z /= 1000;                                                  // 0-70.5 inc
-            return compresstablex[(int)x] + ZMult * compresstablez[(int)z];
+            return Id((double)x128 / 128.0, (double)z128 / 128.0);
         }
 
-        public static int IdFromComponents(int x, int z)                // given x grid/ y grid give ID
+        public static List<int> Ids(double minx, double maxx, double minz, double maxz)
         {
-            return x + ZMult * z;
-        }
-
-        public static bool XZ(int id, out float x, out float z, bool mid = true)         // given id, return x/z pos of left bottom
-        {
-            x = 0; z = 0;
-            if (id >= 0)
+            int botleft = Id(minx, minz);
+            int topright = Id(maxx, maxz);
+            List<int> ids = new List<int>();
+            for (int x = botleft % ZMult; x <= topright % ZMult; x++)
             {
-                int xid = (id % ZMult);
-                int zid = (id / ZMult);
-
-                if (xid < GridXRange && zid < GridZRange)
-                {
-                    for (int i = 0; i < compresstablex.Length; i++)
-                    {
-                        if (compresstablex[i] == xid)
-                        {
-                            double startx = i * 1000 + xleft;
-
-                            while (i < compresstablex.Length && compresstablex[i] == xid)
-                                i++;
-
-                            x = (mid) ? (float)((((i * 1000) + xleft) + startx) / 2.0) : (float)startx;
-                            break;
-                        }
-                    }
-
-                    for (int i = 0; i < compresstablez.Length; i++)
-                    {
-                        if (compresstablez[i] == zid)
-                        {
-                            double startz = i * 1000 + zbot;
-
-                            while (i < compresstablez.Length && compresstablez[i] == zid)
-                                i++;
-
-                            z = (mid) ? (float)((((i * 1000) + zbot) + startz) / 2.0) : (float)startz;
-                            break;
-                        }
-                    }
-
-                    return true;
-                }
+                for (int z = botleft / ZMult; z <= topright / ZMult; z++)
+                    ids.Add(IdFromComponents(x, z));
             }
-
-            return false;
+            return ids;
         }
 
         public static List<int> AllId()
@@ -120,6 +79,57 @@ namespace EliteDangerousCore.DB
             }
             return list;
         }
+
+        public static int IdFromComponents(int x, int z)                // given x grid/ y grid give ID
+        {
+            return x + ZMult * z;
+        }
+
+        public static bool XZ(int id, out float x, out float z, bool mid = true)         // given id, return x/z pos of left bottom or mid
+        {
+            x = 0; z = 0;
+            if (id >= 0)
+            {
+                int xid = (id % ZMult);
+                int zid = (id / ZMult);
+
+                if (xid < GridXRange && zid < GridZRange)
+                {
+                    for (int i = 0; i < compresstablex.Length; i++)
+                    {
+                        if (compresstablex[i] == xid)
+                        {
+                            double startx = i * GridSize + xleft;
+
+                            while (i < compresstablex.Length && compresstablex[i] == xid)
+                                i++;
+
+                            x = (mid) ? (float)((((i * GridSize) + xleft) + startx) / 2.0) : (float)startx;
+                            break;
+                        }
+                    }
+
+                    for (int i = 0; i < compresstablez.Length; i++)
+                    {
+                        if (compresstablez[i] == zid)
+                        {
+                            double startz = i * GridSize + zbot;
+
+                            while (i < compresstablez.Length && compresstablez[i] == zid)
+                                i++;
+
+                            z = (mid) ? (float)((((i * GridSize) + zbot) + startz) / 2.0) : (float)startz;
+                            break;
+                        }
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
 
         public static int[] XLines(int endentry)            // fill in the LY values, plus an end stop one
         {

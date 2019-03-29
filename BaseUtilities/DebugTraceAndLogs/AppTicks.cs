@@ -44,22 +44,35 @@ namespace BaseUtils
             }
         }
 
-        public static string TickCountLap(string id, bool reset = false)        // lap time to last recorded tick of this id
+        // ID starting with @ means don't print it
+
+        public static Tuple<string,int> TickCountLapDelta(string id, bool reset = false)        // lap time to last recorded tick of this id
         {
             long tc = TickCount;
+            int delta = 0;
             string s;
+            if (id.StartsWith("@"))
+                id = "";
+            else
+                id = " " + id;
 
             if (reset || !laptimes.ContainsKey(id))     // if reset, or not present
             {
-                s = string.Format("{0} {1}", tc, id);
+                s = string.Format("{0}{1}", tc, id);
             }
             else
             {
-                s = string.Format("{0} {1}+{2}", tc, id, tc - laptimes[id]);
+                delta = (int)(tc - laptimes[id]);
+                s = string.Format("{0}{1}+{2}", tc, id, delta);
             }
 
             laptimes[id] = tc;
-            return s;
+            return new Tuple<string,int>(s,delta);
+        }
+
+        public static string TickCountLap(string id, bool reset = false)        // lap time to last recorded tick of this id
+        {
+            return TickCountLapDelta(id, reset).Item1;
         }
 
         public static string TickCountLap(Object id, bool reset = false)        // lap time to last recorded tick of this object used as an identifier
@@ -74,7 +87,12 @@ namespace BaseUtils
 
         public static string TickCountLap()        // default Program lap
         {
-            return TickCountLap("Program");
+            return TickCountLap("@");
+        }
+
+        public static string TickCountLapDelta()        // default Program lap
+        {
+            return TickCountLap("@");
         }
     }
 }

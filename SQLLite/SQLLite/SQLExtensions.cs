@@ -124,4 +124,42 @@ public static class SQLiteCommandExtensions
         }
     }
 
+    // either give a fully formed cmd to it, or give cmdexplain=null and it will create one for you using cmdtextoptional (but with no variable variables allowed)
+    public static List<string> ExplainQueryPlan(this SQLExtConnection r, DbCommand cmdexplain, string cmdtextoptional = null )
+    {
+        if (cmdexplain == null)
+        {
+            System.Diagnostics.Debug.Assert(cmdtextoptional != null);
+            cmdexplain = r.CreateCommand(cmdtextoptional);
+        }
+
+        List<string> ret = new List<string>();
+
+        using (DbCommand cmd = r.CreateCommand("Explain Query Plan " + cmdexplain.CommandText))
+        {
+            foreach( var p in cmdexplain.Parameters )
+                cmd.Parameters.Add(p);  
+
+            using (DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string detail = (string)reader[3];
+                    int order = (int)(long)reader[1];
+                    int from = (int)(long)reader[2];
+                    int selectid = (int)(long)reader[0];
+                    ret.Add("Select ID " + selectid + " Order " + order + " From " + from + ": " + detail);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    public static string ExplainQueryPlanString(this SQLExtConnection r, DbCommand cmdexplain)
+    {
+        var ret = ExplainQueryPlan(r, cmdexplain);
+        return "SQL Query:" + Environment.NewLine + ">" + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
+    }
+
 }

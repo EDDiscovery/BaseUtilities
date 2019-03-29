@@ -43,15 +43,15 @@ namespace EliteDangerousCore.DB
                 DbCommand selectCmd = cn.CreateCommand("SELECT eddbupdatedat FROM EDDB WHERE edsmid = @edsmid LIMIT 1", txn);   // 1 return matching ID
                 selectCmd.AddParameter("@Edsmid", DbType.Int64);
 
-                DbCommand insertCmd = cn.CreateCommand("INSERT INTO EDDB (edsmid, eddbupdatedat, properties) VALUES (@edsmid, @eddbupdatedat, @properties)", txn);
+                DbCommand insertCmd = cn.CreateCommand("INSERT INTO EDDB (edsmid, eddbupdatedat,properties) VALUES (@edsmid, @eddbupdatedat, @properties)", txn);
                 insertCmd.AddParameter("@edsmid", DbType.Int64);
                 insertCmd.AddParameter("@eddbupdatedat", DbType.Int64);
                 insertCmd.AddParameter("@properties", DbType.String);
 
                 DbCommand updateCmd = cn.CreateCommand("UPDATE EDDB SET eddbupdatedat=@eddbupdatedat, properties=@properties WHERE edsmid=@edsmid", txn);
-                insertCmd.AddParameter("@edsmid", DbType.Int64);
-                insertCmd.AddParameter("@eddbupdatedat", DbType.Int64);
-                insertCmd.AddParameter("@properties", DbType.String);
+                updateCmd.AddParameter("@edsmid", DbType.Int64);
+                updateCmd.AddParameter("@eddbupdatedat", DbType.Int64);
+                updateCmd.AddParameter("@properties", DbType.String);
 
                 while (!SQLiteConnectionSystem.IsReadWaiting)
                 {
@@ -68,41 +68,47 @@ namespace EliteDangerousCore.DB
                         JObject jo = JObject.Parse(line);
                         long jsonupdatedat = jo["updated_at"].Int();
                         long jsonedsmid = jo["edsm_id"].Long();
+                        bool jsonispopulated = jo["is_populated"].Bool();
 
-                        long dbupdated_at = 0;
-
-                        selectCmd.Parameters["@edsmid"].Value = jsonedsmid;
-
-                        using (DbDataReader reader = selectCmd.ExecuteReader())
+                        if (jsonispopulated)        // double check that the flag is set - population itself may be zero, for some systems, but its the flag we care about
                         {
-                            if (reader.Read())
-                                dbupdated_at = (long)reader[0];
-                        }
+                            long dbupdated_at = 0;
 
-                        if (dbupdated_at != 0)
-                        {
-                            if (jsonupdatedat != dbupdated_at)
+                            selectCmd.Parameters["@edsmid"].Value = jsonedsmid;
+
+                            using (DbDataReader reader = selectCmd.ExecuteReader())
                             {
-                                updateCmd.Parameters["@edsmid"].Value = jsonedsmid;
-                                updateCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
-                                updateCmd.Parameters["@properties"].Value = line;
-                                updateCmd.ExecuteNonQuery();
-                                updated++;
+                                if (reader.Read())
+                                {
+                                    dbupdated_at = (long)reader[0];
+                                }
                             }
-                        }
-                        else
-                        {
-                            insertCmd.Parameters["@edsmid"].Value = jsonedsmid;
-                            insertCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
-                            insertCmd.Parameters["@properties"].Value = line;
-                            insertCmd.ExecuteNonQuery();
-                            inserted++;
-                        }
 
-                        processed++;
-                        if (processed % 1000 == 0)
-                        {
-                            System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("EDDB") + "   " + updated + " " + inserted);
+                            if (dbupdated_at != 0)
+                            {
+                                //if (jsonupdatedat != dbupdated_at)
+                                {
+                                    updateCmd.Parameters["@edsmid"].Value = jsonedsmid;
+                                    updateCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
+                                    updateCmd.Parameters["@properties"].Value = RemoveStuff(jo);
+                                    updateCmd.ExecuteNonQuery();
+                                    updated++;
+                                }
+                            }
+                            else
+                            {
+                                insertCmd.Parameters["@edsmid"].Value = jsonedsmid;
+                                insertCmd.Parameters["@eddbupdatedat"].Value = jsonupdatedat;
+                                insertCmd.Parameters["@properties"].Value = RemoveStuff(jo);
+                                insertCmd.ExecuteNonQuery();
+                                inserted++;
+                            }
+
+                            processed++;
+                            if (processed % 1000 == 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("EDDB") + "   " + updated + " " + inserted);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -121,6 +127,34 @@ namespace EliteDangerousCore.DB
 
             return updated + inserted;
         }
+
+        const string splitchar = "\u2B94";
+
+        static private string RemoveStuff(JObject jo)
+        {
+            return jo["id"].Long().ToStringInvariant() +
+            splitchar + jo["controlling_minor_faction"].Str() +
+            splitchar + jo["population"].Long().ToStringInvariant() +
+            splitchar + jo["government"].Str() +
+            splitchar + jo["allegiance"].Str() +
+            splitchar + jo["state"].Str() +
+            splitchar + jo["security"].Str() +
+            splitchar + jo["primary_economy"].Str() +
+            splitchar + jo["needs_permit"].Int().ToStringInvariant() +
+            splitchar + jo["updated_at"].Int().ToStringInvariant();
+       }
+
+
+
+
+        //    jo.Remove("x");
+        //    jo.Remove("y");
+        //    jo.Remove("z");
+        //    jo.Remove("edsm_id");
+        //    jo.Remove("name");
+        //    jo.Remove("is_populated");
+        //    return jo.ToString(Formatting.None);
+        //}
     }
 }
 

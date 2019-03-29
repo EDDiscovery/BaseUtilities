@@ -202,5 +202,10 @@ namespace BaseUtils
             return json;
         }
 
+        public override string ToString()
+        {
+            return Get();
+        }
+
     }
 }

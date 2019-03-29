@@ -81,7 +81,7 @@ namespace EliteDangerousCore.DB
 
                                 if (d.Deserialize(jr) && d.id >= 0 && d.name.HasChars() && d.z != int.MinValue)     // if we have a valid record
                                 {
-                                    int gridid = GridId.Id(d.x, d.y);
+                                    int gridid = GridId.Id(d.x, d.z);
                                     if (grididallowed == null || ( grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
                                     {
                                         CreateNewUpdate(selectSectorCmd, d, gridid, tablesareempty, ref maxdate, ref nextsectorid);
@@ -213,7 +213,7 @@ namespace EliteDangerousCore.DB
             }
 
             if (t.edsmdatalist == null)
-                t.edsmdatalist = new List<TableWriteData>();
+                t.edsmdatalist = new List<TableWriteData>(5000);
 
             t.edsmdatalist.Add(data);                       // add to list of systems to process for this sector
         }
@@ -414,38 +414,43 @@ namespace EliteDangerousCore.DB
             sectoridcache = new Dictionary<long, Sector>();
             sectornamecache = new Dictionary<string, Sector>();
 
-            SQLiteConnectionSystem cn1 = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.ReaderWriter);
-            SQLiteConnectionSystem cn2 = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer);
+            SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.ReaderWriter);
 
             long nextnameid = 1;                // tables are empty..
             long nextsectorid = 1;
 
-            long recordpos = 0;
             long updates = 0;
-            const int BlockSize = 100000;
             long Limit = long.MaxValue;
 
-            DbCommand selectSectorCmd = cn2.CreateCommand("SELECT id FROM Sectors" + tablepostfix + " WHERE name = @sname AND gridid = @gid");
+            DbCommand selectSectorCmd = cn.CreateCommand("SELECT id FROM Sectors" + tablepostfix + " WHERE name = @sname AND gridid = @gid");
             selectSectorCmd.AddParameter("@sname", DbType.String);
             selectSectorCmd.AddParameter("@gid", DbType.Int32);
 
             DateTime maxdate = DateTime.MinValue;       // we don't pass this back due to using the same date
             reportProgress?.Invoke("Being System DB upgrade");
 
-            while ( !cancelRequested() )
-            { 
-                DbCommand selectPrev = cn1.CreateCommand(
-                    "Select s.EdsmId,s.x,s.y,s.z,n.Name,s.UpdateTimeStamp " +
-                    "From EdsmSystems s left Outer Join SystemNames n On n.EdsmId=s.EdsmId " + 
-                    "LIMIT " + BlockSize.ToStringInvariant() + " OFFSET " + recordpos.ToStringInvariant() );
+            List<int> gridids = DB.GridId.AllId();
 
-                BaseUtils.AppTicks.TickCountLap("U1");
+
+            foreach (int gridid in gridids)  // using grid id to keep chunks a good size.. can't read and write so can't just read the whole.
+            {
+                if (cancelRequested())
+                {
+                    updates = -1;
+                    break;
+                }
+
+                DbCommand selectPrev = cn.CreateCommand(
+                    "Select s.EdsmId,s.x,s.y,s.z,n.Name,s.UpdateTimeStamp " +
+                    "From EdsmSystems s left Outer Join SystemNames n On n.EdsmId=s.EdsmId where s.GridId= " + gridid.ToStringInvariant());
 
                 int recordstostore = 0;
 
                 using (DbDataReader reader = selectPrev.ExecuteReader())       // find name:gid
                 {
-                    while (reader.Read())      // if found name:gid
+                    BaseUtils.AppTicks.TickCountLap("U1");
+
+                    while (reader.Read())
                     {
                         try
                         {
@@ -457,8 +462,7 @@ namespace EliteDangerousCore.DB
                             d.name = (string)reader[4];
                             d.date = new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromSeconds((long)reader["UpdateTimestamp"]);
 
-                            int gridid = GridId.Id(d.x, d.y);
-                            CreateNewUpdate(selectSectorCmd, d, gridid, true, ref maxdate, ref nextsectorid);
+                            CreateNewUpdate(selectSectorCmd, d, GridId.Id(d.x, d.z), true, ref maxdate, ref nextsectorid);      // not using gridid on purpose to double check it.
                             recordstostore++;
                         }
                         catch (Exception ex)
@@ -468,15 +472,14 @@ namespace EliteDangerousCore.DB
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine("Reader took " + BaseUtils.AppTicks.TickCountLap("U1") + "   " + recordpos);
                 selectPrev.Dispose();
 
-                if (recordstostore >= 0) 
-                {
-                    updates += StoreNewEntries(cn2, ref nextnameid, tablepostfix, true, null);
-                    reportProgress?.Invoke("System DB upgrade processed " + updates);
+                //System.Diagnostics.Debug.WriteLine("Reader took " + BaseUtils.AppTicks.TickCountLap("U1") + " in " + gridid + "  " + recordpos + " total " + recordstostore);
 
-                    recordpos += recordstostore;
+                if (recordstostore >= 0)
+                {
+                    updates += StoreNewEntries(cn, ref nextnameid, tablepostfix, true, null);
+                    reportProgress?.Invoke("System DB upgrade processed " + updates);
 
                     Limit -= recordstostore;
 
@@ -487,19 +490,15 @@ namespace EliteDangerousCore.DB
                     {
                         System.Threading.Thread.Sleep(20);      // just sleepy for a bit to let others use the db
                     }
-
-                    if (recordstostore < BlockSize)             // must have run out
-                        break;
                 }
-
-                System.Diagnostics.Debug.WriteLine("Writer took " + BaseUtils.AppTicks.TickCountLap("U1") + "   " + recordpos);
+                var res = BaseUtils.AppTicks.TickCountLapDelta("U1");
+                System.Diagnostics.Debug.WriteLine("Sector " + gridid + " took " + res.Item1 + " store " + recordstostore + " total " + updates + " " + ((float)res.Item2 / (float)recordstostore));
             }
 
             reportProgress?.Invoke("System DB complete, processed " + updates);
 
             selectSectorCmd.Dispose();
-            cn1.Dispose();
-            cn2.Dispose();
+            cn.Dispose();
 
             sectoridcache = null;
             sectornamecache = null;
