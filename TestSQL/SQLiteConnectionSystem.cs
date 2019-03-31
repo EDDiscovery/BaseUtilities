@@ -89,17 +89,40 @@ namespace EliteDangerousCore.DB
                     DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
                     CreateStarTables(conn, tablepostfix);     // and make new temp tables
 
-                    long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix);
+                    // with edsmid integer primary key not null - putting unique on it slows it down.
+                    //Sector 109 took 12404 U1 + 260 store 9843 total 542005 0.02641471 cumulative 12404
+                    // Sector 109 took 12430 U1+260 store 9843 total 542005 0.02641471 cumulative 12430
+
+                    int maxgridid = int.MaxValue;// 109;    // for debugging
+
+                    long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: true, maxgridid: maxgridid);
 
                     if ( updates >= 0 ) // a cancel will result in -1
                     {
+                        // keep code for checking
+
+                        if (false)   // demonstrate replacement to show rows are overwitten and not duplicated in the edsmid column and that speed is okay
+                        {
+                            long countrows = conn.CountOf("Systems" + tablepostfix, "edsmid");
+                            long countnames = conn.CountOf("Names" + tablepostfix, "id");
+                            long countsectors = conn.CountOf("Sectors" + tablepostfix, "id");
+
+                            // replace takes : Sector 108 took 44525 U1 + 116 store 5627 total 532162 0.02061489 cumulative 11727
+
+                            SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: false, maxgridid: maxgridid);
+                            System.Diagnostics.Debug.Assert(countrows == conn.CountOf("Systems" + tablepostfix, "edsmid"));
+                            System.Diagnostics.Debug.Assert(countnames * 2 == conn.CountOf("Names" + tablepostfix, "id"));      // names are duplicated.. so should be twice as much
+                            System.Diagnostics.Debug.Assert(countsectors == conn.CountOf("Sectors" + tablepostfix, "id"));
+                            System.Diagnostics.Debug.Assert(1 == conn.CountOf("Systems" + tablepostfix, "edsmid", "edsmid=6719254"));
+                        }
+
                         DropStarTables(conn);     // drop the main ones - this also kills the indexes
 
                         RenameStarTables(conn, tablepostfix, "");     // rename the temp to main ones
 
                         reportProgress?.Invoke("Removing old system tables");
 
-                        conn.ExecuteNonQueries( new string[]
+                        conn.ExecuteNonQueries(new string[]
                         {
                             "DROP TABLE IF EXISTS EdsmSystems",
                             "DROP TABLE IF EXISTS SystemNames",
@@ -123,9 +146,12 @@ namespace EliteDangerousCore.DB
         {
             conn.ExecuteNonQueries(new string[]
             {
-                "CREATE TABLE IF NOT EXISTS Sectors" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE , gridid INTEGER, name TEXT NOT NULL COLLATE NOCASE)",
-                "CREATE TABLE IF NOT EXISTS Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , sector INTEGER, name INTEGER, x INTEGER, y INTEGER, z INTEGER, edsmid INTEGER )",
-                "CREATE TABLE IF NOT EXISTS Names" + postfix + " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  UNIQUE , Name TEXT NOT NULL  COLLATE NOCASE )",
+                //"CREATE TABLE IF NOT EXISTS Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
+                //"CREATE TABLE IF NOT EXISTS Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , edsmid INTEGER, sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
+
+                "CREATE TABLE IF NOT EXISTS Sectors" + postfix + " (id INTEGER PRIMARY KEY NOT NULL, gridid INTEGER, name TEXT NOT NULL COLLATE NOCASE)",
+                "CREATE TABLE IF NOT EXISTS Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
+                "CREATE TABLE IF NOT EXISTS Names" + postfix + " (id INTEGER PRIMARY KEY NOT NULL , Name TEXT NOT NULL  COLLATE NOCASE )",
             });
         }
 
@@ -153,8 +179,8 @@ namespace EliteDangerousCore.DB
         {
             string[] queries = new[]
             {
-                 "CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name)",        // on 32Msys, about 500mb cost, massive speed increase in find star
-                 "CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sector)",    // on 32Msys, about 500mb cost, massive speed increase in find star
+                 "CREATE INDEX IF NOT EXISTS SystemsNameid ON Systems (nameid)",        // on 32Msys, about 500mb cost, massive speed increase in find star
+                 "CREATE INDEX IF NOT EXISTS SystemsSectorid ON Systems (sectorid)",    // on 32Msys, about 500mb cost, massive speed increase in find star
 
                  "CREATE INDEX IF NOT EXISTS NamesName ON Names (Name)",            // improved speed from 9038 (named)/1564 (std) to 516/446ms at minimal cost
 

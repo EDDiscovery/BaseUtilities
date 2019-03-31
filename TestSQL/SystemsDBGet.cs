@@ -57,7 +57,7 @@ namespace EliteDangerousCore.DB
                         "SELECT s.x,s.y,s.z,s.edsmid " + 
                         "FROM Systems s " +
                         "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +
-                        "WHERE s.name = @nid AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
+                        "WHERE s.nameid = @nid AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)"
                         ))
                     {
                         selectSysCmd.AddParameterWithValue("@nid", ec.ID);
@@ -80,7 +80,7 @@ namespace EliteDangerousCore.DB
                         "SELECT s.x,s.y,s.z,s.edsmid " +
                         "FROM Systems s " +
                         "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +
-                        "WHERE s.name IN (Select id FROM Names WHERE name=@starname) AND s.sector IN (Select id FROM Sectors c WHERE c.name=@sname)"
+                        "WHERE s.nameid IN (Select id FROM Names WHERE name=@starname) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)"
                         ))
                     {
                         selectSysCmd.AddParameterWithValue("@starname", ec.StarName);

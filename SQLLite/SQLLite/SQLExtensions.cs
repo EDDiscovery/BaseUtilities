@@ -168,7 +168,31 @@ public static class SQLiteCommandExtensions
         return "SQL Query:" + Environment.NewLine + ">" + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
     }
 
-    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null)
+    public static long MaxIdOf(this SQLExtConnection r, string table, string idfield)
+    {
+        using (DbCommand queryNameCmd = r.CreateCommand("SELECT Max(" + idfield + ") as " + idfield + " FROM " + table))
+            return (long)r.SQLScalar(queryNameCmd);
+    }
+
+    public static long CountOf(this SQLExtConnection r, string table, string idfield, string where = null)
+    {
+        using (DbCommand queryNameCmd = r.CreateCommand("SELECT Count(" + idfield + ") as " + idfield + " FROM " + table + (where != null ?  (" WHERE " + where) : "")))
+            return (long)r.SQLScalar(queryNameCmd);
+    }
+
+    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
+    {
+        if (paras != null)
+        {
+            System.Diagnostics.Debug.Assert(paras.Length == types.Length);
+            for (int i = 0; i < paras.Length; i++)
+            {
+                cmd.AddParameter("@" + paras[i], types[i]);
+            }
+        }
+    }
+
+    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null, bool insertorreplace = false)
     {
         string plist = "";
         string atlist = "";
@@ -178,23 +202,19 @@ public static class SQLiteCommandExtensions
             atlist = atlist.AppendPrePad("@" + s, ",");
         }
 
-        string cmdtext = "INSERT INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
+        string cmdtext = "INSERT " + (insertorreplace ? "OR REPLACE ":"") + "INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
 
         DbCommand cmd = r.CreateCommand(cmdtext, tx);
         cmd.CreateParams(paras, types);
         return cmd;
     }
 
-    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
+    public static DbCommand CreateReplace(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null)
     {
-        System.Diagnostics.Debug.Assert(paras.Length == types.Length);
-        for (int i = 0; i < paras.Length; i++)
-        {
-            cmd.AddParameter("@" + paras[i], types[i]);
-        }
+        return CreateInsert(r, table, paras, types, tx, insertorreplace: true);
     }
 
-    public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string[] paras, DbType[] types, string where, DbTransaction tx = null)
+    public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string where, string[] paras, DbType[] types,  DbTransaction tx = null)
     {
         string plist = "";
         foreach (string s in paras)
@@ -206,6 +226,14 @@ public static class SQLiteCommandExtensions
 
         DbCommand cmd = r.CreateCommand(cmdtext, tx);
         cmd.CreateParams(paras, types);
+        return cmd;
+    }
+
+    public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where, string[] inparas = null, DbType[] intypes = null, string[] joinlist=null, DbTransaction tx = null)
+    {
+        string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist!=null ? string.Join(" ", joinlist) :"") + " WHERE " + where;
+        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        cmd.CreateParams(inparas, intypes);
         return cmd;
     }
 

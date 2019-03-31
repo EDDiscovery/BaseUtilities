@@ -49,7 +49,7 @@ namespace EliteDangerousCore.DB
                 DbType[] dbfieldtypes = { DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.String, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.Int64, DbType.String ,DbType.String ,DbType.String };
 
                 DbCommand insertCmd = cn.CreateInsert("EDDB", dbfields, dbfieldtypes, txn);
-                DbCommand updateCmd = cn.CreateUpdate("EDDB", dbfields, dbfieldtypes, "WHERE edsmid=@edsmid", txn);
+                DbCommand updateCmd = cn.CreateUpdate("EDDB", "WHERE edsmid=@edsmid", dbfields, dbfieldtypes, txn);
 
                 while (!SQLiteConnectionSystem.IsReadWaiting)
                 {

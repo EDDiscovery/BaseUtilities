@@ -49,25 +49,32 @@ namespace BaseUtils
         public static Tuple<string,int> TickCountLapDelta(string id, bool reset = false)        // lap time to last recorded tick of this id
         {
             long tc = TickCount;
+            string idtext = id.StartsWith("@") ? "" : (" " + id);
+
+            string res;
             int delta = 0;
-            string s;
-            if (id.StartsWith("@"))
-                id = "";
-            else
-                id = " " + id;
 
             if (reset || !laptimes.ContainsKey(id))     // if reset, or not present
             {
-                s = string.Format("{0}{1}", tc, id);
+                res = string.Format("{0}{1}", tc, idtext);
             }
             else
             {
                 delta = (int)(tc - laptimes[id]);
-                s = string.Format("{0}{1}+{2}", tc, id, delta);
+                res = string.Format("{0}{1}+{2}", tc, idtext, delta);
             }
 
             laptimes[id] = tc;
-            return new Tuple<string,int>(s,delta);
+            return new Tuple<string,int>(res,delta);
+        }
+
+        public static long TickCountFrom(string id)        // lap time to last recorded tick of this id
+        {
+            long tc = TickCount;
+            if (laptimes.ContainsKey(id))     // if reset, or not present
+                return tc - laptimes[id];
+            else
+                return 0;
         }
 
         public static string TickCountLap(string id, bool reset = false)        // lap time to last recorded tick of this id
