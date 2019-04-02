@@ -1,4 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿/*
+ * Copyright © 2015 - 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +22,6 @@ using SQLLiteExtensions;
 using System.Data.Common;
 using System.Data;
 using Newtonsoft.Json.Linq;
-using System.Globalization;
 
 namespace EliteDangerousCore.DB
 {
@@ -14,26 +29,25 @@ namespace EliteDangerousCore.DB
     {
         #region Table Update from JSON FILE
 
-        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSONFile(string filename, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix, bool presumeempty = false, string debugoutputfile = null)
         {
             using (StreamReader sr = new StreamReader(filename))         // read directly from file..
                 return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, reportProgress, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSONString(string data, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tableposfix, bool presumeempty = false, string debugoutputfile = null)
         {
             using (StringReader sr = new StringReader(data))         // read directly from file..
                 return ParseEDSMJSON(sr, grididallow, ref date, cancelRequested, reportProgress, tableposfix, presumeempty, debugoutputfile);
         }
 
-        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tablepostfix = "", bool presumeempty = false, string debugoutputfile = null)
+        public static long ParseEDSMJSON(TextReader sr, bool[] grididallow, ref DateTime date, Func<bool> cancelRequested, Action<string> reportProgress, string tablepostfix, bool presumeempty = false, string debugoutputfile = null)
         {
             using (JsonTextReader jr = new JsonTextReader(sr))
                 return ParseEDSMJSON(jr, grididallow, ref date, cancelRequested, reportProgress, tablepostfix, presumeempty, debugoutputfile);
         }
 
         // set tempostfix to use another set of tables
-
 
         public static long ParseEDSMJSON(JsonTextReader jr, 
                                         bool[] grididallowed,       // null = all, else grid bool value
@@ -59,12 +73,19 @@ namespace EliteDangerousCore.DB
             int Limit = int.MaxValue;
             bool jr_eof = false;
 
-            DbCommand selectSectorCmd = cn.CreateSelect("Sectors" + tablepostfix, "id", "name = @sname AND gridid = @gid", new string[] { "sname", "gid" }, new DbType[] { DbType.String, DbType.Int32 });
+            DbCommand selectSectorCmd = cn.CreateSelect("Sectors" + tablepostfix, "id", "name = @sname AND gridid = @gid", null, 
+                                                    new string[] { "sname", "gid" }, new DbType[] { DbType.String, DbType.Int32 });
 
             reportProgress?.Invoke("Being EDSM Download");
 
-            while (!cancelRequested() && jr_eof == false)
+            while (jr_eof == false)
             {
+                if ( cancelRequested() )
+                {
+                    updates = -1;
+                    break;
+                }
+
                 int recordstostore = 0;
 
                 while (true)
@@ -165,7 +186,8 @@ namespace EliteDangerousCore.DB
             DateTime maxdate = DateTime.MinValue;       // we don't pass this back due to using the same date
             reportProgress?.Invoke("Being System DB upgrade");
 
-            DbCommand selectSectorCmd = cn.CreateSelect("Sectors" + tablepostfix, "id", "name = @sname AND gridid = @gid", new string[] { "sname", "gid" }, new DbType[] { DbType.String, DbType.Int32 });
+            DbCommand selectSectorCmd = cn.CreateSelect("Sectors" + tablepostfix, "id", "name = @sname AND gridid = @gid", null, 
+                                                    new string[] { "sname", "gid" }, new DbType[] { DbType.String, DbType.Int32 });
 
             List<int> gridids = DB.GridId.AllId();
             BaseUtils.AppTicks.TickCountLap("UTotal");
@@ -354,21 +376,26 @@ namespace EliteDangerousCore.DB
                     insertSectorCmd.Parameters[0].Value = t.Name;     // make a new one so we can get the ID
                     insertSectorCmd.Parameters[1].Value = t.GId;
                     insertSectorCmd.ExecuteNonQuery();
-                    //System.Diagnostics.Debug.WriteLine("Written sector " + t.id + " " +t.Name + " now clean");
+                    //System.Diagnostics.Debug.WriteLine("Written sector " + t.GId + " " +t.Name);
                     t.insertsec = false;
                 }
 
                 if (t.edsmdatalist != null)       // if updated..
                 {
+#if DEBUG
+                    t.edsmdatalist.Sort(delegate (TableWriteData left, TableWriteData right) { return left.edsm.id.CompareTo(right.edsm.id); });
+#endif
+
                     foreach (var data in t.edsmdatalist)            // now write the star list in this sector
                     {
                         try
                         {
-                            if (!data.classifier.IsStandard)    // if non standard, we assign a new ID
+                            if (data.classifier.IsNamed)    // if its a named entry, we need a name
                             {
-                                data.classifier.NameId = nextnameid++;
+                                data.classifier.NameIdNumeric = nextnameid++;
                                 insertNameCmd.Parameters[0].Value = data.classifier.StarName;       // insert a new name
                                 insertNameCmd.ExecuteNonQuery();
+                               // System.Diagnostics.Debug.WriteLine("Make name " + data.classifier.NameIdNumeric);
                             }
 
                             insertorreplaceSysCmd.Parameters[0].Value = t.Id;
@@ -380,7 +407,7 @@ namespace EliteDangerousCore.DB
                             insertorreplaceSysCmd.ExecuteNonQuery();
 
                             if (sw != null)
-                                sw.WriteLine(data.classifier.ToString() + " " + data.edsm.x + "," + data.edsm.y + "," + data.edsm.z + ", EDSM:" + data.edsm.id + " Grid:" + data.gridid);
+                                sw.WriteLine(data.edsm.name + " " + data.edsm.x + "," + data.edsm.y + "," + data.edsm.z + ", EDSM:" + data.edsm.id + " Grid:" + data.gridid);
 
                             updates++;
                         }

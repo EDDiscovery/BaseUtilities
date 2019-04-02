@@ -1,16 +1,30 @@
-﻿using SQLLiteExtensions;
+﻿/*
+ * Copyright © 2015 - 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+ 
+using SQLLiteExtensions;
 using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
 
 namespace EliteDangerousCore.DB
 {
     public class SQLiteConnectionSystem : SQLExtConnectionWithLockRegister<SQLiteConnectionSystem>
     {
         static public string dbFile = @"c:\code\EDSM\edsm.sql";
+        const string tablepostfix = "temp"; // postfix for temp tables
+        const string debugoutfile = @"c:\code\edsm\Jsonprocess.lst";        // null off
 
         public SQLiteConnectionSystem() : base(dbFile, false, Initialize, AccessMode.ReaderWriter)
         {
@@ -23,6 +37,8 @@ namespace EliteDangerousCore.DB
         private SQLiteConnectionSystem(bool utc, Action init) : base(dbFile, utc, init, AccessMode.ReaderWriter)
         {
         }
+
+        #region Init
 
         public static void Initialize()
         {
@@ -43,7 +59,7 @@ namespace EliteDangerousCore.DB
             {
                 conn.ExecuteNonQuery("CREATE TABLE IF NOT EXISTS Register (ID TEXT PRIMARY KEY NOT NULL, ValueInt INTEGER, ValueDouble DOUBLE, ValueString TEXT, ValueBlob BLOB)");
 
-                SQLExtRegister reg = new SQLExtRegister(conn);
+                // BE VERY careful with connections when creating/deleting tables - you end up with SQL Schema errors or it not seeing the table
 
                 conn.ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
                     {
@@ -52,13 +68,17 @@ namespace EliteDangerousCore.DB
                     "DROP TABLE IF EXISTS Stations",
                     "DROP TABLE IF EXISTS SystemAliases",
                     "DROP TABLE IF EXISTS station_commodities",
-                    "CREATE TABLE IF NOT EXISTS EDDB (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE, eddbid INTEGER, eddbupdatedat INTEGER, population INTEGER, faction TEXT, government INTEGER, allegiance INTEGER, state INTEGER, security INTEGER, primaryeconomy INTEGER, needspermit INTEGER, power TEXT, powerstate TEXT, properties TEXT)",
+                    "CREATE TABLE IF NOT EXISTS EDDB (edsmid INTEGER PRIMARY KEY NOT NULL, eddbid INTEGER, eddbupdatedat INTEGER, population INTEGER, faction TEXT, government INTEGER, allegiance INTEGER, state INTEGER, security INTEGER, primaryeconomy INTEGER, needspermit INTEGER, power TEXT, powerstate TEXT, properties TEXT)",
+                    "CREATE TABLE IF NOT EXISTS Aliases (edsmid INTEGER PRIMARY KEY NOT NULL, edsmid_mergedto INTEGER, name TEXT COLLATE NOCASE)"
                     });
 
                 CreateStarTables(conn);                     // ensure we have
                 CreateSystemDBTableIndexes(conn);           // ensure they are there 
+                DropStarTables(conn, tablepostfix);         // clean out any temp tables half prepared 
 
-                dbver = reg.GetSettingInt("DBVer", 0);      
+                SQLExtRegister reg = new SQLExtRegister(conn);
+
+                dbver = reg.GetSettingInt("DBVer", 0);      // use reg, don't use the built in func as they create new connections and confuse the schema
                 if (dbver < 200)
                 {
                     reg.PutSettingInt("DBVer", 200);
@@ -74,29 +94,102 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        // should have indexes present, empty new tables, full old tables..
+        #endregion
 
-        public static void UpgradeFrom102TypeDB(Func<bool> cancelRequested, Action<string> reportProgress )
+        #region Updators
+
+        // full table replace
+
+        public static void UpgradeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress)
         {
-            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
+            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))     
+            {
+                DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
+                CreateStarTables(conn, tablepostfix);     // and make new temp tables
+            }
+
+            DateTime maxdate = DateTime.MinValue;
+            long updates = SystemsDB.ParseEDSMJSONFile(filename, gridids, ref maxdate, cancelRequested, reportProgress, tablepostfix, presumeempty: true, debugoutputfile: debugoutfile);
+
+            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))   
+            {
+                if (updates > 0)
+                {
+                    reportProgress?.Invoke("Remove old data");
+                    DropStarTables(conn);     // drop the main ones - this also kills the indexes
+
+                    RenameStarTables(conn, tablepostfix, "");     // rename the temp to main ones
+
+                    reportProgress?.Invoke("Shrinking database");
+                    conn.Vacuum();
+
+                    reportProgress?.Invoke("Creating indexes");
+                    CreateSystemDBTableIndexes(conn);
+
+                    SetLastEDSMRecordTimeUTC(maxdate);          // record last data stored in database
+                }
+                else
+                    DropStarTables(conn, tablepostfix);     // clean out half prepared tables
+            }
+        }
+
+        // use a file to update the data..
+
+        public static long UpdateSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress)
+        {
+            DateTime maxdate = GetLastEDSMRecordTimeUTC();
+
+            long updates = SystemsDB.ParseEDSMJSONFile(filename, gridids, ref maxdate, cancelRequested, reportProgress, tablepostfix, presumeempty: false, debugoutputfile: debugoutfile);
+
+            if ( updates>0)
+                SetLastEDSMRecordTimeUTC(maxdate);          // record last data stored in database
+
+            return updates;
+        }
+
+
+        // check to see if table type 102 exists, if so, update
+
+        public static void UpgradeSystemTableFrom102TypeDB(Func<bool> cancelRequested, Action<string> reportProgress)
+        {
+            bool executeupgrade = false;
+            string tablepostfix = "temp";
+
+            // first work out if we can upgrade, if so, create temp tables
+
+            using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))  
             {
                 var list = conn.Tables();
 
-                if ( list.Contains("EdsmSystems"))
+                if (list.Contains("EdsmSystems") )
                 {
-                    string tablepostfix = "temp";
+                    if (SQLiteConnectionSystem.GetSettingInt("DBVer", 0) == 102)        // is it a 102 database?, yes go.
+                    {
+                        DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
+                        CreateStarTables(conn, tablepostfix);     // and make new temp tables
+                        executeupgrade = true;
+                    }
+                    else
+                    {
+                        conn.ExecuteNonQueries(new string[]         // older than 102, not supporting, remove
+                        {
+                            "DROP TABLE IF EXISTS EdsmSystems",
+                            "DROP TABLE IF EXISTS SystemNames",
+                        });
+                    }
+                }
+            }
 
-                    DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
-                    CreateStarTables(conn, tablepostfix);     // and make new temp tables
+            //drop connection, execute upgrade in another connection, this solves an issue with SQL 17 error
 
-                    // with edsmid integer primary key not null - putting unique on it slows it down.
-                    //Sector 109 took 12404 U1 + 260 store 9843 total 542005 0.02641471 cumulative 12404
-                    // Sector 109 took 12430 U1+260 store 9843 total 542005 0.02641471 cumulative 12430
+            if ( executeupgrade )
+            { 
+                int maxgridid = int.MaxValue;// 109;    // for debugging
 
-                    int maxgridid = int.MaxValue;// 109;    // for debugging
+                long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: true, maxgridid: maxgridid);
 
-                    long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: true, maxgridid: maxgridid);
-
+                using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
+                {
                     if ( updates >= 0 ) // a cancel will result in -1
                     {
                         // keep code for checking
@@ -129,9 +222,9 @@ namespace EliteDangerousCore.DB
                         });
 
                         reportProgress?.Invoke("Shrinking database");
-                        conn.Vacuum();
+                        conn.Vacuum();  
 
-                        reportProgress?.Invoke("Creating indexes");
+                        reportProgress?.Invoke("Creating indexes");         // NOTE the date should be the same so we don't rewrite
                         CreateSystemDBTableIndexes(conn);
                     }
                     else
@@ -141,6 +234,49 @@ namespace EliteDangerousCore.DB
                 }
             }
         }
+
+        #endregion
+
+        #region Time markers
+
+        // time markers - keeping the old code for now, not using better datetime funcs
+
+        static public void ForceEDSMFullUpdate()
+        {
+            SQLiteConnectionSystem.PutSettingString("EDSMLastSystems", "2010-01-01 00:00:00");
+        }
+
+        static public DateTime GetLastEDSMRecordTimeUTC()
+        {
+            string rwsystime = SQLiteConnectionSystem.GetSettingString("EDSMLastSystems", "2000-01-01 00:00:00"); // Latest time from RW file.
+            DateTime edsmdate;
+
+            if (!DateTime.TryParse(rwsystime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out edsmdate))
+                edsmdate = new DateTime(2000, 1, 1);
+
+            return edsmdate;
+        }
+
+        static public void SetLastEDSMRecordTimeUTC(DateTime time)
+        {
+            SQLiteConnectionSystem.PutSettingString("EDSMLastSystems", time.ToString(CultureInfo.InvariantCulture));
+            System.Diagnostics.Debug.WriteLine("Last EDSM record " + time.ToString());
+        }
+
+        static public DateTime GetLastEDDBDownloadTime()
+        {
+            string timestr = SQLiteConnectionSystem.GetSettingString("EDDBSystemsTime", "0");
+            return new DateTime(Convert.ToInt64(timestr), DateTimeKind.Utc);
+        }
+
+        static public void ForceEDDBFullUpdate()
+        {
+            SQLiteConnectionSystem.PutSettingString("EDDBSystemsTime", "0");
+        }
+
+        #endregion
+
+        #region Helpers
 
         private static void CreateStarTables(SQLExtConnection conn, string postfix = "")
         {
@@ -190,6 +326,8 @@ namespace EliteDangerousCore.DB
 
             conn.ExecuteNonQueries(queries);
         }
+
+        #endregion
 
     }
 }

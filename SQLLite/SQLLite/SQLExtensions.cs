@@ -49,52 +49,33 @@ public static class SQLiteCommandExtensions
         cmd.Parameters[name].Value = val;
     }
 
-    public static DataSet SQLQueryText(this SQLExtConnection cn, DbCommand cmd)
+    // Either a list of names/types, or types = null, in which case paras contains name:dbtype (case insensitive)
+
+    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
     {
-        try
+        if (paras != null)
         {
-            DataSet ds = new DataSet();
-            DbDataAdapter da = cn.CreateDataAdapter(cmd);
-            da.Fill(ds);
-            return ds;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlQuery Exception: " + ex.Message);
-            throw;
+            System.Diagnostics.Debug.Assert(types == null || paras.Length == types.Length);
+            for (int i = 0; i < paras.Length; i++)
+            {
+                if (types == null)
+                {
+                    string[] parts = paras[i].Split(':');
+                    System.Diagnostics.Debug.Assert(parts.Length == 2);
+
+                    DbType dbt = (DbType)Enum.Parse(typeof(DbType), parts[1], true);
+                    cmd.AddParameter("@" + parts[0], dbt);
+                }
+                else
+                    cmd.AddParameter("@" + paras[i], types[i]);
+            }
         }
     }
 
-    static public int SQLNonQueryText(this SQLExtConnection cn, DbCommand cmd)
+    static public T ExecuteScalar<T>(this DbCommand cmd, T def)
     {
-        int rows = 0;
-
-        try
-        {
-            rows = cmd.ExecuteNonQuery();
-            return rows;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlNonQueryText Exception: " + ex.Message);
-            throw;
-        }
-    }
-
-    static public object SQLScalar(this SQLExtConnection cn, DbCommand cmd)
-    {
-        object ret = null;
-
-        try
-        {
-            ret = cmd.ExecuteScalar();
-            return ret;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlNonQuery Exception: " + ex.Message);
-            throw;
-        }
+        Object res = cmd.ExecuteScalar();
+        return res == null ? def : (T)res;
     }
 
     static public T ConvertTo<T>(this DbDataReader r, int index)
@@ -165,62 +146,56 @@ public static class SQLiteCommandExtensions
     public static string ExplainQueryPlanString(this SQLExtConnection r, DbCommand cmdexplain)
     {
         var ret = ExplainQueryPlan(r, cmdexplain);
-        return "SQL Query:" + Environment.NewLine + ">" + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
+        return "SQL Query:" + Environment.NewLine + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
     }
 
     public static long MaxIdOf(this SQLExtConnection r, string table, string idfield)
     {
         using (DbCommand queryNameCmd = r.CreateCommand("SELECT Max(" + idfield + ") as " + idfield + " FROM " + table))
-            return (long)r.SQLScalar(queryNameCmd);
+            return (long)queryNameCmd.ExecuteScalar();
     }
 
     public static long CountOf(this SQLExtConnection r, string table, string idfield, string where = null)
     {
         using (DbCommand queryNameCmd = r.CreateCommand("SELECT Count(" + idfield + ") as " + idfield + " FROM " + table + (where != null ?  (" WHERE " + where) : "")))
-            return (long)r.SQLScalar(queryNameCmd);
+            return (long)queryNameCmd.ExecuteScalar();
     }
 
-    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
-    {
-        if (paras != null)
-        {
-            System.Diagnostics.Debug.Assert(paras.Length == types.Length);
-            for (int i = 0; i < paras.Length; i++)
-            {
-                cmd.AddParameter("@" + paras[i], types[i]);
-            }
-        }
-    }
+    // for these, types are optional if paras given as name:type strings
 
-    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null, bool insertorreplace = false)
+    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null, bool insertorreplace = false, bool insertorignore = false)
     {
         string plist = "";
         string atlist = "";
         foreach (string s in paras)
         {
-            plist = plist.AppendPrePad(s, ",");
-            atlist = atlist.AppendPrePad("@" + s, ",");
+            string n = s.Split(':')[0];
+            plist = plist.AppendPrePad(n, ",");
+            atlist = atlist.AppendPrePad("@" + n, ",");
         }
 
-        string cmdtext = "INSERT " + (insertorreplace ? "OR REPLACE ":"") + "INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
+        string cmdtext = "INSERT " + (insertorreplace ? "OR REPLACE " : "") + (insertorignore ? "OR IGNORE " : "") + "INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
 
         DbCommand cmd = r.CreateCommand(cmdtext, tx);
         cmd.CreateParams(paras, types);
         return cmd;
     }
 
-    public static DbCommand CreateReplace(this SQLExtConnection r, string table, string[] paras, DbType[] types, DbTransaction tx = null)
+    public static DbCommand CreateReplace(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null)
     {
         return CreateInsert(r, table, paras, types, tx, insertorreplace: true);
+    }
+
+    public static DbCommand CreateInsertOrIgnore(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null)
+    {
+        return CreateInsert(r, table, paras, types, tx, insertorignore: true);
     }
 
     public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string where, string[] paras, DbType[] types,  DbTransaction tx = null)
     {
         string plist = "";
         foreach (string s in paras)
-        {
-            plist = plist.AppendPrePad(s + "=@" + s, ",");
-        }
+            plist = plist.AppendPrePad(s.Split(':')[0], ",");
 
         string cmdtext = "UPDATE " + table + " SET " + plist + " " + where;
 
@@ -229,12 +204,78 @@ public static class SQLiteCommandExtensions
         return cmd;
     }
 
-    public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where, string[] inparas = null, DbType[] intypes = null, string[] joinlist=null, DbTransaction tx = null)
+    public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where = null, string orderby = "",
+                                            string[] inparas = null, DbType[] intypes = null,
+                                            string[] joinlist = null, string limit = null, DbTransaction tx = null)
     {
-        string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist!=null ? string.Join(" ", joinlist) :"") + " WHERE " + where;
+        string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist != null ? string.Join(" ", joinlist) : "") +
+                                        (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") +
+                                        (limit.HasChars() ? (" LIMIT " + limit) : "");
         DbCommand cmd = r.CreateCommand(cmdtext, tx);
         cmd.CreateParams(inparas, intypes);
         return cmd;
+    }
+
+    public static DbCommand CreateDelete(this SQLExtConnection r, string table, string where , string[] paras = null, DbType[] types = null, DbTransaction tx = null)
+    {
+        string cmdtext = "DELETE FROM " + table + " WHERE " + where;
+        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        cmd.CreateParams(paras, types);
+        return cmd;
+    }
+
+
+
+
+
+    // Dodgy old ones - check this on re-integration
+
+    public static DataSet SQLQueryText(this SQLExtConnection cn, DbCommand cmd)
+    {
+        try
+        {
+            DataSet ds = new DataSet();
+            DbDataAdapter da = cn.CreateDataAdapter(cmd);
+            da.Fill(ds);
+            return ds;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("SqlQuery Exception: " + ex.Message);
+            throw;
+        }
+    }
+
+    static public int SQLNonQueryText(this SQLExtConnection cn, DbCommand cmd)
+    {
+        int rows = 0;
+
+        try
+        {
+            rows = cmd.ExecuteNonQuery();
+            return rows;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("SqlNonQueryText Exception: " + ex.Message);
+            throw;
+        }
+    }
+
+    static public object SQLScalar(this SQLExtConnection cn, DbCommand cmd)
+    {
+        object ret = null;
+
+        try
+        {
+            ret = cmd.ExecuteScalar();
+            return ret;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("SqlNonQuery Exception: " + ex.Message);
+            throw;
+        }
     }
 
 }

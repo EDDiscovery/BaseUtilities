@@ -111,11 +111,13 @@ namespace EliteDangerousCore
     {
         public SystemClass()
         {
+            Xi = int.MinValue;
         }
 
         public SystemClass(string name)
         {
             Name = name;
+            Xi = int.MinValue;
             status = SystemStatusEnum.Unknown;
         }
 
@@ -123,6 +125,7 @@ namespace EliteDangerousCore
         {
             Name = "UnKnown";
             EDSMID = id;
+            Xi = int.MinValue;
             status = SystemStatusEnum.Unknown;
         }
 
@@ -195,6 +198,17 @@ namespace EliteDangerousCore
         public override string ToString()
         {
             return string.Format("{0} @ {1:N1},{2:N1},{3:N1}", Name, X, Y, Z);
+        }
+
+        public string ToStringVerbose()
+        {
+            string x = string.Format("{0} @ {1:N1},{2:N1},{3:N1} EDSMID:{4}", Name, X, Y, Z, EDSMID);
+            if ( EDDBID!=0)
+            {
+                x += " EDDBID:" + EDDBID + " " + Population + " " + Faction + " " + Government + " " + Allegiance + " " + State + " " + Security + " " + PrimaryEconomy
+                                    + " " + Power + " " + PowerState + " " + NeedsPermit + " " + EDDBUpdatedAt;
+            }
+            return x;
         }
     }
 }

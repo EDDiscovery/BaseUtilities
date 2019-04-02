@@ -62,6 +62,8 @@ namespace SQLLiteExtensions
                 if (utctimeindicator)   // indicate treat dates as UTC.
                     connection.ConnectionString += "DateTimeKind=Utc;";
 
+               // System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
+
                 transactionLock = new SQLExtTransactionLock<TConn>();
                 connection.Open();
             }
@@ -128,6 +130,7 @@ namespace SQLLiteExtensions
             {
                 if (connection != null)
                 {
+                 //   System.Diagnostics.Debug.WriteLine("Closed connection " + connection.ConnectionString);
                     connection.Close();
                     connection.Dispose();
                     connection = null;

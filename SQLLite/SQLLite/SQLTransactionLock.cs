@@ -166,7 +166,7 @@ namespace SQLLiteExtensions
 
             if (rwlock.IsReadLockHeld)
             {
-                throw new InvalidOperationException("Write attempted in read-only connection");
+                throw new InvalidOperationException("Writer found RW Lock held ");
             }
 
             if (!isWriter)

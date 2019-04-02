@@ -157,5 +157,7 @@ namespace EliteDangerousCore
     public interface ISystem : ISystemBase, ISystemEDDB
     {
         SystemStatusEnum status { get; set; }        // Who made this entry, where did the info come from?
+        string ToString();
+        string ToStringVerbose();
     }
 }
