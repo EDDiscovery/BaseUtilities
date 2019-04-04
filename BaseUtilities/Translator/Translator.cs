@@ -297,10 +297,11 @@ namespace BaseUtils
                     System.Diagnostics.Debug.WriteLine(tx);
                     logger?.WriteLine(tx);
                 }
+
                 if (translations.ContainsKey(key))
                 {
 #if DEBUG
-                    return translations[key] ?? ('\'' + normal + '\'');     // debug more we quote them to show its not translated, else in release we just print
+                    return translations[key] ?? normal.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
                     return translations[key] ?? normal;
 #endif

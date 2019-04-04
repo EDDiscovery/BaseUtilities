@@ -152,7 +152,7 @@ public static class ObjectExtensionsStrings
             while (i < obj.Length && !char.IsLetterOrDigit(obj[i]))
                 i++;
 
-            for(; i < obj.Length; i++)
+            for (; i < obj.Length; i++)
             {
                 if (char.IsLetterOrDigit(obj[i]))
                     ret += obj[i];
@@ -162,6 +162,26 @@ public static class ObjectExtensionsStrings
 
             return ret;
 
+        }
+    }
+
+    public static string QuoteFirstAlphaDigit(this string obj, char quotemark = '\'')    // find first alpha text and quote it.. strange function
+    {
+        if (obj == null)
+            return null;
+        else
+        {
+            int i = 0;
+            while (i < obj.Length && !char.IsLetter(obj[i]))
+                i++;
+
+            int s = i;
+
+            while (i < obj.Length && ( char.IsLetterOrDigit(obj[i]) || char.IsWhiteSpace(obj[i])))
+                i++;
+
+            string ret = obj.Substring(0, s) + quotemark + obj.Substring(s, i - s) + quotemark + obj.Mid(i);
+            return ret;
         }
     }
 
