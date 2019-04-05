@@ -47,6 +47,22 @@ namespace EliteDangerousCore
         public int GridID { get; set; }
         public long? SystemAddress { get; set; }
 
+        public SystemClassBase()
+        {
+            Xi = int.MinValue;
+        }
+
+        public SystemClassBase(ISystem sys)
+        {
+            this.EDSMID = sys.EDSMID;
+            this.Name = sys.Name;
+            this.Xi = sys.Xi;
+            this.Yi = sys.Yi;
+            this.Zi = sys.Zi;
+            this.GridID = sys.GridID;
+            this.SystemAddress = sys.SystemAddress;
+        }
+
         public bool Equals(ISystemBase other)
         {
             return other != null &&
@@ -109,15 +125,31 @@ namespace EliteDangerousCore
     [DebuggerDisplay("System {Name} ({X,nq},{Y,nq},{Z,nq})")]
     public class SystemClass : SystemClassBase, ISystem
     {
-        public SystemClass()
+        public SystemClass() : base()
         {
-            Xi = int.MinValue;
         }
 
-        public SystemClass(string name)
+        public SystemClass(ISystem sys) : base(sys)
+        {
+            this.status = sys.status;
+
+            this.EDDBID = sys.EDDBID;
+            this.Population = sys.Population;
+            this.Faction = sys.Faction;
+            this.Government = sys.Government;
+            this.Allegiance = sys.Allegiance;
+            this.State = sys.State;
+            this.Security = sys.Security;
+            this.PrimaryEconomy = sys.PrimaryEconomy;
+            this.Power = sys.Power;
+            this.PowerState = sys.PowerState;
+            this.NeedsPermit = sys.NeedsPermit;
+            this.EDDBUpdatedAt = sys.EDDBUpdatedAt;
+        }
+
+        public SystemClass(string name) : base()
         {
             Name = name;
-            Xi = int.MinValue;
             status = SystemStatusEnum.Unknown;
         }
 
@@ -125,7 +157,6 @@ namespace EliteDangerousCore
         {
             Name = "UnKnown";
             EDSMID = id;
-            Xi = int.MinValue;
             status = SystemStatusEnum.Unknown;
         }
 
@@ -145,17 +176,16 @@ namespace EliteDangerousCore
             status = SystemStatusEnum.Unknown;
         }
 
-        public SystemClass(string Name, int xi, int yi, int zi, long edsmid, 
-                            long eddbid, int eddbupdateat, long population, string faction , 
-                            EDGovernment g, EDAllegiance a, EDState s, EDSecurity security, 
+        public SystemClass(string Name, int xi, int yi, int zi, long edsmid,
+                            long eddbid, int eddbupdateat, long population, string faction,
+                            EDGovernment g, EDAllegiance a, EDState s, EDSecurity security,
                             EDEconomy eco, string power, string powerstate, int needspermit,
-                            int gridid = -1)
+                            int gridid = -1, SystemStatusEnum statusv = SystemStatusEnum.Unknown)
         {
             base.Name = Name;
             Xi = xi; Yi = yi; Zi = zi;
             EDSMID = edsmid;
             GridID = gridid == -1 ? EliteDangerousCore.DB.GridId.Id(xi, zi) : gridid;
-            status = SystemStatusEnum.Unknown;
 
             EDDBID = eddbid;
             Population = population;
@@ -169,6 +199,7 @@ namespace EliteDangerousCore
             PowerState = powerstate;
             NeedsPermit = needspermit;
             EDDBUpdatedAt = eddbupdateat;
+            status = statusv;
         }
 
         public SystemStatusEnum status { get; set; }
@@ -203,7 +234,7 @@ namespace EliteDangerousCore
         public string ToStringVerbose()
         {
             string x = string.Format("{0} @ {1:N1},{2:N1},{3:N1} EDSMID:{4}", Name, X, Y, Z, EDSMID);
-            if ( EDDBID!=0)
+            if (EDDBID != 0)
             {
                 x += " EDDBID:" + EDDBID + " " + Population + " " + Faction + " " + Government + " " + Allegiance + " " + State + " " + Security + " " + PrimaryEconomy
                                     + " " + Power + " " + PowerState + " " + NeedsPermit + " " + EDDBUpdatedAt;

@@ -669,7 +669,7 @@ namespace EliteDangerousCore.DB
                                 (long)reader[offset], (int)(long)reader[offset + 1], (long)reader[offset + 2], (string)reader[offset + 3],
                                 (EDGovernment)(long)reader[offset + 4], (EDAllegiance)(long)reader[offset + 5], (EDState)(long)reader[offset + 6], (EDSecurity)(long)reader[offset + 7],
                                 (EDEconomy)(long)reader[offset + offset], (string)reader[offset + 9], (string)reader[offset + 10], (int)(long)reader[offset + 11],
-                                (int)(long)reader[5]);
+                                (int)(long)reader[5], SystemStatusEnum.EDSM);
             }
         }
 
@@ -698,7 +698,7 @@ namespace EliteDangerousCore.DB
                                 (long)reader[offset], (int)(long)reader[offset + 1], (long)reader[offset + 2], (string)reader[offset + 3],
                                 (EDGovernment)(long)reader[offset + 4], (EDAllegiance)(long)reader[offset + 5], (EDState)(long)reader[offset + 6], (EDSecurity)(long)reader[offset + 7],
                                 (EDEconomy)(long)reader[offset + offset], (string)reader[offset + 9], (string)reader[offset + 10], (int)(long)reader[offset + 11],
-                                (int)(long)reader[5]);
+                                (int)(long)reader[5], SystemStatusEnum.EDSM);
             }
         }
 
