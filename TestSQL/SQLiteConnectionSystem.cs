@@ -54,12 +54,14 @@ namespace EliteDangerousCore.DB
 
         protected static bool UpgradeSystemsDB(SQLiteConnectionSystem conn)
         {
-            int dbver;
             try
             {
                 conn.ExecuteNonQuery("CREATE TABLE IF NOT EXISTS Register (ID TEXT PRIMARY KEY NOT NULL, ValueInt INTEGER, ValueDouble DOUBLE, ValueString TEXT, ValueBlob BLOB)");
 
                 // BE VERY careful with connections when creating/deleting tables - you end up with SQL Schema errors or it not seeing the table
+
+                SQLExtRegister reg = new SQLExtRegister(conn);
+                int dbver = reg.GetSettingInt("DBVer", 0);      // use reg, don't use the built in func as they create new connections and confuse the schema
 
                 conn.ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
                     {
@@ -72,13 +74,21 @@ namespace EliteDangerousCore.DB
                     "CREATE TABLE IF NOT EXISTS Aliases (edsmid INTEGER PRIMARY KEY NOT NULL, edsmid_mergedto INTEGER, name TEXT COLLATE NOCASE)"
                     });
 
+                if (dbver < 102)        // is it older than 102, its unusable
+                {
+                    conn.ExecuteNonQueries(new string[]         // older than 102, not supporting, remove
+                    {
+                        "DROP TABLE IF EXISTS EdsmSystems",
+                        "DROP TABLE IF EXISTS SystemNames",
+                    });
+
+                    reg.DeleteKey("EDSMLastSystems");       // no EDSM system time
+                }
+
                 CreateStarTables(conn);                     // ensure we have
                 CreateSystemDBTableIndexes(conn);           // ensure they are there 
                 DropStarTables(conn, tablepostfix);         // clean out any temp tables half prepared 
 
-                SQLExtRegister reg = new SQLExtRegister(conn);
-
-                dbver = reg.GetSettingInt("DBVer", 0);      // use reg, don't use the built in func as they create new connections and confuse the schema
                 if (dbver < 200)
                 {
                     reg.PutSettingInt("DBVer", 200);
@@ -153,7 +163,6 @@ namespace EliteDangerousCore.DB
         public static void UpgradeSystemTableFrom102TypeDB(Func<bool> cancelRequested, Action<string> reportProgress)
         {
             bool executeupgrade = false;
-            string tablepostfix = "temp";
 
             // first work out if we can upgrade, if so, create temp tables
 
@@ -163,20 +172,9 @@ namespace EliteDangerousCore.DB
 
                 if (list.Contains("EdsmSystems") )
                 {
-                    if (SQLiteConnectionSystem.GetSettingInt("DBVer", 0) == 102)        // is it a 102 database?, yes go.
-                    {
-                        DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
-                        CreateStarTables(conn, tablepostfix);     // and make new temp tables
-                        executeupgrade = true;
-                    }
-                    else
-                    {
-                        conn.ExecuteNonQueries(new string[]         // older than 102, not supporting, remove
-                        {
-                            "DROP TABLE IF EXISTS EdsmSystems",
-                            "DROP TABLE IF EXISTS SystemNames",
-                        });
-                    }
+                    DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
+                    CreateStarTables(conn, tablepostfix);     // and make new temp tables
+                    executeupgrade = true;
                 }
             }
 

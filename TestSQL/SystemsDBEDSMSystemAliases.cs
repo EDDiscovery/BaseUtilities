@@ -89,10 +89,10 @@ namespace EliteDangerousCore.DB
                                         insertCmd.Parameters[2].Value = name;
                                         insertCmd.ExecuteNonQuery();
                                         System.Diagnostics.Debug.WriteLine("Alias " + edsmid + " -> " + mergedto + " " + name);
+                                        updates++;
                                     }
                                 }
 
-                                updates++;
                             }
                         }
                     }

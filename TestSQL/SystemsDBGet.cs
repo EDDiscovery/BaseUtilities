@@ -20,6 +20,7 @@ using System.Linq;
 using System.Data.Common;
 using System.Data;
 using System.Drawing;
+using EMK.LightGeometry;
 
 namespace EliteDangerousCore.DB
 {
@@ -77,12 +78,10 @@ namespace EliteDangerousCore.DB
                 if (ec.IsNamed)
                 {
                     using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "s.nameid IN (Select id FROM Names WHERE name=@starname) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)",
+                                                        "s.nameid IN (Select id FROM Names WHERE name=@p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                        new Object[] { ec.StarName, ec.SectorName },
                                                         joinlist: MakeSystemQueryEDDBJoinList))
                     {
-                        selectSysCmd.AddParameterWithValue("@starname", ec.StarName);
-                        selectSysCmd.AddParameterWithValue("@sname", ec.SectorName);
-
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -95,12 +94,10 @@ namespace EliteDangerousCore.DB
                 }
                 else
                 {           // Numeric or Standard - all data in ID
-                    using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSysStdNumericQueryEDDB, "s.nameid = @nid AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)",
+                    using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSysStdNumericQueryEDDB, "s.nameid = @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                        new Object[] { ec.ID, ec.SectorName },
                                                         joinlist: MakeSysStdNumericQueryEDDBJoinList))
                     {
-                        selectSysCmd.AddParameterWithValue("@nid", ec.ID);
-                        selectSysCmd.AddParameterWithValue("@sname", ec.SectorName);
-
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -121,11 +118,10 @@ namespace EliteDangerousCore.DB
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
                 using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                    "s.edsmid=@nedsmid",
+                                                    "s.edsmid=@p1",
+                                                    new Object[] { edsmid },
                                                     joinlist: MakeSystemQueryEDDBJoinList))
                 {
-                    selectSysCmd.AddParameterWithValue("@nedsmid", edsmid);
-
                     using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -138,7 +134,7 @@ namespace EliteDangerousCore.DB
             return null;
         }
 
-        public static List<ISystem> FindStarWildcard(string name)
+        public static List<ISystem> FindStarWildcard(string name , int limit = int.MaxValue) 
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
@@ -149,13 +145,11 @@ namespace EliteDangerousCore.DB
                 if (ec.IsStandardParts)     // normal Euk PRoc qc-l d2-3
                 {
                     using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "s.nameid >= @nidlow AND s.nameid <= @nidhigh AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)",
+                                                        "s.nameid >= @p1 AND s.nameid <= @p2 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p3)",
+                                                        new Object[] { ec.ID, ec.IDHigh, ec.SectorName },
+                                                        limit:limit,
                                                         joinlist: MakeSystemQueryEDDBJoinList))
                     {
-                        selectSysCmd.AddParameterWithValue("@nidlow", ec.ID);
-                        selectSysCmd.AddParameterWithValue("@nidhigh", ec.IDHigh);
-                        selectSysCmd.AddParameterWithValue("@sname", ec.SectorName);
-
                         //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
 
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
@@ -174,11 +168,11 @@ namespace EliteDangerousCore.DB
                     // beware, 1<<46 works, 0x40 0000 0000 does not.. check SQL later
 
                     using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "(s.nameid & (1<<46) != 0) AND cast((s.nameid & 0x3fffffffff) as text) LIKE @nid AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)",
+                                                        "(s.nameid & (1<<46) != 0) AND cast((s.nameid & 0x3fffffffff) as text) LIKE @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                        new Object[] { ec.NameIdNumeric.ToStringInvariant() + "%", ec.SectorName },
+                                                        limit:limit,
                                                         joinlist: MakeSystemQueryEDDBJoinList))  
                     {
-                        selectSysCmd.AddParameterWithValue("@nid", ec.NameIdNumeric.ToStringInvariant() + "%");
-                        selectSysCmd.AddParameterWithValue("@sname", ec.SectorName);
 
                         //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
 
@@ -200,12 +194,11 @@ namespace EliteDangerousCore.DB
                         // and requires CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name) for fast lookup of nameid on star list
 
                         using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                            "s.nameid IN (Select id FROM Names WHERE name LIKE @starname) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@sname)",
+                                                            "s.nameid IN (Select id FROM Names WHERE name LIKE @p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                            new Object[] { ec.StarName + "%", ec.SectorName },
+                                                            limit: limit,
                                                             joinlist: MakeSystemQueryEDDBJoinList))
                         {
-                            selectSysCmd.AddParameterWithValue("@starname", ec.StarName + "%");
-                            selectSysCmd.AddParameterWithValue("@sname", ec.SectorName);
-
                             using (DbDataReader reader = selectSysCmd.ExecuteReader())
                             {
                                 while (reader.Read())
@@ -213,6 +206,8 @@ namespace EliteDangerousCore.DB
                                     SystemClass sc = MakeSystem(reader);
                                     ret.Add(sc);
                                 }
+
+                                limit -= ret.Count;
                             }
                         }
                     }
@@ -222,18 +217,21 @@ namespace EliteDangerousCore.DB
                     // Requires CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)
                     // Requires CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sector) (Big cost)
 
-                    using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @secname)",
-                                                        joinlist: MakeSystemQueryEDDBJoinList))
+                    if (limit > 0)
                     {
-                        selectSysCmd.AddParameterWithValue("@secname", (ec.SectorName != EliteNameClassifier.NoSectorName ? ec.SectorName : ec.StarName) + "%");
-
-                        using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                        using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
+                                                            "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @p1)",
+                                                            new Object[] { (ec.SectorName != EliteNameClassifier.NoSectorName ? ec.SectorName : ec.StarName) + "%" },
+                                                            limit: limit,
+                                                            joinlist: MakeSystemQueryEDDBJoinList))
                         {
-                            while (reader.Read())
+                            using (DbDataReader reader = selectSysCmd.ExecuteReader())
                             {
-                                SystemClass sc = MakeSystem(reader);
-                                ret.Add(sc);
+                                while (reader.Read())
+                                {
+                                    SystemClass sc = MakeSystem(reader);
+                                    ret.Add(sc);
+                                }
                             }
                         }
                     }
@@ -246,7 +244,7 @@ namespace EliteDangerousCore.DB
         public static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
                                                     int maxitems,
                                                     double mindist, double maxdist, bool spherical,
-                                                    Action<ISystem> AddedTo = null
+                                                    Action<ISystem> LookedUp = null
                                                     )
 
         {
@@ -255,7 +253,7 @@ namespace EliteDangerousCore.DB
             if (gridids.Count > 64)     // too many grids for IN expression - and its stupid sized then anyway.
                 return;
 
-            var strinlist = string.Join(",",(from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
+            var strinlist = string.Join(",", (from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
             //System.Diagnostics.Debug.WriteLine("Limit search to " + strinlist);
 
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
@@ -264,7 +262,7 @@ namespace EliteDangerousCore.DB
 
                 using (DbCommand cmd = cn.CreateSelect("Systems s",
                     MakeSystemQueryEDDB,
-                    where:"s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
+                    where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
                         "AND s.x >= @xv - @maxdist " +
                         "AND s.x <= @xv + @maxdist " +
                         "AND s.y >= @yv - @maxdist " +
@@ -283,18 +281,19 @@ namespace EliteDangerousCore.DB
                     cmd.AddParameterWithValue("@maxdist", SystemClass.DoubleToInt(maxdist));
                     cmd.AddParameterWithValue("@mindistsq", SystemClass.DoubleToInt(mindist) * SystemClass.DoubleToInt(mindist));  // note in square terms
 
-                    System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
+                    //System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
 
                     using (DbDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())// && distlist.Count < maxitems)           // already sorted, and already limited to max items
                         {
                             SystemClass s = MakeSystem(reader);
+                            LookedUp?.Invoke(s);                            // callback to say looked up
+
                             double distsq = s.DistanceSq(x, y, z);
                             if ((!spherical || distsq <= maxdist * maxdist))// MUST use duplicate double list to protect against EDSM having two at the same point
                             {
                                 distlist.Add(distsq, s);                  // which Rob has seen crashing the program! Bad EDSM!
-                                AddedTo?.Invoke(s);         // callback to say added to.
                             }
                         }
                     }
@@ -329,7 +328,7 @@ namespace EliteDangerousCore.DB
                                 "AND s.Z <= @Z + 16 ",
                           joinlist: MakeSystemQueryEDDBJoinList,
                           limit: "1"))
-                { 
+                {
                     cmd.AddParameterWithValue("@X", SystemClass.DoubleToInt(x));
                     cmd.AddParameterWithValue("@Y", SystemClass.DoubleToInt(y));
                     cmd.AddParameterWithValue("@Z", SystemClass.DoubleToInt(z));
@@ -348,13 +347,6 @@ namespace EliteDangerousCore.DB
             return null;
         }
 
-#if false
-        
-        // null if not found
-
-
-        // TBC needs optimising with grid id
-
         public const int metric_nearestwaypoint = 0;     // easiest way to synchronise metric selection..
         public const int metric_mindevfrompath = 1;
         public const int metric_maximum100ly = 2;
@@ -366,32 +358,37 @@ namespace EliteDangerousCore.DB
                                               Point3D wantedpos,
                                               double maxfromcurpos,
                                               double maxfromwanted,
-                                              int routemethod)
+                                              int routemethod,
+                                              Action<ISystem> LookedUp = null)
         {
+
+            var gridids = GridId.Ids(wantedpos.X - maxfromwanted, wantedpos.X + maxfromwanted, wantedpos.Z - maxfromwanted, wantedpos.Z + maxfromwanted);       // find applicable grid ids across this range..
+
+            if (gridids.Count > 64)     // too many grids for IN expression - and its stupid sized then anyway.
+                return null;
+
+            var strinlist = string.Join(",", (from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
+
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                // TBD EDDB
-
-                using (DbCommand cmd = cn.CreateCommand(
-                    "SELECT c.name,s.name,s.x,s.y,s.z,s.edsmid,n.Name,c.gridid " +
-                    "FROM Systems s " +
-                    "JOIN Sectors c on c.id = s.sector " +
-                    "LEFT OUTER JOIN Names n on s.name=n.id " + //n.name is optional return
-                    "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " +  //e.properites is optional return
-                    "WHERE x >= @xc - @maxfromcurpos " +
-                    "AND x <= @xc + @maxfromcurpos " +
-                    "AND y >= @yc - @maxfromcurpos " +
-                    "AND y <= @yc + @maxfromcurpos " +
-                    "AND z >= @zc - @maxfromcurpos " +
-                    "AND z <= @zc + @maxfromcurpos " +
-                    "AND x >= @xw - @maxfromwanted " +
-                    "AND x <= @xw + @maxfromwanted " +
-                    "AND y >= @yw - @maxfromwanted " +
-                    "AND y <= @yw + @maxfromwanted " +
-                    "AND z >= @zw - @maxfromwanted " +
-                    "AND z <= @zw + @maxfromwanted "))
+                using (DbCommand cmd = cn.CreateSelect("Systems s",
+                          MakeSystemQueryEDDB,
+                          where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
+                                "AND x >= @xc - @maxfromcurpos " +
+                                "AND x <= @xc + @maxfromcurpos " +
+                                "AND y >= @yc - @maxfromcurpos " +
+                                "AND y <= @yc + @maxfromcurpos " +
+                                "AND z >= @zc - @maxfromcurpos " +
+                                "AND z <= @zc + @maxfromcurpos " +
+                                "AND x >= @xw - @maxfromwanted " +
+                                "AND x <= @xw + @maxfromwanted " +
+                                "AND y >= @yw - @maxfromwanted " +
+                                "AND y <= @yw + @maxfromwanted " +
+                                "AND z >= @zw - @maxfromwanted " +
+                                "AND z <= @zw + @maxfromwanted ",
+                          joinlist: MakeSystemQueryEDDBJoinList))
                 {
-                    cmd.AddParameterWithValue("@xw", SystemClass.DoubleToInt(wantedpos.X));
+                    cmd.AddParameterWithValue("@xw", SystemClass.DoubleToInt(wantedpos.X));         // easier to manage with named paras
                     cmd.AddParameterWithValue("@yw", SystemClass.DoubleToInt(wantedpos.Y));
                     cmd.AddParameterWithValue("@zw", SystemClass.DoubleToInt(wantedpos.Z));
                     cmd.AddParameterWithValue("@maxfromwanted", SystemClass.DoubleToInt(maxfromwanted));
@@ -408,7 +405,8 @@ namespace EliteDangerousCore.DB
                     {
                         while (reader.Read())
                         {
-                            SystemClass s = FromReaderDBInStdOrder(reader);
+                            SystemClass s = MakeSystem(reader);
+                            LookedUp?.Invoke(s);                            // callback to say looked up
 
                             Point3D syspos = new Point3D(s.X, s.Y, s.Z);
                             double distancefromwantedx2 = Point3D.DistanceBetweenX2(wantedpos, syspos); // range between the wanted point and this, ^2
@@ -457,7 +455,6 @@ namespace EliteDangerousCore.DB
             }
         }
 
-#endif
         public enum SystemAskType { AllStars, SplitPopulatedStars };        
 
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,int percentage, Func<int, int, int, V> tovect)
@@ -470,8 +467,8 @@ namespace EliteDangerousCore.DB
         // if split, vertices1 is populated, 2 is unpopulated
 
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,
-                                                             ref V[] vertices2, ref uint[] colours2,
-                                                            int percentage, Func<int, int, int, V> tovect, SystemAskType ask = SystemAskType.SplitPopulatedStars)
+                                                          ref V[] vertices2, ref uint[] colours2,
+                                                          int percentage, Func<int, int, int, V> tovect, SystemAskType ask = SystemAskType.SplitPopulatedStars)
         {
             int numvertices1 = 0;
             vertices1 = vertices2 = null;
@@ -567,10 +564,11 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        public static V[] GetStarPositions<V>(int percentage, Func<int, int, int, V> tovect)  // return all star positions..
+        // randimised id % 100 < selector
+        public static V[] GetStarPositions<V>(int selector, Func<int, int, int, V> tovect)  // return all star positions..
         {
             long totalsystems = GetTotalSystems();
-            V[] ret = new V[totalsystems * percentage / 100 + 1];      // 1 is for luck
+            V[] ret = new V[totalsystems * selector / 100 + 1];      // 1 is for luck
 
             int entry = 0;
 
@@ -578,7 +576,7 @@ namespace EliteDangerousCore.DB
             {
                 using (DbCommand cmd = cn.CreateSelect("Systems s",
                                                        outparas: "s.x,s.y,s.z",
-                                                       where: "((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()
+                                                       where: "((s.edsmid*2333)%100) <" + selector.ToStringInvariant()
                                                        ))
                 {
                     using (DbDataReader reader = cmd.ExecuteReader())

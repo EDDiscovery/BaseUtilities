@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
+using EMK.LightGeometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace EliteDangerousCore
         // the system db may not be full at that point.  So a restart would be required to clear the misses..
         // difficult
 
-#region Public Interface
+        #region Public Interface for Find System
 
         public static ISystem FindSystem(long edsmid)
         {
@@ -79,7 +80,7 @@ namespace EliteDangerousCore
                 {
                     found = DB.SystemsDB.FindStar(find.EDSMID);
 
-                    if (found != null && find.Name.HasChars() )      // if we find it, use the find name in the return as the EDSM name may be out of date..
+                    if (found != null && find.Name.HasChars())      // if we find it, use the find name in the return as the EDSM name may be out of date..
                         found.Name = find.Name;
                 }
 
@@ -89,10 +90,10 @@ namespace EliteDangerousCore
                 if (found == null && find.HasCoordinate)        // finally, not found, but we have a co-ord, find it from the db  by distance
                     found = DB.SystemsDB.GetSystemByPosition(find.X, find.Y, find.Z);
 
-                if ( found == null )
+                if (found == null)
                 {
                     long newid = DB.SystemsDB.FindAlias(find.EDSMID, find.Name);   // is there a named alias in there due to a system being renamed..
-                    if ( newid >= 0 )
+                    if (newid >= 0)
                         found = DB.SystemsDB.FindStar(newid);  // find it using the new id
                 }
 
@@ -129,9 +130,9 @@ namespace EliteDangerousCore
         }
 
         // use the DB but cache the returns for future use
-        static public List<ISystem> FindSystemWildcard(string name)
+        static public List<ISystem> FindSystemWildcard(string name, int limit = int.MaxValue)
         {
-            var list = DB.SystemsDB.FindStarWildcard(name);
+            var list = DB.SystemsDB.FindStarWildcard(name, limit);
             if (list != null)
             {
                 foreach (var x in list)
@@ -147,9 +148,9 @@ namespace EliteDangerousCore
                                                     double mindist, double maxdist, bool spherical)
         {
             DB.SystemsDB.GetSystemListBySqDistancesFrom(distlist, x, y, z, maxitems, mindist, maxdist, spherical, (s) => AddToCache(s));
-            if ( distlist.Count > 0 )
+            if (distlist.Count > 0)
             {
-                foreach( var s in distlist )
+                foreach (var s in distlist)
                 {
                     AddToCache(s.Value);
                 }
@@ -174,10 +175,76 @@ namespace EliteDangerousCore
             return s;
         }
 
-#endregion
+        public static ISystem GetSystemNearestTo(Point3D currentpos,
+                                      Point3D wantedpos,
+                                      double maxfromcurpos,
+                                      double maxfromwanted,
+                                      int routemethod)
+        {
+            return DB.SystemsDB.GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod, (s) => AddToCache(s));
+        }
 
+        #endregion
 
-#region Helpers
+        #region Autocomplete
+
+        // use this for additional autocompletes outside of the normal stars
+        public static void AddToAutoCompleteList(List<string> t)
+        {
+            lock (AutoCompleteAdditionalList)
+            {
+                AutoCompleteAdditionalList.AddRange(t);
+            }
+        }
+
+        public static List<string> ReturnSystemListForAutoComplete(string input, Object ctrl)
+        {
+            List<string> ret = new List<string>();
+            ret.AddRange(ReturnAdditionalAutoCompleteList(input, ctrl));
+            ret.AddRange(ReturnSystemAutoCompleteList(input, ctrl));
+            return ret;
+        }
+
+        public static List<string> ReturnAdditionalAutoCompleteList(string input, Object ctrl)
+        {
+            List<string> ret = new List<string>();
+
+            if (input != null && input.Length > 0)
+            {
+                lock (AutoCompleteAdditionalList)
+                {
+                    foreach (string other in AutoCompleteAdditionalList)
+                    {
+                        if (other.StartsWith(input, StringComparison.InvariantCultureIgnoreCase))
+                            ret.Add(other);
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public static int MaximumStars { get; set; } = 1000;
+
+        public static List<string> ReturnSystemAutoCompleteList(string input, Object ctrl)
+        {
+            List<string> ret = new List<string>();
+
+            if (input.HasChars())
+            {
+                List<ISystem> systems = DB.SystemsDB.FindStarWildcard(input, MaximumStars);
+                foreach( var i in systems)
+                {
+                    AddToCache(i);
+                    ret.Add(i.Name);
+                }
+            }
+
+            return ret;
+        }
+
+        #endregion
+
+        #region Helpers
 
         static private void AddToCache(ISystem found, ISystem orgsys = null)
         {
@@ -216,6 +283,8 @@ namespace EliteDangerousCore
 
         private static Dictionary<long, ISystem> systemsByEdsmId = new Dictionary<long, ISystem>();
         private static Dictionary<string, List<ISystem>> systemsByName = new Dictionary<string, List<ISystem>>(StringComparer.InvariantCultureIgnoreCase);
+
+        private static List<string> AutoCompleteAdditionalList = new List<string>();
 
         #endregion
     }

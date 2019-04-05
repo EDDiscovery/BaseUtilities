@@ -204,15 +204,44 @@ public static class SQLiteCommandExtensions
         return cmd;
     }
 
+    // no paras, or delayed paras
+
     public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where = null, string orderby = "",
                                             string[] inparas = null, DbType[] intypes = null,
-                                            string[] joinlist = null, string limit = null, DbTransaction tx = null)
+                                            string[] joinlist = null, object limit = null, DbTransaction tx = null)
     {
+        string lmt = "";
+        if (limit != null)
+            lmt = " LIMIT " + (limit is string ? (string)limit : ((int)limit).ToStringInvariant());
+
         string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist != null ? string.Join(" ", joinlist) : "") +
-                                        (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") +
-                                        (limit.HasChars() ? (" LIMIT " + limit) : "");
+                                        (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") + lmt;
         DbCommand cmd = r.CreateCommand(cmdtext, tx);
         cmd.CreateParams(inparas, intypes);
+        return cmd;
+    }
+
+    // immediate paras, called p1,p2,p3 etc. 
+
+    public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where, Object[] paras , 
+                                            string orderby = "", string[] joinlist = null, object limit = null, DbTransaction tx = null)
+    {
+        string lmt = "";
+        if (limit != null)
+            lmt = " LIMIT " + (limit is string ? (string)limit : ((int)limit).ToStringInvariant());
+
+        string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist != null ? string.Join(" ", joinlist) : "") +
+                                        (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") + lmt;
+                                        
+        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        int pname = 1;
+        foreach( var o in paras)
+        {
+            var par = cmd.CreateParameter();
+            par.ParameterName = "@p" + (pname++).ToStringInvariant();
+            par.Value = o;
+            cmd.Parameters.Add(par);
+        }
         return cmd;
     }
 

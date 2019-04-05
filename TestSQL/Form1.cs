@@ -22,20 +22,19 @@ namespace TestSQL
 
             bool deletedb = false;
             bool reloadjson = false;
-            bool reloadeddb = false;
+            bool reloadeddb = true;
 
             bool printstars = false;
             bool printstarseddb = false;
             bool testdelete = false;
             bool testaliases = true;
 
-
             if ( deletedb )
                 BaseUtils.FileHelpers.DeleteFileNoError(SQLiteConnectionSystem.dbFile);
 
             SQLiteConnectionSystem.Initialize();
             //SQLiteConnectionSystem.UpgradeFrom102TypeDB(()=> { return false; },(s)=>System.Diagnostics.Debug.WriteLine(s));
-            //SQLiteConnectionSystem.UpgradeFrom102TypeDB(null);
+            SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s));
 
             if (reloadjson)
             {
@@ -114,6 +113,7 @@ namespace TestSQL
             }
 
 
+            ///////////////////////////////////////////// main tests
 
             {
                 BaseUtils.AppTicks.TickCountLap();
@@ -315,26 +315,47 @@ namespace TestSQL
                 uint[] colours = null;
                 Vector3[] vertices = null;
                 SystemsDB.GetSystemVector(810, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.WriteLine("810 load : " + BaseUtils.AppTicks.TickCountLap());
+                System.Diagnostics.Debug.WriteLine("810 load 100 : " + BaseUtils.AppTicks.TickCountLap());
 
+                BaseUtils.AppTicks.TickCountLap();
                 uint[] colours2 = null;
                 Vector3[] vertices2 = null;
                 SystemsDB.GetSystemVector(810, ref vertices2, ref colours2, 50, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.Assert(vertices.Length >= vertices2.Length * 2);
+                System.Diagnostics.Debug.WriteLine("810 load 50 : " + BaseUtils.AppTicks.TickCountLap());
 
                 int lengthall = vertices.Length;
 
-                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 1000, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                BaseUtils.AppTicks.TickCountLap();
+                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.Assert(vertices.Length >= 20000);
                 System.Diagnostics.Debug.Assert(vertices2.Length >= 300000);
                 System.Diagnostics.Debug.Assert(vertices.Length + vertices2.Length == lengthall);
+                System.Diagnostics.Debug.WriteLine("810 load dual : " + BaseUtils.AppTicks.TickCountLap());
 
 
             }
 
+            {
+                BaseUtils.AppTicks.TickCountLap();
+                ISystem s;
+                s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.metric_waypointdev2);
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Sol"));
+                System.Diagnostics.Debug.WriteLine("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
+
+            }
 
             {
-                var v = SystemsDB.GetStarPositions(50, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                SystemCache.AddToAutoCompleteList(new List<string>() { "galone", "galtwo", "sol2" });
+                List<string> sys;
+                sys = SystemCache.ReturnSystemListForAutoComplete("Sol", null);
+                System.Diagnostics.Debug.Assert(sys != null && sys.Contains("Sol") && sys.Count >= 6);
+            }
+
+
+
+            {
+                var v = SystemsDB.GetStarPositions(5, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
          //       var v2 = SystemClassDB.GetStarPositions(100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
             }
         }
