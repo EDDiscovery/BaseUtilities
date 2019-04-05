@@ -88,7 +88,7 @@ namespace SQLLiteExtensions
                             continue;
                         }
                     }
-
+                    System.Diagnostics.Debug.WriteLine("SQL Command: " + this.InnerCommand.CommandText);
                     throw;
                 }
             }

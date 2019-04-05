@@ -185,10 +185,7 @@ namespace SQLLiteExtensions
 
             try
             {
-                foreach (var query in queries)
-                {
-                    ExecuteQuery(query);
-                }
+                ExecuteNonQueries(queries);
             }
             catch (Exception ex)
             {
@@ -206,9 +203,17 @@ namespace SQLLiteExtensions
             reg.PutSettingInt("DBVer", newVersion);
         }
 
-        // Query operator
+        // Query operators
 
-        public void ExecuteQuery(string query)
+        public void ExecuteNonQueries(string[] queries)
+        {
+            foreach (var query in queries)
+            {
+                ExecuteNonQuery(query);
+            }
+        }
+
+        public void ExecuteNonQuery(string query)
         {
             using (DbCommand command = CreateCommand(query))
                 command.ExecuteNonQuery();
