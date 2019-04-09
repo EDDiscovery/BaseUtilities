@@ -117,17 +117,22 @@ namespace EliteDangerousCore.DB
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer))  // open the db
             {
-                string query = "edsmid = @edsmid OR name = @name";
-                if (edsmid < 1)
-                    query = "name = @name";
-                else if (!name.HasChars())
-                    query = "edsmid = @edsmid";
-
-                DbCommand selectCmd = cn.CreateSelect("Aliases", "edsmid_mergedto", query, inparas: new string[] { "edsmid:int64", "name:string" });
-                selectCmd.Parameters[0].Value = edsmid;
-                selectCmd.Parameters[1].Value = name;
-                return selectCmd.ExecuteScalar<long>(-1);
+                return FindAlias(edsmid, name, cn);
             }
+        }
+
+        public static long FindAlias(long edsmid, string name, SQLiteConnectionSystem cn)
+        {
+            string query = "edsmid = @edsmid OR name = @name";
+            if (edsmid < 1)
+                query = "name = @name";
+            else if (!name.HasChars())
+                query = "edsmid = @edsmid";
+
+            DbCommand selectCmd = cn.CreateSelect("Aliases", "edsmid_mergedto", query, inparas: new string[] { "edsmid:int64", "name:string" });
+            selectCmd.Parameters[0].Value = edsmid;
+            selectCmd.Parameters[1].Value = name;
+            return selectCmd.ExecuteScalar<long>(-1);
         }
     }
 }

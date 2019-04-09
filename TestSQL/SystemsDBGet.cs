@@ -68,45 +68,50 @@ namespace EliteDangerousCore.DB
             return ret;
         }
 
-        
+
         public static ISystem FindStar(string name)
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                EliteNameClassifier ec = new EliteNameClassifier(name);
+                return FindStar(name, cn);
+            }
+        }
 
-                if (ec.IsNamed)
+        public static ISystem FindStar(string name, SQLiteConnectionSystem cn)
+        {
+            EliteNameClassifier ec = new EliteNameClassifier(name);
+
+            if (ec.IsNamed)
+            {
+                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
+                                                    "s.nameid IN (Select id FROM Names WHERE name=@p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                    new Object[] { ec.StarName, ec.SectorName },
+                                                    joinlist: MakeSystemQueryEDDBJoinList))
                 {
-                    using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "s.nameid IN (Select id FROM Names WHERE name=@p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
-                                                        new Object[] { ec.StarName, ec.SectorName },
-                                                        joinlist: MakeSystemQueryEDDBJoinList))
+                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
-                        using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                        if (reader.Read())
                         {
-                            if (reader.Read())
-                            {
-                                return MakeSystem(reader);        // read back and make name from db info due to case problems.
-                            }
+                            return MakeSystem(reader);        // read back and make name from db info due to case problems.
                         }
                     }
-
                 }
-                else
-                {           // Numeric or Standard - all data in ID
-                    using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSysStdNumericQueryEDDB, "s.nameid = @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
-                                                        new Object[] { ec.ID, ec.SectorName },
-                                                        joinlist: MakeSysStdNumericQueryEDDBJoinList))
-                    {
-                        using (DbDataReader reader = selectSysCmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                return MakeSystem(reader, ec.ID); // read back .. sector name is taken from DB for case reasons
-                            }
-                        }
 
+            }
+            else
+            {           // Numeric or Standard - all data in ID
+                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSysStdNumericQueryEDDB, "s.nameid = @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                    new Object[] { ec.ID, ec.SectorName },
+                                                    joinlist: MakeSysStdNumericQueryEDDBJoinList))
+                {
+                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return MakeSystem(reader, ec.ID); // read back .. sector name is taken from DB for case reasons
+                        }
                     }
+
                 }
             }
 
@@ -117,41 +122,99 @@ namespace EliteDangerousCore.DB
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                    "s.edsmid=@p1",
-                                                    new Object[] { edsmid },
-                                                    joinlist: MakeSystemQueryEDDBJoinList))
+                return FindStar(edsmid, cn);
+            }
+        }
+
+        public static ISystem FindStar(long edsmid, SQLiteConnectionSystem cn)
+        {
+            using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
+                                                "s.edsmid=@p1",
+                                                new Object[] { edsmid },
+                                                joinlist: MakeSystemQueryEDDBJoinList))
+            {
+                using (DbDataReader reader = selectSysCmd.ExecuteReader())
                 {
-                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                    if (reader.Read())
                     {
-                        if (reader.Read())
-                        {
-                            return MakeSystem(reader); 
-                        }
+                        return MakeSystem(reader); 
                     }
                 }
             }
             return null;
         }
 
-        public static List<ISystem> FindStarWildcard(string name , int limit = int.MaxValue) 
+        public static List<ISystem> FindStarWildcard(string name, int limit = int.MaxValue)
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                EliteNameClassifier ec = new EliteNameClassifier(name);
+                return FindStarWildcard(name, cn, limit);
+            }
+        }
 
-                List<ISystem> ret = new List<ISystem>();
+        public static List<ISystem> FindStarWildcard(string name, SQLiteConnectionSystem cn, int limit = int.MaxValue)
+        {
+            EliteNameClassifier ec = new EliteNameClassifier(name);
 
-                if (ec.IsStandardParts)     // normal Euk PRoc qc-l d2-3
+            List<ISystem> ret = new List<ISystem>();
+
+            if (ec.IsStandardParts)     // normal Euk PRoc qc-l d2-3
+            {
+                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
+                                                    "s.nameid >= @p1 AND s.nameid <= @p2 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p3)",
+                                                    new Object[] { ec.ID, ec.IDHigh, ec.SectorName },
+                                                    limit:limit,
+                                                    joinlist: MakeSystemQueryEDDBJoinList))
                 {
+                    //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
+
+                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            SystemClass sc = MakeSystem(reader);
+                            ret.Add(sc);
+                        }
+                    }
+                }
+            }
+            else if (ec.IsNumeric)        // HIP 29282
+            {
+                // checked select *,s.nameid & 0x3fffffffff , cast((s.nameid & 0x3fffffffff) as text) From Systems  s where (s.nameid & (1<<46)!=0) and s.sectorid=15568 USNO entries
+                // beware, 1<<46 works, 0x40 0000 0000 does not.. check SQL later
+
+                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
+                                                    "(s.nameid & (1<<46) != 0) AND cast((s.nameid & 0x3fffffffff) as text) LIKE @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                    new Object[] { ec.NameIdNumeric.ToStringInvariant() + "%", ec.SectorName },
+                                                    limit:limit,
+                                                    joinlist: MakeSystemQueryEDDBJoinList))  
+                {
+
+                    //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
+
+                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            SystemClass sc = MakeSystem(reader);
+                            ret.Add(sc);
+                        }
+                    }
+                }
+            }
+            else
+            {                             // named
+                if (ec.StarName.Length > 0)      // if we have a starname component and a sector name, look up sectorname + starname%
+                {
+                    // Requires CREATE INDEX IF NOT EXISTS NamesName ON Names (Name) CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)
+                    // and requires CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name) for fast lookup of nameid on star list
+
                     using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "s.nameid >= @p1 AND s.nameid <= @p2 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p3)",
-                                                        new Object[] { ec.ID, ec.IDHigh, ec.SectorName },
-                                                        limit:limit,
+                                                        "s.nameid IN (Select id FROM Names WHERE name LIKE @p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
+                                                        new Object[] { ec.StarName + "%", ec.SectorName },
+                                                        limit: limit,
                                                         joinlist: MakeSystemQueryEDDBJoinList))
                     {
-                        //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
-
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -159,23 +222,25 @@ namespace EliteDangerousCore.DB
                                 SystemClass sc = MakeSystem(reader);
                                 ret.Add(sc);
                             }
+
+                            limit -= ret.Count;
                         }
                     }
                 }
-                else if (ec.IsNumeric)        // HIP 29282
+
+                // look up Sector. Use sectorname, unless it NoSectorName in which case use the starname as a presumed sector name
+
+                // Requires CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)
+                // Requires CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sector) (Big cost)
+
+                if (limit > 0)
                 {
-                    // checked select *,s.nameid & 0x3fffffffff , cast((s.nameid & 0x3fffffffff) as text) From Systems  s where (s.nameid & (1<<46)!=0) and s.sectorid=15568 USNO entries
-                    // beware, 1<<46 works, 0x40 0000 0000 does not.. check SQL later
-
                     using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                        "(s.nameid & (1<<46) != 0) AND cast((s.nameid & 0x3fffffffff) as text) LIKE @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
-                                                        new Object[] { ec.NameIdNumeric.ToStringInvariant() + "%", ec.SectorName },
-                                                        limit:limit,
-                                                        joinlist: MakeSystemQueryEDDBJoinList))  
+                                                        "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @p1)",
+                                                        new Object[] { (ec.SectorName != EliteNameClassifier.NoSectorName ? ec.SectorName : ec.StarName) + "%" },
+                                                        limit: limit,
+                                                        joinlist: MakeSystemQueryEDDBJoinList))
                     {
-
-                        //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
-
                         using (DbDataReader reader = selectSysCmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -186,64 +251,27 @@ namespace EliteDangerousCore.DB
                         }
                     }
                 }
-                else
-                {                             // named
-                    if (ec.StarName.Length > 0)      // if we have a starname component and a sector name, look up sectorname + starname%
-                    {
-                        // Requires CREATE INDEX IF NOT EXISTS NamesName ON Names (Name) CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)
-                        // and requires CREATE INDEX IF NOT EXISTS SystemsName ON Systems (name) for fast lookup of nameid on star list
+            }
 
-                        using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                            "s.nameid IN (Select id FROM Names WHERE name LIKE @p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
-                                                            new Object[] { ec.StarName + "%", ec.SectorName },
-                                                            limit: limit,
-                                                            joinlist: MakeSystemQueryEDDBJoinList))
-                        {
-                            using (DbDataReader reader = selectSysCmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    SystemClass sc = MakeSystem(reader);
-                                    ret.Add(sc);
-                                }
+            return ret;
+        }
 
-                                limit -= ret.Count;
-                            }
-                        }
-                    }
-
-                    // look up Sector. Use sectorname, unless it NoSectorName in which case use the starname as a presumed sector name
-
-                    // Requires CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)
-                    // Requires CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sector) (Big cost)
-
-                    if (limit > 0)
-                    {
-                        using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryEDDB,
-                                                            "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @p1)",
-                                                            new Object[] { (ec.SectorName != EliteNameClassifier.NoSectorName ? ec.SectorName : ec.StarName) + "%" },
-                                                            limit: limit,
-                                                            joinlist: MakeSystemQueryEDDBJoinList))
-                        {
-                            using (DbDataReader reader = selectSysCmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    SystemClass sc = MakeSystem(reader);
-                                    ret.Add(sc);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return ret;
+        public static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
+                                                    int maxitems,
+                                                    double mindist, double maxdist, bool spherical,
+                                                    Action<ISystem> LookedUp = null
+                                                    )
+        {
+            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            {
+                GetSystemListBySqDistancesFrom(distlist, x, y, z, maxitems, mindist, maxdist, spherical, cn, LookedUp);
             }
         }
 
         public static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
                                                     int maxitems,
                                                     double mindist, double maxdist, bool spherical,
+                                                    SQLiteConnectionSystem cn,
                                                     Action<ISystem> LookedUp = null
                                                     )
 
@@ -256,55 +284,52 @@ namespace EliteDangerousCore.DB
             var strinlist = string.Join(",", (from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
             //System.Diagnostics.Debug.WriteLine("Limit search to " + strinlist);
 
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            // Requires index on Sector(gridid), Systems(sector)
+
+            using (DbCommand cmd = cn.CreateSelect("Systems s",
+                MakeSystemQueryEDDB,
+                where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
+                    "AND s.x >= @xv - @maxdist " +
+                    "AND s.x <= @xv + @maxdist " +
+                    "AND s.y >= @yv - @maxdist " +
+                    "AND s.y <= @yv + @maxdist " +
+                    "AND s.z >= @zv - @maxdist " +
+                    "AND s.z <= @zv + @maxdist " +
+                    "AND (s.x-@xv)*(s.x-@xv)+(s.y-@yv)*(s.y-@yv)+(s.z-@zv)*(s.z-@zv)>=@mindistsq",     // tried a direct spherical lookup using <=maxdist, too slow
+                orderby:"(s.x-@xv)*(s.x-@xv)+(s.y-@yv)*(s.y-@yv)+(s.z-@zv)*(s.z-@zv)",         // just use squares to order
+                joinlist: MakeSystemQueryEDDBJoinList,
+                limit: "@max"))
             {
-                // Requires index on Sector(gridid), Systems(sector)
+                cmd.AddParameterWithValue("@xv", SystemClass.DoubleToInt(x));
+                cmd.AddParameterWithValue("@yv", SystemClass.DoubleToInt(y));
+                cmd.AddParameterWithValue("@zv", SystemClass.DoubleToInt(z));
+                cmd.AddParameterWithValue("@max", maxitems + 1);     // 1 more, because if we artre on a SystemClass, that will be returned
+                cmd.AddParameterWithValue("@maxdist", SystemClass.DoubleToInt(maxdist));
+                cmd.AddParameterWithValue("@mindistsq", SystemClass.DoubleToInt(mindist) * SystemClass.DoubleToInt(mindist));  // note in square terms
 
-                using (DbCommand cmd = cn.CreateSelect("Systems s",
-                    MakeSystemQueryEDDB,
-                    where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
-                        "AND s.x >= @xv - @maxdist " +
-                        "AND s.x <= @xv + @maxdist " +
-                        "AND s.y >= @yv - @maxdist " +
-                        "AND s.y <= @yv + @maxdist " +
-                        "AND s.z >= @zv - @maxdist " +
-                        "AND s.z <= @zv + @maxdist " +
-                        "AND (s.x-@xv)*(s.x-@xv)+(s.y-@yv)*(s.y-@yv)+(s.z-@zv)*(s.z-@zv)>=@mindistsq",     // tried a direct spherical lookup using <=maxdist, too slow
-                    orderby:"(s.x-@xv)*(s.x-@xv)+(s.y-@yv)*(s.y-@yv)+(s.z-@zv)*(s.z-@zv)",         // just use squares to order
-                    joinlist: MakeSystemQueryEDDBJoinList,
-                    limit: "@max"))
+                //System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
+
+                using (DbDataReader reader = cmd.ExecuteReader())
                 {
-                    cmd.AddParameterWithValue("@xv", SystemClass.DoubleToInt(x));
-                    cmd.AddParameterWithValue("@yv", SystemClass.DoubleToInt(y));
-                    cmd.AddParameterWithValue("@zv", SystemClass.DoubleToInt(z));
-                    cmd.AddParameterWithValue("@max", maxitems + 1);     // 1 more, because if we artre on a SystemClass, that will be returned
-                    cmd.AddParameterWithValue("@maxdist", SystemClass.DoubleToInt(maxdist));
-                    cmd.AddParameterWithValue("@mindistsq", SystemClass.DoubleToInt(mindist) * SystemClass.DoubleToInt(mindist));  // note in square terms
-
-                    //System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
-
-                    using (DbDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())// && distlist.Count < maxitems)           // already sorted, and already limited to max items
                     {
-                        while (reader.Read())// && distlist.Count < maxitems)           // already sorted, and already limited to max items
-                        {
-                            SystemClass s = MakeSystem(reader);
-                            LookedUp?.Invoke(s);                            // callback to say looked up
+                        SystemClass s = MakeSystem(reader);
+                        LookedUp?.Invoke(s);                            // callback to say looked up
 
-                            double distsq = s.DistanceSq(x, y, z);
-                            if ((!spherical || distsq <= maxdist * maxdist))// MUST use duplicate double list to protect against EDSM having two at the same point
-                            {
-                                distlist.Add(distsq, s);                  // which Rob has seen crashing the program! Bad EDSM!
-                            }
+                        double distsq = s.DistanceSq(x, y, z);
+                        if ((!spherical || distsq <= maxdist * maxdist))// MUST use duplicate double list to protect against EDSM having two at the same point
+                        {
+                            distlist.Add(distsq, s);                  // which Rob has seen crashing the program! Bad EDSM!
                         }
                     }
                 }
             }
         }
 
-        public static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance = 1000)
+        public static ISystem FindNearestSystemTo(double x, double y, double z, SQLiteConnectionSystem cn, double maxdistance = 1000 )
         {
             BaseUtils.SortedListDoubleDuplicate<ISystem> distlist = new BaseUtils.SortedListDoubleDuplicate<ISystem>();
-            GetSystemListBySqDistancesFrom(distlist, x, y, z, 1, 0.0, maxdistance, false);
+            GetSystemListBySqDistancesFrom(distlist, x, y, z, 1, 0.0, maxdistance, false, cn);
             return distlist.Select(v => v.Value).FirstOrDefault();
         }
 
@@ -312,34 +337,39 @@ namespace EliteDangerousCore.DB
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                string grididstr = GridId.Id(x, z).ToStringInvariant();
+                return GetSystemByPosition(x, y, z, cn);
+            }
+        }
 
-                // Requires Systems (sector), Sectors(Gridid)
+        public static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn)
+        {
+            string grididstr = GridId.Id(x, z).ToStringInvariant();
 
-                // TBD EDDB
-                using (DbCommand cmd = cn.CreateSelect("Systems s",
-                          MakeSystemQueryEDDB,
-                          where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid = " + grididstr + " ) " +
-                                "AND s.X >= @X - 16 " +
-                                "AND s.X <= @X + 16 " +
-                                "AND s.Y >= @Y - 16 " +
-                                "AND s.Y <= @Y + 16 " +
-                                "AND s.Z >= @Z - 16 " +
-                                "AND s.Z <= @Z + 16 ",
-                          joinlist: MakeSystemQueryEDDBJoinList,
-                          limit: "1"))
+            // Requires Systems (sector), Sectors(Gridid)
+
+            // TBD EDDB
+            using (DbCommand cmd = cn.CreateSelect("Systems s",
+                        MakeSystemQueryEDDB,
+                        where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid = " + grididstr + " ) " +
+                            "AND s.X >= @X - 16 " +
+                            "AND s.X <= @X + 16 " +
+                            "AND s.Y >= @Y - 16 " +
+                            "AND s.Y <= @Y + 16 " +
+                            "AND s.Z >= @Z - 16 " +
+                            "AND s.Z <= @Z + 16 ",
+                        joinlist: MakeSystemQueryEDDBJoinList,
+                        limit: "1"))
+            {
+                cmd.AddParameterWithValue("@X", SystemClass.DoubleToInt(x));
+                cmd.AddParameterWithValue("@Y", SystemClass.DoubleToInt(y));
+                cmd.AddParameterWithValue("@Z", SystemClass.DoubleToInt(z));
+
+                //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(cmd));
+                using (DbDataReader reader = cmd.ExecuteReader())        // MEASURED very fast, <1ms
                 {
-                    cmd.AddParameterWithValue("@X", SystemClass.DoubleToInt(x));
-                    cmd.AddParameterWithValue("@Y", SystemClass.DoubleToInt(y));
-                    cmd.AddParameterWithValue("@Z", SystemClass.DoubleToInt(z));
-
-                    //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(cmd));
-                    using (DbDataReader reader = cmd.ExecuteReader())        // MEASURED very fast, <1ms
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            return MakeSystem(reader);
-                        }
+                        return MakeSystem(reader);
                     }
                 }
             }
@@ -361,6 +391,20 @@ namespace EliteDangerousCore.DB
                                               int routemethod,
                                               Action<ISystem> LookedUp = null)
         {
+            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            {
+                return GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod, cn, LookedUp);
+            }
+        }
+
+        public static ISystem GetSystemNearestTo(Point3D currentpos,
+                                              Point3D wantedpos,
+                                              double maxfromcurpos,
+                                              double maxfromwanted,
+                                              int routemethod,
+                                              SQLiteConnectionSystem cn,
+                                              Action<ISystem> LookedUp = null)
+        {
 
             var gridids = GridId.Ids(wantedpos.X - maxfromwanted, wantedpos.X + maxfromwanted, wantedpos.Z - maxfromwanted, wantedpos.Z + maxfromwanted);       // find applicable grid ids across this range..
 
@@ -369,106 +413,119 @@ namespace EliteDangerousCore.DB
 
             var strinlist = string.Join(",", (from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
 
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            using (DbCommand cmd = cn.CreateSelect("Systems s",
+                        MakeSystemQueryEDDB,
+                        where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
+                            "AND x >= @xc - @maxfromcurpos " +
+                            "AND x <= @xc + @maxfromcurpos " +
+                            "AND y >= @yc - @maxfromcurpos " +
+                            "AND y <= @yc + @maxfromcurpos " +
+                            "AND z >= @zc - @maxfromcurpos " +
+                            "AND z <= @zc + @maxfromcurpos " +
+                            "AND x >= @xw - @maxfromwanted " +
+                            "AND x <= @xw + @maxfromwanted " +
+                            "AND y >= @yw - @maxfromwanted " +
+                            "AND y <= @yw + @maxfromwanted " +
+                            "AND z >= @zw - @maxfromwanted " +
+                            "AND z <= @zw + @maxfromwanted ",
+                        joinlist: MakeSystemQueryEDDBJoinList))
             {
-                using (DbCommand cmd = cn.CreateSelect("Systems s",
-                          MakeSystemQueryEDDB,
-                          where: "s.sectorid IN (SELECT id FROM Sectors sx WHERE sx.gridid IN (" + strinlist + ") ) " +       // Important.. limit search to only applicable sectors first, since we have an index, it cuts it down massively
-                                "AND x >= @xc - @maxfromcurpos " +
-                                "AND x <= @xc + @maxfromcurpos " +
-                                "AND y >= @yc - @maxfromcurpos " +
-                                "AND y <= @yc + @maxfromcurpos " +
-                                "AND z >= @zc - @maxfromcurpos " +
-                                "AND z <= @zc + @maxfromcurpos " +
-                                "AND x >= @xw - @maxfromwanted " +
-                                "AND x <= @xw + @maxfromwanted " +
-                                "AND y >= @yw - @maxfromwanted " +
-                                "AND y <= @yw + @maxfromwanted " +
-                                "AND z >= @zw - @maxfromwanted " +
-                                "AND z <= @zw + @maxfromwanted ",
-                          joinlist: MakeSystemQueryEDDBJoinList))
+                cmd.AddParameterWithValue("@xw", SystemClass.DoubleToInt(wantedpos.X));         // easier to manage with named paras
+                cmd.AddParameterWithValue("@yw", SystemClass.DoubleToInt(wantedpos.Y));
+                cmd.AddParameterWithValue("@zw", SystemClass.DoubleToInt(wantedpos.Z));
+                cmd.AddParameterWithValue("@maxfromwanted", SystemClass.DoubleToInt(maxfromwanted));
+
+                cmd.AddParameterWithValue("@xc", SystemClass.DoubleToInt(currentpos.X));
+                cmd.AddParameterWithValue("@yc", SystemClass.DoubleToInt(currentpos.Y));
+                cmd.AddParameterWithValue("@zc", SystemClass.DoubleToInt(currentpos.Z));
+                cmd.AddParameterWithValue("@maxfromcurpos", SystemClass.DoubleToInt(maxfromcurpos));
+
+                double bestmindistance = double.MaxValue;
+                SystemClass nearestsystem = null;
+
+                using (DbDataReader reader = cmd.ExecuteReader())
                 {
-                    cmd.AddParameterWithValue("@xw", SystemClass.DoubleToInt(wantedpos.X));         // easier to manage with named paras
-                    cmd.AddParameterWithValue("@yw", SystemClass.DoubleToInt(wantedpos.Y));
-                    cmd.AddParameterWithValue("@zw", SystemClass.DoubleToInt(wantedpos.Z));
-                    cmd.AddParameterWithValue("@maxfromwanted", SystemClass.DoubleToInt(maxfromwanted));
-
-                    cmd.AddParameterWithValue("@xc", SystemClass.DoubleToInt(currentpos.X));
-                    cmd.AddParameterWithValue("@yc", SystemClass.DoubleToInt(currentpos.Y));
-                    cmd.AddParameterWithValue("@zc", SystemClass.DoubleToInt(currentpos.Z));
-                    cmd.AddParameterWithValue("@maxfromcurpos", SystemClass.DoubleToInt(maxfromcurpos));
-
-                    double bestmindistance = double.MaxValue;
-                    SystemClass nearestsystem = null;
-
-                    using (DbDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
+                        SystemClass s = MakeSystem(reader);
+                        LookedUp?.Invoke(s);                            // callback to say looked up
+
+                        Point3D syspos = new Point3D(s.X, s.Y, s.Z);
+                        double distancefromwantedx2 = Point3D.DistanceBetweenX2(wantedpos, syspos); // range between the wanted point and this, ^2
+                        double distancefromcurposx2 = Point3D.DistanceBetweenX2(currentpos, syspos);    // range between the wanted point and this, ^2
+
+                        // ENSURE its withing the circles now
+                        if (distancefromcurposx2 <= (maxfromcurpos * maxfromcurpos) && distancefromwantedx2 <= (maxfromwanted * maxfromwanted))
                         {
-                            SystemClass s = MakeSystem(reader);
-                            LookedUp?.Invoke(s);                            // callback to say looked up
-
-                            Point3D syspos = new Point3D(s.X, s.Y, s.Z);
-                            double distancefromwantedx2 = Point3D.DistanceBetweenX2(wantedpos, syspos); // range between the wanted point and this, ^2
-                            double distancefromcurposx2 = Point3D.DistanceBetweenX2(currentpos, syspos);    // range between the wanted point and this, ^2
-
-                            // ENSURE its withing the circles now
-                            if (distancefromcurposx2 <= (maxfromcurpos * maxfromcurpos) && distancefromwantedx2 <= (maxfromwanted * maxfromwanted))
+                            if (routemethod == metric_nearestwaypoint)
                             {
-                                if (routemethod == metric_nearestwaypoint)
+                                if (distancefromwantedx2 < bestmindistance)
                                 {
-                                    if (distancefromwantedx2 < bestmindistance)
-                                    {
-                                        nearestsystem = s;
-                                        bestmindistance = distancefromwantedx2;
-                                    }
+                                    nearestsystem = s;
+                                    bestmindistance = distancefromwantedx2;
                                 }
-                                else
+                            }
+                            else
+                            {
+                                Point3D interceptpoint = currentpos.InterceptPoint(wantedpos, syspos);      // work out where the perp. intercept point is..
+                                double deviation = Point3D.DistanceBetween(interceptpoint, syspos);
+                                double metric = 1E39;
+
+                                if (routemethod == metric_mindevfrompath)
+                                    metric = deviation;
+                                else if (routemethod == metric_maximum100ly)
+                                    metric = (deviation <= 100) ? distancefromwantedx2 : metric;        // no need to sqrt it..
+                                else if (routemethod == metric_maximum250ly)
+                                    metric = (deviation <= 250) ? distancefromwantedx2 : metric;
+                                else if (routemethod == metric_maximum500ly)
+                                    metric = (deviation <= 500) ? distancefromwantedx2 : metric;
+                                else if (routemethod == metric_waypointdev2)
+                                    metric = Math.Sqrt(distancefromwantedx2) + deviation / 2;
+
+                                if (metric < bestmindistance)
                                 {
-                                    Point3D interceptpoint = currentpos.InterceptPoint(wantedpos, syspos);      // work out where the perp. intercept point is..
-                                    double deviation = Point3D.DistanceBetween(interceptpoint, syspos);
-                                    double metric = 1E39;
-
-                                    if (routemethod == metric_mindevfrompath)
-                                        metric = deviation;
-                                    else if (routemethod == metric_maximum100ly)
-                                        metric = (deviation <= 100) ? distancefromwantedx2 : metric;        // no need to sqrt it..
-                                    else if (routemethod == metric_maximum250ly)
-                                        metric = (deviation <= 250) ? distancefromwantedx2 : metric;
-                                    else if (routemethod == metric_maximum500ly)
-                                        metric = (deviation <= 500) ? distancefromwantedx2 : metric;
-                                    else if (routemethod == metric_waypointdev2)
-                                        metric = Math.Sqrt(distancefromwantedx2) + deviation / 2;
-
-                                    if (metric < bestmindistance)
-                                    {
-                                        nearestsystem = s;
-                                        bestmindistance = metric;
-                                    }
+                                    nearestsystem = s;
+                                    bestmindistance = metric;
                                 }
                             }
                         }
                     }
-
-                    return nearestsystem;
                 }
+
+                return nearestsystem;
             }
         }
 
-        public enum SystemAskType { AllStars, SplitPopulatedStars };        
+        public enum SystemAskType { AllStars, SplitPopulatedStars, UnpopulatedStars, PopulatedStars };
 
-        public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,int percentage, Func<int, int, int, V> tovect)
+        // all stars
+        public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1, int percentage, Func<int, int, int, V> tovect)
         {
             V[] v2 = null;
             uint[] c2 = null;
-            GetSystemVector<V>(gridid, ref vertices1, ref colours1, ref v2, ref c2, percentage, tovect, ask:SystemAskType.AllStars);
+            GetSystemVector<V>(gridid, ref vertices1, ref colours1, ref v2, ref c2, percentage, tovect, ask: SystemAskType.AllStars);
         }
 
-        // if split, vertices1 is populated, 2 is unpopulated
+        // full interface. 
+        // ask = AllStars/UnpopulatedStars/PopulatedStars = only v1/c1 is returned..
+        // ask = SplitPopulatedStars = vertices1 is populated, 2 is unpopulated
 
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,
                                                           ref V[] vertices2, ref uint[] colours2,
-                                                          int percentage, Func<int, int, int, V> tovect, SystemAskType ask = SystemAskType.SplitPopulatedStars)
+                                                          int percentage, Func<int, int, int, V> tovect,
+                                                          SystemAskType ask = SystemAskType.SplitPopulatedStars)
+        {
+            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            {
+                GetSystemVector<V>(gridid, ref vertices1, ref colours1, ref vertices2, ref colours2, percentage, tovect, cn, ask);
+            }
+        }
+
+        public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,
+                                                          ref V[] vertices2, ref uint[] colours2,
+                                                          int percentage, Func<int, int, int, V> tovect,
+                                                          SQLiteConnectionSystem cn,
+                                                          SystemAskType ask = SystemAskType.SplitPopulatedStars)
         {
             int numvertices1 = 0;
             vertices1 = vertices2 = null;
@@ -482,84 +539,83 @@ namespace EliteDangerousCore.DB
             fixedc[2] = Color.Yellow;
             fixedc[3] = Color.White;
 
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
+            using (DbCommand cmd = cn.CreateSelect("Systems s",
+                                                    outparas: "s.edsmid,s.x,s.y,s.z" + (ask == SystemAskType.SplitPopulatedStars ? ",e.eddbid" : ""),
+                                                    where: "s.sectorid IN (Select id FROM Sectors c WHERE c.gridid = @gridid)" +
+                                                            (percentage < 100 ? (" AND ((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()) : "") +
+                                                            (ask == SystemAskType.PopulatedStars ? " AND e.edsmid NOT NULL " : "") +
+                                                            (ask == SystemAskType.UnpopulatedStars ? " AND e.edsmid IS NULL " : ""),
+                                                    joinlist: ask != SystemAskType.AllStars ? new string[] { "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " } : null
+                                                    ))
             {
-                using (DbCommand cmd = cn.CreateSelect("Systems s",
-                                                       outparas: "s.edsmid,s.x,s.y,s.z" + (ask == SystemAskType.SplitPopulatedStars ? ",e.eddbid" : ""),
-                                                       where: "s.sectorid IN (Select id FROM Sectors c WHERE c.gridid = @gridid)" +
-                                                              (percentage < 100 ? (" AND ((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()) : ""),
-                                                       joinlist: ask == SystemAskType.SplitPopulatedStars ? new string[] { "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " } : null
-                                                       ))
+                cmd.AddParameterWithValue("@gridid", gridid);
+
+                //  System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(cmd));
+                vertices1 = new V[250000];
+                colours1 = new uint[250000];
+
+                if (ask == SystemAskType.SplitPopulatedStars)
                 {
-                    cmd.AddParameterWithValue("@gridid", gridid);
+                    vertices2 = new V[250000];
+                    colours2 = new uint[250000];
+                }
 
-                    //  System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(cmd));
-                    vertices1 = new V[250000];
-                    colours1 = new uint[250000];
-
-                    if (ask == SystemAskType.SplitPopulatedStars)
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        vertices2 = new V[250000];
-                        colours2 = new uint[250000];
-                    }
+                        long id = (long)reader[0];
+                        int x = (int)(long)reader[1];
+                        int y = (int)(long)reader[2];
+                        int z = (int)(long)reader[3];
 
-                    using (DbDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        bool addtosecondary = (ask == SystemAskType.SplitPopulatedStars) ? (reader[4] is System.DBNull) : false;
+
+                        Color basec = fixedc[(id) & 3];
+                        int fade = 100 - (((int)id >> 2) & 7) * 8;
+                        byte red = (byte)(basec.R * fade / 100);
+                        byte green = (byte)(basec.G * fade / 100);
+                        byte blue = (byte)(basec.B * fade / 100);
+
+                        if (addtosecondary)
                         {
-                            long id = (long)reader[0];
-                            int x = (int)(long)reader[1];
-                            int y = (int)(long)reader[2];
-                            int z = (int)(long)reader[3];
-
-                            bool addtosecondary = (ask == SystemAskType.SplitPopulatedStars) ? (reader[4] is System.DBNull) : false;
-
-                            Color basec = fixedc[(id) & 3];
-                            int fade = 100 - (((int)id >> 2) & 7) * 8;
-                            byte red = (byte)(basec.R * fade / 100);
-                            byte green = (byte)(basec.G * fade / 100);
-                            byte blue = (byte)(basec.B * fade / 100);
-
-                            if (addtosecondary)
+                            if (numvertices2 == vertices2.Length)
                             {
-                                if (numvertices2 == vertices2.Length)
-                                {
-                                    Array.Resize(ref vertices2, vertices2.Length + 32768);
-                                    Array.Resize(ref colours2, colours2.Length + 32768);
-                                }
-
-                                colours2[numvertices2] = BitConverter.ToUInt32(new byte[] { red, green, blue, 255 }, 0);
-                                vertices2[numvertices2++] = tovect(x, y, z);
+                                Array.Resize(ref vertices2, vertices2.Length + 32768);
+                                Array.Resize(ref colours2, colours2.Length + 32768);
                             }
-                            else
+
+                            colours2[numvertices2] = BitConverter.ToUInt32(new byte[] { red, green, blue, 255 }, 0);
+                            vertices2[numvertices2++] = tovect(x, y, z);
+                        }
+                        else
+                        {
+                            if (numvertices1 == vertices1.Length)
                             {
-                                if (numvertices1 == vertices1.Length)
-                                {
-                                    Array.Resize(ref vertices1, vertices1.Length + 32768);
-                                    Array.Resize(ref colours1, colours1.Length + 32768);
-                                }
-
-                                colours1[numvertices1] = BitConverter.ToUInt32(new byte[] { red, green, blue, 255 }, 0);
-                                vertices1[numvertices1++] = tovect(x, y, z);
+                                Array.Resize(ref vertices1, vertices1.Length + 32768);
+                                Array.Resize(ref colours1, colours1.Length + 32768);
                             }
+
+                            colours1[numvertices1] = BitConverter.ToUInt32(new byte[] { red, green, blue, 255 }, 0);
+                            vertices1[numvertices1++] = tovect(x, y, z);
                         }
                     }
+                }
 
-                    Array.Resize(ref vertices1, numvertices1);
-                    Array.Resize(ref colours1, numvertices1);
+                Array.Resize(ref vertices1, numvertices1);
+                Array.Resize(ref colours1, numvertices1);
 
-                    if (ask == SystemAskType.SplitPopulatedStars)
-                    {
-                        Array.Resize(ref vertices2, numvertices2);
-                        Array.Resize(ref colours2, numvertices2);
-                    }
+                if (ask == SystemAskType.SplitPopulatedStars)
+                {
+                    Array.Resize(ref vertices2, numvertices2);
+                    Array.Resize(ref colours2, numvertices2);
+                }
 
-                    if (gridid == GridId.SolGrid && vertices1 != null)    // BODGE do here, better once on here than every star for every grid..
-                    {                       // replace when we have a better naming system
-                        int solindex = Array.IndexOf(vertices1, tovect(0, 0, 0));
-                        if (solindex >= 0)
-                            colours1[solindex] = 0x00ffff;   //yellow
-                    }
+                if (gridid == GridId.SolGrid && vertices1 != null)    // BODGE do here, better once on here than every star for every grid..
+                {                       // replace when we have a better naming system
+                    int solindex = Array.IndexOf(vertices1, tovect(0, 0, 0));
+                    if (solindex >= 0)
+                        colours1[solindex] = 0x00ffff;   //yellow
                 }
             }
         }
@@ -618,7 +674,7 @@ namespace EliteDangerousCore.DB
                                 (long)reader[offset], (int)(long)reader[offset + 1], (long)reader[offset + 2], (string)reader[offset + 3],
                                 (EDGovernment)(long)reader[offset + 4], (EDAllegiance)(long)reader[offset + 5], (EDState)(long)reader[offset + 6], (EDSecurity)(long)reader[offset + 7],
                                 (EDEconomy)(long)reader[offset + offset], (string)reader[offset + 9], (string)reader[offset + 10], (int)(long)reader[offset + 11],
-                                (int)(long)reader[5]);
+                                (int)(long)reader[5], SystemStatusEnum.EDSM);
             }
         }
 
@@ -647,7 +703,7 @@ namespace EliteDangerousCore.DB
                                 (long)reader[offset], (int)(long)reader[offset + 1], (long)reader[offset + 2], (string)reader[offset + 3],
                                 (EDGovernment)(long)reader[offset + 4], (EDAllegiance)(long)reader[offset + 5], (EDState)(long)reader[offset + 6], (EDSecurity)(long)reader[offset + 7],
                                 (EDEconomy)(long)reader[offset + offset], (string)reader[offset + 9], (string)reader[offset + 10], (int)(long)reader[offset + 11],
-                                (int)(long)reader[5]);
+                                (int)(long)reader[5], SystemStatusEnum.EDSM);
             }
         }
 
