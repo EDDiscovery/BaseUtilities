@@ -60,11 +60,11 @@ namespace EliteDangerousCore.DB
                                         )
         {
             sectoridcache = new Dictionary<long, Sector>();     
-            sectornamecache = new Dictionary<string, Sector>(); 
+            sectornamecache = new Dictionary<string, Sector>();
+
+            int nextsectorid = GetNextSectorID();
 
             SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer);
-
-            GetStartingIds(cn, tablepostfix, tablesareempty, out long nextnameid, out long nextsectorid);
 
             StreamWriter sw = debugoutputfile != null ? new StreamWriter(debugoutputfile) : null;
 
@@ -135,7 +135,7 @@ namespace EliteDangerousCore.DB
 
                 if (recordstostore > 0)
                 {
-                    updates += StoreNewEntries(cn,  ref nextnameid, tablepostfix, sw);
+                    updates += StoreNewEntries(cn, tablepostfix, sw);
 
                     reportProgress?.Invoke("EDSM Download updated " + updates);
                 }
@@ -158,6 +158,8 @@ namespace EliteDangerousCore.DB
             selectSectorCmd.Dispose();
             cn.Dispose();
 
+            PutNextSectorID(nextsectorid);    // and store back
+
             sectoridcache = null;
             sectornamecache = null;
 
@@ -177,8 +179,7 @@ namespace EliteDangerousCore.DB
 
             SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.ReaderWriter);
 
-            long nextnameid = 1;                // tables are empty..
-            long nextsectorid = 1;
+            int nextsectorid = GetNextSectorID();
 
             long updates = 0;
             long Limit =  long.MaxValue;
@@ -245,7 +246,7 @@ namespace EliteDangerousCore.DB
 
                 if (recordstostore >= 0)
                 {
-                    updates += StoreNewEntries(cn, ref nextnameid, tablepostfix, null);
+                    updates += StoreNewEntries(cn, tablepostfix, null);
                     reportProgress?.Invoke("System DB upgrade processed " + updates);
 
                     Limit -= recordstostore;
@@ -268,6 +269,8 @@ namespace EliteDangerousCore.DB
             selectSectorCmd.Dispose();
             cn.Dispose();
 
+            PutNextSectorID(nextsectorid);    // and store back
+
             sectoridcache = null;
             sectornamecache = null;
 
@@ -280,7 +283,7 @@ namespace EliteDangerousCore.DB
         #region Table Update Helpers
 
         // create a new entry for insert in the sector tables 
-        private static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMFileEntry d, int gid, bool tablesareempty, ref DateTime maxdate, ref long nextsectorid)
+        private static void CreateNewUpdate(DbCommand selectSectorCmd , EDSMFileEntry d, int gid, bool tablesareempty, ref DateTime maxdate, ref int nextsectorid)
         {
             TableWriteData data = new TableWriteData() { edsm = d, classifier = new EliteNameClassifier(d.name), gridid = gid };
 
@@ -347,7 +350,6 @@ namespace EliteDangerousCore.DB
         }
 
         private static long StoreNewEntries(SQLiteConnectionSystem cn,
-                                           ref long nextnameid,
                                            string tablepostfix = "",        // set to add on text to table names to redirect to another table
                                            StreamWriter sw = null
                                         )
@@ -360,12 +362,12 @@ namespace EliteDangerousCore.DB
             tl.OpenWriter();
             DbTransaction txn = cn.BeginTransaction();
 
-            DbCommand insertSectorCmd = cn.CreateInsert("Sectors" + tablepostfix, new string[] { "name", "gridid" }, new DbType[] { DbType.String, DbType.Int32 }, txn);
+            DbCommand replaceSectorCmd = cn.CreateReplace("Sectors" + tablepostfix, new string[] { "name", "gridid" , "id" }, new DbType[] { DbType.String, DbType.Int32, DbType.Int64 }, txn);
 
-            DbCommand insertorreplaceSysCmd = cn.CreateInsert("Systems" + tablepostfix, new string[] { "sectorid", "nameid", "x", "y", "z", "edsmid" }, 
-                                new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64 }, txn , insertorreplace:true);
+            DbCommand replaceSysCmd = cn.CreateReplace("Systems" + tablepostfix, new string[] { "sectorid", "nameid", "x", "y", "z", "edsmid" }, 
+                                new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64 }, txn );
 
-            DbCommand insertNameCmd = cn.CreateInsert("Names" + tablepostfix, new string[] { "name" }, new DbType[] { DbType.String }, txn);
+            DbCommand replaceNameCmd = cn.CreateReplace("Names" + tablepostfix, new string[] { "name", "id" }, new DbType[] { DbType.String, DbType.Int64 }, txn);
 
             foreach (var kvp in sectoridcache)                  // all sectors cached, id is unique so its got all sectors                           
             {
@@ -373,9 +375,10 @@ namespace EliteDangerousCore.DB
 
                 if (t.insertsec)         // if we have been told to insert the sector, do it
                 {
-                    insertSectorCmd.Parameters[0].Value = t.Name;     // make a new one so we can get the ID
-                    insertSectorCmd.Parameters[1].Value = t.GId;
-                    insertSectorCmd.ExecuteNonQuery();
+                    replaceSectorCmd.Parameters[0].Value = t.Name;     // make a new one so we can get the ID
+                    replaceSectorCmd.Parameters[1].Value = t.GId;
+                    replaceSectorCmd.Parameters[2].Value = t.Id;        // and we insert with ID, managed by us, and replace in case there are any repeat problems (which there should not be)
+                    replaceSectorCmd.ExecuteNonQuery();
                     //System.Diagnostics.Debug.WriteLine("Written sector " + t.GId + " " +t.Name);
                     t.insertsec = false;
                 }
@@ -392,19 +395,20 @@ namespace EliteDangerousCore.DB
                         {
                             if (data.classifier.IsNamed)    // if its a named entry, we need a name
                             {
-                                data.classifier.NameIdNumeric = nextnameid++;
-                                insertNameCmd.Parameters[0].Value = data.classifier.StarName;       // insert a new name
-                                insertNameCmd.ExecuteNonQuery();
+                                data.classifier.NameIdNumeric = data.edsm.id;           // name is the edsm id
+                                replaceNameCmd.Parameters[0].Value = data.classifier.StarName;       // insert a new name
+                                replaceNameCmd.Parameters[1].Value = data.edsm.id;      // we use edsmid as the nameid, and use replace to ensure that if a prev one is there, its replaced
+                                replaceNameCmd.ExecuteNonQuery();
                                // System.Diagnostics.Debug.WriteLine("Make name " + data.classifier.NameIdNumeric);
                             }
 
-                            insertorreplaceSysCmd.Parameters[0].Value = t.Id;
-                            insertorreplaceSysCmd.Parameters[1].Value = data.classifier.ID;
-                            insertorreplaceSysCmd.Parameters[2].Value = data.edsm.x;
-                            insertorreplaceSysCmd.Parameters[3].Value = data.edsm.y;
-                            insertorreplaceSysCmd.Parameters[4].Value = data.edsm.z;
-                            insertorreplaceSysCmd.Parameters[5].Value = data.edsm.id;       // in the event a new entry has the same edsmid, the system table edsmid is replace with new data
-                            insertorreplaceSysCmd.ExecuteNonQuery();
+                            replaceSysCmd.Parameters[0].Value = t.Id;
+                            replaceSysCmd.Parameters[1].Value = data.classifier.ID;
+                            replaceSysCmd.Parameters[2].Value = data.edsm.x;
+                            replaceSysCmd.Parameters[3].Value = data.edsm.y;
+                            replaceSysCmd.Parameters[4].Value = data.edsm.z;
+                            replaceSysCmd.Parameters[5].Value = data.edsm.id;       // in the event a new entry has the same edsmid, the system table edsmid is replace with new data
+                            replaceSysCmd.ExecuteNonQuery();
 
                             if (sw != null)
                                 sw.WriteLine(data.edsm.name + " " + data.edsm.x + "," + data.edsm.y + "," + data.edsm.z + ", EDSM:" + data.edsm.id + " Grid:" + data.gridid);
@@ -424,25 +428,14 @@ namespace EliteDangerousCore.DB
 
             txn.Commit();
 
-            insertSectorCmd.Dispose();
-            insertorreplaceSysCmd.Dispose();
-            insertNameCmd.Dispose();
+            replaceSectorCmd.Dispose();
+            replaceSysCmd.Dispose();
+            replaceNameCmd.Dispose();
             txn.Dispose();
             tl.Dispose();
 
             return updates;
 
-        }
-
-        static private void GetStartingIds(SQLiteConnectionSystem cn, string tablepostfix, bool tablesareempty, out long nextnameid, out long nextsectorid)
-        {
-            nextnameid = nextsectorid = 1;
-
-            if ( !tablesareempty)
-            {
-                nextnameid = cn.MaxIdOf("Names" + tablepostfix, "id");
-                nextsectorid = cn.MaxIdOf("Sectors" + tablepostfix, "id");
-            }
         }
 
         #endregion
@@ -452,6 +445,9 @@ namespace EliteDangerousCore.DB
         #endregion
 
         #region Internal Vars and Classes
+
+        private static int GetNextSectorID() { return SQLiteConnectionSystem.GetSettingInt("EDSMSectorIDNext", 1); }
+        private static void PutNextSectorID(int v) { SQLiteConnectionSystem.PutSettingInt("EDSMSectorIDNext", v); }  
 
         static Dictionary<long, Sector> sectoridcache;          // only used during store operation
         static Dictionary<string, Sector> sectornamecache;

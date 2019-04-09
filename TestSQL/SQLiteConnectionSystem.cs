@@ -280,12 +280,11 @@ namespace EliteDangerousCore.DB
         {
             conn.ExecuteNonQueries(new string[]
             {
-                //"CREATE TABLE IF NOT EXISTS Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL UNIQUE , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
-                //"CREATE TABLE IF NOT EXISTS Systems" + postfix + " (id INTEGER PRIMARY KEY NOT NULL UNIQUE , edsmid INTEGER, sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
+                // purposely not using autoincrement or unique on primary keys - this slows it down.
 
                 "CREATE TABLE IF NOT EXISTS Sectors" + postfix + " (id INTEGER PRIMARY KEY NOT NULL, gridid INTEGER, name TEXT NOT NULL COLLATE NOCASE)",
                 "CREATE TABLE IF NOT EXISTS Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER)",
-                "CREATE TABLE IF NOT EXISTS Names" + postfix + " (id INTEGER PRIMARY KEY NOT NULL , Name TEXT NOT NULL  COLLATE NOCASE )",
+                "CREATE TABLE IF NOT EXISTS Names" + postfix + " (id INTEGER PRIMARY KEY NOT NULL , Name TEXT NOT NULL COLLATE NOCASE )",
             });
         }
 

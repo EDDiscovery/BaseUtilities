@@ -496,8 +496,9 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        public enum SystemAskType { AllStars, SplitPopulatedStars };
+        public enum SystemAskType { AllStars, SplitPopulatedStars, UnpopulatedStars, PopulatedStars };
 
+        // all stars
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1, int percentage, Func<int, int, int, V> tovect)
         {
             V[] v2 = null;
@@ -505,7 +506,9 @@ namespace EliteDangerousCore.DB
             GetSystemVector<V>(gridid, ref vertices1, ref colours1, ref v2, ref c2, percentage, tovect, ask: SystemAskType.AllStars);
         }
 
-        // if split, vertices1 is populated, 2 is unpopulated
+        // full interface. 
+        // ask = AllStars/UnpopulatedStars/PopulatedStars = only v1/c1 is returned..
+        // ask = SplitPopulatedStars = vertices1 is populated, 2 is unpopulated
 
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,
                                                           ref V[] vertices2, ref uint[] colours2,
@@ -539,8 +542,10 @@ namespace EliteDangerousCore.DB
             using (DbCommand cmd = cn.CreateSelect("Systems s",
                                                     outparas: "s.edsmid,s.x,s.y,s.z" + (ask == SystemAskType.SplitPopulatedStars ? ",e.eddbid" : ""),
                                                     where: "s.sectorid IN (Select id FROM Sectors c WHERE c.gridid = @gridid)" +
-                                                            (percentage < 100 ? (" AND ((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()) : ""),
-                                                    joinlist: ask == SystemAskType.SplitPopulatedStars ? new string[] { "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " } : null
+                                                            (percentage < 100 ? (" AND ((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()) : "") +
+                                                            (ask == SystemAskType.PopulatedStars ? " AND e.edsmid NOT NULL " : "") +
+                                                            (ask == SystemAskType.UnpopulatedStars ? " AND e.edsmid IS NULL " : ""),
+                                                    joinlist: ask != SystemAskType.AllStars ? new string[] { "LEFT OUTER JOIN EDDB e ON e.edsmid = s.edsmid " } : null
                                                     ))
             {
                 cmd.AddParameterWithValue("@gridid", gridid);

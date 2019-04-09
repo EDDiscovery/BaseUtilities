@@ -21,7 +21,11 @@ namespace TestSQL
             InitializeComponent();
 
             bool deletedb = false;
-            bool reloadjson = false;
+
+            string edsminfile = @"c:\code\edsm\edsmsystems.10e6.json";
+            bool reloadjson = true;
+
+            string eddbinfile = @"c:\code\edsm\eddbsystems.json";
             bool reloadeddb = true;
 
             bool printstars = false;
@@ -33,22 +37,19 @@ namespace TestSQL
                 BaseUtils.FileHelpers.DeleteFileNoError(SQLiteConnectionSystem.dbFile);
 
             SQLiteConnectionSystem.Initialize();
-            //SQLiteConnectionSystem.UpgradeFrom102TypeDB(()=> { return false; },(s)=>System.Diagnostics.Debug.WriteLine(s));
             SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s));
 
             if (reloadjson)
             {
-                string infile = @"c:\code\edsm\edsmsystems.10e6.json";
-                SQLiteConnectionSystem.UpgradeSystemTableFromFile(infile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+                SQLiteConnectionSystem.UpgradeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
             }
 
             if (reloadeddb)
             {
-                string infile = @"c:\code\edsm\eddbsystems.json";
                 BaseUtils.AppTicks.TickCountLap();
-                long updated = SystemsDB.ParseEDDBJSONFile(infile, () => false);
+                long updated = SystemsDB.ParseEDDBJSONFile(eddbinfile, () => false);
                 System.Diagnostics.Debug.WriteLine("EDDB Load : " + BaseUtils.AppTicks.TickCountLap() + " updated " + updated);
-                updated = SystemsDB.ParseEDDBJSONFile(infile, () => false);
+                updated = SystemsDB.ParseEDDBJSONFile(eddbinfile, () => false);
                 System.Diagnostics.Debug.WriteLine("EDDB Load : " + BaseUtils.AppTicks.TickCountLap() + " updated " + updated);
             }
 
@@ -332,6 +333,21 @@ namespace TestSQL
                 System.Diagnostics.Debug.Assert(vertices2.Length >= 300000);
                 System.Diagnostics.Debug.Assert(vertices.Length + vertices2.Length == lengthall);
                 System.Diagnostics.Debug.WriteLine("810 load dual : " + BaseUtils.AppTicks.TickCountLap());
+
+                int pop = vertices.Length;
+                int unpop = vertices2.Length;
+
+                BaseUtils.AppTicks.TickCountLap();
+                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); }, SystemsDB.SystemAskType.PopulatedStars);
+                System.Diagnostics.Debug.Assert(vertices.Length == pop);
+                System.Diagnostics.Debug.Assert(vertices2 == null);
+                System.Diagnostics.Debug.WriteLine("810 load pop : " + BaseUtils.AppTicks.TickCountLap());
+
+                BaseUtils.AppTicks.TickCountLap();
+                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); }, SystemsDB.SystemAskType.UnpopulatedStars);
+                System.Diagnostics.Debug.Assert(vertices.Length == unpop);
+                System.Diagnostics.Debug.Assert(vertices2 == null);
+                System.Diagnostics.Debug.WriteLine("810 load unpop : " + BaseUtils.AppTicks.TickCountLap());
 
 
             }
