@@ -22,19 +22,18 @@ namespace EliteDangerousCore.DB
 {
     public class SQLiteConnectionSystem : SQLExtConnectionWithLockRegister<SQLiteConnectionSystem>
     {
-        static public string dbFile = @"c:\code\EDSM\edsm.sql";
         const string tablepostfix = "temp"; // postfix for temp tables
         const string debugoutfile = @"c:\code\edsm\Jsonprocess.lst";        // null off
 
-        public SQLiteConnectionSystem() : base(dbFile, false, Initialize, AccessMode.ReaderWriter)
+        public SQLiteConnectionSystem() : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, false, Initialize, AccessMode.ReaderWriter)
         {
         }
 
-        public SQLiteConnectionSystem(AccessMode mode = AccessMode.ReaderWriter) : base(dbFile, false, Initialize, mode)
+        public SQLiteConnectionSystem(AccessMode mode = AccessMode.ReaderWriter) : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, false, Initialize, mode)
         {
         }
 
-        private SQLiteConnectionSystem(bool utc, Action init) : base(dbFile, utc, init, AccessMode.ReaderWriter)
+        private SQLiteConnectionSystem(bool utc, Action init) : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utc, init, AccessMode.ReaderWriter)
         {
         }
 
@@ -89,6 +88,8 @@ namespace EliteDangerousCore.DB
                 CreateSystemDBTableIndexes(conn);           // ensure they are there 
                 DropStarTables(conn, tablepostfix);         // clean out any temp tables half prepared 
 
+                //conn.Vacuum();  // debug
+
                 if (dbver < 200)
                 {
                     reg.PutSettingInt("DBVer", 200);
@@ -110,7 +111,7 @@ namespace EliteDangerousCore.DB
 
         // full table replace
 
-        public static void UpgradeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress)
+        public static long UpgradeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress)
         {
             using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))     
             {
@@ -137,30 +138,20 @@ namespace EliteDangerousCore.DB
                     CreateSystemDBTableIndexes(conn);
 
                     SetLastEDSMRecordTimeUTC(maxdate);          // record last data stored in database
+
+                    return updates;
                 }
                 else
+                {
                     DropStarTables(conn, tablepostfix);     // clean out half prepared tables
+                    return -1;
+                }
             }
         }
 
-        // use a file to update the data..
+        // check to see if table type 102 exists, if so, update.  but only if not doing a full sync.
 
-        public static long UpdateSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress)
-        {
-            DateTime maxdate = GetLastEDSMRecordTimeUTC();
-
-            long updates = SystemsDB.ParseEDSMJSONFile(filename, gridids, ref maxdate, cancelRequested, reportProgress, tablepostfix, presumeempty: false, debugoutputfile: debugoutfile);
-
-            if ( updates>0)
-                SetLastEDSMRecordTimeUTC(maxdate);          // record last data stored in database
-
-            return updates;
-        }
-
-
-        // check to see if table type 102 exists, if so, update
-
-        public static void UpgradeSystemTableFrom102TypeDB(Func<bool> cancelRequested, Action<string> reportProgress)
+        public static void UpgradeSystemTableFrom102TypeDB(Func<bool> cancelRequested, Action<string> reportProgress, bool fullsyncrequested)
         {
             bool executeupgrade = false;
 
@@ -181,53 +172,69 @@ namespace EliteDangerousCore.DB
             //drop connection, execute upgrade in another connection, this solves an issue with SQL 17 error
 
             if ( executeupgrade )
-            { 
-                int maxgridid = int.MaxValue;// 109;    // for debugging
-
-                long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: true, maxgridid: maxgridid);
-
-                using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
+            {
+                if (!fullsyncrequested)     // if we did not request a full upgrade, we can use the current data and transmute
                 {
-                    if ( updates >= 0 ) // a cancel will result in -1
+                    int maxgridid = int.MaxValue;// 109;    // for debugging
+
+                    long updates = SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: true, maxgridid: maxgridid);
+
+                    using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
                     {
-                        // keep code for checking
-
-                        if (false)   // demonstrate replacement to show rows are overwitten and not duplicated in the edsmid column and that speed is okay
+                        if (updates >= 0) // a cancel will result in -1
                         {
-                            long countrows = conn.CountOf("Systems" + tablepostfix, "edsmid");
-                            long countnames = conn.CountOf("Names" + tablepostfix, "id");
-                            long countsectors = conn.CountOf("Sectors" + tablepostfix, "id");
+                            // keep code for checking
 
-                            // replace takes : Sector 108 took 44525 U1 + 116 store 5627 total 532162 0.02061489 cumulative 11727
+                            //if (false)   // demonstrate replacement to show rows are overwitten and not duplicated in the edsmid column and that speed is okay
+                            //{
+                            //    long countrows = conn.CountOf("Systems" + tablepostfix, "edsmid");
+                            //    long countnames = conn.CountOf("Names" + tablepostfix, "id");
+                            //    long countsectors = conn.CountOf("Sectors" + tablepostfix, "id");
 
-                            SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: false, maxgridid: maxgridid);
-                            System.Diagnostics.Debug.Assert(countrows == conn.CountOf("Systems" + tablepostfix, "edsmid"));
-                            System.Diagnostics.Debug.Assert(countnames * 2 == conn.CountOf("Names" + tablepostfix, "id"));      // names are duplicated.. so should be twice as much
-                            System.Diagnostics.Debug.Assert(countsectors == conn.CountOf("Sectors" + tablepostfix, "id"));
-                            System.Diagnostics.Debug.Assert(1 == conn.CountOf("Systems" + tablepostfix, "edsmid", "edsmid=6719254"));
+                            //    // replace takes : Sector 108 took 44525 U1 + 116 store 5627 total 532162 0.02061489 cumulative 11727
+
+                            //    SystemsDB.UpgradeDB102to200(cancelRequested, reportProgress, tablepostfix, tablesareempty: false, maxgridid: maxgridid);
+                            //    System.Diagnostics.Debug.Assert(countrows == conn.CountOf("Systems" + tablepostfix, "edsmid"));
+                            //    System.Diagnostics.Debug.Assert(countnames * 2 == conn.CountOf("Names" + tablepostfix, "id"));      // names are duplicated.. so should be twice as much
+                            //    System.Diagnostics.Debug.Assert(countsectors == conn.CountOf("Sectors" + tablepostfix, "id"));
+                            //    System.Diagnostics.Debug.Assert(1 == conn.CountOf("Systems" + tablepostfix, "edsmid", "edsmid=6719254"));
+                            //}
+
+                            DropStarTables(conn);     // drop the main ones - this also kills the indexes
+
+                            RenameStarTables(conn, tablepostfix, "");     // rename the temp to main ones
+
+                            reportProgress?.Invoke("Removing old system tables");
+
+                            conn.ExecuteNonQueries(new string[]
+                            {
+                                "DROP TABLE IF EXISTS EdsmSystems",
+                                "DROP TABLE IF EXISTS SystemNames",
+                            });
+
+                            reportProgress?.Invoke("Shrinking database");
+                            conn.Vacuum();
+
+                            reportProgress?.Invoke("Creating indexes");         // NOTE the date should be the same so we don't rewrite
+                            CreateSystemDBTableIndexes(conn);
                         }
-
-                        DropStarTables(conn);     // drop the main ones - this also kills the indexes
-
-                        RenameStarTables(conn, tablepostfix, "");     // rename the temp to main ones
-
+                        else
+                        {
+                            DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
+                        }
+                    }
+                }
+                else
+                {       // newer data is needed, so just remove
+                    using (SQLiteConnectionSystem conn = new SQLiteConnectionSystem(AccessMode.ReaderWriter))      // use this special one so we don't get double init.
+                    {
                         reportProgress?.Invoke("Removing old system tables");
 
                         conn.ExecuteNonQueries(new string[]
                         {
-                            "DROP TABLE IF EXISTS EdsmSystems",
-                            "DROP TABLE IF EXISTS SystemNames",
+                                    "DROP TABLE IF EXISTS EdsmSystems",
+                                    "DROP TABLE IF EXISTS SystemNames",
                         });
-
-                        reportProgress?.Invoke("Shrinking database");
-                        conn.Vacuum();  
-
-                        reportProgress?.Invoke("Creating indexes");         // NOTE the date should be the same so we don't rewrite
-                        CreateSystemDBTableIndexes(conn);
-                    }
-                    else
-                    {
-                        DropStarTables(conn, tablepostfix);     // just in case, kill the old tables
                     }
                 }
             }
@@ -263,13 +270,17 @@ namespace EliteDangerousCore.DB
 
         static public DateTime GetLastEDDBDownloadTime()
         {
-            string timestr = SQLiteConnectionSystem.GetSettingString("EDDBSystemsTime", "0");
-            return new DateTime(Convert.ToInt64(timestr), DateTimeKind.Utc);
+            return SQLiteConnectionSystem.GetSettingDate("EDDBLastDownloadTime", DateTime.MinValue);    // different ID to 102 on purpose
+        }
+
+        static public void SetLastEDDBDownloadTime()
+        {
+            SQLiteConnectionSystem.PutSettingDate("EDDBLastDownloadTime", DateTime.UtcNow);
         }
 
         static public void ForceEDDBFullUpdate()
         {
-            SQLiteConnectionSystem.PutSettingString("EDDBSystemsTime", "0");
+            SQLiteConnectionSystem.PutSettingDate("EDDBLastDownloadTime", DateTime.MinValue);
         }
 
         #endregion
@@ -312,13 +323,19 @@ namespace EliteDangerousCore.DB
         {
             string[] queries = new[]
             {
-                 "CREATE INDEX IF NOT EXISTS SystemsNameid ON Systems (nameid)",        // on 32Msys, about 500mb cost, massive speed increase in find star
-                 "CREATE INDEX IF NOT EXISTS SystemsSectorid ON Systems (sectorid)",    // on 32Msys, about 500mb cost, massive speed increase in find star
+                //       "CREATE INDEX IF NOT EXISTS SystemsNameid ON Systems (nameid)",        // on 32Msys, about 500mb cost, massive speed increase in find star
+                //"CREATE INDEX IF NOT EXISTS SystemsSectoridX ON Systems (sectorid,x)",     5.8
+                //"CREATE INDEX IF NOT EXISTS SystemsX ON Systems (x)",      // no point having y,z as SQL when using >= does not use the second/third part.
 
-                 "CREATE INDEX IF NOT EXISTS NamesName ON Names (Name)",            // improved speed from 9038 (named)/1564 (std) to 516/446ms at minimal cost
+                "CREATE INDEX IF NOT EXISTS SystemsSectorName ON Systems (sectorid,nameid)",        // worth it for lookups of stars
+                "CREATE INDEX IF NOT EXISTS SystemsXZ ON Systems (x,z)",        // speeds up searching. x+z is enough
 
-                 "CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)",         // name - > entry
-                 "CREATE INDEX IF NOT EXISTS SectorGridid ON Sectors (gridid)",     // gridid -> entry
+              //  "CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sectorid)",
+
+                "CREATE INDEX IF NOT EXISTS NamesName ON Names (Name)",            // improved speed from 9038 (named)/1564 (std) to 516/446ms at minimal cost
+
+                "CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)",         // name - > entry
+                "CREATE INDEX IF NOT EXISTS SectorGridid ON Sectors (gridid)",     // gridid -> entry
             };
 
             conn.ExecuteNonQueries(queries);

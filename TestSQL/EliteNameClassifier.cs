@@ -33,7 +33,7 @@ namespace EliteDangerousCore
             N1ValueOnly     // Pru Eurk CQ-L d2-                            SectorName = sector, StarName = null, L1L2L3 set, MassCode set, NValue set
         };
 
-        public NameType EntryType = NameType.NotSet; 
+        public NameType EntryType = NameType.NotSet;
         public string SectorName = null;    // for string inputs, set always, the sector name (Pru Eurk or HIP) or "NotInSector" (Sol).            For numbers, null
         public string StarName = null;      // for string inputs, set for HIP type names and non standard names, else                    For numbers, null
         public uint L1, L2, L3, MassCode, NValue;   // set for standard names
@@ -54,8 +54,8 @@ namespace EliteDangerousCore
         private const long NameIDNumbericMask = 0x3fffffffff;     // 38 bits
 
         public bool IsStandard { get { return EntryType >= NameType.NValue; } }     // meaning L1L2L3 MassCode NValue is set..
-        public bool IsStandardParts { get { return EntryType >= NameType.Identifier;  } }
-        public bool IsNamed { get { return EntryType == NameType.Named; } } 
+        public bool IsStandardParts { get { return EntryType >= NameType.Identifier; } }
+        public bool IsNamed { get { return EntryType == NameType.Named; } }
         public bool IsNumeric { get { return EntryType == NameType.Numeric; } }
 
         public static bool IsIDStandard(ulong id)
@@ -69,7 +69,7 @@ namespace EliteDangerousCore
 
         public ulong ID // get the ID code
         {
-            get      
+            get
             {
                 if (IsStandardParts)
                 {
@@ -85,7 +85,7 @@ namespace EliteDangerousCore
 
         public ulong IDHigh // get the ID code, giving parts not set the maximum value.  Useful for wildcard searches when code has been set by a string
         {
-            get      
+            get
             {
                 if (IsStandardParts)
                 {
@@ -104,7 +104,7 @@ namespace EliteDangerousCore
                     else
                         return lcodes | ((ulong)NValue << NMarker); // no wild card here
                 }
-                else return ID; 
+                else return ID;
             }
         }
 
@@ -115,9 +115,9 @@ namespace EliteDangerousCore
                 return (SectorName != null ? (SectorName + " ") : "") + (char)(L1 + 'A' - 1) + (char)(L2 + 'A' - 1) + "-" + (char)(L3 + 'A' - 1) + " " + (char)(MassCode + 'a') + (NValue > 0xffff ? ((NValue / 0x10000).ToStringInvariant() + "-") : "") + (NValue & 0xffff).ToStringInvariant();
             else if (IsNumeric)
             {
-                string num = NameIdNumeric.ToStringInvariant("0000000000000000".Substring(0,(int)NumericDigits));
+                string num = NameIdNumeric.ToStringInvariant("0000000000000000".Substring(0, (int)NumericDigits));
                 if (NumericDashPos > 0)
-                    num = num.Substring(0, (int)(NumericDashPos-1)) + "-" + num.Substring((int)(NumericDashPos-1));
+                    num = num.Substring(0, (int)(NumericDashPos - 1)) + "-" + num.Substring((int)(NumericDashPos - 1));
 
                 return (SectorName != null && SectorName != NoSectorName ? (SectorName + " ") : "") + num;
             }
@@ -139,7 +139,7 @@ namespace EliteDangerousCore
             Classify(id);
         }
 
-        public void Classify( ulong id)     // classify an ID.
+        public void Classify(ulong id)     // classify an ID.
         {
             if (IsIDStandard(id))
             {
@@ -158,7 +158,7 @@ namespace EliteDangerousCore
                 NumericDigits = (uint)((id >> NumericCountMarker) & 15);
                 EntryType = NameType.Numeric;
             }
-            else 
+            else
             {
                 NameIdNumeric = (long)(id & NameIDNumbericMask);
                 EntryType = NameType.Named;
@@ -248,7 +248,7 @@ namespace EliteDangerousCore
                 long? namenum = null;
                 int countof = 0;
 
-                if (nameparts.Length >= 2 )     // see if last is a number or number-number
+                if (nameparts.Length >= 2)     // see if last is a number or number-number
                 {
                     dashpos = nameparts.Last().IndexOf('-');
                     string num = (dashpos >= 0 && nameparts.Last().Count(x => x == '-') == 1) ? nameparts.Last().Replace("-", "") : nameparts.Last();
@@ -284,7 +284,7 @@ namespace EliteDangerousCore
                     EntryType = NameType.Named;
                 }
 
-                System.Diagnostics.Debug.Assert(ToString() == starname);        // double check conversion
+                System.Diagnostics.Debug.Assert(ToString() == starname.Trim());        // double check conversion
             }
         }
     }

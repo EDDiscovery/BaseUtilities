@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CoreReplace.cs" />
     <Compile Include="EDTypesFromJSON.cs" />
     <Compile Include="SystemCache.cs" />
     <Compile Include="SystemClass.cs" />

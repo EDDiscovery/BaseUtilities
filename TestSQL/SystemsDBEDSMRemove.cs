@@ -49,6 +49,13 @@ namespace EliteDangerousCore.DB
             }
         }
 
+        public static void Vacuum()
+        {
+            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer))
+            {
+                cn.Vacuum();
+            }
+        }
     }
 }
 

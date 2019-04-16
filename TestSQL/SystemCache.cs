@@ -174,20 +174,20 @@ namespace EliteDangerousCore.DB
         }
 
         // use the DB but cache the returns for future use
-        public static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance = 1000, SQLiteConnectionSystem cn = null)
-        {
-            bool owncn = cn == null;
-            if (owncn)
-                cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
+        //public static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance = 1000, SQLiteConnectionSystem cn = null)
+        //{
+        //    bool owncn = cn == null;
+        //    if (owncn)
+        //        cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
 
-            ISystem s = DB.SystemsDB.FindNearestSystemTo(x, y, z, cn, maxdistance);
-            if (s != null)
-                AddToCache(s);
+        //    ISystem s = DB.SystemsDB.FindNearestSystemTo(x, y, z, cn, maxdistance);
+        //    if (s != null)
+        //        AddToCache(s);
 
-            if (owncn)
-                cn.Dispose();
-            return s;
-        }
+        //    if (owncn)
+        //        cn.Dispose();
+        //    return s;
+        //}
 
         // use the DB but cache the returns for future use
         public static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn = null)
@@ -236,7 +236,7 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        public static List<string> ReturnSystemListForAutoComplete(string input, Object ctrl)
+        public static List<string> ReturnSystemAdditionalListForAutoComplete(string input, Object ctrl)
         {
             List<string> ret = new List<string>();
             ret.AddRange(ReturnAdditionalAutoCompleteList(input, ctrl));

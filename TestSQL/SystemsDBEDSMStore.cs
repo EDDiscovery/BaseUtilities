@@ -76,8 +76,6 @@ namespace EliteDangerousCore.DB
             DbCommand selectSectorCmd = cn.CreateSelect("Sectors" + tablepostfix, "id", "name = @sname AND gridid = @gid", null, 
                                                     new string[] { "sname", "gid" }, new DbType[] { DbType.String, DbType.Int32 });
 
-            reportProgress?.Invoke("Being EDSM Download");
-
             while (jr_eof == false)
             {
                 if ( cancelRequested() )
@@ -137,7 +135,7 @@ namespace EliteDangerousCore.DB
                 {
                     updates += StoreNewEntries(cn, tablepostfix, sw);
 
-                    reportProgress?.Invoke("EDSM Download updated " + updates);
+                    reportProgress?.Invoke("EDSM Star database updated " + updates);
                 }
 
                 if (jr_eof)
@@ -150,7 +148,7 @@ namespace EliteDangerousCore.DB
             }
 
             System.Diagnostics.Debug.WriteLine("Process " + BaseUtils.AppTicks.TickCountLap("L1") + "   " + updates);
-            reportProgress?.Invoke( "EDSM Download finished, updated " + updates);
+            reportProgress?.Invoke( "EDSM Star database updated " + updates);
 
             if (sw != null)
                 sw.Close();
@@ -510,7 +508,7 @@ namespace EliteDangerousCore.DB
                                     double? v = rdr.ReadAsDouble();
                                     if (v == null)
                                         return false;
-                                    int vi = (int)(v * 128.0);
+                                    int vi = (int)(v * SystemClass.XYZScalar);
 
                                     switch (field)
                                     {
