@@ -88,7 +88,7 @@ namespace EliteDangerousCore.DB
                 CreateSystemDBTableIndexes(conn);           // ensure they are there 
                 DropStarTables(conn, tablepostfix);         // clean out any temp tables half prepared 
 
-                //conn.Vacuum();  // debug
+            //    conn.Vacuum();  // debug
 
                 if (dbver < 200)
                 {
@@ -321,17 +321,12 @@ namespace EliteDangerousCore.DB
 
         private static void CreateSystemDBTableIndexes(SQLiteConnectionSystem conn) 
         {
+
             string[] queries = new[]
             {
-                //       "CREATE INDEX IF NOT EXISTS SystemsNameid ON Systems (nameid)",        // on 32Msys, about 500mb cost, massive speed increase in find star
-                //"CREATE INDEX IF NOT EXISTS SystemsSectoridX ON Systems (sectorid,x)",     5.8
-                //"CREATE INDEX IF NOT EXISTS SystemsX ON Systems (x)",      // no point having y,z as SQL when using >= does not use the second/third part.
-
                 "CREATE INDEX IF NOT EXISTS SystemsSectorName ON Systems (sectorid,nameid)",        // worth it for lookups of stars
-                "CREATE INDEX IF NOT EXISTS SystemsXZ ON Systems (x,z)",        // speeds up searching. x+z is enough
-
-              //  "CREATE INDEX IF NOT EXISTS SystemsSector ON Systems (sectorid)",
-
+                "CREATE INDEX IF NOT EXISTS SystemsXZ ON Systems (x,z)",        // speeds up searching. x+z is enough. X only saves a small percent
+               
                 "CREATE INDEX IF NOT EXISTS NamesName ON Names (Name)",            // improved speed from 9038 (named)/1564 (std) to 516/446ms at minimal cost
 
                 "CREATE INDEX IF NOT EXISTS SectorName ON Sectors (name)",         // name - > entry
@@ -345,3 +340,4 @@ namespace EliteDangerousCore.DB
 
     }
 }
+

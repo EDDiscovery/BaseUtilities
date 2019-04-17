@@ -112,7 +112,7 @@ public static class SQLiteCommandExtensions
     }
 
     // either give a fully formed cmd to it, or give cmdexplain=null and it will create one for you using cmdtextoptional (but with no variable variables allowed)
-    public static List<string> ExplainQueryPlan(this SQLExtConnection r, DbCommand cmdexplain, string cmdtextoptional = null )
+    public static List<string> ExplainQueryPlan(this SQLExtConnection r, DbCommand cmdexplain = null, string cmdtextoptional = null )
     {
         if (cmdexplain == null)
         {
@@ -124,8 +124,8 @@ public static class SQLiteCommandExtensions
 
         using (DbCommand cmd = r.CreateCommand("Explain Query Plan " + cmdexplain.CommandText))
         {
-            foreach( var p in cmdexplain.Parameters )
-                cmd.Parameters.Add(p);  
+            foreach (System.Data.SQLite.SQLiteParameter p in cmdexplain.Parameters)
+                cmd.Parameters.Add(p);
 
             using (DbDataReader reader = cmd.ExecuteReader())
             {
@@ -143,10 +143,22 @@ public static class SQLiteCommandExtensions
         return ret;
     }
 
-    public static string ExplainQueryPlanString(this SQLExtConnection r, DbCommand cmdexplain)
+    public static string ExplainQueryPlanString(this SQLExtConnection r, DbCommand cmdexplain, bool listparas = true)
     {
         var ret = ExplainQueryPlan(r, cmdexplain);
-        return "SQL Query:" + Environment.NewLine + cmdexplain.CommandText + Environment.NewLine + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
+        string s = "SQL Query:" + Environment.NewLine + cmdexplain.CommandText + Environment.NewLine;
+
+        if (listparas && cmdexplain.Parameters.Count > 0 )
+        {
+            foreach (System.Data.SQLite.SQLiteParameter p in cmdexplain.Parameters)
+            {
+                s += p.Value + " ";
+            }
+
+            s += Environment.NewLine;
+        }
+
+        return s+ "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
     }
 
     public static long MaxIdOf(this SQLExtConnection r, string table, string idfield)

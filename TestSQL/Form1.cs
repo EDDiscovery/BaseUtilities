@@ -57,7 +57,7 @@ namespace TestSQL
             {
                 using (StreamWriter wr = new StreamWriter(@"c:\code\edsm\starlistout.lst"))
                 {
-                    SystemsDB.FindStars(orderby: "s.sectorid,s.edsmid", eddbinfo: false, starreport: (s) =>
+                    SystemsDB.ListStars(orderby: "s.sectorid,s.edsmid", eddbinfo: false, starreport: (s) =>
                     {
                         wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + ", EDSM:" + s.EDSMID + " Grid:" + s.GridID);
                     });
@@ -70,7 +70,7 @@ namespace TestSQL
 
                 using (StreamWriter wr = new StreamWriter(@"c:\code\edsm\starlistout2.lst"))
                 {
-                    SystemsDB.FindStars(orderby: "s.sectorid,s.edsmid", eddbinfo: false, starreport: (s) =>
+                    SystemsDB.ListStars(orderby: "s.sectorid,s.edsmid", eddbinfo: false, starreport: (s) =>
                     {
                         wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + ", EDSM:" + s.EDSMID + " Grid:" + s.GridID);
                     });
@@ -99,7 +99,7 @@ namespace TestSQL
 
             if (printstarseddb)
             {
-                List<ISystem> stars = SystemsDB.FindStars(orderby: "s.sectorid,s.edsmid", eddbinfo: true);
+                List<ISystem> stars = SystemsDB.ListStars(orderby: "s.sectorid,s.edsmid", eddbinfo: true);
                 using (StreamWriter wr = new StreamWriter(@"c:\code\edsm\starlisteddb.lst"))
                 {
                     foreach (var s in stars)
@@ -200,6 +200,7 @@ namespace TestSQL
 
 
             { // No system indexes = 4179  xz=10 @21, xz=100 @ 176,  x= 100 @ 1375, xz 100 @ 92 xz vacummed 76.
+                System.Diagnostics.Debug.WriteLine("Begin Find Pos for 100" );
                 ISystem s;
                 BaseUtils.AppTicks.TickCountLap();
 
@@ -207,6 +208,7 @@ namespace TestSQL
                 {
                     s = SystemsDB.GetSystemByPosition(-100.7, 166.4, -36.8);
                     System.Diagnostics.Debug.Assert(s != null && s.Name == "Col 285 Sector IZ-B b15-2");
+                  //  System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
                 System.Diagnostics.Debug.WriteLine("Find Pos for 100: " + BaseUtils.AppTicks.TickCountLap());
@@ -361,15 +363,22 @@ namespace TestSQL
 
 
             {
-                BaseUtils.AppTicks.TickCountLap();
                 uint[] colours = null;
                 Vector3[] vertices = null;
+                uint[] colours2 = null;
+                Vector3[] vertices2 = null;
+
+                BaseUtils.AppTicks.TickCountLap();
+                SystemsDB.GetSystemVector(5, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                System.Diagnostics.Debug.Assert(vertices.Length > 10000);
+                System.Diagnostics.Debug.WriteLine("5 load : " + BaseUtils.AppTicks.TickCountLap());
+
+                BaseUtils.AppTicks.TickCountLap();
                 SystemsDB.GetSystemVector(810, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.WriteLine("810 load 100 : " + BaseUtils.AppTicks.TickCountLap());
 
+
                 BaseUtils.AppTicks.TickCountLap();
-                uint[] colours2 = null;
-                Vector3[] vertices2 = null;
                 SystemsDB.GetSystemVector(810, ref vertices2, ref colours2, 50, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.Assert(vertices.Length >= vertices2.Length * 2);
                 System.Diagnostics.Debug.WriteLine("810 load 50 : " + BaseUtils.AppTicks.TickCountLap());
