@@ -16,11 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Data.Common;
-using System.Data;
-using System.Drawing;
-using EMK.LightGeometry;
 
 namespace EliteDangerousCore.DB
 {
@@ -237,7 +233,6 @@ namespace EliteDangerousCore.DB
 
             return ret;
         }
-
 
         #region Helpers for getting stars
 

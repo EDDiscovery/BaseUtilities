@@ -15,21 +15,16 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Data.Common;
-using System.Data;
 using System.Drawing;
-using EMK.LightGeometry;
 
 namespace EliteDangerousCore.DB
 {
     public partial class SystemsDB
     {
-                                   
         public enum SystemAskType { AllStars, SplitPopulatedStars, UnpopulatedStars, PopulatedStars };
 
-        // all stars
+        // all stars/Unpopulated/Poplulated only
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1, int percentage, Func<int, int, int, V> tovect, SystemAskType ask = SystemAskType.AllStars)
         {
             V[] v2 = null;
@@ -39,7 +34,7 @@ namespace EliteDangerousCore.DB
 
         // full interface. 
         // ask = AllStars/UnpopulatedStars/PopulatedStars = only v1/c1 is returned..
-        // ask = SplitPopulatedStars = vertices1 is populated, 2 is unpopulated
+        // ask = SplitPopulatedStars = vertices1 is populated, 2 is unpopulated stars
 
         public static void GetSystemVector<V>(int gridid, ref V[] vertices1, ref uint[] colours1,
                                                           ref V[] vertices2, ref uint[] colours2,

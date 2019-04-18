@@ -31,7 +31,7 @@ namespace TestSQL
             bool printstars = false;
             bool printstarseddb = false;
             bool testdelete = false;
-            bool testaliases = false;
+            bool loadaliases = false;
 
             if ( deletedb )
                 BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
@@ -77,7 +77,7 @@ namespace TestSQL
                 }
             }
 
-            if ( testaliases )
+            if ( loadaliases )
             {
                 string infile = @"c:\code\edsm\hiddensystems.jsonl";
                 BaseUtils.AppTicks.TickCountLap();
@@ -87,14 +87,6 @@ namespace TestSQL
                 string infile2 = @"c:\code\edsm\hiddensystems2.jsonl";
                 updated = SystemsDB.ParseAliasFile(infile2);
                 System.Diagnostics.Debug.WriteLine("Alias Load: " + BaseUtils.AppTicks.TickCountLap() + " updated " + updated);
-
-                long aliasn;
-                aliasn = SystemsDB.FindAlias(-1, "CM Draco");
-                System.Diagnostics.Debug.Assert(aliasn == 19700);
-                aliasn = SystemsDB.FindAlias(1, null);
-                System.Diagnostics.Debug.Assert(aliasn == 19700);
-                aliasn = SystemsDB.FindAlias(-1, "CM qwkqkq");
-                System.Diagnostics.Debug.Assert(aliasn == -1);
             }
 
             if (printstarseddb)
@@ -116,8 +108,8 @@ namespace TestSQL
 
             ///////////////////////////////////////////// main tests
 
-            {
-                //BaseUtils.AppTicks.TickCountLap();  // Repeated run 1420/2
+            { 
+                //BaseUtils.AppTicks.TickCountLap();  // Repeated run 1420/2.. removed too slow
                 //ISystem s;
 
                 //for (int I = 0; I < 2; I++)
@@ -127,6 +119,18 @@ namespace TestSQL
                 //}
 
                 //System.Diagnostics.Debug.WriteLine("total systems for X: " + BaseUtils.AppTicks.TickCountLap());
+            }
+
+            {
+                long aliasn;
+                aliasn = SystemsDB.FindAlias(-1, "CM Draco");
+                System.Diagnostics.Debug.Assert(aliasn == 19700);
+                aliasn = SystemsDB.FindAlias(1, null);
+                System.Diagnostics.Debug.Assert(aliasn == 19700);
+                aliasn = SystemsDB.FindAlias(-1, "CM qwkqkq");
+                System.Diagnostics.Debug.Assert(aliasn == -1);
+                List<ISystem> aliaslist = SystemsDB.FindAliasWildcard("Horsehead");
+                System.Diagnostics.Debug.Assert(aliaslist.Count>10);
             }
 
             {
@@ -316,7 +320,11 @@ namespace TestSQL
                 slist = SystemsDB.FindStarWildcard("4 S");
                 System.Diagnostics.Debug.Assert(slist != null && slist.Count >= 1);
 
-
+                slist = SystemsDB.FindStarWildcard("Beagle Point");
+                System.Diagnostics.Debug.Assert(slist != null && slist.Count == 1);
+                ISystem bp = slist[0];
+                slist = SystemsDB.FindAliasWildcard("Ceeckia ZQ-L C24-0");
+                System.Diagnostics.Debug.Assert(slist != null && slist.Count == 1 && bp.Name == slist[0].Name);
             }
 
             {   // xz index = 70ms

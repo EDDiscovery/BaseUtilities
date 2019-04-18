@@ -15,20 +15,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Data.Common;
-using System.Data;
-using System.Drawing;
 using EMK.LightGeometry;
 
 namespace EliteDangerousCore.DB
 {
     public partial class SystemsDB
     {
-
-
-        ///////////////////////////////////////// List of systems near xyz
+        ///////////////////////////////////////// List of systems near xyz between mindist and maxdist
 
         public static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
                                                     int maxitems,
@@ -53,8 +48,7 @@ namespace EliteDangerousCore.DB
                                                         )
 
         {
-
-
+            // for comparision, using the grid screener is slower than the xy index. keep code for record
             // grid screener..  "s.sectorid IN (Select id FROM Sectors sx where sx.gridid IN (" + strinlist + ")) " +
             //var gridids = GridId.Ids(x - maxdist, x + maxdist, z - maxdist, z + maxdist);       // find applicable grid ids across this range..
             //var strinlist = string.Join(",", (from x1 in gridids select x1.ToStringInvariant()));     // here we convert using invariant for paranoia sake.
@@ -103,18 +97,18 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        public static ISystem GetSystemByPosition(double x, double y, double z)
+        public static ISystem GetSystemByPosition(double x, double y, double z, double maxdist = 0.125)
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
-                return GetSystemByPosition(x, y, z, cn);
+                return GetSystemByPosition(x, y, z, cn, maxdist);
             }
         }
 
-        public static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn)
+        public static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn, double maxdist = 0.125)
         {
             BaseUtils.SortedListDoubleDuplicate<ISystem> distlist = new BaseUtils.SortedListDoubleDuplicate<ISystem>();
-            GetSystemListBySqDistancesFrom(distlist, x, y, z, 1, 0, 0.125, true, cn);
+            GetSystemListBySqDistancesFrom(distlist, x, y, z, 1, 0, maxdist, true, cn); // return 1 item, min dist 0, maxdist
             return (distlist.Count > 0) ? distlist.First().Value : null;
         }
 
@@ -127,12 +121,12 @@ namespace EliteDangerousCore.DB
         public const int metric_maximum500ly = 4;
         public const int metric_waypointdev2 = 5;
 
-        public static ISystem GetSystemNearestTo(Point3D currentpos,            
-                                              Point3D wantedpos,                
-                                              double maxfromcurpos,             
-                                              double maxfromwanted,             
-                                              int routemethod,                  
-                                              Action<ISystem> LookedUp = null)
+        public static ISystem GetSystemNearestTo( Point3D currentpos,            
+                                                  Point3D wantedpos,                
+                                                  double maxfromcurpos,             
+                                                  double maxfromwanted,             
+                                                  int routemethod,                  
+                                                  Action<ISystem> LookedUp = null)
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
@@ -141,13 +135,13 @@ namespace EliteDangerousCore.DB
         }
 
 
-        public static ISystem GetSystemNearestTo(Point3D currentpos,
-                                              Point3D wantedpos,
-                                              double maxfromcurpos,
-                                              double maxfromwanted,
-                                              int routemethod,
-                                              SQLiteConnectionSystem cn,
-                                              Action<ISystem> LookedUp = null)
+        public static ISystem GetSystemNearestTo( Point3D currentpos,
+                                                  Point3D wantedpos,
+                                                  double maxfromcurpos,
+                                                  double maxfromwanted,
+                                                  int routemethod,
+                                                  SQLiteConnectionSystem cn,
+                                                  Action<ISystem> LookedUp = null)
         {
             using (DbCommand cmd = cn.CreateSelect("Systems s",
                         MakeSystemQueryEDDB,

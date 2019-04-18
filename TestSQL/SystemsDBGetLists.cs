@@ -16,17 +16,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Data.Common;
-using System.Data;
-using System.Drawing;
-using EMK.LightGeometry;
 
 namespace EliteDangerousCore.DB
 {
     public partial class SystemsDB
     {
-        public static long GetTotalSystems()
+        public static long GetTotalSystems()            // this is SLOW try not to use
         {
             using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
             {
@@ -37,9 +33,10 @@ namespace EliteDangerousCore.DB
             }
         }
 
-        // Beware with no extra conditions, you get them all..  No EDDB info. Mostly used for debugging
+        // Beware with no extra conditions, you get them all..  Mostly used for debugging
         // use starreport to avoid storing the entries instead pass back one by one
-        public static List<ISystem> ListStars(string where = null, string orderby = null, string limit = null, bool eddbinfo = false, Action<ISystem> starreport = null)
+        public static List<ISystem> ListStars(string where = null, string orderby = null, string limit = null, bool eddbinfo = false, 
+                                                Action<ISystem> starreport = null)
         {
             List<ISystem> ret = new List<ISystem>();
 
@@ -68,7 +65,7 @@ namespace EliteDangerousCore.DB
             return ret;
         }
 
-        // randimised id % 100 < selector
+        // randimised id % 100 < sercentage
         public static List<V> GetStarPositions<V>(int percentage, Func<int, int, int, V> tovect)  // return all star positions..
         {
             List<V> ret = new List<V>();
