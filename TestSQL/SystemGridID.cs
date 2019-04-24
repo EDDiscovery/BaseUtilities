@@ -31,6 +31,8 @@ namespace EliteDangerousCore.DB
                                                 17,17,17,17,17, 18,18,18,18,18,         // 30   +10
                                                 19,19                                   // 40   +20
                                             };
+
+
         public const int GridZRange = 26;
         static private int[] compresstablez = {
                                                 0,1,1,2,2,      3,4,5,6,7,              // 0  -10
@@ -42,6 +44,8 @@ namespace EliteDangerousCore.DB
                                                 23,23,23,23,23, 24,24,24,24,24,         // 60 +50
                                                 25,25                                   // 70 +60
                                             };
+
+
         public const int xleft = -20500;
         public const int xright = 20000;
         public const int zbot = -10500;
@@ -98,6 +102,37 @@ namespace EliteDangerousCore.DB
             return x + ZMult * z;
         }
 
+        public static int X(int gridid)
+        {
+            return gridid % ZMult;
+        }
+
+        public static int Z(int gridid)
+        {
+            return gridid / ZMult;
+        }
+
+        public static bool IsLeft(int gridid)
+        {
+            return gridid % ZMult == 0;
+        }
+
+        public static bool IsRight(int gridid)
+        {
+            return gridid % ZMult == GridXRange - 1;
+        }
+
+        public static bool IsBottom(int gridid)
+        {
+            return gridid / ZMult == 0;
+        }
+
+        public static bool IsTop(int gridid)
+        {
+            return gridid / ZMult == GridZRange - 1;
+        }
+
+
         public static bool XZ(int id, out float x, out float z, bool mid = true)         // given id, return x/z pos of left bottom or mid
         {
             x = 0; z = 0;
@@ -142,7 +177,6 @@ namespace EliteDangerousCore.DB
 
             return false;
         }
-
 
         public static bool Boundaries(int id, out float left, out float bottom, out float right, out float top)         // given id, return boundaries
         {

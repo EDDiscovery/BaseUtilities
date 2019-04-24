@@ -141,7 +141,8 @@ namespace EliteDangerousCore.DB
                                                   double maxfromwanted,
                                                   int routemethod,
                                                   SQLiteConnectionSystem cn,
-                                                  Action<ISystem> LookedUp = null)
+                                                  Action<ISystem> LookedUp = null,
+                                                  int limitto = 1000 )
         {
             using (DbCommand cmd = cn.CreateSelect("Systems s",
                         MakeSystemQueryEDDB,
@@ -158,7 +159,8 @@ namespace EliteDangerousCore.DB
                                 "AND y <= @yc + @maxfromcurpos " +
                                 "AND y >= @yw - @maxfromwanted " +
                                 "AND y <= @yw + @maxfromwanted ",
-
+                        orderby: "(s.x-@xw)*(s.x-@xw)+(s.y-@yw)*(s.y-@yw)+(s.z-@zw)*(s.z-@zw)",         // orderby distance from wanted
+                        limit: limitto,
                         joinlist: MakeSystemQueryEDDBJoinList))
             {
                 cmd.AddParameterWithValue("@xw", SystemClass.DoubleToInt(wantedpos.X));         // easier to manage with named paras
