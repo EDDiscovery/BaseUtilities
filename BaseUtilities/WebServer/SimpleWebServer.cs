@@ -41,7 +41,8 @@ namespace BaseUtils.Web
             listener.Start();
         }
 
-        public SimpleWebServer(Func<HttpListenerRequest, Object, byte[]> method, Object data, params string[] prefixes) : this(prefixes, data, method) { }
+        public SimpleWebServer(Func<HttpListenerRequest, Object, byte[]> method, Object data, params string[] prefixes) : this(prefixes, data, method)
+        { }
 
         public void Run()
         {
@@ -52,29 +53,32 @@ namespace BaseUtils.Web
                 {
                     while (listener.IsListening)
                     {
-                        ThreadPool.QueueUserWorkItem((c) =>
-                        {
-                            var ctx = c as HttpListenerContext;
-                            try
-                            {
-                                System.Diagnostics.Debug.WriteLine("Response");
-
-                                byte[] buf = responderMethod(ctx.Request, objectdata);
-
-                                ctx.Response.ContentLength64 = buf.Length;
-                                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-                            }
-                            catch { } // suppress any exceptions
-                            finally
-                            {
-                                // always close the stream
-                                ctx.Response.OutputStream.Close();
-                            }
-                        }, listener.GetContext());
+                        ThreadPool.QueueUserWorkItem((c)=> ProcessEvent(c), listener.GetContext()); // GetContext blocks until an event c is ready
                     }
                 }
                 catch { } // suppress any exceptions
             });
+        }
+
+        private void ProcessEvent(Object c)
+        {
+            var ctx = c as HttpListenerContext;
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Response");
+
+                byte[] buf = responderMethod(ctx.Request, objectdata);
+
+                ctx.Response.ContentLength64 = buf.Length;
+                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+            }
+            catch { } // suppress any exceptions
+            finally
+            {
+                // always close the stream
+                ctx.Response.OutputStream.Close();
+            }
         }
 
         public void Stop()
@@ -86,3 +90,6 @@ namespace BaseUtils.Web
 
 
 }
+
+
+
