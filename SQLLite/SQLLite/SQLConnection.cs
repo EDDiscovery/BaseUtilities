@@ -37,6 +37,7 @@ namespace SQLLiteExtensions
         protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
         protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging mostly, track connections
         protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();  
+        protected static string DbConnectionString = null;
         public string DBFile { get; protected set; }
 
         protected SQLExtConnection( AccessMode mode )

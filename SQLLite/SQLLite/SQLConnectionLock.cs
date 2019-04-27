@@ -36,6 +36,17 @@ namespace SQLLiteExtensions
         private static bool initialized = false;
         private static int initsem = 0;
 
+        static SQLExtConnectionWithLock()
+        {
+            var connstring = System.Configuration.ConfigurationManager.ConnectionStrings[typeof(TConn).Name];
+
+            if (connstring != null)
+            {
+                DbFactory = DbProviderFactories.GetFactory(connstring.ProviderName);
+                DbConnectionString = connstring.ConnectionString;
+            }
+        }
+
         public SQLExtConnectionWithLock(string dbfile, bool utctimeindicator, Action initializercallback = null, AccessMode mode = AccessMode.ReaderWriter)  : base(mode)
         {
             bool locktaken = false;
@@ -56,8 +67,15 @@ namespace SQLLiteExtensions
                 DBFile = dbfile;
                 connection = DbFactory.CreateConnection();
 
-                // Use the database selected by maindb as the 'main' database
-                connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
+                if (DbConnectionString != null)
+                {
+                    connection.ConnectionString = DbConnectionString;
+                }
+                else
+                {
+                    // Use the database selected by maindb as the 'main' database
+                    connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
+                }
 
                 if (utctimeindicator)   // indicate treat dates as UTC.
                     connection.ConnectionString += "DateTimeKind=Utc;";
@@ -176,6 +194,13 @@ namespace SQLLiteExtensions
 
         protected static void InitializeIfNeeded(Action initializer)        // call this to get your initialiser called and to let it know its been initialised.
         {
+            if (DbConnectionString != null)
+            {
+                System.Diagnostics.Debug.WriteLine("Skipping initialization as custom connection is set in app config");
+                initialized = true;
+                return;
+            }
+
             if (!initialized)
             {
                 int cur = Interlocked.Increment(ref initsem);
