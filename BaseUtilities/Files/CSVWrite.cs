@@ -42,7 +42,17 @@ namespace BaseUtils
         }
 
 
-        public string Format(object value, bool delimit = true)
+        public string Double(double value, bool delimit = true, int decplaces = 2)
+        {
+            return Format(value, delimit, "N" + decplaces.ToStringInvariant());
+        }
+
+        public string Double(double? value, bool delimit = true, int decplaces = 2)
+        {
+            return Format(value, delimit, "N" + decplaces.ToStringInvariant());
+        }
+
+        public string Format(object value, bool delimit = true, string defformat = null)
         {
             string output = "";
 
@@ -51,13 +61,28 @@ namespace BaseUtils
                 if (value is DateTime)
                 {
                     if (((DateTime)value).TimeOfDay.TotalSeconds == 0)
-                        return ((DateTime)value).ToString("yyyy-MM-dd") + delimiter;
+                        return ((DateTime)value).ToString("yyyy-MM-dd");
 
                     output = ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss");
                 }
                 else
                 {
-                    output = Convert.ToString(value, formatculture);
+                    if (defformat == null)
+                        output = Convert.ToString(value, formatculture);
+                    else if (value is double)
+                        output = ((double)value).ToString(defformat, formatculture);
+                    else if (value is double?)
+                        output = ((double?)value).Value.ToString(defformat, formatculture);
+                    else if (value is int)
+                        output = ((int)value).ToString(defformat, formatculture);
+                    else if (value is uint)
+                        output = ((uint)value).ToString(defformat, formatculture);
+                    else if (value is long)
+                        output = ((long)value).ToString(defformat, formatculture);
+                    else if (value is ulong)
+                        output = ((ulong)value).ToString(defformat, formatculture);
+                    else
+                        System.Diagnostics.Debug.Assert(false, "defformat does not support this type");
 
                     if (output.Contains(",") || output.Contains("\"") || output.Contains("\r") || output.Contains("\n"))
                     {
