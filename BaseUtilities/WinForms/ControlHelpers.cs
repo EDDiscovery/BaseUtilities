@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+ * Copyright © 2016 - 2019 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -264,6 +281,31 @@ public static class ControlHelpersStaticFunc
         return new Point(x, y);
     }
 
+    // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16)
+    {
+        Screen scr = Screen.FromControl(p);
+        Rectangle scrb = scr.Bounds;
+
+        int top = p.Top;
+        int left = p.Left;
+
+        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin*2);       // ensure within screen
+        int x = Math.Min(Math.Max(left, scrb.Left), scrb.Right - calcwidth - margin);
+
+        int calcheight = Math.Min(wantedheight, scrb.Height - (lockY ? p.Top : margin) - margin);
+        if (lockY && calcheight < scrb.Height / 5)   // if small and we locked to Y, Y is too low.
+        {
+            calcheight = scrb.Height - margin * 2;
+            top = scrb.Top + margin;
+        }
+
+        int y = Math.Min(Math.Max(top, scrb.Top), scrb.Bottom - calcheight - margin);
+
+        p.Location = new Point(x, y);
+        p.Size = new Size(calcwidth, calcheight);
+    }
+
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
     {
         return new Point(Math.Min(p.X, other.Width - ps.Width),                   // respecting size, ensure we are within the rectangle of another
@@ -280,9 +322,19 @@ public static class ControlHelpersStaticFunc
         {
             int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
             int curDist = sp.SplitterDistance;
+            //System.Diagnostics.Debug.WriteLine("Size is " + a);
             if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
                 a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-            sp.SplitterDistance = Math.Min(Math.Max((int)Math.Round(a * value), sp.Panel1MinSize), a - sp.Panel2MinSize);
+            //System.Diagnostics.Debug.WriteLine("Now Size is " + a + " " + sp.Panel1MinSize + " " + (sp.Height - sp.Panel2MinSize));
+
+            try
+            {       // protect it against excepting because even with the careful protection above and below, it can still mess up if the window is completely small
+                sp.SplitterDistance = Math.Min(Math.Max((int)Math.Round(a * value), sp.Panel1MinSize), a - sp.Panel2MinSize);
+            }
+            catch
+            {
+                System.Diagnostics.Debug.WriteLine("Splitter failed to set in " + sp.GetType().Name);
+            }
             //System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.Panel1MinSize}-{sp.Panel2MinSize} Set SplitterDistance to {value:N2} (was {curDist}, now {sp.SplitterDistance})");
         }
         else
@@ -491,6 +543,55 @@ public static class ControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    static public void SortDataGridViewColumnTagsAsStringsLists(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
+    {
+        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
+        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
+
+        var lleft = left.Tag as List<string>;
+        var lright = right.Tag as List<string>;
+
+        if (lleft != null)
+        {
+            if (lright != null)
+            {
+                string sleft = string.Join(";", left.Tag as List<string>);
+                string sright = string.Join(";", right.Tag as List<string>);
+                e.SortResult = sleft.CompareTo(sright);
+            }
+            else
+                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
+        }
+        else
+            e.SortResult = lright != null ? -1 : 0;
+
+        e.Handled = true;
+    }
+
+    static public void SortDataGridViewColumnTagsAsStrings(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
+    {
+        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
+        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
+
+        var sleft = left.Tag as string;
+        var sright = right.Tag as string;
+
+        if (sleft != null)
+        {
+            if (sright != null)
+            {
+                e.SortResult = sleft.CompareTo(sright);
+            }
+            else
+                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
+        }
+        else
+            e.SortResult = sright != null ? -1 : 0;
+
+        e.Handled = true;
+    }
+
+
     // try and force this row to centre or top
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
     {
@@ -505,7 +606,7 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    public static void FilterGridView(this DataGridView vw, string searchstr)       // can be VERY SLOW for large grids
+    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
     {
         vw.SuspendLayout();
         vw.Enabled = false;
@@ -529,6 +630,29 @@ public static class ControlHelpersStaticFunc
                         {
                             found = true;
                             break;
+                        }
+                    }
+
+                    if (checktags)
+                    {
+                        List<string> slist = cell.Tag as List<string>;
+                        if (slist != null)
+                        {
+                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        string str = cell.Tag as string;
+                        if (str != null)
+                        {
+                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -563,6 +687,68 @@ public static class ControlHelpersStaticFunc
     {
         return cell.Value == null || cell.Value.ToString().Length == 0;
     }
+
+    public static int GetNumberOfVisibleRowsAbove( this DataGridViewRowCollection table, int rowindex )
+    {
+        int visible = 0;
+        for( int i = 0; i < rowindex; i++ )
+        {
+            if (table[i].Visible)
+                visible++;
+        }
+        return visible;
+    }
+
+    public static string GetToolStripState( this ContextMenuStrip cms )     // semi colon list of checked items
+    {
+        string s = "";
+        foreach( ToolStripItem c in cms.Items)
+        {
+            var t = c as ToolStripMenuItem;
+            if (t != null)
+            {
+                if (t.CheckState == CheckState.Checked)
+                    s += t.Name + ";";
+
+                foreach (ToolStripItem d in t.DropDownItems)
+                {
+                    var dt = d as ToolStripMenuItem;
+                    if (dt != null)
+                    {
+                        if (dt.CheckState == CheckState.Checked)
+                            s += dt.Name + ";";
+                    }
+                }
+            }
+        }
+
+        return s;
+    }
+
+    public static void SetToolStripState(this ContextMenuStrip cms, string ss)  // semi colon list of items to check
+    {
+        string[] s = ss.Split(';');
+
+        foreach (ToolStripItem c in cms.Items)
+        {
+            var t = c as ToolStripMenuItem;
+            if (t != null)
+            {
+                t.CheckState = s.Contains(t.Name) ? CheckState.Checked : CheckState.Unchecked;
+
+                foreach (ToolStripItem d in t.DropDownItems)
+                {
+                    var dt = d as ToolStripMenuItem;
+                    if (dt != null)
+                    {
+                        CheckState cs = s.Contains(dt.Name) ? CheckState.Checked : CheckState.Unchecked;
+                        dt.CheckState = cs;
+                    }
+                }
+            }
+        }
+    }
+
 
     #endregion
 }

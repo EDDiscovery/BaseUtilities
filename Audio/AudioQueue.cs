@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -31,7 +31,7 @@ namespace AudioExtensions
             public List<System.IO.Stream> handlelist = new List<System.IO.Stream>();   // audio samples held in files to free
             public AudioData audiodata;         // the audio data, in the driver format
             public int volume;                  // 0-100
-            public Priority priority;           // audio priority
+            public Priority priority;           // set audio prority.
 
             public event SampleStart sampleStartEvent;
             public object sampleStartTag;
@@ -120,7 +120,7 @@ namespace AudioExtensions
         }
 
 
-        private void Queue(AudioSample newdata, Priority p = Priority.Normal )
+        private void Queue(AudioSample newdata)
         {
             //System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);      // UI thread.
 
@@ -130,9 +130,9 @@ namespace AudioExtensions
             {
                 //System.Diagnostics.Debug.WriteLine("Play " + ad.Lengthms(newdata.audiodata) + " in queue " + InQueuems() + " " + newdata.priority);
 
-                if ( audioqueue.Count > 0 && p > audioqueue[0].priority )       // if something is playing, and we have priority..
+                if ( audioqueue.Count > 0 && newdata.priority > audioqueue[0].priority )       // if something is playing, and we have priority..
                 {
-                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000).ToString("00000") + " Priority insert " + p + " front " + audioqueue[0].priority);
+                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000).ToString("00000") + " Priority insert " + newdata.priority + " front " + audioqueue[0].priority);
 
                     if (audioqueue[0].priority == Priority.Low)                 // if low at front, remove all other lows after it
                     {
@@ -165,7 +165,6 @@ namespace AudioExtensions
                 {
                     //System.Diagnostics.Debug.WriteLine(Environment.TickCount + "AUDIO queue");
                     
-                    newdata.priority = p;
                     audioqueue.Add(newdata);
                     if (audioqueue.Count > 1)       // if not the first in queue, no action yet, let stopped handle it
                         return;
@@ -262,7 +261,8 @@ namespace AudioExtensions
         public void Submit(AudioSample s, int vol, Priority p)       // submit to queue
         {
             s.volume = vol;
-            Queue(s, p);
+            s.priority = p;
+            Queue(s);
         }
 
         public void StopCurrent()   // async

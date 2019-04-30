@@ -61,12 +61,14 @@ namespace BaseUtils
 
         static Translator instance;
 
-        LogToFile logger = null;
+        public bool OutputIDs { get; set; } = false;             // for debugging
 
-        Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
-        Dictionary<string, string> originalenglish = null;      // optional load
-        Dictionary<string, string> originalfile = null;         // optional load
-        List<string> ExcludedControls = new List<string>();
+        private LogToFile logger = null;
+
+        private Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
+        private Dictionary<string, string> originalenglish = null;      // optional load
+        private Dictionary<string, string> originalfile = null;         // optional load
+        private List<string> ExcludedControls = new List<string>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
 
@@ -289,10 +291,17 @@ namespace BaseUtils
             if (translations != null && !normal.Equals("<code>") )
             {
                 string key = id;
+                if (OutputIDs)
+                {
+                    string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key]??"Null") : "Missing");
+                    System.Diagnostics.Debug.WriteLine(tx);
+                    logger?.WriteLine(tx);
+                }
+
                 if (translations.ContainsKey(key))
                 {
 #if DEBUG
-                    return translations[key] ?? ('\'' + normal + '\'');     // debug more we quote them to show its not translated, else in release we just print
+                    return translations[key] ?? normal.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
                     return translations[key] ?? normal;
 #endif

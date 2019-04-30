@@ -92,6 +92,7 @@ namespace BaseUtils
                 functions.Add("rv", new FuncEntry(ReplaceVar, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // var/string, literal/var/string
                 functions.Add("rs", new FuncEntry(ReplaceVarSC, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // var/string, literal/var/string
                 functions.Add("replaceescapechar", new FuncEntry(ReplaceEscapeChar, FuncEntry.PT.MESE));
+                functions.Add("replaceifstartswith", new FuncEntry(ReplaceIfStartsWith, 2, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE ));
 
                 functions.Add("sc", new FuncEntry(SplitCaps, FuncEntry.PT.MESE));
                 functions.Add("splitcaps", new FuncEntry(SplitCaps, FuncEntry.PT.MESE));
@@ -382,6 +383,17 @@ namespace BaseUtils
             return true;
         }
 
+        protected bool ReplaceIfStartsWith(out string output)
+        {
+            if (paras[0].Value.StartsWith(paras[1].Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                output = ((paras.Count >= 3) ? paras[2].Value : "") + paras[0].Value.Substring(paras[1].Value.Length);
+            }
+            else
+                output = paras[0].Value;
+            return true;
+        }
+
         protected bool WordOf(out string output)
         {
             string s = paras[0].Value;
@@ -623,7 +635,24 @@ namespace BaseUtils
             {
                 output = "Need prefixes and postfixes";
             }
-            else 
+            else if (double.IsNaN(value))
+            {
+                output = "Not a Number";
+            }
+            else if (double.IsNegativeInfinity(value))
+            {
+                output = "Negative Infinity";
+            }
+            else if (double.IsPositiveInfinity(value))
+            {
+                output = "Positive Infinity";
+            }
+            else if (value == 0)// like, doh.  can't log zero
+            {
+                output = "0";
+                return true;
+            }
+            else
             {
                 string prefix = "";
                 if (value < 0)
@@ -632,9 +661,13 @@ namespace BaseUtils
                     value = -value;
                 }
 
-                int order = (int)Math.Log10((double)value);
+                double order = Math.Log10(value);
 
-                if (order >= 12)        // billions, say X.Y trillion
+                if ( double.IsInfinity(order))
+                {
+                    output = "Log10(0) Something badly wrong, should have been caught - report";
+                }
+                else if (order >= 12)        // trillions, say X.Y trillion
                 {
                     value /= 1E12;
                     output = prefix + value.ToStringInvariant("0.##") + " " + postfixes[1];
@@ -651,21 +684,34 @@ namespace BaseUtils
                 }
                 else if (order >= 4)        // 10000+ thousands, say X thousands
                 {
-                    value /= 1E3;
-                    output = prefix + value.ToStringInvariant("0") + " " + postfixes[4];
+                    value = Math.Round(value / 1E3 * 10.0) / 10.0;   // in thousands
+                    output = prefix + value.ToStringInvariant("0.#") + " " + postfixes[4];
                 }
-                else if (order == 3)        // 1000-9999, say xx hundred
+                else if (order >= 3)        // 1000-9999, say xx hundred
                 {
-                    value /= 1E2;           // hundreds.
+                    value = Math.Round(value / 1E2 * 10.0) / 10.0;   // in hundreds
                     int hundreds = (int)value;  // thousand parts
                     output = prefix + (hundreds / 10).ToStringInvariant() + " " + postfixes[4];
                     if (hundreds % 10 != 0) // hundred parts
                         output += " " + (hundreds % 10).ToStringInvariant() + " " + postfixes[5];
                 }
-                else
+                else if (order >= 2)       // 100-999
                 {
-                    output = prefix + value.ToStringInvariant();
+                    output = prefix + value.ToStringInvariant("0");
                 }
+                else if (order >= 1)       // 10-99
+                {
+                    output = prefix + value.ToStringInvariant("0");
+                }
+                else if (order >= 0)      //1-9
+                    output = prefix + value.ToStringInvariant("0.#");
+                else
+                {                         // order is <0.  so minimum digits is 1
+                    int digits = (int)(-order) + 1;
+                    string s = "0." + new string('#', digits);
+                    output = prefix + value.ToStringInvariant(s);
+                }
+
 
                 return true;
             }

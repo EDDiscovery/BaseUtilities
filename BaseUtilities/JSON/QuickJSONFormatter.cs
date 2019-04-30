@@ -168,6 +168,16 @@ namespace BaseUtils
             return this;
         }
 
+        public QuickJSONFormatter Object(string name)       // call, add elements, call close
+        {
+            Prefix();
+
+            json += "\"" + name + "\":{ ";
+            stack.Add(new StackEntry(StackType.Object, precomma));
+            precomma = false;
+            return this;
+        }
+
         public QuickJSONFormatter Close( int depth = 1 )    // close one of more Arrays/Objects
         {
             while (depth-- > 0 && stack.Count > 0 )
@@ -190,6 +200,11 @@ namespace BaseUtils
         {
             Close(int.MaxValue);
             return json;
+        }
+
+        public override string ToString()
+        {
+            return Get();
         }
 
     }

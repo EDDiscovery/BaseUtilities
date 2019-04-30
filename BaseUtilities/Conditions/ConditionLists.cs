@@ -25,6 +25,15 @@ namespace BaseUtils
 { 
     public class ConditionLists
     {
+        public enum ErrorClass      // errors are passed back by functions in ErrorList (null okay, else string description) plus ErrorClass
+        {
+            None,
+            LeftSideBadFormat,
+            RightSideBadFormat,
+            LeftSideVarUndefined,
+            ExprFormatError,
+        };
+
         private List<Condition> conditionlist = new List<Condition>();
         private List<string> groupname = new List<string>();    // used to associate a group name with a condition..
 
@@ -326,7 +335,19 @@ namespace BaseUtils
         #region Check Condition
 
         // check all conditions against these values.
-        public bool? CheckAll(Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)            // Check all conditions..
+        public bool? CheckAll(Variables values, out string errlist, out ErrorClass errclass, List<Condition> passed = null, Functions cf = null)            // Check all conditions..
+        {
+            if (conditionlist.Count == 0)            // no filters match, null
+            {
+                errlist = null;
+                errclass = ErrorClass.None;
+                return null;
+            }
+
+            return CheckConditions(conditionlist, values, out errlist, out errclass, passed, cf);
+        }
+
+        public bool? CheckAll(Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)            // older non errclass interface
         {
             if (conditionlist.Count == 0)            // no filters match, null
             {
@@ -334,7 +355,7 @@ namespace BaseUtils
                 return null;
             }
 
-            return CheckConditions(conditionlist, values, out errlist, passed, cf);
+            return CheckConditions(conditionlist, values, out errlist, out ErrorClass errclass, passed, cf);
         }
 
         #endregion
@@ -347,9 +368,11 @@ namespace BaseUtils
                                         Object cls , // object with data in it
                                         Variables[] othervars,   // any other variables to present to the condition, in addition to the class variables
                                         out string errlist,     // null if okay..
+                                        out ErrorClass errclass,
                                         List<Condition> passed)            // null or conditions passed
         {
             errlist = null;
+            errclass = ErrorClass.None;
 
             Variables valuesneeded = new Variables();
 
@@ -360,11 +383,11 @@ namespace BaseUtils
             {
                 valuesneeded.GetValuesIndicated(cls);       // given the class data, and the list of values needed, add it
                 valuesneeded.Add(othervars);
-                return CheckConditions(fel, valuesneeded, out errlist, passed);    // and check, passing in the values collected against the conditions to test.
+                return CheckConditions(fel, valuesneeded, out errlist, out errclass, passed);    // and check, passing in the values collected against the conditions to test.
             }
             catch (Exception)
             {
-                errlist = "CL:669 class failed to parse";
+                errlist = "class failed to parse";
                 return null;
             }
         }
@@ -373,7 +396,7 @@ namespace BaseUtils
 
         public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
         {                                                                                         // only if the filter passes do we get a false..
-            bool? v = CheckCondition(conditionlist, cls, othervars, out errlist, passed);
+            bool? v = CheckCondition(conditionlist, cls, othervars, out errlist, out ErrorClass errclass, passed);
             return (v.HasValue && v.Value);     // true IF we have a positive result
         }
 
@@ -385,7 +408,7 @@ namespace BaseUtils
 
             if (fel != null)        // if we have matching filters..
             {
-                bool? v = CheckCondition(fel, cls, othervars, out errlist, passed);  // true means filter matched
+                bool? v = CheckCondition(fel, cls, othervars, out errlist, out ErrorClass errclass, passed);  // true means filter matched
                 bool res = !v.HasValue || v.Value == false;
                 //System.Diagnostics.Debug.WriteLine("Event " + eventname + " res " + res + " v " + v + " v.hv " + v.HasValue);
                 return res; // no value, true .. false did not match, thus true
@@ -401,9 +424,10 @@ namespace BaseUtils
 
         #region Condition Logic
 
-        static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, List<Condition> passed = null, Functions cf = null)
+        static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, List<Condition> passed = null, Functions cf = null)
         {
             errlist = null;
+            errclass = ErrorClass.None;
 
             bool? outerres = null;
 
@@ -425,6 +449,7 @@ namespace BaseUtils
                         else
                         {
                             errlist += "AlwaysFalse/True does not have on the left side the word 'Condition'";
+                            errclass = ErrorClass.ExprFormatError;
                             innerres = false;
                             break;
                         }
@@ -472,6 +497,7 @@ namespace BaseUtils
                                 if (leftside == null)
                                 {
                                     errlist += "Variable '" + qualname + "' does not exist" + Environment.NewLine;
+                                    errclass = ErrorClass.LeftSideVarUndefined;
                                     innerres = false;
                                     break;                       // stop the loop, its a false
                                 }
@@ -499,6 +525,7 @@ namespace BaseUtils
                                 if (!DateTime.TryParse(leftside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmevalue))
                                 {
                                     errlist += "Date time not in correct format on left side" + Environment.NewLine;
+                                    errclass = ErrorClass.LeftSideBadFormat;
                                     innerres = false;
                                     break;
 
@@ -506,6 +533,7 @@ namespace BaseUtils
                                 else if (!DateTime.TryParse(rightside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmecontent))
                                 {
                                     errlist += "Date time not in correct format on right side" + Environment.NewLine;
+                                    errclass = ErrorClass.RightSideBadFormat;
                                     innerres = false;
                                     break;
                                 }
@@ -544,6 +572,7 @@ namespace BaseUtils
                                 if (ret == null)
                                 {
                                     errlist += "IsOneOf value list is not in a optionally quoted comma separated form" + Environment.NewLine;
+                                    errclass = ErrorClass.RightSideBadFormat;
                                     innerres = false;
                                     break;                       // stop the loop, its a false
                                 }
@@ -580,6 +609,7 @@ namespace BaseUtils
                                 if (ll == null || rl == null)
                                 {
                                     errlist += "AnyOfAny value list is not in a optionally quoted comma separated form on both sides" + Environment.NewLine;
+                                    errclass = ErrorClass.RightSideBadFormat;
                                     innerres = false;
                                     break;                       // stop the loop, its a false
                                 }
@@ -612,6 +642,7 @@ namespace BaseUtils
                                 else
                                 {
                                     errlist += "True/False value is not an integer on left side" + Environment.NewLine;
+                                    errclass = ErrorClass.LeftSideBadFormat;
                                     innerres = false;
                                     break;
                                 }
@@ -623,12 +654,14 @@ namespace BaseUtils
                                 if (!leftside.InvariantParse(out num))
                                 {
                                     errlist += "Number not in correct format on left side" + Environment.NewLine;
+                                    errclass = ErrorClass.LeftSideBadFormat;
                                     innerres = false;
                                     break;
                                 }
                                 else if (!rightside.InvariantParse(out fnum))
                                 {
                                     errlist += "Number not in correct format on right side" + Environment.NewLine;
+                                    errclass = ErrorClass.RightSideBadFormat;
                                     innerres = false;
                                     break;
                                 }

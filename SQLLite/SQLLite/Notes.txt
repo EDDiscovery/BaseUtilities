@@ -1,0 +1,65 @@
+﻿// no indexes 1094 mb
+// indexes with 33e6 systems:
+// sectorid,nameid AND xz = 2329
+// sectorid,nameid AND sectorid,xz = 2428  (slower)
+// sectorid,nameid AND x = 2198 (lost speed in position lookups)
+// with no xz, its slow. Even using a sectorid screen first the distance ones are v.slow.
+// sectorid,nameid only = 1780 - kills sq lookup even if using sector screen
+
+// two index xz and sectorid nameid, 2329, best solution
+
+FindStar HIP x for X: 38+38
+Find Standard for X: 69+30
+Find Kanur for X: 100+30
+Find EDSMID for 100: 150+49
+Find Pos for 100: 226+73
+Find Wildcard Standard trunced: 244+10
+Find Wildcard HIP 6: 968+723
+Find Wildcard USNo: 980+12
+Find Wildcard HIP: 1549+569
+Stars Near Sol: 1794+48
+Stars Near x490: 1910+116
+Find Nearest Star: 2050+140
+5 load : 2122+69
+810 load 100 : 7909+5786
+810 load 50 : 10980+3070
+810 load dual : 17847+6867
+810 load pop : 18193+346
+810 load unpop : 25309+7116
+
+
+// sectorid,nameid plus sectorid,x,z 2428 AND using sector screen in sqdist
+
+FindStar HIP x for X: 42+42
+Find Standard for X: 72+30
+Find Kanur for X: 105+32
+Find EDSMID for 100: 165+60
+Find Pos for 100: 285+116		SLOWER
+Find Wildcard Standard trunced: 305+11
+Find Wildcard HIP 6: 4116+3811
+Find Wildcard USNo: 4131+14
+Find Wildcard HIP: 4758+627
+Stars Near Sol: 5230+12
+Stars Near x490: 5322+92
+Find Nearest Star: 7788+2466
+5 load : 7849+58
+810 load 100 : 13773+5923
+810 load 50 : 16873+3100
+810 load dual : 23823+6949
+810 load pop : 24238+415
+810 load unpop : 31184+6945
+
+// sectorid,nameid plus sector screen in sqdist
+
+FindStar HIP x for X: 39+39
+Find Standard for X: 75+35
+Find Kanur for X: 102+27
+Find EDSMID for 100: 153+51
+Too slow to measure
+
+Sector screen is returning 800k 810 systems.. and its searching everyone of them
+
+around 4.7s per lookup 
+
+
+

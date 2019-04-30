@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright © 2016 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public static class ObjectExtensionsStrings
 {
@@ -99,7 +100,7 @@ public static class ObjectExtensionsStrings
             return string.Empty;
     }
 
-    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture )        //extend for case
+    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
     {
         return data.IndexOf(comparision, c) >= 0;
     }
@@ -131,6 +132,15 @@ public static class ObjectExtensionsStrings
         }
     }
 
+    // if it starts with start, and if extra is there (configurable), replace it with replacestring..
+    public static string ReplaceIfStartsWith(this string obj, string start, string replacestring = "", bool musthaveextra = true, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+    {
+        if (start != null && obj.StartsWith(start, sc) && (!musthaveextra || obj.Length > start.Length))
+            return replacestring + obj.Substring(start.Length).TrimStart();
+        else
+            return obj;
+    }
+
     public static string FirstAlphaNumericText(this string obj)     // skip to find first alpha text ignoring whitespace
     {
         if (obj == null)
@@ -142,7 +152,7 @@ public static class ObjectExtensionsStrings
             while (i < obj.Length && !char.IsLetterOrDigit(obj[i]))
                 i++;
 
-            for(; i < obj.Length; i++)
+            for (; i < obj.Length; i++)
             {
                 if (char.IsLetterOrDigit(obj[i]))
                     ret += obj[i];
@@ -155,24 +165,31 @@ public static class ObjectExtensionsStrings
         }
     }
 
+    public static string QuoteFirstAlphaDigit(this string obj, char quotemark = '\'')    // find first alpha text and quote it.. strange function
+    {
+        if (obj == null)
+            return null;
+        else
+        {
+            int i = 0;
+            while (i < obj.Length && !char.IsLetter(obj[i]))
+                i++;
+
+            int s = i;
+
+            while (i < obj.Length && ( char.IsLetterOrDigit(obj[i]) || char.IsWhiteSpace(obj[i])))
+                i++;
+
+            string ret = obj.Substring(0, s) + quotemark + obj.Substring(s, i - s) + quotemark + obj.Mid(i);
+            return ret;
+        }
+    }
+
     public static string ReplaceNonAlphaNumeric(this string obj)
     {
         char[] arr = obj.ToCharArray();
         arr = Array.FindAll<char>(arr, (c => char.IsLetterOrDigit(c)));
         return new string(arr);
-    }
-
-    public static string QuoteString(this string obj, bool comma = false, bool bracket = false, bool space = true)
-    {
-        if (obj.Length == 0 || obj.Contains("\"") || obj[obj.Length - 1] == ' ' || (space && obj.Contains(" ")) || (bracket && obj.Contains(")")) || (comma && obj.Contains(",")))
-            obj = "\"" + obj.Replace("\"", "\\\"") + "\"";
-
-        return obj;
-    }
-
-    public static string AlwaysQuoteString(this string obj)
-    {
-        return "\"" + obj.Replace("\"", "\\\"") + "\"";
     }
 
     public static string Skip(this string s, string t, StringComparison c = StringComparison.InvariantCulture)
@@ -187,34 +204,6 @@ public static class ObjectExtensionsStrings
         if (cond && s.StartsWith(t, c))
             s = s.Substring(t.Length);
         return s;
-    }
-
-    public static string QuoteStrings(this string[] obja)
-    {
-        string res = "";
-        foreach (string obj in obja)
-        {
-            if (res.Length > 0)
-                res += ",";
-
-            res += "\"" + obj.Replace("\"", "\\\"") + "\"";
-        }
-
-        return res;
-    }
-
-    public static string EscapeControlChars(this string obj)
-    {
-        string s = obj.Replace(@"\", @"\\");        // order vital
-        s = obj.Replace("\r", @"\r");
-        return s.Replace("\n", @"\n");
-    }
-
-    public static string ReplaceEscapeControlChars(this string obj)
-    {
-        string s = obj.Replace(@"\n", "\n");
-        s = s.Replace(@"\r", "\r");
-        return s.Replace(@"\\", "\\");
     }
 
     public static void AppendPrePad(this System.Text.StringBuilder sb, string other, string prepad = " ")
@@ -281,383 +270,9 @@ public static class ObjectExtensionsStrings
         return i;
     }
 
-    public static string PickOneOf(this string str, char separ, System.Random rx)   // pick one of x;y;z or if ;x;y;z, pick x and one of y or z
-    {
-        string[] a = str.Split(separ);
-
-        if (a.Length >= 2)          // x;y
-        {
-            if (a[0].Length == 0)      // ;y      
-            {
-                string res = a[1];
-                if (a.Length > 2)   // ;y;x;z
-                    res += " " + a[2 + rx.Next(a.Length - 2)];
-
-                return res;
-            }
-            else
-                return a[rx.Next(a.Length)];
-        }
-        else
-            return a[0];
-    }
-
-    public static string PickOneOfGroups(this string exp, System.Random rx) // pick one of x;y;z or if ;x;y;z, pick x and one of y or z, include {x;y;z}
-    {
-        string res = "";
-        exp = exp.Trim();
-
-        while (exp.Length > 0)
-        {
-            if (exp[0] == '{')
-            {
-                int end = exp.IndexOf('}');
-
-                if (end == -1)              // missing end bit, assume the lot..
-                    end = exp.Length;
-
-                string pl = exp.Substring(1, end - 1);
-
-                exp = (end < exp.Length) ? exp.Substring(end + 1) : "";
-
-                res += pl.PickOneOf(';', rx);
-            }
-            else
-            {
-                res += exp.PickOneOf(';', rx);
-                break;
-            }
-        }
-
-        return res;
-    }
-
-
     public static string AddSuffixToFilename(this string file, string suffix)
     {
         return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(file), System.IO.Path.GetFileNameWithoutExtension(file) + suffix) + System.IO.Path.GetExtension(file);
-    }
-
-    public static string ToStringCommaList(this System.Collections.Generic.List<string> list, int mincount = 100000, bool escapectrl = false)
-    {
-        string r = "";
-        for (int i = 0; i < list.Count; i++)
-        {
-            if (i >= mincount && list[i].Length == 0)           // if >= minimum, and zero
-            {
-                int j = i + 1;
-                while (j < list.Count && list[j].Length == 0)   // if all others are zero
-                    j++;
-
-                if (j == list.Count)        // if so, stop
-                    break;
-            }
-
-            if (i > 0)
-                r += ", ";
-
-            if (escapectrl)
-                r += list[i].EscapeControlChars().QuoteString(comma: true);
-            else
-                r += list[i].QuoteString(comma: true);
-        }
-
-        return r;
-    }
-
-    public static string ToString(this int[] a, string separ)
-    {
-        string outstr = "";
-        if (a.Length > 0)
-        {
-            outstr = a[0].ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            for (int i = 1; i < a.Length; i++)
-                outstr += separ + a[i].ToString(System.Globalization.CultureInfo.InvariantCulture);
-        }
-
-        return outstr;
-    }
-
-    public static string ToString(this List<int> a, string separ)       // ensure invariant
-    {
-        string outstr = "";
-        if (a.Count > 0)
-        {
-            outstr = a[0].ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            for (int i = 1; i < a.Count; i++)
-                outstr += separ + a[i].ToString(System.Globalization.CultureInfo.InvariantCulture);
-        }
-
-        return outstr;
-    }
-
-    public static string ToStringInvariant(this int v)
-    {
-        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this int v, string format)
-    {
-        return v.ToString(format,System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this long v)
-    {
-        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this long v, string format)
-    {
-        return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringIntValue(this bool v)
-    {
-        return v ? "1" : "0";
-    }
-    public static string ToStringInvariant(this bool? v)
-    {
-        return (v.HasValue) ? (v.Value ? "1" : "0") : "";
-    }
-    public static string ToStringInvariant(this double v, string format)
-    {
-        return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this double v)
-    {
-        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this float v, string format)
-    {
-        return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this float v)
-    {
-        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-    }
-    public static string ToStringInvariant(this double? v, string format)
-    {
-        return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-    public static string ToStringInvariant(this float? v, string format)
-    {
-        return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-    public static string ToStringInvariant(this int? v)
-    {
-        return (v.HasValue) ? v.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-    public static string ToStringInvariant(this int? v, string format)
-    {
-        return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-    public static string ToStringInvariant(this long? v)
-    {
-        return (v.HasValue) ? v.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-    public static string ToStringInvariant(this long? v, string format)
-    {
-        return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
-    }
-
-    // fix word_word to Word Word
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([_])([A-Za-z]+)", m => { return m.Groups[1].Value.FixTitleCase() + " " + m.Groups[3].Value.FixTitleCase(); });
-    // fix _word to spc Word
-    //  s = Regex.Replace(s, @"([_])([A-Za-z]+)", m => { return " " + m.Groups[2].Value.FixTitleCase(); });
-    // fix zeros
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([0-9])", "$1 $2");       // Any ascii followed by number, split
-    //  s = Regex.Replace(s, @"(^0)(0+)", "");     // any 000 at start of line, remove
-    //  s = Regex.Replace(s, @"( 0)(0+)", " ");     // any space 000 in middle of line, remove
-    //  s = Regex.Replace(s, @"(0)([0-9]+)", "$2");   // any 0Ns left, remove 0
-
-    // at each alpha start, we search using a for loop searchlist first, so it can match stuff with _ and digits/spaces in, 
-    // then we do a quick namerep lookup, but this is alpha numeric only
-
-    enum State { space, alpha, nonalpha, digits0, digits };
-    static public string SplitCapsWordFull(this string capslower, Dictionary<string, string> namerep = null, Dictionary<string,string> searchlist = null)     // fixes numbers, does replacement of alpha sequences
-    {
-        if (capslower == null || capslower.Length == 0)
-            return "";
-
-        string s = SplitCapsWord(capslower);
-
-        System.Text.StringBuilder sb = new System.Text.StringBuilder(256);
-
-        State state = State.space;
-
-        for (int i = 0; i < s.Length; i++)
-        {
-            char c = s[i];
-
-            if (c == '0') // 00..
-            {
-                if (state == State.digits)      // if in digits, print
-                    sb.Append(c);
-                else if ( state != State.digits0 )  // digits0, we just ignore, otherwise we jump into it
-                {
-                    if (state != State.space)  // if not in space, space it out, but don't print it
-                        sb.Append(' ');
-                    state = State.digits0;     // digits 0.
-                }
-            }
-            else if (c >= '1' && c <= '9')  // numbers
-            {
-                if (state == State.digits)
-                    sb.Append(c);                   // in digits, so print it, as we have removed 0 front stuff.
-                else
-                {
-                    if (state != State.space && state != State.digits0)
-                        sb.Append(' ');     // so, we space out if came from not these two states
-
-                    state = State.digits;           // else jump into digits, and append
-                    sb.Append(c);
-                }
-            }
-            else
-            {
-                if (state == State.digits0)        // left in digit 0, therefore a run of 0's, so don't lose it (since they are not inserted)
-                    sb.Append('0');
-
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))   // if now alpha
-                {
-                    if (state == State.alpha)
-                        sb.Append(c);
-                    else
-                    {
-                        if (state != State.space)
-                            sb.Append(' ');
-
-                        state = State.alpha;
-                        bool done = false;
-
-                        if (searchlist != null)
-                        {
-                            string strleft = s.Substring(i);
-
-                            foreach (string keyname in searchlist.Keys)
-                            {
-                                if (strleft.StartsWith(keyname, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    //System.Diagnostics.Debug.WriteLine("Check List " + keyname + " Replace " + searchlist[keyname]);
-                                    sb.Append(searchlist[keyname]);
-                                    i += keyname.Length - 1;                  // skip this, we are in alpha, -1 because of i++ at top
-                                    done = true;
-                                    break;
-                                }
-                            }
-
-                        }
-
-                        if (done == false && namerep != null)           // at alpha start, see if we have any global subs of alpha numerics
-                        {
-                            int j = i + 1;
-                            for (; j < s.Length && ((s[j] >= 'A' && s[j] <= 'Z') || (s[j] >= 'a' && s[j] <= 'z') || (s[j] >= '0' && s[j] <= '9') ); j++)
-                                ;
-
-                            string keyname = s.Substring(i, j - i);
-                            //                        string keyname = namekeys.Find(x => s.Substring(i).StartsWith(x));
-
-                            if (namerep.ContainsKey(keyname))
-                            {
-                                //System.Diagnostics.Debug.WriteLine("Check " + keyname + " Replace " + namerep[keyname]);
-                                sb.Append(namerep[keyname]);
-                                i += keyname.Length - 1;                  // skip this, we are in alpha, -1 because of i++ at top
-                                done = true;
-                            }
-                        }
-
-                        if ( !done )
-                            sb.Append(char.ToUpperInvariant(c));
-                    }
-                }
-                else
-                {
-                    if (c == '_')       // _ is space
-                        c = ' ';
-
-                    if (c == ' ')       // now space, go into space mode..
-                    {
-                        state = State.space;
-                        sb.Append(c);
-                    }
-                    else
-                    {                                       // any other than 0-9 and a-z
-                        if (state != State.nonalpha)
-                        {
-                            if (state != State.space)       // space it
-                                sb.Append(' ');
-
-                            state = State.nonalpha;
-                        }
-
-                        sb.Append(c);
-                    }
-                }
-            }
-        }
-
-        if (state == State.digits0)     // if trailing 0, append.
-            sb.Append("0");
-
-        return sb.ToString();
-    }
-
-    // regexp of below : string s = Regex.Replace(capslower, @"([A-Z]+)([A-Z][a-z])", "$1 $2"); //Upper(rep)UpperLower = Upper(rep) UpperLower
-    // s = Regex.Replace(s, @"([a-z\d])([A-Z])", "$1 $2");     // lowerdecUpper split
-    // s = Regex.Replace(s, @"[-\s]", " "); // -orwhitespace with spc
-
-    public static string SplitCapsWord(this string capslower)
-    {
-        if (capslower == null || capslower.Length == 0)
-            return "";
-
-        List<int> positions = new List<int>();
-        List<string> words = new List<string>();
-
-        int start = 0;
-
-        if (capslower[0] == '-' || char.IsWhiteSpace(capslower[0]))  // Remove leading dash or whitespace
-            start = 1;
-
-        for (int i = 1; i <= capslower.Length; i++)
-        {
-            char c0 = capslower[i - 1];
-            char c1 = i < capslower.Length ? capslower[i] : '\0';
-            char c2 = i < capslower.Length - 1 ? capslower[i + 1] : '\0';
-
-            if (i == capslower.Length || // End of string
-                (i < capslower.Length - 1 && c0 >= 'A' && c0 <= 'Z' && c1 >= 'A' && c1 <= 'Z' && c2 >= 'a' && c2 <= 'z') || // UpperUpperLower
-                (((c0 >= 'a' && c0 <= 'z') || (c0 >= '0' && c0 <= '9')) && c1 >= 'A' && c1 <= 'Z') || // LowerdigitUpper
-                (c1 == '-' || c1 == ' ' || c1 == '\t' || c1 == '\r')) // dash or whitespace
-            {
-                if (i > start)
-                    words.Add(capslower.Substring(start, i - start));
-
-                if (i < capslower.Length && (c1 == '-' || c1 == ' ' || c1 == '\t' || c1 == '\r'))
-                    start = i + 1;
-                else
-                    start = i;
-            }
-        }
-
-        return String.Join(" ", words);
-    }
-
-    public static bool InQuotes(this string s, int max )            // left true if quote left over on line, taking care of any escapes..
-    {
-        bool inquote = false;
-        char quotechar = ' ';
-
-        for (int i = 0; i < max; i++)
-        {
-            if (s[i] == '\\' && i < max - 1 && s[i + 1] == quotechar)
-                i += 1;     // ignore this, ignore "
-            else if (s[i] == '"' || s[i] == '\'')
-            {
-                quotechar = s[i];
-                inquote = !inquote;
-            }
-        }
-
-        return inquote;
     }
 
     public static string SafeVariableString(this string normal)
@@ -1016,6 +631,28 @@ public static class ObjectExtensionsStrings
         else
             return null;
     }
+
+    // Format into lines, breaking at linelimit.
+    public static string FormatIntoLines(this IEnumerable<string> list, int linelimit = 80)     
+    {
+        StringBuilder res = new StringBuilder();
+        int lastlf = 0;
+
+        foreach (var s in list)
+        {
+            if (res.Length != lastlf)
+                res.Append(",");
+            res.Append(s);
+            if (res.Length - lastlf >= linelimit)
+            {
+                res.Append(Environment.NewLine);
+                lastlf = res.Length;
+            }
+        }
+
+        return res.ToNullSafeString();
+    }
+
 
 }
 

@@ -177,6 +177,15 @@ public static class ObjectExtensionsDates
             ret = def;
         return ret;
     }
+
+    static public DateTime EndOfDay(this DateTime tme)      // end of date, 23:59.59
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, 23, 59, 59, tme.Kind);
+    }
+    static public DateTime StartOfDay(this DateTime tme)      // start of day, 0:0:0
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, 0,0,0, tme.Kind);
+    }
 }
 
 

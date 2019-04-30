@@ -15,6 +15,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -500,6 +501,13 @@ namespace BaseUtils
             return s?.InvariantParseDoubleNull();
         }
 
+        public double NextDouble(double def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            double? v = s?.InvariantParseDoubleNull();
+            return v ?? def;
+        }
+
         public double? NextDoubleComma(string terminators = " ", char separ = ',')
         {
             double? res = NextDouble(terminators);
@@ -510,6 +518,13 @@ namespace BaseUtils
         {
             string s = NextWord(terminators);
             return s?.InvariantParseIntNull();
+        }
+
+        public int NextInt(int def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            int? v = s?.InvariantParseIntNull();
+            return v ?? def;
         }
 
         public int? NextIntComma(string terminators = " ", char separ = ',')
@@ -524,10 +539,28 @@ namespace BaseUtils
             return s?.InvariantParseLongNull();
         }
 
+        public long NextLong(long def, string terminators = " ")
+        {
+            string s = NextWord(terminators);
+            long? v = s?.InvariantParseLongNull();
+            return v ?? def;
+        }
+
         public long? NextLongComma(string terminators = " ", char separ = ',')
         {
             long? res = NextLong(terminators);
             return IsCharMoveOnOrEOL(separ) ? res : null;
+        }
+
+        public DateTime? NextDateTime(CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, string terminators = " ")
+        {
+            string s = NextQuotedWord(terminators);
+            if (s != null && DateTime.TryParse(s, ci, ds, out DateTime ret))
+            {
+                return ret;
+            }
+            else
+                return null;
         }
 
         #endregion
@@ -616,7 +649,7 @@ namespace BaseUtils
                 }
 
                 string s = line.Substring(initpos, pos - initpos);
-                System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
+                //System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
 
                 double? dres = s.InvariantParseDoubleNull();
 
@@ -630,7 +663,7 @@ namespace BaseUtils
             }
             else if (initpos != pos)            // long value
             {
-                System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
+                //System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
 
                 if (IsCharOneOfMoveOn("Ll"))        // UL or LU allowed as prefix for C compatibility.
                 {
@@ -693,7 +726,7 @@ namespace BaseUtils
                         return new ConvertError("Missing end quote");
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("Value is " + v);
+                        //System.Diagnostics.Debug.WriteLine("Value is " + v);
                         return v;
                     }
                 }
@@ -706,7 +739,7 @@ namespace BaseUtils
 
                 if (s != null && s.Length > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("Symbol Value is " + s);
+                    //System.Diagnostics.Debug.WriteLine("Symbol Value is " + s);
                     return new ConvertSymbol(s);
                 }
                 else
