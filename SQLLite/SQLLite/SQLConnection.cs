@@ -194,7 +194,7 @@ namespace SQLLiteExtensions
 
                 System.Diagnostics.Trace.WriteLine("Exception: " + ex.Message);
                 System.Diagnostics.Trace.WriteLine("Trace: " + ex.StackTrace);
-                System.Windows.Forms.MessageBox.Show($"UpgradeDB{newVersion} error: " + ex.Message);
+                //System.Windows.Forms.MessageBox.Show($"UpgradeDB{newVersion} error: " + ex.Message);
             }
 
             doAfterQueries?.Invoke();
