@@ -7,22 +7,25 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace BaseUtils
 {
+    public delegate void ExceptionInfoHandler(Exception ex, string message, string feedbackUrl, bool isFatal = false);
+
     public static class ExceptionCatcher
     {
-        static private string urlfeedback = "Unknown";
+        private static string urlfeedback = "Unknown";
+        private static ExceptionInfoHandler ShowExceptionInfo;
 
-        public static void RedirectExceptions(string url)
+        public static void RedirectExceptions(string url, ExceptionInfoHandler handler, Action<ThreadExceptionEventHandler> setThreadHandler)
         {
             urlfeedback = url;
+            ShowExceptionInfo = handler;
 
             // Log unhandled exceptions
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             // Log unhandled UI exceptions
-            Application.ThreadException += Application_ThreadException;
+            setThreadHandler(Application_ThreadException);
             // Redirect console to trace
         }
 
@@ -41,7 +44,7 @@ namespace BaseUtils
                 TraceLog.WriteLine($"\n==== UNHANDLED EXCEPTION ====\n{e.ExceptionObject.ToString()}\n==== cut ====");
                 TraceLog.WriteLine(null);
                 TraceLog.WaitForOutput();
-                ExceptionForm.ShowException(e.ExceptionObject as Exception, "An unhandled fatal exception has occurred.", urlfeedback, isFatal: true);
+                ShowExceptionInfo(e.ExceptionObject as Exception, "An unhandled fatal exception has occurred.", urlfeedback, isFatal: true);
             }
             catch
             {
@@ -58,7 +61,7 @@ namespace BaseUtils
             try
             {
                 TraceLog.WriteLine($"\n==== UNHANDLED UI EXCEPTION ====\n{e.Exception.ToString()}\n==== cut ====");
-                ExceptionForm.ShowException(e.Exception, "There was an unhandled UI exception.", urlfeedback);
+                ShowExceptionInfo(e.Exception, "There was an unhandled UI exception.", urlfeedback);
             }
             catch
             {
