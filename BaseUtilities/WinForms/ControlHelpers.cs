@@ -749,6 +749,20 @@ public static class ControlHelpersStaticFunc
         }
     }
 
+    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad)
+    {
+        Size s = new Size(0, 0);
+        foreach (Control c in parent.Controls)
+        {
+     //       System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+            s.Width = Math.Max(s.Width, c.Right);
+            s.Height = Math.Max(s.Height, c.Bottom);
+        }
+
+        s.Width += hpad;
+        s.Height += vpad;
+        return s;
+    }
 
     #endregion
 }
