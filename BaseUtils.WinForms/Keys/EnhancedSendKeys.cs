@@ -49,10 +49,6 @@ namespace BaseUtils
 {
     static public class EnhancedSendKeysParser
     {
-        public interface IAdditionalKeyParser
-        {
-            Tuple<string, int, string> Parse(string s);      // return replace key string, or null if not recognised.  int is parse length, Any errors signal in second string or null
-        }
 
         public class SKEvent
         {
@@ -295,7 +291,7 @@ namespace BaseUtils
         public static string CurrentWindow = "Current window";
         private static Queue<EnhancedSendKeysParser.SKEvent> events;
 
-        public static string SendToCurrentWindow(string keys, int keydelay, int shiftdelay, int updelay, EnhancedSendKeysParser.IAdditionalKeyParser additionalkeyparser = null)
+        public static string SendToCurrentWindow(string keys, int keydelay, int shiftdelay, int updelay, IAdditionalKeyParser additionalkeyparser = null)
         {
             string ret = GenerateEvents(keys, keydelay, shiftdelay, updelay, additionalkeyparser);
 
@@ -305,7 +301,7 @@ namespace BaseUtils
             return ret;
         }
 
-        public static string SendToWindow(string keys, int keydelay, int shiftdelay, int updelay, IntPtr window, EnhancedSendKeysParser.IAdditionalKeyParser additionalkeyparser = null)
+        public static string SendToWindow(string keys, int keydelay, int shiftdelay, int updelay, IntPtr window, IAdditionalKeyParser additionalkeyparser = null)
         {
             string ret = GenerateEvents(keys, keydelay, shiftdelay, updelay, additionalkeyparser);
 
@@ -315,7 +311,7 @@ namespace BaseUtils
             return ret;
         }
 
-        public static string SendToProcess(string keys, int keydelay, int shiftdelay, int updelay, string pname, EnhancedSendKeysParser.IAdditionalKeyParser additionalkeyparser = null)
+        public static string SendToProcess(string keys, int keydelay, int shiftdelay, int updelay, string pname, IAdditionalKeyParser additionalkeyparser = null)
         {
             string ret = GenerateEvents(keys, keydelay, shiftdelay, updelay, additionalkeyparser);
 
@@ -337,7 +333,7 @@ namespace BaseUtils
             return ret;
         }
 
-        private static string GenerateEvents(string keys, int keydelay, int shiftdelay, int updelay, EnhancedSendKeysParser.IAdditionalKeyParser additionalkeyparser = null)
+        private static string GenerateEvents(string keys, int keydelay, int shiftdelay, int updelay, IAdditionalKeyParser additionalkeyparser = null)
         {
             Queue<EnhancedSendKeysParser.SKEvent> tempqueue = new Queue<EnhancedSendKeysParser.SKEvent>();
 
