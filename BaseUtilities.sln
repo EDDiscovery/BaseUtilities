@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseUtils", "BaseUtilities\BaseUtils.csproj", "{C657C881-F3E1-45BA-ACA5-966348010414}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{C4452886-6A1B-4AFD-9E76-AB0E5D8AABA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{C4452886-6A1B-4AFD-9E76-AB0E5D8AABA5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Audio", "Audio\Audio.csproj", "{59F99A05-CE16-4FB8-BE99-F1A24F019CB8}"
 EndProject
@@ -13,11 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectInput", "DirectInput\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTKUtils", "OpenTKUtils\OpenTKUtils.csproj", "{4CFA37D5-4182-4CAE-AFC3-7563A13B44EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestOpenTk", "TestOpenTk\TestOpenTk.csproj", "{EADEB2D3-A35D-48B3-B791-B3EC9A847B85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestOpenTk", "TestOpenTk\TestOpenTk.csproj", "{EADEB2D3-A35D-48B3-B791-B3EC9A847B85}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SQLLite", "SQLLite\SQLLite.csproj", "{3D79DE63-5EEC-4F30-A879-FB4C6BA4B2DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseUtils.WinForms", "BaseUtils.WinForms\BaseUtils.WinForms.csproj", "{61AFEA77-0276-4DCF-983F-589E6AF31258}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -125,6 +127,18 @@ Global
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x64.Build.0 = Release|Any CPU
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.ActiveCfg = Release|Any CPU
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.Build.0 = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|x64.Build.0 = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Debug|x86.Build.0 = Debug|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|x64.ActiveCfg = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|x64.Build.0 = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|x86.ActiveCfg = Release|Any CPU
+		{61AFEA77-0276-4DCF-983F-589E6AF31258}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
