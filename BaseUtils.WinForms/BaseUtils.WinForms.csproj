@@ -6,7 +6,8 @@
     <RootNamespace>BaseUtils.WinForms</RootNamespace>
     <AssemblyName>BaseUtils.WinForms</AssemblyName>
     <TargetFramework>net461</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Company>EDDiscovery</Company>
+    <Version>1.1.0.0</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -19,5 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="DebugTraceAndLogs\ExceptionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 </Project>
