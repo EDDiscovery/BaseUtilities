@@ -764,5 +764,23 @@ public static class ControlHelpersStaticFunc
         return s;
     }
 
+    public static Font GetFontToFitRectangle(this Graphics g, string text, Font fnt, Rectangle textarea, StringFormat fmt)
+    {
+        bool ownfont = false;
+        while (true)
+        {
+            SizeF drawnsize = g.MeasureString(text, fnt, new Point(0,0), fmt);
+
+            if ((int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height)
+                return fnt;
+
+            if (ownfont)
+                fnt.Dispose();
+
+            fnt = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size - 0.5f, fnt.Style);
+            ownfont = true;
+        }
+    }
+
     #endregion
 }
