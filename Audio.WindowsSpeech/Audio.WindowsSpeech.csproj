@@ -2,4 +2,10 @@
   <PropertyGroup>
     <TargetFrameworks>net461</TargetFrameworks>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Audio\Audio.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Speech" />
+  </ItemGroup>
 </Project>
