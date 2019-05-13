@@ -28,4 +28,5 @@
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
+  <Import Sdk="Microsoft.NET.Sdk.WindowsDesktop" Project="Sdk.targets" Condition="'$(TargetFramework)' == 'netcoreapp3.0'"/>
 </Project>
