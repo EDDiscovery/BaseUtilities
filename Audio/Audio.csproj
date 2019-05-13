@@ -15,20 +15,6 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard20'">
-    <DefineConstants>NO_SYSTEM_SPEECH</DefineConstants>
-  </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard20'">
-    <PackageReference Include="CSCore" Version="1.2.1.2" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard20'">
-    <Reference Include="System.Speech" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard20'">
-    <Compile Remove="AudioDriverCSCore.cs" />
-    <Compile Remove="SpeechSynthesizerWindows.cs" />
-    <Compile Remove="VoiceRecognitionWindows.cs" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BaseUtilities\BaseUtils.csproj" />
   </ItemGroup>
