@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
  * Copyright © 2016 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -271,39 +272,46 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    static public Point PositionWithinScreen(this Control p, int x, int y)      // clamp to withing screen of control
+    static public void PositionWithinScreen(this Control p, int x, int y, int margin = 64)      // clamp to withing screen of control
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
         //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
-        x = Math.Min(Math.Max(x, scrb.Left), scrb.Right - p.Width);
-        y = Math.Min(Math.Max(y, scrb.Top), scrb.Bottom - p.Height);
-        return new Point(x, y);
+        x = Math.Min(Math.Max(x, scrb.Left + margin), scrb.Right - p.Width - margin);
+        y = Math.Min(Math.Max(y, scrb.Top + margin), scrb.Bottom - p.Height - margin);
+        p.Location = new Point(x, y);
     }
 
     // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16)
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false)
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
 
+        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin * 2);       // ensure within screen
+
         int top = p.Top;
         int left = p.Left;
+        if (rightalign)
+            left -= calcwidth;
 
-        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin*2);       // ensure within screen
-        int x = Math.Min(Math.Max(left, scrb.Left), scrb.Right - calcwidth - margin);
+        int x = Math.Min(Math.Max(left, scrb.Left + margin), scrb.Right - calcwidth - margin);
 
-        int calcheight = Math.Min(wantedheight, scrb.Height - (lockY ? p.Top : margin) - margin);
-        if (lockY && calcheight < scrb.Height / 5)   // if small and we locked to Y, Y is too low.
+        int availableh = scrb.Height - (lockY ? p.Top : margin) - margin;
+
+        if (wantedheight > availableh)
         {
-            calcheight = scrb.Height - margin * 2;
-            top = scrb.Top + margin;
+            if (lockY && availableh >= scrb.Height / 4)        // if locky and available is reasonable
+                wantedheight = availableh;      // lock h to it, keep y
+            else
+            {
+                top = Math.Max(margin, scrb.Height - margin - wantedheight);     // at least margin, or at least height-margin-wantedheight
+                wantedheight = Math.Min(scrb.Height - margin * 2, wantedheight);    // and limit to margin*2
+            }
         }
 
-        int y = Math.Min(Math.Max(top, scrb.Top), scrb.Bottom - calcheight - margin);
-
-        p.Location = new Point(x, y);
-        p.Size = new Size(calcwidth, calcheight);
+        p.Location = new Point(x, top);
+        p.Size = new Size(calcwidth, wantedheight);
     }
 
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
@@ -754,7 +762,7 @@ public static class ControlHelpersStaticFunc
         Size s = new Size(0, 0);
         foreach (Control c in parent.Controls)
         {
-     //       System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+            System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
             s.Width = Math.Max(s.Width, c.Right);
             s.Height = Math.Max(s.Height, c.Bottom);
         }
@@ -780,6 +788,39 @@ public static class ControlHelpersStaticFunc
             fnt = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size - 0.5f, fnt.Style);
             ownfont = true;
         }
+    }
+
+    public static Size MeasureItems(this Graphics g, Font fnt , string[] array, StringFormat fmt)
+    {
+        Size max = new Size(0, 0);
+        foreach (string s in array)
+        {
+            SizeF f = g.MeasureString(s, fnt, new Point(0, 0), fmt);
+            max = new Size(Math.Max(max.Width, (int)(f.Width + 0.99)), Math.Max(max.Height, (int)(f.Height + 0.99)));
+        }
+
+        return max;
+    }
+
+    public static int ScalePixels(this Font f, int nominalat12)      //given a font, and size at normal 12 point, what size should i make it now
+    {
+        return (int)(f.GetHeight() / 18 * nominalat12);
+    }
+
+    public static float ScaleSize(this Font f, float nominalat12)      //given a font, and size at normal 12 point, what size should i make it now
+    {
+        return f.GetHeight() / 18 * nominalat12;
+    }
+
+
+    public static int XCenter(this Rectangle r)
+    {
+        return (r.Right + r.Left) / 2;
+    }
+
+    public static int YCenter(this Rectangle r)
+    {
+        return (r.Top + r.Bottom) / 2;
     }
 
     #endregion
