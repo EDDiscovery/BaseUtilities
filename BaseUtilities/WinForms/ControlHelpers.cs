@@ -283,7 +283,7 @@ public static class ControlHelpersStaticFunc
     }
 
     // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false)
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false, bool centrecoords = false)
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
@@ -293,7 +293,14 @@ public static class ControlHelpersStaticFunc
         int top = p.Top;
         int left = p.Left;
         if (rightalign)
-            left -= calcwidth;
+        {
+            left = Math.Max(left - calcwidth, margin);
+        }
+        else if (centrecoords)
+        {
+            left = Math.Max(left - wantedwidth / 2, margin);
+            top = Math.Max(top - wantedheight / 2, margin);
+        }
 
         int x = Math.Min(Math.Max(left, scrb.Left + margin), scrb.Right - calcwidth - margin);
 
@@ -309,7 +316,10 @@ public static class ControlHelpersStaticFunc
                 wantedheight = Math.Min(scrb.Height - margin * 2, wantedheight);    // and limit to margin*2
             }
         }
+        else if (top + wantedheight > scrb.Height - margin)
+            top = scrb.Height - margin - wantedheight;
 
+      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(x, top) + " size " + new Size(calcwidth, wantedheight));
         p.Location = new Point(x, top);
         p.Size = new Size(calcwidth, wantedheight);
     }
@@ -762,7 +772,7 @@ public static class ControlHelpersStaticFunc
         Size s = new Size(0, 0);
         foreach (Control c in parent.Controls)
         {
-            System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+           // System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
             s.Width = Math.Max(s.Width, c.Right);
             s.Height = Math.Max(s.Height, c.Bottom);
         }
