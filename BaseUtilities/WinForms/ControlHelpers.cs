@@ -833,5 +833,16 @@ public static class ControlHelpersStaticFunc
         return (r.Top + r.Bottom) / 2;
     }
 
+    static public string GetHeirarchy(this Control c, bool name = false)
+    {
+        string str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "");
+        while ( c.Parent != null )
+        {
+            c = c.Parent;
+            str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "") + ":" + str;
+        }
+        return str;
+    }
+
     #endregion
 }
