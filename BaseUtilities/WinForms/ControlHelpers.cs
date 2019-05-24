@@ -767,14 +767,18 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad)
+    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad , Type[] excludedtypes = null, bool debugout = false)
     {
         Size s = new Size(0, 0);
         foreach (Control c in parent.Controls)
         {
-           // System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
-            s.Width = Math.Max(s.Width, c.Right);
-            s.Height = Math.Max(s.Height, c.Bottom);
+            if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
+            {
+                if (debugout)
+                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+                s.Width = Math.Max(s.Width, c.Right);
+                s.Height = Math.Max(s.Height, c.Bottom);
+            }
         }
 
         s.Width += hpad;
@@ -842,6 +846,17 @@ public static class ControlHelpersStaticFunc
             str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "") + ":" + str;
         }
         return str;
+    }
+
+    static public SizeF CurrentAutoScaleFactor( this Form f )
+    { 
+        return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
+    }
+
+    static public Rectangle ScreenRectangle(this Control c)
+    {
+        Point p = c.PointToScreen(new Point(0, 0));
+        return new Rectangle(p.X, p.Y, c.Width, c.Height);
     }
 
     #endregion
