@@ -236,5 +236,15 @@ namespace SQLLiteExtensions
             using (DbCommand command = CreateCommand(query))
                 command.ExecuteNonQuery();
         }
+
+        public DbCommandBuilder CreateCommandBuilder()
+        {
+            return DbFactory.CreateCommandBuilder();
+        }
+
+        public Type GetConnectionType()
+        {
+            return connection.GetType();
+        }
     }
 }
