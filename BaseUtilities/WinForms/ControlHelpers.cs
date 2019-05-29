@@ -64,7 +64,7 @@ public static class ControlHelpersStaticFunc
 
     static public void DumpTree(this Control c, int lvl)
     {
-        System.Diagnostics.Debug.WriteLine("                                             ".Substring(0,lvl*2) + "Control " + c.GetType().Name + ":" + c.Name);
+        System.Diagnostics.Debug.WriteLine("                                             ".Substring(0,lvl*2) + "Control " + c.GetType().Name + ":" + c.Name + c.Location + c.Size);
 
         foreach (Control s in c.Controls)
         {
@@ -848,16 +848,29 @@ public static class ControlHelpersStaticFunc
         return str;
     }
 
-    static public SizeF CurrentAutoScaleFactor( this Form f )
-    { 
+    static public SizeF CurrentAutoScaleFactor(this Form f)
+    {
         return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
     }
 
-    static public Rectangle ScreenRectangle(this Control c)
+    static public SizeF InvCurrentAutoScaleFactor(this Form f)
+    {
+        return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
+    }
+
+    static public Rectangle RectangleScreenCoords(this Control c)
     {
         Point p = c.PointToScreen(new Point(0, 0));
         return new Rectangle(p.X, p.Y, c.Width, c.Height);
     }
+
+    static public void DebugSizePosition(this Control p, ToolTip t)     // assign info to tooltip
+    {
+        t.SetToolTip(p, p.Name + " " + p.Location + p.Size +"F:" + p.ForeColor + "B:" + p.BackColor);
+        foreach (Control c in p.Controls)
+            c.DebugSizePosition(t);
+    }
+
 
     #endregion
 }
