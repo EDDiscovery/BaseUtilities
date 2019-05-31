@@ -590,7 +590,7 @@ public static class ObjectExtensionsStrings
 
     static public string LineLimit(this string s, int limit, string cutindicator)   // love extension methods
     {
-        int count = 1;         
+        int count = 1;
         int position = 0;
         while ((position = s.IndexOf(Environment.NewLine, position)) != -1)
         {
@@ -604,6 +604,23 @@ public static class ObjectExtensionsStrings
         }
 
         return s;
+    }
+
+    static public string LineNumbering(this string s, int start, string fmt = "N")   // love extension methods
+    {
+        StringBuilder sb = new StringBuilder();
+        int position = 0,positions = 0;
+        while ((positions = s.IndexOf(Environment.NewLine, position)) != -1)
+        {
+            sb.Append(start.ToStringInvariant(fmt));
+            sb.Append(':');
+            sb.Append(s.Substring(position, positions - position));
+            sb.Append(Environment.NewLine);
+            position = positions + Environment.NewLine.Length;
+            start++;
+        }
+
+        return sb.ToNullSafeString();
     }
 
     // find the next instance of one of the chars in set, in str, and return it in res. Return string after it.  Null if not found 

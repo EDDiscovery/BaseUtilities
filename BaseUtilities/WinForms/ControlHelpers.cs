@@ -272,6 +272,14 @@ public static class ControlHelpersStaticFunc
         }
     }
 
+    static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
+    {
+        Screen scr = Screen.FromControl(p);
+        Rectangle scrb = scr.Bounds;
+        //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
+        return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
+    }
+
     static public void PositionWithinScreen(this Control p, int x, int y, int margin = 64)      // clamp to withing screen of control
     {
         Screen scr = Screen.FromControl(p);
@@ -869,6 +877,27 @@ public static class ControlHelpersStaticFunc
         t.SetToolTip(p, p.Name + " " + p.Location + p.Size +"F:" + p.ForeColor + "B:" + p.BackColor);
         foreach (Control c in p.Controls)
             c.DebugSizePosition(t);
+    }
+
+    static public Control FirstY(this Control.ControlCollection cc, Type[] t)
+    {
+        int miny = int.MaxValue;
+        int minx = int.MaxValue;
+        Control highest = null;
+        foreach( Control c in cc)
+        {
+            if (t.Contains(c.GetType()) )
+            {
+                if (c.Top < miny || (c.Top == miny && c.Left < minx))
+                {
+                    miny = c.Top;
+                    minx = c.Left;
+                    highest = c;
+                }
+            }
+        }
+
+        return highest;
     }
 
 
