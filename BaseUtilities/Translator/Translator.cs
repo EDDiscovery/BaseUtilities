@@ -76,18 +76,13 @@ namespace BaseUtils
         }
 
         public bool Translating { get { return translations != null; } }
-
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
         public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
         public string GetOriginalFile (string fullid) => originalfile[fullid];         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
+        public bool IsExcludedControl(string name) => ExcludedControls.Contains(name);
         // You can call this multiple times if required for debugging purposes
-
-        public static void SetTranslatorInstance(Translator translator)
-        {
-            instance = translator;
-        }
 
         public void LoadTranslation(string language, CultureInfo uicurrent, 
                                     string[] txfolders, int includesearchupdepth, 
