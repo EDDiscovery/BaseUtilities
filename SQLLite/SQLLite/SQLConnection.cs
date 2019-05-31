@@ -35,15 +35,20 @@ namespace SQLLiteExtensions
 
         protected DbConnection connection;      // the connection
         protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
-        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging mostly, track connections
         protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();  
         public string DBFile { get; protected set; }
+
+        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging to track connections
+
+        private bool hasbeendisposed = false;
 
         protected SQLExtConnection( AccessMode mode )
         {
             lock (openConnections)
             {
                 openConnections.Add(this);
+                if (openConnections.Count > 10)     // this is a lot of parallel connections.. warn as we may be forgetting to close them
+                    System.Diagnostics.Debug.WriteLine("SQLlite warning open connection count now " + openConnections.Count);
             }
             owningThread = Thread.CurrentThread;
         }
@@ -160,9 +165,22 @@ namespace SQLLiteExtensions
         {
             lock (openConnections)
             {
-                SQLExtConnection.openConnections.Remove(this);
+                openConnections.Remove(this);
+                hasbeendisposed = true;
             }
         }
+
+#if DEBUG
+        //since finalisers impose a penalty, we shall check only in debug mode
+        ~SQLExtConnection()
+        {
+            if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
+            {
+                System.Windows.Forms.MessageBox.Show("Missing dispose for connection " + DBFile);
+                System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for connection" + DBFile);       // must have been disposed
+            }
+        }
+#endif
 
         // provided for DB upgrade operations at the basic level..
 

@@ -58,10 +58,11 @@
     <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
-    <Compile Include="WebServer\SimpleWebServerFileNode.cs" />
-    <Compile Include="WebServer\SimpleWebServerDynamicNode.cs" />
-    <Compile Include="WebServer\SimpleWebServerDispatcher.cs" />
-    <Compile Include="WebServer\SimpleWebServer.cs" />
+    <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="WebServer\WebServerFileNode.cs" />
+    <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
+    <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />
+    <Compile Include="WebServer\WebServer.cs" />
     <Compile Include="HTTP\HttpDownloadFile.cs" />
     <Compile Include="Misc\TemplateObjectExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
