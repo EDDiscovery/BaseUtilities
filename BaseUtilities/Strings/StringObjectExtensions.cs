@@ -606,19 +606,47 @@ public static class ObjectExtensionsStrings
         return s;
     }
 
-    static public string LineNumbering(this string s, int start, string fmt = "N")   // love extension methods
+    static public string LineNumbering(this string s, int start, string fmt = "N", string newline = null)   // love extension methods
     {
+        if (newline == null)
+            newline = Environment.NewLine;
+
         StringBuilder sb = new StringBuilder();
-        int position = 0,positions = 0;
-        while ((positions = s.IndexOf(Environment.NewLine, position)) != -1)
+        int position = 0, positions = 0;
+        while ((positions = s.IndexOf(newline, position)) != -1)
         {
             sb.Append(start.ToStringInvariant(fmt));
             sb.Append(':');
             sb.Append(s.Substring(position, positions - position));
-            sb.Append(Environment.NewLine);
-            position = positions + Environment.NewLine.Length;
+            sb.Append(newline);
+            position = positions + newline.Length;
             start++;
         }
+
+        if (position < s.Length)
+            sb.Append(s.Substring(position));
+
+        return sb.ToNullSafeString();
+    }
+
+    static public string LineTextInsersion(this string s, string insertatlinestart, string insertafternewline = "", string newline = null)   
+    {
+        if (newline == null)
+            newline = Environment.NewLine;
+
+        StringBuilder sb = new StringBuilder();
+        int position = 0, positions = 0;
+        while ((positions = s.IndexOf(newline, position)) != -1)
+        {
+            sb.Append(insertatlinestart);
+            sb.Append(s.Substring(position, positions - position));
+            sb.Append(newline);
+            sb.Append(insertafternewline);
+            position = positions + newline.Length;
+        }
+
+        if (position < s.Length)
+            sb.Append(s.Substring(position));
 
         return sb.ToNullSafeString();
     }
