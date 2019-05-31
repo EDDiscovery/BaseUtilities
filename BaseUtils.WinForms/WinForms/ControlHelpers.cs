@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
  * Copyright © 2016 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -63,7 +64,7 @@ public static class ControlHelpersStaticFunc
 
     static public void DumpTree(this Control c, int lvl)
     {
-        System.Diagnostics.Debug.WriteLine("                                             ".Substring(0,lvl*2) + "Control " + c.GetType().Name + ":" + c.Name);
+        System.Diagnostics.Debug.WriteLine("                                             ".Substring(0,lvl*2) + "Control " + c.GetType().Name + ":" + c.Name + c.Location + c.Size);
 
         foreach (Control s in c.Controls)
         {
@@ -271,39 +272,64 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    static public Point PositionWithinScreen(this Control p, int x, int y)      // clamp to withing screen of control
+    static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
         //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
-        x = Math.Min(Math.Max(x, scrb.Left), scrb.Right - p.Width);
-        y = Math.Min(Math.Max(y, scrb.Top), scrb.Bottom - p.Height);
-        return new Point(x, y);
+        return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
+    }
+
+    static public void PositionWithinScreen(this Control p, int x, int y, int margin = 64)      // clamp to withing screen of control
+    {
+        Screen scr = Screen.FromControl(p);
+        Rectangle scrb = scr.Bounds;
+        //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
+        x = Math.Min(Math.Max(x, scrb.Left + margin), scrb.Right - p.Width - margin);
+        y = Math.Min(Math.Max(y, scrb.Top + margin), scrb.Bottom - p.Height - margin);
+        p.Location = new Point(x, y);
     }
 
     // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16)
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false, bool centrecoords = false)
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
 
+        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin * 2);       // ensure within screen
+
         int top = p.Top;
         int left = p.Left;
-
-        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin*2);       // ensure within screen
-        int x = Math.Min(Math.Max(left, scrb.Left), scrb.Right - calcwidth - margin);
-
-        int calcheight = Math.Min(wantedheight, scrb.Height - (lockY ? p.Top : margin) - margin);
-        if (lockY && calcheight < scrb.Height / 5)   // if small and we locked to Y, Y is too low.
+        if (rightalign)
         {
-            calcheight = scrb.Height - margin * 2;
-            top = scrb.Top + margin;
+            left = Math.Max(left - calcwidth, margin);
+        }
+        else if (centrecoords)
+        {
+            left = Math.Max(left - wantedwidth / 2, margin);
+            top = Math.Max(top - wantedheight / 2, margin);
         }
 
-        int y = Math.Min(Math.Max(top, scrb.Top), scrb.Bottom - calcheight - margin);
+        int x = Math.Min(Math.Max(left, scrb.Left + margin), scrb.Right - calcwidth - margin);
 
-        p.Location = new Point(x, y);
-        p.Size = new Size(calcwidth, calcheight);
+        int availableh = scrb.Height - (lockY ? p.Top : margin) - margin;
+
+        if (wantedheight > availableh)
+        {
+            if (lockY && availableh >= scrb.Height / 4)        // if locky and available is reasonable
+                wantedheight = availableh;      // lock h to it, keep y
+            else
+            {
+                top = Math.Max(margin, scrb.Height - margin - wantedheight);     // at least margin, or at least height-margin-wantedheight
+                wantedheight = Math.Min(scrb.Height - margin * 2, wantedheight);    // and limit to margin*2
+            }
+        }
+        else if (top + wantedheight > scrb.Height - margin)
+            top = scrb.Height - margin - wantedheight;
+
+      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(x, top) + " size " + new Size(calcwidth, wantedheight));
+        p.Location = new Point(x, top);
+        p.Size = new Size(calcwidth, wantedheight);
     }
 
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
@@ -747,6 +773,131 @@ public static class ControlHelpersStaticFunc
                 }
             }
         }
+    }
+
+    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad , Type[] excludedtypes = null, bool debugout = false)
+    {
+        Size s = new Size(0, 0);
+        foreach (Control c in parent.Controls)
+        {
+            if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
+            {
+                if (debugout)
+                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+                s.Width = Math.Max(s.Width, c.Right);
+                s.Height = Math.Max(s.Height, c.Bottom);
+            }
+        }
+
+        s.Width += hpad;
+        s.Height += vpad;
+        return s;
+    }
+
+    public static Font GetFontToFitRectangle(this Graphics g, string text, Font fnt, Rectangle textarea, StringFormat fmt)
+    {
+        bool ownfont = false;
+        while (true)
+        {
+            SizeF drawnsize = g.MeasureString(text, fnt, new Point(0,0), fmt);
+
+            if ((int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height)
+                return fnt;
+
+            if (ownfont)
+                fnt.Dispose();
+
+            fnt = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size - 0.5f, fnt.Style);
+            ownfont = true;
+        }
+    }
+
+    public static Size MeasureItems(this Graphics g, Font fnt , string[] array, StringFormat fmt)
+    {
+        Size max = new Size(0, 0);
+        foreach (string s in array)
+        {
+            SizeF f = g.MeasureString(s, fnt, new Point(0, 0), fmt);
+            max = new Size(Math.Max(max.Width, (int)(f.Width + 0.99)), Math.Max(max.Height, (int)(f.Height + 0.99)));
+        }
+
+        return max;
+    }
+
+    public static int ScalePixels(this Font f, int nominalat12)      //given a font, and size at normal 12 point, what size should i make it now
+    {
+        return (int)(f.GetHeight() / 18 * nominalat12);
+    }
+
+    public static float ScaleSize(this Font f, float nominalat12)      //given a font, and size at normal 12 point, what size should i make it now
+    {
+        return f.GetHeight() / 18 * nominalat12;
+    }
+
+
+    public static int XCenter(this Rectangle r)
+    {
+        return (r.Right + r.Left) / 2;
+    }
+
+    public static int YCenter(this Rectangle r)
+    {
+        return (r.Top + r.Bottom) / 2;
+    }
+
+    static public string GetHeirarchy(this Control c, bool name = false)
+    {
+        string str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "");
+        while ( c.Parent != null )
+        {
+            c = c.Parent;
+            str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "") + ":" + str;
+        }
+        return str;
+    }
+
+    static public SizeF CurrentAutoScaleFactor(this Form f)
+    {
+        return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
+    }
+
+    static public SizeF InvCurrentAutoScaleFactor(this Form f)
+    {
+        return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
+    }
+
+    static public Rectangle RectangleScreenCoords(this Control c)
+    {
+        Point p = c.PointToScreen(new Point(0, 0));
+        return new Rectangle(p.X, p.Y, c.Width, c.Height);
+    }
+
+    static public void DebugSizePosition(this Control p, ToolTip t)     // assign info to tooltip
+    {
+        t.SetToolTip(p, p.Name + " " + p.Location + p.Size +"F:" + p.ForeColor + "B:" + p.BackColor);
+        foreach (Control c in p.Controls)
+            c.DebugSizePosition(t);
+    }
+
+    static public Control FirstY(this Control.ControlCollection cc, Type[] t)
+    {
+        int miny = int.MaxValue;
+        int minx = int.MaxValue;
+        Control highest = null;
+        foreach( Control c in cc)
+        {
+            if (t.Contains(c.GetType()) )
+            {
+                if (c.Top < miny || (c.Top == miny && c.Left < minx))
+                {
+                    miny = c.Top;
+                    minx = c.Left;
+                    highest = c;
+                }
+            }
+        }
+
+        return highest;
     }
 
 
