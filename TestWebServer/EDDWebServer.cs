@@ -43,6 +43,7 @@ namespace TestWebServer
             eddif = new EDDInterface();
 
             jsondispatch.Add("journal", eddif.jr);
+            jsondispatch.Add("status", eddif.status);
 
             httpws.AddWebServerResponder("EDDJSON",
                     (ctx, ws, wsrr, buf, lrdata) => { jsondispatch.Response(ctx, ws, wsrr, buf, lrdata); },
@@ -73,6 +74,7 @@ namespace TestWebServer
     class EDDInterface
     {
         public JournalRequest jr = new JournalRequest();
+        public StatusRequest status = new StatusRequest();
 
         public class JournalRequest : IJSONNode
         {
@@ -80,6 +82,7 @@ namespace TestWebServer
 
             public JToken Response(string key, JToken message, HttpListenerRequest request)
             {
+                System.Diagnostics.Debug.WriteLine("Journal Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
                 int startindex = message["start"].Int(0);
                 int length = message["length"].Int(0);
 
@@ -91,11 +94,11 @@ namespace TestWebServer
 
             public JToken PushRecord()
             {
-                return NewJRec("journalpush",++maxjindex, 1);
+                return NewJRec("journalpush", ++maxjindex, 1);
             }
 
-            public JToken NewJRec(string type, int startindex, int length )
-            { 
+            public JToken NewJRec(string type, int startindex, int length)
+            {
                 JObject response = new JObject();
                 response["responsetype"] = type;
 
@@ -115,6 +118,31 @@ namespace TestWebServer
                 }
 
                 response["rows"] = jarray;
+
+                return response;
+            }
+
+        }
+
+
+        public class StatusRequest : IJSONNode
+        {
+            public JToken Response(string key, JToken message, HttpListenerRequest request)
+            {
+                System.Diagnostics.Debug.WriteLine("Status Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
+                int entry = message["entry"].Int(0);
+
+                return NewSRec("status", entry);
+            }
+
+            public JToken NewSRec(string type, int entry)
+            {
+                JObject response = new JObject();
+                response["responsetype"] = type;
+                response["entry"] = entry;
+
+               // do this, get displayed on screen
+              //      then theme the page
 
                 return response;
             }

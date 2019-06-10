@@ -81,7 +81,7 @@ namespace BaseUtils.WebServer
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("Error No responder for "  + req);
+                        System.Diagnostics.Debug.WriteLine("WEBSOCKET Error No responder for "  + req);
                     }
                 }
             }

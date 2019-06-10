@@ -85,7 +85,6 @@ namespace BaseUtils.WebServer
                     {
                         HttpListenerContext ctx = listener.GetContext();    // block, get
 
-                        System.Diagnostics.Debug.WriteLine(ctx.Request.RequestHeaders());
 
                         if (ctx.Request.IsWebSocketRequest)
                         {
@@ -93,7 +92,8 @@ namespace BaseUtils.WebServer
 
                             if ( protocol != null && websocketresponders.Count > 0 && websocketresponders.ContainsKey(protocol))    // must have a protocol (even if null)
                             {
-                                System.Diagnostics.Debug.WriteLine("Requesting protocol " + protocol);
+                                System.Diagnostics.Debug.WriteLine("WEBSOCKET Requesting protocol " + protocol);
+                                System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
                                 ThreadPool.QueueUserWorkItem((ox) => { ProcessWebSocket(ctx, protocol, websocketresponders[protocol]); });  // throw handling into a thread pool so we don't block this threa
                             }
                             else
@@ -104,6 +104,9 @@ namespace BaseUtils.WebServer
                         }
                         else
                         {
+                            System.Diagnostics.Debug.WriteLine("HTTP: " + ctx.Request.Url  + " " + ctx.Request.UserHostName + " : " + ctx.Request.RawUrl);
+                            System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
+
                             if ( httpresponder != null )
                             {
                                 ProcessHTTP(ctx);       // by not shelling out to a thread per HTTP request, we are serialising them for now
@@ -155,8 +158,6 @@ namespace BaseUtils.WebServer
 
         private void ProcessHTTP(HttpListenerContext ctx)
         {
-            System.Diagnostics.Debug.WriteLine("HTTP Req " + ctx.Request.UserHostName + " : " + ctx.Request.RawUrl);
-
             try
             {
                 ServerLog?.Invoke(ctx.Request.RequestInfo());
@@ -182,7 +183,7 @@ namespace BaseUtils.WebServer
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("WS Accepting on " + prefixesString + " protocol " + protocol);
+                System.Diagnostics.Debug.WriteLine("WEBSOCKET Accepting on " + prefixesString + " protocol " + protocol);
                 webSocketContext = await ctx.AcceptWebSocketAsync(protocol);
             }
             catch (Exception e)
@@ -195,8 +196,8 @@ namespace BaseUtils.WebServer
                 return;
             }
 
-            ServerLog?.Invoke("WS connect " + prefixesString );
-            System.Diagnostics.Debug.WriteLine("WS Receive loop on " + prefixesString);
+            ServerLog?.Invoke("WEBSOCKET accepted " + prefixesString );
+            System.Diagnostics.Debug.WriteLine("WEBSOCKET accepted " + prefixesString);
             WebSocket webSocket = webSocketContext.WebSocket;
 
             try
@@ -207,13 +208,12 @@ namespace BaseUtils.WebServer
                 {
                     WebSocketReceiveResult receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
 
-                    ServerLog?.Invoke("WS rx " + prefixesString + ": " + receiveResult.MessageType);
-
-                    System.Diagnostics.Debug.WriteLine("WS rx " + prefixesString + " type " + receiveResult.MessageType + " len " + receiveResult.Count);
+                    ServerLog?.Invoke("WEBSOCKET request " + prefixesString + ": " + receiveResult.MessageType);
+                    System.Diagnostics.Debug.WriteLine("WEBSOCKET request " + prefixesString + " type " + receiveResult.MessageType + " len " + receiveResult.Count);
 
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
-                        System.Diagnostics.Debug.WriteLine("WS close req " + prefixesString);
+                        System.Diagnostics.Debug.WriteLine("WEBSOCKET close req " + prefixesString);
                         webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();        // here we block until complete
                     }
                     else
@@ -222,7 +222,7 @@ namespace BaseUtils.WebServer
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine("WS closed on " + prefixesString);
+                System.Diagnostics.Debug.WriteLine("WEBSOCKET closed on " + prefixesString);
 
             }
             catch (Exception e)
@@ -237,7 +237,7 @@ namespace BaseUtils.WebServer
             }
 
             webSocketContext = null;
-            System.Diagnostics.Debug.WriteLine("terminate Websocket " + prefixesString);
+            System.Diagnostics.Debug.WriteLine("WEBSOCKET terminate " + prefixesString);
         }
 
         #endregion
