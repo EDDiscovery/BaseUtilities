@@ -25,15 +25,22 @@ namespace SQLLiteExtensions
     public class SQLExtRegister
     {
         SQLExtConnection cn;
+        DbTransaction txn;
 
         public SQLExtRegister(SQLExtConnection cn)
         {
             this.cn = cn;
         }
 
+        public SQLExtRegister(SQLExtConnection cn, DbTransaction txn)
+        {
+            this.cn = cn;
+            this.txn = txn;
+        }
+
         public bool keyExists(string sKey)
         {
-            using (DbCommand cmd = cn.CreateCommand("select ID from Register WHERE ID=@key"))
+            using (DbCommand cmd = cn.CreateCommand("select ID from Register WHERE ID=@key", txn))
             {
                 cmd.AddParameterWithValue("@key", sKey);
                 return cmd.ExecuteScalar() != null;
@@ -42,7 +49,7 @@ namespace SQLLiteExtensions
 
         public bool DeleteKey(string sKey)        // SQL wildcards
         {
-            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key"))
+            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key", txn))
             {
                 cmd.AddParameterWithValue("@key", sKey);
                 return cmd.ExecuteScalar() != null;
@@ -53,7 +60,7 @@ namespace SQLLiteExtensions
         {
             try
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueInt from Register WHERE ID = @ID"))
+                using (DbCommand cmd = cn.CreateCommand("SELECT ValueInt from Register WHERE ID = @ID", txn))
                 {
                     cmd.AddParameterWithValue("@ID", key);
 
@@ -79,7 +86,7 @@ namespace SQLLiteExtensions
             {
                 if (keyExists(key))
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID"))
+                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@ValueInt", intvalue);
@@ -89,7 +96,7 @@ namespace SQLLiteExtensions
                 }
                 else
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @valint)"))
+                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @valint)", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@valint", intvalue);
@@ -108,7 +115,7 @@ namespace SQLLiteExtensions
         {
             try
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueDouble from Register WHERE ID = @ID"))
+                using (DbCommand cmd = cn.CreateCommand("SELECT ValueDouble from Register WHERE ID = @ID", txn))
                 {
                     cmd.AddParameterWithValue("@ID", key);
 
@@ -134,7 +141,7 @@ namespace SQLLiteExtensions
             {
                 if (keyExists(key))
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID"))
+                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@ValueDouble", doublevalue);
@@ -144,7 +151,7 @@ namespace SQLLiteExtensions
                 }
                 else
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @valdbl)"))
+                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @valdbl)", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@valdbl", doublevalue);
@@ -173,7 +180,7 @@ namespace SQLLiteExtensions
         {
             try
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueString from Register WHERE ID = @ID"))
+                using (DbCommand cmd = cn.CreateCommand("SELECT ValueString from Register WHERE ID = @ID", txn))
                 {
                     cmd.AddParameterWithValue("@ID", key);
                     object ob = cmd.ExecuteScalar();
@@ -198,7 +205,7 @@ namespace SQLLiteExtensions
             {
                 if (keyExists(key))
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID"))
+                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@ValueString", strvalue);
@@ -208,7 +215,7 @@ namespace SQLLiteExtensions
                 }
                 else
                 {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)"))
+                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)", txn))
                     {
                         cmd.AddParameterWithValue("@ID", key);
                         cmd.AddParameterWithValue("@valint", strvalue);
@@ -248,7 +255,7 @@ namespace SQLLiteExtensions
         {
             Dictionary<string, Entry> regs = new Dictionary<string, Entry>();
 
-            using (DbCommand cmd = cn.CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register"))
+            using (DbCommand cmd = cn.CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register", txn))
             {
                 using (DbDataReader rdr = cmd.ExecuteReader())
                 {
