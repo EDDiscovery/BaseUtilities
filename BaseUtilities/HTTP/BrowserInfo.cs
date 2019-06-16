@@ -16,7 +16,6 @@
 using Microsoft.Win32;
 using System;
 using System.Reflection;
-using System.Windows.Forms;
 
 namespace BaseUtils
 {
@@ -132,14 +131,11 @@ namespace BaseUtils
             }
         }
 
-        public static void FixIECompatibility(string progexe)
+        public static void FixIECompatibility(string progexe, int BrowserVer)
         {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                int BrowserVer, RegVal;
-
-                using (WebBrowser Wb = new WebBrowser())
-                    BrowserVer = Wb.Version.Major;
+                int RegVal;
 
                 // set the appropriate IE version
                 if (BrowserVer >= 11)
