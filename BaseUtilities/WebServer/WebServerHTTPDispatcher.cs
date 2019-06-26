@@ -23,7 +23,7 @@ namespace BaseUtils.WebServer
 {
     public interface IHTTPNode
     {
-        byte[] Response(string partialpath, HttpListenerRequest request);
+        byte[] Response(string partialpath, HttpListenerRequest request);       // if return null, you get a resource unavailable message back
     }
 
     // this holds a list of http dispatchers and processes the HTTPlistenerrequest and decides which one to use
@@ -62,11 +62,21 @@ namespace BaseUtils.WebServer
                 resourcepath = RootNodeTranslation;
 
             if (terminalnodes.ContainsKey(resourcepath))
-                return terminalnodes[resourcepath].Response(resourcepath, request);
-
-            var disp = partialpathnodes.Find(x => resourcepath.StartsWith(x.Item1));
-            if (disp != null)
-                return disp.Item2.Response(resourcepath.Substring(disp.Item1.Length), request);
+            {
+                var r = terminalnodes[resourcepath].Response(resourcepath, request);
+                if (r != null)
+                    return r;
+            }
+            else
+            {
+                var disp = partialpathnodes.Find(x => resourcepath.StartsWith(x.Item1));
+                if (disp != null)
+                {
+                    var r = disp.Item2.Response(resourcepath.Substring(disp.Item1.Length), request);
+                    if (r != null)
+                        return r;
+                }
+            }
 
             if (URLNotFound != null)
                 return URLNotFound.Response(resourcepath, request);

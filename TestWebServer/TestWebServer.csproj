@@ -69,6 +69,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -89,6 +90,111 @@
       <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
       <Name>BaseUtils</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CommunityGoalJoin.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CommunityGoalReward.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Continued.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewAssign.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewFire.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewHire.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewLaunchFighter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewMemberJoins.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewMemberQuits.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CrewMemberRoleChange.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AfmuRepair.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AfmuRepairs.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AppliedToSquadron.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ApproachBody.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ApproachSettlement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AsteroidCracked.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Bounty.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BuyAmmo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BuyDrones.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BuyExplorationData.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BuyTradeData.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CapShipBond.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Cargo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CargoDepot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ChangeCrewRole.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ClearSavedGame.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CockpitBreached.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CodexEntry.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CollectCargo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Commander.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CommitCrime.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CommunityGoal.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CommunityGoalDiscard.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Docked.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Market.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

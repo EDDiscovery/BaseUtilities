@@ -25,6 +25,8 @@ namespace BaseUtils.WebServer
 
     public class HTTPFileNode : IHTTPNode
     {
+        public string[] BinaryTypes = new string[] { ".png", ".bmp" };
+
         private string path;
 
         public HTTPFileNode(string pathbase)
@@ -35,26 +37,32 @@ namespace BaseUtils.WebServer
         public virtual byte[] Response(string partialpath, HttpListenerRequest request)
         {
             string file = Path.Combine(path, partialpath);
-            string ext = Path.GetExtension(file);
 
             if ( File.Exists(file))
             {
                 System.Diagnostics.Debug.WriteLine("File Request: " + file);
 
-                if (ext.Equals(".png"))
-                    return File.ReadAllBytes(file);
-                else
+                try
                 {
-                    string data = File.ReadAllText(file, Encoding.UTF8);
-                    return Encoding.UTF8.GetBytes(data);
+                    string ext = Path.GetExtension(file);
+
+                    if (BinaryTypes.ContainsIn(ext, StringComparison.InvariantCultureIgnoreCase) != -1 )
+                        return File.ReadAllBytes(file);
+                    else
+                    {
+                        string data = File.ReadAllText(file, Encoding.UTF8);
+                        return Encoding.UTF8.GetBytes(data);
+                    }
+                }
+                catch (Exception e)
+                {
+                    System.Diagnostics.Debug.WriteLine("Swallow file io web exception " + e);
                 }
             }
-            else
-            { 
-                System.Diagnostics.Debug.WriteLine("File Request: Not found: " + file);
-                string text = "Resource not available " + request.Url + " local " + file + Environment.NewLine;
-                return Encoding.UTF8.GetBytes(text);
-            }
+
+            System.Diagnostics.Debug.WriteLine("File Request: Not found: " + file);
+            string text = "Resource not available " + request.Url + " local " + file + Environment.NewLine;
+            return Encoding.UTF8.GetBytes(text);
         }
     }
 }

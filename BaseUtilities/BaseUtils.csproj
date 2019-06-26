@@ -37,6 +37,11 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression.ZipFile, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)\packages\System.IO.Compression.ZipFile.4.3.0\lib\net46\System.IO.Compression.ZipFile.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -47,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CHash\ResourceHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\RangeLists.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
@@ -59,6 +65,7 @@
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
     <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />

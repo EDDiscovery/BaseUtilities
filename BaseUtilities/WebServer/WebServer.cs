@@ -59,7 +59,7 @@ namespace BaseUtils.WebServer
         }
 
         // call to add a Websockets responder which handles this subprotocol
-        public void AddWebServerResponder(string subprotocol, WebSocketsResponderFunc f, Object data)      
+        public void AddWebSocketsResponder(string subprotocol, WebSocketsResponderFunc f, Object data)      
         {
             websocketresponders.Add(subprotocol, new Tuple<WebSocketsResponderFunc, Object>(f, data));
         }
@@ -162,8 +162,7 @@ namespace BaseUtils.WebServer
             {
                 ServerLog?.Invoke(ctx.Request.RequestInfo());
 
-                byte[] buf = httpresponder.Item1(ctx.Request, httpresponder.Item2);      // get response from method.
-
+                byte[] buf = httpresponder.Item1(ctx.Request, httpresponder.Item2);      // get response from method.  Always responds with data
                 ctx.Response.ContentLength64 = buf.Length;
                 ctx.Response.OutputStream.Write(buf, 0, buf.Length);
             }
