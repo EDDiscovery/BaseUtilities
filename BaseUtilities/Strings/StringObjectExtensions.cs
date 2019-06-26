@@ -646,7 +646,12 @@ public static class ObjectExtensionsStrings
         }
 
         if (position < s.Length)
+        {
+            sb.Append(insertatlinestart);
             sb.Append(s.Substring(position));
+            sb.Append(newline);
+            sb.Append(insertafternewline);
+        }
 
         return sb.ToNullSafeString();
     }

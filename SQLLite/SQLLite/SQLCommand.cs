@@ -33,6 +33,8 @@ namespace SQLLiteExtensions
         protected SQLExtConnection connection;
         protected SQLExtTransactionLock<TConn> txnlock;
 
+        private bool hasbeendisposed = false;
+
         public SQLExtCommand(DbCommand cmd, SQLExtConnection conn, SQLExtTransactionLock<TConn> txnlock, DbTransaction txn = null)
         {
             connection = conn;
@@ -150,10 +152,25 @@ namespace SQLLiteExtensions
                     InnerCommand.Dispose();
                     InnerCommand = null;
                 }
+
+                hasbeendisposed = true;
             }
 
             base.Dispose(disposing);
         }
+
+#if DEBUG
+        //since finalisers impose a penalty, we shall check only in debug mode
+        ~SQLExtCommand()
+        {
+            if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
+            {
+                System.Windows.Forms.MessageBox.Show("Missing dispose for command " + this.CommandText);
+                System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for command " + this.CommandText);       // must have been disposed
+            }
+        }
+#endif
+
 
         protected void SetTransaction(DbTransaction txn)
         {

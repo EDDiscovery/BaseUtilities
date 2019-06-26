@@ -18,7 +18,7 @@ using System.Drawing;
 
 namespace BaseUtils
 {
-    public class BitMapHelpers
+    public static class BitMapHelpers
     {
         public static Bitmap ReplaceColourInBitmap(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
         {
@@ -48,7 +48,7 @@ namespace BaseUtils
 
         public static Bitmap ScaleColourInBitmapSideBySide(Bitmap source, Bitmap source2, System.Drawing.Imaging.ColorMatrix cm)
         {
-            Bitmap newmap = new Bitmap(source.Width + source2.Width, Math.Max(source.Height,source2.Height));
+            Bitmap newmap = new Bitmap(source.Width + source2.Width, Math.Max(source.Height, source2.Height));
 
             System.Drawing.Imaging.ImageAttributes ia = new System.Drawing.Imaging.ImageAttributes();
             ia.SetColorMatrix(cm);
@@ -71,7 +71,7 @@ namespace BaseUtils
                 bgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
                 using (Brush textb = new SolidBrush(c))
-                    bgr.DrawString(text, dp, textb, img.Width / 2 - (int)((sizef.Width+1) / 2 ), img.Height / 2 - (int)((sizef.Height+1) / 2 ) );
+                    bgr.DrawString(text, dp, textb, img.Width / 2 - (int)((sizef.Width + 1) / 2), img.Height / 2 - (int)((sizef.Height + 1) / 2));
 
                 bgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
             }
@@ -82,7 +82,7 @@ namespace BaseUtils
         // setting frmt allows you to word wrap etc into a bitmap, maximum of maxsize.  
         // no frmt means a single line across the bitmap unless there are \n in it.
 
-        public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b, 
+        public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b,
                                             float backscale = 1.0F, StringFormat frmt = null)
         {
             Bitmap t = new Bitmap(1, 1);
@@ -111,7 +111,7 @@ namespace BaseUtils
                     using (Brush textb = new SolidBrush(c))
                     {
                         if (frmt != null)
-                            dgr.DrawString(text, dp, textb, new Rectangle(0,0,width,height), frmt); // use the draw into rectangle with formatting function
+                            dgr.DrawString(text, dp, textb, new Rectangle(0, 0, width, height), frmt); // use the draw into rectangle with formatting function
                         else
                             dgr.DrawString(text, dp, textb, 0, 0);
                     }
@@ -127,8 +127,8 @@ namespace BaseUtils
         // centretext overrided frmt and just centres it
         // frmt provides full options and draws text into bitmap
 
-        public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b, 
-                                                    float backscale = 1.0F , bool centertext = false, StringFormat frmt = null)
+        public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b,
+                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null)
         {
             Bitmap img = new Bitmap(size.Width, size.Height);
 
@@ -136,7 +136,7 @@ namespace BaseUtils
             {
                 if (!b.IsFullyTransparent() && text.Length > 0)
                 {
-                    Rectangle backarea = new Rectangle(0, 0, img.Width,img.Height);
+                    Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
                     using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, b, b.Multiply(backscale), 90))
                         dgr.FillRectangle(bb, backarea);
 
@@ -172,6 +172,16 @@ namespace BaseUtils
                 using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, c, c.Multiply(backscale), 90))
                     dgr.FillRectangle(bb, backarea);
             }
+        }
+
+        // convert BMP to another format and return the bytes of that format
+
+        public static byte[] ConvertTo(this Bitmap bmp, System.Drawing.Imaging.ImageFormat fmt)
+        {
+            System.IO.MemoryStream ms = new System.IO.MemoryStream();
+            bmp.Save(ms, fmt);
+            Byte[] f = ms.ToArray();
+            return f;
         }
     }
 }
