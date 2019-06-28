@@ -156,5 +156,22 @@ namespace BaseUtils
 
             }
         }
+
+        public static string EstimateLocalHostPreferredIPV4()   // may return empty if no ip stack
+        {
+            try
+            {
+                using (System.Net.Sockets.Socket socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Dgram, 0))
+                {
+                    socket.Connect("8.8.8.8", 65530);
+                    System.Net.IPEndPoint endPoint = socket.LocalEndPoint as System.Net.IPEndPoint;
+                    return endPoint.Address.ToString();
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
     }
 }
