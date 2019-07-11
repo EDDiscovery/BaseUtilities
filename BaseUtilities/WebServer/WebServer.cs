@@ -26,8 +26,8 @@ namespace BaseUtils.WebServer
 {
     public class Server
     {
-        public Action<string> ServerLog { get; set; } = null;   // set to get server log info
-        public int MsgBufferSize { get; set; } = 8192;          // set max size of received packet
+        public Action<string> ServerLog { get; set; } = null;   // set to get server log messages
+        public int WebSocketMsgBufferSize { get; set; } = 8192; // set max size of received packet
                
 
         public delegate byte[] HTTPResponderFunc(HttpListenerRequest lr, Object lrdata);    // template for HTTP responders
@@ -50,6 +50,8 @@ namespace BaseUtils.WebServer
                 listener.Prefixes.Add(s);
 
             prefixesString = string.Join(";", prefixes);
+
+            tks = new CancellationTokenSource();
         }
 
         // call to add a HTTP responder
@@ -64,71 +66,90 @@ namespace BaseUtils.WebServer
             websocketresponders.Add(subprotocol, new Tuple<WebSocketsResponderFunc, Object>(f, data));
         }
 
-        //stop
+        //stop - does not wait for thread pools to terminate
         public void Stop()
         {
-            listener.Stop();
-            listener.Close();
+            tks.Cancel();
         }
 
         // call this to run the system - returns after kicking it off
         public void Run()
         {
-            System.Diagnostics.Debug.WriteLine("Listening on " + prefixesString);
-            listener.Start();
-
             ThreadPool.QueueUserWorkItem((o) =>         // in a thread pool, handing incoming requests
             {
+                System.Diagnostics.Debug.WriteLine("Listening on " + prefixesString);
+                listener.Start();
+
                 try
                 {
-                    while (listener.IsListening)
+                    AsyncCallback OnContextReceived = new AsyncCallback((res) => 
                     {
-                        HttpListenerContext ctx = listener.GetContext();    // block, get
-
-
-                        if (ctx.Request.IsWebSocketRequest)
+                        if (!tks.IsCancellationRequested)       // make sure we are not in cancellation mode
                         {
-                            string protocol = ctx.Request.Headers["Sec-WebSocket-Protocol"]; // null if not there
+                            HttpListenerContext ctx = listener.EndGetContext(res);
 
-                            if ( protocol != null && websocketresponders.Count > 0 && websocketresponders.ContainsKey(protocol))    // must have a protocol (even if null)
+                            if (ctx.Request.IsWebSocketRequest)
                             {
-                                System.Diagnostics.Debug.WriteLine("WEBSOCKET Requesting protocol " + protocol);
-                                System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
-                                ThreadPool.QueueUserWorkItem((ox) => { ProcessWebSocket(ctx, protocol, websocketresponders[protocol]); });  // throw handling into a thread pool so we don't block this threa
+                                string protocol = ctx.Request.Headers["Sec-WebSocket-Protocol"]; // null if not there
+
+                                if (protocol != null && websocketresponders.Count > 0 && websocketresponders.ContainsKey(protocol))    // must have a protocol (even if null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine("WEBSOCKET Requesting protocol " + protocol);
+                                    //System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
+                                    ThreadPool.QueueUserWorkItem((ox) => { ProcessWebSocket(ctx, protocol, websocketresponders[protocol], tks.Token); });  // throw handling into a thread pool so we don't block this threa
+                                }
+                                else
+                                {
+                                    ctx.Response.StatusCode = 400;
+                                    ctx.Response.Close();
+                                }
                             }
                             else
                             {
-                                ctx.Response.StatusCode = 400;
-                                ctx.Response.Close();
+                                System.Diagnostics.Debug.WriteLine("HTTP: " + ctx.Request.Url + " " + ctx.Request.UserHostName + " : " + ctx.Request.RawUrl);
+                                //System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
+
+                                if (httpresponder != null)
+                                {
+                                    ProcessHTTP(ctx);       // by not shelling out to a thread per HTTP request, we are serialising them for now
+                                                            //ThreadPool.QueueUserWorkItem((c) => ProcessHTTP((HttpListenerContext)c),ctx); // throw handling into a thread 
+                                }
+                                else
+                                {
+                                    ctx.Response.StatusCode = 400;
+                                    ctx.Response.Close();
+                                }
                             }
                         }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("HTTP: " + ctx.Request.Url  + " " + ctx.Request.UserHostName + " : " + ctx.Request.RawUrl);
-                            System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
+                    });
 
-                            if ( httpresponder != null )
-                            {
-                                ProcessHTTP(ctx);       // by not shelling out to a thread per HTTP request, we are serialising them for now
-                                //ThreadPool.QueueUserWorkItem((c) => ProcessHTTP((HttpListenerContext)c),ctx); // throw handling into a thread 
-                            }
-                            else
-                            {
-                                ctx.Response.StatusCode = 400;
-                                ctx.Response.Close();
-                            }
-                        }
-
+                    while (!tks.IsCancellationRequested)            // sit here, spawing off a begin get context (which OnContextReceived services) 
+                                                                    // and wait for either a completion or a cancellation
+                    {
+                        //System.Diagnostics.Debug.WriteLine("beinggetcontext");
+                        IAsyncResult iar=  listener.BeginGetContext(OnContextReceived, null);
+                        //System.Diagnostics.Debug.WriteLine("wait");
+                        WaitHandle.WaitAny(new WaitHandle[] { iar.AsyncWaitHandle, tks.Token.WaitHandle });
+                        //System.Diagnostics.Debug.WriteLine("wait over");
                     }
+
+                    System.Diagnostics.Debug.WriteLine("listener abort");
+                    listener.Abort();
                 }
                 catch ( Exception e )
                 {
                     System.Diagnostics.Debug.WriteLine("Exception " + e);
 
                 } // suppress any exceptions
+
+                System.Diagnostics.Debug.WriteLine("Listening close");
+                listener.Close();
+                listener = null;
+                System.Diagnostics.Debug.WriteLine("Listening now null");
             });
         }
 
+        // call to send text (JSON normally) to websocket.
         public bool SendWebSocket(string text, bool wait = false)
         {
             if (webSocketContext != null)
@@ -178,7 +199,7 @@ namespace BaseUtils.WebServer
         }
 
         // a web socket is attaching
-        private async void ProcessWebSocket(HttpListenerContext ctx, string protocol , Tuple<WebSocketsResponderFunc, Object> responder)
+        private async void ProcessWebSocket(HttpListenerContext ctx, string protocol , Tuple<WebSocketsResponderFunc, Object> responder, CancellationToken canceltk)
         {
             try
             {
@@ -201,11 +222,11 @@ namespace BaseUtils.WebServer
 
             try
             {
-                byte[] receiveBuffer = new byte[MsgBufferSize];
+                byte[] receiveBuffer = new byte[WebSocketMsgBufferSize];
 
                 while (webSocket.State == WebSocketState.Open)
                 {
-                    WebSocketReceiveResult receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+                    WebSocketReceiveResult receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), canceltk);
 
                     ServerLog?.Invoke("WEBSOCKET request " + prefixesString + ": " + receiveResult.MessageType);
                     System.Diagnostics.Debug.WriteLine("WEBSOCKET request " + prefixesString + " type " + receiveResult.MessageType + " len " + receiveResult.Count);
@@ -222,7 +243,10 @@ namespace BaseUtils.WebServer
                 }
 
                 System.Diagnostics.Debug.WriteLine("WEBSOCKET closed on " + prefixesString);
-
+            }
+            catch(System.Threading.Tasks.TaskCanceledException)
+            {
+                // normal task canceled exception
             }
             catch (Exception e)
             {
@@ -245,13 +269,15 @@ namespace BaseUtils.WebServer
 
         protected HttpListener listener = new HttpListener();
 
-        private Tuple<HTTPResponderFunc, Object> httpresponder = null;
+        private Tuple<HTTPResponderFunc, Object> httpresponder = null;      // http requests go thru this function for service
 
-        private WebSocketContext webSocketContext = null;
+        private WebSocketContext webSocketContext = null;               
+                                                                            // websocket requests, for protocol string, go thru this function for service
         private Dictionary<string, Tuple<WebSocketsResponderFunc, Object>> websocketresponders = new Dictionary<string, Tuple<WebSocketsResponderFunc, object>>();
 
         protected string prefixesString;    // debug only
 
+        CancellationTokenSource tks;        // for graceful shut down
         #endregion
 
     }
