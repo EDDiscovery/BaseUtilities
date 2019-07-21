@@ -37,10 +37,11 @@ namespace BaseUtils
             return null;
         }
 
-        public static string GetPath(string defbrowser)
+        public static string GetPath(string defbrowser, out string args)
         {
             const string exeSuffix = ".exe";
             string path = defbrowser + @"\shell\open\command";
+            args = null;
 
             using (Microsoft.Win32.RegistryKey pathKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(path))
             {
@@ -49,19 +50,37 @@ namespace BaseUtils
                     return null;
                 }
 
-                // Trim parameters.
-                try
+                var command = pathKey.GetValue(null)?.ToString();
+
+                if (command != null)
                 {
-                    path = pathKey.GetValue(null).ToString().ToLowerInvariant().Replace("\"", "");
-                    if (!path.EndsWith(exeSuffix))
+                    // Trim parameters.
+                    try
                     {
-                        path = path.Substring(0, path.LastIndexOf(exeSuffix, StringComparison.Ordinal) + exeSuffix.Length);
-                        return path;
+                        if (command.StartsWith("\"") && command.Substring(1).Contains("\""))
+                        {
+                            path = command.Substring(1, command.IndexOf(exeSuffix + "\"", 1) + exeSuffix.Length - 1);
+                            args = command.Substring(path.Length + 3);
+                            return path;
+                        }
+                        else if (command.Contains(exeSuffix))
+                        {
+                            path = command.Substring(0, command.IndexOf(exeSuffix));
+                            args = command.Substring(path.Length + 1);
+                            return path;
+                        }
+
+                        path = command.Replace("\"", "");
+                        if (!path.EndsWith(exeSuffix))
+                        {
+                            path = path.Substring(0, path.LastIndexOf(exeSuffix, StringComparison.Ordinal) + exeSuffix.Length);
+                            return path;
+                        }
                     }
-                }
-                catch
-                {
-                    // Assume the registry value is set incorrectly, or some funky browser is used which currently is unknown.
+                    catch
+                    {
+                        // Assume the registry value is set incorrectly, or some funky browser is used which currently is unknown.
+                    }
                 }
             }
 
@@ -78,13 +97,23 @@ namespace BaseUtils
 
                 if (browser != null)
                 {
-                    string path = BaseUtils.BrowserInfo.GetPath(browser);
+                    string args;
+                    string path = BaseUtils.BrowserInfo.GetPath(browser, out args);
 
                     if (path != null)
                     {
                         try
                         {
-                            System.Diagnostics.ProcessStartInfo p = new System.Diagnostics.ProcessStartInfo(path, uri);
+                            if (args != null && args.Contains("%1"))
+                            {
+                                args = args.Replace("%1", uri);
+                            }
+                            else
+                            {
+                                args = uri;
+                            }
+
+                            System.Diagnostics.ProcessStartInfo p = new System.Diagnostics.ProcessStartInfo(path, args);
                             p.UseShellExecute = false;
                             System.Diagnostics.Process.Start(p);
                             return true;
