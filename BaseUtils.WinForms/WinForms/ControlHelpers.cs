@@ -38,6 +38,7 @@ public static class ControlHelpersStaticFunc
 
         foreach (Control s in c.Controls)
         {
+            //System.Diagnostics.Debug.WriteLine(".. " + s.GetType().Name + " " + s.Name);
             if (s.Controls.Count > 0)
             {
                 //System.Diagnostics.Debug.WriteLine(lvl + " Go into " + s.GetType().Name + " " + s.Name);
@@ -59,7 +60,6 @@ public static class ControlHelpersStaticFunc
             //System.Diagnostics.Debug.WriteLine(lvl + " Dispose " + c.GetType().Name + " " + c.Name);
             c.Dispose();
         }
-
     }
 
     static public void DumpTree(this Control c, int lvl)
@@ -484,16 +484,18 @@ public static class ControlHelpersStaticFunc
     }
 
 
-    static public void Merge(this SplitContainer currentsplitter , int panel )      // currentsplitter has a splitter underneath it in panel (0/1)
+    static public void Merge(this SplitContainer topsplitter , int panel )      // currentsplitter has a splitter underneath it in panel (0/1)
     {
-        SplitContainer tomerge = currentsplitter.Controls[panel].Controls[0] as SplitContainer;  // verified by enable on open
+        SplitContainer insidesplitter = (SplitContainer)topsplitter.Controls[panel].Controls[0];  // get that split container, error if not. 
 
-        Control keep = tomerge.Controls[0].Controls[0];      // we keep this tree..
+        Control keep = insidesplitter.Panel1.Controls[0];      // we keep this control - the left/top one
 
-        tomerge.Controls[0].Controls.Clear();    // clear control list - we want to keep these..
-        tomerge.DisposeTree(0);               // tree dispose of all other stuff left, and dispose of tomerge.
+        insidesplitter.Panel2.Controls[0].Dispose();        // and we dispose(close) the right/bot one
 
-        currentsplitter.Controls[panel].Controls.Add(keep);
+        insidesplitter.Panel1.Controls.Clear();             // clear the control list on the inside splitter so it does not kill the keep list
+        insidesplitter.Dispose();                            // get rid of the inside splitter
+
+        topsplitter.Controls[panel].Controls.Add(keep);     // add the keep list back onto the the top splitter panel.
     }
 
     static public void Split(this SplitContainer currentsplitter, int panel ,  SplitContainer sc, Control ctrl )    // currentsplitter, split panel into a SC with a ctrl
