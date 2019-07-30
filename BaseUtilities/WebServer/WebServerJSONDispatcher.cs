@@ -58,7 +58,7 @@ namespace BaseUtils.WebServer
                 return null;
         }
 
-        // this one handles it from a websocket and sends the JSON response backYour 
+        // this one handles it from a websocket and sends the JSON response back 
 
         public void Response(HttpListenerRequest initialwsrequest, WebSocket ws, WebSocketReceiveResult rr, byte[] receiveBuffer, Object lrdata)
         {
