@@ -26,19 +26,29 @@ namespace BaseUtils
             processes.Clear();
         }
 
-        public int StartProcess(string proc, string cmdline)
+        public int StartProcess(string proc, string cmdline, string runas = null)
         {
             Process p = new Process();
             p.StartInfo.FileName = proc;
             p.StartInfo.Arguments = cmdline;
-            bool ok = p.Start();
-            if (ok)
+
+            if (runas != null)
+                p.StartInfo.Verb = runas;
+
+            try
             {
-                processes[p.Id] = p;
-                return p.Id;
+                bool ok = p.Start();
+                if (ok)
+                {
+                    processes[p.Id] = p;
+                    return p.Id;
+                }
             }
-            else
-                return 0;
+            catch( Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception " + ex);
+            }
+            return 0;
         }
 
         public int FindProcess(string proc)
