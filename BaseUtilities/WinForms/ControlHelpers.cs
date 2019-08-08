@@ -545,7 +545,7 @@ public static class ControlHelpersStaticFunc
         e.Handled = true;
     }
 
-    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e)
+    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e, bool userowtagtodistinguish = false)
     {
         string s1 = e.CellValue1?.ToString();
         string s2 = e.CellValue2?.ToString();
@@ -566,6 +566,19 @@ public static class ControlHelpersStaticFunc
         else
         {
             e.SortResult = v1.CompareTo(v2);
+        }
+
+        if ( e.SortResult == 0 && userowtagtodistinguish)
+        {
+            var left = e.Column.DataGridView.Rows[e.RowIndex1].Tag;
+            var right = e.Column.DataGridView.Rows[e.RowIndex2].Tag;
+            if (left != null && right != null)
+            {
+                long lleft = (long)left;
+                long lright = (long)right;
+
+                e.SortResult = lleft.CompareTo(lright);
+            }
         }
 
         e.Handled = true;
