@@ -113,5 +113,10 @@ namespace BaseUtils
             return null;
         }
 
+        static public T ParseEnum<T>(this string value)
+        {
+            return (T)Enum.Parse(typeof(T), value, true);
+        }
+
     }
 }
