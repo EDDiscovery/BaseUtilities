@@ -20,6 +20,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace SQLLiteExtensions
@@ -70,6 +71,13 @@ namespace SQLLiteExtensions
             throw new InvalidOperationException("Unable to get a working Sqlite driver");
         }
 
+        // Wrap SQLiteVersion in an uninlined method to prevent type resolution hoisting out of the try
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static string GetSQLiteVersion()
+        {
+            return SQLiteConnection.SQLiteVersion;
+        }
+
         private static bool WindowsSqliteProviderWorks()
         {
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
@@ -80,7 +88,7 @@ namespace SQLLiteExtensions
             try
             {
                 // This will throw an exception if the SQLite.Interop.dll can't be loaded.
-                string sqliteversion = SQLiteConnection.SQLiteVersion;
+                string sqliteversion = GetSQLiteVersion();
 
                 if (!String.IsNullOrEmpty(sqliteversion))
                 {
