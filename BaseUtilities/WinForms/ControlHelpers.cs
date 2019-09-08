@@ -632,6 +632,20 @@ public static class ControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    // Find text in coloun
+
+    static public int FindRowWithValue(this DataGridView grid, int coln, string text, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+    {
+        foreach (DataGridViewRow row in grid.Rows)
+        {
+            if (row.Cells[coln].Value.ToString().Equals(text,sc))
+            {
+                return row.Index;
+            }
+        }
+
+        return -1;
+    }
 
     // try and force this row to centre or top
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
