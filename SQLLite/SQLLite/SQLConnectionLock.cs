@@ -17,6 +17,8 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace SQLLiteExtensions
 {
@@ -32,6 +34,8 @@ namespace SQLLiteExtensions
         private static ReaderWriterLockSlim schemaLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
         private static ManualResetEvent initbarrier = new ManualResetEvent(false);
         private SQLExtTransactionLock<TConn> transactionLock;
+        private static ThreadLocal<Dictionary<Guid, Tuple<WeakReference<SQLExtConnection>, StackTrace>>> threadConnection = new ThreadLocal<Dictionary<Guid, Tuple<WeakReference<SQLExtConnection>, StackTrace>>>(() => new Dictionary<Guid, Tuple<WeakReference<SQLExtConnection>, StackTrace>>());
+        private Guid ConnectionGuid = Guid.NewGuid();
 
         private static bool initialized = false;
         private static int initsem = 0;
@@ -48,6 +52,33 @@ namespace SQLLiteExtensions
 
                     initializercallback();  // call back up to initialise
                 }
+
+                var threadconns = threadConnection.Value;
+                var stacktrace = new StackTrace(1, true);
+
+                if (threadConnection.Value.Count != 0)
+                {
+                    Trace.WriteLine($"ERROR: Connection opened twice, expect deadlock");
+                    foreach (var kvp in threadconns)
+                    {
+                        if (kvp.Value.Item1.TryGetTarget(out _))
+                        {
+                            Trace.WriteLine($"Original connection opened {kvp.Value.Item2.ToString()}");
+                        }
+                        else
+                        {
+                            Trace.WriteLine($"Leaked original connection opened {kvp.Value.Item2.ToString()}");
+                        }
+                    }
+                    Trace.WriteLine($"New connection opened {stacktrace.ToString()}");
+
+                    if (Debugger.IsAttached)
+                    {
+                        Debugger.Break();
+                    }
+                }
+
+                threadconns[this.ConnectionGuid] = new Tuple<WeakReference<SQLExtConnection>, StackTrace>(new WeakReference<SQLExtConnection>(this, false), stacktrace);
 
                 schemaLock.EnterReadLock();
                 locktaken = true;
@@ -128,6 +159,11 @@ namespace SQLLiteExtensions
         {
             if (disposing)
             {
+                if (threadConnection.Value.ContainsKey(this.ConnectionGuid))
+                {
+                    threadConnection.Value.Remove(this.ConnectionGuid);
+                }
+
                 if (connection != null)
                 {
                  //   System.Diagnostics.Debug.WriteLine("Closed connection " + connection.ConnectionString);

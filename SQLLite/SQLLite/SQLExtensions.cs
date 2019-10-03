@@ -22,26 +22,31 @@ using System.Data.Common;
 
 public static class SQLiteCommandExtensions
 {
-    public static void AddParameterWithValue(this DbCommand cmd, string name, object val)
+    public static DbParameter AddParameterWithValue(this DbCommand cmd, string name, object val)
     {
         var par = cmd.CreateParameter();
         par.ParameterName = name;
         par.Value = val;
         cmd.Parameters.Add(par);
+        return par;
     }
 
-    public static void AddParameter(this DbCommand cmd, string name, DbType type)
+    public static DbParameter AddParameter(this DbCommand cmd, string name, DbType type)
     {
         var par = cmd.CreateParameter();
         par.ParameterName = name;
         par.DbType = type;
         cmd.Parameters.Add(par);
+        return par;
     }
 
-    public static void AddParamsWithValue(this DbCommand cmd, string[] paras, Object[] values)
+    public static DbParameter[] AddParamsWithValue(this DbCommand cmd, string[] paras, Object[] values)
     {
+        DbParameter[] parameters = new DbParameter[paras.Length];
         for (int i = 0; i < paras.Length; i++)
-            cmd.AddParameterWithValue("@" + paras[i], values[i]);
+            parameters[i] = cmd.AddParameterWithValue("@" + paras[i], values[i]);
+
+        return parameters;
     }
 
     public static void SetParameterValue(this DbCommand cmd, string name, object val)
@@ -51,11 +56,13 @@ public static class SQLiteCommandExtensions
 
     // Either a list of names/types, or types = null, in which case paras contains name:dbtype (case insensitive)
 
-    public static void CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
+    public static DbParameter[] CreateParams(this DbCommand cmd, string[] paras, DbType[] types)
     {
         if (paras != null)
         {
             System.Diagnostics.Debug.Assert(types == null || paras.Length == types.Length);
+            DbParameter[] parameters = new DbParameter[paras.Length];
+
             for (int i = 0; i < paras.Length; i++)
             {
                 if (types == null)
@@ -64,11 +71,19 @@ public static class SQLiteCommandExtensions
                     System.Diagnostics.Debug.Assert(parts.Length == 2);
 
                     DbType dbt = (DbType)Enum.Parse(typeof(DbType), parts[1], true);
-                    cmd.AddParameter("@" + parts[0], dbt);
+                    parameters[i] = cmd.AddParameter("@" + parts[0], dbt);
                 }
                 else
-                    cmd.AddParameter("@" + paras[i], types[i]);
+                {
+                    parameters[i] = cmd.AddParameter("@" + paras[i], types[i]);
+                }
             }
+
+            return parameters;
+        }
+        else
+        {
+            return null;
         }
     }
 
