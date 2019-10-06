@@ -42,7 +42,7 @@ namespace SQLLiteExtensions
 
         private bool hasbeendisposed = false;
 
-        protected SQLExtConnection( AccessMode mode )
+        protected SQLExtConnection( AccessMode mode = AccessMode.ReaderWriter )
         {
             lock (openConnections)
             {
