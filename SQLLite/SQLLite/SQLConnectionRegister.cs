@@ -46,6 +46,8 @@ namespace SQLLiteExtensions
                 // System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
 
                 connection.Open();
+
+                registerclass = new SQLExtRegister(this);
             }
             catch
             {
@@ -108,59 +110,61 @@ namespace SQLLiteExtensions
 
         #region Register
 
-        static public bool keyExists(string sKey, TConn conn = null)
+        private SQLExtRegister registerclass;
+
+        public bool keyExists(string sKey)
         {
-            return RegisterGet(sKey, false, cn => { var reg = new SQLExtRegister(cn); return reg.keyExists(sKey); }, conn);
+            return registerclass.keyExists(sKey);
         }
 
-        static public bool DeleteKey(string key, TConn conn = null)
+        public bool DeleteKey(string key)
         {
-            return RegisterDelete(key, cn => { var reg = new SQLExtRegister(cn); return reg.DeleteKey(key); }, conn);
+            return registerclass.DeleteKey(key);
         }
 
-        static public int GetSettingInt(string key, int defaultvalue, TConn conn = null)
+        public int GetSettingInt(string key, int defaultvalue)
         {
-            return (int)RegisterGet(key, defaultvalue, cn => { var reg = new SQLExtRegister(cn); return reg.GetSettingInt(key, defaultvalue); }, conn);
+            return registerclass.GetSettingInt(key, defaultvalue);
         }
 
-        static public bool PutSettingInt(string key, int intvalue, TConn conn = null)
+        public bool PutSettingInt(string key, int intvalue)
         {
-            return RegisterPut(cn => { var reg = new SQLExtRegister(cn); return reg.PutSettingInt(key, intvalue); }, conn);
+            return registerclass.PutSettingInt(key, intvalue);
         }
 
-        static public double GetSettingDouble(string key, double defaultvalue, TConn conn = null)
+        public double GetSettingDouble(string key, double defaultvalue)
         {
-            return RegisterGet(key, defaultvalue, cn => { var reg = new SQLExtRegister(cn); return reg.GetSettingDouble(key, defaultvalue); }, conn);
+            return registerclass.GetSettingDouble(key, defaultvalue);
         }
 
-        static public bool PutSettingDouble(string key, double doublevalue, TConn conn = null)
+        public bool PutSettingDouble(string key, double doublevalue)
         {
-            return RegisterPut(cn => { var reg = new SQLExtRegister(cn); return reg.PutSettingDouble(key, doublevalue); }, conn);
+            return registerclass.PutSettingDouble(key, doublevalue); 
         }
 
-        static public bool GetSettingBool(string key, bool defaultvalue, TConn conn = null)
+        public bool GetSettingBool(string key, bool defaultvalue)
         {
-            return RegisterGet(key, defaultvalue, cn => { var reg = new SQLExtRegister(cn); return reg.GetSettingBool(key, defaultvalue); }, conn);
+            return registerclass.GetSettingBool(key, defaultvalue); 
         }
 
-        static public bool PutSettingBool(string key, bool boolvalue, TConn conn = null)
+        public bool PutSettingBool(string key, bool boolvalue)
         {
-            return RegisterPut(cn => { var reg = new SQLExtRegister(cn); return reg.PutSettingBool(key, boolvalue); }, conn);
+            return registerclass.PutSettingBool(key, boolvalue);
         }
 
-        static public string GetSettingString(string key, string defaultvalue, TConn conn = null)
+        public string GetSettingString(string key, string defaultvalue)
         {
-            return RegisterGet(key, defaultvalue, cn => { var reg = new SQLExtRegister(cn); return reg.GetSettingString(key, defaultvalue); }, conn);
+            return registerclass.GetSettingString(key, defaultvalue);
         }
 
-        static public bool PutSettingString(string key, string strvalue, TConn conn = null)        // public IF
+        public bool PutSettingString(string key, string strvalue)       
         {
-            return RegisterPut(cn => { var reg = new SQLExtRegister(cn); return reg.PutSettingString(key, strvalue); }, conn);
+            return registerclass.PutSettingString(key, strvalue); 
         }
 
-        static public DateTime GetSettingDate(string key, DateTime defaultvalue, TConn conn = null)
+        public DateTime GetSettingDate(string key, DateTime defaultvalue)
         {
-            string s = RegisterGet(key, "--", cn => { var reg = new SQLExtRegister(cn); return reg.GetSettingString(key, "--"); }, conn);
+            string s = registerclass.GetSettingString(key, "--"); 
 
             if (!DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
             {
@@ -170,54 +174,13 @@ namespace SQLLiteExtensions
             return date;
         }
 
-        static public bool PutSettingDate(string key, DateTime value, TConn conn = null)        // public IF
+        public bool PutSettingDate(string key, DateTime value)      
         {
-            return RegisterPut(cn => { var reg = new SQLExtRegister(cn); return reg.PutSettingString(key, value.ToStringZulu()); }, conn);
-        }
-
-#endregion
-
-        #region Generics
-
-        public static T RegisterGet<T>(string key, T defval, Func<TConn, T> normal, TConn conn)
-        {
-            if (conn != null)
-            {
-                return normal(conn);
-            }
-            using (TConn cn = new TConn())
-            {
-                return normal(cn);
-            }
-        }
-
-        public static bool RegisterPut(Func<TConn, bool> action, TConn conn)
-        {
-            if (conn != null)
-            {
-                return action(conn);
-            }
-
-            using (TConn cn = new TConn())
-            {
-                return action(cn);
-            }
-        }
-
-        public static bool RegisterDelete(string key, Func<TConn, bool> action, TConn conn)
-        {
-            if (conn != null)
-            {
-                return action(conn);
-            }
-
-            using (TConn cn = new TConn())
-            {
-                return action(cn);
-            }
+            return registerclass.PutSettingString(key, value.ToStringZulu());
         }
 
         #endregion
+
 
     }
 }
