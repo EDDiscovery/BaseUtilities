@@ -43,6 +43,9 @@ namespace BaseUtils.Win32Constants
         /// when clicking a <see cref="System.Windows.Forms.Form"/>'s TaskBar icon.
         /// </summary>
         public const int DBLCLKS = 0x0008;
+
+        public const int DROPSHADOW = 0x00020000;
+        public const int NOCLOSE = 0x00000200;
     }
 
     #endregion

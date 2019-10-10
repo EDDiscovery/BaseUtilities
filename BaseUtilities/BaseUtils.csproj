@@ -135,6 +135,7 @@
     <Compile Include="Strings\StringParser.cs" />
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
+    <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="WinForms\FontLoader.cs" />
   </ItemGroup>
