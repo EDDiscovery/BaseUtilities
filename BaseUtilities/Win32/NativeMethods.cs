@@ -9,7 +9,7 @@ namespace BaseUtils.Win32
 {
     public class NativeMethods
     {
-        public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
+        public delegate int HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [StructLayout(LayoutKind.Sequential)]
         public class EVENTMSG
@@ -275,6 +275,25 @@ namespace BaseUtils.Win32
         VK_OEM_CLEAR      = 0xFE;
     }
 
+    public enum HookType
+    {
+        WH_JOURNALRECORD = 0,
+        WH_JOURNALPLAYBACK = 1,
+        WH_KEYBOARD = 2,
+        WH_GETMESSAGE = 3,
+        WH_CALLWNDPROC = 4,
+        WH_CBT = 5,
+        WH_SYSMSGFILTER = 6,
+        WH_MOUSE = 7,
+        WH_HARDWARE = 8,
+        WH_DEBUG = 9,
+        WH_SHELL = 10,
+        WH_FOREGROUNDIDLE = 11,
+        WH_CALLWNDPROCRET = 12,
+        WH_KEYBOARD_LL = 13,
+        WH_MOUSE_LL = 14
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct KBDLLHOOKSTRUCT
     {
@@ -306,9 +325,9 @@ namespace BaseUtils.Win32
         public static extern int GetKeyNameText(int lParam, [Out] StringBuilder str, int len);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr SetWindowsHookEx(int hookid, NativeMethods.HookProc pfnhook, IntPtr hinst, IntPtr threadid);
+        public static extern IntPtr SetWindowsHookEx(HookType hk, NativeMethods.HookProc pfnhook, IntPtr hinst, uint threadid);
         [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
-        public static extern IntPtr CallNextHookEx(IntPtr hhook, int code, IntPtr wparam, IntPtr lparam);
+        public static extern int CallNextHookEx(IntPtr hhook, int code, IntPtr wparam, IntPtr lparam);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern bool UnhookWindowsHookEx(IntPtr hhook);
 
