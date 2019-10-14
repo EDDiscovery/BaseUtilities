@@ -21,10 +21,10 @@ namespace OpenTKUtils.Common
 {
     public class MatrixCalc
     {
-        public bool InPerspectiveMode { get { return perspectivemode; } set { perspectivemode = value; } }
-        public Matrix4 ModelMatrix { get { return modelmatrix; } }
-        public Matrix4 ProjectionMatrix { get { return projectionmatrix; } }
-        public Matrix4 ProjectionModelMatrix { get { return projectionmodelmatrix; } }
+        public bool InPerspectiveMode { get; set; } = true;
+        public Matrix4 ModelMatrix { get; private set; }
+        public Matrix4 ProjectionMatrix { get; private set; }
+        public Matrix4 ProjectionModelMatrix { get; private set; }
 
         public float ZoomDistance { get; set; } = 1000F;       // distance that zoom=1 will be from the Position, in the direction of the camera.
         public float PerspectiveFarZDistance { get; set; } = 1000000.0f;        // perspective, set Z's for clipping
@@ -37,33 +37,51 @@ namespace OpenTKUtils.Common
         public Vector3 EyePosition { get; private set; }                        // after ModelMatrix
         public float EyeDistance { get; private set; }                          // after ModelMatrix
 
-        private bool perspectivemode = true;
-        private Matrix4 modelmatrix;
-        private Matrix4 projectionmatrix;
-        private Matrix4 projectionmodelmatrix;
-
-        // Calculate the model matrix, which is the view onto the model
-        // model matrix rotates and scales the model to the eye position
+        // Calculate the model matrix, which is the model translated to world space then to view space..
+        // Model matrix does not have any Y inversion(axis flip around x).
+        // opengl normal model has +z towards viewer, y up, x to right.  We want +z away, y up, x to right
+        // we use the normal in lookup to position the axis to +z away, y down, x to right (180 rot).  then use the projection model to flip y.
 
         public void CalculateModelMatrix(Vector3 position, Vector3 cameraDir, float zoom)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
-            position = new Vector3(position.X, -position.Y, position.Z);      // correct for Y inversion.. some day we should fix this
-
             TargetPosition = position;      // record for shader use
-
-            Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
-            Matrix4 preinverted;
 
             if (InPerspectiveMode)
             {
-                Vector3 eye, normal;
-                CalculateEyePosition(position, cameraDir, zoom, out eye, out normal);
-                EyePosition = eye;
-                preinverted = Matrix4.LookAt(eye, position, normal);   // from eye, look at target, with up giving the rotation of the look
-                modelmatrix = Matrix4.Mult(flipy, preinverted);    //ORDER VERY important this one took longer to work out the order! replaces GL.Scale(1.0, -1.0, 1.0);
+                Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+                // we rotate the identity matrix by the camera direction
+                // .x and .y values are set by our axis orientations..
+                // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+                // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+                // .z rotates the camera.
+
+                transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
+                transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
+                transform *= Matrix3.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
+
+                //System.Diagnostics.Debug.WriteLine("XY transform " + transform);
+
+                EyeDistance = CalcEyeDistance(zoom);
+
+                Vector3 eyerel = Vector3.Transform(new Vector3(0, -EyeDistance, 0), transform);       // the 0,-E,0 sets the axis of the system..
+
+                Vector3 normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);       // 0,0,1 also sets the axis - this whats make .x/.y address the x/y rotations
+
+                EyePosition = position + eyerel;              // eye is here, the target pos, plus the eye relative position
+
+                System.Diagnostics.Debug.WriteLine("Eye " + EyePosition + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom + " normal " + normal);
+
+                ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with up giving the rotation of the look
+
+                System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
+
+                // inveye rotation, if ever needed, would be : xrot = -(180f - cameraDir.X), yrot = cameraDir.Y
             }
             else
-            {                                                               // replace open gl computation with our own.
+            {
+
+                // TBD.. 
                 Matrix4 scale = Matrix4.CreateScale(zoom);
                 Matrix4 offset = Matrix4.CreateTranslation(-position.X, -position.Y, -position.Z);
                 Matrix4 rotcam = Matrix4.Identity;
@@ -71,14 +89,13 @@ namespace OpenTKUtils.Common
                 rotcam *= Matrix4.CreateRotationX((float)((cameraDir.X - 90) * Math.PI / 180.0f));
                 rotcam *= Matrix4.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
 
-                preinverted = Matrix4.Mult(offset, scale);
+                Matrix4 preinverted = Matrix4.Mult(offset, scale);
                 EyePosition = new Vector3(preinverted.Row0.X, preinverted.Row1.Y, preinverted.Row2.Z);          // TBD.. 
                 preinverted = Matrix4.Mult(preinverted, rotcam);
-                modelmatrix = preinverted;
+                ModelMatrix = preinverted;
             }
 
-            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);        // order order order ! so important.
-            EyeDistance = CalcEyeDistance(zoom);
+            ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);        // order order order ! so important.
         }
 
         // used for calculating positions on the screen from pixel positions
@@ -86,49 +103,37 @@ namespace OpenTKUtils.Common
         {
             get
             {
-                return projectionmodelmatrix;
+                return ProjectionModelMatrix;
             }
         }
 
         // Projection matrix - projects the 3d model space to the 2D screen
+        // Has a Y flip so that +Y is going up.
 
         public void CalculateProjectionMatrix(float fov, int w, int h, out float znear)
         {
             if (InPerspectiveMode)
             {                                                                   // Fov, perspective, znear, zfar
                 znear = 1.0F;
-                projectionmatrix = Matrix4.CreatePerspectiveFieldOfView(fov, (float)w / h, PerspectiveNearZDistance, PerspectiveFarZDistance);
+                ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, (float)w / h, PerspectiveNearZDistance, PerspectiveFarZDistance);
             }
             else
             {
                 znear = -OrthographicDistance;
                 float orthoheight = (OrthographicDistance / 5.0f) * h / w;
-                projectionmatrix = Matrix4.CreateOrthographic(OrthographicDistance*2.0f/5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
+                ProjectionMatrix = Matrix4.CreateOrthographic(OrthographicDistance * 2.0f / 5.0f, orthoheight * 2.0F, -OrthographicDistance, OrthographicDistance);
             }
 
-            projectionmodelmatrix = Matrix4.Mult(modelmatrix, projectionmatrix);
+            // we want the axis orientation with +z away from us, +x to right, +y upwards.
+            // this means we need to rotate the normal opengl model (+z towards us) 180 degrees around x - therefore flip y
+            // we do it here since its the end of the chain - easier to keep the rest in the other method
+            // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
+            // to make the ccw cull test work.
+
+            Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
+            ProjectionMatrix = flipy * ProjectionMatrix;
+
+            ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);
         }
-
-        // calculate pos of eye, given position, CameraDir, zoom.
-
-        private void CalculateEyePosition(Vector3 position, Vector3 cameraDir, float zoom, out Vector3 eye, out Vector3 normal)
-        {
-            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
-            transform *= Matrix3.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
-            // transform ends as the camera direction vector
-
-            // calculate where eye is, relative to target. its 1000/zoom, rotated by camera rotation.  This is based on looking at 0,0,0.  
-            // So this is the camera pos to look at 0,0,0
-            Vector3 eyerel = Vector3.Transform(new Vector3(0.0f, -CalcEyeDistance(zoom), 0.0f), transform);
-
-            // rotate the up vector (0,0,1) by the eye camera dir to get a vector upwards from the current camera dir
-            normal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);
-
-            eye = position + eyerel;              // eye is here, the target pos, plus the eye relative position
-            //System.Diagnostics.Debug.WriteLine("Camera at " + eye + " looking at " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom);
-        }
-
     }
 }

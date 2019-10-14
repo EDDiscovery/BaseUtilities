@@ -416,14 +416,60 @@ public static class ObjectExtensionsNumbersBool
 
     #region stuff that should have been in Math
 
-    static public int Range(this int a, int min, int max)
+    public static int Range(this int a, int min, int max)
     {
-        return Math.Min(Math.Max(a, min), max);
+        return Math.Max(Math.Min(a, min), max);
     }
-    static public long Range(this long a, long min, long max)
+    public static long Range(this long a, long min, long max)
     {
-        return Math.Min(Math.Max(a, min), max);
+        return Math.Max(Math.Min(a, min), max);
     }
+
+    public static float Radians(this float x)
+    {
+        return x * (float)(Math.PI / 180.0);
+    }
+
+    public static float Degrees(this float x)
+    {
+        return x * (float)(180.0 / Math.PI);
+    }
+
+    public static double Radians(this double x)
+    {
+        return x * (Math.PI / 180.0);
+    }
+
+    public static double Degrees(this double x)
+    {
+        return x * (180.0 / Math.PI);
+    }
+
+    public static float BoundedAngle(this float angle)
+    {
+        return ((angle + 360 + 180) % 360) - 180;
+    }
+
+    public static float BoundedAngle(this float angle, float add)
+    {
+        return ((angle + add + 360 + 180) % 360) - 180;
+    }
+
+    public static float Fract(this float a)
+    {
+        return a - (float)Math.Floor(a);
+    }
+
+    public static float Mix(float a, float b, float mix)
+    {
+        return a + (b - a) * mix;
+    }
+
+    public static float Abs(this float a)
+    {
+        return (a < 0) ? -a : a;
+    }
+
 
     #endregion
 }

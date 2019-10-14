@@ -32,11 +32,11 @@ namespace OpenTKUtils.Common
         public OpenTK.GLControl glControl { get; private set; }      // use to draw to
         public float zNear { get; private set; }                     // model znear
 
-        public Func<int,float> TravelSpeed;                       // set to scale travel speed given this time interval
+        public Func<int, float> TravelSpeed;                       // set to scale travel speed given this time interval
 
         public Color BackColour { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");
 
-        public Action<Matrix4,Matrix4, long> PaintObjects;  // madatory if you actually want to see anything
+        public Action<MatrixCalc, long> PaintObjects;  // madatory if you actually want to see anything
 
         public Action<MouseEventArgs> MouseDown;            // optional - set to handle more mouse actions if required
         public Action<MouseEventArgs> MouseUp;
@@ -49,6 +49,8 @@ namespace OpenTKUtils.Common
         public Zoom Zoom { get { return zoom; } }
         public Position Pos { get { return pos; } }
         public Camera Camera { get { return camera; } }
+
+        public bool EliteMovement { get; set; } = true;
 
         private Position pos = new Position();
         private Camera camera = new Camera();
@@ -86,7 +88,7 @@ namespace OpenTKUtils.Common
 
         public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
         {
-            pos.Set(lookat);
+            pos.Current = lookat;
             camera.Set(cameradir);
             zoom.Default = zoomn;
             zoom.SetDefault();
@@ -96,19 +98,25 @@ namespace OpenTKUtils.Common
 
             GL.ClearColor(BackColour);
 
+            GL.Enable(EnableCap.DepthTest);         // standard - depth, ccw, cull
+            GL.FrontFace(FrontFaceDirection.Ccw);
+            GLStatics.CullFace(true);
+            GLStatics.PointSize(1);                 // default is controlled by external not shaders
+
             sysinterval.Start();
         }
 
         // Pos Direction interface
         // don't want direct class access, via this wrapper
-        public void SetPosition(Vector3 posx) { pos.Set(posx); }
+        public void SetPosition(Vector3 posx) { pos.Current = posx; }
         public void TranslatePosition(Vector3 posx) { pos.Translate(posx); }
-        public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F ) { pos.GoTo(normpos, timeslewsec, unitspersecond); }
+        public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F) { pos.GoTo(normpos, timeslewsec, unitspersecond); }
 
         public void SetCameraDir(Vector3 pos) { camera.Set(pos); }
         public void RotateCameraDir(Vector3 rot) { camera.Rotate(rot); }
-        public void StartCameraPan(Vector3 pos, float timeslewsec = 0) { camera.Pan(pos, timeslewsec);     }
-        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0)          { camera.LookAt(pos.Current, normtarget, zoom, time);        }
+        public void StartCameraPan(Vector3 pos, float timeslewsec = 0) { camera.Pan(pos, timeslewsec); }
+        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0, float unitspersecond = 1000F)
+        { pos.GoTo(normtarget, time, unitspersecond); camera.LookAt(matrix.EyePosition, normtarget, zoom, time); }
 
         public void KillSlews() { pos.KillSlew(); camera.KillSlew(); zoom.KillSlew(); }
 
@@ -144,7 +152,7 @@ namespace OpenTKUtils.Common
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            PaintObjects?.Invoke(matrix.ModelMatrix, matrix.ProjectionMatrix, sysinterval.ElapsedMilliseconds);
+            PaintObjects?.Invoke(matrix, sysinterval.ElapsedMilliseconds);
 
             glControl.SwapBuffers();
         }
@@ -152,7 +160,7 @@ namespace OpenTKUtils.Common
         // Owner should call this at regular intervals.
         // handle keyboard, indicate if activated, handle other keys if required, return movement calculated in case you need to use it
 
-        public CameraDirectionMovementTracker HandleKeyboard( bool activated, Action<BaseUtils.KeyboardState> handleotherkeys = null)
+        public CameraDirectionMovementTracker HandleKeyboard(bool activated, Action<BaseUtils.KeyboardState> handleotherkeys = null)
         {
             long elapsed = sysinterval.ElapsedMilliseconds;         // stopwatch provides precision timing on last paint time.
             LastHandleInterval = (int)(elapsed - lastintervalcount);
@@ -163,10 +171,13 @@ namespace OpenTKUtils.Common
                 if (StandardKeyboardHandler.Camera(keyboard, camera, LastHandleInterval))       // moving the camera around kills the pos slew (as well as its own slew)
                     pos.KillSlew();
 
-                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, true))
+                if (StandardKeyboardHandler.Movement(keyboard, pos, matrix.InPerspectiveMode, camera.Current, TravelSpeed != null ? TravelSpeed(LastHandleInterval) : 1.0f, EliteMovement))
                     camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
 
                 StandardKeyboardHandler.Zoom(keyboard, zoom, LastHandleInterval);      // zoom slew is not affected by the above
+
+                if (keyboard.IsPressedRemove(Keys.M, BaseUtils.KeyboardState.ShiftState.Ctrl))
+                    EliteMovement = !EliteMovement;
 
                 handleotherkeys?.Invoke(keyboard);
             }
@@ -246,7 +257,7 @@ namespace OpenTKUtils.Common
                     mouseStartRotate.Y = mouseStartTranslateXZ.Y = e.Y;
                     //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
-                    camera.Rotate(new Vector3((float)(-dy / 4.0f), (float)(dx / 4.0f), 0));
+                    camera.Rotate(new Vector3((float)(dy / 4.0f), (float)(dx / 4.0f), 0));
                 }
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
@@ -279,7 +290,7 @@ namespace OpenTKUtils.Common
                     //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
                     Matrix3 transform = Matrix3.CreateRotationZ((float)(-camera.Current.Y * Math.PI / 180.0f));
-                    Vector3 translation = new Vector3(-dx * (1.0f / zoom.Current) * 2.0f, dy * (1.0f / zoom.Current) * 2.0f, 0.0f);
+                    Vector3 translation = new Vector3(dx * (1.0f / zoom.Current) * 2.0f, -dy * (1.0f / zoom.Current) * 2.0f, 0.0f);
                     translation = Vector3.Transform(translation, transform);
 
                     pos.Translate(new Vector3(translation.X, 0, translation.Y));

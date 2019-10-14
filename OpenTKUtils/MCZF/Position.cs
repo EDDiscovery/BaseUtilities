@@ -21,19 +21,13 @@ namespace OpenTKUtils.Common
 {
     public class Position
     {
-        public Vector3 Current { get { Vector3 norm = new Vector3(position); norm.Y = -norm.Y; return norm; } } // REAL world position of eye.  With no internal invert of Y.  Same as star positions
+        public Vector3 Current { get {return position; } set { KillSlew(); position = value; } } 
         public bool InSlew { get { return (targetposSlewProgress < 1.0f); } }
 
         private Vector3 position = Vector3.Zero;                // point where we are viewing. Eye is offset from this by _cameraDir * 1000/_zoom. (prev _cameraPos)
         private float targetposSlewProgress = 1.0f;             // 0 -> 1 slew progress
         private float targetposSlewTime;                        // how long to take to do the slew
         private Vector3 targetposSlewPosition;                  // where to slew to.
-
-        public void Set(Vector3 pos)
-        {
-            KillSlew();
-            position = pos;
-        }
 
         public void Translate(Vector3 pos)
         {
@@ -46,27 +40,24 @@ namespace OpenTKUtils.Common
         public void Z(float adj) { KillSlew(); position.Z += adj; }
 
         // time <0 estimate, 0 instance >0 time
-        public void GoTo(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F)       // may pass a Nan Position - no action. Y is normal sense
+        public void GoTo(Vector3 gotopos, float timeslewsec = 0, float unitspersecond = 10000F)       // may pass a Nan Position - no action. Y is normal sense
         {
-            if (!float.IsNaN(normpos.X))
+            if (!float.IsNaN(gotopos.X))
             {
                 //System.Diagnostics.Debug.WriteLine("Goto " + normpos + " in " + timeslewsec + " at " + unitspersecond);
 
-                Vector3 pos = new Vector3(normpos);
-                pos.Y = -pos.Y;     // invert to internal Y
-
-                double dist = Math.Sqrt((position.X - pos.X) * (position.X - pos.X) + (position.Y - pos.Y) * (position.Y - pos.Y) + (position.Z - pos.Z) * (position.Z - pos.Z));
+                double dist = Math.Sqrt((position.X - gotopos.X) * (position.X - gotopos.X) + (position.Y - gotopos.Y) * (position.Y - gotopos.Y) + (position.Z - gotopos.Z) * (position.Z - gotopos.Z));
                 Debug.Assert(!double.IsNaN(dist));      // had a bug due to incorrect signs!
 
                 if (dist >= 1)
                 {
                     if (timeslewsec == 0)
                     {
-                        position = pos;
+                        position = gotopos;
                     }
                     else
                     {
-                        targetposSlewPosition = pos;
+                        targetposSlewPosition = gotopos;
                         targetposSlewProgress = 0.0f;
                         targetposSlewTime = (timeslewsec < 0) ? ((float)Math.Max(1.0, dist / unitspersecond)) : timeslewsec;            //10000 ly/sec, with a minimum slew
                         //System.Diagnostics.Debug.WriteLine("{0} Slew start to {1} in {2}",  Environment.TickCount % 10000 , targetposSlewPosition , targetposSlewTime);

@@ -48,11 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataSets\Data3DCollection.cs" />
-    <Compile Include="DataSets\Data3DPointData.cs" />
-    <Compile Include="DataSets\Data3DLineData.cs" />
-    <Compile Include="DataSets\Data3DTexturedQuadData.cs" />
-    <Compile Include="DataSets\Data3DPolygon.cs" />
+    <Compile Include="GL1\Data3DCollection.cs" />
+    <Compile Include="GL1\Data3DLineData.cs" />
+    <Compile Include="GL1\Data3DPointData.cs" />
+    <Compile Include="GL1\Data3DPolygon.cs" />
+    <Compile Include="GL1\Data3DTexturedQuadData.cs" />
+    <Compile Include="GL\GLStatics.cs" />
     <Compile Include="MCZF\Camera.cs" />
     <Compile Include="MCZF\CameraDirectionMovementTracker.cs" />
     <Compile Include="MCZF\Fov.cs" />
@@ -75,5 +76,6 @@
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
