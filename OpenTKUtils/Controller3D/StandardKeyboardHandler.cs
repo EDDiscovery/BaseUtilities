@@ -45,12 +45,12 @@ namespace OpenTKUtils.Common
             if (kbd.IsAnyPressed(Keys.PageUp, Keys.R) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Z = distance;
+                    cameraActionMovement.Z = -distance;
             }
             else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Z = -distance;
+                    cameraActionMovement.Z = distance;
             }
 
             if (kbd.IsAnyPressed(Keys.Up, Keys.W) != null)

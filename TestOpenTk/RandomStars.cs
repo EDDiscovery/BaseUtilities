@@ -45,8 +45,8 @@ namespace TestOpenTk
         {
             base.OnLoad(e);
 
-            var dataset = Data3DCollection<PointData>.Create("Points", Color.Red, 2.0f);
-
+            var dataset = Data3DCollection<PointData>.Create("Points", Color.Transparent, 2.0f);
+       
             //for (int y = -500; y < 500; y += 20)
             //{
             //    for (int x = -500; x < 500; x += 20)
@@ -62,7 +62,7 @@ namespace TestOpenTk
                 int x = rnd.Next(1000) - 500;
                 int y = rnd.Next(1000) - 500;
                 int z = rnd.Next(1000) - 500;
-                dataset.Add(new PointData(x, y, z));
+                dataset.Add(new PointData(x, y, z, Color.FromArgb(128,128+y/4,0)));
             }
 
             datasets.Add(dataset);
@@ -81,30 +81,24 @@ namespace TestOpenTk
 
             datasets.Add(smalldatasetGrid);
 
-            gltracker.Start(new Vector3(0, 0, 0), Vector3.Zero, 1F);
+            gltracker.Start(new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
             gltracker.TravelSpeed = (ms) =>
             {
                 float zoomlimited = Math.Min(Math.Max(gltracker.Zoom.Current, 0.01F), 15.0F);
                 float distance1sec = gltracker.MatrixCalc.ZoomDistance * (1.0f / zoomlimited);        // move Zoomdistance in one second, scaled by zoomY
                 return distance1sec * (float)ms / 1000.0f;
             };
-
-
-        //    
-        //    w
-        //            
-        //    distance1sec *= TravelSpeed;
-        //public float TravelSpeed { get; private set; } = 1.0f;       // Distance speed, in units, (ZoomDistance / zoom) is the 1 second movement, use this to scale up/down
-
-        //var distance = LastHandleInterval * (1.0f / zoomlimited);
         }
-    
-        private void Draw(Matrix4 modelmatrix, Matrix4 projmatrix, long time)
+
+   
+        private void Draw(MatrixCalc mc, long time)
         {
             GL.MatrixMode(MatrixMode.Projection);           // Select the project matrix for the following operations (current matrix)
-            GL.LoadMatrix(ref projmatrix);                   // replace projection matrix with this perspective matrix
+            Matrix4 pm = mc.ProjectionMatrix;
+            GL.LoadMatrix(ref pm);                   // replace projection matrix with this perspective matrix
+            Matrix4 mm = mc.ModelMatrix;
             GL.MatrixMode(MatrixMode.Modelview);            // select the current matrix to the model view
-            GL.LoadMatrix(ref modelmatrix);                          // set the model view to this matrix.
+            GL.LoadMatrix(ref mm);                          // set the model view to this matrix.
 
             foreach (var ds in datasets)
                 ds.DrawAll(gltracker.glControl);
