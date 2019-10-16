@@ -60,6 +60,48 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShaderTestBlendedShaderMultImages.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestBlendedShaderMultImages.designer.cs">
+      <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestGeoTest1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestGeoTest1.designer.cs">
+      <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestMain.designer.cs">
+      <DependentUpon>ShaderTestMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestStarDiscs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestStarDiscs.designer.cs">
+      <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestStarPoints.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestStarPoints.designer.cs">
+      <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestStarPointsDiscs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestStarPointsDiscs.designer.cs">
+      <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestVertexCompute.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestVertexCompute.designer.cs">
+      <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </EmbeddedResource>
@@ -71,7 +113,29 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
+      <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestGeoTest1.resx">
+      <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestMain.resx">
+      <DependentUpon>ShaderTestMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestStarDiscs.resx">
+      <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestStarPoints.resx">
+      <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestStarPointsDiscs.resx">
+      <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestVertexCompute.resx">
+      <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -96,6 +160,42 @@
       <Project>{4cfa37d5-4182-4cae-afc3-7563a13b44ee}</Project>
       <Name>OpenTKUtils</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\dotted.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\dotted2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\golden.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Logo8bpp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\moonmap1k.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\shoppinglist.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\smile5300-256x256x8.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\wooden.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asteroid 2 texture one side mipmap levels 0 to 8.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asteroid 3 texture one side mipmap levels 0 to 8.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asteroid 4 texture one side mipmap levels 0 to 8 - Copy.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\asteroid texture one side mipmap levels 0 to 8.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

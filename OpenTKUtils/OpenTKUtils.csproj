@@ -53,6 +53,38 @@
     <Compile Include="GL1\Data3DPointData.cs" />
     <Compile Include="GL1\Data3DPolygon.cs" />
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
+    <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
+    <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
+    <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
+    <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
+    <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
+    <Compile Include="GL4\ShapeFactory\FactorySphere.cs" />
+    <Compile Include="GL4\BasicTypes\GLStatics.cs" />
+    <Compile Include="GL4\ItemLists\GLItemsList.cs" />
+    <Compile Include="GL4\IGLInterfaces.cs" />
+    <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
+    <Compile Include="GL4\Renderers\RenderableItem.cs" />
+    <Compile Include="GL4\Renderers\RenderableLists.cs" />
+    <Compile Include="GL4\BasicTypes\GLProgram.cs" />
+    <Compile Include="GL4\BasicTypes\GLShader.cs" />
+    <Compile Include="GL4\Shaders\Base\ShaderPipeline.cs" />
+    <Compile Include="GL4\Shaders\Base\ShaderPipelineShadersBase.cs" />
+    <Compile Include="GL4\Shaders\Base\ShaderStandard.cs" />
+    <Compile Include="GL4\Shaders\FunctionsData\FunctionsNoise.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersFragment.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersColourObjects.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersStarPoints.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
+    <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />
+    <Compile Include="GL4\Textures\Texture2D.cs" />
+    <Compile Include="GL4\Textures\Texture2DArray.cs" />
+    <Compile Include="GL4\UniformsStorageBlocks\MatrixCalcUniformBlock.cs" />
+    <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
+    <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />
     <Compile Include="GL\GLStatics.cs" />
     <Compile Include="MCZF\Camera.cs" />
     <Compile Include="MCZF\CameraDirectionMovementTracker.cs" />
@@ -75,6 +107,9 @@
     <None Include="app.config" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="GL4\Shaders\Base\PlanShaders.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -24,6 +24,13 @@ namespace TestOpenTk
 
                 string arg1 = args.Next();
 
+                Type t = Type.GetType("TestOpenTk." + arg1);
+
+                if (t != null)
+                {
+                    Application.Run((Form)Activator.CreateInstance(t));
+                }
+                else
                 {
                     Application.Run(new RandomStars());
                 }

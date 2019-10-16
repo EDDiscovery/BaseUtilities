@@ -659,6 +659,38 @@ public static class ObjectExtensionsStrings
         return sb.ToNullSafeString();
     }
 
+    static public string Lines(this string s, int start, int count, string lineformat = null, int markline = -1)   // start = 1 to N, if less than 1, removes it off count. (so -1 count 3 only produces line 1 (-1,0 removed))
+    {
+        string ret = string.Empty;
+        if (start < 1)
+            count += start - 1;
+        if (count < 1)
+            return ret;
+
+        int position = 0, newposition;
+        int lineno = 0;
+
+        while ((newposition = s.IndexOf(Environment.NewLine, position)) != -1)
+        {
+            lineno++;
+            if (lineno >= start)
+            {
+                if (markline >= 1)
+                    ret += (lineno == markline) ? ">>> " : "";
+                if (lineformat != null)
+                    ret += lineno.ToStringInvariant(lineformat) + ": ";
+                ret += s.Substring(position, newposition - position) + Environment.NewLine;
+                if (--count <= 0)
+                    return ret;
+            }
+
+            position = newposition + Environment.NewLine.Length;
+        }
+
+        return ret;
+    }
+
+
     // find the next instance of one of the chars in set, in str, and return it in res. Return string after it.  Null if not found 
     static public string NextOneOf(this string str, char[] set, out char res)
     {
