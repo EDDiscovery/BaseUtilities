@@ -235,11 +235,11 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0 set up
-        public static GLRenderableItem CreateVector3Packed(GLItemsList items, PrimitiveType pt, Vector3[] vectors, Vector3 offsets, float mult, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector3Packed2(GLItemsList items, PrimitiveType pt, Vector3[] vectors, Vector3 offsets, float mult, IGLInstanceData id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
             vb.Allocate(sizeof(uint) * 2 * vectors.Length);
-            vb.Fill(vectors, offsets, mult);
+            vb.FillPacked2vec(vectors, offsets, mult);
             var va = items.NewArray();
             vb.Bind(0, vb.Positions[0], 8);
             va.AttributeI(0, 0, 2, VertexAttribType.UnsignedInt);

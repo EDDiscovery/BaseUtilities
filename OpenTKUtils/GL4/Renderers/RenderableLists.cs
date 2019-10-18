@@ -55,7 +55,6 @@ namespace OpenTKUtils.GL4
             foreach (var d in renderables)
             {
                 d.Key.Start();       // start the program
-                d.Key.StartAction?.Invoke(d.Key);       // optional bind
 
                 foreach (IGLRenderableItem g in d.Value.Values)
                 {

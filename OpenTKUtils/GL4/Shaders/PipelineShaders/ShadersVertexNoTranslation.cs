@@ -20,7 +20,10 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Vertex in vec4 in direct output
+    // No extra translation, direct move
+    // Requires:
+    //      location 0 vec4 positions
+    //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
 
     public class GLVertexShaderNoTranslation : GLShaderPipelineShadersBase
     {
@@ -50,7 +53,11 @@ void main(void)
         }
     }
 
-    // vertext in vec4 (0), colour in vec4 (1)
+    // No extra translation, direct move, but with colour
+    // Requires:
+    //      location 0 vec4 positions
+    //      location 1 vec4 color components
+    //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
 
     public class GLVertexShaderColourNoTranslation : GLShaderPipelineShadersBase
     {

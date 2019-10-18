@@ -135,6 +135,26 @@ namespace OpenTKUtils
             }
         }
 
+        static bool? LastPointSpriteEnable = null;
+
+        public static void DisablePointSprite()          // cache size for speed 
+        {
+            if (LastPointSpriteEnable == null || LastPointSpriteEnable == true)
+            {
+                GL.Disable(EnableCap.PointSprite);
+                LastPointSpriteEnable = false;
+            }
+        }
+
+        public static void EnablePointSprite()          // cache size for speed 
+        {
+            if (LastPointSpriteEnable == null || LastPointSpriteEnable == false)
+            {
+                GL.Enable(EnableCap.PointSprite);
+                LastPointSpriteEnable = true;
+            }
+        }
+
         static float? LastLineWidth = null;
 
         public static void LineWidth(float p)          // cache size for speed

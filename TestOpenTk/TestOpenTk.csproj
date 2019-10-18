@@ -66,11 +66,23 @@
     <Compile Include="ShaderTestBlendedShaderMultImages.designer.cs">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTestPointSprites.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestPointSprites.designer.cs">
+      <DependentUpon>ShaderTestPointSprites.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTestGeoTest1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ShaderTestGeoTest1.designer.cs">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestGalaxy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestGalaxy.designer.cs">
+      <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTestMain.cs">
       <SubType>Form</SubType>
@@ -118,8 +130,14 @@
     <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestPointSprites.resx">
+      <DependentUpon>ShaderTestPointSprites.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestGeoTest1.resx">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestGalaxy.resx">
+      <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestMain.resx">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>
@@ -196,6 +214,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\asteroid texture one side mipmap levels 0 to 8.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\lensflare_white2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\lensflare0.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\star_grey2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\lensflare_white40.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\lensflare_white64.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\star_grey64.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

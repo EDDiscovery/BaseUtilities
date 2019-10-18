@@ -46,6 +46,12 @@ namespace OpenTKUtils.GL4
             StartAction = sa;
         }
 
+        public GLShaderStandard(Action<IGLProgramShader> sa, Action<IGLProgramShader> fa) : this()
+        {
+            StartAction = sa;
+            FinishAction = fa;
+        }
+
         public void CompileLink( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null )
         {
             program = new OpenTKUtils.GL4.GLProgram();

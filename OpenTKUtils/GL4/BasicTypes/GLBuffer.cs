@@ -127,7 +127,7 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void Fill(Vector3[] vertices, Vector3 offsets, float mult)
+        public void FillPacked2vec(Vector3[] vertices, Vector3 offsets, float mult)
         {
             int p = 0;                                                                  // probably change to write directly into buffer..
             uint[] packeddata = new uint[vertices.Length * 2];

@@ -47,19 +47,24 @@ namespace OpenTKUtils.GL4
             shaders = new Dictionary<ShaderType, IGLPipelineShader>();
         }
 
-        public GLShaderPipeline(Action<IGLProgramShader> sa) : this()
+        public GLShaderPipeline(Action<IGLProgramShader> sa, Action<IGLProgramShader> fa = null ) : this()
         {
             StartAction = sa;
+            FinishAction = fa;
         }
 
-        public GLShaderPipeline(IGLPipelineShader vertex, IGLPipelineShader fragment) : this()
-        {
-            AddVertexFragment(vertex,fragment);
-        }
-
-        public GLShaderPipeline(IGLPipelineShader vertex) : this()
+        public GLShaderPipeline(IGLPipelineShader vertex, Action<IGLProgramShader> sa = null, Action<IGLProgramShader> fa = null) : this()
         {
             AddVertex(vertex);
+            StartAction = sa;
+            FinishAction = fa;
+        }
+
+        public GLShaderPipeline(IGLPipelineShader vertex, IGLPipelineShader fragment, Action<IGLProgramShader> sa = null, Action<IGLProgramShader> fa = null) : this()
+        {
+            AddVertexFragment(vertex,fragment);
+            StartAction = sa;
+            FinishAction = fa;
         }
 
         public void AddVertex(IGLPipelineShader p)

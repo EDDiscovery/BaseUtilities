@@ -65,7 +65,7 @@ namespace TestOpenTk
 
             Vector3[] stars = GLPointsFactory.RandomStars(10000, 12322, -200, 200, -100, 100, 20, -20);
 
-            rObjects.Add(items.Shader("STARS"), "Stars", GLRenderableItem.CreateVector3Packed(items,OpenTK.Graphics.OpenGL4.PrimitiveType.Points, 
+            rObjects.Add(items.Shader("STARS"), "Stars", GLRenderableItem.CreateVector3Packed2(items,OpenTK.Graphics.OpenGL4.PrimitiveType.Points, 
                                             stars, new Vector3(50000, 50000, 50000), 16));
 
             using (var bmp = BaseUtils.BitMapHelpers.DrawTextIntoAutoSizedBitmap("200,100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))

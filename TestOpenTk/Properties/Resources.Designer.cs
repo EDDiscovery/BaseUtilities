@@ -93,6 +93,26 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap lensflare_white40 {
+            get {
+                object obj = ResourceManager.GetObject("lensflare_white40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap lensflare_white64 {
+            get {
+                object obj = ResourceManager.GetObject("lensflare_white64", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Logo8bpp {
             get {
                 object obj = ResourceManager.GetObject("Logo8bpp", resourceCulture);
@@ -166,6 +186,16 @@ namespace TestOpenTk.Properties {
         internal static System.Drawing.Bitmap smile5300_256x256x8 {
             get {
                 object obj = ResourceManager.GetObject("smile5300_256x256x8", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap star_grey64 {
+            get {
+                object obj = ResourceManager.GetObject("star_grey64", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
