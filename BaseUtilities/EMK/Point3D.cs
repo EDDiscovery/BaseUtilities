@@ -52,24 +52,33 @@ namespace EMK.LightGeometry
 		/// <exception cref="IndexOutOfRangeException">Index must belong to [0;2].</exception>
 		public double this[int CoordinateIndex]
 		{
-			get { return _Coordinates[CoordinateIndex]; }
-			set	{ _Coordinates[CoordinateIndex] = value; }
+			get => _Coordinates[CoordinateIndex];
+			set => _Coordinates[CoordinateIndex] = value;
 		}
 
 		/// <summary>
 		/// Gets/Set X coordinate.
 		/// </summary>
-		public double X { set { _Coordinates[0] = value; } get { return _Coordinates[0]; } }
+		public double X {
+			set => _Coordinates[0] = value;
+			get => _Coordinates[0];
+		}
 
 		/// <summary>
 		/// Gets/Set Y coordinate.
 		/// </summary>
-		public double Y { set { _Coordinates[1] = value; } get { return _Coordinates[1]; } }
+		public double Y {
+			set => _Coordinates[1] = value;
+			get => _Coordinates[1];
+		}
 
 		/// <summary>
 		/// Gets/Set Z coordinate.
 		/// </summary>
-		public double Z { set { _Coordinates[2] = value; } get { return _Coordinates[2]; } }
+		public double Z {
+			set => _Coordinates[2] = value;
+			get => _Coordinates[2];
+		}
 
         /// <summary>
         /// Returns the distance between two points.
