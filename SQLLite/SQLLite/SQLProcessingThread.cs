@@ -16,37 +16,67 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SQLLiteExtensions
 {
     public class SQLProcessingThread<ConnectionType> where ConnectionType: IDisposable, new()
     {
-        private class Job : IDisposable
+        private static ConcurrentBag<Tuple<Task, string>> TasksRun = new ConcurrentBag<Tuple<Task, string>>();
+
+        private abstract class Job
         {
-            private ManualResetEventSlim WaitHandle;
-            private Action Action;
+            public abstract Task Exec();
+        }
 
-            public Job(Action action)
+        private class Job<T> : Job
+        {
+            private readonly ManualResetEventSlim JobCompletedEvent = new ManualResetEventSlim(false);
+            private Task<T> JobTask;
+            private readonly Func<Task<T>> Action;
+            private readonly string CallerStackTrace;
+
+            public Job(Func<Task<T>> action)
             {
-                this.Action = action;
-                this.WaitHandle = new ManualResetEventSlim(false);
+                CallerStackTrace = new StackTrace().ToString();
+                Action = action;
             }
 
-            public void Exec()
+            public override async Task Exec()
             {
-                Action.Invoke();
-                WaitHandle.Set();
+                try
+                {
+                    var task = Action.Invoke();
+                    TasksRun.Add(new Tuple<Task, string>(task, new StackTrace().ToString()));
+                    var res = await task;
+                    JobTask = Task.FromResult(res);
+                }
+                catch (Exception ex)
+                {
+                    JobTask = Task.FromException<T>(ex);
+                }
+
+                TasksRun.Add(new Tuple<Task, string>(JobTask, new StackTrace().ToString()));
+
+                JobCompletedEvent.Set();
             }
 
-            public void Wait(int timeout = 5000)
+            public T Wait()
             {
-                WaitHandle.Wait(timeout);
+                JobCompletedEvent.Wait();
+                return JobTask.Result;
             }
 
-            public void Dispose()
+            public async Task<T> WaitAsync()
             {
-                this.WaitHandle?.Dispose();
+                var waitjobbompleted = Task.Factory.StartNew(() => JobCompletedEvent.Wait());
+                TasksRun.Add(new Tuple<Task, string>(waitjobbompleted, new StackTrace().ToString()));
+                await waitjobbompleted;
+                return await JobTask;
             }
         }
 
@@ -54,39 +84,71 @@ namespace SQLLiteExtensions
         private Thread SqlThread;
         private ManualResetEvent StopRequestedEvent = new ManualResetEvent(false);
         private bool StopRequested = false;
-        private AutoResetEvent JobQueuedEvent = new AutoResetEvent(false);
+        private ManualResetEvent JobQueuedEvent = new ManualResetEvent(false);
         private ManualResetEvent StopCompleted = new ManualResetEvent(true);
 
         public long? SqlThreadId => SqlThread?.ManagedThreadId;
-        private int recursiondepth = 0;
 
         protected ConnectionType Connection;
 
         private void SqlThreadProc()    // SQL process thread
         {
-            using (Connection = new ConnectionType())   // hold connection over whole period.
+            try
             {
-                while (!StopRequested)
+                using (Connection = new ConnectionType())   // hold connection over whole period.
                 {
-                    switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }))
+                    var runningjobs = new Dictionary<Task, Job>();
+                    var jobscompleted = new List<KeyValuePair<Task, Job>>();
+                    var stoprequestedtask = Task.Run(() => StopRequestedEvent.WaitOne());
+                    var jobqueuedtask = Task.Run(() => JobQueuedEvent.WaitOne());
+
+                    while (!StopRequested)
                     {
-                        case 1:
-                            while (JobQueue.TryDequeue(out Job job))
+                        if (runningjobs.Count == 0)
+                        {
+                            WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent });
+                        }
+
+                        JobQueuedEvent.Reset();
+
+                        while (!StopRequested && JobQueue.TryDequeue(out Job job))
+                        {
+                            runningjobs[job.Exec()] = job;
+                        }
+
+                        // Using .GetAwaiter().GetResult() ensures async tasks are processed on this thread
+                        var tasktask = Task.WhenAny(runningjobs.Keys.Concat(new[] { stoprequestedtask, jobqueuedtask }));
+
+                        try
+                        {
+                            var task = tasktask.GetAwaiter().GetResult();
+                            task.Wait();
+
+                            if (runningjobs.TryGetValue(task, out Job job))
                             {
-                                System.Diagnostics.Debug.Assert(recursiondepth++ == 0); // we must not have a call to Job.Exec() calling back. Should never happen but check
-                                //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
-                                job.Exec();
-                                recursiondepth--;
+                                runningjobs.Remove(task);
+                                TasksRun.Add(new Tuple<Task, string>(task, new StackTrace().ToString()));
+                                jobscompleted.Add(new KeyValuePair<Task, Job>(task, job));
                             }
-                            break;
+                            else if (object.ReferenceEquals(task, jobqueuedtask))
+                            {
+                                jobqueuedtask = Task.Factory.StartNew(() => JobQueuedEvent.WaitOne());
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Trace.WriteLine($"Error executing task: {ex.ToString()}");
+                        }
                     }
                 }
             }
-
-            StopCompleted.Set();
+            finally
+            {
+                StopCompleted.Set();
+            }
         }
 
-        protected void Execute(Action action, int skipframes = 1, int warnthreshold = 500)  // in caller thread, queue to job queue, wait for complete
+        protected T Execute<T>(Func<Task<T>> action, int skipframes = 1, int warnthreshold = 500)  // in caller thread, queue to job queue, wait for complete
         {
             if (StopCompleted.WaitOne(0))
             {
@@ -95,21 +157,22 @@ namespace SQLLiteExtensions
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
+            var ret = default(T);
+
             if (Thread.CurrentThread.ManagedThreadId == SqlThread?.ManagedThreadId)     // if current thread is the SQL Job thread, uh-oh
             {
                 System.Diagnostics.Trace.WriteLine($"Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
-                action();
+                var task = action();
+                TasksRun.Add(new Tuple<Task, string>(task, new StackTrace().ToString()));
+                ret = task.Result;
             }
             else
             {
-                using (var job = new Job(action))       // make a new job and queue it
-                {
-                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Queue Job " + Thread.CurrentThread.Name);
-                    JobQueue.Enqueue(job);
-                    JobQueuedEvent.Set();           // kick the thread to execute it.
-                    job.Wait(Timeout.Infinite);     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
-                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Job finished " + sw.ElapsedMilliseconds + " " + Thread.CurrentThread.Name);
-                }
+                var job = new Job<T>(action);       // make a new job and queue it
+                                                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Queue Job " + Thread.CurrentThread.Name);
+                JobQueue.Enqueue(job);
+                JobQueuedEvent.Set();           // kick the thread to execute it.
+                ret = job.Wait();
             }
 
             if (sw.ElapsedMilliseconds > warnthreshold)
@@ -117,33 +180,33 @@ namespace SQLLiteExtensions
                 var trace = new System.Diagnostics.StackTrace(skipframes, true);
                 System.Diagnostics.Trace.WriteLine($"Database connection held for {sw.ElapsedMilliseconds}ms\n{trace.ToString()}");
             }
-        }
 
-        protected T Execute<T>(Func<T> func, int skipframes = 1, int warnthreshold = 500)
-        {
-            T ret = default(T);
-            Execute(() => { ret = func(); }, skipframes + 1, warnthreshold);
             return ret;
         }
 
-        private void ExecuteWithDatabaseInternal(Action<ConnectionType> action)
+        protected void Execute(Func<Task> func, int skipframes = 1, int warnthreshold = 500)
         {
-            action.Invoke(Connection);
+            Execute<object>(async () => { await func(); return null; }, skipframes + 1, warnthreshold);
+        }
+
+        public void ExecuteWithDatabase(Func<ConnectionType, Task> action, int warnthreshold = 500)
+        {
+            Execute(() => { action.Invoke(Connection); return Task.CompletedTask; }, warnthreshold: warnthreshold);
         }
 
         public void ExecuteWithDatabase(Action<ConnectionType> action, int warnthreshold = 500)
         {
-            Execute(() => action.Invoke(Connection), warnthreshold: warnthreshold);
+            Execute(() => { action.Invoke(Connection); return Task.CompletedTask; }, warnthreshold: warnthreshold);
+        }
+
+        public T ExecuteWithDatabase<T>(Func<ConnectionType, Task<T>> func, int warnthreshold = 500)
+        {
+            return Execute(() => func.Invoke(Connection), warnthreshold: warnthreshold);
         }
 
         public T ExecuteWithDatabase<T>(Func<ConnectionType, T> func, int warnthreshold = 500)
         {
-            return Execute(() =>
-            {
-                T ret = default(T);
-                ExecuteWithDatabaseInternal(db => ret = func(db));
-                return ret;
-            }, warnthreshold: warnthreshold);
+            return Execute(() => { var ret = func.Invoke(Connection); return Task.FromResult(ret); }, warnthreshold: warnthreshold);
         }
 
         public void Start(string threadname)

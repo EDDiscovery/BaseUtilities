@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Threading.Tasks;
 
 public static class SQLiteCommandExtensions
 {
@@ -90,6 +91,12 @@ public static class SQLiteCommandExtensions
     static public T ExecuteScalar<T>(this DbCommand cmd, T def)
     {
         Object res = cmd.ExecuteScalar();
+        return res == null ? def : (T)res;
+    }
+
+    static public async Task<T> ExecuteScalarAsync<T>(this DbCommand cmd, T def)
+    {
+        Object res = await cmd.ExecuteScalarAsync();
         return res == null ? def : (T)res;
     }
 
