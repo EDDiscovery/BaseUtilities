@@ -58,6 +58,11 @@ namespace BaseUtils
             return Request("GET", "", action, headers, handleException, timeout);
         }
 
+        protected async Task<ResponseData> RequestGetAsync(string action, NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
+        {
+            return await RequestAsync("GET", "", action, headers, handleException, timeout);
+        }
+
         // responsecallback is in TASK you must convert back to foreground
         protected void RequestGetAsync(string action, Action<ResponseData,Object> responsecallback, Object tag = null, NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
         {
@@ -71,6 +76,13 @@ namespace BaseUtils
         protected ResponseData Request(string method, string postData, string action, NameValueCollection headers, bool handleException,
                                         int timeout)
         {
+            return RequestAsync(method, postData, action, headers, handleException, timeout).GetAwaiter().GetResult();
+        }
+
+
+        protected async Task<ResponseData> RequestAsync(string method, string postData, string action, NameValueCollection headers, bool handleException,
+                                        int timeout)
+        {
             if (httpserveraddress == null || httpserveraddress.Length == 0)           // for debugging, set _serveraddress empty
             {
                 System.Diagnostics.Trace.WriteLine(method + action);
@@ -81,7 +93,7 @@ namespace BaseUtils
             {
                 try
                 {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + action);
+                    HttpWebRequest request = WebRequest.CreateHttp(httpserveraddress + action);
                     request.Method = method;
                     request.ContentType = MimeType;    //request.Headers.Add("Accept-Encoding", "gzip,deflate");
 
@@ -106,9 +118,9 @@ namespace BaseUtils
                     System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + action) + " Thread" + System.Threading.Thread.CurrentThread.Name);
                     WriteLog(method + " " + request.RequestUri, postData);
 
-                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                    HttpWebResponse response = (HttpWebResponse)(await request.GetResponseAsync());
 
-                    var data = getResponseData(response);
+                    var data = await getResponseDataAsync(response);
                     response.Close();
 
                     System.Diagnostics.Trace.WriteLine("..HTTP" + method + " Response " + data.StatusCode);
@@ -208,6 +220,19 @@ namespace BaseUtils
             var dataStream = response.GetResponseStream();
             StreamReader reader = new StreamReader(dataStream);
             var data = new ResponseData(response.StatusCode, reader.ReadToEnd(), response.Headers);
+            reader.Close();
+            dataStream.Close();
+            return data;
+        }
+
+        private async Task<ResponseData> getResponseDataAsync(HttpWebResponse response, bool? error = null)
+        {
+            if (response == null)
+                return new ResponseData(HttpStatusCode.NotFound);
+
+            var dataStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(dataStream);
+            var data = new ResponseData(response.StatusCode, await reader.ReadToEndAsync(), response.Headers);
             reader.Close();
             dataStream.Close();
             return data;
