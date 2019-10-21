@@ -62,24 +62,36 @@ namespace EMK.LightGeometry
         /// <exception cref="IndexOutOfRangeException">Illegal value for CoordinateIndex.</exception>
         public double this[int CoordinateIndex]
         {
-            get { return _Coordinates[CoordinateIndex]; }
-            set { _Coordinates[CoordinateIndex] = value; }
+            get => _Coordinates[CoordinateIndex];
+            set => _Coordinates[CoordinateIndex] = value;
         }
 
         /// <summary>
         /// Gets/Sets delta X value.
         /// </summary>
-        public double DX { set { _Coordinates[0] = value; } get { return _Coordinates[0]; } }
+        public double DX
+        {
+            set => _Coordinates[0] = value;
+            get => _Coordinates[0];
+        }
 
         /// <summary>
         /// Gets/Sets delta Y value.
         /// </summary>
-        public double DY { set { _Coordinates[1] = value; } get { return _Coordinates[1]; } }
+        public double DY
+        {
+            set => _Coordinates[1] = value;
+            get => _Coordinates[1];
+        }
 
         /// <summary>
         /// Gets/Sets delta Z value.
         /// </summary>
-        public double DZ { set { _Coordinates[2] = value; } get { return _Coordinates[2]; } }
+        public double DZ
+        {
+            set => _Coordinates[2] = value;
+            get => _Coordinates[2];
+        }
 
         /// <summary>
         /// Multiplication of a vector by a scalar value.
@@ -128,7 +140,7 @@ namespace EMK.LightGeometry
         /// <exception cref="InvalidOperationException">Vector's norm cannot be changed if it is 0.</exception>
         public double Norm
         {
-            get { return Math.Sqrt(SquareNorm); }
+            get => Math.Sqrt(SquareNorm);
             set
             {
                 double N = Norm;
@@ -181,13 +193,7 @@ namespace EMK.LightGeometry
             Z = z;
         }
 
-        public float LengthSquared
-        {
-            get
-            {
-                return X * X + Y * Y + Z * Z;
-            }
-        }
+        public float LengthSquared => X * X + Y * Y + Z * Z;
 
         public static Vector3 operator +(Vector3 a, Vector3 b)
         {
