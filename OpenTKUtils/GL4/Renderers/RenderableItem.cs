@@ -89,13 +89,13 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        // in 0 set up
-        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, GLBuffer vb, int pos = 0, IGLInstanceData id = null, int ic = 1)
+        // in 0 set up. Use a buffer setup, Must set up drawcount, or set to 0 and reset it later..
+        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, GLBuffer vb, int drawcount, int pos = 0, IGLInstanceData id = null, int ic = 1)
         {
             var va = items.NewArray();
             vb.Bind(0, pos, 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
-            return new GLRenderableItem(pt, 0, va, id, ic);
+            return new GLRenderableItem(pt, drawcount, va, id, ic);
         }
 
         // in 0,1 set up

@@ -35,6 +35,7 @@ namespace OpenTKUtils.GL4
             layout(std140, binding=0) uniform MatrixCalc
             {
                 mat4 ProjectionModelMatrix;
+                mat4 ProjectionMatrix;
                 vec4 TargetPosition;
                 vec4 EyePosition;
                 float EyeDistance;
@@ -51,6 +52,7 @@ namespace OpenTKUtils.GL4
 
             if (full)
             {
+                MapWrite(ref ptr, c.ProjectionMatrix);
                 MapWrite(ref ptr, c.TargetPosition, 0);
                 MapWrite(ref ptr, c.EyePosition, 0);
                 MapWrite(ref ptr, c.EyeDistance);

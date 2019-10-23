@@ -187,7 +187,7 @@ void main(void)
             rObjects.Add(items.Shader("Shader"), "T1", new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vertexes.Length, null, null, 1));
 
             //Unknown count at this point.. use another buffer for vec4s not a new one
-            redraw = GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vecoutbuffer);
+            redraw = GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, vecoutbuffer, 0);
 
             rObjects2.Add(items.Shader("ResultShader"), redraw);
 

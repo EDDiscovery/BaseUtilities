@@ -26,6 +26,7 @@ namespace OpenTKUtils.Common
         public Matrix4 ProjectionMatrix { get; private set; }
         public Matrix4 ProjectionModelMatrix { get; private set; }
 
+
         public float ZoomDistance { get; set; } = 1000F;       // distance that zoom=1 will be from the Position, in the direction of the camera.
         public float PerspectiveFarZDistance { get; set; } = 1000000.0f;        // perspective, set Z's for clipping
         public float PerspectiveNearZDistance { get; set; } = 1f;
@@ -74,8 +75,7 @@ namespace OpenTKUtils.Common
 
                 ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with up giving the rotation of the look
 
-                System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
-
+                //System.Diagnostics.Debug.WriteLine("... model matrix " + ModelMatrix);
                 // inveye rotation, if ever needed, would be : xrot = -(180f - cameraDir.X), yrot = cameraDir.Y
             }
             else

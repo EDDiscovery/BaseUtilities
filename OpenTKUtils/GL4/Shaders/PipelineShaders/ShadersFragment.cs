@@ -21,6 +21,8 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
     // Pipeline shader, Fixed Colour fragment shader
+    // Requires:
+    //      no inputs
 
     public class GLFragmentShaderFixedColour : GLShaderPipelineShadersBase
     {
@@ -47,7 +49,9 @@ void main(void)
         }
     }
 
-    // Pipeline shader, colour from Vec4 input
+    // Pipeline shader, Vertex shader colour pass to it
+    // Requires:
+    //      vs_color : vec4 of colour
 
     public class GLFragmentShaderColour : GLShaderPipelineShadersBase
     {
@@ -72,24 +76,25 @@ void main(void)
         }
     }
 
-    // Pipeline shaders for a 2D texture bound with 2D vertexes
+    // Pipeline shader for a 2D texture bound with 2D vertexes
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
+    //      tex binding 1 : textureObject : 2D texture
 
     public class GLFragmentShaderTexture : GLShaderPipelineShadersBase
     {
-        const int BindingPoint = 1;
-
         public string Code()
         {
             return
 @"
 #version 450 core
-layout (location=0) in vec2 vs_textureCoordinate2;
+layout (location=0) in vec2 vs_textureCoordinate;
 layout (binding=1) uniform sampler2D textureObject;
 out vec4 color;
 
 void main(void)
 {
-    color = texture(textureObject, vs_textureCoordinate2);       // vs_texture coords normalised 0 to 1.0f
+    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
         }
@@ -107,11 +112,13 @@ void main(void)
     }
 
     // Pipeline shader, 2d texture array (0,1), 2d o-ords, with blend between them via a uniform
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
+    //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
+    //      location 30 : uniform float blend between the two texture
 
     public class GLFragmentShader2DCommonBlend : GLShaderPipelineShadersBase
     {
-        const int BindingPoint = 1;
-
         public string Code()
         {
             return
@@ -145,6 +152,4 @@ void main(void)
             OpenTKUtils.GLStatics.Check();
         }
     }
-
-
 }

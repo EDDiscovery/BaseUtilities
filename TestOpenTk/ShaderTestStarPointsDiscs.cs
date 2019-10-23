@@ -16,6 +16,8 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
+    // demonstrates packed structure and sizing of points
+
     public partial class ShaderTestStarPointsDiscs : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
@@ -39,6 +41,91 @@ namespace TestOpenTk
 
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
+
+        public class GLStarPoints : GLShaderStandard
+        {
+            public static string StarColours =
+    @"
+    const ivec3 starcolours[] = ivec3[] (
+        ivec3(144,166,255),
+        ivec3(148,170,255)
+);
+";
+
+            string vertpos =
+            @"
+#version 450 core
+" + GLMatrixCalcUniformBlock.GLSL
+      + StarColours + @"
+layout (location = 0) in uvec2 positionpacked;
+
+out flat ivec3 i_color;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+float rand1(float n)
+{
+return fract(sin(n) * 43758.5453123);
+}
+
+void main(void)
+{
+    uint xcoord = positionpacked.x & 0x1fffff;
+    uint ycoord = positionpacked.y & 0x1fffff;
+    float x = float(xcoord)/16.0-50000;
+    float y = float(ycoord)/16.0-50000;
+    uint zcoord = positionpacked.x >> 21;
+    zcoord = zcoord | ( ((positionpacked.y >> 21) & 0x7ff) << 11);
+    float z = float(zcoord)/16.0-50000;
+
+    vec4 position = vec4( x, y, z, 1.0f);
+
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
+
+    float distance = 50-pow(distance(mc.EyePosition,vec4(x,y,z,0)),2)/20;
+
+    gl_PointSize = clamp(distance,1.0,63.0);
+    i_color = ivec3(128,0,0);
+}
+";
+
+
+            string frag =
+
+    @"
+#version 450 core
+
+in flat ivec3 i_color;
+out vec4 color;
+
+void main(void)
+{
+    color = vec4( float(i_color.x)/256.0, float(i_color.y)/256.0, float(i_color.z)/256.0,1);
+}
+";
+
+            public GLStarPoints()      // give the number of images to blend over..
+            {
+                CompileLink(vertex: vertpos, frag: frag);
+            }
+
+            public override void Start()
+            {
+                base.Start();
+                OpenTKUtils.GLStatics.PointSizeByProgram();
+                OpenTKUtils.GLStatics.Check();
+            }
+
+            public override void Finish()
+            {
+                base.Finish();
+            }
+        }
+
 
         protected override void OnLoad(EventArgs e)
         {

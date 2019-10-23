@@ -1,7 +1,7 @@
 ﻿Vertex
 
 0 = vec4 positions
-1 = vec4 colour | vec2 texcoord
+1 = vec4 colour | vec2 texcoord | model positions
 4 = mat4 transforms
 
 Textures
@@ -10,6 +10,7 @@ Textures
 
 Uniform blocks
 0 = MatrixCalc - see the MatrixCalcUniformBlock.cs
+		
 
 Uniforms
 

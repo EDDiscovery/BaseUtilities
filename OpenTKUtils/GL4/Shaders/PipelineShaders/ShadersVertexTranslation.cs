@@ -20,7 +20,14 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Vector4 in (0), mat4 transform in (4), colour based on instance id.
+    // Pipeline shader, Translation
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 4 : transform: mat4 array of transforms
+    // Out:
+    //      vs_color is based on instance ID mostly for debugging
+    //      gl_Position
 
     public class GLVertexShaderMatrixTranslation : GLShaderPipelineShadersBase
     {
@@ -55,7 +62,15 @@ void main(void)
         }
     }
 
-    // Vector4 in (0), mat4 transform in (4), colour based ontexture vec2 (1)
+    // Pipeline shader, Translation, Texture
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ordinates
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 4 : transform: mat4 array of transforms
+    // Out:
+    //      vs_textureCoordinate
+    //      gl_Position
 
     public class GLVertexShaderTextureMatrixTranslation : GLShaderPipelineShadersBase
     {
@@ -91,7 +106,16 @@ void main(void)
         }
     }
 
-    // Vector4 in (0), colour in vec4 (1), uniform 22 and 23 hold object and common transforms. 23 set up by this class
+    // Pipeline shader, Translation, Color, Common transform, Object transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec4 colours of vertexs
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 array of transforms
+    //      uniform 23 : commontransform: mat4 array of transforms
+    // Out:
+    //      gl_Position
+    //      vs_textureCoordinate
 
     public class GLVertexShaderColorTransformWithCommonTransform : GLShaderPipelineShadersBase
     {
@@ -125,8 +149,6 @@ void main(void)
 ";
         }
 
-        // with transform, object needs to pass in uniform 22 the transform
-
         public GLVertexShaderColorTransformWithCommonTransform()
         {
             Transform = new GLObjectDataTranslationRotation();
@@ -142,7 +164,16 @@ void main(void)
         }
     }
 
-    // Vector4 in (0), texture co-ord vec2(1), uniform 22 and 23 hold object and common transforms. 23 set up by this class
+    // Pipeline shader, Translation, Texture, Common transform, Object transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ords
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 array of transforms
+    //      uniform 23 : commontransform: mat4 array of transforms
+    // Out:
+    //      gl_Position
+    //      vs_textureCoordinate
 
     public class GLVertexShaderTextureTransformWithCommonTransform : GLShaderPipelineShadersBase
     {
@@ -176,8 +207,6 @@ void main(void)
 ";
         }
 
-        // with transform, object needs to pass in uniform 22 the transform
-
         public GLVertexShaderTextureTransformWithCommonTransform()
         {
             Transform = new GLObjectDataTranslationRotation();
@@ -192,8 +221,5 @@ void main(void)
             OpenTKUtils.GLStatics.Check();
         }
     }
-
-
-
 }
 

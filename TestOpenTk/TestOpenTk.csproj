@@ -66,6 +66,18 @@
     <Compile Include="ShaderTestBlendedShaderMultImages.designer.cs">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTestMultiImage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestMultiImage.designer.cs">
+      <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestVolumetric.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestVolumetric.designer.cs">
+      <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTestPointSprites.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -129,6 +141,12 @@
     </Compile>
     <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestMultiImage.resx">
+      <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestVolumetric.resx">
+      <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestPointSprites.resx">
       <DependentUpon>ShaderTestPointSprites.cs</DependentUpon>
@@ -232,6 +250,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\star_grey64.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\heightmap7.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

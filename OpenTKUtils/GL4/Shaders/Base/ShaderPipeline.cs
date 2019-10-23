@@ -35,6 +35,7 @@ namespace OpenTKUtils.GL4
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
         public Action<IGLProgramShader> StartAction { get; set; }
         public Action<IGLProgramShader> FinishAction { get; set; }
+        public Tuple<IGLTexture, int>[] Textures { get; set; }                            // set of textures to bind
 
         public IGLShader Get(ShaderType t) { return shaders[t]; }
 
@@ -88,6 +89,12 @@ namespace OpenTKUtils.GL4
         {
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
             GL.BindProgramPipeline(pipelineid);
+
+            if (Textures != null)
+            {
+                foreach (var t in Textures)
+                    t.Item1.Bind(t.Item2);
+            }
 
             foreach (var x in shaders)                             // let any programs do any special set up
                 x.Value.Start();

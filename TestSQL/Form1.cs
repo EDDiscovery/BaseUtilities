@@ -20,7 +20,24 @@ namespace TestSQL
         {
             InitializeComponent();
 
-            bool deletedb = false;
+            {
+                for (int x = -40000; x < 40000; x += 1)
+                {
+                    for (int z = -25000; z < 70000; z += 1)
+                    {
+                        int gridid = GridId.Id((double)x, (double)z);
+                        int gridid2 = GridId.IdInt(x, z);
+                        int gridid3 = GridId.Id3((double)x, (double)z);
+                        if ( gridid != gridid2 || gridid != gridid3 )
+                            System.Diagnostics.Debug.WriteLine("Grid " + x + "," + z + " = " + gridid + " : " + gridid2);
+                    }
+                    System.Diagnostics.Debug.WriteLine("Grid " + x );
+                }
+            }
+
+
+
+                        bool deletedb = false;
 
             string edsminfile = @"c:\code\edsm\edsmsystems.10e6.json";
             bool reloadjson = false;

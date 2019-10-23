@@ -105,7 +105,6 @@ namespace OpenTKUtils.GL4
             }
 
             Texture?.Bind(TextureBind);
-
         }
     }
 

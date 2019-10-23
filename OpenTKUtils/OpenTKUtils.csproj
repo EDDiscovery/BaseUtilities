@@ -76,7 +76,6 @@
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersColourObjects.cs" />
-    <Compile Include="GL4\Shaders\Shaders\ShadersStarPoints.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />

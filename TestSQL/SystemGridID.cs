@@ -58,6 +58,16 @@ namespace EliteDangerousCore.DB
 
         private const int ZMult = 100;
 
+        public static int Id3(double x, double z)
+        {
+            x = Math.Max(xleft, x);     // in case x/z are stupidly large, we need to limit
+            x = Math.Min(xright, x);
+            z = Math.Max(zbot, z);
+            z = Math.Min(ztop, z);
+            return IdInt((int)x, (int)z);
+        }
+
+
         public static int Id(double x, double z)
         {
             x = Math.Min(Math.Max(x - xleft, 0), xright - xleft);       // 40500
@@ -67,7 +77,18 @@ namespace EliteDangerousCore.DB
             return compresstablex[(int)x] + ZMult * compresstablez[(int)z];
         }
 
-        public static int Id(int x128, int z128)
+        public static int IdInt(int x, int z)
+        {
+            x = Math.Max(xleft, x);
+            x = Math.Min(xright, x);
+            x = (x - xleft) / GridSize;
+            z = Math.Max(zbot, z);
+            z = Math.Min(ztop, z);
+            z = (z - zbot) / GridSize;
+            return compresstablex[x] + ZMult * compresstablez[z];
+        }
+
+        public static int Id128(int x128, int z128)
         {
             return Id((double)x128 / 128.0, (double)z128 / 128.0);
         }

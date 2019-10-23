@@ -16,6 +16,8 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
+    // demonstrates packed data
+
     public partial class ShaderTestStarPoints : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();

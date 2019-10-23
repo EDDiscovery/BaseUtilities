@@ -53,6 +53,41 @@ void main(void)
         }
     }
 
+    // No modelview, just project view. Co-ords are in model view values
+    // Requires:
+    //      location 0 vec4 positions
+    //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
+
+    public class GLVertexShaderProjection: GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+" + GLMatrixCalcUniformBlock.GLSL + @"
+layout (location = 0) in vec4 position;
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+void main(void)
+{
+	gl_Position = mc.ProjectionMatrix * position;        // order important
+}
+";
+        }
+
+        public GLVertexShaderProjection()
+        {
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+        }
+    }
+
+
+
     // No extra translation, direct move, but with colour
     // Requires:
     //      location 0 vec4 positions

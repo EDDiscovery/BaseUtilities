@@ -83,6 +83,16 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap galheightmap7 {
+            get {
+                object obj = ResourceManager.GetObject("galheightmap7", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap golden {
             get {
                 object obj = ResourceManager.GetObject("golden", resourceCulture);

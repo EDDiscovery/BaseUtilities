@@ -17,13 +17,13 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestGalaxy : Form
+    public partial class ShaderTestMultiImage : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestGalaxy()
+        public ShaderTestMultiImage()
         {
             InitializeComponent();
 
@@ -41,49 +41,8 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
+        // TODO - demonstrate a 2d image stack and drawing them to different locations, rotations, using instancing
 
-        public class GLGalShader : GLShaderStandard
-        {
-            string vert =
-@"
-#version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
-layout (location = 0) in vec4 position;
-out gl_PerVertex {
-        vec4 gl_Position;
-        float gl_PointSize;
-        float gl_ClipDistance[];
-    };
-
-layout(location = 1) in vec2 texco;
-
-layout(location = 0) out vec2 vs_textureCoordinate;
-
-layout (location = 22) uniform  mat4 transform;
-
-void main(void)
-{
-	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
-    vs_textureCoordinate = texco;
-}
-";
-            string frag =
-@"
-#version 450 core
-layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2D textureObject;
-out vec4 color;
-
-void main(void)
-{
-    color = texture(textureObject, vs_textureCoordinate) * vec4(1,1,1,0.8);     
-}
-";
-            public GLGalShader() : base()
-            {
-                CompileLink(vert, frag: frag);
-            }
-        }
 
         protected override void OnLoad(EventArgs e)
         {
@@ -101,24 +60,6 @@ void main(void)
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
 
-            var ss = new GLGalShader();
-            ss.StartAction = a => { GLStatics.CullFace(false); };
-            ss.FinishAction = a => { GLStatics.DefaultCullFace(); };
-            items.Add("TEX-NC", ss);
-
-            items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
-
-            // thoughts.
-            // the galmap, extended into 3d, with a function giving the opacity of the bit
-            // test this with a set of planes in normal transform above
-
-            // use the volumetric system
-            // take a bounding box (-100,100,-20,20,-100,100)
-            // rotate to model view
-            // find polys to map to bounding box (pass in modelview vertexes)
-            // find texture co-ords at vertex edges
-            // pass to shader drawing triangles.
-            
             #region coloured lines
 
             rObjects.Add(items.Shader("COS-1L"),    // horizontal
@@ -133,12 +74,6 @@ void main(void)
                                GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
                                                          new Color4[] { Color.Gray })
                                );
-
-            rObjects.Add(items.Shader("TEX-NC"),
-                        GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                        GLShapeObjectFactory.CreateQuad(200.0f, 200.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("gal"), new Vector3(0, 0, 0))
-                        ));
 
 
             #endregion

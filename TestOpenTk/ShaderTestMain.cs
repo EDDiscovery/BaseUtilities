@@ -389,11 +389,16 @@ void main(void)
 
 
             #region Tesselation
-            items.Add("TESx1", new GLTesselationShaderSinewave(20,0.5f,2f));
+
+            var shdrtesssine = new GLTesselationShaderSinewave(20, 0.5f, 2f);
+            shdrtesssine.Textures = new Tuple<IGLTexture, int>[1];                              // demonstrate using the shader textures to bind
+            shdrtesssine.Textures[0] = new Tuple<IGLTexture, int>(items.Tex("logo8bpp"), 1);
+            items.Add("TESx1", shdrtesssine);
             rObjects.Add(items.Shader("TESx1"), "O-TES1",
                 GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Patches,
                                     GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f),
-                                    new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3(-90,0,0))
+//                                    new GLObjectDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3(-90,0,0))
+                                    new GLObjectDataTranslationRotation(new Vector3(12, 0, 0), new Vector3(-90,0,0))
                                     ));
 
             #endregion
