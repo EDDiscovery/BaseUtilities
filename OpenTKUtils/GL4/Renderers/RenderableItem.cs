@@ -30,30 +30,31 @@ namespace OpenTKUtils.GL4
     // It is rendered by render, giving the instance count
 
     public class GLRenderableItem : IGLRenderableItem
-    { 
+    {
         public int DrawCount { get; set; }                                  // Draw count
         public int InstanceCount { get; set; }                              // Instances
         public PrimitiveType PrimitiveType { get; set; }                    // Draw type
         public IGLVertexArray VertexArray { get; set; }                     // may be null - if so no vertex data. Does not own
-        public IGLInstanceData InstanceData { get; set; }                   // may be null - no instance data. Does not own.
+        public IGLInstanceControl InstanceControl { get; set; }                   // may be null - no instance data. Does not own.
 
-        public GLRenderableItem(PrimitiveType pt, int drawcount, IGLVertexArray va, IGLInstanceData id = null, int ic = 1)
+        public GLRenderableItem(PrimitiveType pt, int drawcount, IGLVertexArray va, IGLInstanceControl id = null, int ic = 1)
         {
             PrimitiveType = pt;
             DrawCount = drawcount;
             VertexArray = va;
-            InstanceData = id;
+            InstanceControl = id;
             InstanceCount = ic;
         }
 
         public void Bind(IGLProgramShader shader, Common.MatrixCalc c)      // called by Render() to bind data to GL, vertex and InstanceData
         {
             VertexArray?.Bind();
-            InstanceData?.Bind(shader,c);
+            InstanceControl?.Bind(shader,this,c);
         }
 
         public void Render()                                                // called by Render() to draw the item.  Note DrawArrayInstanced
         {
+            System.Diagnostics.Debug.WriteLine("Render " + PrimitiveType + " " + DrawCount + " " + InstanceCount);
             GL.DrawArraysInstanced(PrimitiveType, 0, DrawCount,InstanceCount);
         }
 
@@ -61,7 +62,7 @@ namespace OpenTKUtils.GL4
 
         // Vector4, Color4, optional instance data and count
 
-        public static GLRenderableItem CreateVector4Color4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Color4[] colours, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4Color4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Color4[] colours, IGLInstanceControl id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
             vb.Allocate(GLBuffer.Vec4size * vectors.Length * 2);
@@ -77,7 +78,7 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0 set up
-        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, IGLInstanceControl id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
             vb.Allocate(GLBuffer.Vec4size * vectors.Length);
@@ -90,7 +91,7 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0 set up. Use a buffer setup, Must set up drawcount, or set to 0 and reset it later..
-        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, GLBuffer vb, int drawcount, int pos = 0, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4(GLItemsList items, PrimitiveType pt, GLBuffer vb, int drawcount, int pos = 0, IGLInstanceControl id = null, int ic = 1)
         {
             var va = items.NewArray();
             vb.Bind(0, pos, 16);
@@ -99,7 +100,7 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0,1 set up
-        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Vector2[] coords, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Vector2[] coords, IGLInstanceControl id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
             vb.Allocate(GLBuffer.Vec4size * vectors.Length + GLBuffer.Vec2size * coords.Length);
@@ -114,7 +115,7 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, PrimitiveType pt, Tuple<Vector4[], Vector2[]> vectors, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, PrimitiveType pt, Tuple<Vector4[], Vector2[]> vectors, IGLInstanceControl id = null, int ic = 1)
         {
             return CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic);
         }
@@ -122,7 +123,7 @@ namespace OpenTKUtils.GL4
         public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, PrimitiveType pt,
                                                                    Tuple<Vector4[],Vector2[]> pos, 
                                                                     Vector4[] instanceposition,
-                                                                   IGLInstanceData id = null, int ic = 1,
+                                                                   IGLInstanceControl id = null, int ic = 1,
                                                                    bool separbuf = false, int divisorinstance = 1)
         {
             return CreateVector4Vector2Vector4(items, pt, pos.Item1, pos.Item2, instanceposition, id, ic, separbuf, divisorinstance);
@@ -131,7 +132,7 @@ namespace OpenTKUtils.GL4
         // in 0,1,4 set up.  if separbuffer = true and instanceposition is null, it makes a buffer for you to fill up externally.
         public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, PrimitiveType pt,
                                                                    Vector4[] vectors, Vector2[] coords, Vector4[] instanceposition,
-                                                                   IGLInstanceData id = null, int ic = 1,
+                                                                   IGLInstanceControl id = null, int ic = 1,
                                                                    bool separbuf = false, int divisorinstance = 1)
         {
             var va = items.NewArray();
@@ -173,7 +174,7 @@ namespace OpenTKUtils.GL4
         // in 0,1,4-7 set up.  if separbuffer = true and instancematrix is null, it makes a buffer for you to fill up externally.
         public static GLRenderableItem CreateVector4Vector2Matrix4(GLItemsList items, PrimitiveType pt, 
                                                                     Vector4[] vectors, Vector2[] coords, Matrix4[] instancematrix, 
-                                                                    IGLInstanceData id = null, int ic = 1, 
+                                                                    IGLInstanceControl id = null, int ic = 1, 
                                                                     bool separbuf = false, int matrixdivisor = 1)
         {
             var va = items.NewArray();
@@ -208,14 +209,14 @@ namespace OpenTKUtils.GL4
             vbuf1.Bind(1, vbuf1.Positions[1], 8);
             va.Attribute(1, 1, 2, VertexAttribType.Float);      // bp 1 at 1
 
-            va.MatrixAttribute(2, 4);                                    // bp 2 at 4-7
+            va.MatrixAttribute(2, 4);                           // bp 2 at 4-7
             vbuf2.Bind(2, instancematrix != null ? vbuf2.Positions[posi]: 0, 64, matrixdivisor);     // use a binding 
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
         // in 0,4-7 set up
-        public static GLRenderableItem CreateVector4Matrix4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Matrix4[] matrix, IGLInstanceData id = null, int ic = 1, int matrixdivisor=1)
+        public static GLRenderableItem CreateVector4Matrix4(GLItemsList items, PrimitiveType pt, Vector4[] vectors, Matrix4[] matrix, IGLInstanceControl id = null, int ic = 1, int matrixdivisor=1)
         {
             var vb = items.NewBuffer();
 
@@ -226,16 +227,16 @@ namespace OpenTKUtils.GL4
             var va = items.NewArray();
 
             vb.Bind(0, vb.Positions[0], 16);
-            va.Attribute(0, 0, 4, VertexAttribType.Float);      // bp 0 at 0/1 
+            va.Attribute(0, 0, 4, VertexAttribType.Float);      // bp 0 at attrib 0
 
             vb.Bind(2, vb.Positions[1], 64, matrixdivisor);     // use a binding 
-            va.MatrixAttribute(2, 4);                    // bp 2 at 4-7
+            va.MatrixAttribute(2, 4);                    // bp 2 at attribs 4-7
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
         // in 0 set up
-        public static GLRenderableItem CreateVector3Packed2(GLItemsList items, PrimitiveType pt, Vector3[] vectors, Vector3 offsets, float mult, IGLInstanceData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector3Packed2(GLItemsList items, PrimitiveType pt, Vector3[] vectors, Vector3 offsets, float mult, IGLInstanceControl id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
             vb.Allocate(sizeof(uint) * 2 * vectors.Length);

@@ -1,19 +1,14 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
-using OpenTKUtils.GL4;
+using OpenTKUtils;
 using OpenTKUtils.Common;
+using OpenTKUtils.GL4;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenTKUtils;
+
+// Demonstrate the volumetric calculations needed to compute a plane facing the user inside a bounding box.
 
 namespace TestOpenTk
 {
@@ -41,50 +36,6 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
-
-        public class GLGalShader : GLShaderStandard
-        {
-            string vert =
-@"
-#version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
-layout (location = 0) in vec4 position;
-out gl_PerVertex {
-        vec4 gl_Position;
-        float gl_PointSize;
-        float gl_ClipDistance[];
-    };
-
-layout(location = 1) in vec2 texco;
-
-layout(location = 0) out vec2 vs_textureCoordinate;
-
-layout (location = 22) uniform  mat4 transform;
-
-void main(void)
-{
-	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
-    vs_textureCoordinate = texco;
-}
-";
-            string frag =
-@"
-#version 450 core
-layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2D textureObject;
-out vec4 color;
-
-void main(void)
-{
-    color = texture(textureObject, vs_textureCoordinate) * vec4(1,1,1,0.8);     
-}
-";
-            public GLGalShader() : base()
-            {
-                CompileLink(vert, frag: frag);
-            }
-        }
-
         public class GLFixedShader : GLShaderPipeline
         {
             public GLFixedShader(Color c, Action<IGLProgramShader> action = null) : base(action)
@@ -101,8 +52,6 @@ void main(void)
             }
         }
 
-
-
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -110,7 +59,6 @@ void main(void)
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
-            //gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(90,0,0), 1F);
 
             gl3dcontroller.TravelSpeed = (ms) =>
@@ -122,12 +70,7 @@ void main(void)
             items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
             items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple, (a) => { GLStatics.LineWidth(1); }));
             items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow, (a) => { GLStatics.PointSize(10); }));
-            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.Blue, (a) => { GLStatics.PointSize(20); }));
-
-            var ss = new GLGalShader();
-            ss.StartAction = a => { GLStatics.CullFace(false); };
-            ss.FinishAction = a => { GLStatics.DefaultCullFace(); };
-            items.Add("TEX-NC", ss);
+            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue), (a) => { GLStatics.PointSize(20); }));
 
             items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
 
@@ -144,12 +87,6 @@ void main(void)
                                GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
                                                          new Color4[] { Color.Gray })
                                );
-
-            rObjects.Add(items.Shader("TEX-NC"),
-                        GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                        GLShapeObjectFactory.CreateQuad(10.0f, 10.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("gal"), new Vector3(20, 0, -10))
-                        ));
 
             int hsize = 10, vsize = 5, zsize = 10;
             boundingbox = new Vector4[]
@@ -223,8 +160,6 @@ void main(void)
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
 
-            // modelmatrix.camerapos.z = camera z
-
             Vector4[] modelboundingbox = boundingbox.Transform(gl3dcontroller.MatrixCalc.ModelMatrix);
 
             for (int i = 0; i < boundingbox.Length; i++)
@@ -262,6 +197,8 @@ void main(void)
                 modelboundingbox[1].FindVectorFromZ(modelboundingbox[5], ref intercepts, ref count, zpoint);
                 modelboundingbox[2].FindVectorFromZ(modelboundingbox[6], ref intercepts, ref count, zpoint);
                 modelboundingbox[3].FindVectorFromZ(modelboundingbox[7], ref intercepts, ref count, zpoint);
+
+                // texturecoords can be worked out by zpercent and knowing its direction (x,y,z)..
 
                 if (count>=3)
                 {
@@ -308,39 +245,11 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e )
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboard(true);
             if ( cdmt.AnythingChanged )
                 gl3dcontroller.Redraw();
         }
-
-        private void OtherKeys( BaseUtils.KeyboardState kb )
-        {
-            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
-            {
-                gl3dcontroller.CameraLookAt(new Vector3(0, 0, 0), 1, 2);
-            }
-
-            if (kb.IsPressedRemove(Keys.F2, BaseUtils.KeyboardState.ShiftState.None))
-            {
-                gl3dcontroller.CameraLookAt(new Vector3(4, 0, 0), 1, 2);
-            }
-
-            if (kb.IsPressedRemove(Keys.F3, BaseUtils.KeyboardState.ShiftState.None))
-            {
-                gl3dcontroller.CameraLookAt(new Vector3(10, 0, -10), 1, 2);
-            }
-
-            if (kb.IsPressedRemove(Keys.F4, BaseUtils.KeyboardState.ShiftState.None))
-            {
-                gl3dcontroller.CameraLookAt(new Vector3(50, 0, 50), 1, 2);
-            }
-
-        }
-
     }
-
-
-
 }
 
 

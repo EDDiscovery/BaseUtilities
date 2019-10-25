@@ -458,25 +458,25 @@ void main(void)
             float degreesd4 = ((float)time / 20000.0f * 360.0f) % 360f;
             float zeroone = (degrees >= 180) ? (1.0f - (degrees - 180.0f) / 180.0f) : (degrees / 180f);
 
-            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).XRotDegrees = degrees;
-            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).ZRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceControl)).XRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceControl)).ZRotDegrees = degrees;
 
             //((GLObjectDataTranslationRotation)(rObjects["woodbox"].InstanceData)).Translate(new Vector3(0.01f, 0.01f, 0));
-            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).YRotDegrees = degrees;
-            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceData)).ZRotDegrees = degreesd2;
+            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceControl)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["EDDCube"].InstanceControl)).ZRotDegrees = degreesd2;
 
-            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).XRotDegrees = -degrees;
-            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceData)).YRotDegrees = degrees;
-            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).YRotDegrees = degrees;
-            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceData)).ZRotDegrees = -degreesd2;
-            ((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceData)).YRotDegrees = degreesd4;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceControl)).XRotDegrees = -degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere3"].InstanceControl)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceControl)).YRotDegrees = degrees;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceControl)).ZRotDegrees = -degreesd2;
+            ((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceControl)).YRotDegrees = degreesd4;
 
             ((GLVertexShaderTextureTransformWithCommonTransform)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
             ((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
             items.SB("SB6").Write(zeroone, 4, true);
 
-            ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceData)).Position = gl3dcontroller.Pos.Current;
+            ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceControl)).Position = gl3dcontroller.Pos.Current;
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 

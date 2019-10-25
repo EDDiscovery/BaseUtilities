@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using BaseUtils;
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
@@ -44,9 +46,20 @@ namespace OpenTKUtils.GL4
             shaders.Add(s);
         }
 
-        public string Compile( ShaderType t, string code )
+        public string Compile( ShaderType t, string codeorfile )        // codeorfile - either code or Resourcename.filename.glsl
         {
             GLShader shader = new GLShader(t);
+
+            string code;
+
+            if (codeorfile.Contains(".glsl") && !codeorfile.Contains("#version"))        // .glsl and not #version in it.. its a assembly name
+            {
+                code = BaseUtils.ResourceHelpers.GetResourceAsString(codeorfile);
+                System.Diagnostics.Debug.Assert(code != null, "Resource File " + codeorfile + " not found");
+            }
+            else
+                code = codeorfile;
+
             string ret = shader.Compile(code);
 
             if (ret == null)

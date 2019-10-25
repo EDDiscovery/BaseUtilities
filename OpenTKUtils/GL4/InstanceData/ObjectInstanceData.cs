@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     // optional Lookat to look at viewer
     // optional texture bind
 
-    public class GLObjectDataTranslationRotation : IGLInstanceData
+    public class GLObjectDataTranslationRotation : IGLInstanceControl
     {
         public int LookAtUniform = 21;    
         public int TransformUniform = 22;  
@@ -90,7 +90,7 @@ namespace OpenTKUtils.GL4
             System.Diagnostics.Debug.WriteLine("Transform " + transform);
         }
 
-        public virtual void Bind(IGLProgramShader shader, Common.MatrixCalc c)
+        public virtual void Bind(IGLProgramShader shader, IGLRenderableItem ri, Common.MatrixCalc c)
         {
             GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, TransformUniform, false, ref transform);
 

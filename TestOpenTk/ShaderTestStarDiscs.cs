@@ -331,7 +331,7 @@ void main(void)
                 GL.ProgramUniform1(vid, 13, blackdeepness);
                 GL.ProgramUniform1(vid, 14, concentrationequator);
 
-                ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+                ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceControl)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
 
                 var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
                 stellarsurfaceshader.TimeDeltaSpots = zeroone500s;

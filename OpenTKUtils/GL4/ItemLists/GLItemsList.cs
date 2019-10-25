@@ -31,17 +31,13 @@ namespace OpenTKUtils.GL4
             return items.ContainsKey(name);
         }
 
+        // Add existing items
+
         public IGLTexture Add(string name, IGLTexture disp)
         {
             items.Add(name, disp);
             return disp;
         }
-
-        public IGLTexture Tex(string name)
-        {
-            return (IGLTexture)items[name];
-        }
-
 
         public IGLProgramShader Add(string name, IGLProgramShader disp)
         {
@@ -49,9 +45,10 @@ namespace OpenTKUtils.GL4
             return disp;
         }
 
-        public IGLProgramShader Shader(string name)
+        public GLVertexArray Add(string name, GLVertexArray disp)
         {
-            return (IGLProgramShader)items[name];
+            items.Add(name, disp);
+            return disp;
         }
 
         public GLUniformBlock Add(string name, GLUniformBlock disp)
@@ -60,20 +57,16 @@ namespace OpenTKUtils.GL4
             return disp;
         }
 
-        public GLUniformBlock UB(string name)
-        {
-            return (GLUniformBlock)items[name];
-        }
-
         public GLStorageBlock Add(string name, GLStorageBlock disp)
         {
             items.Add(name, disp);
             return disp;
         }
 
-        public GLStorageBlock SB(string name)
+        public GLAtomicBlock Add(string name, GLAtomicBlock disp)
         {
-            return (GLStorageBlock)items[name];
+            items.Add(name, disp);
+            return disp;
         }
 
         public GLBuffer Add(string name, GLBuffer disp)
@@ -82,14 +75,36 @@ namespace OpenTKUtils.GL4
             return disp;
         }
 
-        public GLBuffer NewBuffer(string name = null)
-        {
-            if (name == null)
-                name = "Unnamed_" + (unnamed++);
+        // Get existing items
 
-            GLBuffer b = new GLBuffer();
-            items[name] = b;
-            return b;
+        public IGLTexture Tex(string name)
+        {
+            return (IGLTexture)items[name];
+        }
+
+        public IGLProgramShader Shader(string name)
+        {
+            return (IGLProgramShader)items[name];
+        }
+
+        public GLVertexArray VA(string name)
+        {
+            return (GLVertexArray)items[name];
+        }
+
+        public GLUniformBlock UB(string name)
+        {
+            return (GLUniformBlock)items[name];
+        }
+
+        public GLStorageBlock SB(string name)
+        {
+            return (GLStorageBlock)items[name];
+        }
+
+        public GLAtomicBlock AB(string name)
+        {
+            return (GLAtomicBlock)items[name];
         }
 
         public GLBuffer B(string name)
@@ -97,24 +112,58 @@ namespace OpenTKUtils.GL4
             return (GLBuffer)items[name];
         }
 
-        public GLBuffer LastBuffer(int c= 1)
+        public GLBuffer LastBuffer(int c = 1)
         {
             return (GLBuffer)items.Last(typeof(GLBuffer), c);
         }
 
+        public T Last<T>(int c = 1) where T:class
+        {
+            return (T)items.Last(typeof(T), c);
+        }
+
+        // New items
+
         public GLVertexArray NewArray(string name = null)
         {
-            if (name == null)
-                name = "Unnamed_" + (unnamed++);
-
             GLVertexArray b = new GLVertexArray();
-            items[name] = b;
+            items[EnsureName(name)] = b;
             return b;
         }
 
-        public GLVertexArray VA(string name)
+        public GLUniformBlock NewUniformBlock(int bindingindex, string name = null)
         {
-            return (GLVertexArray)items[name];
+            GLUniformBlock sb = new GLUniformBlock(bindingindex);
+            items[EnsureName(name)] = sb;
+            return sb;
+        }
+
+        public GLStorageBlock NewStorageBlock(int bindingindex, bool std430 = false, string name = null)
+        {
+            GLStorageBlock sb = new GLStorageBlock(bindingindex, std430);
+            items[EnsureName(name)] = sb;
+            return sb;
+        }
+
+        public GLAtomicBlock NewAtomicBlock(int bindingindex, string name = null)
+        {
+            GLAtomicBlock sb = new GLAtomicBlock(bindingindex);
+            items[EnsureName(name)] = sb;
+            return sb;
+        }
+
+        public GLBuffer NewBuffer(string name = null)
+        {
+            GLBuffer b = new GLBuffer();
+            items[EnsureName(name)] = b;
+            return b;
+        }
+
+        // helpers
+
+        private string EnsureName(string name)
+        {
+            return (name == null) ? ("Unnamed_" + (unnamed++)) : name;
         }
 
     }

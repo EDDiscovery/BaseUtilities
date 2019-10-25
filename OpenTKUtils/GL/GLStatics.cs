@@ -335,6 +335,34 @@ namespace OpenTKUtils
             return res * res;
         }
 
+        public static string[] Extensions()
+        {
+            return GL.GetString(StringName.Extensions).Split(' ');
+        }
 
+        public static bool HasExtensions(string s)
+        {
+            return Array.IndexOf(Extensions(), s)>=0;
+        }
+
+        // public delegate void DebugProc(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam);
+
+        public static bool EnableDebug( DebugProc p )
+        {
+            if (HasExtensions("GL_KHR_debug"))
+            {
+                GL.Enable(EnableCap.DebugOutput);
+                GL.Enable(EnableCap.DebugOutputSynchronous);
+
+                GL.DebugMessageCallback(p, IntPtr.Zero);
+                GL.DebugMessageControl(DebugSourceControl.DontCare, DebugTypeControl.DontCare, DebugSeverityControl.DontCare, 0, new int[0], true);
+
+                GL.DebugMessageInsert(DebugSourceExternal.DebugSourceApplication, DebugType.DebugTypeMarker, 0, DebugSeverity.DebugSeverityNotification, -1, "Debug output enabled");
+
+                return true;
+            }
+            else
+                return false;
+        }
     }
 }

@@ -36,6 +36,7 @@ namespace OpenTKUtils.GL4
             {
                 mat4 ProjectionModelMatrix;
                 mat4 ProjectionMatrix;
+                mat4 ModelMatrix;
                 vec4 TargetPosition;
                 vec4 EyePosition;
                 float EyeDistance;
@@ -53,6 +54,7 @@ namespace OpenTKUtils.GL4
             if (full)
             {
                 MapWrite(ref ptr, c.ProjectionMatrix);
+                MapWrite(ref ptr, c.ModelMatrix);
                 MapWrite(ref ptr, c.TargetPosition, 0);
                 MapWrite(ref ptr, c.EyePosition, 0);
                 MapWrite(ref ptr, c.EyeDistance);

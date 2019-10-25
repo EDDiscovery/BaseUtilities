@@ -31,9 +31,9 @@ namespace OpenTKUtils.GL4
         {
             BindingIndex = bindingindex;
 
-            GL.BindBuffer(target, Id);
-            GL.BindBufferBase(tgr, BindingIndex, Id);            // binding point
-            GL.BindBuffer(target, 0);
+            GL.BindBuffer(target, Id);          // bind ID to target type
+            GL.BindBufferBase(tgr, BindingIndex, Id);       // binding point
+            GL.BindBuffer(target, 0);               // unbind
         }
        
     }
@@ -51,7 +51,15 @@ namespace OpenTKUtils.GL4
     // storage blocks - std140 and 430
     public class GLStorageBlock : GLDataBlock
     {
-        public GLStorageBlock(int bindingindex, bool std430 = false): base(bindingindex, std430, BufferTarget.ShaderStorageBuffer, BufferRangeTarget.ShaderStorageBuffer)
+        public GLStorageBlock(int bindingindex, bool std430 = false) : base(bindingindex, std430, BufferTarget.ShaderStorageBuffer, BufferRangeTarget.ShaderStorageBuffer)
+        {
+        }
+    }
+
+    // atomic blocks blocks
+    public class GLAtomicBlock : GLDataBlock
+    {
+        public GLAtomicBlock(int bindingindex) : base(bindingindex, false, BufferTarget.AtomicCounterBuffer, BufferRangeTarget.AtomicCounterBuffer)
         {
         }
     }

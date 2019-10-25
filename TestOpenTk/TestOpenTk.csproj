@@ -66,11 +66,23 @@
     <Compile Include="ShaderTestBlendedShaderMultImages.designer.cs">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTestTemplate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestTemplate.designer.cs">
+      <DependentUpon>ShaderTestTemplate.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTestMultiImage.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ShaderTestMultiImage.designer.cs">
       <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ShaderTestVolumetric2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestVolumetric2.designer.cs">
+      <DependentUpon>ShaderTestVolumetric2.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTestVolumetric.cs">
       <SubType>Form</SubType>
@@ -142,8 +154,14 @@
     <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestTemplate.resx">
+      <DependentUpon>ShaderTestTemplate.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestMultiImage.resx">
       <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestVolumetric2.resx">
+      <DependentUpon>ShaderTestVolumetric2.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestVolumetric.resx">
       <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>
@@ -183,6 +201,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <EmbeddedResource Include="volumetricgeo2.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

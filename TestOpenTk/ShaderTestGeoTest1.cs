@@ -207,7 +207,7 @@ void main(void)
 
         private void ControllerDraw(MatrixCalc mc, long time)
         {
-           // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
+            // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
 
             countbuffer.ZeroBuffer();
 

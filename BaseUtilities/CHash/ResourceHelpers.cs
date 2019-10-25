@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -52,11 +53,49 @@ namespace BaseUtils
                     }
                 }
             }
-            catch ( Exception e)
+            catch (Exception e)
             {
                 System.Diagnostics.Debug.WriteLine("Resource " + resource + "." + item + " Exception" + e);
             }
 
+            return null;
+        }
+
+        public static Assembly GetAssemblyByName(string name)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().
+                   SingleOrDefault(assembly => assembly.GetName().Name == name);
+        }
+
+        public static string GetResourceAsString(this Assembly ass, string resourcename)        // resourcename should be the whole thing - OpenTk.name
+        {
+            try
+            {
+                var stream = ass.GetManifestResourceStream(resourcename);
+                if (stream != null)
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Resource get " + e.ToString());
+            }
+
+            return null;
+        }
+
+        public static string GetResourceAsString(string fullname)       // Opentk.resourcename.. assembly must be loaded.  File should be an embedded resource.
+        {
+            int dotpos = fullname.IndexOf('.');
+            if (dotpos >= 0)
+            {
+                Assembly aw = BaseUtils.ResourceHelpers.GetAssemblyByName(fullname.Left(dotpos));
+                return aw.GetResourceAsString(fullname);
+            }
             return null;
         }
     }

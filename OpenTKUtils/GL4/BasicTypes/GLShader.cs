@@ -48,16 +48,18 @@ namespace OpenTKUtils.GL4
                 Id = -1;
 
                 int opos = CompileReport.IndexOf("0(");
-                int opose = CompileReport.IndexOf(")", opos);
-                if ( opos != -1 && opose != -1)     // lets help ourselves by reporting the source.. since the source can be obscure.
+                if (opos != -1)
                 {
-                    int? lineno = CompileReport.Substring(opos + 2, opose-opos-2).InvariantParseIntNull();
-
-                    if ( lineno.HasValue )
+                    int opose = CompileReport.IndexOf(")", opos);
+                    if (opose != -1)     // lets help ourselves by reporting the source.. since the source can be obscure.
                     {
-                        CompileReport = CompileReport + Environment.NewLine + source.Lines(lineno.Value-5, 10, "000", lineno.Value);
-                    }
+                        int? lineno = CompileReport.Substring(opos + 2, opose - opos - 2).InvariantParseIntNull();
 
+                        if (lineno.HasValue)
+                        {
+                            CompileReport = CompileReport + Environment.NewLine + source.Lines(lineno.Value - 5, 10, "000", lineno.Value);
+                        }
+                    }
                 }
 
                 return CompileReport;
