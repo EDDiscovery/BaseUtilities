@@ -59,7 +59,7 @@
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
     <Compile Include="GL4\ShapeFactory\FactorySphere.cs" />
-    <Compile Include="GL4\BasicTypes\GLStatics.cs" />
+    <Compile Include="GL4\BasicTypes\GLStatics4.cs" />
     <Compile Include="GL4\ItemLists\GLItemsList.cs" />
     <Compile Include="GL4\IGLInterfaces.cs" />
     <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />

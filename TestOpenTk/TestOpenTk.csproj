@@ -78,6 +78,12 @@
     <Compile Include="ShaderTestMultiImage.designer.cs">
       <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
     </Compile>
+    <Compile Include="ShaderTestVolumetric3.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShaderTestVolumetric3.designer.cs">
+      <DependentUpon>ShaderTestVolumetric3.cs</DependentUpon>
+    </Compile>
     <Compile Include="ShaderTestVolumetric2.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -160,6 +166,9 @@
     <EmbeddedResource Include="ShaderTestMultiImage.resx">
       <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ShaderTestVolumetric3.resx">
+      <DependentUpon>ShaderTestVolumetric3.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestVolumetric2.resx">
       <DependentUpon>ShaderTestVolumetric2.cs</DependentUpon>
     </EmbeddedResource>
@@ -202,6 +211,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <EmbeddedResource Include="volumetricgeo2.glsl" />
+    <EmbeddedResource Include="volumetricgeo3.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

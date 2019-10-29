@@ -23,7 +23,7 @@ out vec4 vs_color;
 
 layout (binding = 5, std430) buffer DataBack
 {
-    vec4[] databack;
+    float[] databack;
 };
 
 layout (binding = 6, offset=0) uniform atomic_uint atomiccounter;
@@ -54,7 +54,7 @@ void main(void)
             minzv = p[i].z;
             minz = i;
         }
-        if (p[i].z > maxzv)
+        else if (p[i].z > maxzv)
         {
             maxzv = p[i].z;
             maxz = i;
@@ -65,8 +65,6 @@ void main(void)
 	// find the z point
 	float zdist =p[maxz].z-p[minz].z;
 	float z = p[minz].z + zdist * (0.1+instanceid * 0.1);		// first is painted at the back, then forward..
-
-	databack[0] = vec4(minz,maxz,zdist,0);
 
 	float intercept[6];		// holds floating intercept
 	vec4 interceptpoints[6];	// holds model view points of intercept
@@ -103,6 +101,9 @@ void main(void)
 		}
 
 		uint counter = atomicCounterIncrement(atomiccounter);
+
+		databack[counter*2+0] = z;
+		databack[counter*2+1] = interceptcount;
 
 		int j;
 		for( j = 1 ; j < interceptcount; j++ )		// insert sort leaving the least angle at 0, most at end

@@ -90,12 +90,19 @@ out gl_PerVertex {
     };
 
 layout(location = 1) in vec2 texco;
+
+out VS_OUT
+{
+    flat int vs_instanced;
+} vs_out;
+
 out vec2 vs_textureCoordinate;
 
 void main(void)
 {
 	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
     vs_textureCoordinate = texco;
+    vs_out.vs_instanced = gl_InstanceID;
 }
 ";
         }

@@ -41,7 +41,11 @@ namespace OpenTKUtils.GL4
 
         public virtual void Dispose()
         {
-            GL.DeleteVertexArray(Id);
+            if (Id != -1)
+            {
+                GL.DeleteVertexArray(Id);
+                Id = -1;
+            }
         }
 
         public void Attribute(int bindingindex, int attribindex, int components, VertexAttribType vat, int reloffset = 0, int divisor = -1)
@@ -90,6 +94,5 @@ namespace OpenTKUtils.GL4
             for (int i = 0; i < 4; i++)
                 Attribute(bindingindex, attribstart + i, 4, VertexAttribType.Float, 16*i, divisor);
         }
-
     }
 }

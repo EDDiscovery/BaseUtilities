@@ -71,7 +71,7 @@ namespace BaseUtils
             return keyspressed.ContainsKey(key) && keyspressed[key] == state;
         }
 
-        public ShiftState? IsPressed(Keys key)                                 // is currently pressed and in any shift state
+        public ShiftState? IsPressed(Keys key)                        // is currently pressed and in any shift state
         {
             if (keyspressed.ContainsKey(key))
                 return keyspressed[key];

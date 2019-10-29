@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4
 {
@@ -13,9 +9,10 @@ namespace OpenTKUtils.GL4
     //      Program shaders
     //      Uniform blocks
     //      Storage blocks
+    //      Atomic blocks
     //      Buffers
     //      Vertex Arrays
-    
+
     public class GLItemsList : IDisposable
     {
         BaseUtils.DisposableDictionary<string, IDisposable> items = new BaseUtils.DisposableDictionary<string, IDisposable>();

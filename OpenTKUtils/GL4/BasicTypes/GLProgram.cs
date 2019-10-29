@@ -46,9 +46,9 @@ namespace OpenTKUtils.GL4
             shaders.Add(s);
         }
 
-        public string Compile( ShaderType t, string codeorfile )        // codeorfile - either code or Resourcename.filename.glsl
+        public string Compile( ShaderType st, string codeorfile )        // codeorfile - either code or Resourcename.filename.glsl. null or okay
         {
-            GLShader shader = new GLShader(t);
+            GLShader shader = new GLShader(st);
 
             string code;
 
@@ -71,20 +71,7 @@ namespace OpenTKUtils.GL4
                 return ret;
         }
 
-        public string Link(params GLShader[] sh)        // done together, not seperable
-        {
-            foreach( var s in sh )
-            {
-                if (s.Compiled)
-                    shaders.Add(s);
-                else
-                    return "Shader not compiled";
-            }
-
-            return Link(false);
-        }
-
-        public string Link( bool separable = false )            // link, seperable or not.  Disposes of shaders
+        public string Link( bool separable = false )            // link, seperable or not.  Disposes of shaders. null if okay
         {
             if (shaders.Count == 0)
                 return "No shaders attached";

@@ -57,7 +57,7 @@ namespace OpenTKUtils.GL4
 
                         if (lineno.HasValue)
                         {
-                            CompileReport = CompileReport + Environment.NewLine + source.Lines(lineno.Value - 5, 10, "000", lineno.Value);
+                            CompileReport = CompileReport + Environment.NewLine + source.LineMarking(lineno.Value - 5, 10, "##0", lineno.Value);
                         }
                     }
                 }

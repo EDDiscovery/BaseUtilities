@@ -62,10 +62,17 @@ namespace BaseUtils
             return newmap;
         }
 
-        public static void DrawTextCentreIntoBitmap(ref Bitmap img, string text, Font dp, Color c)
+        public static void DrawTextCentreIntoBitmap(ref Bitmap img, string text, Font dp, Color c, Color? b = null)
         {
             using (Graphics bgr = Graphics.FromImage(img))
             {
+                if ( b!=null)
+                {
+                    Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
+                    using (Brush bb = new SolidBrush(b.Value))
+                        bgr.FillRectangle(bb, backarea);
+                }
+
                 SizeF sizef = bgr.MeasureString(text, dp);
 
                 bgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;

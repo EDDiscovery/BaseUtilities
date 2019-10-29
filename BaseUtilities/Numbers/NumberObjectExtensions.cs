@@ -13,12 +13,9 @@
  *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 public static class ObjectExtensionsNumbersBool
 {
@@ -100,6 +97,18 @@ public static class ObjectExtensionsNumbersBool
             }
         }
         return null;
+    }
+
+    static public int? ToHex(this char c)
+    {
+        if (char.IsDigit(c))
+            return c - '0';
+        else if ("ABCDEF".Contains(c))
+            return c - 'A' + 10;
+        else if ("abcdef".Contains(c))
+            return c - 'a' + 10;
+        else
+            return null;
     }
 
     #endregion

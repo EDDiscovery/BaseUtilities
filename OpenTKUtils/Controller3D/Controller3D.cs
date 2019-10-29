@@ -123,9 +123,20 @@ namespace OpenTKUtils.Common
         // Zoom
         public void StartZoom(float z, float timetozoom = 0) { zoom.GoTo(z, timetozoom); }
 
-        // misc
+        // Redraw scene, something has changed
 
-        public void Redraw() { glControl.Invalidate(); }
+        public void Redraw() { glControl.Invalidate(); }            // invalidations causes a glControl_Paint
+
+        public long Redraw(int times)                               // for testing, redraw the scene N times and give ms 
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            for (int i = 0; i < times; i++)
+                glControl_Paint(null, null);
+            long time = sw.ElapsedMilliseconds;
+            sw.Stop();
+            return time;
+        }
 
         #region Implementation
 
@@ -142,6 +153,8 @@ namespace OpenTKUtils.Common
             matrix.CalculateModelMatrix(pos.Current, camera.Current, zoom.Current);
             GL.Viewport(0, 0, glControl.Width, glControl.Height);                        // Use all of the glControl painting area
         }
+
+        // Paint the scene, call the installed PaintObjects after setting up the buffer and standard settings.
 
         private void glControl_Paint(object sender, PaintEventArgs e)
         {

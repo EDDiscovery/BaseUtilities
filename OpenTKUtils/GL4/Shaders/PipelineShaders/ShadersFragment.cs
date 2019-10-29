@@ -111,13 +111,54 @@ void main(void)
         }
     }
 
+    // Pipeline shader for a 2D Array texture bound using instance to pick between them. Use with GLVertexShaderTextureMatrixTransform
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
+    //      tex binding 1 : textureObject : 2D texture
+    //      vs_in.vs_instance - instance id
+
+    public class GLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location=0) in vec2 vs_textureCoordinate;
+layout (binding=1) uniform sampler2DArray textureObject2D;
+out vec4 color;
+
+in VS_IN
+{
+    flat int vs_instanced;      // not sure why structuring is needed..
+} vs;
+
+void main(void)
+{
+    color = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced));
+}
+";
+        }
+
+        public GLFragmentShaderTexture2DIndexed()
+        {
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+        }
+
+        public override void Start()
+        {
+            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            OpenTKUtils.GLStatics.Check();
+        }
+    }
+
     // Pipeline shader, 2d texture array (0,1), 2d o-ords, with blend between them via a uniform
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
     //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
     //      location 30 : uniform float blend between the two texture
 
-    public class GLFragmentShader2DCommonBlend : GLShaderPipelineShadersBase
+    public class GLFragmentShaderTexture2DBlend : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -140,7 +181,7 @@ void main(void)
 
         public float Blend { get; set; } = 0.0f;
 
-        public GLFragmentShader2DCommonBlend()
+        public GLFragmentShaderTexture2DBlend()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }

@@ -27,9 +27,14 @@ namespace OpenTKUtils.GL4
         public int Id { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
+        public Bitmap[] BitMaps { get; private set; }
+        public bool OwnBitmaps { get; set; }  = false;
 
-        public GLTexture2DArray(Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4)
+        public GLTexture2DArray(Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4, bool ownbitmaps = false)
         {
+            BitMaps = bmps;
+            OwnBitmaps = ownbitmaps;
+
             GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
             Id = id;
 
@@ -112,6 +117,12 @@ namespace OpenTKUtils.GL4
             {
                 GL.DeleteTexture(Id);
                 Id = -1;
+
+                if ( OwnBitmaps )
+                {
+                    foreach (var b in BitMaps)
+                        b.Dispose();
+                }
             }
         }
     }

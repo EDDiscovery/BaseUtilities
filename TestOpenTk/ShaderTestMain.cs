@@ -472,7 +472,7 @@ void main(void)
             ((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceControl)).YRotDegrees = degreesd4;
 
             ((GLVertexShaderTextureTransformWithCommonTransform)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
-            ((GLFragmentShader2DCommonBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
+            ((GLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
             items.SB("SB6").Write(zeroone, 4, true);
 

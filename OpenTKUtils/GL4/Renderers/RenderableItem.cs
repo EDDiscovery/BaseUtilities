@@ -54,7 +54,7 @@ namespace OpenTKUtils.GL4
 
         public void Render()                                                // called by Render() to draw the item.  Note DrawArrayInstanced
         {
-            System.Diagnostics.Debug.WriteLine("Render " + PrimitiveType + " " + DrawCount + " " + InstanceCount);
+           // System.Diagnostics.Debug.WriteLine("Render " + PrimitiveType + " " + DrawCount + " " + InstanceCount);
             GL.DrawArraysInstanced(PrimitiveType, 0, DrawCount,InstanceCount);
         }
 

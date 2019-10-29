@@ -42,7 +42,7 @@ namespace OpenTKUtils.GL4
     {
         public GLTexturedObjectShader2DBlend(Action<IGLProgramShader> action = null) : base(action)
         {
-            AddVertexFragment(new GLVertexShaderTextureObjectTransform(), new GLFragmentShader2DCommonBlend());
+            AddVertexFragment(new GLVertexShaderTextureObjectTransform(), new GLFragmentShaderTexture2DBlend());
         }
     }
 

@@ -27,7 +27,7 @@ namespace OpenTKUtils.Common
     {
         static public bool Movement(KeyboardState kbd, Position pos, bool inperspectivemode, Vector3 cameraDir, float distance, bool elitemovement)
         {
-            Vector3 cameraActionMovement = Vector3.Zero;
+            Vector3 positionMovement = Vector3.Zero;
 
             if (kbd.Shift)
                 distance *= 2.0F;
@@ -35,67 +35,70 @@ namespace OpenTKUtils.Common
             //Console.WriteLine("Distance " + distance + " zoom " + _zoom + " lzoom " + zoomlimited );
             if (kbd.IsAnyPressed(Keys.Left, Keys.A) != null)
             {
-                cameraActionMovement.X = -distance;
+                positionMovement.X = -distance;
             }
             else if (kbd.IsAnyPressed(Keys.Right, Keys.D) != null)
             {
-                cameraActionMovement.X = distance;
+                positionMovement.X = distance;
             }
 
             if (kbd.IsAnyPressed(Keys.PageUp, Keys.R) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Z = -distance;
+                    positionMovement.Z = -distance;
             }
             else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Z = distance;
+                    positionMovement.Z = distance;
             }
 
             if (kbd.IsAnyPressed(Keys.Up, Keys.W) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Y = distance;
+                    positionMovement.Y = distance;
                 else
-                    cameraActionMovement.Z = -distance;
+                    positionMovement.Z = -distance;
             }
             else if (kbd.IsAnyPressed(Keys.Down, Keys.S) != null)
             {
                 if (inperspectivemode)
-                    cameraActionMovement.Y = -distance;
+                    positionMovement.Y = -distance;
                 else
-                    cameraActionMovement.Z = distance;
+                    positionMovement.Z = distance;
             }
 
-            if (cameraActionMovement.LengthSquared > 0)
+            if (positionMovement.LengthSquared > 0)
             {
                 if (!inperspectivemode)
                     elitemovement = false;
 
+                Vector3 requestedmove = new Vector3(positionMovement.X, positionMovement.Y, (elitemovement) ? 0 : positionMovement.Z);
+
+                var translation = Matrix4.CreateTranslation(requestedmove);     // movement matrix
+
+                var cameramove = Matrix4.Identity;      
+                cameramove *= translation;                      // move the translation into the camera 
+
                 var rotZ = Matrix4.CreateRotationZ(cameraDir.Z.Radians());
+                cameramove *= rotZ;                             // rotate the vector by the camera look angle
+
                 var rotX = Matrix4.CreateRotationX(cameraDir.X.Radians());
-                var rotY = Matrix4.CreateRotationY(cameraDir.Y.Radians());
-
-                Vector3 requestedmove = new Vector3(cameraActionMovement.X, cameraActionMovement.Y, (elitemovement) ? 0 : cameraActionMovement.Z);
-
-                var translation = Matrix4.CreateTranslation(requestedmove);
-                var cameramove = Matrix4.Identity;
-                cameramove *= translation;
-                cameramove *= rotZ;
                 cameramove *= rotX;
+
+                var rotY = Matrix4.CreateRotationY(cameraDir.Y.Radians());
                 cameramove *= rotY;
 
-                Vector3 trans = cameramove.ExtractTranslation();
+                Vector3 cameratranslation = cameramove.ExtractTranslation();    // finally get the translation this look implies
 
                 if (elitemovement)                                   // if in elite movement, Y is not affected
-                {                                                   // by ASDW.
-                    trans.Y = 0;                                    // no Y translation even if camera rotated the vector into Y components
-                    pos.Translate(trans);
-                    pos.Y(-cameraActionMovement.Z);
+                {                                                    // by ASDW.
+                    cameratranslation.Y = 0;                         // no Y translation even if camera rotated the vector into Y components
+                    pos.Translate(cameratranslation);
+                    pos.Y(-positionMovement.Z);
                 }
                 else
-                    pos.Translate(trans);
+                    pos.Translate(cameratranslation);
 
                 return true;
             }
