@@ -52,18 +52,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes.cs" />
-    <Compile Include="RandomStars.cs">
+    <Compile Include="GL1\RandomStars.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RandomStars.Designer.cs">
+    <Compile Include="GL1\RandomStars.Designer.cs">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ShaderTestBlendedShaderMultImages.cs">
+    <Compile Include="Textures\ShaderTestBlendedShaderMultImages.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestBlendedShaderMultImages.designer.cs">
+    <Compile Include="Textures\ShaderTestBlendedShaderMultImages.designer.cs">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTestTemplate.cs">
@@ -72,46 +72,40 @@
     <Compile Include="ShaderTestTemplate.designer.cs">
       <DependentUpon>ShaderTestTemplate.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestMultiImage.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric3.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestMultiImage.designer.cs">
-      <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ShaderTestVolumetric3.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ShaderTestVolumetric3.designer.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric3.designer.cs">
       <DependentUpon>ShaderTestVolumetric3.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestVolumetric2.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestVolumetric2.designer.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric2.designer.cs">
       <DependentUpon>ShaderTestVolumetric2.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestVolumetric.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestVolumetric.designer.cs">
+    <Compile Include="Volumetrics\ShaderTestVolumetric.designer.cs">
       <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestPointSprites.cs">
+    <Compile Include="Sprites\ShaderTestPointSprites.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestPointSprites.designer.cs">
+    <Compile Include="Sprites\ShaderTestPointSprites.designer.cs">
       <DependentUpon>ShaderTestPointSprites.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestGeoTest1.cs">
+    <Compile Include="Geometry\ShaderTestGeoTest1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestGeoTest1.designer.cs">
+    <Compile Include="Geometry\ShaderTestGeoTest1.designer.cs">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestGalaxy.cs">
+    <Compile Include="Textures\ShaderTestGalaxy.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestGalaxy.designer.cs">
+    <Compile Include="Textures\ShaderTestGalaxy.designer.cs">
       <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTestMain.cs">
@@ -120,31 +114,31 @@
     <Compile Include="ShaderTestMain.designer.cs">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestStarDiscs.cs">
+    <Compile Include="Stars\ShaderTestStarDiscs.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestStarDiscs.designer.cs">
+    <Compile Include="Stars\ShaderTestStarDiscs.designer.cs">
       <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestStarPoints.cs">
+    <Compile Include="Stars\ShaderTestStarPoints.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestStarPoints.designer.cs">
+    <Compile Include="Stars\ShaderTestStarPoints.designer.cs">
       <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestStarPointsDiscs.cs">
+    <Compile Include="Stars\ShaderTestStarPointsDiscs.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestStarPointsDiscs.designer.cs">
+    <Compile Include="Stars\ShaderTestStarPointsDiscs.designer.cs">
       <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
     </Compile>
-    <Compile Include="ShaderTestVertexCompute.cs">
+    <Compile Include="Compute\ShaderTestVertexCompute.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ShaderTestVertexCompute.designer.cs">
+    <Compile Include="Compute\ShaderTestVertexCompute.designer.cs">
       <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="RandomStars.resx">
+    <EmbeddedResource Include="GL1\RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -157,46 +151,43 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="ShaderTestBlendedShaderMultImages.resx">
+    <EmbeddedResource Include="Textures\ShaderTestBlendedShaderMultImages.resx">
       <DependentUpon>ShaderTestBlendedShaderMultImages.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestTemplate.resx">
       <DependentUpon>ShaderTestTemplate.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestMultiImage.resx">
-      <DependentUpon>ShaderTestMultiImage.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestVolumetric3.resx">
+    <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric3.resx">
       <DependentUpon>ShaderTestVolumetric3.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestVolumetric2.resx">
+    <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric2.resx">
       <DependentUpon>ShaderTestVolumetric2.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestVolumetric.resx">
+    <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric.resx">
       <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestPointSprites.resx">
+    <EmbeddedResource Include="Sprites\ShaderTestPointSprites.resx">
       <DependentUpon>ShaderTestPointSprites.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestGeoTest1.resx">
+    <EmbeddedResource Include="Geometry\ShaderTestGeoTest1.resx">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestGalaxy.resx">
+    <EmbeddedResource Include="Textures\ShaderTestGalaxy.resx">
       <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestMain.resx">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestStarDiscs.resx">
+    <EmbeddedResource Include="Stars\ShaderTestStarDiscs.resx">
       <DependentUpon>ShaderTestStarDiscs.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestStarPoints.resx">
+    <EmbeddedResource Include="Stars\ShaderTestStarPoints.resx">
       <DependentUpon>ShaderTestStarPoints.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestStarPointsDiscs.resx">
+    <EmbeddedResource Include="Stars\ShaderTestStarPointsDiscs.resx">
       <DependentUpon>ShaderTestStarPointsDiscs.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ShaderTestVertexCompute.resx">
+    <EmbeddedResource Include="Compute\ShaderTestVertexCompute.resx">
       <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="OpenTK.dll.config" />
@@ -210,8 +201,8 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="volumetricgeo2.glsl" />
-    <EmbeddedResource Include="volumetricgeo3.glsl" />
+    <EmbeddedResource Include="Volumetrics\volumetricgeo2.glsl" />
+    <EmbeddedResource Include="Volumetrics\volumetricgeo3.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
