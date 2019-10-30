@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2015 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -15,13 +15,9 @@
  * Noise from the seeds of andromeda MIT licence.
  */
 
-using System;
-using OpenTK;
-using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Fragment, requires vs_color
 
     public static class GLShaderFunctionsNoise
     {

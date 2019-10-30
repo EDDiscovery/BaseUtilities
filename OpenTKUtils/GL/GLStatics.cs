@@ -27,6 +27,11 @@ namespace OpenTKUtils
     {
         #region Static helpers
 
+        static public Vector3 Abs(this Vector3 v)
+        {
+            return new Vector3(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
+        }
+
         static public Vector4 Translate(this Vector4 Vertex, Vector3 offset)
         {
             Vertex.X += offset.X;

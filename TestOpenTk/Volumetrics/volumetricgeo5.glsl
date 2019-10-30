@@ -61,12 +61,7 @@ void main(void)
 	int i;
 	int instanceid = instance[0];
 
-	// find the z point
-	//float zdist =p[maxz].z-p[minz].z;
-	//float z = p[minz].z + zdist * (0.1+instanceid * 0.1);		// first is painted at the back, then forward..
-
-	//float z = pb.minz + (pb.maxz-pb.minz) * (pb.slicestart+instanceid * pb.slicedist);		// first is painted at the back, then forward..
-	float z = pb.minz + pb.slicestart + instanceid * pb.slicedist;
+	float z = pb.minz + pb.slicestart + instanceid * pb.slicedist;		// z is picked up by instance ID * Uniform
 
 	uint counter = atomicCounterIncrement(atomiccounter);
 	databack[counter*2+0] = vec4(z,pb.minz,pb.maxz,pb.slicestart);
@@ -76,7 +71,7 @@ void main(void)
 	//	return;
 
 	int i1lookup[12] = {0,1,3,0, 4,5,7,4, 0,1,2,3};	// comparision index to check for ic=0 to 12
-	int i2lookup[12] = {1,2,2,3, 5,6,6,7, 4,5,6,7}; // direction of vectors very important for texcoords
+	int i2lookup[12] = {1,2,2,3, 5,6,6,7, 4,5,6,7};	
 	vec3 texdef[12] = { vec3(0,9,0), vec3(9,1,0), vec3(1,9,0), vec3(9,0,0),		// front face.  9 is replace by %,  x or y varies, z = 0
 					    vec3(0,9,1), vec3(9,1,1), vec3(1,9,1), vec3(9,0,1),		// back face, x or y varies, z= 1
 					    vec3(0,0,9), vec3(0,1,9), vec3(1,1,9), vec3(1,0,9)};	// sides, z varies, x/y set
@@ -126,7 +121,6 @@ void main(void)
 	{
 		average.x /= interceptcount;
 		average.y /= interceptcount;		// find average x/y.  z is obj the same
-
 		texaverage /= interceptcount;
 
 		float angles[6];
@@ -175,7 +169,7 @@ void main(void)
 		}
 		else
 		{
-			for( int i = 0 ; i < interceptcount ; i++ )		// since we can only output a triangle strip, we must do each set individually.
+			for( int i = 0 ; i < interceptcount ; i++ )		// since we can only output a triangle sets, we must do each set individually wound around the centre
 			{
 				gl_Position = mc.ProjectionMatrix * average;
 				vs_texcoord = texaverage;

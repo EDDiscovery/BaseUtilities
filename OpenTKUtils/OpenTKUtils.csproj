@@ -55,6 +55,7 @@
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
+    <Compile Include="GL4\Shaders\FunctionsData\FunctionsDist.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\Textures\Texture2DArray.cs" />
+    <Compile Include="GL4\UniformsStorageBlocks\VolumetricUniformBlock.cs" />
     <Compile Include="GL4\UniformsStorageBlocks\MatrixCalcUniformBlock.cs" />
     <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />

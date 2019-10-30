@@ -13,13 +13,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestVolumetric4 : Form
+    public partial class ShaderTestVolumetric5 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestVolumetric4()
+        public ShaderTestVolumetric5()
         {
             InitializeComponent();
 
@@ -44,38 +44,57 @@ namespace TestOpenTk
             string vcode =
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
-
-//layout (location = 0) in vec4 position;
 
 out int instance;
 
 void main(void)
 {
-	//gl_Position = position;       
-	//gl_Position = vec4(0,0,0,0);
-
     instance = gl_InstanceID;
 }
 ";
 
             string fcode = @"
 #version 450 core
+" + GLShaderFunctionsDist.DistFunctions + @"
 out vec4 color;
 in vec3 vs_texcoord;
 
 void main(void)
 {
-    color = vec4(vs_texcoord,0.5);
+    bool colourit = false;
+
+    float xc = abs(vs_texcoord.x-0.5);
+    float zc = abs(vs_texcoord.z-0.5);
+    float m = sqrt(xc*xc+zc*zc);        // 0 at centre, 0.707 at maximum
+
+    float gd = gaussian(m,0,0.08) ;  // deviation around centre, 1 = centre
+    gd = gd * 0.1 + m*m/100;     // +/-0.25 is half of maximum h, of 0.5, so therefore its half height of box
+
+    float h = abs(vs_texcoord.y-0.5);       // from 0 to 0.5
+
+    if ( h < gd && m < 0.5)
+        colourit = true;
+    
+    if ( colourit)
+    {
+        //color = vec4(h,h,0,0.5);
+        //color = vec4(0.5,0,0,1);
+        color = vec4(vs_texcoord,0.2);
+    }
+    else
+        discard;    
 }
 ";
 
             public ShaderV2()
             {
-                CompileLink(vertex: vcode, frag: fcode, geo: "TestOpenTk.Volumetrics.volumetricgeo4.glsl");
+                CompileLink(vertex: vcode, frag: fcode, geo: "TestOpenTk.Volumetrics.volumetricgeo5.glsl");
                 StartAction += (s) => { GLStatics.PointSize(10); };
             }
         }
+
+
+
 
         public class GLFixedShader : GLShaderPipeline
         {
@@ -113,6 +132,19 @@ void main(void)
             gl3dcontroller.MouseRotateAmountPerPixel = 0.1f;
 
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
+
+            {
+                for( float i  = 0; i < 1.0; i+=0.05f)
+                {
+                    Vector3 pos = new Vector3(i, i, i);
+                    Vector3 delta = pos - new Vector3(0.5f, 0.5f, 0.5f);
+                   // delta = delta.Abs();
+                    float length = 1.0f - delta.Length/0.867f;      // 0 at edge, 1 at centre
+                    float h = Math.Abs(pos.Y - 0.5f);
+                    System.Diagnostics.Debug.WriteLine("{0} {1} : {2} : {3}", i, length , h, h < length);
+                }
+            }
+
         
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
@@ -123,18 +155,21 @@ void main(void)
             items.Add("V2", new ShaderV2());
             //           items.Add("wooden", new GLTexture2D(Properties.Resources.wooden));
 
-            rObjects.Add(items.Shader("COS-1L"), "L1",   // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Gray })
-                               );
+            for (float h = -10; h < 20; h += 20)
+            {
+                rObjects.Add(items.Shader("COS-1L"),    // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, h, -100), new Vector3(-100, h, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Gray })
+                                   );
 
 
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Gray })
-                               );
+                rObjects.Add(items.Shader("COS-1L"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, h, -100), new Vector3(100, h, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Gray })
+                                   );
+            }
 
             // Number markers using instancing and 2d arrays, each with its own transform
 
@@ -165,10 +200,6 @@ void main(void)
                                     GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                                             GLShapeObjectFactory.CreateQuad(1.0f), GLShapeObjectFactory.TexQuad, numberpos,
                                             null, numberpos.Length));
-
-
-
-
 
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
@@ -228,7 +259,7 @@ void main(void)
 
         }
 
-        int slices =10;
+        int slices =10000;
 
         Vector4[] boundingbox;
 
