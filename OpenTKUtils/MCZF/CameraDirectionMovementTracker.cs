@@ -26,36 +26,44 @@ namespace OpenTKUtils.Common
 
         public Vector3 Rotation = new Vector3(0, 0, 0);
 
-        public bool CameraDirChanged;
-        public bool CameraDirGrossChanged;
-        public bool CameraMoved;
-        public bool CameraZoomed;
+        public bool CameraDirChanged { get; private set; }
+        public float MinimumCameraDirChange { get; set; } = 1.0f;
+
+        public bool CameraDirGrossChanged { get; private set; }
+        public float MinimumGrossCameraDirChange { get; set; } = 10.0f;
+
+        public bool CameraMoved { get; private set; }
+        public float MinimumCameraMoved { get; set; } = 0.05f;
+
+        public bool CameraZoomed { get; private set; }
+        public float MinimumZoomMoved { get; set; } = 0.05f;
+
         public bool AnythingChanged { get { return CameraDirChanged || CameraMoved || CameraZoomed; } }         //DIR is more sensitive than gross, so no need to use
 
-        public void Update(Vector3 cameraDir, Vector3 position, float zoom, float grossdirchange)
+        public void Update(Vector3 cameraDir, Vector3 position, float zoom)
         {
-            CameraDirChanged = Vector3.Subtract(LastCameraDir, cameraDir).LengthSquared >= 1;
+            CameraDirChanged = Vector3.Subtract(LastCameraDir, cameraDir).LengthSquared >= MinimumCameraDirChange;
 
             if (CameraDirChanged)
             {
                 LastCameraDir = cameraDir;
             }
 
-            CameraDirGrossChanged = Vector3.Subtract(LastCameraGrossDir, cameraDir).LengthSquared >= grossdirchange;
+            CameraDirGrossChanged = Vector3.Subtract(LastCameraGrossDir, cameraDir).LengthSquared >= MinimumGrossCameraDirChange;
 
             if ( CameraDirGrossChanged )
             {
                 LastCameraGrossDir = cameraDir;
             }
 
-            CameraMoved = Vector3.Subtract(LastPosition, position).LengthSquared >= 0.05; // small so you can see small slews
+            CameraMoved = Vector3.Subtract(LastPosition, position).LengthSquared >= MinimumCameraMoved;
 
             if ( CameraMoved )
                 LastPosition = position;
 
             float zoomfact = zoom / LastZoom;
 
-            CameraZoomed = (zoomfact >= 1.05 || zoomfact <= 0.95);     // prevent too small zoom causing a repaint
+            CameraZoomed = (zoomfact >= (1.0+ MinimumZoomMoved) || zoomfact <= (1.0- MinimumZoomMoved));     // prevent too small zoom causing a repaint
 
             if ( CameraZoomed )
                 LastZoom = zoom;

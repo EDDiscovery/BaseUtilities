@@ -73,11 +73,12 @@ void main(void)
 	int interceptcount = 0;		// count
 	vec4 average = vec4(0,0,z,1);// average of found intercepts
 
-	int i2lookup[12] = {1,2,3,0, 5,6,7,4, 4,5,6,7};	// comparision index to check for ic=0 to 12.
+	int i1lookup[12] = {0,1,3,0, 4,5,7,4, 0,1,2,3};	// comparision index to check for ic=0 to 12
+	int i2lookup[12] = {1,2,2,3, 5,6,6,7, 4,5,6,7};	
 	int ic = 0;
     for ( ic = 0 ; ic < 12 ; ic++ )
     {
-		int i = ic & 7;				// find the indexes to compare.
+		int i = i1lookup[ic];				// find the indexes to compare.
 		int i2 = i2lookup[ic];
 		float interceptv = (z - p[i].z) / (p[i2].z - p[i].z);
 		if ( interceptv >= 0 && interceptv <=1)	// we have an intercept

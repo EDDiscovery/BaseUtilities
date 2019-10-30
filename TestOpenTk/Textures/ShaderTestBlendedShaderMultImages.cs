@@ -54,7 +54,7 @@ namespace TestOpenTk
             gl3dcontroller.BackColour = Color.FromArgb(0, 0, 60);
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(120f, 0, 0f), 1F);
 
-            gl3dcontroller.TravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 return (float)ms / 20.0f;
             };

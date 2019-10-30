@@ -248,6 +248,12 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
+
+        public static GLRenderableItem CreateNullVertex(PrimitiveType pt, IGLInstanceControl id = null, int dc =1,  int ic = 1)
+        {
+            return new GLRenderableItem(pt, dc, null, id, ic);  // no vertex data.
+        }
+
         #endregion
     }
 

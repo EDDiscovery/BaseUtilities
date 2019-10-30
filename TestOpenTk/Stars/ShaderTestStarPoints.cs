@@ -116,7 +116,7 @@ void main(void)
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
-            gl3dcontroller.TravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 return (float)ms / 20.0f;
             };

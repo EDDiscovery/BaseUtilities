@@ -61,7 +61,7 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(90,0,0), 1F);
 
-            gl3dcontroller.TravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 return (float)ms / 100.0f;
             };

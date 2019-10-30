@@ -82,7 +82,7 @@ namespace TestOpenTk
             datasets.Add(smalldatasetGrid);
 
             gltracker.Start(new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
-            gltracker.TravelSpeed = (ms) =>
+            gltracker.KeyboardTravelSpeed = (ms) =>
             {
                 float zoomlimited = Math.Min(Math.Max(gltracker.Zoom.Current, 0.01F), 15.0F);
                 float distance1sec = gltracker.MatrixCalc.ZoomDistance * (1.0f / zoomlimited);        // move Zoomdistance in one second, scaled by zoomY

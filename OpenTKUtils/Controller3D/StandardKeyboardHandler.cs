@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2015 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -15,8 +15,6 @@
  */
 using BaseUtils;
 using OpenTK;
-using System;
-using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace OpenTKUtils.Common
@@ -106,10 +104,8 @@ namespace OpenTKUtils.Common
                 return false;
         }
 
-        static public bool Zoom(KeyboardState kbd, Zoom zoom, int msticks)
+        static public bool Zoom(KeyboardState kbd, Zoom zoom, float adjustment)
         {
-            float adjustment = 1.0f + ((float)msticks * 0.002f);
-
             bool changed = false;
 
             if (kbd.IsAnyPressed(Keys.Add, Keys.Z) != null)
@@ -154,11 +150,10 @@ namespace OpenTKUtils.Common
             return changed;
         }
 
-        static public bool Camera(KeyboardState kbd, Camera camera, int msticks)
+        static public bool Camera(KeyboardState kbd, Camera camera, float angle)
         {
             Vector3 cameraActionRotation = Vector3.Zero;
 
-            var angle = (float)msticks * 0.075f;
             if (kbd.IsPressed(Keys.NumPad4) != null)
             {
                 cameraActionRotation.Z = -angle;

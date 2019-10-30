@@ -13,13 +13,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestVolumetric3 : Form
+    public partial class ShaderTestVolumetric4 : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestVolumetric3()
+        public ShaderTestVolumetric4()
         {
             InitializeComponent();
 
@@ -46,13 +46,15 @@ namespace TestOpenTk
 #version 450 core
 " + GLMatrixCalcUniformBlock.GLSL + @"
 
-layout (location = 0) in vec4 position;
+//layout (location = 0) in vec4 position;
 
 out int instance;
 
 void main(void)
 {
-	gl_Position = position;       
+	//gl_Position = position;       
+	//gl_Position = vec4(0,0,0,0);
+
     instance = gl_InstanceID;
 }
 ";
@@ -60,19 +62,17 @@ void main(void)
             string fcode = @"
 #version 450 core
 out vec4 color;
-in vec4 vs_color;
 in vec3 vs_texcoord;
 
 void main(void)
 {
-    //color = vs_color;
-    color = vec4(vs_texcoord,0.8);
+    color = vec4(vs_texcoord,0.5);
 }
 ";
 
             public ShaderV2()
             {
-                CompileLink(vertex: vcode, frag: fcode, geo: "TestOpenTk.Volumetrics.volumetricgeo3.glsl");
+                CompileLink(vertex: vcode, frag: fcode, geo: "TestOpenTk.Volumetrics.volumetricgeo4.glsl");
                 StartAction += (s) => { GLStatics.PointSize(10); };
             }
         }
@@ -95,28 +95,29 @@ void main(void)
 
         void DebugProc(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
-            string s = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message);
-            System.Diagnostics.Debug.WriteLine("{0} {1} {2} {3} {4} {5}", source, type, id, severity, length, s);
+            //string s = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message);
+            //System.Diagnostics.Debug.WriteLine("{0} {1} {2} {3} {4} {5}", source, type, id, severity, length, s);
+           //  s = null;
         }
-
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
 
-            GLStatics.EnableDebug(DebugProc);
+            //GLStatics.EnableDebug(DebugProc);
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            gl3dcontroller.MatrixCalc.ZoomDistance = 40F;
+            gl3dcontroller.MatrixCalc.ZoomDistance = 80F;
             gl3dcontroller.MovementTracker.MinimumCameraDirChange = 0.01f;
-            gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
+            gl3dcontroller.MouseRotateAmountPerPixel = 0.1f;
+
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
-            {
-                return (float)ms / 100.0f;
-            };
+            //gl3dcontroller.TravelSpeed = (ms) =>
+            //{
+            //    return (float)ms / 100.0f;
+            //};
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
@@ -179,13 +180,16 @@ void main(void)
 
             // New geo shader
 
-            Vector4[] points = new Vector4[]
-            {
-                new Vector4(-40,-20,-40,1),
-                new Vector4(+40,+20,+40,1),
-            };
+            //Vector4[] points = new Vector4[]        // pass null data to vertex shader
+            //{
+            //    new Vector4(0,0,0,0)
+            //};
 
-            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, points, ic: 1));
+            //rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, points, ic: 9));
+
+            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, ic: slices));
+
+            // bounding box
 
             int left = -40, right = 40, bottom = -20, top = +20, front = -40, back = 40;
             Vector4[] lines2 = new Vector4[]
@@ -216,9 +220,34 @@ void main(void)
             atomicbuffer = items.NewAtomicBlock(6);
             atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
+            dataoutbuffer = items.NewStorageBlock(5);
+            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
+
+            pointblock = items.NewUniformBlock(1);
+            pointblock.Allocate(sizeof(float) * 4 * 8 + sizeof(float) * 30);        // plenty of space
+
+            int hsize = 40, vsize = 20, zsize = 40;
+            boundingbox = new Vector4[]
+            {
+                new Vector4(-hsize,-vsize,-zsize,1),
+                new Vector4(-hsize,vsize,-zsize,1),
+                new Vector4(hsize,vsize,-zsize,1),
+                new Vector4(hsize,-vsize,-zsize,1),
+
+                new Vector4(-hsize,-vsize,zsize,1),
+                new Vector4(-hsize,vsize,zsize,1),
+                new Vector4(hsize,vsize,zsize,1),
+                new Vector4(hsize,-vsize,zsize,1),
+            };
+
         }
 
+        int slices =1000;
+
+        Vector4[] boundingbox;
+
         GLStorageBlock dataoutbuffer;
+        GLUniformBlock pointblock;
         GLAtomicBlock atomicbuffer;
 
         private void ShaderTest_Closed(object sender, EventArgs e)
@@ -230,6 +259,31 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
+            IntPtr pb = pointblock.Map(0, pointblock.BufferSize);
+            float minzv = float.MaxValue, maxzv = float.MinValue;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector4 p = Vector4.Transform(boundingbox[i], mc.ModelMatrix);
+                if (p.Z < minzv)
+                    minzv = p.Z;
+                if (p.Z > maxzv)
+                    maxzv = p.Z;
+                pointblock.MapWrite(ref pb, p);
+            }
+
+            pointblock.MapWrite(ref pb, minzv);
+            pointblock.MapWrite(ref pb, maxzv);
+            pointblock.MapWrite(ref pb, Vector4.Transform(new Vector4(mc.EyePosition, 0), mc.ModelMatrix));
+            float slicedist = (maxzv - minzv) / (float)slices;
+            float slicestart = (maxzv - minzv) / ((float)slices*2);
+            pointblock.MapWrite(ref pb, slicestart); //slicestart
+            pointblock.MapWrite(ref pb, slicedist); //slicedist
+
+       //     System.Diagnostics.Debug.WriteLine("slice start {0} dist {1}", slicestart, slicedist);
+           // for (int ic = 0; ic < slices; ic++)
+            //    System.Diagnostics.Debug.WriteLine("slice {0} {1} {2}", minzv, maxzv, minzv + slicestart + slicedist * ic);
+            pointblock.UnMap();
+
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();
 
@@ -237,13 +291,13 @@ void main(void)
 
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
 
-            Vector4[] databack = dataoutbuffer.ReadVector4(0, 12);
+            Vector4[] databack = dataoutbuffer.ReadVector4(0, 5);
 
-            System.Diagnostics.Debug.WriteLine("avg {0} txtavg {1}", databack[0].ToStringVec(), databack[1].ToStringVec());
+          //  System.Diagnostics.Debug.WriteLine("avg {0} txtavg {1}", databack[0].ToStringVec(), databack[1].ToStringVec());
 
-            for (int i = 2; i < databack.Length; i += 2)
+            for (int i = 0; i < databack.Length; i += 1)
             {
-                System.Diagnostics.Debug.WriteLine("{0} v{1} a{2:0.0} :  {3}", databack[i].X, databack[i].Z, databack[i].Y, databack[i + 1].ToStringVec());
+         //       System.Diagnostics.Debug.WriteLine("db "+databack[i].ToStringVec());
             }
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;

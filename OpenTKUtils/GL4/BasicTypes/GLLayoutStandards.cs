@@ -51,7 +51,6 @@ namespace OpenTKUtils.GL4
             arraystridealignment = std430 ? sizeof(float) : Vec4size;               // if in std130, arrays have vec4 alignment and strides are vec4
         }
 
-
         #region Write to cache area..  then call Complete() to store to GL buffer.
 
         // Write to the local copy - pos = -1 place at end, else place at position (for update)
@@ -262,6 +261,13 @@ namespace OpenTKUtils.GL4
             Positions.Add(pos);
             System.Diagnostics.Debug.Assert(pos + datasize <= BufferSize);
             return pos;
+        }
+
+        protected IntPtr Align(IntPtr p, int offset, int align)
+        {
+            int newoffset = (offset + align - 1) & (~(align - 1));     // align..
+            p += (newoffset - offset);
+            return p;
         }
 
         #endregion
