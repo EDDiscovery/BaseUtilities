@@ -66,20 +66,24 @@ void main(void)
     float xc = abs(vs_texcoord.x-0.5);
     float zc = abs(vs_texcoord.z-0.5);
     float m = sqrt(xc*xc+zc*zc);        // 0 at centre, 0.707 at maximum
+    float mi = 0.707-m;
 
     float gd = gaussian(m,0,0.08) ;  // deviation around centre, 1 = centre
-    gd = gd * 0.1 + m*m/100;     // +/-0.25 is half of maximum h, of 0.5, so therefore its half height of box
+                   
+    // +/-0.25 is half of maximum h, of 0.5, so therefore its half height of box
+
+    gd = gd * 0.1 + mi/100;        // set max height of galatic centre with a minimum disc addition
 
     float h = abs(vs_texcoord.y-0.5);       // from 0 to 0.5
 
-    if ( h < gd && m < 0.5)
+    if ( h < gd && m < 0.5)     // 0.5 sets the size of the disk, this is touching the bounding box
         colourit = true;
     
     if ( colourit)
     {
         //color = vec4(h,h,0,0.5);
         //color = vec4(0.5,0,0,1);
-        color = vec4(vs_texcoord,0.2);
+        color = vec4(vs_texcoord,0.05);
     }
     else
         discard;    
@@ -89,7 +93,6 @@ void main(void)
             public ShaderV2()
             {
                 CompileLink(vertex: vcode, frag: fcode, geo: "TestOpenTk.Volumetrics.volumetricgeo5.glsl");
-                StartAction += (s) => { GLStatics.PointSize(10); };
             }
         }
 
@@ -240,8 +243,8 @@ void main(void)
             dataoutbuffer = items.NewStorageBlock(5);
             dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
-            pointblock = items.NewUniformBlock(1);
-            pointblock.Allocate(sizeof(float) * 4 * 8 + sizeof(float) * 30);        // plenty of space
+            volumetricblock = new GLVolumetricUniformBlock();
+            items.Add("VB",volumetricblock);
 
             int hsize = 40, vsize = 20, zsize = 40;
             boundingbox = new Vector4[]
@@ -259,13 +262,13 @@ void main(void)
 
         }
 
-        int slices =10000;
-
         Vector4[] boundingbox;
 
         GLStorageBlock dataoutbuffer;
-        GLUniformBlock pointblock;
+        GLVolumetricUniformBlock volumetricblock;
         GLAtomicBlock atomicbuffer;
+
+        int slices = 10000;
 
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
@@ -276,30 +279,7 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            IntPtr pb = pointblock.Map(0, pointblock.BufferSize);
-            float minzv = float.MaxValue, maxzv = float.MinValue;
-            for (int i = 0; i < 8; i++)
-            {
-                Vector4 p = Vector4.Transform(boundingbox[i], mc.ModelMatrix);
-                if (p.Z < minzv)
-                    minzv = p.Z;
-                if (p.Z > maxzv)
-                    maxzv = p.Z;
-                pointblock.MapWrite(ref pb, p);
-            }
-
-            pointblock.MapWrite(ref pb, minzv);
-            pointblock.MapWrite(ref pb, maxzv);
-            pointblock.MapWrite(ref pb, Vector4.Transform(new Vector4(mc.EyePosition, 0), mc.ModelMatrix));
-            float slicedist = (maxzv - minzv) / (float)slices;
-            float slicestart = (maxzv - minzv) / ((float)slices*2);
-            pointblock.MapWrite(ref pb, slicestart); //slicestart
-            pointblock.MapWrite(ref pb, slicedist); //slicedist
-
-       //     System.Diagnostics.Debug.WriteLine("slice start {0} dist {1}", slicestart, slicedist);
-           // for (int ic = 0; ic < slices; ic++)
-            //    System.Diagnostics.Debug.WriteLine("slice {0} {1} {2}", minzv, maxzv, minzv + slicestart + slicedist * ic);
-            pointblock.UnMap();
+            volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, slices);        // set up the volumentric uniform
 
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();

@@ -22,11 +22,9 @@ using OpenTKUtils.Common;
 
 namespace OpenTKUtils.GL4
 {
-    // Matrix calc UB block at 0 fixed
-
     public class GLVolumetricUniformBlock : GLUniformBlock 
     {
-        public GLVolumetricUniformBlock() : base(1)         // binding block
+        public GLVolumetricUniformBlock() : base(1)         // binding block 1 fixed
         {
         }
 
@@ -34,10 +32,10 @@ namespace OpenTKUtils.GL4
         @"
                 layout (std140, binding = 1) uniform PointBlock
                 {
-	                vec4 p[8];    
+	                vec4 p[8];      // model positions
 	                float minz;
 	                float maxz;
-	                vec4 eyeposition;
+	                vec4 eyeposition; // model positions
 	                float slicestart;
 	                float slicedist;
                 } pb;
@@ -66,8 +64,8 @@ namespace OpenTKUtils.GL4
             MapWrite(ref pb, Vector4.Transform(new Vector4(c.EyePosition, 0), c.ModelMatrix));
             float slicedist = (maxzv - minzv) / (float)slices;
             float slicestart = (maxzv - minzv) / ((float)slices * 2);
-            MapWrite(ref pb, slicestart); //slicestart
-            MapWrite(ref pb, slicedist); //slicedist
+            MapWrite(ref pb, slicestart);
+            MapWrite(ref pb, slicedist); 
             UnMap();
         }
     }
