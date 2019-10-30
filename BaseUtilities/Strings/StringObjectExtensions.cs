@@ -576,11 +576,14 @@ public static class ObjectExtensionsStrings
         return text;
     }
 
-    static public int Lines(this string s)    
+    static public int Lines(this string s, string lineterm = null)      // Newline standard  
     {
+        if (lineterm == null)
+            lineterm = Environment.NewLine;
+
         int count = 1;         // supposedly the fastest https://www.codeproject.com/Tips/312312/Counting-Lines-in-a-String
         int position = 0;
-        while ((position = s.IndexOf(Environment.NewLine, position)) != -1)
+        while ((position = s.IndexOf(lineterm, position)) != -1)
         {
             count++;
             position++;         // Skip this occurrence!

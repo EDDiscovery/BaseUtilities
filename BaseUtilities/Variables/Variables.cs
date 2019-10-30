@@ -447,13 +447,18 @@ namespace BaseUtils
             if (classtypeexcluded != null && classtypeexcluded.Contains(rettype))
                 return;
 
+            if (rettype.IsGenericType && rettype.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                rettype = rettype.GetGenericArguments()[0];
+            }
+
             //System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
 
             System.Globalization.CultureInfo ct = System.Globalization.CultureInfo.InvariantCulture;
 
             try // just to make sure a strange type does not barfe it
             {
-                if (rettype.UnderlyingSystemType.FullName.Contains("System.Collections.Generic.Dictionary"))
+                if (typeof(System.Collections.IDictionary).IsAssignableFrom(rettype))
                 {
                     if (o == null)
                         values[name + "Count"] = "0";                           // we always get a NameCount so we can tell..
@@ -473,7 +478,7 @@ namespace BaseUtils
                         }
                     }
                 }
-                else if (rettype.UnderlyingSystemType.FullName.Contains("System.Collections.Generic.List"))
+                else if (typeof(System.Collections.IList).IsAssignableFrom(rettype))
                 {
                     if (o == null)
                         values[name + "Count"] = "0";                           // we always get a NameCount so we can tell..
@@ -532,32 +537,26 @@ namespace BaseUtils
                         AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1 , classtypeexcluded);
                     }
                 }
-                else if (o is bool)
-                {
-                    values[name] = ((bool)o) ? "1" : "0";
-                }
-                else if (!rettype.IsGenericType || rettype.GetGenericTypeDefinition() != typeof(Nullable<>))
+                else if (rettype.IsPrimitive || rettype == typeof(DateTime))
                 {
                     var v = Convert.ChangeType(o, rettype);
 
-                    if (v is Double)
+                    if (v is double)
                         values[name] = ((double)v).ToString(ct);
                     else if (v is int)
                         values[name] = ((int)v).ToString(ct);
                     else if (v is long)
                         values[name] = ((long)v).ToString(ct);
+                    else if (v is bool)
+                        values[name] = ((bool)v) ? "1" : "0";
                     else if (v is DateTime)
                         values[name] = ((DateTime)v).ToString(System.Globalization.CultureInfo.CreateSpecificCulture("en-us"));
                     else
                         values[name] = v.ToString();
                 }
                 else
-                {                                                               // generic, get value type
-                    System.Reflection.PropertyInfo pvalue = rettype.GetProperty("Value");   // value is second property of a nullable class
-
-                    Type nulltype = pvalue.PropertyType;    // its type and value are found..
-                    var value = pvalue.GetValue(o);
-                    AddDataOfType(value, nulltype, name, depth-1);         // recurse to decode it
+                {
+                    values[name] = o.ToString();
                 }
             }
             catch { }

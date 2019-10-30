@@ -43,7 +43,7 @@ namespace SQLLiteExtensions
 
         private bool hasbeendisposed = false;
 
-        protected SQLExtConnection( AccessMode mode )
+        protected SQLExtConnection( AccessMode mode = AccessMode.ReaderWriter )
         {
             lock (openConnections)
             {
@@ -242,6 +242,16 @@ namespace SQLLiteExtensions
         {
             using (DbCommand command = CreateCommand(query))
                 command.ExecuteNonQuery();
+        }
+
+        public DbCommandBuilder CreateCommandBuilder()
+        {
+            return DbFactory.CreateCommandBuilder();
+        }
+
+        public Type GetConnectionType()
+        {
+            return connection.GetType();
         }
     }
 }
