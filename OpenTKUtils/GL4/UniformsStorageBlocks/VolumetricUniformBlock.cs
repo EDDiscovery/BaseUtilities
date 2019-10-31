@@ -49,24 +49,44 @@ namespace OpenTKUtils.GL4
             IntPtr pb = Map(0, BufferSize);        // the whole schebang
 
             float minzv = float.MaxValue, maxzv = float.MinValue;
+            int minv=0, maxv=0;
             for (int i = 0; i < 8; i++)
             {
-                Vector4 p = Vector4.Transform(boundingbox[i], c.ModelMatrix);
-                if (p.Z < minzv)
-                    minzv = p.Z;
-                if (p.Z > maxzv)
-                    maxzv = p.Z;
-                MapWrite(ref pb, p);
+                Vector4 m = Vector4.Transform(boundingbox[i], c.ModelMatrix);
+             //   Vector4 p = Vector4.Transform(m, c.ProjectionMatrix);
+             //   System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec() , p.ToStringVec());
+                if (m.Z < minzv)
+                {
+                    minzv = m.Z;
+                    minv = i;
+                }
+                if (m.Z > maxzv)
+                {
+                    maxzv = m.Z;
+                    maxv = i;
+                }
+                MapWrite(ref pb, m);
             }
 
             MapWrite(ref pb, minzv);
             MapWrite(ref pb, maxzv);
-            MapWrite(ref pb, Vector4.Transform(new Vector4(c.EyePosition, 0), c.ModelMatrix));
+            Vector4 eyemodel = Vector4.Transform(new Vector4(c.EyePosition, 0), c.ModelMatrix);
+            MapWrite(ref pb, eyemodel);
+
             float slicedist = (maxzv - minzv) / (float)slices;
-            float slicestart = (maxzv - minzv) / ((float)slices * 2);
+            float slicestart = minzv + (maxzv - minzv) / ((float)slices * 2);
+            float sliceend = slicestart + slicedist * slices;
+
+            //slicestart = maxzv - (maxzv - minzv) / ((float)slices * 2);
+            //slicestart += slicedist;
+
+            //float slicedist = 1f;
+            //float slicestart = maxzv - slices * slicedist;
+
             MapWrite(ref pb, slicestart);
             MapWrite(ref pb, slicedist); 
             UnMap();
+            System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} eyemodel {4} : {5}..{6} delta {7}", minv, minzv, maxv, maxzv, eyemodel.Z, slicestart, sliceend, slicedist);
         }
     }
 }

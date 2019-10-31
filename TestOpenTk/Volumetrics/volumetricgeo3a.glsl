@@ -13,24 +13,14 @@ layout(std140, binding=0) uniform MatrixCalc
     float EyeDistance;
 } mc;
 
-layout (points) in;              // get two vertexes discribing p0 and p6 in
+layout (lines) in;              // get two vertexes discribing p0 and p6 in
 layout (triangle_strip) out;
 layout (max_vertices=32) out;
 
 in int instance[];
 
-out vec3 vs_texcoord;
 out vec4 vs_color;
-
-layout (std140, binding = 1) uniform PointBlock
-{
-	vec4 p[8];    
-	float minz;
-	float maxz;
-	vec4 eyeposition;
-	float slicestart;
-	float slicedist;
-} pb;
+out vec3 vs_texcoord;
 
 layout (binding = 5, std430) buffer DataBack
 {
@@ -59,17 +49,47 @@ void main(void)
 	// vectors are back face : v4 = p4->p5, v5 = p5->p6, v6 = p6->p7, v7 = p6->p4
 	// vectors are sides : v8 = p0->p4, v9 = p1->p5, v10 = p2->p6, v11 = p3->p7
 	
-	int i;
+    vec4 p[8];
+    p[0] = mc.ModelMatrix * gl_in[0].gl_Position;
+    p[6] = mc.ModelMatrix * gl_in[1].gl_Position;
+    p[1] = mc.ModelMatrix * vec4(gl_in[0].gl_Position.x,gl_in[1].gl_Position.y,gl_in[0].gl_Position.z,1);
+    p[2] = mc.ModelMatrix * vec4(gl_in[1].gl_Position.x,gl_in[1].gl_Position.y,gl_in[0].gl_Position.z,1);
+    p[3] = mc.ModelMatrix * vec4(gl_in[1].gl_Position.x,gl_in[0].gl_Position.y,gl_in[0].gl_Position.z,1);
+
+    p[4] = mc.ModelMatrix * vec4(gl_in[0].gl_Position.x,gl_in[0].gl_Position.y,gl_in[1].gl_Position.z,1);
+    p[5] = mc.ModelMatrix * vec4(gl_in[0].gl_Position.x,gl_in[1].gl_Position.y,gl_in[1].gl_Position.z,1);
+    p[7] = mc.ModelMatrix * vec4(gl_in[1].gl_Position.x,gl_in[0].gl_Position.y,gl_in[1].gl_Position.z,1);
+
+	// Find the min z and max z
+    int maxz=0,minz=0;
+    float maxzv = -10000000,minzv = +10000000;
+    int i;
+    for ( i = 0 ; i < 8 ; i++ )
+    {
+        if (p[i].z < minzv)
+        {
+            minzv = p[i].z;
+            minz = i;
+        }
+        if (p[i].z > maxzv)		// don't elseif
+        {
+            maxzv = p[i].z;
+            maxz = i;
+        }
+    }
+
+	vec4 eyeposition = mc.ModelMatrix * mc.EyePosition;
+	//vec4 eyeposition = mc.EyePosition;
+
 	int instanceid = instance[0];
+	// find the z point
+	float zdist =p[maxz].z-p[minz].z;
+	float z = p[minz].z + zdist * (0.95+instanceid * 0.1);		// first is painted at the back, then forward..
 
-	float z = pb.slicestart + instanceid * pb.slicedist;		// z is picked up by instance ID * Uniform
+	uint counter = atomicCounterIncrement(atomiccounter);
 
-	//uint counter = atomicCounterIncrement(atomiccounter);
-	//databack[counter*2+0] = vec4(z,pb.minz,pb.maxz,pb.slicestart);
-	//databack[counter*2+1] = vec4(instanceid,pb.slicedist,0,0);
-
-	//if ( pb.eyeposition.z < z-2 )		// we should be able to clip the computation if our eye z is in front of the z plane.
-	//	return;
+	if ( eyeposition.z < z-2 )		// we should be able to clip the computation if our eye z is in front of the z plane.
+		return;
 
 	int i1lookup[12] = {0,1,3,0, 4,5,7,4, 0,1,2,3};	// comparision index to check for ic=0 to 12
 	int i2lookup[12] = {1,2,2,3, 5,6,6,7, 4,5,6,7};	
@@ -82,6 +102,7 @@ void main(void)
 	int interceptcount = 0;		// count
 	vec4 average = vec4(0,0,z,1);// average of found intercepts
 	vec3 texaverage = vec3(0,0,0);	// average of tex coords
+	int icnumber[6];
 
 	int ic = 0;
     for ( ic = 0 ; ic < 12 ; ic++ )
@@ -89,15 +110,17 @@ void main(void)
 		int i1 = i1lookup[ic];// computes the pairs to compare..
 		int i2 = i2lookup[ic];		
 
-		float interceptv = (z - pb.p[i1].z) / (pb.p[i2].z - pb.p[i1].z);	// z% intercept on those pairs
+		float interceptv = (z - p[i1].z) / (p[i2].z - p[i1].z);	// z% intercept on those pairs
 
 		if ( interceptv >= 0 && interceptv <=1)	// we have an intercept
 		{
-			vec4 pos = vec4( pb.p[i1].x + (pb.p[i2].x-pb.p[i1].x) * interceptv , pb.p[i1].y + (pb.p[i2].y-pb.p[i1].y) * interceptv, z,1);
+			vec4 pos = vec4( p[i1].x + (p[i2].x-p[i1].x) * interceptv , p[i1].y + (p[i2].y-p[i1].y) * interceptv, z,1);
 			interceptpoints[interceptcount] = pos;	// set intercept point, on the z plane
 
 			average.x += pos.x;		// update average
 			average.y += pos.y;
+
+			icnumber[interceptcount] = ic;
 
 			if ( bool(ic & 8))	// sides, z varying (v8-11)
 			{
@@ -122,6 +145,7 @@ void main(void)
 	{
 		average.x /= interceptcount;
 		average.y /= interceptcount;		// find average x/y.  z is obj the same
+
 		texaverage /= interceptcount;
 
 		float angles[6];
@@ -141,59 +165,56 @@ void main(void)
 			{
 				vec4 keyi = interceptpoints[j];
 				vec3 texi = texpoints[j];
+				int icn = icnumber[j];
 
 				do
 				{
 					angles[i+1] = angles[i];
 					interceptpoints[i+1] = interceptpoints[i];
 					texpoints[i+1] = texpoints[i];
+					icnumber[i+1] = icnumber[i];
 					i--;
 				} while( i>=0 && angles[i] > key);
 
 				angles[i+1] = key;
 				interceptpoints[i+1] = keyi;
 				texpoints[i+1] = texi;
+				icnumber[i+1] = icn;
 			}
 		}
 
-		if ( interceptcount == 3 )			// if only 3, we only need to emit a single triangle
+		for(  i =0 ; i < interceptcount ; i++ )	// find the angle to the average
 		{
-			gl_Position = mc.ProjectionMatrix * interceptpoints[0];
-			vs_texcoord = texpoints[0];
-			EmitVertex();
-
-			gl_Position = mc.ProjectionMatrix * interceptpoints[1];
-			vs_texcoord = texpoints[1];
-			EmitVertex();
-
-			gl_Position = mc.ProjectionMatrix * interceptpoints[2];
-			vs_texcoord = texpoints[2];
-			EmitVertex();
+			databack[i*2+3] = vec4(texpoints[i],9);
 		}
-		else
+
+
+		// RGBYCW
+		vec4 colours[6] = { vec4(1,0,0,1),vec4(0,1,0,1), vec4(0,0,1,1),vec4(1,1,0,1),vec4(0,1,1,1),vec4(1,1,1,1)};
+
+		for( int i = 0 ; i < interceptcount ; i++ )		// since we can only output a triangle strip, we must do each set individually.
 		{
-			for( int i = 0 ; i < interceptcount ; i++ )		// since we can only output a triangle sets, we must do each set individually wound around the centre
-			//int i = 3;
-			{
-				gl_Position = mc.ProjectionMatrix * average;
-				vs_texcoord = texaverage;
-				EmitVertex();
-				//databack[0] = vec4(vs_texcoord,0);
+			vec4 c = vec4(1,instanceid*0.1,1,0.4);
+			vs_color = colours[0];
+		    gl_Position = mc.ProjectionMatrix * average;
+			databack[i*3] =  gl_Position;
+			vs_texcoord = texaverage;
+			EmitVertex();
 
-				gl_Position = mc.ProjectionMatrix * interceptpoints[i];
-				vs_texcoord = texpoints[i];
-				EmitVertex();
-			//	databack[1] = vec4(vs_texcoord,1);
+			vs_color = colours[1];
+		    gl_Position = mc.ProjectionMatrix * interceptpoints[i];
+			databack[i*3+1] =  gl_Position;
+			vs_texcoord = texpoints[i];
+		    EmitVertex();
 
-				int iother = (i+1)%interceptcount;
-				gl_Position = mc.ProjectionMatrix * interceptpoints[ iother ];
-				vs_texcoord = texpoints[iother];
-			//	databack[2] = vec4(vs_texcoord,2);
+			int iother = (i+1)%interceptcount;
+			vs_color = colours[2];
+		    gl_Position = mc.ProjectionMatrix * interceptpoints[ iother ];
+			databack[i*3+2] =  gl_Position;
+			vs_texcoord = texpoints[iother];
+		    EmitVertex();
 
-				EmitVertex();
-
-				EndPrimitive();
-			}	
+			EndPrimitive();
 		}
 	}
 }

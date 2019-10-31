@@ -21,15 +21,14 @@ namespace OpenTKUtils.Common
 {
     public class MatrixCalc
     {
-        public bool InPerspectiveMode { get; set; } = true;
         public Matrix4 ModelMatrix { get; private set; }
         public Matrix4 ProjectionMatrix { get; private set; }
         public Matrix4 ProjectionModelMatrix { get; private set; }
 
-
-        public float ZoomDistance { get; set; } = 1000F;       // distance that zoom=1 will be from the Position, in the direction of the camera.
-        public float PerspectiveFarZDistance { get; set; } = 1000000.0f;        // perspective, set Z's for clipping
-        public float PerspectiveNearZDistance { get; set; } = 1f;
+        public bool InPerspectiveMode { get; set; } = true;                     // perspective mode
+        public float ZoomDistance { get; set; } = 1000F;                        // distance that zoom=1 will be from the Position, in the direction of the camera.
+        public float PerspectiveFarZDistance { get; set; } = 500000.0f;         // perspective, set Z's for clipping.
+        public float PerspectiveNearZDistance { get; set; } = 1f;               // Don't set this too small othersize depth testing stars going wrong.
         public float OrthographicDistance { get; set; } = 5000.0f;              // Orthographic, give scale
 
         public float CalcEyeDistance(float zoom) { return ZoomDistance / zoom; }    // distance of eye from target position
@@ -71,7 +70,7 @@ namespace OpenTKUtils.Common
 
                 EyePosition = position + eyerel;              // eye is here, the target pos, plus the eye relative position
 
-                System.Diagnostics.Debug.WriteLine("Eye " + EyePosition + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom + " normal " + normal);
+              //  System.Diagnostics.Debug.WriteLine("Eye " + EyePosition + " target " + position + " dir " + cameraDir + " camera dist " + CalcEyeDistance(zoom) + " zoom " + zoom + " normal " + normal);
 
                 ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with up giving the rotation of the look
 
@@ -90,7 +89,7 @@ namespace OpenTKUtils.Common
                 rotcam *= Matrix4.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
 
                 Matrix4 preinverted = Matrix4.Mult(offset, scale);
-                EyePosition = new Vector3(preinverted.Row0.X, preinverted.Row1.Y, preinverted.Row2.Z);          // TBD.. 
+                EyePosition = new Vector3(preinverted.Row0.X, preinverted.Row1.Y, preinverted.Row2.Z);        
                 preinverted = Matrix4.Mult(preinverted, rotcam);
                 ModelMatrix = preinverted;
             }

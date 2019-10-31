@@ -28,6 +28,12 @@ float gaussian(float x, float centre, float stddist)
     return exp(-(x-centre)*(x-centre)/(2*stddist*stddist));
 }
 
+
+//{
+//    double xd = double(x)-centre;
+//    xd = -xd * xd;
+//    double d = 2 * stddist * stddist;
+//    return exp(float(xd / d);
 ";
 
     }
