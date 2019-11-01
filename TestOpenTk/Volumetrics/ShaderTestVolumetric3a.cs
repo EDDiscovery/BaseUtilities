@@ -109,7 +109,7 @@ void main(void)
             GLStatics.EnableDebug(DebugProc);
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            gl3dcontroller.MatrixCalc.ZoomDistance = 40F;
+            gl3dcontroller.ZoomDistance = 40F;
             gl3dcontroller.MovementTracker.MinimumCameraDirChange = 0.01f;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);

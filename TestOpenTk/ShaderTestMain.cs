@@ -101,7 +101,7 @@ void main(void)
             Closed += ShaderTest_Closed;
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
+            gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>

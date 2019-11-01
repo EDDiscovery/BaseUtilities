@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2016 EDDiscovery development team
+ * Copyright © 2015 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -23,6 +23,10 @@ namespace OpenTKUtils.Common
     public class Zoom
     {
         public float Current { get { return zoom; } }
+
+        public float Zoom1Distance { get; set; } = 1000F;                        // distance that zoom=1 will be from the Position, in the direction of the camera.
+        public float EyeDistance { get { return Zoom1Distance / zoom; } }    // distance of eye from target position
+
         public bool InSlew { get { return (zoomtimer.IsRunning); } }
         public float Default { get { return defaultZoom; } set { defaultZoom = Math.Min(Math.Max(value, ZoomMin),ZoomMax); } }
 

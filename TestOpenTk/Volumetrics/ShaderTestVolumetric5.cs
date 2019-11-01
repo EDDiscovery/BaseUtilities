@@ -71,14 +71,18 @@ namespace TestOpenTk
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
-            gl3dcontroller.MatrixCalc.ZoomDistance = 500F;
+            gl3dcontroller.ZoomDistance = 500F;
+
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 return (float)ms * 20.0f;
             };
 
-            gl3dcontroller.Start(new Vector3(0, 0, -30000), new Vector3(126.75f, 0, 0), 0.31622F);
+            //gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
+            //gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(126.75f, 0, 0), 0.31622F);
+            gl3dcontroller.MatrixCalc.InPerspectiveMode = false;
+            gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(180f, 0, 0), 0.31622F);
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
 
@@ -157,6 +161,41 @@ namespace TestOpenTk
             volumetricblock = new GLVolumetricUniformBlock();
             items.Add("VB",volumetricblock);
 
+
+
+            Bitmap[] numbers = new Bitmap[70];
+            Matrix4[] numberpos = new Matrix4[numbers.Length];
+
+            Font fnt = new Font("Arial", 20);
+
+            for (int i = 0; i < numbers.Length; i++)
+            {
+                int v = -35000 + i * 1000;
+                numbers[i] = new Bitmap(100, 100);
+                BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+                numberpos[i] = Matrix4.CreateScale(1);
+                numberpos[i] *= Matrix4.CreateRotationX(-25f.Radians());
+                numberpos[i] *= Matrix4.CreateTranslation(new Vector3(35500, 0, v));
+            }
+
+            GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
+            items.Add("Nums", array);
+            items.Add("IC-2", new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed()));
+            items.Shader("IC-2").StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
+            items.Shader("IC-2").FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
+
+            // investigate why its wrapping when we asked for it TexQUAD 1 which should interpolate over surface..
+
+            rObjects.Add(items.Shader("IC-2"), "1-b",
+                                    GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                            GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberpos,
+                                            null, numberpos.Length));
+
+
+
+
+
+
         }
 
         Vector4[] boundingbox;
@@ -192,7 +231,7 @@ namespace TestOpenTk
                 System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
             }
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
         int slices = 10000;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2015 - 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -24,12 +24,14 @@ namespace OpenTKUtils.Common
     public class Camera
     {
         public Vector3 Current { get { return cameraDir; } }    // in degrees
+        public Vector3 Normal { get { return cameraNormal; } }  // normal to the camera.. calculated if its moved.
 
         public Vector3 RotateToLookAtMe { get { return new Vector3(-(180f - Current.X), Current.Y, 0); } }
 
         public bool InSlew { get { return (cameraDirSlewProgress < 1.0F); } }
 
         private Vector3 cameraDir = Vector3.Zero;               // X = up/down, Y = rotate, Z = yaw, in degrees.
+        private Vector3 cameraNormal = Vector3.Zero;        
         private float cameraDirSlewProgress = 1.0f;             // 0 -> 1 slew progress
         private float cameraDirSlewTime;                        // how long to take to do the slew
         private Vector3 cameraDirSlewPosition;                  // where to slew to.
@@ -38,6 +40,7 @@ namespace OpenTKUtils.Common
         {
             KillSlew();
             cameraDir = pos;
+            CalcNormal();
         }
 
         public void Rotate( Vector3 offset )
@@ -53,6 +56,8 @@ namespace OpenTKUtils.Common
                 cameraDir.X = 0;
             if (cameraDir.X > 180 || cameraDir.X <= -90)
                 cameraDir.X = 180;
+
+            CalcNormal();
         }
 
         public void Pan(Vector3 pos, float timeslewsec = 0)       // may pass a Nan Position - no action
@@ -62,6 +67,7 @@ namespace OpenTKUtils.Common
                 if (timeslewsec == 0)
                 {
                     cameraDir = pos;
+                    CalcNormal();
                 }
                 else
                 {
@@ -105,13 +111,34 @@ namespace OpenTKUtils.Common
                     cameraDir += Vector3.Multiply(totvector, (float)slewfact);
                 }
 
+                CalcNormal();
                 cameraDirSlewProgress = (float)newprogress;
             }
         }
 
-        public bool Keyboard(KeyboardState kbd, float angle)
+        public void CalcNormal()                // we need the normal for the perspective mode
+        {
+            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+            // we rotate the identity matrix by the camera direction
+            // .x and .y values are set by our axis orientations..
+            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+            // .z rotates the camera.
+
+            transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationZ((float)(cameraDir.Z * Math.PI / 180.0f));
+
+            cameraNormal = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), transform);       // 0,0,1 also sets the axis - this whats make .x/.y address the x/y rotations
+        }
+
+        public enum KeyboardAction { None, MoveEye, MovePosition };
+
+        public KeyboardAction Keyboard(KeyboardState kbd, float angle)
         {
             Vector3 cameraActionRotation = Vector3.Zero;
+            KeyboardAction act = KeyboardAction.MoveEye;
 
             if (kbd.IsPressed(Keys.NumPad4) != null)
             {
@@ -129,22 +156,34 @@ namespace OpenTKUtils.Common
             {
                 cameraActionRotation.X = angle;
             }
-            if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q) != null)
+
+            if (kbd.IsPressed(KeyboardState.ShiftState.Ctrl, Keys.Q))
             {
                 cameraActionRotation.Y = angle;
             }
-            if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E) != null)
+            else if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q) != null)
             {
                 cameraActionRotation.Y = -angle;
+                act = KeyboardAction.MovePosition;
+            }
+
+            if (kbd.IsPressed(KeyboardState.ShiftState.Ctrl, Keys.E))
+            {
+                cameraActionRotation.Y = -angle;
+            }
+            else if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E) != null)
+            {
+                cameraActionRotation.Y = angle;
+                act = KeyboardAction.MovePosition;
             }
 
             if (cameraActionRotation.LengthSquared > 0)
             {
                 Rotate(cameraActionRotation);
-                return true;
+                return act;
             }
             else
-                return false;
+                return KeyboardAction.None;
         }
 
 

@@ -18,7 +18,7 @@ namespace TestOpenTk
 {
     public partial class RandomStars : Form
     {
-        private Controller3D gltracker = new Controller3D();
+        private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
@@ -27,9 +27,9 @@ namespace TestOpenTk
             InitializeComponent();
 
             this.glControlContainer.SuspendLayout();
-            gltracker.CreateGLControl();
-            this.glControlContainer.Controls.Add(gltracker.glControl);
-            gltracker.PaintObjects = Draw;
+            gl3dcontroller.CreateGLControl();
+            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
+            gl3dcontroller.PaintObjects = Draw;
             this.glControlContainer.ResumeLayout();
 
             systemtimer.Interval = 25;
@@ -81,11 +81,11 @@ namespace TestOpenTk
 
             datasets.Add(smalldatasetGrid);
 
-            gltracker.Start(new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
-            gltracker.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
+            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
-                float zoomlimited = Math.Min(Math.Max(gltracker.Zoom.Current, 0.01F), 15.0F);
-                float distance1sec = gltracker.MatrixCalc.ZoomDistance * (1.0f / zoomlimited);        // move Zoomdistance in one second, scaled by zoomY
+                float zoomlimited = Math.Min(Math.Max(gl3dcontroller.Zoom.Current, 0.01F), 15.0F);
+                float distance1sec = gl3dcontroller.ZoomDistance * (1.0f / zoomlimited);        // move Zoomdistance in one second, scaled by zoomY
                 return distance1sec * (float)ms / 1000.0f;
             };
         }
@@ -101,12 +101,12 @@ namespace TestOpenTk
             GL.LoadMatrix(ref mm);                          // set the model view to this matrix.
 
             foreach (var ds in datasets)
-                ds.DrawAll(gltracker.glControl);
+                ds.DrawAll(gl3dcontroller.glControl);
         }
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gltracker.HandleKeyboard(true, null);
+            gl3dcontroller.HandleKeyboard(true, null);
         }
 
     }

@@ -150,7 +150,7 @@ void main(void)
         {
             base.OnLoad(e);
 
-            gl3dcontroller.MatrixCalc.ZoomDistance = 20F;
+            gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(170f, 0, 0f), 1F);
 
