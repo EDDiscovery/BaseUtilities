@@ -93,7 +93,6 @@
     <Compile Include="Controller3D\MatrixCalc.cs" />
     <Compile Include="MCZF\Position.cs" />
     <Compile Include="Controller3D\Controller3D.cs" />
-    <Compile Include="Controller3D\StandardKeyboardHandler.cs" />
     <Compile Include="MCZF\Zoom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\Polygon.cs" />

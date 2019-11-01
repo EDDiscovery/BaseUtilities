@@ -13,9 +13,11 @@
  *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+using BaseUtils;
 using OpenTK;
 using System;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace OpenTKUtils.Common
 {
@@ -106,6 +108,46 @@ namespace OpenTKUtils.Common
                 cameraDirSlewProgress = (float)newprogress;
             }
         }
+
+        public bool Keyboard(KeyboardState kbd, float angle)
+        {
+            Vector3 cameraActionRotation = Vector3.Zero;
+
+            if (kbd.IsPressed(Keys.NumPad4) != null)
+            {
+                cameraActionRotation.Z = -angle;
+            }
+            if (kbd.IsPressed(Keys.NumPad6) != null)
+            {
+                cameraActionRotation.Z = angle;
+            }
+            if (kbd.IsAnyPressed(Keys.NumPad5, Keys.NumPad2) != null)
+            {
+                cameraActionRotation.X = -angle;
+            }
+            if (kbd.IsPressed(Keys.NumPad8) != null)
+            {
+                cameraActionRotation.X = angle;
+            }
+            if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q) != null)
+            {
+                cameraActionRotation.Y = angle;
+            }
+            if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E) != null)
+            {
+                cameraActionRotation.Y = -angle;
+            }
+
+            if (cameraActionRotation.LengthSquared > 0)
+            {
+                Rotate(cameraActionRotation);
+                return true;
+            }
+            else
+                return false;
+        }
+
+
 
     }
 }

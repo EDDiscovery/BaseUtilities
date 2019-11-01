@@ -78,12 +78,12 @@ namespace OpenTKUtils.Common
 
         public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
         {
-            Pos.Current = lookat;
+            Pos.Lookat = lookat;
             Camera.Set(cameradir);
             Zoom.Default = zoomn;
             Zoom.SetDefault();
 
-            MovementTracker.Update(Camera.Current, Pos.Current, this.Zoom.Current); // set up here so ready for action.. below uses it.
+            MovementTracker.Update(Camera.Current, Pos.Lookat, this.Zoom.Current); // set up here so ready for action.. below uses it.
             SetModelProjectionMatrix();
 
             GL.ClearColor(BackColour);
@@ -98,7 +98,7 @@ namespace OpenTKUtils.Common
 
         // Pos Direction interface
         // don't want direct class access, via this wrapper
-        public void SetPosition(Vector3 posx) { Pos.Current = posx; }
+        public void SetPosition(Vector3 posx) { Pos.Lookat = posx; }
         public void TranslatePosition(Vector3 posx) { Pos.Translate(posx); }
         public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F) { Pos.GoTo(normpos, timeslewsec, unitspersecond); }
 
@@ -139,13 +139,13 @@ namespace OpenTKUtils.Common
 
             if (activated && glControl.Focused)                      // if we can accept keys
             {
-                if (StandardKeyboardHandler.Camera(keyboard, Camera, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.07f*LastHandleInterval)))      // moving the camera around kills the pos slew (as well as its own slew)
+                if (Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.07f*LastHandleInterval)))      // moving the camera around kills the pos slew (as well as its own slew)
                     Pos.KillSlew();
 
-                if (StandardKeyboardHandler.Movement(keyboard, Pos, MatrixCalc.InPerspectiveMode, Camera.Current, KeyboardTravelSpeed?.Invoke(LastHandleInterval) ?? (0.1f*LastHandleInterval), EliteMovement))
+                if (Pos.Keyboard(keyboard, MatrixCalc.InPerspectiveMode, Camera.Current, KeyboardTravelSpeed?.Invoke(LastHandleInterval) ?? (0.1f*LastHandleInterval), EliteMovement))
                     Camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
 
-                StandardKeyboardHandler.Zoom(keyboard, Zoom, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f)));      // zoom slew is not affected by the above
+                Zoom.Keyboard(keyboard, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f)));      // zoom slew is not affected by the above
 
                 if (keyboard.IsPressedRemove(Keys.M, BaseUtils.KeyboardState.ShiftState.Ctrl))
                     EliteMovement = !EliteMovement;
@@ -161,11 +161,11 @@ namespace OpenTKUtils.Common
             Camera.DoSlew(LastHandleInterval);
             Zoom.DoSlew();
 
-            MovementTracker.Update(Camera.Current, Pos.Current, Zoom.Current);       // Gross limit allows you not to repaint due to a small movement. I've set it to all the time for now, prefer the smoothness to the frame rate.
+            MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current);       // Gross limit allows you not to repaint due to a small movement. I've set it to all the time for now, prefer the smoothness to the frame rate.
 
             if (MovementTracker.AnythingChanged)
             {
-                MatrixCalc.CalculateModelMatrix(Pos.Current, Camera.Current, Zoom.Current);
+                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Camera.Current, Zoom.Current);
                 //System.Diagnostics.Debug.WriteLine("Moved " + pos.Current + " " + camera.Current);
                 glControl.Invalidate();
             }
@@ -185,7 +185,7 @@ namespace OpenTKUtils.Common
         {
             MatrixCalc.CalculateProjectionMatrix(fov.Current, glControl.Width, glControl.Height, out float zn);
             zNear = zn;
-            MatrixCalc.CalculateModelMatrix(Pos.Current, Camera.Current, Zoom.Current);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Camera.Current, Zoom.Current);
             GL.Viewport(0, 0, glControl.Width, glControl.Height);                        // Use all of the glControl painting area
         }
 

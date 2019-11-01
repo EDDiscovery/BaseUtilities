@@ -476,7 +476,7 @@ void main(void)
 
             items.SB("SB6").Write(zeroone, 4, true);
 
-            ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceControl)).Position = gl3dcontroller.Pos.Current;
+            ((GLObjectDataTranslationRotation)(rObjects["viewpoint"].InstanceControl)).Position = gl3dcontroller.Pos.Lookat;
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 
