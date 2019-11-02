@@ -57,7 +57,7 @@ layout (binding = 1, std430) buffer Positions
     float noisebuf[];
 };
 
-" + GLShaderFunctionsNoise.NoiseFunctions3 + @"
+#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
 
 void write(float v)
 {

@@ -65,9 +65,8 @@ layout (location = 14) uniform float concentrationequator;
 layout (location = 15) uniform float unDTsurface;
 layout (location = 16) uniform float unDTspots;
 
+#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
 
-" + GLShaderFunctionsNoise.NoiseFunctions3 +
-    @"
 void main(void)
 {
     vec3 position = normalize(modelpos);        // normalise model vectors
@@ -144,7 +143,8 @@ void main(void)
                 return
     @"
 #version 450 core
-" + GLShaderFunctionsNoise.NoiseFunctions4 + @"
+
+#include OpenTKUtils.GL4.Shaders.Functions.noise4.glsl
 
 layout (location =0 ) in vec3 fposition;
 out vec4 color;

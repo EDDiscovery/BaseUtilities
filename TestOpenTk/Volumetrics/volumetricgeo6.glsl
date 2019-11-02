@@ -3,6 +3,7 @@
 
 #version 450 core
 
+//from UniformStorageBlocks.volumetric.glsl copied for syntax reasons
 layout(std140, binding=0) uniform MatrixCalc
 {
     mat4 ProjectionModelMatrix;

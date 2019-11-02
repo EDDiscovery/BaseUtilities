@@ -253,7 +253,7 @@ namespace TestOpenTk
 
             string fcode = @"
             #version 450 core
-            " + GLShaderFunctionsDist.DistFunctions + @"
+            #include OpenTKUtils.GL4.Shaders.Functions.distribution.glsl
             out vec4 color;
 
             in vec3 vs_texcoord;
