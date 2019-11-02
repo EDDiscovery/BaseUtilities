@@ -28,19 +28,6 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public static string GLSL =                         // code to include in your shader..
-        @"
-                layout (std140, binding = 1) uniform PointBlock
-                {
-	                vec4 p[8];      // model positions
-	                float minz;
-	                float maxz;
-	                vec4 eyeposition; // model positions
-	                float slicestart;
-	                float slicedist;
-                } pb;
-        ";
-
         public void Set(MatrixCalc c, Vector4[] boundingbox, int slices)
         {
             if (NotAllocated)

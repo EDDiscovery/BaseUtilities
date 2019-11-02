@@ -121,7 +121,7 @@ void main(void)
                 return
     @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 
 layout (location = 0) in vec4 position;
 

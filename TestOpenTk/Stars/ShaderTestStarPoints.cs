@@ -49,7 +49,7 @@ namespace TestOpenTk
                 return
     @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in uvec2 positionpacked;
 
 out vec4 vs_color;

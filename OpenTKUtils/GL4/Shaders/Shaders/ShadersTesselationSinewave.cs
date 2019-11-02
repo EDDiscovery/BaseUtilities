@@ -68,7 +68,7 @@ void main(void)
 
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (quads) in; 
 
 layout (location = 20) uniform  mat4 projectionmodel;

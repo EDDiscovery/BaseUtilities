@@ -78,6 +78,12 @@
     <Compile Include="Volumetrics\ShaderTestVolumetric3a.designer.cs">
       <DependentUpon>ShaderTestVolumetric3a.cs</DependentUpon>
     </Compile>
+    <Compile Include="Volumetrics\ShaderTestVolumetric6.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Volumetrics\ShaderTestVolumetric6.designer.cs">
+      <DependentUpon>ShaderTestVolumetric6.cs</DependentUpon>
+    </Compile>
     <Compile Include="Volumetrics\ShaderTestVolumetric5.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -178,6 +184,9 @@
     <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric3a.resx">
       <DependentUpon>ShaderTestVolumetric3a.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric6.resx">
+      <DependentUpon>ShaderTestVolumetric6.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric5.resx">
       <DependentUpon>ShaderTestVolumetric5.cs</DependentUpon>
     </EmbeddedResource>
@@ -233,6 +242,7 @@
     <EmbeddedResource Include="Volumetrics\volumetricgeo4.glsl" />
     <EmbeddedResource Include="Volumetrics\volumetricgeo5.glsl" />
     <EmbeddedResource Include="Volumetrics\volumetricgeo3a.glsl" />
+    <EmbeddedResource Include="Volumetrics\volumetricgeo6.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

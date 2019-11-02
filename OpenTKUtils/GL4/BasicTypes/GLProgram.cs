@@ -46,19 +46,37 @@ namespace OpenTKUtils.GL4
             shaders.Add(s);
         }
 
-        public string Compile( ShaderType st, string codeorfile )        // codeorfile - either code or Resourcename.filename.glsl. null or okay
+        public string Compile( ShaderType st, string codelisting )        // code listing - with added #includes
         {
             GLShader shader = new GLShader(st);
 
-            string code;
+            LineReader lr = new LineReader();
+            lr.OpenString(codelisting);
 
-            if (codeorfile.Contains(".glsl") && !codeorfile.Contains("#version"))        // .glsl and not #version in it.. its a assembly name
+            string code = "", line;
+            bool doneversion = false;
+
+            while( (line = lr.ReadLine())!=null)
             {
-                code = BaseUtils.ResourceHelpers.GetResourceAsString(codeorfile);
-                System.Diagnostics.Debug.Assert(code != null, "Resource File " + codeorfile + " not found");
+                line = line.Trim();
+                if (line.StartsWith("#include", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("//Include", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    line = line.Mid(line[0]=='#' ? 8 : 9).Trim();
+                    string include = BaseUtils.ResourceHelpers.GetResourceAsString(line);
+                    System.Diagnostics.Debug.Assert(include != null, "Cannot include " + line);
+                    lr.OpenString(include);     // include it
+                }
+                else if ( line.StartsWith("#version", StringComparison.InvariantCultureIgnoreCase))        // one and only one #version
+                {
+                    if ( !doneversion)
+                    {
+                        code += line + Environment.NewLine;
+                        doneversion = true;
+                    }
+                }
+                else
+                    code += line + Environment.NewLine;
             }
-            else
-                code = codeorfile;
 
             string ret = shader.Compile(code);
 

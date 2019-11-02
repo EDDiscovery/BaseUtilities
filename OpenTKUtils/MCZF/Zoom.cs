@@ -133,13 +133,13 @@ namespace OpenTKUtils.Common
         {
             bool changed = false;
 
-            if (kbd.IsAnyPressed(Keys.Add, Keys.Z) != null)
+            if (kbd.IsAnyPressed(KeyboardState.ShiftState.None,Keys.Add, Keys.M))
             {
                 Multiply(adjustment);
                 changed = true;
             }
 
-            if (kbd.IsAnyPressed(Keys.Subtract, Keys.X) != null)
+            if (kbd.IsAnyPressed(KeyboardState.ShiftState.None, Keys.Subtract, Keys.N) )
             {
                 Multiply(1.0f / adjustment);
                 changed = true;

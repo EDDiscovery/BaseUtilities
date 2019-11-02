@@ -55,8 +55,9 @@ namespace TestOpenTk
             string vertpos =
             @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL
-      + StarColours + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
+"  + StarColours + @"
 layout (location = 0) in uvec2 positionpacked;
 
 out flat ivec3 i_color;

@@ -30,19 +30,6 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public static string GLSL =                         // code to include in your shader..
-        @"
-            layout(std140, binding=0) uniform MatrixCalc
-            {
-                mat4 ProjectionModelMatrix;
-                mat4 ProjectionMatrix;
-                mat4 ModelMatrix;
-                vec4 TargetPosition;
-                vec4 EyePosition;
-                float EyeDistance;
-            } mc;
-        ";
-
         public void Set( MatrixCalc c, bool full = true)
         {
             if (NotAllocated)

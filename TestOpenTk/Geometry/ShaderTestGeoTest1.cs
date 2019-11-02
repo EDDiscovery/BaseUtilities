@@ -61,7 +61,7 @@ void main(void)
 
             string gcode = @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (points) in;
 layout (points) out;
 layout (max_vertices=2) out;

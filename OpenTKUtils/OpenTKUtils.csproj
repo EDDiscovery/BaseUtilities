@@ -55,7 +55,7 @@
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
-    <Compile Include="GL4\Shaders\FunctionsData\FunctionsDist.cs" />
+    <Compile Include="GL4\Shaders\Functions\FunctionsDist.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
@@ -71,7 +71,7 @@
     <Compile Include="GL4\Shaders\Base\ShaderPipeline.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipelineShadersBase.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderStandard.cs" />
-    <Compile Include="GL4\Shaders\FunctionsData\FunctionsNoise.cs" />
+    <Compile Include="GL4\Shaders\Functions\FunctionsNoise.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersFragment.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
@@ -82,9 +82,9 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\Textures\Texture2DArray.cs" />
-    <Compile Include="GL4\UniformsStorageBlocks\VolumetricUniformBlock.cs" />
-    <Compile Include="GL4\UniformsStorageBlocks\MatrixCalcUniformBlock.cs" />
-    <Compile Include="GL4\UniformsStorageBlocks\UniformsStorageBlocks.cs" />
+    <Compile Include="GL4\UniformStorageBlocks\VolumetricUniformBlock.cs" />
+    <Compile Include="GL4\UniformStorageBlocks\MatrixCalcUniformBlock.cs" />
+    <Compile Include="GL4\UniformStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />
     <Compile Include="GL\GLStatics.cs" />
     <Compile Include="MCZF\Camera.cs" />
@@ -105,6 +105,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\distribution.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\noise3.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\noise4.glsl" />
+    <EmbeddedResource Include="GL4\UniformStorageBlocks\matrixcalc.glsl" />
+    <EmbeddedResource Include="GL4\UniformStorageBlocks\volumetric.glsl" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

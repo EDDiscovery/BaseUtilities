@@ -36,7 +36,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in vec4 position;
 layout (location = 4) in mat4 transform;
 
@@ -79,7 +79,9 @@ void main(void)
             return
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
 layout (location = 0) in vec4 position;
 layout (location = 4) in mat4 transform;
 
@@ -134,7 +136,7 @@ void main(void)
 
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;
@@ -192,7 +194,7 @@ void main(void)
 
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in vec4 position;
 out gl_PerVertex {
         vec4 gl_Position;

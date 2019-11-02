@@ -154,7 +154,7 @@ namespace OpenTKUtils.Common
             {
                 if (MatrixCalc.InPerspectiveMode)       // camera rotations are only in perspective mode
                 {
-                    var ca = Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.07f * LastHandleInterval));
+                    var ca = Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
                     if (ca != Camera.KeyboardAction.None)      // moving the camera around kills the pos slew (as well as its own slew)
                     {
                         Pos.KillSlew();

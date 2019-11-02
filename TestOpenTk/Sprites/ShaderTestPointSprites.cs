@@ -46,7 +46,8 @@ namespace TestOpenTk
             string vert =
 @"
 #version 450 core
-" + GLMatrixCalcUniformBlock.GLSL + @"
+
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 
 layout (location = 0) in vec4 position;     // has w=1
 layout (location = 1) in vec4 color;       
