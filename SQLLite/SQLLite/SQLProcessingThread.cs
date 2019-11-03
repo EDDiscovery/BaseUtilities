@@ -20,6 +20,13 @@ using System.Threading;
 
 namespace SQLLiteExtensions
 {
+    public class SQLProcessingThreadException : Exception
+    {
+        public SQLProcessingThreadException(Exception innerexception) : base(innerexception.Message, innerexception)
+        {
+        }
+    }
+
     public class SQLProcessingThread<ConnectionType> where ConnectionType: IDisposable, new()
     {
         private abstract class Job
@@ -33,7 +40,9 @@ namespace SQLLiteExtensions
             private Func<T> Func;
             private string StackTrace;
             private int WarnThreshold;
+            private Exception Exception;
             private T Result;
+            private System.Diagnostics.Stopwatch Stopwatch;
 
             public Job(Func<T> func, int skipframes, int warnthreshold)
             {
@@ -41,30 +50,48 @@ namespace SQLLiteExtensions
                 this.WaitHandle = new ManualResetEventSlim(false);
                 this.StackTrace = new System.Diagnostics.StackTrace(skipframes + 1, true).ToString();
                 this.WarnThreshold = warnthreshold;
+                this.Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             }
 
             public override void Exec()
             {
-                var sw = System.Diagnostics.Stopwatch.StartNew();
+                if (Stopwatch.ElapsedMilliseconds > WarnThreshold)
+                {
+                    System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Job delayed for {Stopwatch.ElapsedMilliseconds}ms");
+                }
+                Stopwatch.Reset();
+
                 try
                 {
                     Result = Func.Invoke();
                 }
+                catch (Exception ex)
+                {
+                    this.Exception = ex;
+                }
                 finally
                 {
-                    if (sw.ElapsedMilliseconds > WarnThreshold)
+                    if (Stopwatch.ElapsedMilliseconds > WarnThreshold)
                     {
-                        System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database connection held for {sw.ElapsedMilliseconds}ms\n{StackTrace}");
+                        System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database connection held for {Stopwatch.ElapsedMilliseconds}ms\n{StackTrace}");
                     }
-                }
 
-                WaitHandle.Set();
+                    WaitHandle.Set();
+                }
             }
 
             public T Wait()
             {
                 WaitHandle.Wait();
-                return Result;
+
+                if (Exception != null)
+                {
+                    throw new SQLProcessingThreadException(Exception);
+                }
+                else
+                {
+                    return Result;
+                }
             }
 
             public void Dispose()
@@ -161,7 +188,7 @@ namespace SQLLiteExtensions
                 SqlThread = new Thread(SqlThreadProc);
                 SqlThread.Name = threadname;
                 SqlThread.IsBackground = true;
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name}  SQL Thread " + threadname);
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name} SQL Thread " + threadname);
                 SqlThread.Start();
             }
         }
@@ -170,7 +197,7 @@ namespace SQLLiteExtensions
         {
             if (SqlThread != null)
             {
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name}  SQL Thread " + SqlThread.Name);
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name} SQL Thread " + SqlThread.Name);
                 StopRequested = true;
                 StopRequestedEvent.Set();
                 StopCompleted.WaitOne();
