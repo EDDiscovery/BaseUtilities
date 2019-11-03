@@ -22,26 +22,49 @@ namespace SQLLiteExtensions
 {
     public class SQLProcessingThread<ConnectionType> where ConnectionType: IDisposable, new()
     {
-        private class Job : IDisposable
+        private abstract class Job
+        {
+            public abstract void Exec();
+        }
+
+        private class Job<T> : Job, IDisposable
         {
             private ManualResetEventSlim WaitHandle;
-            private Action Action;
+            private Func<T> Func;
+            private string StackTrace;
+            private int WarnThreshold;
+            private T Result;
 
-            public Job(Action action)
+            public Job(Func<T> func, int skipframes, int warnthreshold)
             {
-                this.Action = action;
+                this.Func = func;
                 this.WaitHandle = new ManualResetEventSlim(false);
+                this.StackTrace = new System.Diagnostics.StackTrace(skipframes + 1, true).ToString();
+                this.WarnThreshold = warnthreshold;
             }
 
-            public void Exec()
+            public override void Exec()
             {
-                Action.Invoke();
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    Result = Func.Invoke();
+                }
+                finally
+                {
+                    if (sw.ElapsedMilliseconds > WarnThreshold)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database connection held for {sw.ElapsedMilliseconds}ms\n{StackTrace}");
+                    }
+                }
+
                 WaitHandle.Set();
             }
 
-            public void Wait(int timeout = 5000)
+            public T Wait()
             {
-                WaitHandle.Wait(timeout);
+                WaitHandle.Wait();
+                return Result;
             }
 
             public void Dispose()
@@ -86,64 +109,45 @@ namespace SQLLiteExtensions
             StopCompleted.Set();
         }
 
-        protected void Execute(Action action, int skipframes = 1, int warnthreshold = 500)  // in caller thread, queue to job queue, wait for complete
+        protected T Execute<T>(Func<T> func, int skipframes = 1, int warnthreshold = 500)  // in caller thread, queue to job queue, wait for complete
         {
             if (StopCompleted.WaitOne(0))
             {
                 throw new ObjectDisposedException(this.GetType().Name);
             }
 
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-
-            if (Thread.CurrentThread.ManagedThreadId == SqlThread?.ManagedThreadId)     // if current thread is the SQL Job thread, uh-oh
+            using (var job = new Job<T>(func, skipframes, warnthreshold))       // make a new job and queue it
             {
-                System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
-                action();
-            }
-            else
-            {
-                using (var job = new Job(action))       // make a new job and queue it
+                if (Thread.CurrentThread.ManagedThreadId == SqlThread?.ManagedThreadId)     // if current thread is the SQL Job thread, uh-oh
+                {
+                    System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
+                    job.Exec();
+                    return job.Wait();
+                }
+                else
                 {
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Queue Job " + Thread.CurrentThread.Name);
                     JobQueue.Enqueue(job);
                     JobQueuedEvent.Set();           // kick the thread to execute it.
-                    job.Wait(Timeout.Infinite);     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
+                    return job.Wait();     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Job finished " + sw.ElapsedMilliseconds + " " + Thread.CurrentThread.Name);
                 }
             }
-
-            if (sw.ElapsedMilliseconds > warnthreshold)
-            {
-                var trace = new System.Diagnostics.StackTrace(skipframes, true);
-                System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database connection held for {sw.ElapsedMilliseconds}ms\n{trace.ToString()}");
-            }
         }
 
-        protected T Execute<T>(Func<T> func, int skipframes = 1, int warnthreshold = 500)
+        protected void Execute(Action action, int skipframes = 1, int warnthreshold = 500)
         {
-            T ret = default(T);
-            Execute(() => { ret = func(); }, skipframes + 1, warnthreshold);
-            return ret;
-        }
-
-        private void ExecuteWithDatabaseInternal(Action<ConnectionType> action)
-        {
-            action.Invoke(Connection);
+            Execute<object>(() => { action(); return null; }, skipframes + 1, warnthreshold);
         }
 
         public void ExecuteWithDatabase(Action<ConnectionType> action, int warnthreshold = 500)
         {
-            Execute(() => action.Invoke(Connection), warnthreshold: warnthreshold);
+            Execute<object>(() => { action.Invoke(Connection); return null; }, warnthreshold: warnthreshold);
         }
 
         public T ExecuteWithDatabase<T>(Func<ConnectionType, T> func, int warnthreshold = 500)
         {
-            return Execute(() =>
-            {
-                T ret = default(T);
-                ExecuteWithDatabaseInternal(db => ret = func(db));
-                return ret;
-            }, warnthreshold: warnthreshold);
+            return Execute(() => func.Invoke(Connection), warnthreshold: warnthreshold);
         }
 
         public void Start(string threadname)
