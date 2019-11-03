@@ -97,7 +97,7 @@ namespace SQLLiteExtensions
 
             if (Thread.CurrentThread.ManagedThreadId == SqlThread?.ManagedThreadId)     // if current thread is the SQL Job thread, uh-oh
             {
-                System.Diagnostics.Trace.WriteLine($"Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
+                System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
                 action();
             }
             else
@@ -115,7 +115,7 @@ namespace SQLLiteExtensions
             if (sw.ElapsedMilliseconds > warnthreshold)
             {
                 var trace = new System.Diagnostics.StackTrace(skipframes, true);
-                System.Diagnostics.Trace.WriteLine($"Database connection held for {sw.ElapsedMilliseconds}ms\n{trace.ToString()}");
+                System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database connection held for {sw.ElapsedMilliseconds}ms\n{trace.ToString()}");
             }
         }
 
@@ -157,7 +157,7 @@ namespace SQLLiteExtensions
                 SqlThread = new Thread(SqlThreadProc);
                 SqlThread.Name = threadname;
                 SqlThread.IsBackground = true;
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Start SQL Thread " + threadname);
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name}  SQL Thread " + threadname);
                 SqlThread.Start();
             }
         }
@@ -166,11 +166,11 @@ namespace SQLLiteExtensions
         {
             if (SqlThread != null)
             {
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Stop SQL Thread " + SqlThread.Name);
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name}  SQL Thread " + SqlThread.Name);
                 StopRequested = true;
                 StopRequestedEvent.Set();
                 StopCompleted.WaitOne();
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Stopped SQL " + SqlThread.Name);
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stopped {typeof(ConnectionType).Name} SQL " + SqlThread.Name);
                 SqlThread = null;
             }
         }
