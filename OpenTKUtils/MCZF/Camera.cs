@@ -140,6 +140,9 @@ namespace OpenTKUtils.Common
             Vector3 cameraActionRotation = Vector3.Zero;
             KeyboardAction act = KeyboardAction.MoveEye;
 
+            if (kbd.Shift)
+                angle *= 2.0F;
+
             if (kbd.IsPressed(Keys.NumPad4) != null)
             {
                 cameraActionRotation.Z = -angle;

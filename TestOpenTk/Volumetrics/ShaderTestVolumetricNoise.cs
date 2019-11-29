@@ -1,4 +1,4 @@
-﻿using OpenTK;
+﻿ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils;
@@ -6,6 +6,7 @@ using OpenTKUtils.Common;
 using OpenTKUtils.GL4;
 using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 // Demonstrate the volumetric calculations needed to compute a plane facing the user inside a bounding box done inside a geo shader
@@ -13,13 +14,13 @@ using System.Windows.Forms;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestVolumetric5 : Form
+    public partial class ShaderTestVolumetricNoise : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestVolumetric5()
+        public ShaderTestVolumetricNoise()
         {
             InitializeComponent();
 
@@ -34,8 +35,6 @@ namespace TestOpenTk
             systemtimer.Start();
         }
 
-        GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
-        GLItemsList items = new GLItemsList();
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,19 +46,26 @@ namespace TestOpenTk
             }
         }
 
-        public class GLFixedProjectionShader : GLShaderPipeline
-        {
-            public GLFixedProjectionShader(Color c, Action<IGLProgramShader> action = null) : base(action)
-            {
-                AddVertexFragment(new GLVertexShaderProjection(), new GLFragmentShaderFixedColour(c));
-            }
-        }
-
+        
         void DebugProc(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
             //string s = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message);
             //System.Diagnostics.Debug.WriteLine("{0} {1} {2} {3} {4} {5}", source, type, id, severity, length, s);
            //  s = null;
+        }
+
+        GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
+        GLComputeShaderList cObjects = new GLComputeShaderList();
+        GLItemsList items = new GLItemsList();
+        Vector4[] boundingbox;
+        GLStorageBlock dataoutbuffer;
+        GLVolumetricUniformBlock volumetricblock;
+        GLAtomicBlock atomicbuffer;
+        GLRenderableItem noisebox;
+
+        private void ShaderTest_Closed(object sender, EventArgs e)
+        {
+            items.Dispose();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -71,34 +77,33 @@ namespace TestOpenTk
 
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
-            gl3dcontroller.ZoomDistance = 500F;
-
+            gl3dcontroller.ZoomDistance = 5000F;
+            gl3dcontroller.EliteMovement = true;
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
-                return (float)ms * 20.0f;
+                return (float)ms * 10.0f;
             };
 
-            //gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            //gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(126.75f, 0, 0), 0.31622F);
-            gl3dcontroller.MatrixCalc.InPerspectiveMode = false;
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(180f, 0, 0), 0.01F);
+            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
+            gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(135f, 0, 0), 0.31622F);
 
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
 
-            //for (float h = -2000; h <= 2000; h += 2000)
-            float h = 0;
+            float h = -1;
+            if ( h != -1 )
             {
+                Color cr = Color.FromArgb(60, Color.Gray);
                 rObjects.Add(items.Shader("COS-1L"),    // horizontal
                              GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
                                                         GLShapeObjectFactory.CreateLines(new Vector3(-35000, h, -35000), new Vector3(-35000, h, 35000), new Vector3(1000, 0, 0), 70),
-                                                        new Color4[] { Color.Gray })
+                                                        new Color4[] { cr })
                                    );
 
                 rObjects.Add(items.Shader("COS-1L"),  
                              GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
                                                         GLShapeObjectFactory.CreateLines(new Vector3(-35000, h, -35000), new Vector3(35000, h, -35000), new Vector3(0, 0,1000), 70),
-                                                        new Color4[] { Color.Gray })
+                                                        new Color4[] { cr })
                                    );
 
             }
@@ -144,9 +149,6 @@ namespace TestOpenTk
             rObjects.Add(items.Shader("LINEYELLOW"),
                         GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, lines2));
 
-            items.Add("V2", new ShaderV2());
-            galaxy = GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
-            rObjects.Add(items.Shader("V2"), galaxy);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
@@ -162,10 +164,9 @@ namespace TestOpenTk
             volumetricblock = new GLVolumetricUniformBlock();
             items.Add("VB",volumetricblock);
 
-
-
             Bitmap[] numbers = new Bitmap[70];
             Matrix4[] numberpos = new Matrix4[numbers.Length];
+            Matrix4[] numberpos2 = new Matrix4[numbers.Length];
 
             Font fnt = new Font("Arial", 20);
 
@@ -174,9 +175,13 @@ namespace TestOpenTk
                 int v = -35000 + i * 1000;
                 numbers[i] = new Bitmap(100, 100);
                 BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+
                 numberpos[i] = Matrix4.CreateScale(1);
                 numberpos[i] *= Matrix4.CreateRotationX(-25f.Radians());
                 numberpos[i] *= Matrix4.CreateTranslation(new Vector3(35500, 0, v));
+                numberpos2[i] = Matrix4.CreateScale(1);
+                numberpos2[i] *= Matrix4.CreateRotationX(-25f.Radians());
+                numberpos2[i] *= Matrix4.CreateTranslation(new Vector3(v,0,-35500));
             }
 
             GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
@@ -185,37 +190,71 @@ namespace TestOpenTk
             items.Shader("IC-2").StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
             items.Shader("IC-2").FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
 
-            // investigate why its wrapping when we asked for it TexQUAD 1 which should interpolate over surface..
-
             rObjects.Add(items.Shader("IC-2"), "1-b",
                                     GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                                             GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberpos,
                                             null, numberpos.Length));
 
+            rObjects.Add(items.Shader("IC-2"), "1-b2",
+                                    GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                            GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberpos2,
+                                            null, numberpos.Length));
 
 
+            //GLTexture3D noise3d = new GLTexture3D(128, 128, 1, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f);   // only the red channel
 
+            GLTexture3D noise3d = new GLTexture3D(1024, 64, 1024, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
 
+            //{     // shows program fill
+            //    for (int ly = 0; ly < noise3d.Depth; ly++)
+            //    {
+            //        float[] fd = new float[noise3d.Width * noise3d.Height];
+            //        float[] fdi = new float[noise3d.Width * noise3d.Height];
+            //        for (int x = 0; x < noise3d.Width; x++)
+            //        {
+            //            for (int y = 0; y < noise3d.Height; y++)
+            //            {
+            //                int p = (y * noise3d.Width + x) * 1;
 
-        }
+            //                float xv = (float)x / (float)noise3d.Width;
+            //                float yv = (float)y / (float)noise3d.Height;
 
-        Vector4[] boundingbox;
+            //                var c = ((Math.Sin(2 * Math.PI * xv) / 2) + 0.5);
+            //                c += ((Math.Cos(2 * Math.PI * yv) / 2) + 0.5);
 
-        GLStorageBlock dataoutbuffer;
-        GLVolumetricUniformBlock volumetricblock;
-        GLAtomicBlock atomicbuffer;
-        GLRenderableItem galaxy;
+            //                c /= 2;
 
-        private void ShaderTest_Closed(object sender, EventArgs e)
-        {
-            items.Dispose();
+            //                fd[p + 0] = (float)(c);
+            //                fdi[p + 0] = 1.0f-(float)(c);
+            //            }
+            //        }
+
+            //        noise3d.StoreZPlane(ly, 0, 0, noise3d.Width, noise3d.Height, fd, OpenTK.Graphics.OpenGL4.PixelFormat.Red);        // only a single float per pixel, stored in RED
+
+            //    }
+            //}
+
+            ShaderNoise ns = new ShaderNoise();
+            ns.StartAction = (a) => { noise3d.Bind(3); };
+
+            items.Add("NS", ns);
+            noisebox = GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);   // no vertexes, all data from bound volumetric uniform, no instances as yet
+
+            rObjects.Add(items.Shader("NS"), noisebox);
+
+            ComputeShaderNoise csn = new ComputeShaderNoise(noise3d.Width, noise3d.Height, noise3d.Depth,32,4,32);       // must be a multiple of localgroupsize in csn
+            csn.StartAction += (A) => { noise3d.BindImage(3); };
+            items.Add("CE1", csn);
+            cObjects.Add(csn);
+                       
+            cObjects.Run();
         }
 
         private void ControllerDraw(MatrixCalc mc, long time)
         {
-            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
+            items.Get<GLMatrixCalcUniformBlock>("MCUB").Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            galaxy.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 100);        // set up the volumentric uniform
+            noisebox.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 10.0f);        // set up the volumentric uniform
 
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();
@@ -230,14 +269,58 @@ namespace TestOpenTk
 
             for (int i = 0; i < databack.Length; i += 1)
             {
-                System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
+         //       System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
             }
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
+        public class ComputeShaderNoise: GLShaderCompute
+        {
+            static int Localgroupsize = 8;
 
-        public class ShaderV2 : GLShaderStandard
+            private string gencode(int w, int h, int d , int wb, int hb, int db)
+            {
+                return
+@"
+#version 450 core
+#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.random.glsl
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+layout (binding=3, r32f ) uniform image3D img;
+
+void main(void)
+{
+    ivec3 p = ivec3(gl_GlobalInvocationID.xyz);
+
+    float w = " + w.ToStringInvariant() + @";       // grab the constants from caller
+    float h = " + h.ToStringInvariant() + @";
+    float d = " + d.ToStringInvariant() + @";
+    float wb = " + wb.ToStringInvariant() + @";     // these set the granularity of the image..
+    float hb = " + hb.ToStringInvariant() + @";
+    float db = " + db.ToStringInvariant() + @";
+
+    vec3 np = vec3( float(gl_GlobalInvocationID.x)/w*wb, float(gl_GlobalInvocationID.y)/h*hb,float(gl_GlobalInvocationID.z)/d*db);
+
+    float f = gradientnoiseT1(np);
+    vec4 color = vec4(f*0.5+0.5,0,0,1);             // red only
+
+    imageStore( img, p, color);                     // store back the computed noise
+}
+";
+            }
+
+            public ComputeShaderNoise(int width, int height, int depth, int wb, int hb, int db) : base(width/Localgroupsize,height/Localgroupsize,depth/Localgroupsize)
+            {
+                CompileLink( gencode(width,height,depth,wb,hb,db)) ;
+            }
+
+        }
+
+
+        public class ShaderNoise : GLShaderStandard
         {
             string vcode =
             @"
@@ -252,45 +335,37 @@ namespace TestOpenTk
             ";
 
             string fcode = @"
-            #version 450 core
-            #include OpenTKUtils.GL4.Shaders.Functions.distribution.glsl
-            out vec4 color;
+#version 450 core
+#include OpenTKUtils.GL4.Shaders.Functions.noise2.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.random.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.colours.glsl
+out vec4 color;
 
-            in vec3 vs_texcoord;
-            in vec4 vs_color;
+in vec3 vs_texcoord;
 
-            void main(void)
-            {
-                float xc = abs(vs_texcoord.x-0.5)*2;    // so +/-1
-                float zc = abs(vs_texcoord.z-0.5)*2;
-                float h = abs(vs_texcoord.y-0.5)*2;       // from 0 to 1
-                float m = sqrt(xc*xc+zc*zc);        // 0 at centre, 0.707 at maximum
+layout (binding=3) uniform sampler3D tex;
 
-                float gd = gaussian(m,0,0.2) ;  // deviation around centre, 1 = centre
+void main(void)
+{   
+    //ivec3 texpos = ivec3(vs_texcoord.x*128,vs_texcoord.y*16,vs_texcoord.z*128);   
+    //int lod=0;
+    //vec4 n2 = texelFetch(tex, texpos,lod);  // pixel samples, need pixel position
 
-                bool colourit = false;
-                
-                gd = max(gd,0.1);
+    vec3 texpos = vec3(vs_texcoord.x,vs_texcoord.y,vs_texcoord.z);
+    vec4 n2 = texture(tex, texpos);         // texture needs 0->1 across whole surface
 
-                if ( h < gd && m < 1)     // 0.5 sets the size of the disk, this is touching the bounding box
-                    colourit = true;
-
-                if ( colourit)
-                {
-                    color = vec4(vs_texcoord,0.05);
-                }
-                else
-                    discard;
-            }
+    color = vec4(n2.x,0,0,1);
+}
             ";
 
-            public ShaderV2()
+            public ShaderNoise()
             {
-                CompileLink(vertex: vcode, frag: fcode, geo: "#include TestOpenTk.Volumetrics.volumetricgeo5.glsl");
+                var an = System.Reflection.Assembly.GetExecutingAssembly().GetName();
+
+                CompileLink(vertex: vcode, frag: fcode, geo: "#include " + an.Name + ".Volumetrics.volumetricgeoNoise.glsl");
             }
         }
-
-
 
 
         private void SystemTick(object sender, EventArgs e)

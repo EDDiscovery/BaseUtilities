@@ -69,6 +69,7 @@ namespace TestOpenTk
             items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
             items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
             items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple, (a) => { GLStatics.LineWidth(1); }));
+            items.Add("LINERED", new GLFixedShader(System.Drawing.Color.Red, (a) => { GLStatics.LineWidth(1); }));
             items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow, (a) => { GLStatics.PointSize(10); }));
             items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue), (a) => { GLStatics.PointSize(20); }));
 
@@ -102,7 +103,7 @@ namespace TestOpenTk
                 new Vector4(hsize,-vsize,-zsize,1),
             };
 
-            rObjects.Add(items.Shader("LINEYELLOW"),
+            rObjects.Add(items.Shader("LINERED"),
                         GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.LineLoop, boundingbox));
 
             Vector4[] extralines = new Vector4[]
@@ -164,7 +165,7 @@ namespace TestOpenTk
 
             for (int i = 0; i < boundingbox.Length; i++)
             {
-                //System.Diagnostics.Debug.WriteLine(i + " = " + modelboundingbox[i].ToStringVec());
+                System.Diagnostics.Debug.WriteLine(i + " = " + modelboundingbox[i].ToStringVec());
             }
 
             modelboundingbox.MinMaxZ(out int minz, out int maxz);
@@ -214,7 +215,7 @@ namespace TestOpenTk
 
                     for (int i = 0; i < count; i++)
                     {
-                        System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
+                    //    System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
                     }
 
                     var p1 = interceptpointbuffer.Map(0, sizeof(float) * 4 * count);

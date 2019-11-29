@@ -47,14 +47,6 @@ namespace TestOpenTk
             }
         }
 
-        public class GLFixedProjectionShader : GLShaderPipeline
-        {
-            public GLFixedProjectionShader(Color c, Action<IGLProgramShader> action = null) : base(action)
-            {
-                AddVertexFragment(new GLVertexShaderProjection(), new GLFragmentShaderFixedColour(c));
-            }
-        }
-
         void DebugProc(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
             //string s = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(message);
@@ -147,10 +139,11 @@ namespace TestOpenTk
                         GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, lines2));
 
 
-            items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
+            items.Add("gal", new GLTexture2D(Properties.Resources.Galaxy_L));
 
             items.Add("V2", new ShaderV2(items.Tex("gal")));
-            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, ic: slices));
+            galaxy = GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);   // no vertexes, all data from bound volumetric uniform, no instances as yet
+            rObjects.Add(items.Shader("V2"), galaxy);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
@@ -212,12 +205,12 @@ namespace TestOpenTk
 
 
         }
-
         Vector4[] boundingbox;
 
         GLStorageBlock dataoutbuffer;
         GLVolumetricUniformBlock volumetricblock;
         GLAtomicBlock atomicbuffer;
+        GLRenderableItem galaxy;
 
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
@@ -228,7 +221,7 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, slices);        // set up the volumentric uniform
+            galaxy.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 10.0f);        // set up the volumentric uniform
 
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();
@@ -243,14 +236,11 @@ namespace TestOpenTk
 
             for (int i = 0; i < databack.Length; i += 1)
             {
-                System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
+         //       System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
             }
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
-
-        int slices = 1000;
-
 
         public class ShaderV2 : GLShaderStandard
         {
@@ -272,7 +262,6 @@ namespace TestOpenTk
             out vec4 color;
 
             in vec3 vs_texcoord;
-            in vec4 vs_color;
 
             layout (binding=1) uniform sampler2D tex;
 
@@ -282,13 +271,12 @@ namespace TestOpenTk
                 float zc = abs(vs_texcoord.z-0.5)*2;
                 float h = abs(vs_texcoord.y-0.5)*2;       // from 0 to 1
                 float ms = xc*xc+zc*zc;
-                float m = sqrt(ms);        // 0 at centre, 0.707 at maximum
+                float m = sqrt(ms);        
 
                 float gd = gaussian(m,0,0.2) ;  // deviation around centre, 1 = centre
+                gd = max(gd,0.1);   // limit height of galaxy
 
                 bool colourit = false;
-                
-                gd = max(gd,0.1);
 
                 if ( h < gd && m < 1.1)     // 0.5 sets the size of the disk, this is touching the bounding box
                     colourit = true;
@@ -297,9 +285,10 @@ namespace TestOpenTk
                 {
                     float s = 1.25;
                     float edge = (1-1/s)/2;
-                    vec4 c =texture(tex,vec2(vs_texcoord.x/s+edge,vs_texcoord.z/s+edge));                     
-                    //vec4 c =texture(tex,vec2(vs_texcoord.x,vs_texcoord.z));                     
-                    if ( c.x*c.x+c.y*c.y+c.z*c.z > 0.0)
+                    vec4 c =texture(tex,vec2(vs_texcoord.x/s+edge,vs_texcoord.z/s+edge));   // pick up colour scaled out
+                    float brightness = c.x*c.x+c.y*c.y+c.z*c.z;
+
+                    if ( brightness > 0.01) // min brightness
                     {
                         float alpha = min(max(m,0.7),0.04); // beware the 8 bit alpha (0.0039 per bit).
                         color = vec4(c.x,c.y,c.z,alpha);
@@ -339,4 +328,14 @@ namespace TestOpenTk
         }
     }
 }
+
+
+//next..
+//    fade when close
+//    reject vertex if all behind users - two ways.. all mv.z of z's behind eyez.  
+//        if we went
+//                back edge - > Model view->projection, /w and looked at the x/y size
+//                front edge -> Model view->projection, /w and looked at the x/y size
+//                maybe you could optimise the z range based on the rec sizes interpolated.
+//        experiment with this.
 

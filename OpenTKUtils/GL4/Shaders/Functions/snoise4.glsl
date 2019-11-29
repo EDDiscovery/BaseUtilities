@@ -41,7 +41,7 @@ vec4 grad4(float j, vec4 ip)
 // (sqrt(5) - 1)/4 = F4, used once below
 #define F4 0.309016994374947451
 
-float snoise(vec4 v)
+float simplexnoise(vec4 v)
   {
   const vec4  C = vec4( 0.138196601125011,  // (5 - sqrt(5))/20  G4
                         0.276393202250021,  // 2 * G4
@@ -119,12 +119,12 @@ float snoise(vec4 v)
 
   }
 
-float noise(vec4 position, int octaves, float frequency, float persistence) {
+float simplexnoise(vec4 position, int octaves, float frequency, float persistence) {
 	float total = 0.0;
 	float maxAmplitude = 0.0;
     float amplitude = 1.0;
 	for (int i = 0; i < octaves; i++) {
-		total += snoise(position * frequency) * amplitude;
+		total += simplexnoise(position * frequency) * amplitude;
 		frequency *= 2.0;
 		maxAmplitude += amplitude;
 		amplitude *= persistence;
@@ -132,12 +132,12 @@ float noise(vec4 position, int octaves, float frequency, float persistence) {
 	return total / maxAmplitude;
 }
 
-float absNoise(vec4 position, int octaves, float frequency, float persistence) {
+float abssimplexnoise(vec4 position, int octaves, float frequency, float persistence) {
 	float total = 0.0;
 	float maxAmplitude = 0.0;
     float amplitude = 1.0;
 	for (int i = 0; i < octaves; i++) {
-		total += abs(snoise(position * frequency)) * amplitude;
+		total += abs(simplexnoise(position * frequency)) * amplitude;
 		frequency *= 2.0;
 		maxAmplitude += amplitude;
 		amplitude *= persistence;
@@ -145,12 +145,12 @@ float absNoise(vec4 position, int octaves, float frequency, float persistence) {
 	return total / maxAmplitude;
 }
 
-float ridgedNoise(vec4 position, int octaves, float frequency, float persistence) {
+float ridgedsimplexnoise(vec4 position, int octaves, float frequency, float persistence) {
 	float total = 0.0;
 	float maxAmplitude = 0.0;
     float amplitude = 1.0;
 	for (int i = 0; i < octaves; i++) {
-		total += ((1.0 - abs(snoise(position * frequency))) * 2.0 - 1.0) * amplitude;
+		total += ((1.0 - abs(simplexnoise(position * frequency))) * 2.0 - 1.0) * amplitude;
 		frequency *= 2.0;
 		maxAmplitude += amplitude;
 		amplitude *= persistence;
@@ -158,12 +158,12 @@ float ridgedNoise(vec4 position, int octaves, float frequency, float persistence
 	return total / maxAmplitude;
 }
 
-float squaredNoise(vec4 position, int octaves, float frequency, float persistence) {
+float squaredsimplexnoise(vec4 position, int octaves, float frequency, float persistence) {
 	float total = 0.0;
 	float maxAmplitude = 0.0;
     float amplitude = 1.0;
 	for (int i = 0; i < octaves; i++) {
-		float tmp = snoise(position * frequency);
+		float tmp = simplexnoise(position * frequency);
         total += tmp * tmp * amplitude;
 		frequency *= 2.0;
 		maxAmplitude += amplitude;
@@ -172,12 +172,12 @@ float squaredNoise(vec4 position, int octaves, float frequency, float persistenc
 	return total / maxAmplitude;
 }
 
-float cubedNoise(vec4 position, int octaves, float frequency, float persistence) {
+float cubedsimplexnoise(vec4 position, int octaves, float frequency, float persistence) {
 	float total = 0.0;
 	float maxAmplitude = 0.0;
     float amplitude = 1.0;
 	for (int i = 0; i < octaves; i++) {
-		float tmp = snoise(position * frequency);
+		float tmp = simplexnoise(position * frequency);
         total += tmp * tmp * tmp * amplitude;
 		frequency *= 2.0;
 		maxAmplitude += amplitude;

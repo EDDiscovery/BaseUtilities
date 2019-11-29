@@ -119,6 +119,11 @@ namespace OpenTKUtils.GL4
             return (T)items.Last(typeof(T), c);
         }
 
+        public T Get<T>(string name)
+        {
+            return (T)items[name];
+        }
+
         // New items
 
         public GLVertexArray NewArray(string name = null)

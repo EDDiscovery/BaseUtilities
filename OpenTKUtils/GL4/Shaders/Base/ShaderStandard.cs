@@ -34,9 +34,8 @@ namespace OpenTKUtils.GL4
         public IGLShader Get(ShaderType t) { return this; }
         public Action<IGLProgramShader> StartAction { get; set; }
         public Action<IGLProgramShader> FinishAction { get; set; }
-        public Tuple<IGLTexture, int>[] Textures { get; set; }                            // set of textures to bind
 
-        private GLProgram program;
+        protected GLProgram program;
 
         public GLShaderStandard()
         {
@@ -97,12 +96,6 @@ namespace OpenTKUtils.GL4
         public virtual void Start()                 // override.. but call back.
         {
             GL.UseProgram(Id);
-            if (Textures != null)
-            {
-                foreach (var t in Textures)
-                    t.Item1.Bind(t.Item2);
-            }
-
             StartAction?.Invoke(this);
         }
 

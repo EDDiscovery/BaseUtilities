@@ -22,68 +22,32 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLTexture2D : IGLTexture          // load a texture into open gl
+    public class GLTexture2D : GLTextureBase          // load a texture into open gl
     {
-        public int Id { get; private set; }
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-
-        public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 4)
+        public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
         {
+            InternalFormat = internalformat;
+            BitMaps = new Bitmap[1];
+            BitMaps[0] = bmp;
+            OwnBitmaps = ownbitmaps;
+
             GL.CreateTextures(TextureTarget.Texture2D, 1, out int id);
             Id = id;
 
             Width = bmp.Width;
-            Height = LoadMipMap(Id, bmp, mipmaplevel, genmipmaplevel, internalformat);
-        }
-
-        static int LoadMipMap(int Id, Bitmap bmp, int mipmaplevel, int genmipmaplevel, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
-        { 
-            System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-                            System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
-
-            IntPtr ptr = bmpdata.Scan0;     // its a byte ptr, not an int ptr in the classic sense.
-
-
-            int height = (mipmaplevel == 1) ? bmp.Height : (bmp.Height / 3) * 2;
+            Height = (mipmaplevel == 1) ? bmp.Height : (bmp.Height / 3) * 2;        // if bitmap is mipped mapped, work out correct height.
 
             GL.TextureStorage2D(
                 Id,
                 mipmaplevel == 1 ? genmipmaplevel : mipmaplevel,    // levels of mipmapping.  If we supplied one, we use that, else we use genmipmaplevel
-                internalformat,                       // format of texture - 4 floats is the normal, and is given in the constructor
+                InternalFormat,                       // format of texture - 4 floats is the normal, and is given in the constructor
                 bmp.Width,                            // width and height of mipmap level 0
-                height);
+                Height);
 
-            int curwidth = bmp.Width;
-            int curheight = height;
+            LoadBitmap(Id, bmp, mipmaplevel, -1);    // use common load into bitmap, indicating its a 2D texture so use texturesubimage2d
 
-            GL.PixelStore(PixelStoreParameter.UnpackRowLength, bmp.Width);      // indicate the image width, if we take less, then GL will skip pixels to get to next row
-
-            for (int m = 0; m < mipmaplevel;  m++)
-            {
-                GL.TextureSubImage2D(Id,
-                    m,                  // this is level m
-                    0,                  // x offset inside the target texture..
-                    0,                  // y offset..
-                    curwidth,           // width to load in the target texture
-                    curheight,          // height..
-                    PixelFormat.Bgra,
-                    PixelType.UnsignedByte,     // and we asked above for Bgra data as unsigned bytes
-                    ptr);
-
-                if (m == 0)             // at 0, we jump down the whole image.  4 is the bytes/pixel
-                    ptr += bmp.Width * height * 4;
-                else
-                    ptr += curwidth * 4;    // else we move across by curwidth.
-
-                if (curwidth > 1)           // scale down size by 2
-                    curwidth /= 2;
-                if (curheight > 1)
-                    curheight /= 2;
-            }
-
-            bmp.UnlockBits(bmpdata);
-
+            if (mipmaplevel == 1 && genmipmaplevel > 1)     // single level mipmaps with genmipmap levels > 1 get auto gen
+                GL.GenerateTextureMipmap(Id);
 
             var textureMinFilter = (int)All.LinearMipmapLinear;
             GL.TextureParameterI(Id, TextureParameterName.TextureMinFilter, ref textureMinFilter);
@@ -93,31 +57,7 @@ namespace OpenTKUtils.GL4
             //var textureWrap = (int)All.ClampToBorder;     // for testing, keep for now.
             //GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref textureWrap);     
             //GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref textureWrap);
-
-            GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
-
-            if (mipmaplevel == 1)                                       // single level mipmaps get auto gen
-                GL.GenerateTextureMipmap(Id);
-
-            OpenTKUtils.GLStatics.Check();
-            return height;
-        }
-
-        public void Bind(int bindingpoint)
-        {
-            GL.BindTextureUnit(bindingpoint, Id);
-            OpenTKUtils.GLStatics.Check();
-        }
-
-        public void Dispose()           // you can double dispose.
-        {
-            if (Id != -1)
-            {
-                GL.DeleteTexture(Id);
-                Id = -1;
-            }
         }
     }
-
 }
 

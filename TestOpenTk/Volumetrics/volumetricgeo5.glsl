@@ -25,9 +25,6 @@ out vec4 vs_color;
 layout (std140, binding = 1) uniform PointBlock
 {
 	vec4 p[8];    
-	float minz;
-	float maxz;
-	vec4 eyeposition;
 	float slicestart;
 	float slicedist;
 } pb;

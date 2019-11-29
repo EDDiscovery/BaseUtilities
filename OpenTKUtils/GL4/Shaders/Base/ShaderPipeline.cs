@@ -35,7 +35,6 @@ namespace OpenTKUtils.GL4
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
         public Action<IGLProgramShader> StartAction { get; set; }
         public Action<IGLProgramShader> FinishAction { get; set; }
-        public Tuple<IGLTexture, int>[] Textures { get; set; }                            // set of textures to bind
 
         public IGLShader Get(ShaderType t) { return shaders[t]; }
 
@@ -48,7 +47,7 @@ namespace OpenTKUtils.GL4
             shaders = new Dictionary<ShaderType, IGLPipelineShader>();
         }
 
-        public GLShaderPipeline(Action<IGLProgramShader> sa, Action<IGLProgramShader> fa = null ) : this()
+        public GLShaderPipeline(Action<IGLProgramShader> sa, Action<IGLProgramShader> fa = null) : this()
         {
             StartAction = sa;
             FinishAction = fa;
@@ -63,7 +62,7 @@ namespace OpenTKUtils.GL4
 
         public GLShaderPipeline(IGLPipelineShader vertex, IGLPipelineShader fragment, Action<IGLProgramShader> sa = null, Action<IGLProgramShader> fa = null) : this()
         {
-            AddVertexFragment(vertex,fragment);
+            AddVertexFragment(vertex, fragment);
             StartAction = sa;
             FinishAction = fa;
         }
@@ -89,12 +88,6 @@ namespace OpenTKUtils.GL4
         {
             GL.UseProgram(0);           // ensure no active program - otherwise the stupid thing picks it
             GL.BindProgramPipeline(pipelineid);
-
-            if (Textures != null)
-            {
-                foreach (var t in Textures)
-                    t.Item1.Bind(t.Item2);
-            }
 
             foreach (var x in shaders)                             // let any programs do any special set up
                 x.Value.Start();
@@ -130,6 +123,6 @@ namespace OpenTKUtils.GL4
             { ShaderType.ComputeShader, ProgramStageMask.ComputeShaderBit },
         };
 
-    }
 
+    }
 }

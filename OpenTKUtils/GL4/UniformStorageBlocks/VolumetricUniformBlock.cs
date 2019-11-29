@@ -28,20 +28,20 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public void Set(MatrixCalc c, Vector4[] boundingbox, int slices)
+        public int Set(MatrixCalc c, Vector4[] boundingbox, float slicesize) // return slices to show
         {
             if (NotAllocated)
-                Allocate(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment
+                Allocate(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment, not important to get precise
 
             IntPtr pb = Map(0, BufferSize);        // the whole schebang
 
             float minzv = float.MaxValue, maxzv = float.MinValue;
-            int minv=0, maxv=0;
+            int minv = 0, maxv = 0;
             for (int i = 0; i < 8; i++)
             {
                 Vector4 m = Vector4.Transform(boundingbox[i], c.ModelMatrix);
-             //   Vector4 p = Vector4.Transform(m, c.ProjectionMatrix);
-             //   System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec() , p.ToStringVec());
+                Vector4 p = Vector4.Transform(m, c.ProjectionMatrix);
+                System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec(), p.ToStringVec());
                 if (m.Z < minzv)
                 {
                     minzv = m.Z;
@@ -55,26 +55,23 @@ namespace OpenTKUtils.GL4
                 MapWrite(ref pb, m);
             }
 
+            if (maxzv > 0)      // 0 is the eye plane in z, no point above it
+                maxzv = 0;
+
+            if (minzv > maxzv)
+                minzv = -1;
+
+            float zdist = maxzv - minzv;
+            int slices = Math.Max(1, (int)(zdist / slicesize));
+
             MapWrite(ref pb, minzv);
-            MapWrite(ref pb, maxzv);
-            Vector4 eyemodel = Vector4.Transform(new Vector4(c.EyePosition, 0), c.ModelMatrix);
-            MapWrite(ref pb, eyemodel);
-
-            float slicedist = (maxzv - minzv) / (float)slices;
-            float slicestart = minzv + (maxzv - minzv) / ((float)slices * 2);
-            float sliceend = slicestart + slicedist * slices;
-
-            //slicestart = maxzv - (maxzv - minzv) / ((float)slices * 2);
-            //slicestart += slicedist;
-
-            //float slicedist = 1f;
-            //float slicestart = maxzv - slices * slicedist;
-
-            MapWrite(ref pb, slicestart);
-            MapWrite(ref pb, slicedist); 
+            MapWrite(ref pb, (float)slicesize);
             UnMap();
-            System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} eyemodel {4} : {5}..{6} delta {7}", minv, minzv, maxv, maxzv, eyemodel.Z, slicestart, sliceend, slicedist);
+            System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} slices {4} dist {5}", minv, minzv, maxv, maxzv, slices, slicesize);
+
+            return slices;
         }
+
     }
 }
 
