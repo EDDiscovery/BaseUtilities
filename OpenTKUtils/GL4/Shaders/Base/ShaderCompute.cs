@@ -22,6 +22,7 @@ using System.Collections.Generic;
 namespace OpenTKUtils.GL4
 {
     // inherit from this to make a compute shader 
+    // you can either run it directly, or you can add it to a RenderableList to mix it with renderable items
 
     public abstract class GLShaderCompute : GLShaderStandard
     {

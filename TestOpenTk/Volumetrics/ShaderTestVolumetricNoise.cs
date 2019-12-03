@@ -55,7 +55,6 @@ namespace TestOpenTk
         }
 
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
-        GLComputeShaderList cObjects = new GLComputeShaderList();
         GLItemsList items = new GLItemsList();
         Vector4[] boundingbox;
         GLStorageBlock dataoutbuffer;
@@ -245,9 +244,10 @@ namespace TestOpenTk
             ComputeShaderNoise csn = new ComputeShaderNoise(noise3d.Width, noise3d.Height, noise3d.Depth,32,4,32);       // must be a multiple of localgroupsize in csn
             csn.StartAction += (A) => { noise3d.BindImage(3); };
             items.Add("CE1", csn);
-            cObjects.Add(csn);
-                       
-            cObjects.Run();
+
+            GLComputeShaderList p = new GLComputeShaderList();      // demonstrate a render list holding a compute shader.
+            p.Add(csn);
+            p.Run();
         }
 
         private void ControllerDraw(MatrixCalc mc, long time)

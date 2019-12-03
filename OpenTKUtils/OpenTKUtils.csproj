@@ -55,7 +55,6 @@
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
-    <Compile Include="GL4\ComputeShaders\ComputeShaderLists.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
