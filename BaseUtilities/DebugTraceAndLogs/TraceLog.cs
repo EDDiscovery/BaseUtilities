@@ -147,6 +147,9 @@ namespace BaseUtils
                         }
                     }
                 }
+                catch (ThreadAbortException)
+                {
+                }
                 catch (Exception ex)
                 {
                     LogFileWriterException?.Invoke(ex);
