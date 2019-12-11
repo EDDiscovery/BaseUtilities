@@ -24,8 +24,6 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture3D : GLTextureBase         // load a texture into open gl
     {
-        public int Depth { get; private set; }      // z
-
         public GLTexture3D( int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
         {
             InternalFormat = internalformat;
@@ -58,13 +56,13 @@ namespace OpenTKUtils.GL4
         }
 
         // only if internal format is RGBA data.
-        // either make bitmapmipmaplevels = set up mip map levels, or use GenMipMapTextures() after all is loaded
+        // either make bitmapmipmaplevels>1 meaning the image is mipmapped, or use GenMipMapTextures() after all bitmaps in all z planes are loaded
         public void StoreBitmapZPlane(Bitmap map, int zoffset, int bitmapmipmaplevels = 1)      
         {
             LoadBitmap(Id, map, bitmapmipmaplevels, zoffset);
         }
 
-        public void GenMipMapTextures()     // only call if mipmaplevels > 1
+        public void GenMipMapTextures()     // only call if mipmaplevels > 1 after you have loaded all z planes
         {
             GL.GenerateTextureMipmap(Id);
         }

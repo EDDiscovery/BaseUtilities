@@ -22,7 +22,7 @@ float gradientnoise( in vec3 p )
                           dot( random3A( i + vec3(1.0,1.0,1.0) ), f - vec3(1.0,1.0,1.0) ), u.x), u.y), u.z );
 }
 
-float gradientnoiseT1( in vec3 p )	// same above but readable.
+float gradientnoiseT1( in vec3 p )	// same as gradientnoise above but readable.
 {
     vec3 i = floor( p );
     vec3 f = fract( p );

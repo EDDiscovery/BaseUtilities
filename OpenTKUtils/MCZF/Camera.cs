@@ -23,6 +23,10 @@ namespace OpenTKUtils.Common
 {
     public class Camera
     {
+        // X component = rotation around the x (horizontal to you) axis
+        // Y component = rotation around the Y (vertical to you) axis
+        // Z component = rotation around the Z (facing you) axis - therefore rotates the camera
+
         public Vector3 Current { get { return cameraDir; } }    // in degrees
         public Vector3 Normal { get { return cameraNormal; } }  // normal to the camera.. calculated if its moved.
 

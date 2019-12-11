@@ -157,8 +157,7 @@ namespace OpenTKUtils.Common
             if (kbd.Shift)
                 distance *= 2.0F;
 
-            //Console.WriteLine("Distance " + distance + " zoom " + _zoom + " lzoom " + zoomlimited );
-            if (kbd.IsAnyPressed(Keys.Left, Keys.A) != null)
+            if (kbd.IsAnyPressed(Keys.Left, Keys.A) != null)                // x axis
             {
                 positionMovement.X = -distance;
             }
@@ -167,58 +166,47 @@ namespace OpenTKUtils.Common
                 positionMovement.X = distance;
             }
 
-            if (kbd.IsAnyPressed(Keys.PageUp, Keys.R) != null)
-            {
-                positionMovement.Z = -distance;
-            }
-            else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F) != null)
-            {
-                positionMovement.Z = distance;
-            }
-
-            if (kbd.IsAnyPressed(Keys.Up, Keys.W) != null)
+            if (kbd.IsAnyPressed(Keys.PageUp, Keys.R) != null)              // y axis
             {
                 positionMovement.Y = distance;
             }
-            else if (kbd.IsAnyPressed(Keys.Down, Keys.S) != null)
+            else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F) != null)
             {
                 positionMovement.Y = -distance;
+            }
+
+            if (kbd.IsAnyPressed(Keys.Up, Keys.W) != null)                  // z axis
+            {
+                positionMovement.Z = distance;
+            }
+            else if (kbd.IsAnyPressed(Keys.Down, Keys.S) != null)
+            {
+                positionMovement.Z = -distance;
             }
 
             if (positionMovement.LengthSquared > 0)
             {
                 if (inperspectivemode)
                 {
-                    Vector3 requestedmove = new Vector3(positionMovement.X, positionMovement.Y, (elitemovement) ? 0 : positionMovement.Z);
-
-                    var translation = Matrix4.CreateTranslation(requestedmove);     // movement matrix
-
-                    var cameramove = Matrix4.Identity;
-                    cameramove *= translation;                      // move the translation into the camera 
-
-                    var rotZ = Matrix4.CreateRotationZ(cameraDir.Z.Radians());
-                    cameramove *= rotZ;                             // rotate the vector by the camera look angle
-
-                    var rotX = Matrix4.CreateRotationX(cameraDir.X.Radians());
-                    cameramove *= rotX;
-
-                    var rotY = Matrix4.CreateRotationY(cameraDir.Y.Radians());
-                    cameramove *= rotY;
-
-                    Vector3 cameratranslation = cameramove.ExtractTranslation();    // finally get the translation this look implies
-
-                    if (elitemovement)                                   // if in elite movement, Y is not affected
-                    {                                                    // by ASDW.
-                        cameratranslation.Y = 0;                         // no Y translation even if camera rotated the vector into Y components
-                        Translate(cameratranslation);
-                        Y(-positionMovement.Z);
+                    if (elitemovement)  // elite movement means only the camera rotation around the Y axis is taken into account. 
+                    {
+                        var cameramove = Matrix4.CreateTranslation(positionMovement);
+                        var rotY = Matrix4.CreateRotationY(cameraDir.Y.Radians());      // rotate by Y, which is rotation around the Y axis, which is where your looking at horizontally
+                        cameramove *= rotY;
+                        Translate(cameramove.ExtractTranslation());
                     }
                     else
-                        Translate(cameratranslation);
+                    {
+                        // we need to rotate components to get the X/Y/Z into the same meaning as the camera angles.
+                        var cameramove = Matrix4.CreateTranslation(new Vector3(positionMovement.X,positionMovement.Z,-positionMovement.Y));
+                        cameramove *= Matrix4.CreateRotationZ(cameraDir.Z.Radians());   // rotate the translation by the camera look angle
+                        cameramove *= Matrix4.CreateRotationX(cameraDir.X.Radians());
+                        cameramove *= Matrix4.CreateRotationY(cameraDir.Y.Radians());
+                        Translate(cameramove.ExtractTranslation());
+                    }
                 }
                 else
                 {
-                    positionMovement.Z = positionMovement.Y;
                     positionMovement.Y = 0;
                     Translate(positionMovement);
                 }

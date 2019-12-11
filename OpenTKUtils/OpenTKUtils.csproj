@@ -56,6 +56,8 @@
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
+    <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
+    <Compile Include="GL4\Shaders\Compute\ComputeNoise.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
     <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />
     <Compile Include="GL4\Textures\Texture.cs" />
+    <Compile Include="GL4\Textures\Texture1D.cs" />
     <Compile Include="GL4\Textures\Texture3D.cs" />
     <Compile Include="GL4\Textures\Texture2D.cs" />
     <Compile Include="GL4\Textures\Texture2DArray.cs" />

@@ -78,6 +78,12 @@
     <Compile Include="Volumetrics\ShaderTestVolumetric3a.designer.cs">
       <DependentUpon>ShaderTestVolumetric3a.cs</DependentUpon>
     </Compile>
+    <Compile Include="Volumetrics\ShaderTestVolumetric7.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Volumetrics\ShaderTestVolumetric7.designer.cs">
+      <DependentUpon>ShaderTestVolumetric7.cs</DependentUpon>
+    </Compile>
     <Compile Include="Volumetrics\ShaderTestVolumetricNoise.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -189,6 +195,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric3a.resx">
       <DependentUpon>ShaderTestVolumetric3a.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric7.resx">
+      <DependentUpon>ShaderTestVolumetric7.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Volumetrics\ShaderTestVolumetricNoise.resx">
       <DependentUpon>ShaderTestVolumetricNoise.cs</DependentUpon>

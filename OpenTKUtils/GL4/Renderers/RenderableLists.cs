@@ -47,12 +47,14 @@ namespace OpenTKUtils.GL4
 
         public void Add(IGLProgramShader prog, IGLRenderableItem r)
         {
-            Add(prog, "Unnamed_" + (unnamed++), r);
+            string n = prog.GetType().Name + ":" + r.GetType().Name + " # " + (unnamed++).ToStringInvariant();
+            Add(prog, n, r);
         }
 
         public void Add(GLShaderCompute cprog)
         {
-            Add(cprog, "Unnamed_" + (unnamed++), null);
+            string n = cprog.GetType().Name + " # " + (unnamed++).ToStringInvariant();
+            Add(cprog, n, null);
         }
 
         public IGLRenderableItem this[string key] { get { return renderables[key]; } }
@@ -63,14 +65,16 @@ namespace OpenTKUtils.GL4
         {
             foreach (var d in renderables)
             {
+                System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
                 d.Key.Start();       // start the program
 
-                foreach (IGLRenderableItem g in d.Value.Values)
+                foreach (var g in d.Value)
                 {
-                    if (g != null)  // may have added a null renderable item if its a compute shader.
+                    if (g.Value != null)  // may have added a null renderable item if its a compute shader.
                     {
-                        g.Bind(d.Key, c);
-                        g.Render();
+                        System.Diagnostics.Debug.WriteLine("Render " + g.Key);
+                        g.Value.Bind(d.Key, c);
+                        g.Value.Render();
                     }
                 }
 

@@ -25,6 +25,7 @@ namespace OpenTKUtils.GL4
     public class GLTexture2DArray : GLTextureBase          // load a 2D set of textures into open gl
     {
         // bitmap 0 gives the common width/height of the image.
+        // 2d arrays do not interpolate between z pixels, unlike 3d textures
 
         public GLTexture2DArray(Bitmap[] bmps, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
         {

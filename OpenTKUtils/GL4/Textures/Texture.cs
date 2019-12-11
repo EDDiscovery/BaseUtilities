@@ -26,7 +26,8 @@ namespace OpenTKUtils.GL4
     {
         public int Id { get; protected set; }
         public int Width { get; protected set; }
-        public int Height { get; protected set; }
+        public int Height { get; protected set; } = 1;
+        public int Depth { get; protected set; } = 1;
         public SizedInternalFormat InternalFormat { get; protected set; }       // internal format of stored data in texture unit
 
         public Bitmap[] BitMaps { get; protected set; } // textures can own the bitmaps for disposal purposes
@@ -79,6 +80,7 @@ namespace OpenTKUtils.GL4
         }
 
         // load bitmap into texture, allow for mipmapping (mipmaplevels = 1 no mip in current bitmap)
+        // bitmap textures go into x/y plane (as per normal graphics).
         // see the derived classes for the actual load function - this is a helper
         // this can load into 2d texture, 2d arrays and 3d textures.
         // if zoffset = -1, load into 2d texture (can't use texture sub image 3d) otherwise its the 2d array or 3d texture at zoffset
@@ -137,8 +139,31 @@ namespace OpenTKUtils.GL4
             }
 
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
-
             bmp.UnlockBits(bmpdata);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        // Return texture as a set of floats. Note you have to get them all back per level, can't subsample.
+        public float[] GetTextureImageAsFloats(PixelFormat pxformatback = PixelFormat.Rgba , int level = 0)
+        {
+            int items = Width*Height*Depth;
+            if (pxformatback == PixelFormat.Red)
+                items *= 1;
+            else if (pxformatback == PixelFormat.Rgba)
+                items *= 4;
+            else
+                System.Diagnostics.Debug.Assert(false);     // others later
+
+            int bufsize = items * sizeof(float);
+
+            IntPtr unmanagedPointer = System.Runtime.InteropServices.Marshal.AllocHGlobal(bufsize); // get an unmanaged buffer
+
+            GL.GetTextureImage(Id, level, pxformatback, PixelType.Float, bufsize, unmanagedPointer);  // fill
+            OpenTKUtils.GLStatics.Check();
+
+            float[] data = new float[items];
+            System.Runtime.InteropServices.Marshal.Copy(unmanagedPointer, data, 0, items);      // transfer buffer to floats
+            return data;
         }
     }
 }

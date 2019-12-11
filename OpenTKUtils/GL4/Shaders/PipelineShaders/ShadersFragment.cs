@@ -119,7 +119,7 @@ void main(void)
 
     public class GLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
     {
-        public string Code()
+        public string Code(int offset)
         {
             return
 @"
@@ -135,14 +135,14 @@ in VS_IN
 
 void main(void)
 {
-    color = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced));
+    color = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced+ " + offset.ToStringInvariant() + @"));
 }
 ";
         }
 
-        public GLFragmentShaderTexture2DIndexed()
+        public GLFragmentShaderTexture2DIndexed(int offset)
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(offset), GetType().Name);
         }
 
         public override void Start()
