@@ -206,7 +206,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("bp"), new Vector3(-1111f, 2000, 65269))
+                             new GLObjectDataTranslationRotationTexture(items.Tex("bp"), new Vector3(-1111f, 0, 65269))
                              ));
             }
 
@@ -216,16 +216,17 @@ namespace TestOpenTk
             float h = -1;
             if ( h != -1)
             {
+                int dist = 1000;
                 Color cr = Color.FromArgb(20, Color.Red);
                 rObjects.Add(items.Shader("COS-1L"),    // horizontal
                              GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(left, h, back), new Vector3(1000, 0, 0), (back-front)/1000+1),
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(left, h, back), new Vector3(dist, 0, 0), (back-front)/dist+1),
                                                         new Color4[] { cr })
                                    );
 
                 rObjects.Add(items.Shader("COS-1L"),  
                              GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(right, h, front), new Vector3(0, 0,1000), (right-left)/1000+1),
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(right, h, front), new Vector3(0, 0,dist), (right-left)/dist+1),
                                                         new Color4[] { cr })
                                    );
 
@@ -236,9 +237,10 @@ namespace TestOpenTk
                 volumetricblock = new GLVolumetricUniformBlock();
                 items.Add("VB", volumetricblock);
 
-                GLTexture3D noise3d = new GLTexture3D(1024, 64, 1024, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
+                int sc = 1;
+                GLTexture3D noise3d = new GLTexture3D(1024*sc, 64*sc, 1024*sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
                 items.Add("Noise", noise3d);
-                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 32, 4, 32);       // must be a multiple of localgroupsize in csn
+                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128*sc, 16*sc, 128*sc);       // must be a multiple of localgroupsize in csn
                 csn.StartAction += (A) => { noise3d.BindImage(3); };
                 csn.Run();      // compute noise
 
@@ -255,7 +257,8 @@ namespace TestOpenTk
 
                 float[] gdata = gaussiantex.GetTextureImageAsFloats(OpenTK.Graphics.OpenGL4.PixelFormat.Red); // read back check
 
-                GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L);
+                // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
+                GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);     
                 items.Add("gal", galtex);
                 GalaxyShader gs = new GalaxyShader();
                 items.Add("Galaxy", gs);
@@ -292,26 +295,34 @@ layout (binding=4) uniform sampler1D gaussian;
 
 void main(void)
 {
+//        color = texture(tex,vec2(vs_texcoord.x,vs_texcoord.z));     
+//color = vec4(vs_texcoord.x, vs_texcoord.z,0,0);
+//color.w = 0.5;
+
+
     float dx = abs(0.5-vs_texcoord.x);
     float dz = abs(0.5-vs_texcoord.z);
     float d = 0.7072-sqrt(dx*dx+dz*dz);     // 0 - 0.7
     d = d / 0.7272; // 0.707 is the unit circle, 1 is the max at corners
 
-    if ( d > (1-0.707+0.05) )               // limit to circle around centre
+    if ( d > (1-0.707) )               // limit to circle around centre
     {
-        float g = texture(gaussian,d).x;      // look up single sided gaussian function, 0-1
-
-        vec4 c = texture(tex,vec2(vs_texcoord.x,1.0-vs_texcoord.z)); 
-       // c = vec4(0.5,0,0.0,1);
-
-        float h = abs(vs_texcoord.y-0.5)*2;     // 0-1 also
+        vec4 c = texture(tex,vec2(vs_texcoord.x,vs_texcoord.z)); 
         float brightness = sqrt(c.x*c.x+c.y*c.y+c.z*c.z)/1.733;         // 0-1
 
-        if ( g > h && brightness > 0.00)
+        if ( brightness > 0.001 )
         {
-            //float alpha = min(max(brightness*20,1.0),0.04);    // beware the 8 bit alpha (0.0039 per bit).
-            float alpha = min(max(brightness,0.5),0.1);    // beware the 8 bit alpha (0.0039 per bit).
-            color = vec4(c.xyz,alpha);
+            float g = texture(gaussian,d).x;      // look up single sided gaussian function, 0-1
+            float h = abs(vs_texcoord.y-0.5)*2;     // 0-1 also
+
+            if ( g > h )
+            {
+                float nv = texture(noise,vs_texcoord.xyz).x;
+                float alpha = min(max(brightness,0.5),(brightness>0.05) ? 0.3 : brightness);    // beware the 8 bit alpha (0.0039 per bit).
+                color = vec4(c.xyz*(1.0+nv*0.2),alpha*(1.0+nv*0.1));        // noise adjusting brightness and alpha a little
+            }
+            else 
+                discard;
         }
         else
             discard;
@@ -322,25 +333,6 @@ void main(void)
 
 }
             ";
-
-            //float gv = gx.x * gz.x;     // 0-2
-
-            //float h = abs(vs_texcoord.y-0.5)*4;     // 0-2 also
-
-            //if ( h < gv )
-            //{
-            //                    vec4 c =texture(tex,vec2(vs_texcoord.x,1.0-vs_texcoord.z));   
-            //                    float brightness = c.x*c.x+c.y*c.y+c.z*c.z;
-
-            //                    if ( brightness > 0.1 ) // min brightness
-            //                    {
-            ////                        vec4 n = texture(noise,vec3(vs_texcoord.x,vs_texcoord.y,1.0-vs_texcoord.z));  
-            //                        vec4 c = texture(tex,vec2(vs_texcoord.x,1.0-vs_texcoord.z));   // pick up colour scaled out
-            //                        color = vec4(c.x,c.y,c.z,0.1);
-            //                    }
-            //        }
-            //else
-            //    discard;
 
             public GalaxyShader()
             {

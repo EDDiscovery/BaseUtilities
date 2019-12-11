@@ -22,7 +22,7 @@ namespace OpenTKUtils.GL4
 {
     // Textures are not autoloaded into shaders, you normally should do this by overriding the StartAction of the sampler and call a bind function
 
-    public class GLTextureBase : IGLTexture          // load a texture into open gl
+    public abstract class GLTextureBase : IGLTexture          // load a texture into open gl
     {
         public int Id { get; protected set; }
         public int Width { get; protected set; }
@@ -90,7 +90,7 @@ namespace OpenTKUtils.GL4
             System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                             System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
 
-            IntPtr ptr = bmpdata.Scan0;     // its a byte ptr, not an int ptr in the classic sense.
+            IntPtr ptr = bmpdata.Scan0;     // its a byte ptr
 
             int curwidth = bmp.Width;
             int masterheight = (mipmaplevels == 1) ? bmp.Height : (bmp.Height / 3) * 2;
