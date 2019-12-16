@@ -75,6 +75,7 @@ namespace BaseUtils
                 System.Diagnostics.Trace.AutoFlush = true;
                 // Log trace events to the above file
                 System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(new TraceLogWriter()));
+                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.ConsoleTraceListener(true));
                 Console.SetOut(new TraceLogWriter());
             }
         }
@@ -146,6 +147,9 @@ namespace BaseUtils
                             }
                         }
                     }
+                }
+                catch (ThreadAbortException)
+                {
                 }
                 catch (Exception ex)
                 {
