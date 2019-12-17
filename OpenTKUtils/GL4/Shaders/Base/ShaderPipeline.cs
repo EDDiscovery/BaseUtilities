@@ -78,7 +78,7 @@ namespace OpenTKUtils.GL4
             Add(f, ShaderType.FragmentShader);
         }
 
-        private void Add(IGLPipelineShader p, ShaderType m)
+        public void Add(IGLPipelineShader p, ShaderType m)
         {
             shaders[m] = p;
             GL.UseProgramStages(pipelineid, convmask[m], p.Id);

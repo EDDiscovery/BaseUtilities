@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using BaseUtils;
+using OpenTK;
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -22,20 +23,21 @@ namespace OpenTKUtils.Common
 {
     public class Zoom
     {
-        public float Current { get { return zoom; } }
+        public float Zoom1Distance { get; set; } = 1000F;                     // distance that Current=1 will be from the Position, in the direction of the camera.
 
-        public float Zoom1Distance { get; set; } = 1000F;                        // distance that zoom=1 will be from the Position, in the direction of the camera.
-        public float EyeDistance { get { return Zoom1Distance / zoom; } }    // distance of eye from target position
+        public float Current { get; set; } = 1.0f;
+        public void Set(Vector3 eye, Vector3 lookat) { Current = Zoom1Distance / (eye - lookat).Length; }  // set using two points
 
+        public float EyeDistance { get { return Zoom1Distance / Current; } }    // distance of eye from target position
+        
         public bool InSlew { get { return (zoomtimer.IsRunning); } }
         public float Default { get { return defaultZoom; } set { defaultZoom = Math.Min(Math.Max(value, ZoomMin),ZoomMax); } }
 
-        public float ZoomMax = 300F;            // Default out zoom
-        public float ZoomMin = 0.01F;           // Iain special ;-) - this depends on znear (the clip distance - smaller you can zoom in more) and Zoomdistance.
+        public float ZoomMax = 300F;            // Default out Current
+        public float ZoomMin = 0.01F;           // Iain special ;-) - this depends on znear (the clip distance - smaller you can Current in more) and Zoomdistance.
         public float ZoomFact = 1.258925F;      // scaling
 
         private float defaultZoom = 1F;
-        private float zoom = 1.0f;
 
         private int zoomtimeperstep = 0;
         private float zoommultiplier = 0;
@@ -43,33 +45,27 @@ namespace OpenTKUtils.Common
         private Stopwatch zoomtimer = new Stopwatch();
         long zoomnextsteptime = 0;
 
-        public void SetDefault()
-        {
-            KillSlew();
-            zoom = defaultZoom;
-        }
-
         public void Multiply(float other)
         {
             KillSlew();
-            zoom *= other;
-            zoom = Math.Max(Math.Min(zoom, ZoomMax), ZoomMin);
+            Current *= other;
+            Current = Math.Max(Math.Min(Current, ZoomMax), ZoomMin);
         }
 
-        public void Scale(bool direction)        // direction true is scale up zoom
+        public void Scale(bool direction)        // direction true is scale up Current
         {
             KillSlew();
             if (direction)
             {
-                zoom *= (float)ZoomFact;
-                if (zoom > ZoomMax)
-                    zoom = (float)ZoomMax;
+                Current *= (float)ZoomFact;
+                if (Current > ZoomMax)
+                    Current = (float)ZoomMax;
             }
             else
             {
-                zoom /= (float)ZoomFact;
-                if (zoom < ZoomMin)
-                    zoom = (float)ZoomMin;
+                Current /= (float)ZoomFact;
+                if (Current < ZoomMin)
+                    Current = (float)ZoomMin;
             }
         }
 
@@ -78,27 +74,27 @@ namespace OpenTKUtils.Common
         {
             if (timetozoom == 0)
             {
-                zoom = z;
+                Current = z;
             }
-            else if ( z != zoom )
+            else if ( z != Current )
             {
                 zoomtarget = z;
 
                 if ( timetozoom < 0 )       // auto estimate on log distance between them
                 {
-                    timetozoom = (float)(Math.Abs(Math.Log10(zoomtarget / zoom)) * 1.5);
+                    timetozoom = (float)(Math.Abs(Math.Log10(zoomtarget / Current)) * 1.5);
                 }
 
                 zoomtimeperstep = 50;          // go for 20hz tick
                 int wantedsteps = (int)((timetozoom * 1000.0F) / zoomtimeperstep);
-                zoommultiplier = (float)Math.Pow(10.0, Math.Log10(zoomtarget / zoom) / wantedsteps );      // I.S^n = F I = initial, F = final, S = scaling, N = no of steps
+                zoommultiplier = (float)Math.Pow(10.0, Math.Log10(zoomtarget / Current) / wantedsteps );      // I.S^n = F I = initial, F = final, S = scaling, N = no of steps
 
                 zoomtimer.Stop();
                 zoomtimer.Reset();
                 zoomtimer.Start();
                 zoomnextsteptime = 0;
 
-                //Console.WriteLine("Zoom {0} to {1} in {2} steps {3} steptime {4} mult {5}", _zoom, _zoomtarget, timetozoom*1000, wantedsteps, _zoomtimeperstep , _zoommultiplier );
+                //Console.WriteLine("Current {0} to {1} in {2} steps {3} steptime {4} mult {5}", _zoom, _zoomtarget, timetozoom*1000, wantedsteps, _zoomtimeperstep , _zoommultiplier );
             }
         }
 
@@ -107,23 +103,23 @@ namespace OpenTKUtils.Common
             zoomtimer.Stop();
         }
 
-        public void DoSlew()                           // do dynamic zoom adjustments..  true if a readjust zoom needed
+        public void DoSlew()                           // do dynamic Current adjustments..  true if a readjust Current needed
         {
             if ( zoomtimer.IsRunning && zoomtimer.ElapsedMilliseconds >= zoomnextsteptime )
             {
-                float newzoom = (float)(zoom * zoommultiplier);
-                bool stop = (zoomtarget > zoom) ? (newzoom >= zoomtarget) : (newzoom <= zoomtarget);
+                float newzoom = (float)(Current * zoommultiplier);
+                bool stop = (zoomtarget > Current) ? (newzoom >= zoomtarget) : (newzoom <= zoomtarget);
 
-                //Console.WriteLine("{0} Zoom {1} -> {2} m {3} t {4} stop {5}", _zoomtimer.ElapsedMilliseconds, _zoom , newzoom, _zoommultiplier, _zoomtarget, stop);
+                //Console.WriteLine("{0} Current {1} -> {2} m {3} t {4} stop {5}", _zoomtimer.ElapsedMilliseconds, _zoom , newzoom, _zoommultiplier, _zoomtarget, stop);
 
                 if (stop)
                 {
-                    zoom = zoomtarget;
+                    Current = zoomtarget;
                     zoomtimer.Stop();
                 }
                 else
                 {
-                    zoom = newzoom;
+                    Current = newzoom;
                     zoomnextsteptime += zoomtimeperstep;
                 }
             }

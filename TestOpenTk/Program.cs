@@ -24,7 +24,10 @@ namespace TestOpenTk
 
                 string arg1 = args.Next();
 
-                Type t = Type.GetType("TestOpenTk." + arg1,false,true);
+                Type t = Type.GetType("TestOpenTk." + arg1, false, true);
+
+                if ( t == null )
+                    t = Type.GetType("TestOpenTk.Shader" + arg1, false, true);
 
                 if ( t == null )
                     t = Type.GetType("TestOpenTk.ShaderTest" + arg1,false,true);

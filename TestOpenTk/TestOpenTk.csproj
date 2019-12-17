@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes.cs" />
+    <Compile Include="Galaxy\ShaderGalaxy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Galaxy\ShaderGalaxy.designer.cs">
+      <DependentUpon>ShaderGalaxy.cs</DependentUpon>
+    </Compile>
     <Compile Include="GL1\RandomStars.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -138,11 +144,11 @@
     <Compile Include="Geometry\ShaderTestGeoTest1.designer.cs">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </Compile>
-    <Compile Include="Textures\ShaderTestGalaxy.cs">
+    <Compile Include="Textures\ShaderTestGalaxyTexture.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Textures\ShaderTestGalaxy.designer.cs">
-      <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
+    <Compile Include="Textures\ShaderTestGalaxyTexture.designer.cs">
+      <DependentUpon>ShaderTestGalaxyTexture.cs</DependentUpon>
     </Compile>
     <Compile Include="ShaderTestMain.cs">
       <SubType>Form</SubType>
@@ -174,6 +180,9 @@
     <Compile Include="Compute\ShaderTestVertexCompute.designer.cs">
       <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Galaxy\ShaderGalaxy.resx">
+      <DependentUpon>ShaderGalaxy.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="GL1\RandomStars.resx">
       <DependentUpon>RandomStars.cs</DependentUpon>
     </EmbeddedResource>
@@ -226,8 +235,8 @@
     <EmbeddedResource Include="Geometry\ShaderTestGeoTest1.resx">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Textures\ShaderTestGalaxy.resx">
-      <DependentUpon>ShaderTestGalaxy.cs</DependentUpon>
+    <EmbeddedResource Include="Textures\ShaderTestGalaxyTexture.resx">
+      <DependentUpon>ShaderTestGalaxyTexture.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ShaderTestMain.resx">
       <DependentUpon>ShaderTestMain.cs</DependentUpon>

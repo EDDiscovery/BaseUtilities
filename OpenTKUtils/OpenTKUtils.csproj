@@ -58,6 +58,7 @@
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeNoise.cs" />
+    <Compile Include="GL4\Shaders\Volumetric\ShaderVolumetric.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />
@@ -77,10 +78,10 @@
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />
-    <Compile Include="GL4\Shaders\Shaders\ShadersColourObjects.cs" />
-    <Compile Include="GL4\Shaders\Shaders\ShadersTesselationSinewave.cs" />
-    <Compile Include="GL4\Shaders\Shaders\ShadersTexturedBlendedMultiple.cs" />
-    <Compile Include="GL4\Shaders\Shaders\ShadersTexturedObjects.cs" />
+    <Compile Include="GL4\Shaders\Basic Shaders\ShadersColourObjects.cs" />
+    <Compile Include="GL4\Shaders\Basic Shaders\ShadersTesselationSinewave.cs" />
+    <Compile Include="GL4\Shaders\Basic Shaders\ShadersTexturedBlendedMultiple.cs" />
+    <Compile Include="GL4\Shaders\Basic Shaders\ShadersTexturedObjects.cs" />
     <Compile Include="GL4\Textures\Texture.cs" />
     <Compile Include="GL4\Textures\Texture1D.cs" />
     <Compile Include="GL4\Textures\Texture3D.cs" />
@@ -121,6 +122,7 @@
     <EmbeddedResource Include="GL4\Shaders\Functions\colours.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\noise2.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\noise3.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Volumetric\volumetricgeoshader.glsl" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

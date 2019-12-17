@@ -17,13 +17,13 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestGalaxy : Form
+    public partial class ShaderTestGalaxyTexture : Form
     {
         private Controller3D gl3dcontroller = new Controller3D();
 
         private Timer systemtimer = new Timer();
 
-        public ShaderTestGalaxy()
+        public ShaderTestGalaxyTexture()
         {
             InitializeComponent();
 

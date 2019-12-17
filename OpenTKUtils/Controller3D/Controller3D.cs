@@ -82,8 +82,7 @@ namespace OpenTKUtils.Common
         {
             Pos.Lookat = lookat;
             Camera.Set(cameradir);
-            Zoom.Default = zoomn;
-            Zoom.SetDefault();
+            Zoom.Current = zoomn;
             Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
             MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current); // set up here so ready for action.. below uses it.
 
