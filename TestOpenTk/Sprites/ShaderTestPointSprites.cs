@@ -151,7 +151,7 @@ void main(void)
                                );
 
 
-            var p = GLPointsFactory.RandomStars4(100, 23, -100, 100, 100, -100, 100, -100);
+            var p = GLPointsFactory.RandomStars4(100, -100, 100, 100, -100, 100, -100);
             //p = new Vector4[10];
             //for( int i = 0; i < 10; i++)
             //{

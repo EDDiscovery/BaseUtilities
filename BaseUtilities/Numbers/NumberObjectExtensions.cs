@@ -427,11 +427,11 @@ public static class ObjectExtensionsNumbersBool
 
     public static int Range(this int a, int min, int max)
     {
-        return Math.Max(Math.Min(a, min), max);
+        return Math.Min(Math.Max(a, min), max);
     }
     public static long Range(this long a, long min, long max)
     {
-        return Math.Max(Math.Min(a, min), max);
+        return Math.Min(Math.Max(a, min), max);
     }
 
     public static float Radians(this float x)
@@ -479,12 +479,12 @@ public static class ObjectExtensionsNumbersBool
         return (a < 0) ? -a : a;
     }
 
-    static double GaussianDist(double x, double centre, double stddist)     // https://en.wikipedia.org/wiki/Gaussian_function
+    public static double GaussianDist(double x, double centre, double stddist)     // https://en.wikipedia.org/wiki/Gaussian_function
     {
         return Math.Exp(-(x - centre) * (x - centre) / (2 * stddist * stddist));
     }
 
-    static double GaussianNoise(double x, double u, double stddist)
+    public static double GaussianNoise(double x, double u, double stddist)
     {
         return 1 / Math.Sqrt(2 * Math.PI * stddist) * Math.Exp(-(x - u) * (x - u) / (2 * stddist * stddist));       // Wichura 1998, Gentle 2003, https://www.statsdirect.com/help/randomization/generate_random_numbers.htm
     }

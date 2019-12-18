@@ -348,5 +348,8 @@
   <ItemGroup>
     <None Include="Resources\Galaxy_L180.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Galaxy_L180-2.jpg" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

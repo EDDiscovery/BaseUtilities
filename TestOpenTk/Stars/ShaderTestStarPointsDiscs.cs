@@ -151,7 +151,7 @@ void main(void)
                         GLShapeObjectFactory.CreateBox(400, 200, 40, new Vector3(0, 0, 0), new Vector3(0, 0, 0)),
                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
 
-            Vector3[] stars = GLPointsFactory.RandomStars(10000, 12322, -200, 200, -100, 100, 20, -20);
+            Vector3[] stars = GLPointsFactory.RandomStars(10000, -200, 200, -100, 100, 20, -20);
 
             rObjects.Add(items.Shader("STARS"), "Stars", GLRenderableItem.CreateVector3Packed2(items,OpenTK.Graphics.OpenGL4.PrimitiveType.Points, 
                                             stars, new Vector3(50000, 50000, 50000), 16));

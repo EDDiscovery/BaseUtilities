@@ -29,7 +29,7 @@ namespace OpenTKUtils.Common
         public bool InSlew { get { return (targetposSlewProgress < 1.0f); } }
 
         private Vector3 lookat = Vector3.Zero;                // point where we are viewing. 
-        private Vector3 eyeposition = new Vector3(10,10,10);  // random point 
+        private Vector3 eyeposition = new Vector3(10,10,10);  // and the eye position
 
         private float targetposSlewProgress = 1.0f;             // 0 -> 1 slew progress
         private float targetposSlewTime;                        // how long to take to do the slew

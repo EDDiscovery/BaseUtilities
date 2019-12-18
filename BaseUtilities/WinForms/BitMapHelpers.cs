@@ -190,5 +190,89 @@ namespace BaseUtils
             Byte[] f = ms.ToArray();
             return f;
         }
+
+        // not the quickest way in the world, but not supposed to do this at run time
+        // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
+
+        public enum BitmapFunction
+        {
+            Average,
+            HeatMap,
+        };
+
+        public static Bitmap Function(this Bitmap bmp, int granularityx, int granularityy, int avggranulatityx = 0, int avggranulatityy = 0, BitmapFunction mode = BitmapFunction.Average, 
+                        bool enablered = true, bool enablegreen = true, bool enableblue = true, 
+                        bool flipx = false, bool flipy = false)
+        {
+            System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                            System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
+
+            IntPtr baseptr = bmpdata.Scan0;     // its a byte ptr
+
+            Bitmap newbmp = new Bitmap(granularityx, granularityy);  // bitmap to match
+
+            if (avggranulatityx == 0)
+                avggranulatityx = granularityx;
+            if (avggranulatityy == 0)
+                avggranulatityy = granularityy;
+
+            int bmpcellsizex = bmp.Width / granularityx;      // no of avg points 
+            int bmpcellsizey = bmp.Height / granularityx;
+            int avgwidth = bmp.Width / avggranulatityx;
+            int avgheight = bmp.Height / avggranulatityx;
+            int linestride = bmp.Width * 4;
+
+            for (int gy = 0; gy < granularityy; gy++)
+            {
+                for (int gx = 0; gx < granularityx; gx++)
+                {
+                    int x = bmpcellsizex / 2 + bmpcellsizex * gx - avgwidth/2;
+                    int mx = x + avgwidth;
+                    x = x.Range(0, bmp.Width-1);
+                    mx = mx.Range(0, bmp.Width);
+
+                    int y = bmpcellsizey / 2 + bmpcellsizey * gy - avgheight/2;
+                    int my = y + avgheight;
+                    y = y.Range(0, bmp.Height-1);
+                    my = my.Range(0, bmp.Height);   // yes, let it go to height, its the stop value
+
+                  //  System.Diagnostics.Debug.WriteLine("Avg " + x + "->" + mx + ", " + y +"->" + my);
+
+                    uint red=0, green=0, blue = 0,points=0;
+
+                    for (int ay = y; ay < my; ay++)
+                    {
+                        IntPtr ptr = baseptr + x * 4 + ay * linestride;
+                        for (int ax = x; ax < mx; ax++)
+                        {
+                            int v = System.Runtime.InteropServices.Marshal.ReadInt32(ptr);  // ARBG
+                            red += enablered ? (uint)((v >> 16) & 0xff) : 0;
+                            blue += enableblue ? (uint)((v >> 8) & 0xff) : 0;
+                            green += enablegreen ? (uint)((v >> 0) & 0xff) : 0;
+                            ptr += 4;
+                            points++;
+                            //System.Diagnostics.Debug.WriteLine("Avg " + ax + "," + ay);
+                        }
+                    }
+
+                    Color res;
+                    if (mode == BitmapFunction.HeatMap)
+                    {
+                        double ir = (double)red * (double)red + (double)green * (double)green + (double)blue * (double)blue;
+                        ir = Math.Sqrt(ir) * 255/442;   // scaling is for sqrt(255*255+255*255+255*255) to bring it back to 255 nom
+                        ir /= points;
+                        res = Color.FromArgb(255, (int)ir, (int)ir, (int)ir);
+                    }
+                    else
+                        res = Color.FromArgb(255, (int)(red / points), (int)(blue / points), (int)(green / points));
+
+                    newbmp.SetPixel(flipx ? (newbmp.Width-1-gx) : gx, flipy ? (newbmp.Height-1- gy) : gy, res);
+                }
+
+            }
+
+            bmp.UnlockBits(bmpdata);
+            return newbmp;
+        }
     }
 }

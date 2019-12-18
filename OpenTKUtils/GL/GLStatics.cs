@@ -101,6 +101,11 @@ namespace OpenTKUtils
             }
         }
 
+        public static void DefaultPointSize()
+        {
+            PointSize(1);
+        }
+
         static bool? LastPointSpriteEnable = null;
 
         public static void DisablePointSprite()          // cache size for speed 
@@ -130,6 +135,62 @@ namespace OpenTKUtils
                 GL.LineWidth(p);
                 LastLineWidth = p;
             }
+        }
+
+        static bool? depthteststate = false;
+
+        public static void DepthTest(bool state)
+        {
+            if ( depthteststate == null || depthteststate.Value != state)
+            {
+                SetEnable(EnableCap.DepthTest, state);
+                depthteststate = state;
+            }
+        }
+
+        public static void DefaultDepthTest()
+        {
+            DepthTest(true);
+        }
+
+        static BlendingFactor? bfsource = null;
+        static BlendingFactor? bfdest= null;
+        static bool bfon = false;
+
+        public static void Blend(BlendingFactor source, BlendingFactor dest)
+        {
+            if (bfsource == null || bfsource.Value != source || bfdest != dest || bfon == false)
+            {
+                bfsource = source;
+                bfdest = dest;
+                GL.BlendFunc(source, dest);
+
+                if (!bfon)
+                {
+                    GL.Enable(EnableCap.Blend);
+                    bfon = true;
+                }
+            }
+        }
+
+        public static void BlendOff()
+        {
+            bfon = false;
+            GL.Disable(EnableCap.Blend);
+        }
+
+        public static void BlendDefault()
+        {
+            Blend(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        }
+
+
+        public static void SetEnable( EnableCap c , bool state)
+        {
+            if (state)
+                GL.Enable(c);
+            else
+                GL.Disable(c);
         }
 
         public static string[] Extensions()

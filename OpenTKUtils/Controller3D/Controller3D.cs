@@ -91,11 +91,6 @@ namespace OpenTKUtils.Common
 
             GL.ClearColor(BackColour);
 
-            GL.Enable(EnableCap.DepthTest);         // standard - depth
-            GL.FrontFace(FrontFaceDirection.Ccw);
-            GLStatics.CullFace(true);               // cull faces, ccw.
-            GLStatics.PointSize(1);                 // default is controlled by external not shaders
-
             sysinterval.Start();
         }
 
@@ -222,10 +217,14 @@ namespace OpenTKUtils.Common
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.Enable(EnableCap.PointSmooth);                                               // standard render options
-            GL.Hint(HintTarget.PointSmoothHint, HintMode.Nicest);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.FrontFace(FrontFaceDirection.Ccw);          
+            GLStatics.DefaultDepthTest();
+            GLStatics.DefaultCullFace();
+            GLStatics.DefaultPointSize();                               // default is controlled by external not shaders
+            GLStatics.BlendDefault();
+
+            // <gl3 GL.Enable(EnableCap.PointSmooth);                                               // removed as not gl4 compatible
+            //GL.Hint(HintTarget.PointSmoothHint, HintMode.Nicest);
 
             PaintObjects?.Invoke(MatrixCalc, sysinterval.ElapsedMilliseconds);
 
