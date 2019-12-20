@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Robbyxp1 robxp@hotmail.com
+ * Copyright © 2019 Robbyxp1 @ github.com
  * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -12,6 +12,7 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
 
 #version 450 core
 

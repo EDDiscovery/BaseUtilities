@@ -67,7 +67,7 @@ namespace TestOpenTk
         {
             public GLFixedShader(Color c, Action<IGLProgramShader> action = null) : base(action)
             {
-                AddVertexFragment(new GLVertexShaderNoTranslation(), new GLFragmentShaderFixedColour(c));
+                AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(c));
             }
         }
 
@@ -151,7 +151,7 @@ namespace TestOpenTk
                     numberposx[i] *= Matrix4.CreateTranslation(new Vector3(left + 1000 * i, 0, front));
                 }
 
-                GLShaderPipeline numshaderx = new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed(0));
+                GLShaderPipeline numshaderx = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
                 items.Add("IC-X", numshaderx);
                 numshaderx.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
                 numshaderx.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
@@ -169,7 +169,7 @@ namespace TestOpenTk
                     numberposz[i] *= Matrix4.CreateTranslation(new Vector3(right + 1000, 0, front + 1000 * i));
                 }
 
-                GLShaderPipeline numshaderz = new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed(25));
+                GLShaderPipeline numshaderz = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(25));
                 items.Add("IC-Z", numshaderz);
                 numshaderz.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
                 numshaderz.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
@@ -182,7 +182,7 @@ namespace TestOpenTk
 
             {
                 items.Add("solmarker", new GLTexture2D(numbitmaps[45]));
-                items.Add("TEX", new GLTexturedObjectShaderSimple((a) => { GLStatics.CullFace(false); }, (b)=> { GLStatics.DefaultCullFace(); }));
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation((a) => { GLStatics.CullFace(false); }, (b)=> { GLStatics.DefaultCullFace(); }));
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
@@ -213,7 +213,7 @@ namespace TestOpenTk
             }
 
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
             float h = -1;
             if ( h != -1)
@@ -306,7 +306,7 @@ namespace TestOpenTk
                                  GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, points.ToArray()));
                 }
 
-                if (true)
+                if (false)
                 {
                     List<Vector4> points = new List<Vector4>();
                     Random rnd = new Random(23);
@@ -349,6 +349,54 @@ namespace TestOpenTk
                     items.Add("SD", new GLStarDots());
                     rObjects.Add(items.Shader("SD"),
                                  GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, points.ToArray()));
+                }
+
+                if (true)
+                {
+                    Random rnd = new Random(23);
+
+                    GLBuffer buf = new GLBuffer(16*240000);     // since RND is fixed, should get the same number every time.
+                    IntPtr bufptr = buf.Map(0, buf.BufferSize); // get a ptr to the whole schebang
+
+                    int xcw = (right - left) / heat.Width;
+                    int zch = (back - front) / heat.Height;
+
+                    int points = 0;
+
+                    for (int x = 0; x < heat.Width; x++)
+                    {
+                        for (int z = 0; z < heat.Height; z++)
+                        {
+                            int i = heat.GetPixel(x, z).R;
+                            int ii = i * i * i;
+                            if (ii > 32 * 32 * 32)
+                            {
+                                int gx = left + x * xcw;
+                                int gz = front + z * zch;
+
+                                float dx = (float)Math.Abs(gx) / 45000;
+                                float dz = (float)Math.Abs(25889 - gz) / 45000;
+                                double d = Math.Sqrt(dx * dx + dz * dz);     // 0 - 0.1412
+                                d = 1 - d;  // 1 = centre, 0 = unit circle
+                                d = d * 2 - 1;  // -1 to +1
+                                double dist = ObjectExtensionsNumbersBool.GaussianDist(d, 1, 1.4);
+
+                                int c = Math.Min(Math.Max(ii / 100000, 0), 20);
+
+                                dist *= 2000;
+
+                                GLPointsFactory.RandomStars4(ref bufptr,c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: i);
+                                points += c;
+                                System.Diagnostics.Debug.Assert(points < buf.BufferSize / 16);
+                            }
+                        }
+                    }
+
+                    buf.UnMap();
+
+                    items.Add("SD", new GLStarDots());
+                    rObjects.Add(items.Shader("SD"),
+                                 GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, buf, points));
                 }
 
             }
@@ -501,7 +549,7 @@ void main(void)
 
                 FinishAction = (a) =>
                 {
-                    GLStatics.DisablePointSprite();
+                    GLStatics.DefaultPointSprite();
                     GLStatics.DefaultDepthTest();
                     //GL.Disable(EnableCap.Blend);
                 };

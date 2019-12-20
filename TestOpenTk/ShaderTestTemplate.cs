@@ -55,7 +55,7 @@ namespace TestOpenTk
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
             #region coloured lines
 

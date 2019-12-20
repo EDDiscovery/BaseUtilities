@@ -44,6 +44,8 @@ namespace OpenTKUtils
                 System.Diagnostics.Debug.Assert(false, errmsg);
         }
 
+        /////////////////////////////////////////////////
+
         static bool? LastCullface = null;
 
         public static void CullFace(bool on)
@@ -64,6 +66,7 @@ namespace OpenTKUtils
             CullFace(true);
         }
 
+        /////////////////////////////////////////////////
 
         static int? LastPatchSize = null;
 
@@ -75,6 +78,8 @@ namespace OpenTKUtils
                 LastPatchSize = p;
             }
         }
+
+        /////////////////////////////////////////////////
 
         static float? LastPointSize = null;
 
@@ -106,9 +111,11 @@ namespace OpenTKUtils
             PointSize(1);
         }
 
+        /////////////////////////////////////////////////
+
         static bool? LastPointSpriteEnable = null;
 
-        public static void DisablePointSprite()          // cache size for speed 
+        public static void DefaultPointSprite()          // cache size for speed 
         {
             if (LastPointSpriteEnable == null || LastPointSpriteEnable == true)
             {
@@ -126,6 +133,8 @@ namespace OpenTKUtils
             }
         }
 
+        /////////////////////////////////////////////////
+
         static float? LastLineWidth = null;
 
         public static void LineWidth(float p)          // cache size for speed
@@ -137,11 +146,13 @@ namespace OpenTKUtils
             }
         }
 
+        /////////////////////////////////////////////////
+
         static bool? depthteststate = false;
 
         public static void DepthTest(bool state)
         {
-            if ( depthteststate == null || depthteststate.Value != state)
+            if (depthteststate == null || depthteststate.Value != state)
             {
                 SetEnable(EnableCap.DepthTest, state);
                 depthteststate = state;
@@ -152,6 +163,9 @@ namespace OpenTKUtils
         {
             DepthTest(true);
         }
+
+
+        /////////////////////////////////////////////////
 
         static BlendingFactor? bfsource = null;
         static BlendingFactor? bfdest= null;
@@ -184,6 +198,7 @@ namespace OpenTKUtils
             Blend(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         }
 
+        /////////////////////////////////////////////////
 
         public static void SetEnable( EnableCap c , bool state)
         {
@@ -192,6 +207,8 @@ namespace OpenTKUtils
             else
                 GL.Disable(c);
         }
+
+        /////////////////////////////////////////////////
 
         public static string[] Extensions()
         {

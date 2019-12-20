@@ -68,5 +68,23 @@ namespace OpenTKUtils
             return res * res;
         }
 
+        public static Vector2 Rotate(this Vector2 v, float degreesrad)
+        {
+            double sin = Math.Sin(degreesrad);
+            double cos = Math.Cos(degreesrad);
+
+            float tx = v.X;
+            float ty = v.Y;
+            v.X = (float)((cos * tx) - (sin * ty));
+            v.Y = (float)((sin * tx) + (cos * ty));
+            return v;
+        }
+
+        public static float Angle(this Vector2 start, Vector2 end)
+        {
+            return (float)Math.Atan2(end.Y - start.Y, end.X - start.X);
+        }
+
+
     }
 }

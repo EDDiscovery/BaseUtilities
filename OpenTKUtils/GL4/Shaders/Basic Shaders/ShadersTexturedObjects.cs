@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +11,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 
 using System;
 using OpenTK;
@@ -20,31 +20,91 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Simple rendered texture
+    // Texture, no translation
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions world coords
+    //      location 1 : vec2 texture co-ords
+    //      tex binding 1 : textureObject : 2D 
+    //      uniform 0 : GL MatrixCalc
 
-    public class GLTexturedObjectShaderSimple : GLShaderPipeline
+    public class GLTexturedShaderWithWorldCoord : GLShaderPipeline
     {
-        public GLTexturedObjectShaderSimple(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        public GLTexturedShaderWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLVertexShaderTextureObjectTransform(), new GLFragmentShaderTexture());
+            AddVertexFragment(new GLPLVertexShaderTextureWorldCoord(), new GLPLFragmentShaderTexture());
         }
     }
 
-    public class GLTexturedObjectShaderTransformWithCommonTransform : GLShaderPipeline
+    // Texture, translation
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ords
+    //      tex binding 1 : textureObject : 2D 
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 array of transforms
+
+    public class GLTexturedShaderWithObjectTranslation : GLShaderPipeline
     {
-        public GLTexturedObjectShaderTransformWithCommonTransform(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        public GLTexturedShaderWithObjectTranslation(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLVertexShaderTextureTransformWithCommonTransform(), new GLFragmentShaderTexture());
+            AddVertexFragment(new GLPLVertexShaderTextureModelCoordWithObjectTranslation(), new GLPLFragmentShaderTexture());
         }
     }
 
-    public class GLTexturedObjectShader2DBlend : GLShaderPipeline
+    // Texture, translation, common translation
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ords
+    //      tex binding 1 : textureObject : 2D 
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 array of transforms
+    //      uniform 23 : commontransform: mat4 array of transforms
+
+    public class GLTexturedShaderWithObjectCommonTranslation : GLShaderPipeline
     {
-        public GLTexturedObjectShader2DBlend(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        public GLTexturedShaderWithObjectCommonTranslation(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLVertexShaderTextureObjectTransform(), new GLFragmentShaderTexture2DBlend());
+            AddVertexFragment(new GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation(), new GLPLFragmentShaderTexture());
         }
     }
+
+    // Texture, translation, 2d blend
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ords
+    //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
+    //      uniform 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 array of transforms
+    //      location 30 : uniform float blend between the two texture
+
+    public class GLTexturedShader2DBlendWithWorldCoord : GLShaderPipeline
+    {
+        public GLTexturedShader2DBlendWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderTextureModelCoordWithObjectTranslation(), new GLPLFragmentShaderTexture2DBlend());
+        }
+    }
+
+    // Texture, triangle strip
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions world
+    //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
+    //      uniform 0 : GL MatrixCalc
+
+    public class GLTexturedShaderTriangleStripWithWorldCoord : GLShaderPipeline
+    {
+        GLPLFragmentShaderTextureTriangleStrip frag;
+
+        public GLTexturedShaderTriangleStripWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            frag = new GLPLFragmentShaderTextureTriangleStrip();
+            AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), frag);
+        }
+
+        public Vector2 TexOffset { get { return frag.TexOffset; } set { frag.TexOffset = value; } }
+    }
+
+
 
 
 }

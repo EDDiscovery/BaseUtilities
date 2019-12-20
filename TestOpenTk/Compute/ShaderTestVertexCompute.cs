@@ -126,8 +126,8 @@ void main(void)
 
             // this bit is eye candy just to show its working
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
-            items.Add("TEX", new GLTexturedObjectShaderSimple());
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
+            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
 
             rObjects.Add(items.Shader("COS-1L"),
                          GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,

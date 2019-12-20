@@ -61,13 +61,6 @@ namespace TestOpenTk
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
-        public class GLFixedShader : GLShaderPipeline
-        {
-            public GLFixedShader(Color c, Action<IGLProgramShader> action = null) : base(action)
-            {
-                AddVertexFragment(new GLVertexShaderNoTranslation(), new GLFragmentShaderFixedColour(c));
-            }
-        }
 
         protected override void OnLoad(EventArgs e)
         {
@@ -122,7 +115,7 @@ namespace TestOpenTk
             };
 
             {
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
+                items.Add("LINEYELLOW", new GLFixedColourShaderWithWorldCoord(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
                 rObjects.Add(items.Shader("LINEYELLOW"),
                 GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, displaylines));
             }
@@ -149,7 +142,7 @@ namespace TestOpenTk
                     numberposx[i] *= Matrix4.CreateTranslation(new Vector3(left + 1000 * i, 0, front));
                 }
 
-                GLShaderPipeline numshaderx = new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed(0));
+                GLShaderPipeline numshaderx = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
                 items.Add("IC-X", numshaderx);
                 numshaderx.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
                 numshaderx.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
@@ -167,7 +160,7 @@ namespace TestOpenTk
                     numberposz[i] *= Matrix4.CreateTranslation(new Vector3(right + 1000, 0, front + 1000 * i));
                 }
 
-                GLShaderPipeline numshaderz = new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed(25));
+                GLShaderPipeline numshaderz = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(25));
                 items.Add("IC-Z", numshaderz);
                 numshaderz.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
                 numshaderz.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
@@ -180,7 +173,7 @@ namespace TestOpenTk
 
             {
                 items.Add("solmarker", new GLTexture2D(numbitmaps[45]));
-                items.Add("TEX", new GLTexturedObjectShaderSimple((a) => { GLStatics.CullFace(false); }, (b)=> { GLStatics.DefaultCullFace(); }));
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation((a) => { GLStatics.CullFace(false); }, (b)=> { GLStatics.DefaultCullFace(); }));
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
@@ -211,7 +204,7 @@ namespace TestOpenTk
             }
 
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
             float h = -1;
             if ( h != -1)

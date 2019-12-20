@@ -17,6 +17,7 @@ Uniforms
 21 = transform to look at eye position
 22 = object transform position/rotation
 23 = common transform - rotation
+24 = vec2 texture co-ord offset to apply.
 26 = phase
 30 = blend
 

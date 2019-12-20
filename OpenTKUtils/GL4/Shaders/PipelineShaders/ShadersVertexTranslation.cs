@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +11,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 
 using System;
 using OpenTK;
@@ -22,14 +22,14 @@ namespace OpenTKUtils.GL4
 {
     // Pipeline shader, Translation
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions
+    //      location 0 : position: vec4 vertex array of positions of model
     //      uniform 0 : GL MatrixCalc
     //      uniform 4 : transform: mat4 array of transforms
     // Out:
     //      vs_color is based on instance ID mostly for debugging
     //      gl_Position
 
-    public class GLVertexShaderMatrixTranslation : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderMatrixModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -56,7 +56,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderMatrixTranslation()
+        public GLPLVertexShaderMatrixModelCoordWithMatrixTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -64,7 +64,7 @@ void main(void)
 
     // Pipeline shader, Translation, Texture
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions
+    //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec2 texture co-ordinates
     //      uniform 0 : GL MatrixCalc
     //      uniform 4 : transform: mat4 array of transforms
@@ -72,7 +72,7 @@ void main(void)
     //      vs_textureCoordinate
     //      gl_Position
 
-    public class GLVertexShaderTextureMatrixTranslation : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderTextureModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -109,7 +109,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderTextureMatrixTranslation()
+        public GLPLVertexShaderTextureModelCoordWithMatrixTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -126,7 +126,7 @@ void main(void)
     //      gl_Position
     //      vs_textureCoordinate
 
-    public class GLVertexShaderColorTransformWithCommonTransform : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderColorModelCoordWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
@@ -158,7 +158,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderColorTransformWithCommonTransform()
+        public GLPLVertexShaderColorModelCoordWithObjectCommonTranslation()
         {
             Transform = new GLObjectDataTranslationRotation();
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
@@ -184,7 +184,7 @@ void main(void)
     //      gl_Position
     //      vs_textureCoordinate
 
-    public class GLVertexShaderTextureTransformWithCommonTransform : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
         public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
@@ -216,7 +216,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderTextureTransformWithCommonTransform()
+        public GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation()
         {
             Transform = new GLObjectDataTranslationRotation();
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);

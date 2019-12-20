@@ -42,7 +42,7 @@ namespace TestOpenTk
         {
             public GLFixedShader(Color c, Action<IGLProgramShader> action = null) : base(action)
             {
-                AddVertexFragment(new GLVertexShaderNoTranslation(), new GLFragmentShaderFixedColour(c));
+                AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(c));
             }
         }
 
@@ -87,7 +87,7 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(135f, 0, 0), 0.31622F);
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
             float h = -1;
             if ( h != -1 )
@@ -185,7 +185,7 @@ namespace TestOpenTk
 
             GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
             items.Add("Nums", array);
-            items.Add("IC-2", new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture2DIndexed(0)));
+            items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)));
             items.Shader("IC-2").StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
             items.Shader("IC-2").FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
 

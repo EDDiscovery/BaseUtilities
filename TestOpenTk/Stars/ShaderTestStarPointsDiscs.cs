@@ -143,9 +143,9 @@ void main(void)
 
             items.Add("STARS", new GLStarPoints());
              
-            items.Add("COS", new GLColourObjectShaderNoTranslation());
-            items.Add("COST", new GLColourObjectShaderTranslation());
-            items.Add("TEX", new GLTexturedObjectShaderSimple());
+            items.Add("COS", new GLColourShaderWithWorldCoord());
+            items.Add("COST", new GLColourShaderWithObjectTranslation());
+            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
 
             rObjects.Add(items.Shader("COS"), GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
                         GLShapeObjectFactory.CreateBox(400, 200, 40, new Vector3(0, 0, 0), new Vector3(0, 0, 0)),

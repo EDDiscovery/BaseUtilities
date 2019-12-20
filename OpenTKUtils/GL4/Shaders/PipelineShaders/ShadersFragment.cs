@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +11,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 
 using System;
 using OpenTK;
@@ -24,7 +24,7 @@ namespace OpenTKUtils.GL4
     // Requires:
     //      no inputs
 
-    public class GLFragmentShaderFixedColour : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderFixedColour : GLShaderPipelineShadersBase
     {
         OpenTK.Graphics.Color4 col;
 
@@ -42,7 +42,7 @@ void main(void)
 ";
         }
 
-        public GLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
+        public GLPLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
         {
             col = c;
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
@@ -53,7 +53,7 @@ void main(void)
     // Requires:
     //      vs_color : vec4 of colour
 
-    public class GLFragmentShaderColour : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderColour : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -70,7 +70,7 @@ void main(void)
 ";
         }
 
-        public GLFragmentShaderColour()
+        public GLPLFragmentShaderColour()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
@@ -81,7 +81,7 @@ void main(void)
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
     //      tex binding 1 : textureObject : 2D texture
 
-    public class GLFragmentShaderTexture : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderTexture : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -99,7 +99,7 @@ void main(void)
 ";
         }
 
-        public GLFragmentShaderTexture()
+        public GLPLFragmentShaderTexture()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
@@ -117,7 +117,7 @@ void main(void)
     //      tex binding 1 : textureObject : 2D texture
     //      vs_in.vs_instance - instance id
 
-    public class GLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
     {
         public string Code(int offset)
         {
@@ -140,7 +140,7 @@ void main(void)
 ";
         }
 
-        public GLFragmentShaderTexture2DIndexed(int offset)
+        public GLPLFragmentShaderTexture2DIndexed(int offset)
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(offset), GetType().Name);
         }
@@ -158,7 +158,7 @@ void main(void)
     //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
     //      location 30 : uniform float blend between the two texture
 
-    public class GLFragmentShaderTexture2DBlend : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderTexture2DBlend : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -181,7 +181,7 @@ void main(void)
 
         public float Blend { get; set; } = 0.0f;
 
-        public GLFragmentShaderTexture2DBlend()
+        public GLPLFragmentShaderTexture2DBlend()
         {
             Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
@@ -193,4 +193,54 @@ void main(void)
             OpenTKUtils.GLStatics.Check();
         }
     }
+
+    // Pipeline shader, Co-ords are from a triangle strip, so we need to invert x for each other set of triangles
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord - as per triangle strip
+    //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
+    //      location 30 : uniform float blend between the two texture
+
+    public class GLPLFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+layout (location=0) in vec2 vs_textureCoordinate;
+layout (binding=1) uniform sampler2D textureObject;
+layout (location = 24) uniform  vec2 offset;
+out vec4 color;
+
+void main(void)
+{
+    if ( gl_PrimitiveID % 4 < 2 )   // first two primitives have coords okay
+    {
+        color = texture(textureObject, vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
+    }
+    else    // next two have them inverted in x due to re-using the previous triangles vertexes
+    {
+        color = texture(textureObject, vec2(1.0-vs_textureCoordinate.x,vs_textureCoordinate.y)+offset);       // vs_texture coords normalised 0 to 1.0f
+    }
+
+}
+";
+        }
+
+        public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
+
+        public GLPLFragmentShaderTextureTriangleStrip()
+        {
+            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+        }
+
+        public override void Start()
+        {
+            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GL.ProgramUniform2(Id, 24, TexOffset);
+            OpenTKUtils.GLStatics.Check();
+        }
+    }
+
+
 }

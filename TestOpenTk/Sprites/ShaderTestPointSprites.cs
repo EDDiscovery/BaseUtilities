@@ -104,7 +104,7 @@ void main(void)
 
                 FinishAction = (a) => 
                 {
-                    GLStatics.DisablePointSprite();
+                    GLStatics.DefaultPointSprite();
                     GL.Disable(EnableCap.Blend);
                 };
 
@@ -131,7 +131,7 @@ void main(void)
             //items.Add("lensflarewhite", new GLTexture2D(Properties.Resources.lensflare_white64));
             items.Add("lensflare", new GLTexture2D(Properties.Resources.star_grey64));
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
             items.Add("PS1", new GLPointSprite(items.Tex("lensflare")));
 

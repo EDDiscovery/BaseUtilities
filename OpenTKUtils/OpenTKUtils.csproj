@@ -60,6 +60,7 @@
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeNoise.cs" />
     <Compile Include="GL4\Shaders\Volumetric\ShaderVolumetric.cs" />
+    <Compile Include="GL4\ShapeFactory\FactoryTape.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryPoints.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryShapes.cs" />

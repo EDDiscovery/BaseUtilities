@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +11,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -22,7 +21,7 @@ namespace OpenTKUtils.GL4
 {
     // Pipeline shader, Translation, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions
+    //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec3 model position
     //      uniform 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
@@ -30,7 +29,7 @@ namespace OpenTKUtils.GL4
     //      gl_Position
     //      modelpos
 
-    public class GLVertexShaderObjectTransform : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
         public string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
@@ -57,7 +56,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderObjectTransform()
+        public GLPLVertexShaderModelCoordWithObjectTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -66,7 +65,7 @@ void main(void)
 
     // Pipeline shader, Translation, Colour, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions
+    //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec4 colour
     //      uniform 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
@@ -75,7 +74,7 @@ void main(void)
     //      vs_color
     //      modelpos
 
-    public class GLVertexShaderColourObjectTransform : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderColourModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
         public string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
@@ -107,7 +106,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderColourObjectTransform()
+        public GLPLVertexShaderColourModelCoordWithObjectTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -115,7 +114,7 @@ void main(void)
 
     // Pipeline shader, Translation, Texture, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions
+    //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec2 texture co-ords
     //      uniform 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
@@ -125,7 +124,7 @@ void main(void)
     //      modelpos
 
 
-    public class GLVertexShaderTextureObjectTransform : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderTextureModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
         public string Code()       // with transform, object needs to pass in uniform 22 the transform
         {
@@ -157,7 +156,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderTextureObjectTransform()
+        public GLPLVertexShaderTextureModelCoordWithObjectTranslation()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }

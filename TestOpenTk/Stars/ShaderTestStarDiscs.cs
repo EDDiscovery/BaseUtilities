@@ -242,8 +242,8 @@ void main(void)
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { OpenTKUtils.GLStatics.LineWidth(1); }));
-            items.Add("TEX", new GLTexturedObjectShaderSimple());
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { OpenTKUtils.GLStatics.LineWidth(1); }));
+            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
 
             rObjects.Add(items.Shader("COS-1L"),
                          GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
@@ -268,7 +268,7 @@ void main(void)
                         ));
 
 
-            items.Add("STAR", new GLShaderPipeline(new GLVertexShaderObjectTransform(),
+            items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(),
                         new GLFragmentShaderStarTexture()));
 
             rObjects.Add(items.Shader("STAR"), "sun",

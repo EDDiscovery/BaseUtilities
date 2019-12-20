@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +11,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 
 using OpenTK.Graphics.OpenGL4;
 using System;
@@ -164,6 +164,31 @@ namespace OpenTKUtils.GL4
             float[] data = new float[items];
             System.Runtime.InteropServices.Marshal.Copy(unmanagedPointer, data, 0, items);      // transfer buffer to floats
             return data;
+        }
+
+        public void SetSamplerMode(TextureWrapMode s, TextureWrapMode t, TextureWrapMode p)
+        {
+            int st = (int)s;
+            int tt = (int)t;
+            int pt = (int)p;
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref st);
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref tt);
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref pt);
+
+        }
+
+        public void SetSamplerMode(TextureWrapMode s, TextureWrapMode t)
+        {
+            int st = (int)s;
+            int tt = (int)t;
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref st);
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapT, ref tt);
+        }
+
+        public void SetSamplerMode(TextureWrapMode s)
+        {
+            int st = (int)s;
+            GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref st);
         }
     }
 }

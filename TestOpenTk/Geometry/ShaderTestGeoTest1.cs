@@ -161,7 +161,7 @@ void main(void)
 
             items.Add("Shader", new ShaderT3());
 
-            items.Add("ResultShader", new GLShaderPipeline(new GLVertexShaderNoTranslation(), new GLFragmentShaderFixedColour(new Color4(0.9f, 0.9f, 0.9f, 1.0f))));
+            items.Add("ResultShader", new GLShaderPipeline(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(new Color4(0.9f, 0.9f, 0.9f, 1.0f))));
 
             //rObjects.Add(items.Shader("COS-1L"), GLRenderableItem.CreateVertex4Color4( items,
             //                                            OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,

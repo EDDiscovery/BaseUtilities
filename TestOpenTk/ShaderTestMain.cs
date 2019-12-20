@@ -109,14 +109,14 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COS-1L", new GLColourObjectShaderNoTranslation((a) => { GLStatics.LineWidth(1); }));
-            items.Add("TEX", new GLTexturedObjectShaderSimple());
-            items.Add("COST-FP", new GLColourObjectShaderTranslation((a) => { GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill); }));
-            items.Add("COST-LP", new GLColourObjectShaderTranslation((a) => { GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Line); }));
-            items.Add("COST-1P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(1.0F); }));
-            items.Add("COST-2P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(2.0F); }));
-            items.Add("COST-10P", new GLColourObjectShaderTranslation((a) => { GLStatics.PointSize(10.0F); }));
-            items.Add("CROT", new GLTexturedObjectShaderTransformWithCommonTransform());
+            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
+            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+            items.Add("COST-FP", new GLColourShaderWithObjectTranslation((a) => { GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill); }));
+            items.Add("COST-LP", new GLColourShaderWithObjectTranslation((a) => { GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Line); }));
+            items.Add("COST-1P", new GLColourShaderWithObjectTranslation((a) => { GLStatics.PointSize(1.0F); }));
+            items.Add("COST-2P", new GLColourShaderWithObjectTranslation((a) => { GLStatics.PointSize(2.0F); }));
+            items.Add("COST-10P", new GLColourShaderWithObjectTranslation((a) => { GLStatics.PointSize(10.0F); }));
+            items.Add("CROT", new GLTexturedShaderWithObjectCommonTranslation());
 
             items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
             items.Add("logo8bpp", new GLTexture2D(Properties.Resources.Logo8bpp));
@@ -331,7 +331,7 @@ void main(void)
             #endregion
 
             #region 2dArrays
-            items.Add("TEX2DA", new GLTexturedObjectShader2DBlend());
+            items.Add("TEX2DA", new GLTexturedShader2DBlendWithWorldCoord());
             items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap2 }, 9));
 
             rObjects.Add(items.Shader("TEX2DA"), "2DA",
@@ -354,7 +354,7 @@ void main(void)
 
             #region Instancing
 
-            items.Add("IC-1", new GLShaderPipeline(new GLVertexShaderMatrixTranslation(), new GLFragmentShaderColour()));
+            items.Add("IC-1", new GLShaderPipeline(new GLPLVertexShaderMatrixModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()));
 
             GLStatics.PointSize(10);
             Matrix4[] pos1 = new Matrix4[3];
@@ -377,7 +377,7 @@ void main(void)
             pos2[2] = Matrix4.CreateRotationZ(-60f.Radians());
             pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
 
-            items.Add("IC-2", new GLShaderPipeline(new GLVertexShaderTextureMatrixTranslation(), new GLFragmentShaderTexture()));
+            items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture()));
             items.Shader("IC-2").StartAction += (s) => { items.Tex("wooden").Bind(1); GL.Disable(EnableCap.CullFace); };
             items.Shader("IC-2").FinishAction += (s) => {  GL.Enable(EnableCap.CullFace); };
 
@@ -413,7 +413,7 @@ void main(void)
             b6.Write(0.0f);
             b6.Complete();
 
-            items.Add("UT-1", new GLShaderPipeline(new GLVertexShaderColourObjectTransform(), new GLFragmentShaderUniformTest(5)));
+            items.Add("UT-1", new GLShaderPipeline(new GLPLVertexShaderColourModelCoordWithObjectTranslation(), new GLFragmentShaderUniformTest(5)));
 
             rObjects.Add(items.Shader("UT-1"), "UT1",
                     GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
@@ -436,11 +436,31 @@ void main(void)
 
             #endregion
 
+            #region Tape
+
+            {
+                var p = GLTapeObjectFactory.CreateTape(new Vector3(0,5,10), new Vector3(100,50,100), 4,20, 80F.Radians(), ensureintegersamples:true);
+
+                items.Add("tapelogo", new GLTexture2D(Properties.Resources.Logo8bpp));
+
+                items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
+
+                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord( (a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b)=> { GLStatics.DefaultCullFace(); }));
+
+                rObjects.Add(items.Shader("tapeshader"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
+            }
+
+
+            #endregion
+
             #region Matrix Calc Uniform
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
             #endregion
+
+
+
 
         }
 
@@ -471,8 +491,10 @@ void main(void)
             ((GLObjectDataTranslationRotation)(rObjects["sphere4"].InstanceControl)).ZRotDegrees = -degreesd2;
             ((GLObjectDataTranslationRotation)(rObjects["sphere7"].InstanceControl)).YRotDegrees = degreesd4;
 
-            ((GLVertexShaderTextureTransformWithCommonTransform)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
-            ((GLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
+            ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
+            ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
+
+            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees/360f, 0.0f);
 
             items.SB("SB6").Write(zeroone, 4, true);
 

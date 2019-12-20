@@ -1,5 +1,6 @@
 ﻿/*
- * Copyright © 2015 - 2018 EDDiscovery development team
+ * Copyright © 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +11,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -25,7 +24,7 @@ namespace OpenTKUtils.GL4
     //      location 0 vec4 positions
     //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
 
-    public class GLVertexShaderNoTranslation : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderWorldCoord : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -49,7 +48,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderNoTranslation()
+        public GLPLVertexShaderWorldCoord()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -60,7 +59,7 @@ void main(void)
     //      location 0 vec4 positions
     //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
 
-    public class GLVertexShaderProjection: GLShaderPipelineShadersBase
+    public class GLPLVertexShaderModelViewCoord: GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -82,7 +81,7 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderProjection()
+        public GLPLVertexShaderModelViewCoord()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
@@ -92,11 +91,11 @@ void main(void)
 
     // No extra translation, direct move, but with colour
     // Requires:
-    //      location 0 vec4 positions
+    //      location 0 vec4 positions in world space
     //      location 1 vec4 color components
     //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
 
-    public class GLVertexShaderColourNoTranslation : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderColourWorldCoord : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -123,11 +122,105 @@ void main(void)
 ";
         }
 
-        public GLVertexShaderColourNoTranslation()
+        public GLPLVertexShaderColourWorldCoord()
         {
             Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
+    // Pipeline shader, Texture, Modelpos, transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      location 1 : vec2 texture co-ords
+    //      uniform 0 : GL MatrixCalc
+    // Out:
+    //      gl_Position
+    //      vs_textureCoordinate
+    //      modelpos
+
+    public class GLPLVertexShaderTextureWorldCoord : GLShaderPipelineShadersBase
+    {
+        public string Code()     
+        {
+            return
+
+@"
+#version 450 core
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 0) in vec4 position;
+layout(location = 1) in vec2 texco;
+
+layout(location = 0) out vec2 vs_textureCoordinate;
+layout(location = 1) out vec3 modelpos;
+
+void main(void)
+{
+    modelpos = position.xyz;
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
+    vs_textureCoordinate = texco;
+}
+";
+        }
+
+        public GLPLVertexShaderTextureWorldCoord()
+        {
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+        }
+    }
+
+
+    // Pipeline shader, Texture, Modelpos, transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions
+    //      uniform 0 : GL MatrixCalc
+    // Out:
+    //      gl_Position
+    //      vs_textureCoordinate per triangle strip rules
+    //      modelpos
+
+    public class GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord : GLShaderPipelineShadersBase
+    {
+        public string Code()       
+        {
+            return
+
+@"
+#version 450 core
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 0) in vec4 position;
+
+layout(location = 0) out vec2 vs_textureCoordinate;
+layout(location = 1) out vec3 modelpos;
+
+void main(void)
+{
+    vec2 vcoords[4] = {{0,0},{0,1},{1,0},{1,1} };      // these give the coords for the 4 points making up 2 triangles.  Use with the right fragment shader which understands strip co-ords
+
+    modelpos = position.xyz;
+	gl_Position = mc.ProjectionModelMatrix * position;        // order important
+    vs_textureCoordinate = vcoords[ gl_VertexID % 4];
+}
+";
+        }
+
+        public GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord()
+        {
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+        }
+    }
 
 }
