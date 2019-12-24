@@ -21,14 +21,20 @@ namespace BaseUtils
 {
     public class CSVWriteGrid : BaseUtils.CSVWrite
     {
-        public Func<int, string> GetHeader;// mandatory, return header items, can return nothing
+        public Func<int, Object[]> GetPreHeader;// optional, return pre header items, return empty array for blank line, return null to stop pre-header
+
+        public Func<int, Object[]> GetLineHeader;// optional, return all header items by line, return empty array for blank line, return null to stop header
+        // or use the older
+        public Func<int, string> GetHeader;     // optional, return header column items one by one, return null when out of header items
 
         public enum LineStatus { EOF, Skip, OK};
-        public Func<int, LineStatus> GetLineStatus; // mandatory, either EOF, Skip or OK for a line
+        public Func<int, LineStatus> GetLineStatus; // optional, or either EOF, Skip or OK for a line
 
         public Func<int,bool> VerifyLine;   // Second optional call, to screen out line again.
 
-        public Func<int, Object[]> GetLine;// mandatory, allowed to return an empty array if you change your mind again
+        public Func<int, Object[]> GetLine;// mandatory, empty array for no items on line, null to stop
+
+        public Func<int, Object[]> GetPostHeader;// optional, return post header items, return empty array for blank line, return null to stop pre-header
 
         public CSVWriteGrid()
         {
@@ -40,43 +46,90 @@ namespace BaseUtils
             {
                 using (StreamWriter writer = new StreamWriter(filename))
                 {
-                    string t;
-                    int cols;
-                    for (cols = 0; (t = GetHeader(cols)) != null; cols++)
+                    if (GetPreHeader != null)
                     {
-                        if (cols > 0)
-                            writer.Write(delimiter);
-                        writer.Write(Format(t, false));
+                        Object[] objs;
+                        for (int l = 0; (objs = GetPreHeader(l)) != null; l++)
+                        {
+                            for (int i = 0; i < objs.Length; i++)
+                            {
+                                writer.Write(Format(objs[i], (i != objs.Length - 1)));
+                            }
+                            writer.WriteLine();
+                        }
                     }
 
-                    if ( cols>0)
-                        writer.WriteLine();
+                    if (GetLineHeader != null)
+                    {
+                        Object[] objs;
+                        for (int l = 0; (objs = GetLineHeader(l)) != null; l++)
+                        {
+                            for (int i = 0; i < objs.Length; i++)
+                            {
+                                writer.Write(Format(objs[i], (i != objs.Length - 1)));
+                            }
+                            writer.WriteLine();
+                        }
+                    }
 
-                    LineStatus ls;
-                    for( int r = 0; (ls = GetLineStatus(r)) != LineStatus.EOF; r++ )
+                    if (GetHeader != null)
+                    {
+                        string t;
+                        int cols;
+                        for (cols = 0; (t = GetHeader(cols)) != null; cols++)
+                        {
+                            if (cols > 0)
+                                writer.Write(delimiter);
+                            writer.Write(Format(t, false));
+                        }
+
+                        if (cols > 0)
+                            writer.WriteLine();
+                    }
+
+                    LineStatus ls = LineStatus.OK;
+
+                    for( int r = 0; GetLineStatus == null || (ls = GetLineStatus(r)) != LineStatus.EOF; r++ )
                     {
                         if (ls != LineStatus.Skip)
                         {
                             if (VerifyLine == null || VerifyLine(r))
                             {
                                 Object[] objs = GetLine(r);
-                                if (objs.Length > 0)
+
+                                if (objs == null)
+                                    break;
+                                else if (objs.Length > 0)
                                 {
                                     for (int i = 0; i < objs.Length; i++)
                                     {
                                         writer.Write(Format(objs[i], (i != objs.Length - 1)));
                                     }
-                                    writer.WriteLine();
                                 }
+                                writer.WriteLine();
                             }
+                        }
+                    }
+
+                    if (GetPostHeader != null)
+                    {
+                        Object[] objs;
+                        for (int l = 0; (objs = GetPostHeader(l)) != null; l++)
+                        {
+                            for (int i = 0; i < objs.Length; i++)
+                            {
+                                writer.Write(Format(objs[i], (i != objs.Length - 1)));
+                            }
+                            writer.WriteLine();
                         }
                     }
                 }
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("CSV Write failed " + ex.ToString());
                 return false;
             }
         }
