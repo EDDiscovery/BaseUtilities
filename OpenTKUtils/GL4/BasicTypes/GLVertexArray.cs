@@ -48,6 +48,8 @@ namespace OpenTKUtils.GL4
             }
         }
 
+        // floats are being bound
+
         public void Attribute(int bindingindex, int attribindex, int components, VertexAttribType vat, int reloffset = 0, int divisor = -1)
         {
             GL.VertexArrayAttribFormat(
@@ -69,6 +71,8 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
            // System.Diagnostics.Debug.WriteLine("ATTR " + attribindex + " to " + bindingindex + " Components " + components + " +" + reloffset + " divisor " + divisor);
         }
+
+        // Integers are being bound
 
         public void AttributeI(int bindingindex, int attribindex, int components, VertexAttribType vat, int reloffset = 0, int divisor = -1)
         {

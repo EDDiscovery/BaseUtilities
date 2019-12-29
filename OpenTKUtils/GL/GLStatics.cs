@@ -148,7 +148,7 @@ namespace OpenTKUtils
 
         /////////////////////////////////////////////////
 
-        static bool? depthteststate = false;
+        static bool? depthteststate = null;
 
         public static void DepthTest(bool state)
         {
@@ -162,6 +162,31 @@ namespace OpenTKUtils
         public static void DefaultDepthTest()
         {
             DepthTest(true);
+        }
+
+        /////////////////////////////////////////////////
+
+        static bool? primitiverestart = null;
+        static int? primitiverestartindex = null;
+
+        public static void PrimitiveRestart(bool state, int index = 0xff)
+        {
+            if (primitiverestart == null || primitiverestart.Value != state)
+            {
+                SetEnable(EnableCap.PrimitiveRestart, state);
+                primitiverestart = state;
+
+                if ( primitiverestartindex == null || primitiverestartindex != index )
+                {
+                    primitiverestartindex = index;
+                    GL.PrimitiveRestartIndex(primitiverestartindex.Value);
+                }
+            }
+        }
+
+        public static void DefaultPrimitiveRestart()
+        {
+            PrimitiveRestart(false);
         }
 
 
@@ -193,7 +218,7 @@ namespace OpenTKUtils
             GL.Disable(EnableCap.Blend);
         }
 
-        public static void BlendDefault()
+        public static void DefaultBlend()
         {
             Blend(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         }

@@ -479,8 +479,8 @@ void main(void)
         {
             public GalaxyShader()
             {
-                Add(new GLVertexShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
-                Add(new GLGeometricShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
+                Add(new GLPLVertexShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
+                Add(new GLPLGeometricShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
                 Add(new GalaxyFragmentPipeline(), OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
             }
         }

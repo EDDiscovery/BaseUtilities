@@ -88,8 +88,9 @@ namespace OpenTKUtils.GL4
     // Texture, triangle strip
     // Requires:
     //      location 0 : position: vec4 vertex array of positions world
-    //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
+    //      tex binding 1 : textureObject : texture of bitmap
     //      uniform 0 : GL MatrixCalc
+    //      location 24 : uniform of texture offset (written by start automatically)
 
     public class GLTexturedShaderTriangleStripWithWorldCoord : GLShaderPipeline
     {

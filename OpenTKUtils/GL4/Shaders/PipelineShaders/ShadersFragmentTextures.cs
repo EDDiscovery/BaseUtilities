@@ -20,61 +20,6 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // Pipeline shader, Fixed Colour fragment shader
-    // Requires:
-    //      no inputs
-
-    public class GLPLFragmentShaderFixedColour : GLShaderPipelineShadersBase
-    {
-        OpenTK.Graphics.Color4 col;
-
-        public string Code()
-        {
-            return
-@"
-#version 450 core
-out vec4 color;
-
-void main(void)
-{
-    color = vec4(" + col.R + "," + col.G + "," + col.B + "," + col.A + @");
-}
-";
-        }
-
-        public GLPLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
-        {
-            col = c;
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
-        }
-    }
-
-    // Pipeline shader, Vertex shader colour pass to it
-    // Requires:
-    //      vs_color : vec4 of colour
-
-    public class GLPLFragmentShaderColour : GLShaderPipelineShadersBase
-    {
-        public string Code()
-        {
-            return
-@"
-#version 450 core
-in vec4 vs_color;
-out vec4 color;
-
-void main(void)
-{
-	color = vs_color;
-}
-";
-        }
-
-        public GLPLFragmentShaderColour()
-        {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
-        }
-    }
 
     // Pipeline shader for a 2D texture bound with 2D vertexes
     // Requires:
@@ -198,7 +143,7 @@ void main(void)
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord - as per triangle strip
     //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
-    //      location 30 : uniform float blend between the two texture
+    //      location 24 : uniform of texture offset (written by start automatically)
 
     public class GLPLFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
     {

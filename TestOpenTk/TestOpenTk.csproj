@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes.cs" />
+    <Compile Include="Controls\ShaderControls.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\ShaderControls.designer.cs">
+      <DependentUpon>ShaderControls.cs</DependentUpon>
+    </Compile>
     <Compile Include="Galaxy\ShaderGalaxy.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -180,6 +186,9 @@
     <Compile Include="Compute\ShaderTestVertexCompute.designer.cs">
       <DependentUpon>ShaderTestVertexCompute.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Controls\ShaderControls.resx">
+      <DependentUpon>ShaderControls.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Galaxy\ShaderGalaxy.resx">
       <DependentUpon>ShaderGalaxy.cs</DependentUpon>
     </EmbeddedResource>

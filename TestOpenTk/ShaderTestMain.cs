@@ -40,6 +40,7 @@ namespace TestOpenTk
 
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
+        GLStorageBlock dataoutbuffer;
 
         public class GLFragmentShaderUniformTest : GLShaderPipelineShadersBase
         {
@@ -439,17 +440,177 @@ void main(void)
             #region Tape
 
             {
-                var p = GLTapeObjectFactory.CreateTape(new Vector3(0,5,10), new Vector3(100,50,100), 4,20, 80F.Radians(), ensureintegersamples:true);
+                var p = GLTapeObjectFactory.CreateTape(new Vector3(0, 5, 10), new Vector3(100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
                 items.Add("tapelogo", new GLTexture2D(Properties.Resources.Logo8bpp));
 
                 items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
 
-                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord( (a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b)=> { GLStatics.DefaultCullFace(); }));
+                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord((a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
 
                 rObjects.Add(items.Shader("tapeshader"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
 
+            {
+                var p = GLTapeObjectFactory.CreateTape(new Vector3(-0, 5, 10), new Vector3(-100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
+
+                items.Add("tapelogo2", new GLTexture2D(Properties.Resources.Logo8bpp));
+
+                items.Tex("tapelogo2").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
+
+                items.Add("tapeshader2", new GLTexturedShaderTriangleStripWithWorldCoord((a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
+
+                rObjects.Add(items.Shader("tapeshader2"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
+            }
+
+            // fixed point on screen
+            {
+                Vector4[] p = new Vector4[4];
+
+                p[0] = new Vector4(10, 100, 0, 0);
+                p[1] = new Vector4(10, 10, 0, 0);
+                p[2] = new Vector4(50, 100, 0, 0);
+                p[3] = new Vector4(50, 10, 0, 0);
+
+                items.Add("ds1", new GLDirect((a)=> {
+                    items.Tex("dotted2").Bind(1);
+                    GLStatics.DepthTest(false);
+                    GLStatics.CullFace(false);
+                },
+                (b) => {
+                    GLStatics.DefaultDepthTest();
+                    GLStatics.DefaultCullFace();
+                }
+                ));
+
+                rObjects.Add(items.Shader("ds1"), "ds1", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
+            }
+
+            // multi element index draw
+            {
+                float CS = 2, O = -20, OY = 0;
+                float[] v = new float[]
+                {
+                    0,0,0,      // basevertex=1, pad with empties at the start to demo
+                    -CS+O, -CS+OY, -CS,
+                    -CS+O,  CS+OY, -CS,
+                     CS+O, -CS+OY, -CS,
+                     CS+O,  CS+OY, -CS,
+                     CS+O, -CS+OY,  CS,
+                     CS+O,  CS+OY,  CS,
+                    -CS+O, -CS+OY,  CS,
+                    -CS+O,  CS+OY,  CS,
+                };
+
+                byte[] vertex_indices = new byte[]
+                {
+                    2, 1, 0,
+                    3, 1, 2,
+                    4, 3, 2,
+                    5, 3, 4,
+                    6, 5, 4,
+                    7, 5, 6,
+                    0, 7, 6,
+                    1, 7, 0,
+                    2, 0, 6,
+                    6, 4, 2,
+                    3, 5, 7,
+                    1, 3, 7
+                };
+
+                GLRenderableItem ri = GLRenderableItem.CreateFloats(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, v, 3);
+                ri.CreateByteIndex(vertex_indices,1);
+
+                items.Add("es1", new GLColourShaderWithWorldCoordXX());
+                rObjects.Add(items.Shader("es1"), "es1", ri);
+            }
+
+            // multi element index draw with primitive restart, draw a triangle strip
+            {
+                float X = -10, Z = -10;
+                float X2 = -8, Z2 = -10;
+                float[] v = new float[]
+                {
+                    1+X,0,1+Z,
+                    1+X,0,0+Z,
+                    0+X,0,1+Z,
+                    0+X,0,0+Z,
+                    1+X2,0,1+Z2,
+                    1+X2,0,0+Z2,
+                    0+X2,0,1+Z2,
+                    0+X2,0,0+Z2,
+                };
+
+                GLRenderableItem ri = GLRenderableItem.CreateFloats(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, v, 3);
+                ri.CreateRectangleRestartIndexByte(2);
+
+                items.Add("es2", new GLColourShaderWithWorldCoordXX(
+                    (a) => 
+                    {
+                        GL.Enable(EnableCap.PrimitiveRestart);
+                        GLStatics.PrimitiveRestart(true, 0xff);
+                        GLStatics.DepthTest(false);
+                        GLStatics.CullFace(false);
+                    },
+                    (b) => 
+                    {
+                        GLStatics.DefaultPrimitiveRestart();
+                        GLStatics.DefaultDepthTest();
+                        GLStatics.DefaultCullFace();
+                    }
+                           ));
+
+                rObjects.Add(items.Shader("es2"), "es2", ri);
+            }
+
+            // indirect multi draw with element index
+            {
+                float X = -10, Z = -12;
+                float X2 = -8, Z2 = -12;
+                float[] v = new float[]
+                {
+                    1+X,0,1+Z,
+                    1+X,0,0+Z,
+                    0+X,0,1+Z,
+                    0+X,0,0+Z,
+                    1+X2,0,1+Z2,
+                    1+X2,0,0+Z2,
+                    0+X2,0,1+Z2,
+                    0+X2,0,0+Z2,
+                };
+
+                GLRenderableItem ri = GLRenderableItem.CreateFloats(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, v, 3);
+                ri.CreateRectangleRestartIndexByte(2);  // put the primitive restart markers in, but we won't use them
+
+                ri.IndirectBuffer = new GLBuffer();
+                ri.MultiDrawCount = 2;
+                ri.IndirectBuffer.Allocate(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
+                IntPtr p = ri.IndirectBuffer.Map(0, ri.IndirectBuffer.BufferSize);
+                ri.IndirectBuffer.MapWrite(ref p, 1.0f);        // dummy float to demo index offset
+                ri.BaseIndex = 4;       // and indicate that the base command index is 4
+                ri.IndirectBuffer.MapWriteIndirectElements(ref p, 4, 1, 0, 0, 0);       // draw indexes 0-3
+                ri.IndirectBuffer.MapWriteIndirectElements(ref p, 4, 1, 5, 0, 0);       // and 5-8
+                ri.IndirectBuffer.UnMap();
+                var data = ri.IndirectBuffer.ReadInts(0,10);                            // notice both are red due to primitive ID=1
+
+                items.Add("es3", new GLColourShaderWithWorldCoordXX(
+                    (a) =>
+                    {
+                        GLStatics.DepthTest(false);
+                        GLStatics.CullFace(false);
+                    },
+                    (b) =>
+                    {
+                        GLStatics.DefaultDepthTest();
+                        GLStatics.DefaultCullFace();
+                    }
+                           ));
+
+                rObjects.Add(items.Shader("es3"), "es3", ri);
+            }
+
+            // indirect draws
+            // GLElementDraw should be a GLBuffer derived class..
 
             #endregion
 
@@ -459,8 +620,8 @@ void main(void)
 
             #endregion
 
-
-
+            dataoutbuffer = items.NewStorageBlock(5);
+            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
         }
 
@@ -494,7 +655,8 @@ void main(void)
             ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("CROT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
             ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
-            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees/360f, 0.0f);
+            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees / 360f, 0.0f);
+            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader2")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
 
             items.SB("SB6").Write(zeroone, 4, true);
 
@@ -503,17 +665,33 @@ void main(void)
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
-            mcub.Set(gl3dcontroller.MatrixCalc);
+            mcub.Set(gl3dcontroller.MatrixCalc, gl3dcontroller.glControl.Width,gl3dcontroller.glControl.Height);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+
+            GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
+            Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);
+            System.Diagnostics.Debug.WriteLine("{0} {1}" , gl3dcontroller.glControl.Width, gl3dcontroller.glControl.Height );
+            for (int i = 0; i < databack.Length; i += 1)
+            {
+               // databack[i] = databack[i] / databack[i].W;
+               // databack[i].X = databack[i].X * gl3dcontroller.glControl.Width / 2 + gl3dcontroller.glControl.Width/2;
+               // databack[i].Y = gl3dcontroller.glControl.Height - databack[i].Y * gl3dcontroller.glControl.Height;
+                System.Diagnostics.Debug.WriteLine("{0}={1}", i, databack[i].ToStringVec(true));
+            }
+
         }
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboard(true, OtherKeys);
-            gl3dcontroller.Redraw();
+            if ( gl3dcontroller.HandleKeyboard(true, OtherKeys).AnythingChanged)
+                gl3dcontroller.Redraw();
+            else
+            {
+              //  gl3dcontroller.Redraw();
+            }
         }
 
         private void OtherKeys( BaseUtils.KeyboardState kb )
@@ -540,6 +718,26 @@ void main(void)
 
         }
 
+    }
+
+    public class GLDirect : GLShaderPipeline
+    {
+        public GLDirect(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderTextureTriangleStrip());
+        }
+    }
+
+    // Pipeline shader, Vertex shader colour pass to it
+    // Requires:
+    //      vs_color : vec4 of colour
+
+    public class GLColourShaderWithWorldCoordXX : GLShaderPipeline
+    {
+        public GLColourShaderWithWorldCoordXX(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentIDShaderColour(2));
+        }
     }
 
 

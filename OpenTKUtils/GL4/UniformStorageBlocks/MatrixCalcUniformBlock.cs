@@ -30,7 +30,17 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public void Set( MatrixCalc c, bool full = true)
+        public void SetMinimal(MatrixCalc c)
+        {
+            if (NotAllocated)
+                Allocate(Mat4size * 1, BufferUsageHint.DynamicCopy);
+
+            IntPtr ptr = Map(0, BufferSize);        // the whole schebang
+            MapWrite(ref ptr, c.ProjectionModelMatrix);
+            UnMap();                                // and complete..
+        }
+
+        public void Set(MatrixCalc c)
         {
             if (NotAllocated)
                 Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float), BufferUsageHint.DynamicCopy);
@@ -38,14 +48,29 @@ namespace OpenTKUtils.GL4
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
             MapWrite(ref ptr, c.ProjectionModelMatrix);
 
-            if (full)
-            {
-                MapWrite(ref ptr, c.ProjectionMatrix);
-                MapWrite(ref ptr, c.ModelMatrix);
-                MapWrite(ref ptr, c.TargetPosition, 0);
-                MapWrite(ref ptr, c.EyePosition, 0);
-                MapWrite(ref ptr, c.EyeDistance);
-            }
+            MapWrite(ref ptr, c.ProjectionMatrix);
+            MapWrite(ref ptr, c.ModelMatrix);
+            MapWrite(ref ptr, c.TargetPosition, 0);
+            MapWrite(ref ptr, c.EyePosition, 0);
+            MapWrite(ref ptr, c.EyeDistance);
+            UnMap();                                // and complete..
+        }
+
+        public void Set(MatrixCalc c, int width, int height)
+        {
+            if (NotAllocated)
+                Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float) + sizeof(int)*2, BufferUsageHint.DynamicCopy);
+
+            IntPtr ptr = Map(0, BufferSize);        // the whole schebang
+            MapWrite(ref ptr, c.ProjectionModelMatrix);
+
+            MapWrite(ref ptr, c.ProjectionMatrix);
+            MapWrite(ref ptr, c.ModelMatrix);
+            MapWrite(ref ptr, c.TargetPosition, 0);
+            MapWrite(ref ptr, c.EyePosition, 0);
+            MapWrite(ref ptr, c.EyeDistance);
+            MapWrite(ref ptr, width);
+            MapWrite(ref ptr, height);
             UnMap();                                // and complete..
         }
 

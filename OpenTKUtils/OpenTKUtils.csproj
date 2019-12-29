@@ -56,9 +56,14 @@
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
     <Compile Include="GL4\BasicTypes\GLStatics4.cs" />
+    <Compile Include="GL4\Controls\ControlPanel.cs" />
+    <Compile Include="GL4\Controls\ControlImage.cs" />
+    <Compile Include="GL4\Controls\ControlForm.cs" />
+    <Compile Include="GL4\Controls\Control.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeNoise.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersFragmentTextures.cs" />
     <Compile Include="GL4\Shaders\Volumetric\ShaderVolumetric.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryTape.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCube.cs" />
@@ -75,7 +80,7 @@
     <Compile Include="GL4\Shaders\Base\ShaderPipeline.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderPipelineShadersBase.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderStandard.cs" />
-    <Compile Include="GL4\Shaders\PipelineShaders\ShadersFragment.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersFragmentColours.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexNoTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslation.cs" />
     <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexTranslationObject.cs" />

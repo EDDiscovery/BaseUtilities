@@ -176,7 +176,7 @@ void main(void)
             for (int v = 0; v < vertexes.Length; v++)
                 vertexes[v] = new Vector4(v % 4, 0, v / 4, 1);
 
-            storagebuffer.Set(vertexes);
+            storagebuffer.AllocateFill(vertexes);
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index
             vecoutbuffer.Allocate(sizeof(float) * 4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer

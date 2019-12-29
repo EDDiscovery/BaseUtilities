@@ -24,7 +24,7 @@ namespace OpenTKUtils.GL4
     //          Add(new GLGeometricShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
     //          Add(new FragmentPipeline(), OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader); }
 
-    public class GLVertexShaderVolumetric : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderVolumetric : GLShaderPipelineShadersBase
     {
         string vcode =
         @"
@@ -44,15 +44,15 @@ void main(void)
 }
             ";
 
-        public GLVertexShaderVolumetric()
+        public GLPLVertexShaderVolumetric()
         {
             Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode);
         }
     }
 
-    public class GLGeometricShaderVolumetric : GLShaderPipelineShadersBase
+    public class GLPLGeometricShaderVolumetric : GLShaderPipelineShadersBase
     {
-        public GLGeometricShaderVolumetric()
+        public GLPLGeometricShaderVolumetric()
         {
             Program = GLProgram.CompileLink(ShaderType.GeometryShader, "#include OpenTKUtils.GL4.Shaders.Volumetric.volumetricgeoshader.glsl");
         }

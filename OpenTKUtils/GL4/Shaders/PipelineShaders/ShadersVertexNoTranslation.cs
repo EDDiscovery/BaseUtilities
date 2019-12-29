@@ -223,4 +223,48 @@ void main(void)
         }
     }
 
+    // Pipeline shader, Texture, real screen coords  (0-glcontrol.Width,0-glcontrol.height, 0,0 at top left)
+    // Requires:
+    //      location 0 : position: vec4 vertex array of real screen coords in the x/y slots.  z/w not used
+    //      uniform 0 : GL MatrixCalc with screen size (use correct fill call)
+    // Out:
+    //      gl_Position
+    //      vs_textureCoordinate per triangle strip rules
+
+    public class GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+
+@"
+#version 450 core
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 0) in vec4 position;
+
+layout(location = 0) out vec2 vs_textureCoordinate;
+
+void main(void)
+{
+    vec2 vcoords[4] = {{0,0},{0,1},{1,0},{1,1} };      // these give the coords for the 4 points making up 2 triangles.  Use with the right fragment shader which understands strip co-ords
+
+	gl_Position = vec4(position.x*2/mc.screenwidth-1,1-position.y*2/mc.screenheight,1,1);        // order important
+    vs_textureCoordinate = vcoords[ gl_VertexID % 4];
+}
+";
+        }
+
+        public GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord()
+        {
+            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+        }
+    }
+
 }

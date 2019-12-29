@@ -79,12 +79,46 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
+        public void Fill(float[] floats)
+        {
+            int datasize = floats.Length * sizeof(float);
+            int posv = Align(sizeof(float), datasize);
+            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, floats);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void AllocateFill(float[] vertices)
+        {
+            Allocate(sizeof(float) * vertices.Length);
+            Fill(vertices);
+        }
+
+        public void Fill(Vector2[] vertices)
+        {
+            int datasize = vertices.Length * Vec2size;
+            int posv = Align(Vec4size, datasize);
+            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void AllocateFill(Vector2[] vertices)
+        {
+            Allocate(Vec2size * vertices.Length);
+            Fill(vertices);
+        }
+
         public void Fill(Vector4[] vertices)
         {
             int datasize = vertices.Length * Vec4size;
             int posv = Align(Vec4size, datasize);
             GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
             OpenTKUtils.GLStatics.Check();
+        }
+
+        public void AllocateFill(Vector4[] vertices)
+        {
+            Allocate(Vec4size * vertices.Length);
+            Fill(vertices);
         }
 
         public void Fill(Matrix4[] mats)
@@ -95,12 +129,10 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void Fill(Vector2[] vertices)
+        public void AllocateFill(Matrix4[] mats)
         {
-            int datasize = vertices.Length * Vec2size;
-            int posv = Align(Vec4size, datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
-            OpenTKUtils.GLStatics.Check();
+            Allocate(Mat4size * mats.Length);
+            Fill(mats);
         }
 
         public void Fill(OpenTK.Graphics.Color4[] colours, int entries = -1)        // entries can say repeat colours until filled to entries..
@@ -132,6 +164,26 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
+        public void AllocateFill(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        {
+            Allocate(sizeof(uint) * data.Length);
+            Fill(data,uh);
+        }
+
+        public void Fill(byte[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        {
+            int datasize = data.Length;
+            int pos = Align(sizeof(byte), datasize);        //tbd
+            GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void AllocateFill(byte[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        {
+            Allocate(data.Length);
+            Fill(data, uh);
+        }
+
         public void FillPacked2vec(Vector3[] vertices, Vector3 offsets, float mult)
         {
             int p = 0;                                                                  // probably change to write directly into buffer..
@@ -146,17 +198,18 @@ namespace OpenTKUtils.GL4
             Fill(packeddata);
         }
 
-        public void ZeroBuffer()
+        public void ZeroBuffer()    // after allocated
         {
             System.Diagnostics.Debug.Assert(BufferSize != 0);
             GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, BufferSize, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void Set(Vector4[] v)        // quick helpers - set length and data
+        public void ZeroBuffer(int size)
         {
-            Allocate(v.Length * Vec4size);
-            Fill(v);
+            Allocate(size);
+            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, BufferSize, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
+            OpenTKUtils.GLStatics.Check();
         }
 
         #endregion
@@ -210,28 +263,91 @@ namespace OpenTKUtils.GL4
             mapoffset += Vec4size;
         }
 
-        public void MapWrite(ref IntPtr pos, float v)      
+        public void MapWrite(ref IntPtr pos, float v)
         {
-            float[] a= new float[] { v };
+            float[] a = new float[] { v };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(float);
             mapoffset += sizeof(float);
-
         }
 
-        public void MapWrite(ref IntPtr pos, float[] a)     
+        public void MapWrite(ref IntPtr pos, float[] a)
         {
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);       // number of units, not byte length!
             pos += sizeof(float) * a.Length;
             mapoffset += sizeof(float) * a.Length;
         }
 
+        public void MapWrite(ref IntPtr pos, int v)
+        {
+            int[] a = new int[] { v };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += sizeof(int);
+            mapoffset += sizeof(int);
+        }
+
+        public void MapWrite(ref IntPtr pos, int[] a)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
+            pos += sizeof(int) * a.Length;
+            mapoffset += sizeof(int) * a.Length;
+        }
+
+        public void MapWrite(ref IntPtr pos, long v)
+        {
+            long[] a = new long[] { v };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += sizeof(int);
+            mapoffset += sizeof(int);
+        }
+
+        public void MapWrite(ref IntPtr pos, long[] a)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
+            pos += sizeof(long) * a.Length;
+            mapoffset += sizeof(long) * a.Length;
+        }
+
+        public void MapWrite(ref IntPtr pos, byte[] a)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
+            pos += a.Length;
+            mapoffset += a.Length;
+        }
+
+        public void MapWrite(ref IntPtr pos, byte v)
+        {
+            byte[] a = new byte[] { v };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += 1;
+            mapoffset++;
+        }
+
+        // if you use it, MultiDrawCountStride = 16
+        public void MapWriteIndirectArray(ref IntPtr pos, int vertexcount, int instancecount = 1, int firstvertex = 0, int baseinstance = 0)
+        {
+            int[] i = new int[] { vertexcount, instancecount, firstvertex, baseinstance };       
+            MapWrite(ref pos, i);
+        }
+
+        // if you use it, MultiDrawCountStride = 20
+        public void MapWriteIndirectElements(ref IntPtr pos, int vertexcount, int instancecount = 1, int firstindex = 0, int basevertex = 0,int baseinstance = 0)
+        {
+            int[] i = new int[] { vertexcount, instancecount, firstindex, basevertex, baseinstance };
+            MapWrite(ref pos, i);
+        }
+
+
         #endregion
 
+        #region DrawElements indexs
+
+
+        #endregion
 
         #region Reads - Map into memory and then read
 
-        public byte[] ReadBuffer(int offset, int size )         // read into a byte array
+        public byte[] ReadBytes(int offset, int size )         // read into a byte array
         {
             byte[] data = new byte[size];
             IntPtr ptr = GL.MapNamedBufferRange(Id, (IntPtr)offset, size, BufferAccessMask.MapReadBit);
@@ -241,16 +357,27 @@ namespace OpenTKUtils.GL4
             return data;
         }
 
-        public int ReadInt(int offset)                          // read a UINT
+        public int ReadInt(int offset)                          
         {
-            byte[] d = ReadBuffer(offset, sizeof(uint));
+            byte[] d = ReadBytes(offset, sizeof(uint));
             return BitConverter.ToInt32(d, 0);
         }
 
-        public float[] ReadFloats(int offset, int number)                      
+        public int[] ReadInts(int offset,  int number)                    
+        {
+            int[] ints = new int[number];
+            byte[] bytes = ReadBytes(offset, sizeof(int)*number);
+
+            for (int i = 0; i < number; i++)
+                ints[i] = BitConverter.ToInt32(bytes, i * 4);
+
+            return ints;
+        }
+
+        public float[] ReadFloats(int offset, int number)
         {
             float[] d = new float[number];
-            byte[] bytes = ReadBuffer(offset, sizeof(float) * number);
+            byte[] bytes = ReadBytes(offset, sizeof(float) * number);
 
             for (int i = 0; i < number; i++)
                 d[i] = BitConverter.ToSingle(bytes, i * 4);
@@ -260,7 +387,7 @@ namespace OpenTKUtils.GL4
 
         public Vector4[] ReadVector4(int offset, int number)                   
         {
-            byte[] bytes = ReadBuffer(offset, Vec4size * number);
+            byte[] bytes = ReadBytes(offset, Vec4size * number);
             Vector4[] d = new Vector4[number];
 
             for (int i = 0; i < number; i++)

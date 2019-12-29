@@ -38,7 +38,7 @@ namespace TestOpenTk
                 }
                 else
                 {
-                    Application.Run(new RandomStars());
+                    Application.Run(new ShaderTestMain());
                 }
 
             }
