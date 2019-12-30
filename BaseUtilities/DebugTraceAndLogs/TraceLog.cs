@@ -79,9 +79,10 @@ namespace BaseUtils
                 LogFileWriterThread.Start();
                 System.Diagnostics.Trace.AutoFlush = true;
                 // Log trace events to the above file
-                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(new TraceLogWriter()));
-                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.ConsoleTraceListener(true));
-                Console.SetOut(new TraceLogWriter());
+                var tlw = new TraceLogWriter();
+                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
+                //System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.ConsoleTraceListener(true));
+                Console.SetOut(tlw);
             }
         }
 
