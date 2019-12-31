@@ -20,7 +20,7 @@ using OpenTKUtils.Common;
 
 namespace OpenTKUtils.GL4
 {
-    // inherit from this is you have a shader which items makes its own set of vertext/fragment shaders all in one go, a non pipelined hader
+    // inherit from this is you have a shader which items makes its own set of vertext/fragment shaders all in one go, non pipelined
     // A program shader has a Start(), called by RenderableList when the shader is started
     // StartAction, an optional hook to supply more start functionality
     // A Finish() to clean up
@@ -52,7 +52,11 @@ namespace OpenTKUtils.GL4
             FinishAction = fa;
         }
 
-        public void CompileLink( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null )
+        // Compile/link various shaders
+        // for varyings, you must set up a start action of Gl.BindBuffer(GL.TRANSFORM_FEEDBACK_BUFFER,bufid) AND BeingTransformFeedback.
+
+        public void CompileLink( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null, string[] varyings = null , 
+                                    TransformFeedbackMode varymode = TransformFeedbackMode.InterleavedAttribs )
         {
             program = new OpenTKUtils.GL4.GLProgram();
             string ret;
@@ -85,6 +89,11 @@ namespace OpenTKUtils.GL4
             {
                 ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag);
                 System.Diagnostics.Debug.Assert(ret == null, "Fragment Shader", ret);
+            }
+
+            if ( varyings != null )
+            {
+                GL.TransformFeedbackVaryings(program.Id, varyings.Length, varyings, varymode);      // this indicate varyings.
             }
 
             ret = program.Link();

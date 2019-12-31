@@ -27,6 +27,15 @@ namespace OpenTKUtils.GL4
         public int Id { get { return Program.Id; } }
         protected GLProgram Program;
 
+        protected void CompileLink( OpenTK.Graphics.OpenGL4.ShaderType st, string code, string auxname = "")
+        {
+            Program = new OpenTKUtils.GL4.GLProgram();
+            string ret = Program.Compile(st, code);
+            System.Diagnostics.Debug.Assert(ret == null, auxname, ret);
+            ret = Program.Link(separable: true);
+            System.Diagnostics.Debug.Assert(ret == null, auxname, ret);
+        }
+
         public virtual void Start()
         {
         }

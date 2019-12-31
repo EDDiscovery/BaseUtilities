@@ -9,7 +9,8 @@ namespace OpenTKUtils.GL4.Controls
 {
     public abstract class GLBaseControl
     {
-        // in parents co-ords terms
+        // co-ords are in parent control positions
+        
         public int Left { get { return window.Left; } set { SetPos(value, window.Top, window.Width, window.Height); } }
         public int Right { get { return window.Right; } set { SetPos(window.Left, window.Top, value - window.Left, window.Height); } }
         public int Top { get { return window.Top; } set { SetPos(window.Left, value, window.Width, window.Height); } }
@@ -18,7 +19,8 @@ namespace OpenTKUtils.GL4.Controls
         public int Height { get { return window.Height; } set { SetPos(window.Left, window.Top, window.Width, value); } }
         public Rectangle Position { get { return window; } set { SetPos(value.Left, value.Top, value.Width, value.Height); } }
         public Point Location { get { return new Point(window.Left, window.Top); } set { SetPos(value.X, value.Y, window.Width, window.Height); } }
-        public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left,window.Top, value.Width, value.Height); } }
+        public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left, window.Top, value.Width, value.Height); } }
+        public Rectangle ClientRectangle { get { return window; } }
 
         public enum DockingType { None, Left, Right, Top, Bottom, Fill };
         public DockingType Dock { get { return docktype; } set { docktype = value; } } // parent?.PerformLayout(); } }
@@ -42,11 +44,12 @@ namespace OpenTKUtils.GL4.Controls
             //    parent?.PerformLayout();        // go up one and perform layout on all its children, since we are part of it.
         }
 
-        protected Bitmap GetBitmap() { return basebmp ?? parent.GetBitmap(); }
-        protected GLBaseControl FindTopControl() { return parent is GLForm ? this : parent.FindTopControl(); }
-        protected GLBaseControl FindForm() { return this is GLForm ? this : parent.FindForm(); }
+        public Bitmap GetBitmap() { return levelbmp ?? parent.GetBitmap(); }
+//        protected GLBaseControl FindTopControl() { return parent is GLForm ? this : parent.FindTopControl(); }
+      //  protected GLBaseControl FindForm() { return this is GLForm ? this : parent.FindForm(); }
 
-        protected Bitmap basebmp;       // its image, only set if its a control under form
+        protected Bitmap levelbmp;       // set if the level has a new bitmap.  Controls under Form always does. Other ones may if they scroll
+
         private Rectangle window;       // total area owned, in parent co-ords
         private DockingType docktype = DockingType.None;
         private GLBaseControl parent;       // its parent, null if top of top
@@ -60,7 +63,7 @@ namespace OpenTKUtils.GL4.Controls
             window = new Rectangle(0, 0, 100, 100);
         }
 
-        public void PerformLayout()
+        public virtual void PerformLayout()
         {
             Rectangle area = new Rectangle(0, 0, Width, Height);
 
@@ -123,13 +126,13 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void Redraw(Bitmap usebmp, Rectangle area )
         {
-            if (usebmp == null)
+            if (usebmp == null || levelbmp != null)             // if no bitmap, or we have a level bmp
             {
-                if (basebmp == null)                        // if we are a level where we have no basebmp, make one
-                    basebmp = new Bitmap(Width, Height);
+                if (levelbmp == null)                           // if we are a level where we have no basebmp, make one
+                    levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
 
-                usebmp = basebmp;
-                area = new Rectangle(0, 0, Width, Height);
+                usebmp = levelbmp;
+                area = new Rectangle(0, 0, Width, Height);      // restate area in terms of bitmap
             }
 
             System.Diagnostics.Debug.WriteLine("Redraw {0} to {1}", Name, area);
@@ -147,6 +150,7 @@ namespace OpenTKUtils.GL4.Controls
 
             foreach (var c in children)
             {
+                // child, redraw using this bitmap, in this area of the bitmap
                 c.Redraw(usebmp,new Rectangle(area.Left + c.Left, area.Top+c.Top,c.Width,c.Height));
             }
 
@@ -157,7 +161,6 @@ namespace OpenTKUtils.GL4.Controls
         public virtual void Paint(Bitmap bmp, Rectangle area)
         {
             System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
-
         }
 
         public virtual void AdjustSize(Rectangle area)

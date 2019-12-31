@@ -331,16 +331,7 @@ namespace OpenTKUtils.GL4
         public void CreateRectangleRestartIndexByte(int reccount)
         {
             ElementBuffer = new GLBuffer();
-            ElementBuffer.Allocate(reccount * 5);
-            IntPtr ip = ElementBuffer.Map(0, ElementBuffer.BufferSize);
-            for (int r = 0; r < reccount; r++)
-            {
-                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), 0xff };
-                ElementBuffer.MapWrite(ref ip, ar);
-            }
-
-            ElementBuffer.UnMap();
-
+            ElementBuffer.FillRectangularIndices(reccount);
             DrawType = DrawElementsType.UnsignedByte;
             DrawCount = ElementBuffer.BufferSize - 1;
 

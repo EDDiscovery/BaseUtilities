@@ -212,6 +212,19 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
+        public void FillRectangularIndices(int reccount)        // rectangular indicies with restart of 0xff
+        {
+            Allocate(reccount * 5);
+            IntPtr ip = Map(0, BufferSize);
+            for (int r = 0; r < reccount; r++)
+            {
+                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), 0xff };
+                MapWrite(ref ip, ar);
+            }
+
+            UnMap();
+        }
+
         #endregion
 
         #region GL MAP into memory so you can use a IntPtr
@@ -245,10 +258,19 @@ namespace OpenTKUtils.GL4
             mapoffset += Vec4size*4;
         }
 
-        public void MapWrite(ref IntPtr pos, Vector4 mat)
+        public void MapWrite(ref IntPtr pos, Vector4 v4)
         {
             pos = Align(pos, mapoffset, Vec4size);
-            float[] a = new float[] { mat.X, mat.Y, mat.Z, mat.W };
+            float[] a = new float[] { v4.X, v4.Y, v4.Z, v4.W };
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            pos += Vec4size;
+            mapoffset += Vec4size;
+        }
+
+        public void MapWrite(ref IntPtr pos, System.Drawing.Rectangle r)
+        {
+            pos = Align(pos, mapoffset, Vec4size);
+            float[] a = new float[] { r.Left, r.Top, r.Right, r.Bottom };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
             pos += Vec4size;
             mapoffset += Vec4size;
@@ -297,8 +319,8 @@ namespace OpenTKUtils.GL4
         {
             long[] a = new long[] { v };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
-            pos += sizeof(int);
-            mapoffset += sizeof(int);
+            pos += sizeof(long);
+            mapoffset += sizeof(long);
         }
 
         public void MapWrite(ref IntPtr pos, long[] a)
@@ -323,6 +345,7 @@ namespace OpenTKUtils.GL4
             mapoffset++;
         }
 
+        // write an Indirect Array draw command to the buffer
         // if you use it, MultiDrawCountStride = 16
         public void MapWriteIndirectArray(ref IntPtr pos, int vertexcount, int instancecount = 1, int firstvertex = 0, int baseinstance = 0)
         {
@@ -330,6 +353,7 @@ namespace OpenTKUtils.GL4
             MapWrite(ref pos, i);
         }
 
+        // write an Element draw command to the buffer
         // if you use it, MultiDrawCountStride = 20
         public void MapWriteIndirectElements(ref IntPtr pos, int vertexcount, int instancecount = 1, int firstindex = 0, int basevertex = 0,int baseinstance = 0)
         {
@@ -357,7 +381,7 @@ namespace OpenTKUtils.GL4
             return data;
         }
 
-        public int ReadInt(int offset)                          
+        public int ReadInt(int offset)
         {
             byte[] d = ReadBytes(offset, sizeof(uint));
             return BitConverter.ToInt32(d, 0);
@@ -372,6 +396,21 @@ namespace OpenTKUtils.GL4
                 ints[i] = BitConverter.ToInt32(bytes, i * 4);
 
             return ints;
+        }
+
+        public long ReadLong(int offset)
+        {
+            byte[] d = ReadBytes(offset, sizeof(long));
+            return BitConverter.ToInt64(d, 0);
+        }
+
+        public long[] ReadLongs(int offset, int number)
+        {
+            long[] longs = new long[number];
+            byte[] bytes = ReadBytes(offset, sizeof(long) * number);
+            for (int i = 0; i < number; i++)
+                longs[i] = BitConverter.ToInt64(bytes, i * 8);
+            return longs;
         }
 
         public float[] ReadFloats(int offset, int number)

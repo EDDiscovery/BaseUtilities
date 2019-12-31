@@ -58,7 +58,7 @@ void main(void)
 
         public GLPLVertexShaderMatrixModelCoordWithMatrixTranslation()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -111,7 +111,7 @@ void main(void)
 
         public GLPLVertexShaderTextureModelCoordWithMatrixTranslation()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -161,7 +161,7 @@ void main(void)
         public GLPLVertexShaderColorModelCoordWithObjectCommonTranslation()
         {
             Transform = new GLObjectDataTranslationRotation();
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
 
         public override void Start()
@@ -219,7 +219,7 @@ void main(void)
         public GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation()
         {
             Transform = new GLObjectDataTranslationRotation();
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
 
         public override void Start()

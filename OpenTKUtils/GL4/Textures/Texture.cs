@@ -22,15 +22,17 @@ namespace OpenTKUtils.GL4
 {
     // Textures are not autoloaded into shaders, you normally should do this by overriding the StartAction of the sampler and call a bind function
 
-    public abstract class GLTextureBase : IGLTexture          // load a texture into open gl
+    public abstract class GLTextureBase : IGLTexture            // load a texture into open gl
     {
         public int Id { get; protected set; }
-        public int Width { get; protected set; }
+
+        public int Width { get; protected set; }                // W/H is always the width/height of the first bitmap in z=0
         public int Height { get; protected set; } = 1;
-        public int Depth { get; protected set; } = 1;
+        public int Depth { get; protected set; } = 1;           // Depth is no of bitmaps down for 2darray/3d
+
         public SizedInternalFormat InternalFormat { get; protected set; }       // internal format of stored data in texture unit
 
-        public Bitmap[] BitMaps { get; protected set; } // textures can own the bitmaps for disposal purposes
+        public Bitmap[] BitMaps { get; protected set; }         // textures can own the bitmaps for disposal purposes
         public bool OwnBitmaps { get; set; } = false;
 
         // normal sampler bind - for sampler2D access etc.
@@ -190,6 +192,22 @@ namespace OpenTKUtils.GL4
             int st = (int)s;
             GL.TextureParameterI(Id, TextureParameterName.TextureWrapS, ref st);
         }
+
+        // TBD! find out why i did this.
+        public void SetMinMagFilter()
+        {
+            var textureMinFilter = (int)All.LinearMipmapLinear;
+            GL.TextureParameterI(Id, TextureParameterName.TextureMinFilter, ref textureMinFilter);
+            var textureMagFilter = (int)All.Linear;
+            GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
+        }
+
+        public void GenMipMapTextures()     // only call if mipmaplevels > 1 after you have loaded all z planes. Called automatically for 2d+2darrays
+        {
+            GL.GenerateTextureMipmap(Id);
+        }
+
+
     }
 }
 

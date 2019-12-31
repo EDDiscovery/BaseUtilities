@@ -46,7 +46,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture()
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
         public override void Start()
@@ -87,7 +87,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture2DIndexed(int offset)
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(offset), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(offset), GetType().Name);
         }
 
         public override void Start()
@@ -128,7 +128,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture2DBlend()
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
         public override void Start()
@@ -176,7 +176,7 @@ void main(void)
 
         public GLPLFragmentShaderTextureTriangleStrip()
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
 
         public override void Start()
@@ -186,6 +186,70 @@ void main(void)
             OpenTKUtils.GLStatics.Check();
         }
     }
+
+    // Pipeline shader, Co-ords are from a triangle strip, so we need to invert x for each other set of triangles
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord - as per triangle strip
+    //      uniform binding 10: ARB bindless texture handles, int 64s
+    //      location 24 : uniform of texture offset (written by start automatically)
+
+    public class GLPLBindlessFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+#extension GL_ARB_bindless_texture : require
+
+layout (location=0) in vec2 vs_textureCoordinate;
+
+layout (binding = 10, std140) uniform TEXTURE_BLOCK
+{
+    sampler2D tex[2];
+};
+
+layout (location = 24) uniform  vec2 offset;
+out vec4 color;
+
+void main(void)
+{
+    int objno = gl_PrimitiveID/2;
+
+    if ( (objno % 2) == 0 )   // first two primitives have coords okay
+    {
+        color = texture(tex[objno], vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
+    }
+    else    // next two have them inverted in x due to re-using the previous triangles vertexes
+    {
+        color = texture(tex[objno], vec2(1.0-vs_textureCoordinate.x,vs_textureCoordinate.y)+offset);       // vs_texture coords normalised 0 to 1.0f
+    }
+
+    //color = texture(tex[1], vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
+    //vec4 sc[] = { vec4(1,0,0,1),vec4(0,1,0,1),vec4(0,0,1,1),vec4(1,1,0,1),vec4(0,1,1,1),vec4(1,1,1,1)};
+    //if ( objno == 1)
+    //    color = sc[objno+1];
+
+}
+";
+        }
+
+        public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
+
+        public GLPLBindlessFragmentShaderTextureTriangleStrip()
+        {
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+        }
+
+        public override void Start()
+        {
+            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GL.ProgramUniform2(Id, 24, TexOffset);
+            OpenTKUtils.GLStatics.Check();
+        }
+    }
+
+
 
 
 }

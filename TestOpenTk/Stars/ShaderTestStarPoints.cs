@@ -90,7 +90,7 @@ void main(void)
 
             public GLShaderStars()
             {
-                Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), GetType().Name);
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), GetType().Name);
             }
 
             public override void Start() // seperable do not use a program - that is for the pipeline to hook up

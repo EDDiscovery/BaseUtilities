@@ -42,7 +42,7 @@ void main(void)
         public GLPLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
         {
             col = c;
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
     }
 
@@ -69,7 +69,7 @@ void main(void)
 
         public GLPLFragmentShaderColour()
         {
-            Program = GLProgram.CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
         }
     }
 
@@ -95,7 +95,7 @@ void main(void)
 
         public GLPLFragmentIDShaderColour(int divisor)
         {
-            Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(divisor), GetType().Name);
+            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(divisor), GetType().Name);
         }
     }
 

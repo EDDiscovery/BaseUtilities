@@ -88,7 +88,7 @@ void main(void)
             public GLFragmentShaderUniformTest(int bp)
             {
                 bindingpoint = bp;
-                Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(), GetType().Name);
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(), GetType().Name);
             }
 
             public override void Start()
@@ -333,12 +333,12 @@ void main(void)
 
             #region 2dArrays
             items.Add("TEX2DA", new GLTexturedShader2DBlendWithWorldCoord());
-            items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap2 }, 9));
+            items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap3 }, 9));
 
             rObjects.Add(items.Shader("TEX2DA"), "2DA",
                 GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
                             GLShapeObjectFactory.CreateQuad(2.0f), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("2DArray2"), new Vector3(-8, 0, 0))
+                        new GLObjectDataTranslationRotationTexture(items.Tex("2DArray2"), new Vector3(-8, 0, 2))
                         ));
 
 
@@ -451,6 +451,7 @@ void main(void)
                 rObjects.Add(items.Shader("tapeshader"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
 
+
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(-0, 5, 10), new Vector3(-100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
@@ -463,28 +464,34 @@ void main(void)
                 rObjects.Add(items.Shader("tapeshader2"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
 
+            #endregion
+            
+            #region Screen coords
             // fixed point on screen
             {
                 Vector4[] p = new Vector4[4];
 
-                p[0] = new Vector4(10, 100, 0, 0);
-                p[1] = new Vector4(10, 10, 0, 0);
-                p[2] = new Vector4(50, 100, 0, 0);
-                p[3] = new Vector4(50, 10, 0, 0);
+                p[0] = new Vector4(10, 10, 0, 0);       // topleft - correct winding for our system. For dotted, red/blue at top as dots
+                p[1] = new Vector4(10, 100, 0, 0);      // bottomleft
+                p[2] = new Vector4(50, 10, 0, 0);       // topright
+                p[3] = new Vector4(50, 100, 0, 0);      // botright
 
-                items.Add("ds1", new GLDirect((a)=> {
+                items.Add("ds1", new GLDirect((a)=> 
+                {
                     items.Tex("dotted2").Bind(1);
-                    GLStatics.DepthTest(false);
-                    GLStatics.CullFace(false);
                 },
-                (b) => {
+                (b) => 
+                {
                     GLStatics.DefaultDepthTest();
-                    GLStatics.DefaultCullFace();
                 }
                 ));
 
                 rObjects.Add(items.Shader("ds1"), "ds1", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
+
+            #endregion
+
+            #region Index/instance draw
 
             // multi element index draw
             {
@@ -609,8 +616,52 @@ void main(void)
                 rObjects.Add(items.Shader("es3"), "es3", ri);
             }
 
-            // indirect draws
-            // GLElementDraw should be a GLBuffer derived class..
+            #endregion
+
+            #region Bindless texture
+
+            {
+                IGLTexture[] btextures = new IGLTexture[2];
+                btextures[0] = items.Add("bl1", new GLTexture2D(Properties.Resources.Logo8bpp));
+                btextures[1] = items.Add("bl2", new GLTexture2D(Properties.Resources.dotted2));
+
+                GLBindlessTextureHandleBlock bl = new GLBindlessTextureHandleBlock(10,btextures);
+
+                GLStatics.Check();
+
+                float X = -10, Z = -14;
+                float X2 = -9, Z2 = -15;
+                float[] v = new float[]
+                {
+                    0+X,0,1+Z,
+                    0+X,0,0+Z,
+                    1+X,0,1+Z,
+                    1+X,0,0+Z,
+
+                    0+X2,0,1+Z2,
+                    0+X2,0,0+Z2,
+                    1+X2,0,1+Z2,
+                    1+X2,0,0+Z2,
+                };
+
+                GLRenderableItem ri = GLRenderableItem.CreateFloats(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, v, 3);
+                ri.CreateRectangleRestartIndexByte(2);
+
+                items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord(
+                    (a) =>
+                    {
+                        GL.Enable(EnableCap.PrimitiveRestart);
+                        GLStatics.PrimitiveRestart(true, 0xff);
+                    },
+                    (b) =>
+                    {
+                        GLStatics.DefaultPrimitiveRestart();
+                    }
+                           ));
+
+                rObjects.Add(items.Shader("bt1"), "bt1-1", ri);
+            }
+
 
             #endregion
 
@@ -690,7 +741,7 @@ void main(void)
                 gl3dcontroller.Redraw();
             else
             {
-              //  gl3dcontroller.Redraw();
+                gl3dcontroller.Redraw();
             }
         }
 
@@ -728,15 +779,19 @@ void main(void)
         }
     }
 
-    // Pipeline shader, Vertex shader colour pass to it
-    // Requires:
-    //      vs_color : vec4 of colour
-
     public class GLColourShaderWithWorldCoordXX : GLShaderPipeline
     {
         public GLColourShaderWithWorldCoordXX(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
             AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentIDShaderColour(2));
+        }
+    }
+
+    public class GLBindlessTextureShaderWithWorldCoord : GLShaderPipeline
+    {
+        public GLBindlessTextureShaderWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
         }
     }
 

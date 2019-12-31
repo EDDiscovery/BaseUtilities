@@ -50,7 +50,7 @@ void main(void)
 
         public GLPLVertexShaderWorldCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -83,7 +83,7 @@ void main(void)
 
         public GLPLVertexShaderModelViewCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -124,7 +124,7 @@ void main(void)
 
         public GLPLVertexShaderColourWorldCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -171,7 +171,7 @@ void main(void)
 
         public GLPLVertexShaderTextureWorldCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -219,7 +219,7 @@ void main(void)
 
         public GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -230,6 +230,7 @@ void main(void)
     // Out:
     //      gl_Position
     //      vs_textureCoordinate per triangle strip rules
+    //      z=0 placing it in foreground
 
     public class GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord : GLShaderPipelineShadersBase
     {
@@ -255,7 +256,7 @@ void main(void)
 {
     vec2 vcoords[4] = {{0,0},{0,1},{1,0},{1,1} };      // these give the coords for the 4 points making up 2 triangles.  Use with the right fragment shader which understands strip co-ords
 
-	gl_Position = vec4(position.x*2/mc.screenwidth-1,1-position.y*2/mc.screenheight,1,1);        // order important
+	gl_Position = vec4(position.x*2/mc.screenwidth-1,1-position.y*2/mc.screenheight,0,1);     
     vs_textureCoordinate = vcoords[ gl_VertexID % 4];
 }
 ";
@@ -263,7 +264,7 @@ void main(void)
 
         public GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 

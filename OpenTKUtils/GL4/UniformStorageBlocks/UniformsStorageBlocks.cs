@@ -62,5 +62,34 @@ namespace OpenTKUtils.GL4
         {
         }
     }
+
+    // bindless texture buffers - note the vec4 stride, the 8 byte numbers
+    public class GLBindlessTextureHandleBlock : GLDataBlock
+    {
+        public GLBindlessTextureHandleBlock(int bindingindex) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        {
+        }
+
+        public GLBindlessTextureHandleBlock(int bindingindex, IGLTexture[] textures) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        {
+            WriteHandles(textures);
+        }
+
+        public void WriteHandles( IGLTexture[] textures)
+        {
+            Allocate(sizeof(long) * textures.Length * 2);
+            IntPtr p = Map(0, BufferSize);
+
+            for (int i = 0; i < textures.Length; i++)
+            {
+                long arbid = OpenTK.Graphics.OpenGL.GL.Arb.GetTextureHandle(textures[i].Id);
+                OpenTK.Graphics.OpenGL.GL.Arb.MakeTextureHandleResident(arbid);
+                MapWrite(ref p, arbid);
+                MapWrite(ref p, (long)0);       // as the int has the same stride as a vec4 (16 bytes)
+            }
+
+            UnMap();
+        }
+    }
 }
 

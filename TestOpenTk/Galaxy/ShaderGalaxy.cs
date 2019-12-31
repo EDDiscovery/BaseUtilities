@@ -470,7 +470,7 @@ void main(void)
 
             public GalaxyFragmentPipeline()
             {
-                Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fcode);
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fcode);
             }
         }
 

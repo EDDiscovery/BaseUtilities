@@ -46,7 +46,7 @@ void main(void)
 
         public GLPLVertexShaderVolumetric()
         {
-            Program = GLProgram.CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode);
+            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode);
         }
     }
 
@@ -54,7 +54,7 @@ void main(void)
     {
         public GLPLGeometricShaderVolumetric()
         {
-            Program = GLProgram.CompileLink(ShaderType.GeometryShader, "#include OpenTKUtils.GL4.Shaders.Volumetric.volumetricgeoshader.glsl");
+            CompileLink(ShaderType.GeometryShader, "#include OpenTKUtils.GL4.Shaders.Volumetric.volumetricgeoshader.glsl");
         }
     }
 }

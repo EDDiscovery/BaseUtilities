@@ -35,6 +35,7 @@ namespace OpenTKUtils.GL4
 
             GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
             Id = id;
+            Depth = bmps.Length;
 
             for (int bitmapnumber = 0; bitmapnumber < bmps.Length; bitmapnumber++)      // for all bitmaps, we load the texture into zoffset of 2darray
             {
@@ -57,14 +58,34 @@ namespace OpenTKUtils.GL4
             if (mipmaplevel == 1 && genmipmaplevel > 1)     // single level mipmaps with genmipmap levels > 1 get auto gen
                 GL.GenerateTextureMipmap(Id);
 
-            var textureMinFilter = (int)All.LinearMipmapLinear;
-            GL.TextureParameterI(Id, TextureParameterName.TextureMinFilter, ref textureMinFilter);
-            var textureMagFilter = (int)All.Linear;
-            GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
-            GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);      // back to off for safety
+            SetMinMagFilter();
 
             OpenTKUtils.GLStatics.Check();
         }
+
+        public GLTexture2DArray(int nobitmaps, int width, int height, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        {
+            InternalFormat = internalformat;
+
+            GL.CreateTextures(TextureTarget.Texture2DArray, 1, out int id);
+            Id = id;
+            Depth = nobitmaps;
+            Width = width;
+            Height = height;
+
+            GL.TextureStorage3D(Id,
+                    mipmaplevel,            // miplevels.
+                    InternalFormat,         // format of texture - 4 floats is normal, given in constructor
+                    Width,
+                    Height,
+                    nobitmaps);             // depth = number of bitmaps depth
+
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void StoreBitmap(Bitmap map, int bmpnumber, int bitmapmipmaplevels = 1)
+        {
+            LoadBitmap(Id, map, bitmapmipmaplevels, bmpnumber);
+        }
     }
 }
-

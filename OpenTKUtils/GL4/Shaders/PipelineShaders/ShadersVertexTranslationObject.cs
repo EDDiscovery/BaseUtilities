@@ -58,7 +58,7 @@ void main(void)
 
         public GLPLVertexShaderModelCoordWithObjectTranslation()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -108,7 +108,7 @@ void main(void)
 
         public GLPLVertexShaderColourModelCoordWithObjectTranslation()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 
@@ -158,7 +158,7 @@ void main(void)
 
         public GLPLVertexShaderTextureModelCoordWithObjectTranslation()
         {
-            Program = GLProgram.CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
     }
 }
