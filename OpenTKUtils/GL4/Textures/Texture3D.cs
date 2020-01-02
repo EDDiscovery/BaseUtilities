@@ -24,7 +24,12 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture3D : GLTextureBase         // load a texture into open gl
     {
-        public GLTexture3D( int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
+        public GLTexture3D(int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
+        {
+            CreateTexture(width, height, depth, internalformat, mipmaplevels);
+        }
+
+        public void CreateTexture(int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
         {
             InternalFormat = internalformat;
             Width = width; Height = height; Depth = depth;
@@ -55,11 +60,20 @@ namespace OpenTKUtils.GL4
             GL.TextureSubImage3D(Id, 0, xoffset, yoffset, zcoord, width, height, 1, px, PixelType.Float, array);
         }
 
-        // only if internal format is RGBA data.
+        // must have called CreateTexture before, allows bitmaps to be loaded individually
         // either make bitmapmipmaplevels>1 meaning the image is mipmapped, or use GenMipMapTextures() after all bitmaps in all z planes are loaded
-        public void StoreBitmap(Bitmap map, int zoffset, int bitmapmipmaplevels = 1)
+
+        public void LoadBitmap(Bitmap map, int zoffset, int bitmapmipmaplevels = 1)
         {
+            int h = MipMapHeight(map, bitmapmipmaplevels);        // if bitmap is mipped mapped, work out correct height.
+            System.Diagnostics.Debug.Assert(map.Width == Width && map.Height == h && Id != -1);
+
             LoadBitmap(Id, map, bitmapmipmaplevels, zoffset);
+
+            if (BitMaps == null)
+                BitMaps = new Bitmap[Depth];
+
+            BitMaps[zoffset] = map;
         }
     }
 

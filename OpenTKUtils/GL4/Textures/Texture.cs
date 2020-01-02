@@ -24,9 +24,14 @@ namespace OpenTKUtils.GL4
 
     public abstract class GLTextureBase : IGLTexture            // load a texture into open gl
     {
+        protected GLTextureBase()
+        {
+            Id = -1;
+        }
+
         public int Id { get; protected set; }
 
-        public int Width { get; protected set; }                // W/H is always the width/height of the first bitmap in z=0
+        public int Width { get; protected set; } = 0;           // W/H is always the width/height of the first bitmap in z=0.
         public int Height { get; protected set; } = 1;
         public int Depth { get; protected set; } = 1;           // Depth is no of bitmaps down for 2darray/3d
 
@@ -76,6 +81,8 @@ namespace OpenTKUtils.GL4
                 {
                     foreach (var b in BitMaps)
                         b.Dispose();
+
+                    BitMaps = null;
                 }
 
             }
@@ -95,7 +102,7 @@ namespace OpenTKUtils.GL4
             IntPtr ptr = bmpdata.Scan0;     // its a byte ptr
 
             int curwidth = bmp.Width;
-            int masterheight = (mipmaplevels == 1) ? bmp.Height : (bmp.Height / 3) * 2;
+            int masterheight = MipMapHeight(bmp, mipmaplevels);
             int curheight = masterheight;
 
             GL.PixelStore(PixelStoreParameter.UnpackRowLength, bmp.Width);      // indicate the image width, if we take less, then GL will skip pixels to get to next row
@@ -205,6 +212,11 @@ namespace OpenTKUtils.GL4
         public void GenMipMapTextures()     // only call if mipmaplevels > 1 after you have loaded all z planes. Called automatically for 2d+2darrays
         {
             GL.GenerateTextureMipmap(Id);
+        }
+
+        static public int MipMapHeight(Bitmap map, int bitmapmipmaplevels)
+        {
+            return (bitmapmipmaplevels == 1) ? map.Height : (map.Height / 3) * 2;        // if bitmap is mipped mapped, work out correct height.
         }
 
 

@@ -24,36 +24,70 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture2D : GLTextureBase          // load a texture into open gl
     {
-        public GLTexture2D(Bitmap bmp, int mipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
+        public GLTexture2D()
         {
-            InternalFormat = internalformat;
+        }
+
+        public GLTexture2D(Bitmap bmp, int bitmipmaplevel = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, 
+                            int genmipmaplevel = 1, bool ownbitmaps = false)
+        {
+            LoadBitmap(bmp, bitmipmaplevel, internalformat, genmipmaplevel, ownbitmaps);
+        }
+
+        // You can call as many times to create textures. Only creates one if required
+
+        public void CreateTexture(int width, int height, int mipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        {
+            if (Id == -1 || Width != width || Height != height)    // if not there, or changed, we can't just replace it, size is fixed. Delete it
+            {
+                if ( Id != -1 )
+                { 
+                    Dispose();
+                }
+
+                InternalFormat = internalformat;
+                Width = width;
+                Height = height;
+
+                GL.CreateTextures(TextureTarget.Texture2D, 1, out int id);
+                Id = id;
+
+                GL.TextureStorage2D(
+                                Id,
+                                mipmaplevels,                    // levels of mipmapping
+                                InternalFormat,                 // format of texture - 4 floats is the normal, and is given in the constructor
+                                Width,                          // width and height of mipmap level 0
+                                Height);
+
+                SetMinMagFilter();
+
+                OpenTKUtils.GLStatics.Check();
+            }
+        }
+
+        // You can reload the bitmap, it will create a new Texture if required
+
+        public void LoadBitmap(Bitmap bmp, int bitmipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
+        {
+            int h = MipMapHeight(bmp, bitmipmaplevels);
+            int texmipmaps = Math.Max(bitmipmaplevels, genmipmaplevel);
+
+            CreateTexture(bmp.Width, h, texmipmaps, internalformat);
+
             BitMaps = new Bitmap[1];
             BitMaps[0] = bmp;
             OwnBitmaps = ownbitmaps;
 
-            GL.CreateTextures(TextureTarget.Texture2D, 1, out int id);
-            Id = id;
+            GLTextureBase.LoadBitmap(Id, bmp, bitmipmaplevels, -1);    // use common load into bitmap, indicating its a 2D texture so use texturesubimage2d
 
-            Width = bmp.Width;
-            Height = (mipmaplevel == 1) ? bmp.Height : (bmp.Height / 3) * 2;        // if bitmap is mipped mapped, work out correct height.
-
-            GL.TextureStorage2D(
-                Id,
-                mipmaplevel == 1 ? genmipmaplevel : mipmaplevel,    // levels of mipmapping.  If we supplied one, we use that, else we use genmipmaplevel
-                InternalFormat,                       // format of texture - 4 floats is the normal, and is given in the constructor
-                bmp.Width,                            // width and height of mipmap level 0
-                Height);
-
-            LoadBitmap(Id, bmp, mipmaplevel, -1);    // use common load into bitmap, indicating its a 2D texture so use texturesubimage2d
-
-            if (mipmaplevel == 1 && genmipmaplevel > 1)     // single level mipmaps with genmipmap levels > 1 get auto gen
+            if (bitmipmaplevels == 1 && genmipmaplevel > 1)     // single level mipmaps with genmipmap levels > 1 get auto gen
                 GL.GenerateTextureMipmap(Id);
+            
+            OpenTKUtils.GLStatics.Check();
 
-            var textureMinFilter = (int)All.LinearMipmapLinear;
-            GL.TextureParameterI(Id, TextureParameterName.TextureMinFilter, ref textureMinFilter);
-            var textureMagFilter = (int)All.Linear;
-            GL.TextureParameterI(Id, TextureParameterName.TextureMagFilter, ref textureMagFilter);
         }
+
+
     }
 }
 

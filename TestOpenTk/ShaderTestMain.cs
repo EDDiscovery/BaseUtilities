@@ -446,7 +446,7 @@ void main(void)
 
                 items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
 
-                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord((a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
+                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord(true, (a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
 
                 rObjects.Add(items.Shader("tapeshader"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
@@ -459,7 +459,7 @@ void main(void)
 
                 items.Tex("tapelogo2").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
 
-                items.Add("tapeshader2", new GLTexturedShaderTriangleStripWithWorldCoord((a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
+                items.Add("tapeshader2", new GLTexturedShaderTriangleStripWithWorldCoord(true, (a) => { GLStatics.CullFace(false); items.Tex("tapelogo").Bind(1); }, (b) => { GLStatics.DefaultCullFace(); }));
 
                 rObjects.Add(items.Shader("tapeshader2"), "tape", GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, p));
             }
@@ -775,7 +775,7 @@ void main(void)
     {
         public GLDirect(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderTextureTriangleStrip());
+            AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderTextureTriangleStrip(false));
         }
     }
 

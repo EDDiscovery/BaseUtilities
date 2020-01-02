@@ -24,7 +24,16 @@ namespace OpenTKUtils.GL4
 {
     public class GLTexture1D : GLTextureBase          
     {
-        public GLTexture1D(int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
+        public GLTexture1D()
+        {
+        }
+
+        public GLTexture1D( int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
+        {
+            CreateTexture(width, internalformat, mipmaplevel);
+        }
+
+        public void CreateTexture(int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
         {
             InternalFormat = internalformat;
             Width = width; 

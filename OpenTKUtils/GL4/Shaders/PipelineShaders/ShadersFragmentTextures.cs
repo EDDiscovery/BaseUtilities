@@ -139,7 +139,9 @@ void main(void)
         }
     }
 
-    // Pipeline shader, Co-ords are from a triangle strip, so we need to invert x for each other set of triangles
+    // Pipeline shader, Co-ords are from a triangle strip
+    // either the vertex's are separated by primitive restart, 
+    // or they are back to back in which case we need to invert text co-ord x for each other set of triangles
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord - as per triangle strip
     //      tex binding 1 : textureObject : 2D array texture of two bitmaps, 0 and 1.
@@ -147,7 +149,7 @@ void main(void)
 
     public class GLPLFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
     {
-        public string Code()
+        public string Code(bool backtoback)
         {
             return
 @"
@@ -158,7 +160,9 @@ layout (location = 24) uniform  vec2 offset;
 out vec4 color;
 
 void main(void)
-{
+{" +
+(backtoback ?
+@"
     if ( gl_PrimitiveID % 4 < 2 )   // first two primitives have coords okay
     {
         color = texture(textureObject, vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
@@ -167,16 +171,19 @@ void main(void)
     {
         color = texture(textureObject, vec2(1.0-vs_textureCoordinate.x,vs_textureCoordinate.y)+offset);       // vs_texture coords normalised 0 to 1.0f
     }
+" :
+@"
+        color = texture(textureObject, vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
+") +
 
+"}";
 }
-";
-        }
 
         public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
 
-        public GLPLFragmentShaderTextureTriangleStrip()
+        public GLPLFragmentShaderTextureTriangleStrip(bool backtobackrect)
         {
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(backtobackrect), GetType().Name);
         }
 
         public override void Start()
@@ -187,15 +194,15 @@ void main(void)
         }
     }
 
-    // Pipeline shader, Co-ords are from a triangle strip, so we need to invert x for each other set of triangles
+    // Pipeline shader, Co-ords are from a triangle strip, we are assuming a primitive restart so we don't need to do the invert thingy
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord - as per triangle strip
-    //      uniform binding 10: ARB bindless texture handles, int 64s
+    //      uniform binding <config>: ARB bindless texture handles, int 64s
     //      location 24 : uniform of texture offset (written by start automatically)
 
     public class GLPLBindlessFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
     {
-        public string Code()
+        public string Code(int arbblock)
         {
             return
 @"
@@ -204,7 +211,7 @@ void main(void)
 
 layout (location=0) in vec2 vs_textureCoordinate;
 
-layout (binding = 10, std140) uniform TEXTURE_BLOCK
+layout (binding = " + arbblock.ToStringInvariant() + @", std140) uniform TEXTURE_BLOCK
 {
     sampler2D tex[2];
 };
@@ -215,30 +222,16 @@ out vec4 color;
 void main(void)
 {
     int objno = gl_PrimitiveID/2;
-
-    if ( (objno % 2) == 0 )   // first two primitives have coords okay
-    {
-        color = texture(tex[objno], vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
-    }
-    else    // next two have them inverted in x due to re-using the previous triangles vertexes
-    {
-        color = texture(tex[objno], vec2(1.0-vs_textureCoordinate.x,vs_textureCoordinate.y)+offset);       // vs_texture coords normalised 0 to 1.0f
-    }
-
-    //color = texture(tex[1], vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
-    //vec4 sc[] = { vec4(1,0,0,1),vec4(0,1,0,1),vec4(0,0,1,1),vec4(1,1,0,1),vec4(0,1,1,1),vec4(1,1,1,1)};
-    //if ( objno == 1)
-    //    color = sc[objno+1];
-
+    color = texture(tex[objno], vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
 }
 ";
         }
 
         public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
 
-        public GLPLBindlessFragmentShaderTextureTriangleStrip()
+        public GLPLBindlessFragmentShaderTextureTriangleStrip(int arbblock = 10)
         {
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(arbblock), GetType().Name);
         }
 
         public override void Start()

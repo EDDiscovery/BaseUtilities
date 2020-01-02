@@ -37,22 +37,24 @@ namespace OpenTKUtils.GL4.Controls
 
         // imp
 
-        protected void SetPos(int left, int top, int width, int height, bool performlayout = true)
+        protected void SetPos(int left, int top, int width, int height)
         {
             window = new Rectangle(left, top, width, height);
-            //if ( performlayout )
-            //    parent?.PerformLayout();        // go up one and perform layout on all its children, since we are part of it.
+            parent?.PerformLayout();        // go up one and perform layout on all its children, since we are part of it.
         }
 
         public Bitmap GetBitmap() { return levelbmp ?? parent.GetBitmap(); }
+
+
+
+
 //        protected GLBaseControl FindTopControl() { return parent is GLForm ? this : parent.FindTopControl(); }
       //  protected GLBaseControl FindForm() { return this is GLForm ? this : parent.FindForm(); }
 
         protected Bitmap levelbmp;       // set if the level has a new bitmap.  Controls under Form always does. Other ones may if they scroll
-
-        private Rectangle window;       // total area owned, in parent co-ords
-        private DockingType docktype = DockingType.None;
-        private GLBaseControl parent;       // its parent, null if top of top
+        protected Rectangle window;       // total area owned, in parent co-ords
+        private DockingType docktype { get; set; }  = DockingType.None;
+        private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
         protected List<GLBaseControl> children;   // its children
         private Font fnt;
 
@@ -116,21 +118,31 @@ namespace OpenTKUtils.GL4.Controls
             }
 
             System.Diagnostics.Debug.WriteLine("{0} in {1} out {2} dock {3} win {4}", Name, area, areaout , Dock, window);
+
             if ( oldwindow != window )
             {
-                NeedRedraw = true;      // set flag to say need redraw
+                SetRedraw();            // set redraw on us and all parents
+
+                if ( levelbmp != null && oldwindow.Size != window.Size) // if window size changed
+                {
+                    levelbmp.Dispose();
+                    levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
+                }
             }
 
             return areaout;
         }
 
+        public void SetRedraw()                                 // cascade redraw command right up to top to the form itself
+        {
+            NeedRedraw = true;
+            parent?.SetRedraw();
+        }
+
         public virtual void Redraw(Bitmap usebmp, Rectangle area )
         {
-            if (usebmp == null || levelbmp != null)             // if no bitmap, or we have a level bmp
+            if (levelbmp != null)                               // bitmap on this level, use it for the children
             {
-                if (levelbmp == null)                           // if we are a level where we have no basebmp, make one
-                    levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
-
                 usebmp = levelbmp;
                 area = new Rectangle(0, 0, Width, Height);      // restate area in terms of bitmap
             }
@@ -151,7 +163,7 @@ namespace OpenTKUtils.GL4.Controls
             foreach (var c in children)
             {
                 // child, redraw using this bitmap, in this area of the bitmap
-                c.Redraw(usebmp,new Rectangle(area.Left + c.Left, area.Top+c.Top,c.Width,c.Height));
+                c.Redraw(usebmp, new Rectangle(area.Left + c.Left, area.Top + c.Top, c.Width, c.Height));
             }
 
             Paint(usebmp, area);
@@ -170,13 +182,21 @@ namespace OpenTKUtils.GL4.Controls
         public void Add(GLBaseControl other)
         {
             children.Add(other);
-            this.NeedRedraw |= other.NeedRedraw;
+
+            if (this is GLForm) // if adding to a form, the child must have a bitmap
+                other.levelbmp = new Bitmap(other.Width, other.Height);
+
+            SetRedraw();
         }
 
         public void Remove(GLBaseControl other)
         {
+            if (other.levelbmp != null)
+                other.levelbmp.Dispose();
+
             children.Remove(other);
-            this.NeedRedraw |= other.NeedRedraw;
+
+            SetRedraw();
         }
 
     }

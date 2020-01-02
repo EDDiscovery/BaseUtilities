@@ -96,9 +96,9 @@ namespace OpenTKUtils.GL4
     {
         GLPLFragmentShaderTextureTriangleStrip frag;
 
-        public GLTexturedShaderTriangleStripWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        public GLTexturedShaderTriangleStripWithWorldCoord(bool backtoback, Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            frag = new GLPLFragmentShaderTextureTriangleStrip();
+            frag = new GLPLFragmentShaderTextureTriangleStrip(backtoback);
             AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), frag);
         }
 

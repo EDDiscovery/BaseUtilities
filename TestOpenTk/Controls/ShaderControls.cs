@@ -157,10 +157,35 @@ namespace TestOpenTk
             p2.Name = "P2";
             ptop.Add(p2);
 
-            //GLPanel p3 = new GLPanel();
-            //p3.Dock = GLBaseControl.DockingType.Right;
-            //p3.Name = "P2";
-            //ptop.Add(p3);
+            GLPanel p3 = new GLPanel();
+            p3.Dock = GLBaseControl.DockingType.Right;
+            p3.DockPercent = 0.10f;
+            p3.Name = "P3";
+            p3.BackColor = Color.Yellow;
+            ptop.Add(p3);
+
+
+            GLPanel ptop2 = new GLPanel();
+            ptop2.Position = new Rectangle(700, 100, 400, 400);
+            ptop2.BackColor = Color.Blue;
+            ptop2.Name = "paneltop2";
+            form.Add(ptop2);
+
+
+            GLPanel p2a = new GLPanel();
+            p2a.Dock = GLBaseControl.DockingType.Top;
+            p2a.DockPercent = 0.25f;
+            p2a.BackColor = Color.Green;
+            p2a.Name = "P2";
+            ptop2.Add(p2a);
+
+            GLPanel p3a = new GLPanel();
+            p3a.Dock = GLBaseControl.DockingType.Bottom;
+            p3a.DockPercent = 0.10f;
+            p3a.Name = "P3";
+            p3a.BackColor = Color.Yellow;
+            ptop2.Add(p3a);
+
 
             //GLPanel p4 = new GLPanel();
             //p4.Dock = GLBaseControl.DockingType.Top;

@@ -11,7 +11,8 @@ Textures
 Uniform blocks
 0 = MatrixCalc - see the MatrixCalcUniformBlock.cs
 1 = Volumentric block - see VolumentciUniformBlock
-		
+10 = ARB Bindless texture block.
+
 Uniforms
 
 21 = transform to look at eye position

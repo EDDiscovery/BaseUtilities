@@ -28,7 +28,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLForm( OpenTK.GLControl gcp)
         {
             gc = gcp;
-            SetPos(0, 0, gcp.Width, gcp.Height,false);
+            window = new Rectangle(0,0,gcp.Width, gcp.Height);
 
             vertexes = new GLBuffer();
 
@@ -42,7 +42,8 @@ namespace OpenTKUtils.GL4.Controls
 
             shader = new GLControlShader();
 
-//            textures = new GLTexture2DArray(maxtoplevel, 1);
+            textures = new Dictionary<GLBaseControl, GLTexture2D>();
+            texturebinds = new GLBindlessTextureHandleBlock(10);
         }
 
         const int cperv = 2;
@@ -50,26 +51,29 @@ namespace OpenTKUtils.GL4.Controls
 
         GLBuffer vertexes;
         GLVertexArray vertexarray;
+        Dictionary<GLBaseControl, GLTexture2D> textures;
+        GLBindlessTextureHandleBlock texturebinds;
         GLRenderableItem ri;
-        GLTexture2DArray textures;
         IGLProgramShader shader;
 
         public class GLControlShader : GLShaderPipeline
         {
             public GLControlShader()
             {
-                //AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderTextureTriangleStrip());
-                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderFixedColour(Color.Red));
+                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
+                //AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderFixedColour(Color.Red));
             }
         }
-
 
         public override void PerformLayout()
         {
             base.PerformLayout();
 
             vertexes.Allocate(children.Count * sizeof(float) * cperv * 4);
-            IntPtr p = vertexes.Map(0, vertexes.BufferSize);   
+            IntPtr p = vertexes.Map(0, vertexes.BufferSize);
+
+            List<IGLTexture> tlist = new List<IGLTexture>();
+
             foreach (var c in children)
             {
                 float[] a = new float[] {
@@ -80,35 +84,47 @@ namespace OpenTKUtils.GL4.Controls
                                             };
 
                 vertexes.MapWrite(ref p, a);
+
+                if ( !textures.ContainsKey(c))      // if we don't have a texture for it..
+                {
+                    textures[c] = new GLTexture2D();
+                    textures[c].CreateTexture(c.Width, c.Height);   // and make a texture
+                }
+                else if ( textures[c].Width != c.GetBitmap().Width || textures[c].Height != c.GetBitmap().Height )      // if layout changed bitmap
+                {
+                    textures[c].CreateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
+                }
+
+                tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles, and the dictionary does not guarantee this
             }
+
+            ri.DrawCount = children.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
+
+            texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..
 
             vertexes.UnMap();
 
             float[] d = vertexes.ReadFloats(0, children.Count * 4 * cperv);
         }
 
+        // tbd clean up textures[c] on removal of control?
 
         public void Render(Common.MatrixCalc mc)
         {
-            int tex = 0;
             foreach (var c in children)
             {
-                if ( c.NeedRedraw )
+                if (c.NeedRedraw)
                 {
-                    c.Redraw(null,new Rectangle(0,0,0,0));
-//                    textures.StoreBitmap(c.GetBitmap(),tex,1);      // reload the bitmap into the texture
-  //                  OpenTKUtils.GLStatics.Check();
+                    c.Redraw(null, new Rectangle(0, 0, 0, 0));      // repaint
+                    textures[c].LoadBitmap(c.GetBitmap());  // and update texture unit with new bitmap
                 }
-                tex++;
             }
 
             shader.Start();
             OpenTKUtils.GLStatics.Check();
-
-            ri.DrawCount = children.Count * 5-1;    // 4 vertexes per rectangle, 1 restart
             ri.Bind(shader, mc);                    // binds VA AND the element buffer
             GLStatics.PrimitiveRestart(true, 0xff);
-            ri.Render();
+            ri.Render();                            // draw using primitive restart on element index buffer with bindless textures
             shader.Finish();
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);

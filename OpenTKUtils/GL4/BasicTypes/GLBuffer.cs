@@ -288,6 +288,7 @@ namespace OpenTKUtils.GL4
         public void MapWrite(ref IntPtr pos, float v)
         {
             float[] a = new float[] { v };
+            pos = Align(pos, mapoffset, sizeof(float));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(float);
             mapoffset += sizeof(float);
@@ -295,6 +296,7 @@ namespace OpenTKUtils.GL4
 
         public void MapWrite(ref IntPtr pos, float[] a)
         {
+            pos = Align(pos, mapoffset, sizeof(float));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);       // number of units, not byte length!
             pos += sizeof(float) * a.Length;
             mapoffset += sizeof(float) * a.Length;
@@ -303,6 +305,7 @@ namespace OpenTKUtils.GL4
         public void MapWrite(ref IntPtr pos, int v)
         {
             int[] a = new int[] { v };
+            pos = Align(pos, mapoffset, sizeof(int));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(int);
             mapoffset += sizeof(int);
@@ -310,6 +313,7 @@ namespace OpenTKUtils.GL4
 
         public void MapWrite(ref IntPtr pos, int[] a)
         {
+            pos = Align(pos, mapoffset, sizeof(int));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
             pos += sizeof(int) * a.Length;
             mapoffset += sizeof(int) * a.Length;
@@ -317,6 +321,7 @@ namespace OpenTKUtils.GL4
 
         public void MapWrite(ref IntPtr pos, long v)
         {
+            pos = Align(pos, mapoffset, sizeof(long));
             long[] a = new long[] { v };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(long);
@@ -325,6 +330,7 @@ namespace OpenTKUtils.GL4
 
         public void MapWrite(ref IntPtr pos, long[] a)
         {
+            pos = Align(pos, mapoffset, sizeof(long));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
             pos += sizeof(long) * a.Length;
             mapoffset += sizeof(long) * a.Length;
