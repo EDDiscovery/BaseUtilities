@@ -355,6 +355,15 @@ namespace BaseUtils.Win32
             return cur;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(out POINT lpPoint);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetKeyboardState(byte[] keystate);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]

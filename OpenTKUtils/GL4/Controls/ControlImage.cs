@@ -17,7 +17,7 @@ namespace OpenTKUtils.GL4.Controls
             Size = new Size(bmpp.Width, bmpp.Height);
         }
 
-        public override void Paint(Bitmap bmp, Rectangle area)
+        public override void Paint(Bitmap bmp, Rectangle area, Graphics gr)
         {
 
         }

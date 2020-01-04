@@ -7,6 +7,34 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
+    public struct Padding
+    {
+        public int Left; public int Top; public int Right; public int Bottom;
+        public Padding(int left, int top, int right, int bottom) { Left = left; Top = top; Right = right; Bottom = bottom; }
+        public Padding(int pad = 0) { Left = pad; Top = pad; Right = pad; Bottom = pad; }
+        public int TotalWidth { get { return Left + Right; } }
+        public int TotalHeight { get { return Top + Bottom; } }
+    };
+
+    public struct Margin
+    {
+        public int Left; public int Top; public int Right; public int Bottom;
+        public Margin(int left, int top, int right, int bottom) { Left = left; Top = top; Right = right; Bottom = bottom; }
+        public Margin(int pad = 0) { Left = pad; Top = pad; Right = pad; Bottom = pad; }
+        public int TotalWidth { get { return Left + Right; } }
+        public int TotalHeight { get { return Top + Bottom; } }
+    };
+
+    public struct MouseEventArgs
+    {
+        public MouseEventArgs(Point l) { Button = 0;Location = l;Clicks = 0;  }
+        public MouseEventArgs(int b, Point l, int c) { Button = b; Location = l; Clicks = c; }
+
+        public int Button { get; set; }
+        public Point Location { get; set; }
+        public int Clicks { get; set; }
+    }
+
     public abstract class GLBaseControl
     {
         // co-ords are in parent control positions
@@ -32,24 +60,89 @@ namespace OpenTKUtils.GL4.Controls
         public string Name { get; set; } = "?";
 
         public Color BackColor { get; set; } = Color.Transparent;
+        public Color BorderColor { get; set; } = Color.Transparent;
+        public int BorderWidth { get; set; } = 1;
+        public GL4.Controls.Padding Padding { get; set; }
+        public GL4.Controls.Margin Margin { get; set; }
 
-        public bool NeedRedraw { get; set; } = true;        
+        public bool InvalidateOnEnterLeave { get; set; } = false;       // if set, invalidate on enter/leave to force a redraw
+
+        public void Invalidate() { NeedRedraw = true; FindForm().RequestRender = true;}     // we need redraw, and form needs rerendering
+
+        public GLForm FindForm() { return this is GLForm ? this as GLForm: parent.FindForm(); }
+
+        public bool Hover { get; set; } = false;            // mouse is over control
+        public bool MouseButtonDown { get; set; } = false;        // mouse is down over control
+
+        Action<MouseEventArgs> MouseDown { get; set; } = null;
+        Action<MouseEventArgs> MouseUp { get; set; } = null;
+        Action<MouseEventArgs> MouseMove { get; set; } = null;
+        Action<MouseEventArgs> MouseEnter { get; set; } = null;
+        Action<MouseEventArgs> MouseLeave { get; set; } = null;
+        Action<MouseEventArgs> MouseClick { get; set; } = null;
+
+        public Bitmap GetBitmap() { return levelbmp ?? parent.GetBitmap(); }
+
+        public void Add(GLBaseControl other)
+        {
+            other.parent = this;
+            children.Add(other);
+
+            if (this is GLForm) // if adding to a form, the child must have a bitmap
+                other.levelbmp = new Bitmap(other.Width, other.Height);
+
+            SetRedraw();
+        }
+
+        public void Remove(GLBaseControl other)
+        {
+            if (other.levelbmp != null)
+                other.levelbmp.Dispose();
+
+            children.Remove(other);
+
+            SetRedraw();
+        }
+
+        public Point FormCoords()       // co-ordinates in the Form, not the screen
+        {
+            Point p = Location;
+            GLBaseControl b = this;
+            while (b.Parent != null)
+            {
+                p = new Point(p.X + b.parent.Left, p.Y + b.parent.Top);
+                b = b.parent;
+            }
+
+            return p;
+        }
+
+        public GLBaseControl FindControlOver(Point p)       // p = form co-ords
+        {
+            if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)
+                return null;
+
+            foreach (GLBaseControl c in children)
+            {
+                var r = c.FindControlOver(new Point(p.X - Left, p.Y - Top));   // find, converting co-ords into child co-ords
+                if (r != null)
+                    return r;
+            }
+
+            return this;
+        }
 
         // imp
+
+        ////////////// imp
+
+        protected bool NeedRedraw { get; private set; } = true;
 
         protected void SetPos(int left, int top, int width, int height)
         {
             window = new Rectangle(left, top, width, height);
             parent?.PerformLayout();        // go up one and perform layout on all its children, since we are part of it.
         }
-
-        public Bitmap GetBitmap() { return levelbmp ?? parent.GetBitmap(); }
-
-
-
-
-//        protected GLBaseControl FindTopControl() { return parent is GLForm ? this : parent.FindTopControl(); }
-      //  protected GLBaseControl FindForm() { return this is GLForm ? this : parent.FindForm(); }
 
         protected Bitmap levelbmp;       // set if the level has a new bitmap.  Controls under Form always does. Other ones may if they scroll
         protected Rectangle window;       // total area owned, in parent co-ords
@@ -67,18 +160,22 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void PerformLayout()
         {
-            Rectangle area = new Rectangle(0, 0, Width, Height);
-
-            foreach (var c in children)
-            {
-                c.AdjustSize(area);
-            }
+            Rectangle area = AdjustByPaddingBorderMargin(new Rectangle(0, 0, Width, Height));
 
             foreach (var c in children)
             {
                 area = c.Layout(area);
                 c.PerformLayout();
             }
+        }
+
+        private Rectangle AdjustByPaddingBorderMargin(Rectangle area)
+        {
+            int bs = BorderColor != Color.Transparent ? BorderWidth : 0;
+            return new Rectangle(area.Left + Margin.Left + Padding.Left + bs,
+                                    area.Top + Margin.Top + Padding.Top + bs,
+                                    area.Width - Margin.TotalWidth - Padding.TotalWidth - bs * 2,
+                                    area.Height - Margin.TotalHeight - Padding.TotalHeight - bs * 2);
         }
 
         protected virtual Rectangle Layout(Rectangle area)
@@ -139,65 +236,119 @@ namespace OpenTKUtils.GL4.Controls
             parent?.SetRedraw();
         }
 
-        public virtual void Redraw(Bitmap usebmp, Rectangle area )
+        public virtual bool Redraw(Bitmap usebmp, Rectangle area, Graphics gr, bool forceredraw )
         {
             if (levelbmp != null)                               // bitmap on this level, use it for the children
             {
                 usebmp = levelbmp;
                 area = new Rectangle(0, 0, Width, Height);      // restate area in terms of bitmap
+                gr = Graphics.FromImage(usebmp);        // get graphics for it
+                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
             }
 
-            System.Diagnostics.Debug.WriteLine("Redraw {0} to {1}", Name, area);
+            bool redrawn = false;
 
-            if (BackColor != Color.Transparent)
+            if (NeedRedraw || forceredraw)          // if we need a redraw, or we are forced to draw by a parent redrawing above us.
             {
-                using (Graphics gr = Graphics.FromImage(usebmp))
+                System.Diagnostics.Debug.WriteLine("Redraw {0} to {1}", Name, area);
+
+                if (BackColor != Color.Transparent)
                 {
-                    gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
                     using (Brush b = new SolidBrush(BackColor))
                         gr.FillRectangle(b, area);
                 }
 
+                if (BorderColor != Color.Transparent)
+                {
+                    Rectangle rectarea = new Rectangle(area.Left + Margin.Left,
+                                                    area.Top + Margin.Top,
+                                                    area.Width - Margin.TotalWidth - 1,
+                                                    area.Height - Margin.TotalHeight - 1);
+
+                    using (var p = new Pen(BorderColor, BorderWidth))
+                    {
+                        gr.DrawRectangle(p, rectarea);
+                    }
+                }
+
+                foreach (var c in children)
+                {
+                    Rectangle controlarea = new Rectangle(area.Left + c.Left,
+                                                            area.Top + c.Top,
+                                                            c.Width, c.Height);
+                    // child, redraw using this bitmap, in this area of the bitmap
+                    c.Redraw(usebmp, controlarea, gr, true);
+                }
+
+                Paint(usebmp, area, gr);
+
+                NeedRedraw = false;
+                redrawn = true;
+            }
+            else
+            {                                                           // we don't require a redraw, but the children might
+                foreach (var c in children)
+                {
+                    Rectangle controlarea = new Rectangle(area.Left + c.Left,
+                                                            area.Top + c.Top,
+                                                            c.Width, c.Height);
+                    // child, redraw using this bitmap, in this area of the bitmap
+                    redrawn |= c.Redraw(usebmp, controlarea, gr, false);
+                }
             }
 
-            foreach (var c in children)
-            {
-                // child, redraw using this bitmap, in this area of the bitmap
-                c.Redraw(usebmp, new Rectangle(area.Left + c.Left, area.Top + c.Top, c.Width, c.Height));
-            }
+            if (levelbmp != null)                               // bitmap on this level, we made a GR, dispose
+                gr.Dispose();
 
-            Paint(usebmp, area);
-            NeedRedraw = false;
+            return redrawn;
         }
 
-        public virtual void Paint(Bitmap bmp, Rectangle area)
+
+        // overrides
+
+        public virtual void Paint(Bitmap bmp, Rectangle area, Graphics gr)
         {
             System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
         }
 
-        public virtual void AdjustSize(Rectangle area)
+        public virtual void OnMouseLeave(MouseEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("leave " + Name + " " + e.Location);
+            MouseLeave?.Invoke(e);
+
+            if (InvalidateOnEnterLeave)
+                Invalidate();
+        }
+        public virtual void OnMouseEnter(MouseEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("enter " + Name + " " + e.Location);
+            MouseEnter?.Invoke(e);
+
+            if (InvalidateOnEnterLeave)
+                Invalidate();
         }
 
-        public void Add(GLBaseControl other)
+        public virtual void OnMouseUp(MouseEventArgs e)
         {
-            children.Add(other);
-
-            if (this is GLForm) // if adding to a form, the child must have a bitmap
-                other.levelbmp = new Bitmap(other.Width, other.Height);
-
-            SetRedraw();
+            System.Diagnostics.Debug.WriteLine("up   " + Name + " " + e.Location + " " + e.Button);
+            MouseUp?.Invoke(e);
+        }
+        public virtual void OnMouseDown(MouseEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
+            MouseDown?.Invoke(e);
         }
 
-        public void Remove(GLBaseControl other)
+        public virtual void OnMouseClick(MouseEventArgs e)
         {
-            if (other.levelbmp != null)
-                other.levelbmp.Dispose();
-
-            children.Remove(other);
-
-            SetRedraw();
+            System.Diagnostics.Debug.WriteLine("click " + Name + " " + e.Button + " " + e.Clicks + " " + e.Location );
+            MouseClick?.Invoke(e);
         }
 
+        public virtual void OnMouseMove(MouseEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
+            MouseMove?.Invoke(e);
+        }
     }
 }

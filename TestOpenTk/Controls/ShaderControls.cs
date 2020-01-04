@@ -148,6 +148,10 @@ namespace TestOpenTk
             ptop.Position = new Rectangle(100, 100, 500, 500);
             ptop.BackColor = Color.Red;
             ptop.Name = "paneltop";
+            ptop.Margin = new Margin(2);
+            ptop.BorderColor = Color.White;
+            ptop.BorderWidth = 1;
+            ptop.Padding = new OpenTKUtils.GL4.Controls.Padding(2);
             form.Add(ptop);
 
             GLPanel p2 = new GLPanel();
@@ -164,9 +168,15 @@ namespace TestOpenTk
             p3.BackColor = Color.Yellow;
             ptop.Add(p3);
 
+            GLButton b1 = new GLButton();
+            b1.Location = new Point(5, 5);
+            b1.Size = new Size(100, 25);
+            b1.BackColor = Color.Gray;
+            b1.Name = "B1";
+            p2.Add(b1);
 
             GLPanel ptop2 = new GLPanel();
-            ptop2.Position = new Rectangle(700, 100, 400, 400);
+            ptop2.Position = new Rectangle(601, 400, 400, 400);
             ptop2.BackColor = Color.Blue;
             ptop2.Name = "paneltop2";
             form.Add(ptop2);
@@ -176,13 +186,13 @@ namespace TestOpenTk
             p2a.Dock = GLBaseControl.DockingType.Top;
             p2a.DockPercent = 0.25f;
             p2a.BackColor = Color.Green;
-            p2a.Name = "P2";
+            p2a.Name = "P2A";
             ptop2.Add(p2a);
 
             GLPanel p3a = new GLPanel();
             p3a.Dock = GLBaseControl.DockingType.Bottom;
             p3a.DockPercent = 0.10f;
-            p3a.Name = "P3";
+            p3a.Name = "P3A";
             p3a.BackColor = Color.Yellow;
             ptop2.Add(p3a);
 
@@ -217,6 +227,8 @@ namespace TestOpenTk
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, gl3dcontroller.glControl.Width, gl3dcontroller.glControl.Height);        // set the matrix unform block to the controller 3d matrix calc.
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
+
+            // somehow kick this off..
             form.Render(gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
@@ -225,7 +237,7 @@ namespace TestOpenTk
         private void SystemTick(object sender, EventArgs e)
         {
             var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
-            if (cdmt.AnythingChanged)
+            if (cdmt.AnythingChanged || form.RequestRender)
             {
                 gl3dcontroller.Redraw();
             }
