@@ -26,10 +26,10 @@ namespace OpenTKUtils.GL4
     {
         protected GLTextureBase()
         {
-            Id = -1;
         }
 
-        public int Id { get; protected set; }
+        public int Id { get; protected set; } = -1;
+        public long ArbId { get { if (arbid == -1) GetARBID(); return arbid; } }        // ARB is only acquired after getting it the first time
 
         public int Width { get; protected set; } = 0;           // W/H is always the width/height of the first bitmap in z=0.
         public int Height { get; protected set; } = 1;
@@ -70,10 +70,24 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
+        private long arbid = -1;
+
+        private void GetARBID()     // if you want bindless textures, use ArbId to get the arb handle
+        {
+            arbid = OpenTK.Graphics.OpenGL.GL.Arb.GetTextureHandle(Id);
+            OpenTK.Graphics.OpenGL.GL.Arb.MakeTextureHandleResident(arbid);     // can't do this twice!
+        }
+
         public void Dispose()           // you can double dispose.
         {
             if (Id != -1)
             {
+                if (arbid != -1)        // if its been arb'd, de-arb it
+                {
+                    OpenTK.Graphics.OpenGL.GL.Arb.MakeTextureHandleNonResident(arbid);     // can't do this twice!
+                    arbid = -1;
+                }
+
                 GL.DeleteTexture(Id);
                 Id = -1;
 

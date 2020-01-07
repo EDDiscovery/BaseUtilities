@@ -65,14 +65,14 @@ namespace OpenTKUtils.GL4
         {
             foreach (var d in renderables)
             {
-                System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
+                //System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
                 d.Key.Start();       // start the program
 
                 foreach (var g in d.Value)
                 {
                     if (g.Value != null)  // may have added a null renderable item if its a compute shader.
                     {
-                        System.Diagnostics.Debug.WriteLine("Render " + g.Key);
+                        //System.Diagnostics.Debug.WriteLine("Render " + g.Key);
                         g.Value.Bind(d.Key, c);
                         g.Value.Render();
                     }

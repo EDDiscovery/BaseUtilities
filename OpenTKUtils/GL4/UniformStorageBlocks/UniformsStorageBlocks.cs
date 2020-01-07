@@ -82,13 +82,12 @@ namespace OpenTKUtils.GL4
 
             for (int i = 0; i < textures.Length; i++)
             {
-                long arbid = OpenTK.Graphics.OpenGL.GL.Arb.GetTextureHandle(textures[i].Id);
-                OpenTK.Graphics.OpenGL.GL.Arb.MakeTextureHandleResident(arbid);
-                MapWrite(ref p, arbid);
+                MapWrite(ref p, textures[i].ArbId);     // possibly get then store the arb id
                 MapWrite(ref p, (long)0);       // as the int has the same stride as a vec4 (16 bytes)
             }
 
             UnMap();
+            OpenTKUtils.GLStatics.Check();
         }
     }
 }

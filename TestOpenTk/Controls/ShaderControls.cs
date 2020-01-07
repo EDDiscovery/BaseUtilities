@@ -143,6 +143,7 @@ namespace TestOpenTk
 
             form = new GLForm(gl3dcontroller.glControl);
             form.Name = "form";
+            form.SuspendLayout();
 
             GLPanel ptop = new GLPanel();
             ptop.Position = new Rectangle(100, 100, 500, 500);
@@ -170,16 +171,49 @@ namespace TestOpenTk
 
             GLButton b1 = new GLButton();
             b1.Location = new Point(5, 5);
-            b1.Size = new Size(100, 25);
+            b1.Size = new Size(100, 15);
             b1.BackColor = Color.Gray;
             b1.Name = "B1";
+            b1.Text = "Button 1";
+            b1.AutoSize = true;
+            b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
             p2.Add(b1);
+
+            GLButton b2 = new GLButton();
+            b2.Location = new Point(5, 30);
+            b2.Size = new Size(100, 15);
+            b2.BackColor = Color.Gray;
+            b2.Name = "B2";
+            b2.Image = Properties.Resources.ImportSphere;
+            b2.ImageAlign = ContentAlignment.MiddleLeft;
+            b2.TextAlign = ContentAlignment.MiddleRight;
+            b2.Text = "Button 2";
+            b2.AutoSize = true;
+            
+            p2.Add(b2);
+
+            GLCheckBox cb1 = new GLCheckBox();
+            cb1.Location = new Point(5, 70);
+            cb1.Size = new Size(130, 20);
+            cb1.BackColor = Color.Transparent;
+            cb1.Name = "CB1";
+            cb1.Text = "Check Box 1";
+            cb1.AutoCheck = true;
+            cb1.CheckChanged += (c,ev)=> { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
+            p2.Add(cb1);
 
             GLPanel ptop2 = new GLPanel();
             ptop2.Position = new Rectangle(601, 400, 400, 400);
             ptop2.BackColor = Color.Blue;
             ptop2.Name = "paneltop2";
             form.Add(ptop2);
+
+            GLImage i1 = new GLImage();
+            i1.Image = Properties.Resources.dotted;
+            i1.Location = new Point(10, 120);
+            i1.Size = new Size(200, 200);
+            i1.Name = "I1";
+            ptop2.Add(i1);
 
 
             GLPanel p2a = new GLPanel();
@@ -218,7 +252,7 @@ namespace TestOpenTk
             ////p1.Add(i1);
             ////p1.Add(i2);
 
-            form.PerformLayout();
+            form.ResumeLayout();
         }
 
 

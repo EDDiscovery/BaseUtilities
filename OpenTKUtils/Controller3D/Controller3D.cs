@@ -62,21 +62,34 @@ namespace OpenTKUtils.Common
 
         public void CreateGLControl()
         {
-            this.glControl = new GLControl();
-            this.glControl.Dock = DockStyle.Fill;
-            this.glControl.BackColor = System.Drawing.Color.Black;
-            this.glControl.Name = "glControl";
-            this.glControl.TabIndex = 0;
-            this.glControl.VSync = true;
-            this.glControl.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseDown);
-            this.glControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseMove);
-            this.glControl.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseUp);
-            this.glControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl_OnMouseWheel);
-            this.glControl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
-            this.glControl.KeyDown += new KeyEventHandler(keyboard.KeyDown);
-            this.glControl.KeyUp += new KeyEventHandler(keyboard.KeyUp);
-            this.glControl.Resize += GlControl_Resize;
+            this.glControl = CreateGLClass();
+            RegisterHandlersTo(this.glControl);
         }
+
+        public void RegisterHandlersTo(OpenTK.GLControl gl)
+        { 
+            gl.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseDown);
+            gl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseMove);
+            gl.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseUp);
+            gl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl_OnMouseWheel);
+            gl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
+            gl.KeyDown += new KeyEventHandler(keyboard.KeyDown);
+            gl.KeyUp += new KeyEventHandler(keyboard.KeyUp);
+            gl.Resize += GlControl_Resize;
+        }
+
+        OpenTK.GLControl CreateGLClass()
+        {
+            OpenTK.GLControl gl;
+            gl = new GLControl();
+            gl.Dock = DockStyle.Fill;
+            gl.BackColor = System.Drawing.Color.Black;
+            gl.Name = "glControl";
+            gl.TabIndex = 0;
+            gl.VSync = true;
+            return gl;
+        }
+
 
         public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
         {

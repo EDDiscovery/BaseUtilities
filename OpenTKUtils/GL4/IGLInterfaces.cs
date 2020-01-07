@@ -45,6 +45,7 @@ namespace OpenTKUtils.GL4
     public interface IGLTexture : IDisposable               // all textures from this..
     {
         int Id { get; }
+        long ArbId { get; }
         int Width { get; }                                  // primary width of mipmap level 0 bitmap on first array entry
         int Height { get; }
         void Bind(int bindingpoint);                        // textures have a chance to bind themselves, called either by instance data (if per object texture) or by shader (either internally or via StartAction)

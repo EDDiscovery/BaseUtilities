@@ -53,6 +53,8 @@ namespace OpenTKUtils.GL4.Controls
             gc.MouseUp += Gc_MouseUp;
             gc.MouseEnter += Gc_MouseEnter;
             gc.MouseLeave += Gc_MouseLeave;
+
+            Font = new Font("Microsoft Sans Serif", 8.25f);
         }
 
         const int cperv = 2;
@@ -107,15 +109,15 @@ namespace OpenTKUtils.GL4.Controls
                 tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles, and the dictionary does not guarantee this
             }
 
+            vertexes.UnMap();
+            OpenTKUtils.GLStatics.Check();
+
             ri.DrawCount = children.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
 
             texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..
 
-            vertexes.UnMap();
-
             RequestRender = true;
 
-            OpenTKUtils.GLStatics.Check();
             //float[] d = vertexes.ReadFloats(0, children.Count * 4 * cperv);
         }
 
@@ -123,6 +125,9 @@ namespace OpenTKUtils.GL4.Controls
 
         public void Render(Common.MatrixCalc mc)
         {
+            System.Diagnostics.Debug.WriteLine("Form redraw start");
+            DebugWhoWantsRedraw();
+
             foreach (var c in children)
             {
                 bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), null , false);      // see if redraw done
@@ -133,6 +138,8 @@ namespace OpenTKUtils.GL4.Controls
                 }
             }
 
+            NeedRedraw = false;
+
             shader.Start();
             ri.Bind(shader, mc);                    // binds VA AND the element buffer
             GLStatics.PrimitiveRestart(true, 0xff);
@@ -142,6 +149,8 @@ namespace OpenTKUtils.GL4.Controls
             GL.BindProgramPipeline(0);
 
             RequestRender = false;
+            System.Diagnostics.Debug.WriteLine("Form redraw end");
+            DebugWhoWantsRedraw();
         }
 
         GLBaseControl currentmouseover = null;
@@ -151,7 +160,8 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentmouseover != null)
             {
-                currentmouseover.MouseButtonDown = currentmouseover.Hover = false;
+                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+                currentmouseover.Hover = false;
                 currentmouseover.OnMouseLeave(new MouseEventArgs(new Point(0, 0)));
                 currentmouseover = null;
             }
@@ -168,8 +178,10 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentmouseover != null)
             {
-                currentmouseover.Hover = currentmouseover.MouseButtonDown = false;
-                currentmouseover.OnMouseLeave(new MouseEventArgs(new Point(0, 0)));
+                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+                currentmouseover.Hover = false;
+                if (currentmouseover.Enabled)
+                    currentmouseover.OnMouseLeave(new MouseEventArgs(new Point(0, 0)));
                 currentmouseover = null;
             }
 
@@ -180,45 +192,74 @@ namespace OpenTKUtils.GL4.Controls
             if (currentmouseover != null)
             {
                 currentmouseoverlocation = currentmouseover.FormCoords();
-                System.Diagnostics.Debug.WriteLine("Set mouse over loc " + currentmouseoverlocation);
+                //System.Diagnostics.Debug.WriteLine("Set mouse over loc " + currentmouseoverlocation);
                 currentmouseover.Hover = true;
-                currentmouseover?.OnMouseEnter(new MouseEventArgs(new Point(relcurpos.X - currentmouseoverlocation.X, relcurpos.Y - currentmouseoverlocation.Y)));
+                if (currentmouseover.Enabled)
+                    currentmouseover.OnMouseEnter(new MouseEventArgs(new Point(relcurpos.X - currentmouseoverlocation.X, relcurpos.Y - currentmouseoverlocation.Y)));
             }
         }
 
         private void Gc_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            currentmouseover.MouseButtonDown = false;
-            currentmouseover?.OnMouseUp(new MouseEventArgs((int)e.Button, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+
+            if (currentmouseover.Enabled)
+            {
+                MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
+
+                currentmouseover.OnMouseUp(new MouseEventArgs(b, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            }
         }
 
         private void Gc_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            currentmouseover.MouseButtonDown = true;
-            currentmouseover?.OnMouseDown(new MouseEventArgs((int)e.Button, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            var x = e.Button;
+            if (currentmouseover.Enabled)
+            {
+                MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
+
+                currentmouseover.MouseButtonsDown = b;
+
+                currentmouseover.OnMouseDown(new MouseEventArgs(b, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            }
         }
 
         private void Gc_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            currentmouseover?.OnMouseClick(new MouseEventArgs((int)e.Button, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            if (currentmouseover.Enabled)
+            {
+                MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
+                    (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
+
+                currentmouseover.OnMouseClick(new MouseEventArgs(b, new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y), e.Clicks));
+            }
         }
 
         private void Gc_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
+            System.Diagnostics.Debug.Assert(c != null);     // always returns something, even if its the form
 
             if (c != currentmouseover )
             {
                 if (currentmouseover != null)
                 {
-                    if ( currentmouseover.MouseButtonDown )   // click and drag, can't change control while mouse is down
+                    if ( currentmouseover.MouseButtonsDown != MouseEventArgs.MouseButtons.None )   // click and drag, can't change control while mouse is down
                     {
-                        currentmouseover.OnMouseMove(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
+                        if (currentmouseover.Enabled)
+                            currentmouseover.OnMouseMove(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
                         return;
                     }
 
                     currentmouseover.Hover = false;
-                    currentmouseover.OnMouseLeave(new MouseEventArgs(new Point(0, 0)));
+
+                    if (currentmouseover.Enabled)
+                        currentmouseover.OnMouseLeave(new MouseEventArgs(new Point(0, 0)));
                 }
 
                 currentmouseover = c;
@@ -227,15 +268,15 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     currentmouseover.Hover = true;
                     currentmouseoverlocation = currentmouseover.FormCoords();
-                    System.Diagnostics.Debug.WriteLine("2Set mouse over loc " + currentmouseoverlocation);
-                    currentmouseover?.OnMouseEnter(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
+                    //System.Diagnostics.Debug.WriteLine("2Set mouse over loc " + currentmouseoverlocation);
+
+                    if (currentmouseover.Enabled)
+                        currentmouseover.OnMouseEnter(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
                 }
             }
 
-            if ( currentmouseover != null )
-            {
-                currentmouseover?.OnMouseMove(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
-            }
+            if (currentmouseover.Enabled)
+                currentmouseover.OnMouseMove(new MouseEventArgs(new Point(e.X - currentmouseoverlocation.X, e.Y - currentmouseoverlocation.Y)));
         }
 
     }

@@ -123,6 +123,16 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ImportSphere {
+            get {
+                object obj = ResourceManager.GetObject("ImportSphere", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap lensflare_white40 {
             get {
                 object obj = ResourceManager.GetObject("lensflare_white40", resourceCulture);

@@ -56,6 +56,7 @@
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
     <Compile Include="GL4\BasicTypes\GLStatics4.cs" />
+    <Compile Include="GL4\Controls\ControlCheckBox.cs" />
     <Compile Include="GL4\Controls\ControlButton.cs" />
     <Compile Include="GL4\Controls\ControlPanel.cs" />
     <Compile Include="GL4\Controls\ControlImage.cs" />
