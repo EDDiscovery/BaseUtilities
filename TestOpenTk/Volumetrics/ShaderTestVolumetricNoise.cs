@@ -16,7 +16,8 @@ namespace TestOpenTk
 {
     public partial class ShaderTestVolumetricNoise : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
@@ -24,11 +25,7 @@ namespace TestOpenTk
         {
             InitializeComponent();
 
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -74,6 +71,8 @@ namespace TestOpenTk
 
             //GLStatics.EnableDebug(DebugProc);
 
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
             gl3dcontroller.ZoomDistance = 5000F;
@@ -85,7 +84,7 @@ namespace TestOpenTk
             };
 
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            gl3dcontroller.Start(new Vector3(0, 0, -35000), new Vector3(135f, 0, 0), 0.31622F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, -35000), new Vector3(135f, 0, 0), 0.31622F);
 
             items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
@@ -250,7 +249,7 @@ namespace TestOpenTk
             p.Run();
         }
 
-        private void ControllerDraw(MatrixCalc mc, long time)
+        private void ControllerDraw(GLMatrixCalc mc, long time)
         {
             items.Get<GLMatrixCalcUniformBlock>("MCUB").Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 

@@ -28,7 +28,7 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public int Set(MatrixCalc c, Vector4[] boundingbox, float slicesize) // return slices to show
+        public int Set(GLMatrixCalc c, Vector4[] boundingbox, float slicesize) // return slices to show
         {
             if (NotAllocated)
                 Allocate(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment, not important to get precise

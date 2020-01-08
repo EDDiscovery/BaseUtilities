@@ -17,9 +17,9 @@ using OpenTK;
 using System;
 using System.Diagnostics;
 
-namespace OpenTKUtils.Common
+namespace OpenTKUtils
 {
-    public class MatrixCalc
+    public class GLMatrixCalc
     {
         public bool InPerspectiveMode { get; set; } = true;                     // perspective mode
 
@@ -67,7 +67,7 @@ namespace OpenTKUtils.Common
             ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);        // order order order ! so important.
         }
 
-        // used for calculating positions on the screen from pixel positions
+        // used for calculating positions on the screen from pixel positions.  Remembering Apollo
         public Matrix4 GetResMat
         {
             get

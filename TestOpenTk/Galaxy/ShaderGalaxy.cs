@@ -17,7 +17,8 @@ namespace TestOpenTk
 {
     public partial class ShaderGalaxy : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
@@ -25,11 +26,7 @@ namespace TestOpenTk
         {
             InitializeComponent();
 
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -50,7 +47,7 @@ namespace TestOpenTk
             items.Dispose();
         }
 
-        private void ControllerDraw(MatrixCalc mc, long time)
+        private void ControllerDraw(GLMatrixCalc mc, long time)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
@@ -76,10 +73,12 @@ namespace TestOpenTk
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
 
+            gl3dcontroller = new Controller3D();
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
             gl3dcontroller.ZoomDistance = 5000F;
             gl3dcontroller.EliteMovement = true;
+            gl3dcontroller.PaintObjects = ControllerDraw;
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
@@ -87,7 +86,7 @@ namespace TestOpenTk
             };
 
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            gl3dcontroller.Start(new Vector3(0, 0,10000), new Vector3(140.75f, 0, 0), 0.5F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0,10000), new Vector3(140.75f, 0, 0), 0.5F);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 

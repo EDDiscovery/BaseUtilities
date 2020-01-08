@@ -66,7 +66,7 @@ namespace OpenTKUtils.GL4
             InstanceCount = ic;
         }
 
-        public void Bind(IGLProgramShader shader, Common.MatrixCalc c)      // called by Render() to bind data to GL, vertex and InstanceData
+        public void Bind(IGLProgramShader shader, GLMatrixCalc c)      // called by Render() to bind data to GL, vertex and InstanceData
         {
             VertexArray?.Bind();
             InstanceControl?.Bind(shader,this,c);

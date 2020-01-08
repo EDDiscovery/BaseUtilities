@@ -61,7 +61,7 @@ namespace OpenTKUtils.GL4
 
         public bool Contains(string key) { return renderables.ContainsKey(key); }
 
-        public void Render(Common.MatrixCalc c)
+        public void Render(GLMatrixCalc c)
         {
             foreach (var d in renderables)
             {

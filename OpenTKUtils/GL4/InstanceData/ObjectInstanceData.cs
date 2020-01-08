@@ -89,7 +89,7 @@ namespace OpenTKUtils.GL4
             System.Diagnostics.Debug.WriteLine("Transform " + transform);
         }
 
-        public virtual void Bind(IGLProgramShader shader, IGLRenderableItem ri, Common.MatrixCalc c)
+        public virtual void Bind(IGLProgramShader shader, IGLRenderableItem ri, GLMatrixCalc c)
         {
             GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, TransformUniform, false, ref transform);
 

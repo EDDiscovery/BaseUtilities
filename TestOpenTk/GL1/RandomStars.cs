@@ -18,7 +18,8 @@ namespace TestOpenTk
 {
     public partial class RandomStars : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
@@ -26,11 +27,7 @@ namespace TestOpenTk
         {
             InitializeComponent();
 
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = Draw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -81,7 +78,9 @@ namespace TestOpenTk
 
             datasets.Add(smalldatasetGrid);
 
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.PaintObjects = Draw;
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 float zoomlimited = Math.Min(Math.Max(gl3dcontroller.Zoom.Current, 0.01F), 15.0F);
@@ -91,7 +90,7 @@ namespace TestOpenTk
         }
 
    
-        private void Draw(MatrixCalc mc, long time)
+        private void Draw(GLMatrixCalc mc, long time)
         {
             GL.MatrixMode(MatrixMode.Projection);           // Select the project matrix for the following operations (current matrix)
             Matrix4 pm = mc.ProjectionMatrix;
@@ -101,7 +100,7 @@ namespace TestOpenTk
             GL.LoadMatrix(ref mm);                          // set the model view to this matrix.
 
             foreach (var ds in datasets)
-                ds.DrawAll(gl3dcontroller.glControl);
+                ds.DrawAll(glwfc.glControl);
         }
 
         private void SystemTick(object sender, EventArgs e )

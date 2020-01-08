@@ -52,19 +52,6 @@ namespace OpenTKUtils.GL4.Controls
         public override int GetHashCode() { return base.GetHashCode(); }
     };
 
-    public struct MouseEventArgs
-    {
-        [System.Flags]
-        public enum MouseButtons { None = 0, Left =1, Middle=2, Right=4, };
-
-        public MouseEventArgs(Point l) { Button = MouseButtons.None;Location = l;Clicks = 0;  }
-        public MouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c; }
-
-        public MouseButtons Button { get; set; }
-        public Point Location { get; set; }
-        public int Clicks { get; set; }
-    }
-
     public enum CheckState { Unchecked, Checked, Indeterminate };
 
     public enum Appearance
@@ -107,6 +94,8 @@ namespace OpenTKUtils.GL4.Controls
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
+        public virtual bool Focused { get { return false; } }
+
         public int Row { get { return row; } set { row = value; InvalidateLayoutParent(); } }
         public int Column { get { return column; } set { column = value; InvalidateLayoutParent(); } }
 
@@ -118,12 +107,15 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLForm FindForm() { return this is GLForm ? this as GLForm: parent?.FindForm(); }
 
-        public Action<GLBaseControl, MouseEventArgs> MouseDown { get; set; } = null;
-        public Action<GLBaseControl, MouseEventArgs> MouseUp { get; set; } = null;
-        public Action<GLBaseControl, MouseEventArgs> MouseMove { get; set; } = null;
-        public Action<GLBaseControl, MouseEventArgs> MouseEnter { get; set; } = null;
-        public Action<GLBaseControl, MouseEventArgs> MouseLeave { get; set; } = null;
-        public Action<GLBaseControl, MouseEventArgs> MouseClick { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseDown { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseUp { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseMove { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseEnter { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseLeave { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseClick { get; set; } = null;
+        public Action<Object, MouseEventArgs> MouseWheel { get; set; } = null;
+        public Action<Object, KeyEventArgs> KeyDown { get; set; } = null;
+        public Action<Object, KeyEventArgs> KeyUp { get; set; } = null;
 
         public Bitmap GetBitmap() { return levelbmp ?? parent.GetBitmap(); }
 
@@ -500,7 +492,25 @@ namespace OpenTKUtils.GL4.Controls
         public virtual void OnMouseMove(MouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
-            MouseMove?.Invoke(this,e);
+            MouseMove?.Invoke(this, e);
+        }
+
+        public virtual void OnMouseWheel(MouseEventArgs e)
+        {
+            //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
+            MouseWheel?.Invoke(this, e);
+        }
+
+        public virtual void OnKeyDown(KeyEventArgs e)
+        {
+            //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
+            KeyDown?.Invoke(this, e);
+        }
+
+        public virtual void OnKeyUp(KeyEventArgs e)
+        {
+            //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
+            KeyUp?.Invoke(this, e);
         }
     }
 }

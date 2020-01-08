@@ -99,6 +99,8 @@
     <Compile Include="GL4\UniformStorageBlocks\MatrixCalcUniformBlock.cs" />
     <Compile Include="GL4\UniformStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />
+    <Compile Include="GL\GLClasses.cs" />
+    <Compile Include="GL\GLWinFormControl.cs" />
     <Compile Include="GL\GLVector2Statics.cs" />
     <Compile Include="GL\GLVector3Statics.cs" />
     <Compile Include="GL\GLVector4Statics.cs" />
@@ -106,7 +108,7 @@
     <Compile Include="MCZF\Camera.cs" />
     <Compile Include="MCZF\CameraDirectionMovementTracker.cs" />
     <Compile Include="MCZF\Fov.cs" />
-    <Compile Include="Controller3D\MatrixCalc.cs" />
+    <Compile Include="GL\GLMatrixCalc.cs" />
     <Compile Include="MCZF\Position.cs" />
     <Compile Include="Controller3D\Controller3D.cs" />
     <Compile Include="MCZF\Zoom.cs" />

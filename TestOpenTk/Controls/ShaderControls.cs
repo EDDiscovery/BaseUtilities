@@ -18,7 +18,8 @@ namespace TestOpenTk
 {
     public partial class ShaderControls : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
@@ -26,11 +27,7 @@ namespace TestOpenTk
         {
             InitializeComponent();
 
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -62,23 +59,6 @@ namespace TestOpenTk
         {
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
-
-            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
-            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
-            gl3dcontroller.ZoomDistance = 5000F;
-            gl3dcontroller.EliteMovement = true;
-
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
-            {
-                return (float)ms * 10.0f;
-            };
-
-            GL.GetInteger(GetPName.MaxTextureImageUnits, out int t1);
-
-            System.Diagnostics.Debug.Assert(GLStatics.HasExtensions("GL_ARB_bindless_texture"));
-
-            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            gl3dcontroller.Start(new Vector3(0, 0,10000), new Vector3(140.75f, 0, 0), 0.5F);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
@@ -141,9 +121,15 @@ namespace TestOpenTk
 
             }
 
-            form = new GLForm(gl3dcontroller.glControl);
+            form = new GLForm(glwfc);       // hook form to the window - its the master
             form.Name = "form";
             form.SuspendLayout();
+            form.Paint += (o) =>
+            {
+                GLMatrixCalc mc = new GLMatrixCalc();       // form does not use the matrix calc values, only width/height, so it can be anything
+                ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(mc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+                form.Render(mc);
+            };
 
             GLPanel ptop = new GLPanel();
             ptop.Position = new Rectangle(100, 100, 500, 500);
@@ -189,7 +175,7 @@ namespace TestOpenTk
             b2.TextAlign = ContentAlignment.MiddleRight;
             b2.Text = "Button 2";
             b2.AutoSize = true;
-            
+
             p2.Add(b2);
 
             GLCheckBox cb1 = new GLCheckBox();
@@ -199,7 +185,7 @@ namespace TestOpenTk
             cb1.Name = "CB1";
             cb1.Text = "Check Box 1";
             cb1.AutoCheck = true;
-            cb1.CheckChanged += (c,ev)=> { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
+            cb1.CheckChanged += (c, ev) => { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
             p2.Add(cb1);
 
             GLPanel ptop2 = new GLPanel();
@@ -216,19 +202,19 @@ namespace TestOpenTk
             ptop2.Add(i1);
 
 
-            GLPanel p2a = new GLPanel();
-            p2a.Dock = GLBaseControl.DockingType.Top;
-            p2a.DockPercent = 0.25f;
-            p2a.BackColor = Color.Green;
-            p2a.Name = "P2A";
-            ptop2.Add(p2a);
+            //GLPanel p2a = new GLPanel();
+            //p2a.Dock = GLBaseControl.DockingType.Top;
+            //p2a.DockPercent = 0.25f;
+            //p2a.BackColor = Color.Green;
+            //p2a.Name = "P2A";
+            //ptop2.Add(p2a);
 
-            GLPanel p3a = new GLPanel();
-            p3a.Dock = GLBaseControl.DockingType.Bottom;
-            p3a.DockPercent = 0.10f;
-            p3a.Name = "P3A";
-            p3a.BackColor = Color.Yellow;
-            ptop2.Add(p3a);
+            //GLPanel p3a = new GLPanel();
+            //p3a.Dock = GLBaseControl.DockingType.Bottom;
+            //p3a.DockPercent = 0.10f;
+            //p3a.Name = "P3A";
+            //p3a.BackColor = Color.Yellow;
+            //ptop2.Add(p3a);
 
 
             //GLPanel p4 = new GLPanel();
@@ -253,40 +239,43 @@ namespace TestOpenTk
             ////p1.Add(i2);
 
             form.ResumeLayout();
+
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
+            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
+            gl3dcontroller.ZoomDistance = 5000F;
+            gl3dcontroller.EliteMovement = true;
+            gl3dcontroller.PaintObjects = ControllerDraw;
+
+            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            {
+                return (float)ms * 10.0f;
+            };
+
+            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
+            gl3dcontroller.Start(form, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);     // HOOK the 3dcontroller to the form so it gets Form events
+
         }
 
 
-        private void ControllerDraw(MatrixCalc mc, long time)
+        private void ControllerDraw(GLMatrixCalc mc, long time)
         {
-            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, gl3dcontroller.glControl.Width, gl3dcontroller.glControl.Height);        // set the matrix unform block to the controller 3d matrix calc.
+            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
-
-            // somehow kick this off..
-            form.Render(gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
-            if (cdmt.AnythingChanged || form.RequestRender)
-            {
-                gl3dcontroller.Redraw();
-            }
+            if (form.RequestRender)
+                glwfc.Invalidate();
+            var cdmt = gl3dcontroller.HandleKeyboard(true);
+            if (cdmt.AnythingChanged )
+                glwfc.Invalidate();
         }
 
-        private void OtherKeys(BaseUtils.KeyboardState kb)
-        {
-            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
-            {
-                int times = 1000;
-                System.Diagnostics.Debug.WriteLine("Start test");
-                long tickcount = gl3dcontroller.Redraw(times);
-                System.Diagnostics.Debug.WriteLine("Redraw {0} ms per {1}", tickcount, (float)tickcount/(float)times);
-            }
-        }
     }
 }
 

@@ -53,7 +53,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLRenderableItem                      // a renderable item inherits from this..
     {
-        void Bind(IGLProgramShader shader, Common.MatrixCalc c );                 // Bind to context
+        void Bind(IGLProgramShader shader,GLMatrixCalc c );                 // Bind to context
         void Render();                                      // and render - do the Draw.
         IGLInstanceControl InstanceControl { get; set; }    // may be null - no instance data/Control.  Allows instance data to be modified in the main program
         OpenTK.Graphics.OpenGL4.PrimitiveType PrimitiveType { get; set; }       // Draw type
@@ -63,7 +63,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLInstanceControl                     // to be attached to a rendableitem, instance control/data need to be based on this. Should not need to be disposable..
     {
-        void Bind(IGLProgramShader shader, IGLRenderableItem ri, Common.MatrixCalc c);  // called just before the item is drawn
+        void Bind(IGLProgramShader shader, IGLRenderableItem ri, GLMatrixCalc c);  // called just before the item is drawn
     }
 
 }

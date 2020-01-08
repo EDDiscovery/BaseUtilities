@@ -116,21 +116,21 @@ namespace BaseUtils
             hasbeenpressed.Clear();
         }
 
-        public void KeyDown(object sender, KeyEventArgs e)      // hook to handler
+        public void KeyDown(bool c, bool s, bool a, Keys keycode)      // hook to handler
         {
-            Ctrl = e.Control;
-            Alt = e.Alt;
-            Shift = e.Shift;
-            keyspressed[e.KeyCode] = SetShift(e.Control, e.Shift, e.Alt);
-            hasbeenpressed[e.KeyCode] = SetShift(e.Control, e.Shift, e.Alt);
+            Ctrl = c;
+            Alt = a;
+            Shift = s;
+            keyspressed[keycode] = SetShift(c,s,a);
+            hasbeenpressed[keycode] = SetShift(c, s, a);
         }
 
-        public void KeyUp(object sender, KeyEventArgs e)        // hook to handler
+        public void KeyUp(bool c, bool s, bool a, Keys keycode)      // hook to handler
         {
-            Ctrl = e.Control;
-            Alt = e.Alt;
-            Shift = e.Shift;
-            keyspressed.Remove(e.KeyCode);
+            Ctrl = c;
+            Alt = a;
+            Shift = s;
+            keyspressed.Remove(keycode);
         }
     }
 }

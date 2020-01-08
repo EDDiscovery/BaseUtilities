@@ -18,19 +18,15 @@ namespace TestOpenTk
 {
     public partial class ShaderTestGeoTest1 : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
         public ShaderTestGeoTest1()
         {
             InitializeComponent();
-
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -150,9 +146,11 @@ void main(void)
         {
             base.OnLoad(e);
 
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(170f, 0, 0f), 1F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(170f, 0, 0f), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
@@ -205,7 +203,7 @@ void main(void)
             items.Dispose();
         }
 
-        private void ControllerDraw(MatrixCalc mc, long time)
+        private void ControllerDraw(OpenTKUtils.GLMatrixCalc mc, long time)
         {
             // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
 

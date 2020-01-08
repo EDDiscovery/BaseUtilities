@@ -19,7 +19,8 @@ namespace TestOpenTk
 {
     public partial class ShaderTestMain : Form
     {
-        private Controller3D gl3dcontroller = new Controller3D();
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
@@ -27,11 +28,7 @@ namespace TestOpenTk
         {
             InitializeComponent();
 
-            this.glControlContainer.SuspendLayout();
-            gl3dcontroller.CreateGLControl();
-            this.glControlContainer.Controls.Add(gl3dcontroller.glControl);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-            this.glControlContainer.ResumeLayout();
+            glwfc = new OpenTKUtils.WinForm.GLWinFormControl(glControlContainer);
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
@@ -101,9 +98,11 @@ void main(void)
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
 
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.ZoomDistance = 20F;
-            gl3dcontroller.Start(new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
@@ -681,7 +680,7 @@ void main(void)
             items.Dispose();
         }
 
-        private void ControllerDraw(MatrixCalc mc, long time)
+        private void ControllerDraw(GLMatrixCalc mc, long time)
         {
             //System.Diagnostics.Debug.WriteLine("Draw");
 
@@ -716,7 +715,7 @@ void main(void)
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
-            mcub.Set(gl3dcontroller.MatrixCalc, gl3dcontroller.glControl.Width,gl3dcontroller.glControl.Height);
+            mcub.Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);
 
             rObjects.Render(gl3dcontroller.MatrixCalc);
 
@@ -724,7 +723,6 @@ void main(void)
 
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);
-            System.Diagnostics.Debug.WriteLine("{0} {1}" , gl3dcontroller.glControl.Width, gl3dcontroller.glControl.Height );
             for (int i = 0; i < databack.Length; i += 1)
             {
                // databack[i] = databack[i] / databack[i].W;

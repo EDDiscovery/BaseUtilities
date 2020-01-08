@@ -25,13 +25,14 @@ namespace OpenTKUtils.Common
 {
     // class brings together keyboard, mouse, posdir, zoom to provide a means to move thru the playfield and zoom.
     // handles keyboard actions and mouse actions to provide a nice method of controlling the 3d playfield
+    // Attaches to a GLWindowControl and hooks its events to provide control
 
     public class Controller3D
     {
         public float ZoomDistance { get { return Zoom.Zoom1Distance; } set { Zoom.Zoom1Distance = value; } }
 
-        public OpenTK.GLControl glControl { get; private set; }      // use to draw to
-
+        private GLWindowControl glwin;
+      
         public float ProjectionZNear { get; private set; }
 
         public Func<int, float> KeyboardTravelSpeed;                            // optional set to scale travel key commands given this time interval
@@ -42,67 +43,38 @@ namespace OpenTKUtils.Common
         public float MouseTranslateAmountAtZoom1PerPixel { get; set; } = 2.0f;  // per pixel movement at zoom 1
         public bool EliteMovement { get; set; } = true;
 
-        public Color BackColour { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");
-
-        public Action<MatrixCalc, long> PaintObjects;       // madatory if you actually want to see anything
-
-        public Action<MouseEventArgs> MouseDown;            // optional - set to handle more mouse actions if required
-        public Action<MouseEventArgs> MouseUp;
-        public Action<MouseEventArgs> MouseMove;
-        public Action<MouseEventArgs> MouseWheel;
+        public Action<GLMatrixCalc, long> PaintObjects;       // madatory if you actually want to see anything
 
         public int LastHandleInterval;                      // set after handlekeyboard, how long since previous one was handled in ms
 
-        public MatrixCalc MatrixCalc { get; private set; } = new MatrixCalc();
+        public GLMatrixCalc MatrixCalc { get; private set; } = new GLMatrixCalc();
         public Zoom Zoom { get; private set; } = new Zoom();
         public Position Pos { get; private set; } = new Position();
         public Camera Camera { get; private set; } = new Camera();
 
         public CameraDirectionMovementTracker MovementTracker { get; set; } = new CameraDirectionMovementTracker();        // these track movements and zoom
 
-        public void CreateGLControl()
+        public void Start(GLWindowControl win, Vector3 lookat, Vector3 cameradir, float zoomn)
         {
-            this.glControl = CreateGLClass();
-            RegisterHandlersTo(this.glControl);
-        }
+            glwin = win;
 
-        public void RegisterHandlersTo(OpenTK.GLControl gl)
-        { 
-            gl.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseDown);
-            gl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseMove);
-            gl.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseUp);
-            gl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl_OnMouseWheel);
-            gl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
-            gl.KeyDown += new KeyEventHandler(keyboard.KeyDown);
-            gl.KeyUp += new KeyEventHandler(keyboard.KeyUp);
-            gl.Resize += GlControl_Resize;
-        }
+            win.Resize += GlControl_Resize;
+            win.Paint += glControl_Paint;
+            win.MouseDown += glControl_MouseDown;
+            win.MouseUp += glControl_MouseUp;
+            win.MouseMove += glControl_MouseMove;
+            win.MouseWheel += glControl_MouseWheel;
+            win.KeyDown += glControl_KeyDown;
+            win.KeyUp += glControl_KeyUp;
 
-        OpenTK.GLControl CreateGLClass()
-        {
-            OpenTK.GLControl gl;
-            gl = new GLControl();
-            gl.Dock = DockStyle.Fill;
-            gl.BackColor = System.Drawing.Color.Black;
-            gl.Name = "glControl";
-            gl.TabIndex = 0;
-            gl.VSync = true;
-            return gl;
-        }
-
-
-        public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
-        {
             Pos.Lookat = lookat;
             Camera.Set(cameradir);
             Zoom.Current = zoomn;
             Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
             MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current); // set up here so ready for action.. below uses it.
 
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glControl.Width, glControl.Height);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
             SetModelProjectionMatrixViewPort();
-
-            GL.ClearColor(BackColour);
 
             sysinterval.Start();
         }
@@ -128,21 +100,21 @@ namespace OpenTKUtils.Common
         public void ChangePerspectiveMode(bool on)
         {
             MatrixCalc.InPerspectiveMode = on;
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glControl.Width, glControl.Height);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
             SetModelProjectionMatrixViewPort();
-            glControl.Invalidate();
+            glwin.Invalidate();
         }
 
         // Redraw scene, something has changed
 
-        public void Redraw() { glControl.Invalidate(); }            // invalidations causes a glControl_Paint
+        public void Redraw() { glwin.Invalidate(); }            // invalidations causes a glControl_Paint
 
         public long Redraw(int times)                               // for testing, redraw the scene N times and give ms 
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < times; i++)
-                glControl_Paint(null, null);
+                glControl_Paint(null);
             long time = sw.ElapsedMilliseconds;
             sw.Stop();
             return time;
@@ -157,7 +129,7 @@ namespace OpenTKUtils.Common
             LastHandleInterval = (int)(elapsed - lastintervalcount);
             lastintervalcount = elapsed;
 
-            if (activated && glControl.Focused)                      // if we can accept keys
+            if (activated && glwin.Focused)                      // if we can accept keys
             {
                 if (MatrixCalc.InPerspectiveMode)       // camera rotations are only in perspective mode
                 {
@@ -202,8 +174,8 @@ namespace OpenTKUtils.Common
 
             if (MovementTracker.AnythingChanged)
             {
-                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glControl.Width, glControl.Height);
-                glControl.Invalidate();
+                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
+                glwin.Invalidate();
             }
 
             return MovementTracker;
@@ -211,84 +183,65 @@ namespace OpenTKUtils.Common
 
         #region Implementation
 
-        private void GlControl_Resize(object sender, EventArgs e)           // there was a gate in the original around OnShown.. not sure why.
+        private void GlControl_Resize(object sender)           // there was a gate in the original around OnShown.. not sure why.
         {
             SetModelProjectionMatrixViewPort();
-            glControl.Invalidate();
+            glwin.Invalidate();
         }
 
         private void SetModelProjectionMatrixViewPort()
         {
-            MatrixCalc.CalculateProjectionMatrix(fov.Current, glControl.Width, glControl.Height, out float zn);
+            MatrixCalc.CalculateProjectionMatrix(fov.Current, glwin.Width, glwin.Height, out float zn);
             ProjectionZNear = zn;
-            GL.Viewport(0, 0, glControl.Width, glControl.Height);                        // Use all of the glControl painting area
+            GL.Viewport(0, 0, glwin.Width, glwin.Height);                        // Use all of the glControl painting area
         }
 
-        // Paint the scene, call the installed PaintObjects after setting up the buffer and standard settings.
+        // Paint the scene - just pass the call down to the installed PaintObjects
 
-        private void glControl_Paint(object sender, PaintEventArgs e)
+        private void glControl_Paint(Object obj)
         {
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            GL.FrontFace(FrontFaceDirection.Ccw);          
-            GLStatics.DefaultDepthTest();
-            GLStatics.DefaultCullFace();
-            GLStatics.DefaultPointSize();                               // default is controlled by external not shaders
-            GLStatics.DefaultBlend();
-            GLStatics.DefaultPointSize();
-            GLStatics.DefaultPrimitiveRestart();
-            // <gl3 GL.Enable(EnableCap.PointSmooth);                                               // removed as not gl4 compatible
-            //GL.Hint(HintTarget.PointSmoothHint, HintMode.Nicest);
-
             PaintObjects?.Invoke(MatrixCalc, sysinterval.ElapsedMilliseconds);
-
-            glControl.SwapBuffers();
         }
 
-        private void glControl_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+        private void glControl_MouseDown(object sender, MouseEventArgs e)
         {
             KillSlews();
 
             mouseDownPos.X = e.X;
             mouseDownPos.Y = e.Y;
 
-            if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Left))
+            if (e.Button.HasFlag(MouseEventArgs.MouseButtons.Left))
             {
                 mouseStartRotate.X = e.X;
                 mouseStartRotate.Y = e.Y;
             }
 
-            if (e.Button.HasFlag(System.Windows.Forms.MouseButtons.Right))
+            if (e.Button.HasFlag(MouseEventArgs.MouseButtons.Right))
             {
                 mouseStartTranslateXY.X = e.X;
                 mouseStartTranslateXY.Y = e.Y;
                 mouseStartTranslateXZ.X = e.X;
                 mouseStartTranslateXZ.Y = e.Y;
             }
-
-            MouseDown?.Invoke(e);
         }
 
-        private void glControl_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+        private void glControl_MouseUp(object sender, MouseEventArgs e)
         {
             bool notmovedmouse = Math.Abs(e.X - mouseDownPos.X) + Math.Abs(e.Y - mouseDownPos.Y) < 4;
 
             if (!notmovedmouse)     // if we moved it, its not a stationary click, ignore
                 return;
 
-
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)                    // right clicks are about bookmarks.
+            if (e.Button == MouseEventArgs.MouseButtons.Right)                    // right clicks are about bookmarks.
             {
                 mouseStartTranslateXY = new Point(int.MinValue, int.MinValue);         // indicate rotation is finished.
                 mouseStartTranslateXZ = new Point(int.MinValue, int.MinValue);
             }
-
-            MouseUp?.Invoke(e);
         }
 
-        private void glControl_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
+        private void glControl_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            if (e.Button == MouseEventArgs.MouseButtons.Left)
             {
                 if (MatrixCalc.InPerspectiveMode && mouseStartRotate.X != int.MinValue) // on resize double click resize, we get a stray mousemove with left, so we need to make sure we actually had a down event
                 {
@@ -303,7 +256,7 @@ namespace OpenTKUtils.Common
                     Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
                 }
             }
-            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            else if (e.Button == MouseEventArgs.MouseButtons.Right)
             {
                 if (mouseStartTranslateXY.X != int.MinValue)
                 {
@@ -319,7 +272,7 @@ namespace OpenTKUtils.Common
                     Pos.Translate(new Vector3(0, -dy * (1.0f / Zoom.Current) * MouseUpDownAmountAtZoom1PerPixel, 0));
                 }
             }
-            else if (e.Button == (System.Windows.Forms.MouseButtons.Left | System.Windows.Forms.MouseButtons.Right))
+            else if (e.Button == (MouseEventArgs.MouseButtons.Left | MouseEventArgs.MouseButtons.Right))
             {
                 if (mouseStartTranslateXZ.X != int.MinValue)
                 {
@@ -346,10 +299,9 @@ namespace OpenTKUtils.Common
                 }
             }
 
-            MouseMove?.Invoke(e);
         }
 
-        private void glControl_OnMouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
+        private void glControl_MouseWheel(object sender, MouseEventArgs e)
         {
             if (e.Delta != 0)
             {
@@ -358,7 +310,7 @@ namespace OpenTKUtils.Common
                     if (fov.Scale(e.Delta < 0))
                     {
                         SetModelProjectionMatrixViewPort();
-                        glControl.Invalidate();
+                        glwin.Invalidate();
                     }
                 }
                 else
@@ -367,9 +319,18 @@ namespace OpenTKUtils.Common
                     Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
                 }
             }
-
-            MouseWheel?.Invoke(e);
         }
+
+        private void glControl_KeyDown(object sender, KeyEventArgs e)
+        {
+            keyboard.KeyDown(e.Control, e.Shift, e.Alt, e.KeyCode);
+        }
+
+        private void glControl_KeyUp(object sender, KeyEventArgs e)
+        {
+            keyboard.KeyUp(e.Control, e.Shift, e.Alt, e.KeyCode);
+        }
+
 
         private Fov fov = new Fov();
         private BaseUtils.KeyboardState keyboard = new BaseUtils.KeyboardState();        // needed to be held because it remembers key downs

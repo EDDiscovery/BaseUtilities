@@ -30,7 +30,7 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public void SetMinimal(MatrixCalc c)
+        public void SetMinimal(GLMatrixCalc c)
         {
             if (NotAllocated)
                 Allocate(Mat4size * 1, BufferUsageHint.DynamicCopy);
@@ -40,7 +40,7 @@ namespace OpenTKUtils.GL4
             UnMap();                                // and complete..
         }
 
-        public void Set(MatrixCalc c)
+        public void Set(GLMatrixCalc c)
         {
             if (NotAllocated)
                 Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float), BufferUsageHint.DynamicCopy);
@@ -56,7 +56,7 @@ namespace OpenTKUtils.GL4
             UnMap();                                // and complete..
         }
 
-        public void Set(MatrixCalc c, int width, int height)
+        public void Set(GLMatrixCalc c, int width, int height)
         {
             if (NotAllocated)
                 Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float) + sizeof(int)*2, BufferUsageHint.DynamicCopy);
