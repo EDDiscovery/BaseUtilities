@@ -122,6 +122,7 @@ namespace TestOpenTk
             }
 
             form = new GLForm(glwfc);       // hook form to the window - its the master
+            form.Focusable = true;          // we want to be able to focus and receive key presses.
             form.Name = "form";
             form.SuspendLayout();
             form.Paint += (o) =>
@@ -131,75 +132,91 @@ namespace TestOpenTk
                 form.Render(mc);
             };
 
-            GLPanel ptop = new GLPanel();
-            ptop.Position = new Rectangle(100, 100, 500, 500);
-            ptop.BackColor = Color.Red;
-            ptop.Name = "paneltop";
-            ptop.Margin = new Margin(2);
-            ptop.BorderColor = Color.White;
-            ptop.BorderWidth = 1;
-            ptop.Padding = new OpenTKUtils.GL4.Controls.Padding(2);
+            GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 10, 1000, 800), Color.Red);
+            ptop.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
             form.Add(ptop);
 
-            GLPanel p2 = new GLPanel();
-            p2.Dock = GLBaseControl.DockingType.Left;
-            p2.DockPercent = 0.25f;
-            p2.BackColor = Color.Green;
-            p2.Name = "P2";
-            ptop.Add(p2);
+            if (false)
+            {
+                GLTableLayoutPanel ptable = new GLTableLayoutPanel("paneltop", new Rectangle(150, 10, 200, 200), Color.Gray);
+                ptable.SuspendLayout();
+                ptable.Rows = new List<GLTableLayoutPanel.Style> { new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50), new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50) };
+                ptable.Columns = new List<GLTableLayoutPanel.Style> { new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50), new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50) };
+                ptop.Add(ptable);
+                GLImage pti1 = new GLImage("PTI1", new Rectangle(0, 0, 24, 24), Properties.Resources.dotted);
+                pti1.Column = 0; pti1.Row = 0; pti1.Dock = DockingType.Fill;
+                ptable.Add(pti1);
+                GLImage pti2 = new GLImage("PTI2", new Rectangle(100, 0, 24, 24), Properties.Resources.dotted2);
+                pti2.Column = 1; pti1.Row = 0;
+                ptable.Add(pti2);
+                GLImage pti3 = new GLImage("PTI3", new Rectangle(100, 0, 48, 48), Properties.Resources.ImportSphere);
+                pti3.Column = 0; pti3.Row = 1; pti3.Dock = DockingType.LeftCenter; pti3.ImageStretch = true;
+                ptable.Add(pti3);
+                GLImage pti4 = new GLImage("PTI4", new Rectangle(100, 0, 64, 64), Properties.Resources.Logo8bpp);
+                pti4.Column = 1; pti4.Row = 1; pti4.Dock = DockingType.Center;
+                ptable.Add(pti4);
+                ptable.ResumeLayout();
+            }
 
-            GLPanel p3 = new GLPanel();
-            p3.Dock = GLBaseControl.DockingType.Right;
-            p3.DockPercent = 0.10f;
-            p3.Name = "P3";
-            p3.BackColor = Color.Yellow;
-            ptop.Add(p3);
+            if (false)
+            {
+                GLTextBox tb1 = new GLTextBox("TB1", new Rectangle(600, 10, 150, 20), "Text Data Which is a very long string", Color.White);
+                ptop.Add(tb1);
+            }
 
-            GLButton b1 = new GLButton();
-            b1.Location = new Point(5, 5);
-            b1.Size = new Size(100, 15);
-            b1.BackColor = Color.Gray;
-            b1.Name = "B1";
-            b1.Text = "Button 1";
-            b1.AutoSize = true;
-            b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
-            p2.Add(b1);
+            if (false)
+            {
+                GLPanel psb = new GLPanel("panelsb", new Rectangle(600, 50, 50, 220), Color.Gray);
+                ptop.Add(psb);
+                GLScrollBar sb1 = new GLScrollBar("SB1", new Rectangle(5, 10, 40, 200), 0, 100);
+                psb.Add(sb1);
+            }
 
-            GLButton b2 = new GLButton();
-            b2.Location = new Point(5, 30);
-            b2.Size = new Size(100, 15);
-            b2.BackColor = Color.Gray;
-            b2.Name = "B2";
-            b2.Image = Properties.Resources.ImportSphere;
-            b2.ImageAlign = ContentAlignment.MiddleLeft;
-            b2.TextAlign = ContentAlignment.MiddleRight;
-            b2.Text = "Button 2";
-            b2.AutoSize = true;
+            if (true)
+            {
+                GLScrollPanel sp1 = new GLScrollPanel("SP1", new Rectangle(150, 220, 200, 200), Color.Gray);
+                ptop.Add(sp1);
+                GLImage sp1i1 = new GLImage("SP1I1", new Rectangle(10, 10, 100, 100), Properties.Resources.dotted);
+                sp1.Add(sp1i1);
+                GLImage sp1i2 = new GLImage("SP1I2", new Rectangle(10, 120, 100, 100), Properties.Resources.dotted);
+                sp1.Add(sp1i2);
+            }
 
-            p2.Add(b2);
+            if (true)
+            {
+                GLPanel p2 = new GLPanel("P2", DockingType.Left, 0.1f, Color.Green);
+                ptop.Add(p2);
 
-            GLCheckBox cb1 = new GLCheckBox();
-            cb1.Location = new Point(5, 70);
-            cb1.Size = new Size(130, 20);
-            cb1.BackColor = Color.Transparent;
-            cb1.Name = "CB1";
-            cb1.Text = "Check Box 1";
-            cb1.AutoCheck = true;
-            cb1.CheckChanged += (c, ev) => { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
-            p2.Add(cb1);
+                GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
+                ptop.Add(p3);
 
-            GLPanel ptop2 = new GLPanel();
-            ptop2.Position = new Rectangle(601, 400, 400, 400);
-            ptop2.BackColor = Color.Blue;
-            ptop2.Name = "paneltop2";
-            form.Add(ptop2);
+                GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 0, 0), "Button 1", Color.Gray);
+                b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
+                p2.Add(b1);
 
-            GLImage i1 = new GLImage();
-            i1.Image = Properties.Resources.dotted;
-            i1.Location = new Point(10, 120);
-            i1.Size = new Size(200, 200);
-            i1.Name = "I1";
-            ptop2.Add(i1);
+                GLButton b2 = new GLButton("B2", new Rectangle(5, 30, 0, 0), "Button 2", Color.Gray);
+                b2.Image = Properties.Resources.ImportSphere;
+                b2.ImageAlign = ContentAlignment.MiddleLeft;
+                b2.TextAlign = ContentAlignment.MiddleRight;
+                p2.Add(b2);
+
+                GLCheckBox cb1 = new GLCheckBox("CB1", new Rectangle(5, 70, 130, 20), "Check Box 1", Color.Transparent);
+                cb1.AutoCheck = true;
+                cb1.CheckChanged += (c, ev) => { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
+                p2.Add(cb1);
+            }
+
+            if (false)
+            {
+                GLPanel ptop2 = new GLPanel();
+                ptop2.Position = new Rectangle(1012, 400, 400, 400);
+                ptop2.BackColor = Color.Blue;
+                ptop2.Name = "paneltop2";
+                form.Add(ptop2);
+
+                GLImage i1 = new GLImage("I1", new Rectangle(10, 120, 200, 200), Properties.Resources.dotted);
+                ptop2.Add(i1);
+            }
 
 
             //GLPanel p2a = new GLPanel();

@@ -12,6 +12,8 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLCheckBox : GLButtonBase
     {
+        public Action<GLBaseControl, MouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
+
         public GL4.Controls.CheckState CheckState { get { return checkstate; } set { checkstate = value; Invalidate(); } }
         public bool Checked { get { return checkstate == CheckState.Checked; } set { checkstate = value ? CheckState.Checked : CheckState.Unchecked; Invalidate(); } }
         public bool AutoCheck { get; set; } = false;
@@ -23,15 +25,26 @@ namespace OpenTKUtils.GL4.Controls
         public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
-        public Action<GLBaseControl, MouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
-        private GL4.Controls.CheckState checkstate { get; set; } = CheckState.Unchecked;
-        private GL4.Controls.Appearance appearance { get; set; } = Appearance.Normal;
-        private ContentAlignment checkalign { get; set; } = ContentAlignment.MiddleCenter;
-        private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
-        private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
-        private Color CheckBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
-        private Color CheckColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
+
+        public GLCheckBox()
+        {
+
+        }
+
+        public GLCheckBox(string name, Rectangle location, string text, Color backcolour)
+        {
+            Name = name;
+            Text = text;
+            Position = location;
+            if (location.Width == 0 || location.Height == 0)
+            {
+                location.Width = location.Height = 10;
+                AutoSize = true;
+            }
+            BackColor = backcolour;
+        }
+
 
         public override void PerformSize()
         {
@@ -46,7 +59,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void Paint(Bitmap bmp, Rectangle area, Graphics gr)
+        public override void Paint(Rectangle area, Graphics gr)
         {
             bool hasimages = Image != null;
 
@@ -219,5 +232,15 @@ namespace OpenTKUtils.GL4.Controls
         {
             CheckChanged?.Invoke(this, e);
         }
+
+        private GL4.Controls.CheckState checkstate { get; set; } = CheckState.Unchecked;
+        private GL4.Controls.Appearance appearance { get; set; } = Appearance.Normal;
+        private ContentAlignment checkalign { get; set; } = ContentAlignment.MiddleCenter;
+        private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
+        private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
+        private Color CheckBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
+        private Color CheckColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
+
+
     }
 }

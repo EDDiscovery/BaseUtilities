@@ -58,6 +58,12 @@
     <Compile Include="GL4\BasicTypes\GLStatics4.cs" />
     <Compile Include="GL4\Controls\ControlCheckBox.cs" />
     <Compile Include="GL4\Controls\ControlButton.cs" />
+    <Compile Include="GL4\Controls\ControlListBox.cs" />
+    <Compile Include="GL4\Controls\ControlScrollBar.cs" />
+    <Compile Include="GL4\Controls\ControlScrollPanelScrollBar.cs" />
+    <Compile Include="GL4\Controls\ControlScrollPanel.cs" />
+    <Compile Include="GL4\Controls\ControlTableLayoutPanel.cs" />
+    <Compile Include="GL4\Controls\ControlTextBox.cs" />
     <Compile Include="GL4\Controls\ControlPanel.cs" />
     <Compile Include="GL4\Controls\ControlImage.cs" />
     <Compile Include="GL4\Controls\ControlForm.cs" />

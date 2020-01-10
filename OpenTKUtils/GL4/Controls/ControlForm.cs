@@ -33,7 +33,6 @@ namespace OpenTKUtils.GL4.Controls
 
         // from Control, override the Mouse* and Key* events
 
-        public Action<Object> Resize { get; set; } = null;                      //override on resize
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
 
         public GLForm(GLWindowControl win)
@@ -65,6 +64,7 @@ namespace OpenTKUtils.GL4.Controls
             glwin.MouseWheel += Gc_MouseWheel;
             glwin.KeyDown += Gc_KeyDown;
             glwin.KeyUp += Gc_KeyUp;
+            glwin.KeyPress += Gc_KeyPress;
             glwin.Resize += Gc_Resize;
             glwin.Paint += Gc_Paint;
 
@@ -75,8 +75,8 @@ namespace OpenTKUtils.GL4.Controls
 
         public void Render(GLMatrixCalc mc)
         {
-            System.Diagnostics.Debug.WriteLine("Form redraw start");
-            DebugWhoWantsRedraw();
+            //System.Diagnostics.Debug.WriteLine("Form redraw start");
+            //DebugWhoWantsRedraw();
 
             foreach (var c in children)
             {
@@ -84,7 +84,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (redrawn)
                 {
-                    textures[c].LoadBitmap(c.GetBitmap());  // and update texture unit with new bitmap
+                    textures[c].LoadBitmap(c.GetLevelBitmap);  // and update texture unit with new bitmap
                 }
             }
 
@@ -99,8 +99,8 @@ namespace OpenTKUtils.GL4.Controls
             GL.BindProgramPipeline(0);
 
             RequestRender = false;
-            System.Diagnostics.Debug.WriteLine("Form redraw end");
-            DebugWhoWantsRedraw();
+
+            //System.Diagnostics.Debug.WriteLine("Form redraw end");
         }
 
 
@@ -150,7 +150,7 @@ namespace OpenTKUtils.GL4.Controls
                     textures[c] = new GLTexture2D();
                     textures[c].CreateTexture(c.Width, c.Height);   // and make a texture
                 }
-                else if (textures[c].Width != c.GetBitmap().Width || textures[c].Height != c.GetBitmap().Height)      // if layout changed bitmap
+                else if (textures[c].Width != c.GetLevelBitmap.Width || textures[c].Height != c.GetLevelBitmap.Height)      // if layout changed bitmap
                 {
                     textures[c].CreateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
                 }
@@ -239,8 +239,37 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentmouseover.Enabled)
             {
+                if ( currentfocus != currentmouseover)
+                {
+                    if (currentfocus != null)
+                    {
+                        currentfocus.Focused = false;
+                        currentfocus.OnFocusChanged(false);
+                        if (currentfocus.InvalidateOnFocusChange)
+                            currentfocus.Invalidate();
+                        currentfocus = null;
+                    }
+
+                    if (currentmouseover.Focusable)
+                    {
+                        currentfocus = currentmouseover;
+                        currentfocus.Focused = true;
+                        currentfocus.OnFocusChanged(true);
+                        if (currentfocus.InvalidateOnFocusChange)
+                            currentfocus.Invalidate();
+                    }
+                }
+
                 e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
                 currentmouseover.OnMouseClick(e);
+            }
+            else if ( currentfocus != null )
+            {
+                currentfocus.Focused = false;
+                currentfocus.OnFocusChanged(false);
+                if (currentfocus.InvalidateOnFocusChange)
+                    currentfocus.Invalidate();
+                currentfocus = null;
             }
         }
 
@@ -319,6 +348,14 @@ namespace OpenTKUtils.GL4.Controls
             if (currentfocus != null && currentfocus.Enabled)
             {
                 currentfocus.OnKeyDown(e);
+            }
+        }
+
+        private void Gc_KeyPress(object sender, KeyEventArgs e)
+        {
+            if (currentfocus != null && currentfocus.Enabled)
+            {
+                currentfocus.OnKeyPress(e);
             }
         }
 

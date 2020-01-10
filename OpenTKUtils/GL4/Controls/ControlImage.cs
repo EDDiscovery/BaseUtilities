@@ -79,7 +79,18 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLImage : GLImageBase
     {
-        public override void Paint(Bitmap bmp, Rectangle area, Graphics gr)
+        public GLImage()
+        {
+        }
+
+        public GLImage(string name, Rectangle location, Bitmap bmp)
+        {
+            Name = name;
+            Position = location;
+            Image = bmp;
+        }
+
+        public override void Paint(Rectangle area, Graphics gr)
         {
             base.DrawImage(Image, area, gr);
         }

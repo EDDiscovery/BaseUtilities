@@ -34,6 +34,7 @@ namespace OpenTKUtils.WinForm
         public Action<Object, MouseEventArgs> MouseWheel { get; set; } = null;
         public Action<Object, KeyEventArgs> KeyDown { get; set; } = null;
         public Action<Object, KeyEventArgs> KeyUp { get; set; } = null;
+        public Action<Object, KeyEventArgs> KeyPress { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
         public Action<Object> Paint { get; set; } = null;
 
@@ -52,6 +53,7 @@ namespace OpenTKUtils.WinForm
             glControl.MouseWheel += Gc_MouseWheel;
             glControl.KeyDown += Gc_KeyDown;
             glControl.KeyUp += Gc_KeyUp;
+            glControl.KeyPress += Gc_KeyPress;
             glControl.Resize += Gc_Resize;
             glControl.Paint += GlControl_Paint;
         }
@@ -65,7 +67,15 @@ namespace OpenTKUtils.WinForm
             gl.Name = "glControl";
             gl.TabIndex = 0;
             gl.VSync = true;
+            gl.PreviewKeyDown += Gl_PreviewKeyDown;
+            
             return gl;
+        }
+
+        private void Gl_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)    // all keys are for us
+        {
+            if ( e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down )
+                e.IsInputKey = true;
         }
 
         public void Invalidate()
@@ -157,10 +167,16 @@ namespace OpenTKUtils.WinForm
             KeyDown?.Invoke(this, ka);
         }
 
-        public void Gc_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)        
+        public void Gc_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             KeyEventArgs ka = new KeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
             KeyUp?.Invoke(this, ka);
+        }
+
+        public void Gc_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            KeyEventArgs ka = new KeyEventArgs(e.KeyChar);     
+            KeyPress?.Invoke(this, ka);
         }
 
         private void Gc_Resize(object sender, EventArgs e)

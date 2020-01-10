@@ -14,12 +14,6 @@ namespace OpenTKUtils.GL4.Controls
 
     public abstract class GLButtonBase : GLImageBase
     {
-        public GLButtonBase()
-        {
-            InvalidateOnEnterLeave = true;
-            InvalidateOnMouseDownUp = true;
-        }
-
         public Action<GLBaseControl, MouseEventArgs> Click { get; set; } = null;         
 
         public Color ButtonBackColor { get { return buttonBackColor; } set { buttonBackColor = value; Invalidate(); } }
@@ -30,12 +24,11 @@ namespace OpenTKUtils.GL4.Controls
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
 
-        private string text;
-        private Color buttonBackColor { get; set; } = Color.Gray;
-        private Color mouseOverBackColor { get; set; } = Color.Green;
-        private Color mouseDownBackColor { get; set; } = Color.YellowGreen;
-        private Color foreColor { get; set; } = Color.White;
-        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleCenter;
+        public GLButtonBase()
+        {
+            InvalidateOnEnterLeave = true;
+            InvalidateOnMouseDownUp = true;
+        }
 
         public override void OnMouseClick(MouseEventArgs e)
         {
@@ -48,6 +41,14 @@ namespace OpenTKUtils.GL4.Controls
         {
             Click?.Invoke(this, e);
         }
+
+        private string text;
+        private Color buttonBackColor { get; set; } = Color.Gray;
+        private Color mouseOverBackColor { get; set; } = Color.Green;
+        private Color mouseDownBackColor { get; set; } = Color.YellowGreen;
+        private Color foreColor { get; set; } = Color.White;
+        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleCenter;
+
     }
 
     public class GLButton : GLButtonBase
@@ -84,9 +85,23 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private Color buttonBorderColor { get; set; } = Color.Brown;
-        private float borderColorScaling = 1.25F;
-        private float buttonColorScaling = 0.5F;
+        public GLButton()
+        {
+        }
+
+        public GLButton(string name, Rectangle location, string text, Color backcolour)
+        {
+            Name = name;
+            Text = text;
+            if (location.Width == 0 || location.Height == 0)
+            {
+                location.Width = location.Height = 10;  // nominal
+                AutoSize = true;
+            }
+            Position = location;
+           
+            BackColor = backcolour;
+        }
 
         public override void PerformSize()
         {
@@ -104,7 +119,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void Paint(Bitmap bmp, Rectangle area, Graphics gr)
+        public override void Paint(Rectangle area, Graphics gr)
         {
             Color colBack = Color.Empty;
             Color colBorder = Color.Empty;
@@ -174,6 +189,10 @@ namespace OpenTKUtils.GL4.Controls
             gr.SmoothingMode = SmoothingMode.None;
 
         }
+
+        private Color buttonBorderColor { get; set; } = Color.Brown;
+        private float borderColorScaling = 1.25F;
+        private float buttonColorScaling = 0.5F;
 
     }
 }
