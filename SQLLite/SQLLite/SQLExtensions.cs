@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 
 public static class SQLiteCommandExtensions
 {
@@ -102,16 +103,31 @@ public static class SQLiteCommandExtensions
             return (T)v;
     }
 
+    // Default is to list table names, but you can look for type = "index", or look for "table" + column name =  "sql" to get table definitions
+
     static public List<string> Tables(this SQLExtConnection r)
     {
-        List<string> tables = new List<string>();
+        var tl = r.SQLMasterQuery("table");
+        return (from x in tl select x.TableName).ToList();
+    }
 
-        using (DbCommand cmd = r.CreateCommand("select name From sqlite_master Where type='table'"))
+    public struct TableInfo
+    {
+        public string Name;
+        public string TableName;
+        public string SQL;
+    };
+
+    static public List<TableInfo> SQLMasterQuery(this SQLExtConnection r, string type)
+    {
+        List<TableInfo> tables = new List<TableInfo>();
+
+        using (DbCommand cmd = r.CreateCommand("select name,tbl_name,sql From sqlite_master Where type='" + type + "'"))
         {
             using (DbDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
-                    tables.Add((string)reader[0]);
+                    tables.Add(new TableInfo() { Name = (string)reader[0], TableName = (string)reader[1], SQL = (string)reader[2] });
             }
         }
 
