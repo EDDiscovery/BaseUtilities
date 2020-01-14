@@ -213,7 +213,7 @@ layout (location=0) in vec2 vs_textureCoordinate;
 
 layout (binding = " + arbblock.ToStringInvariant() + @", std140) uniform TEXTURE_BLOCK
 {
-    sampler2D tex[2];
+    sampler2D tex[256];
 };
 
 layout (location = 24) uniform  vec2 offset;

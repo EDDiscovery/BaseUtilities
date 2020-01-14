@@ -7,14 +7,9 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLTextBox : GLBaseControl
+    public abstract class GLForeDisplayBase : GLBaseControl
     {
-        public Action<GLBaseControl> TextChanged { get; set; } = null;     // not fired by programatically changing Text
-        public Action<GLBaseControl> ReturnPressed { get; set; } = null;     // not fired by programatically changing Text
-
-        public string Text { get { return text; } set { text = value; /* startpos = endpos = */ cursorpos = text.Length; displaystart = -1; Invalidate(); } }
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
-
         public float DisabledScaling
         {
             get { return disabledScaling; }
@@ -30,6 +25,20 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        private Color foreColor { get; set; } = Color.White;
+        private float disabledScaling = 0.5F;
+    }
+
+    public abstract class GLTextDisplayBase : GLForeDisplayBase
+    {
+        public string Text { get { return text; } set { text = value; Invalidate(); } }
+        private string text;
+    }
+
+    public class GLTextBox : GLTextDisplayBase
+    {
+        public Action<GLBaseControl> TextChanged { get; set; } = null;     // not fired by programatically changing Text
+        public Action<GLBaseControl> ReturnPressed { get; set; } = null;     // not fired by programatically changing Text
 
         public GLTextBox()
         {
@@ -44,7 +53,6 @@ namespace OpenTKUtils.GL4.Controls
             Text = text;
             BackColor = backcolor;
         }
-
 
         public override void Paint(Rectangle area, Graphics gr)
         {
@@ -206,8 +214,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     if (cursorpos < Text.Length)
                     {
-                        text = text.Substring(0, cursorpos) + text.Substring(cursorpos + 1);
-                        Invalidate();
+                        Text = Text.Substring(0, cursorpos) + Text.Substring(cursorpos + 1);
                         TextChanged?.Invoke(this);
                     }
                 }
@@ -237,17 +244,15 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     if ( cursorpos>0)
                     {
-                        text = text.Substring(0, cursorpos - 1) + text.Substring(cursorpos);
+                        Text = Text.Substring(0, cursorpos - 1) + Text.Substring(cursorpos);
                         cursorpos--;
-                        Invalidate();
                         TextChanged?.Invoke(this);
                     }
                 }
                 else
                 {
-                    text = text.Substring(0, cursorpos) + e.KeyChar + text.Substring(cursorpos);
+                    Text = Text.Substring(0, cursorpos) + e.KeyChar + Text.Substring(cursorpos);
                     cursorpos++;
-                    Invalidate();
                     TextChanged?.Invoke(this);
                 }
             }
@@ -258,9 +263,6 @@ namespace OpenTKUtils.GL4.Controls
         //public int StartPos { get { return startpos; } set { if (cursorpos == startpos) cursorpos = value; startpos = value; Invalidate(); } }
         //public int EndPos { get { return endpos; } set { if (cursorpos == endpos) cursorpos = value;  endpos = value; Invalidate(); } }
 
-        private float disabledScaling = 0.5F;
-        private string text;
-        private Color foreColor { get; set; } = Color.Black;
         //private int startpos = 0;
         //private int endpos = 0;
         private int cursorpos = 0; // current cursor pos

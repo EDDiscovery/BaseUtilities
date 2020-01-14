@@ -22,6 +22,8 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
+
+
     public abstract class GLImageBase : GLBaseControl
     {
         public Image Image { get { return image; } set { image = value; Invalidate(); } }

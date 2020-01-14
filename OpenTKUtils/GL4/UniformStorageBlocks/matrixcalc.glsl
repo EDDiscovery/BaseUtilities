@@ -17,11 +17,11 @@
 layout(std140, binding=0) uniform MatrixCalc
 {
     mat4 ProjectionModelMatrix;
-    mat4 ProjectionMatrix;		//lv1 optional
+    mat4 ProjectionMatrix;		
     mat4 ModelMatrix;
     vec4 TargetPosition;		// vertex position, before ModelMatrix
     vec4 EyePosition;			// vertex position, before ModelMatrix
     float EyeDistance;			// between eye and target
-	int screenwidth;			// vl2 optional
-	int screenheight;			// vl2 optional
+	mat4 ScreenMatrix;			// for co-ordinate transforms between screen coords and display coords
+
 } mc;

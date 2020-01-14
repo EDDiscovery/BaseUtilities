@@ -36,7 +36,7 @@ namespace OpenTKUtils.GL4
 
         // You can call as many times to create textures. Only creates one if required
 
-        public void CreateTexture(int width, int height, int mipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
+        public void CreateOrUpdateTexture(int width, int height, int mipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f)
         {
             if (Id == -1 || Width != width || Height != height)    // if not there, or changed, we can't just replace it, size is fixed. Delete it
             {
@@ -72,7 +72,7 @@ namespace OpenTKUtils.GL4
             int h = MipMapHeight(bmp, bitmipmaplevels);
             int texmipmaps = Math.Max(bitmipmaplevels, genmipmaplevel);
 
-            CreateTexture(bmp.Width, h, texmipmaps, internalformat);
+            CreateOrUpdateTexture(bmp.Width, h, texmipmaps, internalformat);
 
             BitMaps = new Bitmap[1];
             BitMaps[0] = bmp;
@@ -84,6 +84,8 @@ namespace OpenTKUtils.GL4
                 GL.GenerateTextureMipmap(Id);
             
             OpenTKUtils.GLStatics.Check();
+
+           // float[] tex = GetTextureImageAsFloats(end:100);
 
         }
 

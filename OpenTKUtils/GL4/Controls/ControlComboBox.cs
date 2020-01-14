@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLCheckBox : GLButtonBase
+    public class GLComboBox : GLButtonBase
     {
         public Action<GLBaseControl, MouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
@@ -25,12 +25,12 @@ namespace OpenTKUtils.GL4.Controls
         public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
-        public GLCheckBox()
+        public GLComboBox()
         {
 
         }
 
-        public GLCheckBox(string name, Rectangle location, string text, Color backcolour)
+        public GLComboBox(string name, Rectangle location, string text, Color backcolour)
         {
             Name = name;
             Text = text;

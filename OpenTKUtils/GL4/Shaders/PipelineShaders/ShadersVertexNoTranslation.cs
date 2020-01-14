@@ -211,7 +211,8 @@ void main(void)
     vec2 vcoords[4] = {{0,0},{0,1},{1,0},{1,1} };      // these give the coords for the 4 points making up 2 triangles.  Use with the right fragment shader which understands strip co-ords
 
     modelpos = position.xyz;
-	gl_Position = mc.ProjectionModelMatrix * position;        // order important
+    vec4 p = position;
+	gl_Position = mc.ProjectionModelMatrix * p;        // order important
     vs_textureCoordinate = vcoords[ gl_VertexID % 4];
 }
 ";
@@ -225,8 +226,8 @@ void main(void)
 
     // Pipeline shader, Texture, real screen coords  (0-glcontrol.Width,0-glcontrol.height, 0,0 at top left)
     // Requires:
-    //      location 0 : position: vec4 vertex array of real screen coords in the x/y slots.  z/w not used
-    //      uniform 0 : GL MatrixCalc with screen size (use correct fill call)
+    //      location 0 : position: vec4 vertex array of real screen coords in the x/y/z slots.  w must be 1.
+    //      uniform 0 : GL MatrixCalc with ScreenMatrix set up
     // Out:
     //      gl_Position
     //      vs_textureCoordinate per triangle strip rules
@@ -254,9 +255,8 @@ layout(location = 0) out vec2 vs_textureCoordinate;
 
 void main(void)
 {
+	gl_Position = mc.ScreenMatrix * position;        // order important
     vec2 vcoords[4] = {{0,0},{0,1},{1,0},{1,1} };      // these give the coords for the 4 points making up 2 triangles.  Use with the right fragment shader which understands strip co-ords
-
-	gl_Position = vec4(position.x*2/mc.screenwidth-1,1-position.y*2/mc.screenheight,0,1);     
     vs_textureCoordinate = vcoords[ gl_VertexID % 4];
 }
 ";

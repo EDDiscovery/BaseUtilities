@@ -65,9 +65,9 @@ namespace OpenTKUtils.GL4.Controls
     public abstract class GLBaseControl
     {
         #region Main UI
-        // co-ords are in parent control positions
-
         public string Name { get; set; } = "?";
+
+        // co-ords are in parent control positions
 
         public int Left { get { return window.Left; } set { SetPos(value, window.Top, window.Width, window.Height); } }
         public int Right { get { return window.Right; } set { SetPos(window.Left, window.Top, value - window.Left, window.Height); } }
@@ -77,17 +77,22 @@ namespace OpenTKUtils.GL4.Controls
         public int Height { get { return window.Height; } set { SetPos(window.Left, window.Top, window.Width, value); } }
         public Point Location { get { return new Point(window.Left, window.Top); } set { SetPos(value.X, value.Y, window.Width, window.Height); } }
         public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left, window.Top, value.Width, value.Height); } }
-        public void ClipSize(Size s) { SetPos(window.Left, window.Top, Math.Min(Width, s.Width), Math.Min(Height, s.Height)); }
+        public virtual void SizeClipped(Size s) { SetPos(window.Left, window.Top, Math.Min(Width, s.Width), Math.Min(Height, s.Height)); }
         public Rectangle Position { get { return window; } set { SetPos(value.Left, value.Top, value.Width, value.Height); } }
         public Rectangle ClientRectangle { get { return window; } set { SetPos(value.Left, value.Right, value.Width, value.Height); } }
+
+        // area you can draw into.  Normally its the window, but if we have a level bmp, we use the bitmap size as it may be overriden to be bigger
+        public virtual Size DrawableSize { get { return (levelbmp != null) ? levelbmp.Size : Size; } }
 
         public DockingType Dock { get { return docktype; } set { if (docktype != value) { docktype = value; InvalidateLayoutParent(); } } }
         public float DockPercent { get { return dockpercent; } set { if (value != dockpercent) { dockpercent = value; InvalidateLayoutParent(); } } }        // % in 0-1 terms used to dock on left,top,right,bottom.  0 means just use width/height
 
         public GLBaseControl Parent { get { return parent; } }
-        public Font Font { get { return fnt ?? parent.Font; } set { fnt = value; InvalidateLayoutParent(); } }
+        public Font Font { get { return font ?? parent?.Font; } set { SetFont(value); InvalidateLayoutParent(); } }
 
         public Color BackColor { get { return backcolor; } set { if (backcolor != value) { backcolor = value; Invalidate(); } } }
+        public int BackColorGradient { get { return backcolorgradient;} set { if ( backcolorgradient != value) { backcolorgradient = value;Invalidate(); } } }
+        public Color BackColorGradientAlt { get { return backcolorgradientalt; } set { if (backcolorgradientalt != value) { backcolorgradientalt = value; Invalidate(); } } }
         public Color BorderColor { get { return bordercolor; } set { if (bordercolor != value) { bordercolor = value; Invalidate(); } } }
         public int BorderWidth { get { return borderwidth; } set { if (borderwidth != value) { borderwidth = value; InvalidateLayoutParent(); } } }
         public GL4.Controls.Padding Padding { get { return padding; } set { if (padding != value) { padding = value; InvalidateLayoutParent(); } } }
@@ -95,7 +100,8 @@ namespace OpenTKUtils.GL4.Controls
         public void SetMarginBorderWidth(Margin m, int borderwidth, Color borderc, Padding p) { margin = m; padding = p; bordercolor = borderc; BorderWidth = borderwidth; }
 
         // tbd disable children?
-        public bool Enabled { get { return enabled; } set { if (enabled != value) { enabled = value; Invalidate(); } } }
+        public bool Enabled { get { return enabled; } set { if (enabled != value) { SetEnabled(value); Invalidate(); } } }
+        public bool Visible { get { return visible; } set { if (visible != value) { visible = value; InvalidateLayoutParent(); } } }
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
@@ -115,6 +121,8 @@ namespace OpenTKUtils.GL4.Controls
         public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
         public Bitmap GetLevelBitmap { get { return levelbmp; } }
 
+        public virtual List<GLBaseControl> Controls { get { return children.ToList(); } }      // read only
+
         public Action<Object, MouseEventArgs> MouseDown { get; set; } = null;
         public Action<Object, MouseEventArgs> MouseUp { get; set; } = null;
         public Action<Object, MouseEventArgs> MouseMove { get; set; } = null;
@@ -126,12 +134,15 @@ namespace OpenTKUtils.GL4.Controls
         public Action<Object, KeyEventArgs> KeyUp { get; set; } = null;
         public Action<Object, KeyEventArgs> KeyPress { get; set; } = null;
         public Action<Object, bool> FocusChanged { get; set; } = null;
+        public Action<Object> FontChanged { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
+        public Action<GLBaseControl,GLBaseControl> ControlAdd { get; set; } = null;
+        public Action<GLBaseControl,GLBaseControl> ControlRemove { get; set; } = null;
 
         public GLBaseControl(GLBaseControl p = null)
         {
             parent = p;
-            children = new List<GLBaseControl>();
+            children = new LinkedList<GLBaseControl>();
             window = new Rectangle(0, 0, 100, 100);
         }
 
@@ -157,29 +168,6 @@ namespace OpenTKUtils.GL4.Controls
                 parent.NeedRedraw = true;
                 parent.PerformLayout();
             }
-        }
-
-        public void Add(GLBaseControl other)
-        {
-            other.parent = this;
-            children.Add(other);
-
-            if (this is GLForm) // if adding to a form, the child must have a bitmap
-                other.levelbmp = new Bitmap(other.Width, other.Height);
-
-            Invalidate();           // we are invalidated
-            PerformLayout();        // reperform layout
-        }
-
-        public void Remove(GLBaseControl other)
-        {
-            if (other.levelbmp != null)
-                other.levelbmp.Dispose();
-
-            children.Remove(other);
-
-            Invalidate();
-            PerformLayout();        // reperform layout
         }
 
         public Point FormCoords()       // co-ordinates in the Form, not the screen
@@ -230,10 +218,84 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        #endregion
+
+        #region Protected for inheritors
+
+        protected bool CheckSuspendedLayout() // call to see if suspended in PerformLayout overrides
+        {
+            if (SuspendLayoutSet)
+            {
+                NeedLayout = true;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        protected GLBaseControl FindControlOver(Point p)       // p = form co-ords
+        {
+            if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)
+                return null;
+
+            foreach (GLBaseControl c in children)
+            {
+                var r = c.FindControlOver(new Point(p.X - Left, p.Y - Top));   // find, converting co-ords into child co-ords
+                if (r != null)
+                    return r;
+            }
+
+            return this;
+        }
+
+        protected Rectangle AdjustByPaddingBorderMargin(Rectangle area)
+        {
+            int bs = BorderColor != Color.Transparent ? BorderWidth : 0;
+            return new Rectangle(area.Left + Margin.Left + Padding.Left + bs,
+                                    area.Top + Margin.Top + Padding.Top + bs,
+                                    area.Width - Margin.TotalWidth - Padding.TotalWidth - bs * 2,
+                                    area.Height - Margin.TotalHeight - Padding.TotalHeight - bs * 2);
+        }
+
+        protected void PerformSizeChildren(GLBaseControl c)
+        {
+            c.InAutosize = true;            // this flag stops reentrancy due to size changes
+            c.PerformSize();
+            c.InAutosize = false;
+        }
 
         #endregion
 
         #region Overridables
+
+        public virtual void Add(GLBaseControl other)
+        {
+            other.parent = this;
+            children.AddFirst(other);
+
+            if (this is GLForm) // if adding to a form, the child must have a bitmap
+            {
+                System.Diagnostics.Debug.Assert(other is GLVerticalScrollPanel == false, "GLScrollPanel must not be child of GLForm");
+                other.levelbmp = new Bitmap(other.Width, other.Height);
+            }
+
+            OnControlAdd(this, other);
+            Invalidate();           // we are invalidated
+            PerformLayout();        // reperform layout
+        }
+
+        public virtual void Remove(GLBaseControl other)
+        {
+            if (other.levelbmp != null)
+                other.levelbmp.Dispose();
+
+            children.Remove(other);
+
+            OnControlRemove(this, other);
+
+            Invalidate();
+            PerformLayout();        // reperform layout
+        }
 
         public virtual void PerformLayout()     // override for other layouts
         {
@@ -247,14 +309,20 @@ namespace OpenTKUtils.GL4.Controls
                 //System.Diagnostics.Debug.WriteLine("Perform layout on " + Name);
 
                 foreach (var c in children)         // first let all children autosize
-                    PerformSizeChildren(c);
+                {
+                    if ( c.Visible)     // invisible children don't layout
+                        PerformSizeChildren(c);
+                }
 
                 Rectangle area = AdjustByPaddingBorderMargin(new Rectangle(0, 0, Width, Height));
 
                 foreach (var c in children)
                 {
-                    area = c.Layout(area);
-                    c.PerformLayout();
+                    if (c.Visible)      // invisible children don't layout
+                    {
+                        area = c.Layout(area);
+                        c.PerformLayout();
+                    }
                 }
             }
         }
@@ -297,7 +365,7 @@ namespace OpenTKUtils.GL4.Controls
             else if (docktype == DockingType.Right)
             {
                 window = new Rectangle(area.Right - ws, area.Top, ws, area.Height);
-                areaout = new Rectangle(window.Left, area.Top, area.Width - window.Width, area.Height);
+                areaout = new Rectangle(area.Left, area.Top, area.Width - window.Width, area.Height);
             }
             else if (docktype == DockingType.RightCenter)
             {
@@ -307,24 +375,24 @@ namespace OpenTKUtils.GL4.Controls
             else if (docktype == DockingType.Top)
             {
                 window = new Rectangle(area.Left, area.Top, area.Width, hs);
-                areaout = new Rectangle(window.Left, area.Top + hs, area.Width, area.Height - hs);
+                areaout = new Rectangle(area.Left, area.Top + hs, area.Width, area.Height - hs);
             }
             else if (docktype == DockingType.Bottom)
             {
                 window = new Rectangle(area.Left, area.Bottom - hs, area.Width, hs);
-                areaout = new Rectangle(window.Left, area.Top, area.Width, area.Height - hs);
+                areaout = new Rectangle(area.Left, area.Top, area.Width, area.Height - hs);
             }
             else
             {   // any other docking - we just leave window alone and area alone.
             }
 
-            System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2}", Name, Dock, window);
+            System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2} Area in {3} Area out {4}", Name, Dock, window, area, areaout);
 
             if (oldwindow.Size != window.Size) // if window size changed
             {
                 OnResize();
 
-                if (levelbmp != null && !(this is GLScrollPanel))       // if changed size, and not a scroll panel, we resize the bitmap
+                if (levelbmp != null && !(this is GLVerticalScrollPanel))       // if changed size, and not a scroll panel, we resize the bitmap
                 {
                     levelbmp.Dispose();
                     levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
@@ -334,22 +402,24 @@ namespace OpenTKUtils.GL4.Controls
             return areaout;
         }
 
-        public virtual void PerformSize()        // see if you want to resize
-        {
-        }
+        // redraw, into usebmp
+        // drawarea = area that our control occupies on the bitmap, which may be outside of the clip area
+        // cliparea = area that we can draw into, so we don't exceed the bounds of any parent clip areas
+        // gr = graphics to draw into
+        // we must be visible to be called. Children may not be visible
 
-        public virtual bool Redraw(Bitmap usebmp, Rectangle area, Graphics gr, bool forceredraw)
+        public virtual bool Redraw(Bitmap usebmp, Rectangle drawarea, Rectangle cliparea, Graphics gr, bool forceredraw)
         {
             Graphics parentgr = null;                           // if we changed level bmp, we need to give the control the opportunity
-            Rectangle parentarea = area;                        // to paint thru its level bmp to the parent bmp
+            Rectangle parentarea = drawarea;                    // to paint thru its level bmp to the parent bmp
 
-            if (levelbmp != null)                               // bitmap on this level, use it for the children
+            if (levelbmp != null)                               // bitmap on this level, use it for itself and its children
             {
                 if ( usebmp != null )                           // must have a bitmap to paint thru to
                     parentgr = gr;                              // allow parent paint thru
 
                 usebmp = levelbmp;
-                area = new Rectangle(0, 0, usebmp.Width, usebmp.Height);      // restate area in terms of bitmap
+                cliparea = drawarea = new Rectangle(0, 0, usebmp.Width, usebmp.Height);      // restate area in terms of bitmap
                 gr = Graphics.FromImage(usebmp);        // get graphics for it
                 gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
             }
@@ -358,20 +428,29 @@ namespace OpenTKUtils.GL4.Controls
 
             if (NeedRedraw || forceredraw)          // if we need a redraw, or we are forced to draw by a parent redrawing above us.
             {
-                System.Diagnostics.Debug.WriteLine("Redraw {0} to {1} nr {2} fr {3}", Name, area, NeedRedraw, forceredraw);
+                System.Diagnostics.Debug.WriteLine("{0} redraw {1} clip {2} nr {3} fr {4}", Name, drawarea, cliparea, NeedRedraw, forceredraw);
 
-                if (BackColor != Color.Transparent)
+                gr.SetClip(cliparea);   // set graphics to the clip area so we can draw the background/border
+
+                if (backcolorgradient != int.MinValue && BackColor != Color.Transparent)
                 {
-                    using (Brush b = new SolidBrush(BackColor))
-                        gr.FillRectangle(b, area);
+                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor + " -> " + BackColorGradientAlt );
+                    using (var b = new System.Drawing.Drawing2D.LinearGradientBrush(drawarea, BackColor, BackColorGradientAlt, backcolorgradient))
+                        gr.FillRectangle(b, drawarea);       // linear grad brushes do not respect smoothing mode, btw
+                }
+                else
+                {
+                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor);
+                    using (Brush b = new SolidBrush(BackColor))     // always fill, so we get back to start
+                        gr.FillRectangle(b, drawarea);
                 }
 
-                if (BorderColor != Color.Transparent)
+                if (BorderColor != Color.Transparent)   // border
                 {
-                    Rectangle rectarea = new Rectangle(area.Left + Margin.Left,
-                                                    area.Top + Margin.Top,
-                                                    area.Width - Margin.TotalWidth - 1,
-                                                    area.Height - Margin.TotalHeight - 1);
+                    Rectangle rectarea = new Rectangle(drawarea.Left + Margin.Left,
+                                                    drawarea.Top + Margin.Top,
+                                                    drawarea.Width - Margin.TotalWidth - 1,
+                                                    drawarea.Height - Margin.TotalHeight - 1);
 
                     using (var p = new Pen(BorderColor, BorderWidth))
                     {
@@ -379,33 +458,45 @@ namespace OpenTKUtils.GL4.Controls
                     }
                 }
 
-                foreach (var c in children)
-                {
-                    Rectangle controlarea = new Rectangle(area.Left + c.Left,
-                                                            area.Top + c.Top,
-                                                            c.Width, c.Height);
-                    // child, redraw using this bitmap, in this area of the bitmap
-                    gr.SetClip(controlarea);
-                    c.Redraw(usebmp, controlarea, gr, true);
-                }
+                forceredraw = true;             // all children, force redraw
+                NeedRedraw = false;             // we have been redrawn
 
-                Paint(area, gr);
-                if ( parentgr != null)
-                    PaintParent(parentarea, parentgr);
-
-                NeedRedraw = false;
-                redrawn = true;
+                redrawn = true;                 // and signal up we have been redrawn
             }
-            else
-            {                                                           // we don't require a redraw, but the children might
-                foreach (var c in children)
+
+            LinkedListNode<GLBaseControl> pos = children.Last;      // render in order from last z to first z.
+            while( pos != null)
+            {
+                var c = pos.Value;
+
+                if (c.Visible)
                 {
-                    Rectangle controlarea = new Rectangle(area.Left + c.Left,
-                                                            area.Top + c.Top,
-                                                            c.Width, c.Height);
-                    // child, redraw using this bitmap, in this area of the bitmap
-                    redrawn |= c.Redraw(usebmp, controlarea, gr, false);
+                    // draw area is based on our drawarea plus child offset/size
+                    Rectangle childdrawarea = new Rectangle(drawarea.Left + c.Left, drawarea.Top + c.Top, c.Width, c.Height);
+
+                    // the clip area is the draw clipped by the previous clip area
+                    // so we never go outside of the paintable area of the child and the parents
+
+                    int cleft = Math.Max(drawarea.Left + c.Left, cliparea.Left);
+                    int ctop = Math.Max(drawarea.Top + c.Top, cliparea.Top);
+                    int cright = Math.Min(cleft + c.Width, cliparea.Right);
+                    int cbot = Math.Min(ctop + c.Height, cliparea.Bottom);
+                    Rectangle childcliparea = new Rectangle(cleft, ctop, cright - cleft, cbot - ctop);
+
+                    redrawn |= c.Redraw(usebmp, childdrawarea, childcliparea, gr, forceredraw);
                 }
+
+                pos = pos.Previous;
+            }
+
+            if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
+            {
+                gr.SetClip(cliparea);   // set graphics to the clip area - it may have been overriden by the child draws
+
+                Paint(drawarea, gr);
+
+                if ( parentgr != null)      // give us a chance of parent paint thru
+                    PaintParent(parentarea, parentgr);
             }
 
             if (levelbmp != null)                               // bitmap on this level, we made a GR, dispose
@@ -414,17 +505,18 @@ namespace OpenTKUtils.GL4.Controls
             return redrawn;
         }
 
-
-        // overrides
+        public virtual void PerformSize()        // see if you want to resize
+        {
+        }
 
         public virtual void Paint(Rectangle area, Graphics gr)      // normal override
         {
-            System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
+            //System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
         }
 
-        public virtual void PaintParent(Rectangle parentarea, Graphics parentgr) // only called if you've defined a bitmap at a new level
-        {
-            System.Diagnostics.Debug.WriteLine("Paint Into parent {0} to {1}", Name, parentarea);
+        public virtual void PaintParent(Rectangle parentarea, Graphics parentgr) // only called if you've defined a bitmap yourself, 
+        {                                                                        // gives you a chance to paint to the parent bitmap
+           // System.Diagnostics.Debug.WriteLine("Paint Into parent {0} to {1}", Name, parentarea);
         }
 
         public virtual void OnMouseLeave(MouseEventArgs e)
@@ -509,9 +601,24 @@ namespace OpenTKUtils.GL4.Controls
             FocusChanged?.Invoke(this, focused);
         }
 
+        public virtual void OnFontChanged()
+        {
+            FontChanged?.Invoke(this);
+        }
+
         public virtual void OnResize()
         {
             Resize?.Invoke(this);
+        }
+
+        public virtual void OnControlAdd(GLBaseControl parent, GLBaseControl child)
+        {
+            ControlAdd?.Invoke(parent, child);
+        }
+
+        public virtual void OnControlRemove(GLBaseControl parent, GLBaseControl child)
+        {
+            ControlRemove?.Invoke(parent, child);
         }
 
         #endregion
@@ -519,22 +626,8 @@ namespace OpenTKUtils.GL4.Controls
 
         #region Implementation
 
-        protected GLBaseControl FindControlOver(Point p)       // p = form co-ords
-        {
-            if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)
-                return null;
 
-            foreach (GLBaseControl c in children)
-            {
-                var r = c.FindControlOver(new Point(p.X - Left, p.Y - Top));   // find, converting co-ords into child co-ords
-                if (r != null)
-                    return r;
-            }
-
-            return this;
-        }
-
-        protected void SetPos(int left, int top, int width, int height) // change window rectangle
+        private void SetPos(int left, int top, int width, int height) // change window rectangle
         {
             Rectangle w = new Rectangle(left, top, width, height);
 
@@ -553,54 +646,66 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        protected Rectangle AdjustByPaddingBorderMargin(Rectangle area)
+        private void SetEnabled(bool v)
         {
-            int bs = BorderColor != Color.Transparent ? BorderWidth : 0;
-            return new Rectangle(area.Left + Margin.Left + Padding.Left + bs,
-                                    area.Top + Margin.Top + Padding.Top + bs,
-                                    area.Width - Margin.TotalWidth - Padding.TotalWidth - bs * 2,
-                                    area.Height - Margin.TotalHeight - Padding.TotalHeight - bs * 2);
+            enabled = v;
+            foreach (var c in children)
+                SetEnabled(v);
         }
 
-        protected void PerformSizeChildren(GLBaseControl c)
+        private void SetFont(Font f)
         {
-            c.InAutosize = true;            // this flag stops reentrancy due to size changes
-            c.PerformSize();
-            c.InAutosize = false;
+            font = f;
+            PropergateFontChanged(this);
+        }
+
+        private void PropergateFontChanged(GLBaseControl p)
+        {
+            p.OnFontChanged();
+            foreach (var c in p.children)
+            {
+                if (c.Font == null)
+                    PropergateFontChanged(c);
+            }
         }
 
         public virtual void DebugWhoWantsRedraw()
         {
-            if (NeedRedraw)
-                System.Diagnostics.Debug.WriteLine("Debug Redraw Flag " + Name);
+            //if (NeedRedraw)
+                System.Diagnostics.Debug.WriteLine("Debug Redraw Flag " + Name + " " + NeedRedraw);
 
             foreach (var c in children)
                 c.DebugWhoWantsRedraw();
         }
 
+        //tbd
         protected bool NeedRedraw { get; set; } = true;         // we need to redraw, therefore all children also redraw
-        protected bool InAutosize { get; set; } = false;        // changing size in autosize 
-        protected bool NeedLayout { get; set; } = false;        // need a layout after suspend layout was called
-        protected bool SuspendLayoutSet { get; set; } = false;        // suspend layout is on
-        protected bool enabled = true;
         protected Bitmap levelbmp;       // set if the level has a new bitmap.  Controls under Form always does. Other ones may if they scroll
         protected Rectangle window;       // total area owned, in parent co-ords
+
+        private bool NeedLayout { get; set; } = false;        // need a layout after suspend layout was called
+        private bool SuspendLayoutSet { get; set; } = false;        // suspend layout is on
+        private bool InAutosize { get; set; } = false;        // changing size in autosize 
+        private bool enabled { get; set; } = true;
+        private bool visible { get; set; } = true;
         private DockingType docktype { get; set; } = DockingType.None;
         private float dockpercent { get; set; } = 0;
         private Color backcolor { get; set; } = Color.Transparent;
+        private Color backcolorgradientalt { get; set; } = Color.Black;
+        private int backcolorgradient { get; set; } = int.MinValue;           // in degrees
         private Color bordercolor { get; set; } = Color.Transparent;         // Margin - border - padding is common to all controls. Area left is control area to draw in
         private int borderwidth { get; set; } = 1;
         private GL4.Controls.Padding padding { get; set; }
         private GL4.Controls.Margin margin { get; set; }
         private bool autosize { get; set; }
-        protected int column { get; set; } = 0;     // for table layouts
-        protected int row { get; set; } = 0;        // for table layouts
-        protected bool focused { get; set; } = false;
-        protected bool focusable { get; set; } = false;
+        private int column { get; set; } = 0;     // for table layouts
+        private int row { get; set; } = 0;        // for table layouts
+        private bool focused { get; set; } = false;
+        private bool focusable { get; set; } = false;
 
-        protected GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
-        protected List<GLBaseControl> children;   // its children
-        protected Font fnt;
+        private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
+        protected LinkedList<GLBaseControl> children;   // its children.  First is at the top of the Z list and gets first layed out and last rendered
+        protected Font font;
 
 
         #endregion

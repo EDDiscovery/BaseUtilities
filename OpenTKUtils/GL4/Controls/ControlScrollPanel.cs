@@ -7,16 +7,20 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLScrollPanel : GLPanel
+    // Scroll panel
+    // must not be a child of GLForm as it needs a bitmap to paint into
+
+    public class GLVerticalScrollPanel : GLPanel
     {
-        public GLScrollPanel()
+        public GLVerticalScrollPanel()
         {
         }
 
-        public GLScrollPanel(string name, Rectangle location, Color back) : base(name, location, back)
+        public GLVerticalScrollPanel(string name, Rectangle location, Color back) : base(name, location, back)
         {
         }
 
+        public int ScrollRange { get { return (levelbmp != null) ? (levelbmp.Height - Height) : 0; } }
         public int ScrollPos { get { return scrollpos; } set { SetScrollPos(value); } }
         private int scrollpos = 0;
 
@@ -41,12 +45,14 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     if (levelbmp == null )
                     {
+                        System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
                         levelbmp = new Bitmap(Width, childheight);
                     }
-                    else if ( childheight > levelbmp.Height )
+                    else if ( childheight != levelbmp.Height || levelbmp.Width != Width) // if height is different, or width is different
                     {
                         levelbmp.Dispose();
                         levelbmp = new Bitmap(Width, childheight);
+                        System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
                     }
                 }
             }
@@ -64,6 +70,7 @@ namespace OpenTKUtils.GL4.Controls
             {
                 int maxsp = levelbmp.Height - Height;
                 scrollpos = Math.Max(0, Math.Min(value, maxsp));
+                System.Diagnostics.Debug.WriteLine("ScrollPanel scrolled to " + scrollpos);
                 Invalidate();
             }
         }
@@ -72,6 +79,8 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void PaintParent(Rectangle parentarea, Graphics parentgr)
         {
+            System.Diagnostics.Debug.WriteLine("Scroll panel {0} parea {1} Bitmap {2}", Name, parentarea, levelbmp.Size);
+
             parentgr.DrawImage(levelbmp, parentarea.Left, parentarea.Top, new Rectangle(0, scrollpos, Width, Height), GraphicsUnit.Pixel);
         }
     }

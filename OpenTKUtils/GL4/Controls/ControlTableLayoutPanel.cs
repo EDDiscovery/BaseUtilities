@@ -36,12 +36,10 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void PerformLayout()     // override for other layouts
         {
-            if (SuspendLayoutSet)
-            {
-                NeedLayout = true;
-                System.Diagnostics.Debug.WriteLine("Suspend layout on " + Name);
-            }
-            else if (Columns != null && Rows != null)
+            if (CheckSuspendedLayout())
+                return;
+
+            if (Columns != null && Rows != null)
             {
                 int[] maxcolsize = new int[Columns.Count];
                 int[] maxrowsize = new int[Rows.Count];
@@ -98,7 +96,7 @@ namespace OpenTKUtils.GL4.Controls
                                     Size oldsize = c.Size;
                                     System.Diagnostics.Debug.WriteLine("Top Left layout " + c.Name + " " + cellarea);
                                     c.Location = cellarea.Location;     // else just dock to top left.
-                                    c.ClipSize(cellarea.Size);
+                                    c.SizeClipped(cellarea.Size);
                                     if (oldsize != c.Size)
                                         OnResize();
                                 }

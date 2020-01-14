@@ -166,8 +166,9 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        // Return texture as a set of floats. Note you have to get them all back per level, can't subsample.
-        public float[] GetTextureImageAsFloats(PixelFormat pxformatback = PixelFormat.Rgba , int level = 0)
+        // Return texture as a set of floats. 
+        // it always reads all of them, but you can select the range to return using start/end
+        public float[] GetTextureImageAsFloats(PixelFormat pxformatback = PixelFormat.Rgba , int level = 0, int start = 0, int end = int.MaxValue)
         {
             int items = Width*Height*Depth;
             if (pxformatback == PixelFormat.Red)
@@ -184,9 +185,19 @@ namespace OpenTKUtils.GL4
             GL.GetTextureImage(Id, level, pxformatback, PixelType.Float, bufsize, unmanagedPointer);  // fill
             OpenTKUtils.GLStatics.Check();
 
-            float[] data = new float[items];
-            System.Runtime.InteropServices.Marshal.Copy(unmanagedPointer, data, 0, items);      // transfer buffer to floats
-            return data;
+            if (start < items)
+            {
+                end = Math.Min(items, end);
+                items = end - start;
+
+                float[] data = new float[items];
+                unmanagedPointer += sizeof(float) * start;
+
+                System.Runtime.InteropServices.Marshal.Copy(unmanagedPointer, data, 0, items);      // transfer buffer to floats
+                return data;
+            }
+            else
+                return null;
         }
 
         public void SetSamplerMode(TextureWrapMode s, TextureWrapMode t, TextureWrapMode p)

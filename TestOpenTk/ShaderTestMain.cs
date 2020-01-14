@@ -470,10 +470,10 @@ void main(void)
             {
                 Vector4[] p = new Vector4[4];
 
-                p[0] = new Vector4(10, 10, 0, 0);       // topleft - correct winding for our system. For dotted, red/blue at top as dots
-                p[1] = new Vector4(10, 100, 0, 0);      // bottomleft
-                p[2] = new Vector4(50, 10, 0, 0);       // topright
-                p[3] = new Vector4(50, 100, 0, 0);      // botright
+                p[0] = new Vector4(10, 10, 0, 1);       // topleft - correct winding for our system. For dotted, red/blue at top as dots
+                p[1] = new Vector4(10, 100, 0, 1);      // bottomleft
+                p[2] = new Vector4(50, 10, 0, 1);       // topright
+                p[3] = new Vector4(50, 100, 0, 1);      // botright
 
                 items.Add("ds1", new GLDirect((a)=> 
                 {

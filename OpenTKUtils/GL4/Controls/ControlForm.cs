@@ -43,9 +43,9 @@ namespace OpenTKUtils.GL4.Controls
             vertexes = new GLBuffer();
 
             vertexarray = new GLVertexArray();
-            vertexes.Bind(0, 0, cperv * sizeof(float));             // bind to 0, from 0, 2xfloats. Must bind after vertexarray is made as its bound during construction
+            vertexes.Bind(0, 0, vertexesperentry * sizeof(float));             // bind to 0, from 0, 2xfloats. Must bind after vertexarray is made as its bound during construction
 
-            vertexarray.Attribute(0, 0, cperv, OpenTK.Graphics.OpenGL4.VertexAttribType.Float); // bind 0 on attr 0, 2 components per vertex
+            vertexarray.Attribute(0, 0, vertexesperentry, OpenTK.Graphics.OpenGL4.VertexAttribType.Float); // bind 0 on attr 0, 2 components per vertex
 
             ri = new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, 0, vertexarray);     // create a renderable item
             ri.CreateRectangleRestartIndexByte(255 / 5);
@@ -71,51 +71,18 @@ namespace OpenTKUtils.GL4.Controls
             Font = new Font("Microsoft Sans Serif", 8.25f);
         }
 
-        // call this during your Paint override to render
-
-        public void Render(GLMatrixCalc mc)
+        public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
         {
-            //System.Diagnostics.Debug.WriteLine("Form redraw start");
-            //DebugWhoWantsRedraw();
-
-            foreach (var c in children)
-            {
-                bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
-
-                if (redrawn)
-                {
-                    textures[c].LoadBitmap(c.GetLevelBitmap);  // and update texture unit with new bitmap
-                }
-            }
-
-            NeedRedraw = false;
-
-            shader.Start();
-            ri.Bind(shader, mc);                    // binds VA AND the element buffer
-            GLStatics.PrimitiveRestart(true, 0xff);
-            ri.Render();                            // draw using primitive restart on element index buffer with bindless textures
-            shader.Finish();
-            GL.UseProgram(0);           // final clean up
-            GL.BindProgramPipeline(0);
-
-            RequestRender = false;
-
-            //System.Diagnostics.Debug.WriteLine("Form redraw end");
+            textures[other] = new GLTexture2D();                // we make a texture per top level control to render with
+            base.Add(other);
         }
 
-
-
-
-        const int cperv = 2;
-        const int maxtoplevel = 16;
-
-        private GLWindowControl glwin;
-        private GLBuffer vertexes;
-        private GLVertexArray vertexarray;
-        private Dictionary<GLBaseControl, GLTexture2D> textures;
-        private GLBindlessTextureHandleBlock texturebinds;
-        private GLRenderableItem ri;
-        private IGLProgramShader shader;
+        public override void Remove(GLBaseControl other)
+        {
+            base.Remove(other);
+            textures[other].Dispose();
+            textures.Remove(other);
+        }
 
         public class GLControlShader : GLShaderPipeline
         {
@@ -129,30 +96,26 @@ namespace OpenTKUtils.GL4.Controls
         {
             base.PerformLayout();
 
-            vertexes.Allocate(children.Count * sizeof(float) * cperv * 4);
+            vertexes.Allocate(children.Count * sizeof(float) * vertexesperentry * 4);
             IntPtr p = vertexes.Map(0, vertexes.BufferSize);
 
             List<IGLTexture> tlist = new List<IGLTexture>();
 
             foreach (var c in children)
             {
+                float z = 0f;
                 float[] a = new float[] {
-                                                c.ClientRectangle.Left, c.ClientRectangle.Top,
-                                                c.ClientRectangle.Left, c.ClientRectangle.Bottom ,
-                                                c.ClientRectangle.Right, c.ClientRectangle.Top,
-                                                c.ClientRectangle.Right, c.ClientRectangle.Bottom ,
+                                                c.ClientRectangle.Left, c.ClientRectangle.Top, z, 1,
+                                                c.ClientRectangle.Left, c.ClientRectangle.Bottom , z, 1,
+                                                c.ClientRectangle.Right, c.ClientRectangle.Top, z, 1,
+                                                c.ClientRectangle.Right, c.ClientRectangle.Bottom , z, 1,
                                             };
 
                 vertexes.MapWrite(ref p, a);
 
-                if (!textures.ContainsKey(c))      // if we don't have a texture for it..
+                if (textures[c].Id == -1 || textures[c].Width != c.GetLevelBitmap.Width || textures[c].Height != c.GetLevelBitmap.Height)      // if layout changed bitmap
                 {
-                    textures[c] = new GLTexture2D();
-                    textures[c].CreateTexture(c.Width, c.Height);   // and make a texture
-                }
-                else if (textures[c].Width != c.GetLevelBitmap.Width || textures[c].Height != c.GetLevelBitmap.Height)      // if layout changed bitmap
-                {
-                    textures[c].CreateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
+                    textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
                 }
 
                 tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles, and the dictionary does not guarantee this
@@ -170,11 +133,48 @@ namespace OpenTKUtils.GL4.Controls
             //float[] d = vertexes.ReadFloats(0, children.Count * 4 * cperv);
         }
 
-        // tbd clean up textures[c] on removal of control
+        // call this during your Paint to render
 
-        GLBaseControl currentmouseover = null;
-        Point currentmouseoverlocation;
-        GLBaseControl currentfocus = null;
+        public void Render()
+        {
+            //System.Diagnostics.Debug.WriteLine("Form redraw start");
+            //DebugWhoWantsRedraw();
+
+            LinkedListNode<GLBaseControl> pos = children.Last;      // render in order from last z to first z.
+            while (pos != null)
+            {
+                var c = pos.Value;
+
+                if (c.Visible)
+                {
+                    bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
+
+                    if (redrawn)
+                    {
+                        textures[c].LoadBitmap(c.GetLevelBitmap);  // and update texture unit with new bitmap
+                        //float[] p = textures[c].GetTextureImageAsFloats(end:100);
+                    }
+                }
+
+                pos = pos.Previous;
+            }
+
+            NeedRedraw = false;
+
+            shader.Start();
+            ri.Bind(shader, null);                    // binds VA AND the element buffer
+            GLStatics.PrimitiveRestart(true, 0xff);
+            ri.Render();                            // draw using primitive restart on element index buffer with bindless textures
+            shader.Finish();
+            GL.UseProgram(0);           // final clean up
+            GL.BindProgramPipeline(0);
+
+            RequestRender = false;
+
+            //System.Diagnostics.Debug.WriteLine("Form redraw end");
+        }
+
+        // tbd clean up textures[c] on removal of control
 
         private void Gc_MouseLeave(object sender, MouseEventArgs e)
         {
@@ -368,6 +368,18 @@ namespace OpenTKUtils.GL4.Controls
         {
             Paint?.Invoke(sender);
         }
+
+        const int vertexesperentry = 4;
+        private GLWindowControl glwin;
+        private GLBuffer vertexes;
+        private GLVertexArray vertexarray;
+        private Dictionary<GLBaseControl, GLTexture2D> textures;
+        private GLBindlessTextureHandleBlock texturebinds;
+        private GLRenderableItem ri;
+        private IGLProgramShader shader;
+        private GLBaseControl currentmouseover = null;
+        private Point currentmouseoverlocation;
+        private GLBaseControl currentfocus = null;
 
 
     }

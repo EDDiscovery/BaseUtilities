@@ -16,7 +16,6 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLScrollBar : GLBaseControl
     {
-        public Action<GLBaseControl> ValueChanged { get; set; } = null;
         public Action<GLBaseControl, ScrollEventArgs> Scroll { get; set; } = null;
 
         public int Value { get { return thumbvalue; } set { SetValues(value, maximum, minimum, largechange, smallchange); } }
@@ -161,7 +160,6 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     thumbvalue = newthumbvalue;
                     OnScroll(new ScrollEventArgs(thumbvalue, newthumbvalue));
-                    OnValueChanged();
                     CalculateThumb();
                     Invalidate();
                 }
@@ -325,7 +323,6 @@ namespace OpenTKUtils.GL4.Controls
             {
                 thumbvalue += vchange;
                 thumbvalue = Math.Max(thumbvalue, minimum);
-                OnValueChanged();
                 OnScroll(new ScrollEventArgs( oldvalue, Value));
                 CalculateThumb();
                 Invalidate();
@@ -334,7 +331,6 @@ namespace OpenTKUtils.GL4.Controls
             {
                 thumbvalue += vchange;
                 thumbvalue = Math.Min(thumbvalue, UserMaximum);
-                OnValueChanged();
                 OnScroll(new ScrollEventArgs( oldvalue, Value));
                 CalculateThumb();
                 Invalidate();
@@ -365,7 +361,6 @@ namespace OpenTKUtils.GL4.Controls
 
             if (newthumbvalue != thumbvalue)        // if changed..
             {
-                OnValueChanged();
                 thumbvalue = newthumbvalue;
                 iv = true;
             }
@@ -378,11 +373,6 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         private int UserMaximum { get { return Math.Max(maximum - largechange + 1, minimum); } }    // make sure it does not go below minimum whatever largechange is set to.
-
-        protected virtual void OnValueChanged()
-        {
-            ValueChanged?.Invoke(this);
-        }
 
         protected virtual void OnScroll(ScrollEventArgs se)
         {
