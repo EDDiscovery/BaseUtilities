@@ -67,8 +67,8 @@ namespace OpenTKUtils.GL4.Controls
         #region Main UI
         public string Name { get; set; } = "?";
 
+        // bounds of the window
         // co-ords are in offsets from 0,0 being the parent top left corner.
-        // co-ords are the whole window.  use ClientRectangle to get the area inside the margin/paddings/border
 
         public int Left { get { return window.Left; } set { SetPos(value, window.Top, window.Width, window.Height); } }
         public int Right { get { return window.Right; } set { SetPos(window.Left, window.Top, value - window.Left, window.Height); } }
@@ -81,7 +81,10 @@ namespace OpenTKUtils.GL4.Controls
         public virtual void SizeClipped(Size s) { SetPos(window.Left, window.Top, Math.Min(Width, s.Width), Math.Min(Height, s.Height)); }
         public Rectangle Position { get { return window; } set { SetPos(value.Left, value.Top, value.Width, value.Height); } }
 
-        // returns area inside margins
+        public int ClientLeftMargin { get { return Margin.Left + Padding.Left + BorderWidth; } }
+        public int ClientRightMargin { get { return Margin.Right + Padding.Right + BorderWidth; } }
+        public int ClientTopMargin { get { return Margin.Top + Padding.Top + BorderWidth; } }
+        public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
         public Rectangle ClientRectangle { get { return AdjustByPaddingBorderMargin(window); }  }
 
         public DockingType Dock { get { return docktype; } set { if (docktype != value) { docktype = value; InvalidateLayoutParent(); } } }
@@ -95,6 +98,7 @@ namespace OpenTKUtils.GL4.Controls
         public Color BackColorGradientAlt { get { return backcolorgradientalt; } set { if (backcolorgradientalt != value) { backcolorgradientalt = value; Invalidate(); } } }
         public Color BorderColor { get { return bordercolor; } set { if (bordercolor != value) { bordercolor = value; Invalidate(); } } }
         public int BorderWidth { get { return borderwidth; } set { if (borderwidth != value) { borderwidth = value; InvalidateLayoutParent(); } } }
+
         public GL4.Controls.Padding Padding { get { return padding; } set { if (padding != value) { padding = value; InvalidateLayoutParent(); } } }
         public GL4.Controls.Margin Margin { get { return margin; } set { if (margin != value) { margin = value; InvalidateLayoutParent(); } } }
         public void SetMarginBorderWidth(Margin m, int borderwidth, Color borderc, Padding p) { margin = m; padding = p; bordercolor = borderc; BorderWidth = borderwidth; }
@@ -434,20 +438,28 @@ namespace OpenTKUtils.GL4.Controls
 
                 gr.SetClip(cliparea);   // set graphics to the clip area so we can draw the background/border
 
-                if (backcolorgradient != int.MinValue && BackColor != Color.Transparent)
+                if (BackColor != Color.Transparent)
                 {
-                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor + " -> " + BackColorGradientAlt );
-                    using (var b = new System.Drawing.Drawing2D.LinearGradientBrush(drawarea, BackColor, BackColorGradientAlt, backcolorgradient))
-                        gr.FillRectangle(b, drawarea);       // linear grad brushes do not respect smoothing mode, btw
+                    if (backcolorgradient != int.MinValue)
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor + " -> " + BackColorGradientAlt );
+                        using (var b = new System.Drawing.Drawing2D.LinearGradientBrush(drawarea, BackColor, BackColorGradientAlt, backcolorgradient))
+                            gr.FillRectangle(b, drawarea);       // linear grad brushes do not respect smoothing mode, btw
+                    }
+                    else
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor);
+                        using (Brush b = new SolidBrush(BackColor))     // always fill, so we get back to start
+                            gr.FillRectangle(b, drawarea);
+                    }
                 }
                 else
                 {
-                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + drawarea + " " + BackColor);
-                    using (Brush b = new SolidBrush(BackColor))     // always fill, so we get back to start
-                        gr.FillRectangle(b, drawarea);
+                    if ( levelbmp != null )     // its transparent, we own the bitmap, we clear it
+                        gr.Clear(BackColor);
                 }
 
-                if (BorderColor != Color.Transparent)   // border
+                if (BorderWidth>0)
                 {
                     Rectangle rectarea = new Rectangle(drawarea.Left + Margin.Left,
                                                     drawarea.Top + Margin.Top,
