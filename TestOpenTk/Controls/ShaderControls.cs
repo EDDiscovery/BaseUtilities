@@ -219,6 +219,7 @@ namespace TestOpenTk
                 {
                     List<string> i1 = new List<string>() { "one", "two", "three", "four" ,"five","six","seven","eight","nine","ten","eleven","twelve"};
                     GLListBox lb1 = new GLListBox("LB1", new Rectangle(580, 220, 200, 200), i1, Color.Gray);
+                    lb1.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     lb1.Font = new Font("Microsoft Sans Serif", 12f);
                     ptop.Add(lb1);
                     lb1.SelectedIndexChanged += (s,si) => { System.Diagnostics.Debug.WriteLine("Selected index " + si); };
@@ -227,12 +228,11 @@ namespace TestOpenTk
                 if (true)
                 {
                     GLPanel p2 = new GLPanel("P2", DockingType.Left, 0.15f, Color.Green);
+                    p2.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     ptop.Add(p2);
 
-                    GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
-                    ptop.Add(p3);
-
-                    GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 0, 0), "Button 1", Color.Gray);
+                    GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 50, 20), "Button 1", Color.Gray);
+                    b1.Dock = DockingType.LeftCenter;
                     b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
                     p2.Add(b1);
 
@@ -247,8 +247,11 @@ namespace TestOpenTk
                     cb1.CheckChanged += (c, ev) => { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
                     p2.Add(cb1);
 
-                    GLLabel lb1 = new GLLabel("Lab1", new Rectangle(5, 100, 0,0), "Hello", Color.Red);
+                    GLLabel lb1 = new GLLabel("Lab1", new Rectangle(5, 100, 0, 0), "Hello", Color.Red);
                     p2.Add(lb1);
+
+                    GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
+                    ptop.Add(p3);
                 }
 
                 if (false)

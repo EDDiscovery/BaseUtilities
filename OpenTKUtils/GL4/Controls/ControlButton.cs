@@ -53,23 +53,6 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLButton : GLButtonBase
     {
-        public Color ButtonBorderColor { get { return buttonBorderColor; } set { buttonBorderColor = value; Invalidate(); } }
-
-        public float BorderColorScaling
-        {
-            get { return borderColorScaling; }
-            set
-            {
-                if (float.IsNaN(value) || float.IsInfinity(value))
-                    return;
-                else if (borderColorScaling != value)
-                {
-                    borderColorScaling = value;
-                    Invalidate();
-                }
-            }
-        }
-
         public float ButtonColorScaling
         {
             get { return buttonColorScaling; }
@@ -87,9 +70,12 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLButton()
         {
+            Padding = new Padding(1);       // standard format, a border with a pad of 1
+            BorderWidth = 1;
+            BorderColor = Color.Yellow;
         }
 
-        public GLButton(string name, Rectangle location, string text, Color backcolour)
+        public GLButton(string name, Rectangle location, string text, Color backcolour) : this()
         {
             Name = name;
             Text = text;
@@ -122,55 +108,36 @@ namespace OpenTKUtils.GL4.Controls
         public override void Paint(Rectangle area, Graphics gr)
         {
             Color colBack = Color.Empty;
-            Color colBorder = Color.Empty;
 
             if ( Enabled == false )
             {
                 colBack = ButtonBackColor.Multiply(DisabledScaling);
-                colBorder = ButtonBorderColor.Multiply(DisabledScaling);
             }
             else if (MouseButtonsDown == MouseEventArgs.MouseButtons.Left )
             {
                 colBack = MouseDownBackColor;
-                colBorder = ButtonBorderColor.Multiply(borderColorScaling);
             }
             else if (Hover)
             {
                 colBack = MouseOverBackColor;
-                colBorder = ButtonBorderColor.Multiply(borderColorScaling);
             }
             else
             {
                 colBack = ButtonBackColor;
-                colBorder = ButtonBorderColor;
             }
 
-            Rectangle border = area;
-            border.Width--; border.Height--;
-
-            Rectangle buttonarea = area;
-            buttonarea.Inflate(-1, -1);
-
-            if (buttonarea.Width >= 1 && buttonarea.Height >= 1)  // ensure size
-            {
-                using (var b = new LinearGradientBrush(buttonarea, colBack, colBack.Multiply(buttonColorScaling), 90))
-                    gr.FillRectangle(b, buttonarea);       // linear grad brushes do not respect smoothing mode, btw
-            }
+            if (area.Width < 1 || area.Height < 1)  // and no point drawing any more in the button area if its too small, it will except
+                return;
 
             gr.SmoothingMode = SmoothingMode.None;
 
-            if (border.Width >= 1 && border.Height >= 1)        // ensure it does not except
-            {
-                using (var p = new Pen(colBorder))
-                    gr.DrawRectangle(p, border);
-            }
-
-            if (buttonarea.Width < 1 || buttonarea.Height < 1)  // and no point drawing any more in the button area if its too small, it will except
-                return;
+            //tbd not filling top line
+            using (var b = new LinearGradientBrush(area, colBack, colBack.Multiply(buttonColorScaling), 90))
+                gr.FillRectangle(b, area);       // linear grad brushes do not respect smoothing mode, btw
 
             if (Image != null)
             {
-                base.DrawImage(Image, buttonarea, gr);
+                base.DrawImage(Image, area, gr);
             }
 
             gr.SmoothingMode = SmoothingMode.AntiAlias;
@@ -181,7 +148,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     using (Brush textb = new SolidBrush((Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
                     {
-                        gr.DrawString(this.Text, this.Font, textb, buttonarea, fmt);
+                        gr.DrawString(this.Text, this.Font, textb, area, fmt);
                     }
                 }
             }

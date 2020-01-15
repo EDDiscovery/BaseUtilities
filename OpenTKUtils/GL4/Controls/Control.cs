@@ -67,7 +67,8 @@ namespace OpenTKUtils.GL4.Controls
         #region Main UI
         public string Name { get; set; } = "?";
 
-        // co-ords are in parent control positions
+        // co-ords are in offsets from 0,0 being the parent top left corner.
+        // co-ords are the whole window.  use ClientRectangle to get the area inside the margin/paddings/border
 
         public int Left { get { return window.Left; } set { SetPos(value, window.Top, window.Width, window.Height); } }
         public int Right { get { return window.Right; } set { SetPos(window.Left, window.Top, value - window.Left, window.Height); } }
@@ -79,10 +80,9 @@ namespace OpenTKUtils.GL4.Controls
         public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left, window.Top, value.Width, value.Height); } }
         public virtual void SizeClipped(Size s) { SetPos(window.Left, window.Top, Math.Min(Width, s.Width), Math.Min(Height, s.Height)); }
         public Rectangle Position { get { return window; } set { SetPos(value.Left, value.Top, value.Width, value.Height); } }
-        public Rectangle ClientRectangle { get { return window; } set { SetPos(value.Left, value.Right, value.Width, value.Height); } }
 
-        // area you can draw into.  Normally its the window, but if we have a level bmp, we use the bitmap size as it may be overriden to be bigger
-        public virtual Size DrawableSize { get { return (levelbmp != null) ? levelbmp.Size : Size; } }
+        // returns area inside margins
+        public Rectangle ClientRectangle { get { return AdjustByPaddingBorderMargin(window); }  }
 
         public DockingType Dock { get { return docktype; } set { if (docktype != value) { docktype = value; InvalidateLayoutParent(); } } }
         public float DockPercent { get { return dockpercent; } set { if (value != dockpercent) { dockpercent = value; InvalidateLayoutParent(); } } }        // % in 0-1 terms used to dock on left,top,right,bottom.  0 means just use width/height
@@ -314,7 +314,9 @@ namespace OpenTKUtils.GL4.Controls
                         PerformSizeChildren(c);
                 }
 
-                Rectangle area = AdjustByPaddingBorderMargin(new Rectangle(0, 0, Width, Height));
+                // size down area allows by margins etc
+
+                Rectangle area = AdjustByPaddingBorderMargin(new Rectangle(0, 0, Width, Height));   
 
                 foreach (var c in children)
                 {
@@ -403,8 +405,8 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         // redraw, into usebmp
-        // drawarea = area that our control occupies on the bitmap, which may be outside of the clip area
-        // cliparea = area that we can draw into, so we don't exceed the bounds of any parent clip areas
+        // drawarea = area that our control occupies on the bitmap, in bitmap co-ords, which may be outside of the clip area
+        // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas
         // gr = graphics to draw into
         // we must be visible to be called. Children may not be visible
 
@@ -491,9 +493,10 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
             {
-                gr.SetClip(cliparea);   // set graphics to the clip area - it may have been overriden by the child draws
+                gr.SetClip(cliparea);   // set graphics to the clip area - this is including the margins, again since child may have overridden
 
-                Paint(drawarea, gr);
+                Rectangle paintarea = AdjustByPaddingBorderMargin(drawarea);    // paint area excludes the margins
+                Paint(paintarea, gr);
 
                 if ( parentgr != null)      // give us a chance of parent paint thru
                     PaintParent(parentarea, parentgr);

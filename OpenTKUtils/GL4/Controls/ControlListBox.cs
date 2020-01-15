@@ -98,7 +98,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 itemheight = (int)Font.GetHeight() + 2;
 
-                displayableitems = Height / itemheight;            // number of items to display
+                displayableitems = ClientRectangle.Height / itemheight;            // number of items to display
 
                 if (items > 0 && displayableitems > items)
                     displayableitems = items;
@@ -119,7 +119,8 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (items != null && items.Count > 0)
             {
-                Rectangle itemarea = new Rectangle(area.Left, area.Top, Width - (scrollbar.Visible ? scrollbar.Width : 0), Height);     // total width area
+                Rectangle ca = ClientRectangle;
+                Rectangle itemarea = new Rectangle(area.Left, area.Top, ca.Width - (scrollbar.Visible ? scrollbar.Width : 0), ca.Height);     // total width area
                 itemarea.Height = itemheight;
 
                 Rectangle textarea = itemarea;      // where we draw text

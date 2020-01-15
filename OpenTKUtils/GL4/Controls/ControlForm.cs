@@ -105,10 +105,10 @@ namespace OpenTKUtils.GL4.Controls
             {
                 float z = 0f;
                 float[] a = new float[] {
-                                                c.ClientRectangle.Left, c.ClientRectangle.Top, z, 1,
-                                                c.ClientRectangle.Left, c.ClientRectangle.Bottom , z, 1,
-                                                c.ClientRectangle.Right, c.ClientRectangle.Top, z, 1,
-                                                c.ClientRectangle.Right, c.ClientRectangle.Bottom , z, 1,
+                                                c.Left, c.Top, z, 1,
+                                                c.Left, c.Bottom , z, 1,
+                                                c.Right, c.Top, z, 1,
+                                                c.Right, c.Bottom , z, 1,
                                             };
 
                 vertexes.MapWrite(ref p, a);
