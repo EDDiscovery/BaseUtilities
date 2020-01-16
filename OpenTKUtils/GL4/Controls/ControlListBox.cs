@@ -17,10 +17,13 @@ namespace OpenTKUtils.GL4.Controls
         public List<Image> ImageItems { get { return images; } set { images = value; Invalidate(); PerformLayout(); } }
         public int[] ItemSeperators { get { return itemSeperators; } set { itemSeperators = value; Invalidate(); } }
 
-        public int SelectedIndex { get { return selectedIndex; } set { selectedIndex = value; Invalidate(); } }
+        public int SelectedIndex { get { return selectedIndex; } set { SetSelectedIndex(value); } }
+        public string Text { get { return (items != null && selectedIndex>=0)?items[selectedIndex]:null; } set { SetSelectedIndex(value); } }
 
         public bool FitToItemsHeight { get { return fitToItemsHeight; } set { fitToItemsHeight = value; Invalidate(); } }
         public bool FitImagesToItemHeight { get { return fitImagesToItemHeight; } set { fitImagesToItemHeight = value; Invalidate(); } }
+
+        public int DropDownHeightMaximum { get { return dropDownHeightMaximum; } set { dropDownHeightMaximum = value; InvalidateLayoutParent(); } }
 
         public Color MouseOverBackColor { get { return mouseOverBackColor; } set { mouseOverBackColor = value; Invalidate(); } }
         public Color ItemSeperatorColor { get { return itemSeperatorColor; } set { itemSeperatorColor = value; Invalidate(); } }
@@ -76,7 +79,7 @@ namespace OpenTKUtils.GL4.Controls
             items = texts;
             Focusable = true;
             Name = n;
-            Position = pos;
+            Bounds = pos;
             BackColor = backcolor;
         }
 
@@ -84,6 +87,31 @@ namespace OpenTKUtils.GL4.Controls
         {
             PerformLayout();
         }
+
+        public override void PerformSize()
+        {
+            base.PerformSize();
+            if (AutoSize)       // measure text size and number of items to get idea of space required. Allow for scroll bar
+            {
+                int items = (Items != null) ? Items.Count() : 0;        
+                SizeF max = new SizeF(ScrollBarWidth*2,0);
+                if ( items>0)
+                {
+                    using (StringFormat f = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap })
+                    {
+                        foreach (var s in Items)
+                        {
+                            SizeF cur = BaseUtils.BitMapHelpers.MeasureStringInBitmap(s, Font, f);
+                            if (cur.Width > max.Width)
+                                max.Width = cur.Width;
+                        }
+                    }
+                }
+                int fh = (int)Font.GetHeight() + 2;
+                Size = new Size((int)max.Width+ScrollBarWidth+8,Math.Min(items*fh+4,DropDownHeightMaximum));
+            }
+        }
+
 
         public override void PerformLayout()
         {
@@ -117,6 +145,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void Paint(Rectangle area, Graphics gr)
         {
+           // System.Diagnostics.Debug.WriteLine("Paint List box");
             if (items != null && items.Count > 0)
             {
                 Rectangle ca = ClientRectangle;
@@ -139,6 +168,17 @@ namespace OpenTKUtils.GL4.Controls
                         textarea.X += maxwidth;
                         imagearea.Width = maxwidth;
                     }
+                }
+
+                if ( selectedindexset )     // we set the selected index, move to this and set focus to it, make sure its displayed
+                {
+                    focusindex = SelectedIndex;
+                    if (focusindex > firstindex)         
+                        firstindex = focusindex;
+                    else if (focusindex >= firstindex + displayableitems)
+                        firstindex = focusindex - displayableitems - 1;
+
+                    selectedindexset = false;
                 }
 
                 gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
@@ -183,6 +223,29 @@ namespace OpenTKUtils.GL4.Controls
                 }
 
                 gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+            }
+        }
+
+        private void SetSelectedIndex(int i)
+        {
+            if (items != null)
+            {
+                if (i >= 0 && i < items.Count)
+                {
+                    selectedIndex = i;
+                    selectedindexset = true;
+                    Invalidate();
+                }
+            }
+        }
+
+        private void SetSelectedIndex(string s, StringComparison c = StringComparison.InvariantCultureIgnoreCase)
+        {
+            if (items != null)
+            {
+                int i = items.FindIndex((x) => x.Equals(s, c));
+                if (i >= 0)
+                    SetSelectedIndex(i);
             }
         }
 
@@ -236,7 +299,7 @@ namespace OpenTKUtils.GL4.Controls
 
                     if (index >= 0 && index < items.Count)
                     {
-                        SelectedIndex = index;
+                        selectedIndex = index;
                         SelectedIndexChanged?.Invoke(this, SelectedIndex);
                     }
                 }
@@ -295,7 +358,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 if ((e.KeyCode == System.Windows.Forms.Keys.Enter || e.KeyCode == System.Windows.Forms.Keys.Return) || (e.Alt && (e.KeyCode == System.Windows.Forms.Keys.Up || e.KeyCode == System.Windows.Forms.Keys.Down)))
                 {
-                    SelectedIndex = focusindex;
+                    selectedIndex = focusindex;
                     SelectedIndexChanged?.Invoke(this, SelectedIndex);
                 }
 
@@ -320,6 +383,8 @@ namespace OpenTKUtils.GL4.Controls
         private int displayableitems;
         private int firstindex = 0;
         private int focusindex = -1;
+        private bool selectedindexset = false;
+        private int dropDownHeightMaximum = 400;
 
     }
 }

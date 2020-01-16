@@ -49,7 +49,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLVerticalScrollPanelScrollBar(string name, Rectangle location, Color back) : this()
         {
             Name = name;
-            Position = location;
+            Bounds = location;
             BackColor = back;
         }
 

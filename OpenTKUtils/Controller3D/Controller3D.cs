@@ -193,7 +193,6 @@ namespace OpenTKUtils.Common
         {
             MatrixCalc.CalculateProjectionMatrix(fov.Current, glwin.Width, glwin.Height, out float zn);
             ProjectionZNear = zn;
-            GL.Viewport(0, 0, glwin.Width, glwin.Height);                        // Use all of the glControl painting area
         }
 
         // Paint the scene - just pass the call down to the installed PaintObjects

@@ -46,7 +46,7 @@ namespace OpenTKUtils.GL4.Controls
         private Color buttonBackColor { get; set; } = Color.Gray;
         private Color mouseOverBackColor { get; set; } = Color.Green;
         private Color mouseDownBackColor { get; set; } = Color.YellowGreen;
-        private Color foreColor { get; set; } = Color.White;
+        private Color foreColor { get; set; } = Color.Black;
         private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleCenter;
 
     }
@@ -84,7 +84,7 @@ namespace OpenTKUtils.GL4.Controls
                 location.Width = location.Height = 10;  // nominal
                 AutoSize = true;
             }
-            Position = location;
+            Bounds = location;
            
             BackColor = backcolour;
         }
@@ -158,7 +158,6 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         private Color buttonBorderColor { get; set; } = Color.Brown;
-        private float borderColorScaling = 1.25F;
         private float buttonColorScaling = 0.5F;
 
     }

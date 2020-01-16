@@ -53,7 +53,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLScrollBar(string name, Rectangle pos, int min, int max)
         {
             Name = name;
-            Position = pos;
+            Bounds = pos;
             Value = Minimum = min;
             Maximum = max;
         }
@@ -264,7 +264,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Rectangle areab = base.Layout(area);
 
-            sliderarea = new Rectangle(0,0,Width,Height);
+            sliderarea = ClientRectangle;
 
             int scrollheight = sliderarea.Width;
             if (scrollheight * 2 > ClientRectangle.Height / 3)  // don't take up too much of the slider with the buttons

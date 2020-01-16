@@ -24,8 +24,10 @@ using System.Threading.Tasks;
 namespace OpenTKUtils.GL4.Controls
 {
 
-    public class GLLabel : GLTextDisplayBase
+    public class GLLabel : GLForeDisplayBase
     {
+        public string Text { get { return text; } set { text = value; Invalidate(); } }
+
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
         private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
 
@@ -42,7 +44,7 @@ namespace OpenTKUtils.GL4.Controls
                 location.Width = location.Height = 10;  // nominal
                 AutoSize = true;
             }
-            Position = location;
+            Bounds = location;
             BackColor = backcolour;
         }
 
@@ -64,7 +66,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             gr.SmoothingMode = SmoothingMode.AntiAlias;
 
-            if (!string.IsNullOrEmpty(Text))
+            if (Text.HasChars())
             {
                 using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
                 {
@@ -78,5 +80,7 @@ namespace OpenTKUtils.GL4.Controls
             gr.SmoothingMode = SmoothingMode.None;
 
         }
+
+        private string text = "";
     }
 }

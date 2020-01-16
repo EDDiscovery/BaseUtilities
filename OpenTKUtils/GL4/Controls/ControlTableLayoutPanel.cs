@@ -32,7 +32,7 @@ namespace OpenTKUtils.GL4.Controls
 
         private List<Style> rows { get; set; } = null;
         private List<Style> columns { get; set; } = null;
-        private GL4.Controls.Padding cellPadding { get; set; } = new Padding(4);
+        private GL4.Controls.Padding cellPadding { get; set; } = new Padding(1);
 
         public override void PerformLayout()     // override for other layouts
         {
@@ -66,7 +66,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (okay)
                 {
-                    Rectangle panelarea = AdjustByPaddingBorderMargin(new Rectangle(0, 0, Width, Height));
+                    Rectangle panelarea = ClientRectangle;      // in terms of our client area
 
                     var cols = CalcPos(Columns, panelarea.Width, maxcolsize);
                     var rows = CalcPos(Rows, panelarea.Height, maxrowsize);

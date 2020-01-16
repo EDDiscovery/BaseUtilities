@@ -181,6 +181,7 @@ namespace OpenTKUtils.WinForm
 
         private void Gc_Resize(object sender, EventArgs e)
         {
+            GL.Viewport(0, 0, glControl.Width, glControl.Height);                        // Use all of the glControl painting area
             Resize?.Invoke(this);
         }
 

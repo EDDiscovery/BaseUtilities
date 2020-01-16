@@ -37,7 +37,7 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
         Vector4[] boundingbox;
-        GLForm form;
+        GLControlDisplay form;
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -146,23 +146,27 @@ namespace TestOpenTk
 
             if (true)
             {
-                form = new GLForm(glwfc);       // hook form to the window - its the master
+                form = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 form.Focusable = true;          // we want to be able to focus and receive key presses.
                 form.Name = "form";
                 form.SuspendLayout();
 
                 GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
+                ptop.SuspendLayout();
+
                 ptop.BackColorGradient = 90;
-                ptop.BackColorGradientAlt = Color.Yellow;
+                ptop.BackColorGradientAlt = Color.FromArgb(200,Color.Yellow);
 
                 //GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.Transparent);
                 ptop.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
+                ptop.ResumeLayout();
                 form.Add(ptop);
 
-                if (false)
+                if (true)
                 {
-                    GLTableLayoutPanel ptable = new GLTableLayoutPanel("paneltop", new Rectangle(150, 10, 200, 200), Color.Gray);
+                    GLTableLayoutPanel ptable = new GLTableLayoutPanel("tablelayout", new Rectangle(150, 10, 200, 200), Color.Gray);
                     ptable.SuspendLayout();
+                    ptable.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     ptable.Rows = new List<GLTableLayoutPanel.Style> { new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50), new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50) };
                     ptable.Columns = new List<GLTableLayoutPanel.Style> { new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50), new GLTableLayoutPanel.Style(GLTableLayoutPanel.Style.SizeTypeEnum.Relative, 50) };
                     ptop.Add(ptable);
@@ -181,31 +185,42 @@ namespace TestOpenTk
                     ptable.ResumeLayout();
                 }
 
-                if (false)
+                if (true)
                 {
                     GLTextBox tb1 = new GLTextBox("TB1", new Rectangle(600, 10, 150, 20), "Text Data Which is a very long string", Color.White);
                     ptop.Add(tb1);
                 }
 
-                if (false)
+                if (true)
                 {
-                    GLPanel psb = new GLPanel("panelsb", new Rectangle(600, 50, 50, 220), Color.Gray);
+                    List<string> i1 = new List<string>() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve" };
+                    GLComboBox cb1 = new GLComboBox("CB1", new Rectangle(600, 40, 150, 20), i1, Color.White);
+                    cb1.SelectedIndex = 0;
+                    cb1.BackColorGradient = 90;
+                    cb1.BackColorGradientAlt = Color.Aqua;
+                    cb1.Font = new Font("Microsoft Sans Serif", 12f);
+                    ptop.Add(cb1);
+                }
+
+                if (true)
+                {
+                    GLPanel psb = new GLPanel("panelsb", new Rectangle(600, 80, 50, 100), Color.Gray);
                     ptop.Add(psb);
-                    GLScrollBar sb1 = new GLScrollBar("SB1", new Rectangle(5, 10, 40, 200), 0, 100);
+                    GLScrollBar sb1 = new GLScrollBar("SB1", new Rectangle(0, 0, 20, 100), 0, 100);
                     psb.Add(sb1);
                 }
 
-                if (false)
+                if (true)
                 {
-                    GLVerticalScrollPanel sp1 = new GLVerticalScrollPanel("SP1", new Rectangle(150, 220, 200, 200), Color.Gray);
+                    GLVerticalScrollPanel sp1 = new GLVerticalScrollPanel("VSP1", new Rectangle(150, 220, 200, 200), Color.Gray);
                     ptop.Add(sp1);
                     GLImage sp1i1 = new GLImage("SP1I1", new Rectangle(10, 10, 100, 100), Properties.Resources.dotted);
                     sp1.Add(sp1i1);
-                    GLImage sp1i2 = new GLImage("SP1I2", new Rectangle(10, 120, 100, 100), Properties.Resources.dotted);
+                    GLImage sp1i2 = new GLImage("SP1I22", new Rectangle(10, 120, 100, 100), Properties.Resources.dotted);
                     sp1.Add(sp1i2);
                 }
 
-                if (false)
+                if (true)
                 {
                     GLVerticalScrollPanelScrollBar spb1 = new GLVerticalScrollPanelScrollBar("CSPan", new Rectangle(370, 220, 200, 200), Color.Gray);
                     ptop.Add(spb1);
@@ -217,7 +232,7 @@ namespace TestOpenTk
 
                 if (true)
                 {
-                    List<string> i1 = new List<string>() { "one", "two", "three", "four" ,"five","six","seven","eight","nine","ten","eleven","twelve"};
+                    List<string> i1 = new List<string>() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve" };
                     GLListBox lb1 = new GLListBox("LB1", new Rectangle(580, 220, 200, 200), i1, Color.Gray);
                     lb1.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     lb1.Font = new Font("Microsoft Sans Serif", 12f);
@@ -231,7 +246,9 @@ namespace TestOpenTk
                     p2.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     ptop.Add(p2);
 
-                    GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 50, 20), "Button 1", Color.Gray);
+                    GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1", Color.Gray);
+                    b1.Margin = new Margin(5);
+                    b1.Padding = new OpenTKUtils.GL4.Controls.Padding(5);
                     b1.Dock = DockingType.LeftCenter;
                     b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
                     p2.Add(b1);
@@ -257,7 +274,7 @@ namespace TestOpenTk
                 if (false)
                 {
                     GLPanel ptop2 = new GLPanel();
-                    ptop2.Position = new Rectangle(1012, 400, 400, 400);
+                    ptop2.Bounds = new Rectangle(1012, 400, 400, 400);
                     ptop2.BackColor = Color.Blue;
                     ptop2.Name = "paneltop2";
                     form.Add(ptop2);

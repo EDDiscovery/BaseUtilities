@@ -34,7 +34,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Name = name;
             Text = text;
-            Position = location;
+            Bounds = location;
             if (location.Width == 0 || location.Height == 0)
             {
                 location.Width = location.Height = 10;

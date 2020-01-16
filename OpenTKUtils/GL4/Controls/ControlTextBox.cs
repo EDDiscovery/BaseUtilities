@@ -10,6 +10,7 @@ namespace OpenTKUtils.GL4.Controls
     public abstract class GLForeDisplayBase : GLBaseControl
     {
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
+
         public float DisabledScaling
         {
             get { return disabledScaling; }
@@ -25,20 +26,24 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private Color foreColor { get; set; } = Color.White;
+        private Color foreColor { get; set; } = Color.Black;
         private float disabledScaling = 0.5F;
     }
 
-    public abstract class GLTextDisplayBase : GLForeDisplayBase
-    {
-        public string Text { get { return text; } set { text = value; Invalidate(); } }
-        private string text;
-    }
-
-    public class GLTextBox : GLTextDisplayBase
+    public class GLTextBox : GLForeDisplayBase
     {
         public Action<GLBaseControl> TextChanged { get; set; } = null;     // not fired by programatically changing Text
         public Action<GLBaseControl> ReturnPressed { get; set; } = null;     // not fired by programatically changing Text
+
+        public string Text { get { return text; } set
+            {
+                text = value;
+                if ( text.HasChars() && (cursorpos < 0 || cursorpos > text.Length ))    
+                {
+                    cursorpos = 0; displaystart = -1;
+                }
+                Invalidate();
+            } }
 
         public GLTextBox()
         {
@@ -49,7 +54,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Focusable = true;
             Name = name;
-            Position = pos;
+            Bounds = pos;
             Text = text;
             BackColor = backcolor;
         }
@@ -64,28 +69,37 @@ namespace OpenTKUtils.GL4.Controls
                 fmt.Alignment = StringAlignment.Near;
 
                 int widthavailable = drawbox.Width - 6;
-                
-                if (displaystart == -1)     // move to show end of string
+
+                if (displaystart == -1)     //not set, move to show end of string
                 {
-                    displaystart = cursorpos - 1;
+                    cursorpos = Text.Length;
 
-                    while (true)
+                    if (cursorpos > 0)
                     {
-                        string p = Text.Substring(displaystart);
-                        CharacterRange[] characterRanges = { new CharacterRange(0, p.Length) };   
-                        fmt.SetMeasurableCharacterRanges(characterRanges);
-                        var rect = gr.MeasureCharacterRanges(p, Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
+                        displaystart = Math.Max(0, cursorpos - 1);
 
-                        if (rect.Width < widthavailable) // back off until we fill the box
-                            displaystart--;
-                        else
-                            break;
+                        while (true)
+                        {
+                            string p = Text.Substring(displaystart);
+                            CharacterRange[] characterRanges = { new CharacterRange(0, p.Length) };
+                            fmt.SetMeasurableCharacterRanges(characterRanges);
+                            var rect = gr.MeasureCharacterRanges(p, Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
+
+                            if (rect.Width < widthavailable) // back off until we fill the box
+                                displaystart--;
+                            else
+                                break;
+                        }
+
+                        displaystart++; // then move 1 forward.
                     }
-
-                    displaystart++; // then move 1 forward.
+                    else
+                        displaystart = 0;
                 }
                 else if (displaystart >= cursorpos)    // if we are beyond or AT the cursor pos, reset to cursor pos. the >= means we don't do the below at the cursor pos.
+                {
                     displaystart = cursorpos;
+                }
                 else
                 {
                     while (true)
@@ -258,15 +272,16 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        
+
         // later.. tbd
         //public int StartPos { get { return startpos; } set { if (cursorpos == startpos) cursorpos = value; startpos = value; Invalidate(); } }
         //public int EndPos { get { return endpos; } set { if (cursorpos == endpos) cursorpos = value;  endpos = value; Invalidate(); } }
 
         //private int startpos = 0;
         //private int endpos = 0;
-        private int cursorpos = 0; // current cursor pos
+        private int cursorpos = -1; // not set
         private int displaystart = -1; // its either at startpos, or endpos. -1 means not set so set the string to display to end
+        private string text = "";
 
     }
 }

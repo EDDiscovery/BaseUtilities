@@ -88,7 +88,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLImage(string name, Rectangle location, Bitmap bmp)
         {
             Name = name;
-            Position = location;
+            Bounds = location;
             Image = bmp;
         }
 

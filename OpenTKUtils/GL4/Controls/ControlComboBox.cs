@@ -10,31 +10,71 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLComboBox : GLButtonBase
+    public class GLComboBox : GLBaseControl
     {
-        public Action<GLBaseControl, MouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
-        public GL4.Controls.CheckState CheckState { get { return checkstate; } set { checkstate = value; Invalidate(); } }
-        public bool Checked { get { return checkstate == CheckState.Checked; } set { checkstate = value ? CheckState.Checked : CheckState.Unchecked; Invalidate(); } }
-        public bool AutoCheck { get; set; } = false;
+        public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
+        public string Text { get { return dropdownbox.Text; } set { dropdownbox.Text = value; Invalidate(); } }
 
-        public Appearance Appearance { get { return appearance; } set { appearance = value; Invalidate(); } }
-        public ContentAlignment CheckAlign { get { return checkalign; } set { checkalign = value; Invalidate(); } }
-        public float TickBoxReductionRatio { get; set; } = 0.75f;       // Normal - size reduction
+        // list box
 
-        public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }
-        public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
+        public List<string> Items { get { return dropdownbox.Items; } set { dropdownbox.Items = value; } }
+        public List<Image> ImageItems { get { return dropdownbox.ImageItems; } set { dropdownbox.ImageItems = value; } }
+        public int[] ItemSeperators { get { return dropdownbox.ItemSeperators; } set { dropdownbox.ItemSeperators = value;  } }
+
+        public int SelectedIndex { get { return dropdownbox.SelectedIndex; } set { dropdownbox.SelectedIndex = value; Invalidate();} }
+
+        public int DropDownHeightMaximum { get { return dropdownbox.DropDownHeightMaximum; } set { dropdownbox.DropDownHeightMaximum = value; } }
+
+        public Color MouseOverBackColor { get { return dropdownbox.MouseOverBackColor; } set { dropdownbox.MouseOverBackColor = value; } }
+        public Color DropDownBackgroundColor { get { return dropdownbox.BackColor; } set { dropdownbox.BackColor = value; } }
+        public Color ItemSeperatorColor { get { return dropdownbox.ItemSeperatorColor; } set { dropdownbox.ItemSeperatorColor = value; } }
+
+        // scroll bar
+        public Color ArrowColor { get { return dropdownbox.ArrowColor; } set { dropdownbox.ArrowColor = value; } }       // of text
+        public Color SliderColor { get { return dropdownbox.SliderColor; } set { dropdownbox.SliderColor = value; } }
+        public Color ArrowButtonColor { get { return dropdownbox.ArrowButtonColor; } set { dropdownbox.ArrowButtonColor = value; } }
+        public Color ArrowBorderColor { get { return dropdownbox.ArrowBorderColor; } set { dropdownbox.ArrowBorderColor = value; } }
+        public float ArrowUpDrawAngle { get { return dropdownbox.ArrowUpDrawAngle; } set { dropdownbox.ArrowUpDrawAngle = value; } }
+        public float ArrowDownDrawAngle { get { return dropdownbox.ArrowDownDrawAngle; } set { dropdownbox.ArrowDownDrawAngle = value; } }
+        public float ArrowColorScaling { get { return dropdownbox.ArrowColorScaling; } set { dropdownbox.ArrowColorScaling = value; } }
+        public Color MouseOverButtonColor { get { return dropdownbox.MouseOverButtonColor; } set { dropdownbox.MouseOverButtonColor = value; } }
+        public Color MousePressedButtonColor { get { return dropdownbox.MousePressedButtonColor; } set { dropdownbox.MousePressedButtonColor = value; } }
+        public Color ThumbButtonColor { get { return dropdownbox.ThumbButtonColor; } set { dropdownbox.ThumbButtonColor = value; } }
+        public Color ThumbBorderColor { get { return dropdownbox.ThumbBorderColor; } set { dropdownbox.ThumbBorderColor = value; } }
+        public float ThumbColorScaling { get { return dropdownbox.ThumbColorScaling; } set { dropdownbox.ThumbColorScaling = value; } }
+        public float ThumbDrawAngle { get { return dropdownbox.ThumbDrawAngle; } set { dropdownbox.ThumbDrawAngle = value; } }
+
+        public float DisabledScaling
+        {
+            get { return disabledScaling; }
+            set
+            {
+                if (float.IsNaN(value) || float.IsInfinity(value))
+                    return;
+                else if (disabledScaling != value)
+                {
+                    disabledScaling = value;
+                    Invalidate();
+                }
+            }
+        }
 
         public GLComboBox()
         {
-
+            InvalidateOnEnterLeave = true;
+            Focusable = true;
+            dropdownbox.Visible = false;
+            dropdownbox.Name = "CB-Dropdown";
+            dropdownbox.SelectedIndexChanged += SelectedIndexChanged;
+            dropdownbox.OtherKeyPressed += OtherKeyPressed;
         }
 
-        public GLComboBox(string name, Rectangle location, string text, Color backcolour)
+        public GLComboBox(string name, Rectangle location, List<string> itms, Color backcolour) : this()
         {
             Name = name;
-            Text = text;
-            Position = location;
+            Items = itms;
+            Bounds = location;
             if (location.Width == 0 || location.Height == 0)
             {
                 location.Width = location.Height = 10;
@@ -43,175 +83,61 @@ namespace OpenTKUtils.GL4.Controls
             BackColor = backcolour;
         }
 
-
-        public override void PerformSize()
-        {
-            base.PerformSize();
-            if ( AutoSize )
-            {
-                SizeF size = BaseUtils.BitMapHelpers.MeasureStringInBitmap(Text, Font, ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign));
-                // tbd
-
-                Size = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
-                                 (int)(size.Height + 0.999) + Margin.TotalHeight + Padding.TotalHeight + BorderWidth + 4);
-            }
-        }
+        private GLListBox dropdownbox = new GLListBox();
+        private Color foreColor { get; set; } = Color.Black;
+        private float disabledScaling = 0.5F;
 
         public override void Paint(Rectangle area, Graphics gr)
         {
-            bool hasimages = Image != null;
+            string text = Text;
 
-            if (Appearance == Appearance.Button)
+            if (text != null)
             {
-                if (Enabled)
-                {
-                    Rectangle marea = area;
-                    marea.Inflate(-2, -2);
+                bool enabled = Enabled && Items.Count > 0;
 
-                    if (Hover)
+                if (enabled && Hover)
+                    DrawBack(area, gr, MouseOverBackColor, MouseOverBackColor.Multiply(0.5f), BackColorGradient);
+              
+                int arrowwidth = Font.ScalePixels(20);
+
+                int texthorzspacing = 1;
+                Rectangle textbox = new Rectangle(area.X, area.Y, area.Width - arrowwidth - 2 * texthorzspacing, area.Height);
+                Rectangle arrowbox = new Rectangle(area.Right - arrowwidth, area.Y, arrowwidth, area.Height);
+
+                using (var fmt = new StringFormat())
+                {
+                    fmt.Alignment = StringAlignment.Near;
+                    using (Brush textb = new SolidBrush(enabled ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
                     {
-                        using (Brush mover = new SolidBrush(MouseOverBackColor))
-                           gr.FillRectangle(mover, marea);
+                        gr.DrawString(text, Font, textb, textbox, fmt);
                     }
-                    else if (CheckState == CheckState.Checked)
+                }
+
+                if (enabled)
+                {
+                    int hoffset = arrowbox.Width / 12 + 2;
+                    int voffset = arrowbox.Height / 4;
+                    Point arrowpt1 = new Point(arrowbox.Left + hoffset, arrowbox.Y + voffset);
+                    Point arrowpt2 = new Point(arrowbox.XCenter(), arrowbox.Bottom - voffset);
+                    Point arrowpt3 = new Point(arrowbox.Right - hoffset, arrowpt1.Y);
+
+                    Point arrowpt1c = new Point(arrowpt1.X, arrowpt2.Y);
+                    Point arrowpt2c = new Point(arrowpt2.X, arrowpt1.Y);
+                    Point arrowpt3c = new Point(arrowpt3.X, arrowpt2.Y);
+
+                    using (Pen p2 = new Pen(ForeColor))
                     {
-                        using (Brush mover = new SolidBrush(ButtonBackColor))
-                            gr.FillRectangle(mover, marea);
-                    }
-                }
-
-                if (hasimages)
-                    DrawImage(area, gr);
-
-                using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
-                {
-                    gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                    DrawText(area, gr, fmt);
-                    gr.SmoothingMode = SmoothingMode.Default;
-                }
-            }
-            else
-            {
-                Rectangle tickarea = area;
-                Rectangle textarea = area;
-
-                int reduce = (int)(tickarea.Height * TickBoxReductionRatio);
-                tickarea.Y += (tickarea.Height - reduce) / 2;
-                tickarea.Height = reduce;
-                tickarea.Width = tickarea.Height;
-
-                if (CheckAlign == ContentAlignment.MiddleRight)
-                {
-                    tickarea.X = area.Width - tickarea.Width;
-                    textarea.Width -= tickarea.Width;
-                }
-                else
-                {
-                    textarea.X += tickarea.Width;
-                    textarea.Width -= tickarea.Width;
-                }
-
-                float discaling = Enabled ? 1.0f : DisabledScaling;
-
-                Color checkboxbasecolour = (Enabled && Hover) ? MouseOverBackColor : ButtonBackColor.Multiply(discaling);
-
-                if (!hasimages)      // draw the over box of the checkbox if no images
-                {
-                    using (Pen outer = new Pen(checkboxbasecolour))
-                        gr.DrawRectangle(outer, tickarea);
-                }
-
-                tickarea.Inflate(-1, -1);
-
-                Rectangle checkarea = tickarea;
-                checkarea.Width++; checkarea.Height++;          // convert back to area
-
-                //                System.Diagnostics.Debug.WriteLine("Owner draw " + Name + checkarea + rect);
-
-                if (hasimages)
-                {
-                    if (Enabled && Hover)                // if mouse over, draw a nice box around it
-                    {
-                        using (Brush mover = new SolidBrush(MouseOverBackColor))
+                        if (dropdownbox.Visible)
                         {
-                            gr.FillRectangle(mover, checkarea);
+                            gr.DrawLine(p2, arrowpt1c, arrowpt2c);            // the arrow!
+                            gr.DrawLine(p2, arrowpt2c, arrowpt3c);
+                        }
+                        else
+                        {
+                            gr.DrawLine(p2, arrowpt1, arrowpt2);            // the arrow!
+                            gr.DrawLine(p2, arrowpt2, arrowpt3);
                         }
                     }
-                }
-                else
-                {                                   // in no image, we draw a set of boxes
-                    using (Pen second = new Pen(CheckBoxInnerColor.Multiply(discaling), 1F))
-                        gr.DrawRectangle(second, tickarea);
-
-                    tickarea.Inflate(-1, -1);
-
-                    using (Brush inner = new LinearGradientBrush(tickarea, CheckBoxInnerColor.Multiply(discaling), checkboxbasecolour, 225))
-                        gr.FillRectangle(inner, tickarea);      // fill slightly over size to make sure all pixels are painted
-
-                    using (Pen third = new Pen(checkboxbasecolour.Multiply(discaling), 1F))
-                        gr.DrawRectangle(third, tickarea);
-                }
-
-                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-                using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.FitBlackBox })
-                    DrawText(textarea, gr, fmt);
-
-                if (hasimages)
-                {
-                    DrawImage(checkarea, gr);
-                }
-                else
-                {
-                    Color c1 = Color.FromArgb(200, CheckColor.Multiply(discaling));
-                    if (CheckState == CheckState.Checked)
-                    {
-                        Point pt1 = new Point(checkarea.X + 2, checkarea.Y + checkarea.Height / 2 - 1);
-                        Point pt2 = new Point(checkarea.X + checkarea.Width / 2 - 1, checkarea.Bottom - 2);
-                        Point pt3 = new Point(checkarea.X + checkarea.Width - 2, checkarea.Y);
-
-                        using (Pen pcheck = new Pen(c1, 2.0F))
-                        {
-                            gr.DrawLine(pcheck, pt1, pt2);
-                            gr.DrawLine(pcheck, pt2, pt3);
-                        }
-                    }
-                    else if (CheckState == CheckState.Indeterminate)
-                    {
-                        Size cb = new Size(checkarea.Width - 5, checkarea.Height - 5);
-                        if (cb.Width > 0 && cb.Height > 0)
-                        {
-                            using (Brush br = new SolidBrush(c1))
-                            {
-                                gr.FillRectangle(br, new Rectangle(new Point(checkarea.X + 2, checkarea.Y + 2), cb));
-                            }
-                        }
-                    }
-                }
-
-                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
-            }
-
-        }
-
-        private void DrawImage(Rectangle box, Graphics g)
-        {
-            Image image = CheckState == CheckState.Checked ? Image : ((CheckState == CheckState.Indeterminate && ImageIndeterminate != null) ? ImageIndeterminate : (ImageUnchecked != null ? ImageUnchecked : Image));
-            base.DrawImage(image, box, g);
-        }
-
-        private Font FontToUse;
-
-        private void DrawText(Rectangle box, Graphics g, StringFormat fmt)
-        {
-            if (this.Text.HasChars())
-            {
-                using (Brush textb = new SolidBrush(Enabled ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
-                {
-                    if (FontToUse == null || FontToUse.FontFamily != Font.FontFamily || FontToUse.Style != Font.Style)
-                        FontToUse = g.GetFontToFitRectangle(this.Text, Font, box, fmt);
-
-                    g.DrawString(this.Text, FontToUse, textb, box, fmt);
                 }
             }
         }
@@ -219,25 +145,80 @@ namespace OpenTKUtils.GL4.Controls
         public override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if ( e.Button == MouseEventArgs.MouseButtons.Left && AutoCheck )
+            if ( e.Button == MouseEventArgs.MouseButtons.Left )
             {
-                Checked = !Checked;
-                OnCheckChanged(e);
+                Activate();
             }
         }
 
-        public virtual void OnCheckChanged(MouseEventArgs e)
+        public override void OnKeyDown(KeyEventArgs e)
         {
-            CheckChanged?.Invoke(this, e);
+            base.OnKeyDown(e);
+
+            if ( !e.Handled && Items.Count>0)
+            { 
+                if (SelectedIndex < 0)
+                    SelectedIndex = 0;
+
+                if (e.Alt && (e.KeyCode == System.Windows.Forms.Keys.Up || e.KeyCode == System.Windows.Forms.Keys.Down))
+                {
+                    Activate();
+                }
+                else if (e.KeyCode == System.Windows.Forms.Keys.Up || e.KeyCode == System.Windows.Forms.Keys.Left)
+                {
+                    if (SelectedIndex > 0)
+                    {
+                        SelectedIndex = SelectedIndex - 1;
+                    }
+                }
+                else if (e.KeyCode == System.Windows.Forms.Keys.Down || e.KeyCode == System.Windows.Forms.Keys.Right)
+                {
+                    if (SelectedIndex < Items.Count - 1)
+                    {
+                        SelectedIndex = SelectedIndex + 1;
+                    }
+                }
+            }
         }
 
-        private GL4.Controls.CheckState checkstate { get; set; } = CheckState.Unchecked;
-        private GL4.Controls.Appearance appearance { get; set; } = Appearance.Normal;
-        private ContentAlignment checkalign { get; set; } = ContentAlignment.MiddleCenter;
-        private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
-        private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
-        private Color CheckBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
-        private Color CheckColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
+
+        private void Activate()
+        {
+            bool activatable = Enabled && Items.Count > 0 && Parent != null;
+
+            if (!activatable)
+                return;
+
+            dropdownbox.Bounds = new Rectangle(Left, Bottom + 1, Width, Height);
+            dropdownbox.BackColor = BackColor;
+            dropdownbox.AutoSize = true;
+            dropdownbox.Font = Font;
+            dropdownbox.DropDownHeightMaximum = 100;
+            dropdownbox.Visible = true;
+            Parent.Add(dropdownbox);
+            dropdownbox.SetFocus();
+        }
+
+        public virtual void SelectedIndexChanged(GLBaseControl c, int v)
+        {
+            dropdownbox.Visible = false;
+            Parent.Remove(dropdownbox);
+            SetFocus();
+            Invalidate();
+        }
+
+        public virtual void OtherKeyPressed(GLBaseControl c, KeyEventArgs e)
+        {
+            if ( e.KeyCode == System.Windows.Forms.Keys.Escape)
+            {
+                dropdownbox.Visible = false;
+                Parent.Remove(dropdownbox);
+                SetFocus();
+                Invalidate();
+            }
+
+        }
+
 
 
     }

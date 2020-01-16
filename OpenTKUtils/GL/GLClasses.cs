@@ -15,14 +15,15 @@ namespace OpenTKUtils
         [System.Flags]
         public enum MouseButtons { None = 0, Left = 1, Middle = 2, Right = 4, };
 
-        public MouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; }
-        public MouseEventArgs(MouseButtons b, Point l, int c, int delta) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; }
-        public MouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; }
+        public MouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; NonClientArea = false; }
+        public MouseEventArgs(MouseButtons b, Point l, int c, int delta) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; NonClientArea = false; }
+        public MouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; NonClientArea = false; }
 
         public MouseButtons Button { get; set; }
         public Point Location { get; set; }
         public int X { get { return Location.X; } }
         public int Y { get { return Location.Y; } }
+        public bool NonClientArea { get; set; }
         public int Clicks { get; set; }
         public int Delta { get; set; }
         public bool Handled { get; set; }

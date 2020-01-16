@@ -13,20 +13,20 @@
  * governing permissions and limitations under the License.
  */
 
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using OpenTK.Graphics.OpenGL4;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    // GL form is a base control, implementing the functions of GLWindowControl 
+    // GL display is the main control which can interact with GL to paint sub controls
+    // implementing the functions of GLWindowControl
 
-    public class GLForm : GLBaseControl, GLWindowControl
+    public class GLControlDisplay : GLBaseControl, GLWindowControl
     {
+        #region Public IF
+
         public bool RequestRender { get; set; } = false;
 
         public override bool Focused { get { return glwin.Focused; } }          // override focused to report if whole window is focused.
@@ -35,7 +35,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
 
-        public GLForm(GLWindowControl win)
+        public GLControlDisplay(GLWindowControl win)
         {
             glwin = win;
             window = new Rectangle(0, 0, glwin.Width, glwin.Height);
@@ -68,7 +68,7 @@ namespace OpenTKUtils.GL4.Controls
             glwin.Resize += Gc_Resize;
             glwin.Paint += Gc_Paint;
 
-            Font = new Font("Microsoft Sans Serif", 8.25f);
+            font = new Font("Microsoft Sans Serif", 8.25f);
         }
 
         public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
@@ -79,16 +79,31 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void Remove(GLBaseControl other)
         {
-            base.Remove(other);
-            textures[other].Dispose();
-            textures.Remove(other);
+            if (Controls.Contains(other))
+            {
+                base.Remove(other);
+                textures[other].Dispose();
+                textures.Remove(other);
+            }
         }
 
-        public class GLControlShader : GLShaderPipeline
+        public void SetFocus(GLBaseControl ctrl)    // null to clear focus
         {
-            public GLControlShader()
+            System.Diagnostics.Debug.WriteLine("Focus to " + ctrl.Name);
+
+            if (ctrl == currentfocus)
+                return;
+
+            if (currentfocus != null)
             {
-                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
+                currentfocus.OnFocusChanged(false);
+                currentfocus = null;
+            }
+            
+            if (ctrl != null && ctrl.Enabled && ctrl.Focusable)
+            {
+                currentfocus = ctrl;
+                currentfocus.OnFocusChanged(true);
             }
         }
 
@@ -174,7 +189,16 @@ namespace OpenTKUtils.GL4.Controls
             //System.Diagnostics.Debug.WriteLine("Form redraw end");
         }
 
-        // tbd clean up textures[c] on removal of control
+        #endregion
+        #region Implementation
+
+        public void ControlRemoved(GLBaseControl other)
+        {
+            if (currentfocus == other)
+                currentfocus = null;
+            if (currentmouseover == other)
+                currentmouseover = null;
+        }
 
         private void Gc_MouseLeave(object sender, MouseEventArgs e)
         {
@@ -202,82 +226,70 @@ namespace OpenTKUtils.GL4.Controls
 
             if (currentmouseover != null)
             {
-                currentmouseoverlocation = currentmouseover.FormCoords();
-                //System.Diagnostics.Debug.WriteLine("Set mouse over loc " + currentmouseoverlocation);
+                currentmouseoverlocation = currentmouseover.DisplayControlCoords(true);
+                System.Diagnostics.Debug.WriteLine("Set mouse over loc " + currentmouseoverlocation);
+
                 currentmouseover.Hover = true;
                 if (currentmouseover.Enabled)
                 {
                     e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+                    e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
                     currentmouseover.OnMouseEnter(e);
                 }
             }
         }
 
+        private void AdjustLocation(ref MouseEventArgs e)
+        {
+            e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+            e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
+        }
+
         private void Gc_MouseUp(object sender, MouseEventArgs e)
         {
-            currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
-
-            if (currentmouseover.Enabled)
+            if (currentmouseover != null)
             {
-                e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-                currentmouseover.OnMouseUp(e);
+                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+
+                if (currentmouseover.Enabled)
+                {
+                    e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+                    e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
+                    currentmouseover.OnMouseUp(e);
+                }
             }
         }
 
         private void Gc_MouseDown(object sender, MouseEventArgs e)
         {
-            var x = e.Button;
-            if (currentmouseover.Enabled)
+            if (currentmouseover != null)
             {
-                currentmouseover.MouseButtonsDown = e.Button;
-                e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-                currentmouseover.OnMouseDown(e);
+                var x = e.Button;
+                if (currentmouseover.Enabled)
+                {
+                    currentmouseover.MouseButtonsDown = e.Button;
+                    AdjustLocation(ref e);
+                    currentmouseover.OnMouseDown(e);
+                }
             }
         }
 
         private void Gc_MouseClick(object sender, MouseEventArgs e)
         {
-            if (currentmouseover.Enabled)
+            SetFocus(currentmouseover);
+
+            if (currentmouseover != null && currentmouseover.Enabled)
             {
-                if ( currentfocus != currentmouseover)
-                {
-                    if (currentfocus != null)
-                    {
-                        currentfocus.Focused = false;
-                        currentfocus.OnFocusChanged(false);
-                        if (currentfocus.InvalidateOnFocusChange)
-                            currentfocus.Invalidate();
-                        currentfocus = null;
-                    }
-
-                    if (currentmouseover.Focusable)
-                    {
-                        currentfocus = currentmouseover;
-                        currentfocus.Focused = true;
-                        currentfocus.OnFocusChanged(true);
-                        if (currentfocus.InvalidateOnFocusChange)
-                            currentfocus.Invalidate();
-                    }
-                }
-
-                e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+                AdjustLocation(ref e);
                 currentmouseover.OnMouseClick(e);
-            }
-            else if ( currentfocus != null )
-            {
-                currentfocus.Focused = false;
-                currentfocus.OnFocusChanged(false);
-                if (currentfocus.InvalidateOnFocusChange)
-                    currentfocus.Invalidate();
-                currentfocus = null;
             }
         }
 
         private void Gc_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (currentmouseover.Enabled)
+            if (currentmouseover != null && currentmouseover.Enabled)
             {
-                e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+                AdjustLocation(ref e);
                 currentmouseover.OnMouseWheel(e);
             }
         }
@@ -285,7 +297,6 @@ namespace OpenTKUtils.GL4.Controls
         private void Gc_MouseMove(object sender, MouseEventArgs e)
         {
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
-            System.Diagnostics.Debug.Assert(c != null);     // always returns something, even if its the form
 
             if (c != currentmouseover)
             {
@@ -295,7 +306,7 @@ namespace OpenTKUtils.GL4.Controls
                     {
                         if (currentmouseover.Enabled)
                         {
-                            e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+                            AdjustLocation(ref e);
                             currentmouseover.OnMouseMove(e);
                         }
                         return;
@@ -314,22 +325,21 @@ namespace OpenTKUtils.GL4.Controls
                 if (currentmouseover != null)
                 {
                     currentmouseover.Hover = true;
-                    currentmouseoverlocation = currentmouseover.FormCoords();
+                    currentmouseoverlocation = currentmouseover.DisplayControlCoords(true);
                     //System.Diagnostics.Debug.WriteLine("2Set mouse over loc " + currentmouseoverlocation);
 
                     if (currentmouseover.Enabled)
                     {
-                        e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
                         currentmouseover.OnMouseEnter(e);
                     }
                 }
             }
-            else
+            else 
             {
-                if (currentmouseover.Enabled)
+                if (currentmouseover != null && currentmouseover.Enabled)
                 {
-                    e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-                    //System.Diagnostics.Debug.WriteLine("Mouse " + e.Location);
+                    AdjustLocation(ref e);
+                    //System.Diagnostics.Debug.WriteLine("Mouse " + currentmouseover.Name + " " + e.Location + " Non Client " + e.NonClientArea);
                     currentmouseover.OnMouseMove(e);
                 }
             }
@@ -369,6 +379,14 @@ namespace OpenTKUtils.GL4.Controls
             Paint?.Invoke(sender);
         }
 
+        public class GLControlShader : GLShaderPipeline
+        {
+            public GLControlShader()
+            {
+                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
+            }
+        }
+
         const int vertexesperentry = 4;
         private GLWindowControl glwin;
         private GLBuffer vertexes;
@@ -381,6 +399,7 @@ namespace OpenTKUtils.GL4.Controls
         private Point currentmouseoverlocation;
         private GLBaseControl currentfocus = null;
 
+        #endregion
 
     }
 }
