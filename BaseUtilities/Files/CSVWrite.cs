@@ -61,9 +61,9 @@ namespace BaseUtils
                 if (value is DateTime)
                 {
                     if (((DateTime)value).TimeOfDay.TotalSeconds == 0)
-                        return ((DateTime)value).ToString("yyyy-MM-dd");
-
-                    output = ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss");
+                        output = ((DateTime)value).ToString("yyyy-MM-dd");
+                    else
+                        output = ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss");
                 }
                 else
                 {
