@@ -14,7 +14,7 @@ namespace OpenTKUtils.GL4.Controls
 
     public abstract class GLButtonBase : GLImageBase
     {
-        public Action<GLBaseControl, MouseEventArgs> Click { get; set; } = null;         
+        public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;         
 
         public Color ButtonBackColor { get { return buttonBackColor; } set { buttonBackColor = value; Invalidate(); } }
         public Color MouseOverBackColor { get { return mouseOverBackColor; } set { mouseOverBackColor = value; Invalidate(); } }
@@ -30,14 +30,14 @@ namespace OpenTKUtils.GL4.Controls
             InvalidateOnMouseDownUp = true;
         }
 
-        public override void OnMouseClick(MouseEventArgs e)
+        public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if (e.Button == MouseEventArgs.MouseButtons.Left)
+            if (e.Button == GLMouseEventArgs.MouseButtons.Left)
                 OnClick(e);
         }
 
-        public virtual void OnClick(MouseEventArgs e)
+        public virtual void OnClick(GLMouseEventArgs e)
         {
             Click?.Invoke(this, e);
         }
@@ -113,7 +113,7 @@ namespace OpenTKUtils.GL4.Controls
             {
                 colBack = ButtonBackColor.Multiply(DisabledScaling);
             }
-            else if (MouseButtonsDown == MouseEventArgs.MouseButtons.Left )
+            else if (MouseButtonsDown == GLMouseEventArgs.MouseButtons.Left )
             {
                 colBack = MouseDownBackColor;
             }

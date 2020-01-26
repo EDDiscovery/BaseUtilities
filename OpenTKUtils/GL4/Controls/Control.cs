@@ -127,23 +127,23 @@ namespace OpenTKUtils.GL4.Controls
         public bool InvalidateOnFocusChange { get; set; } = false;      // if set, invalidate on focus change
 
         public bool Hover { get; set; } = false;            // mouse is over control
-        public MouseEventArgs.MouseButtons MouseButtonsDown { get; set; } // set if mouse buttons down over control
+        public GLMouseEventArgs.MouseButtons MouseButtonsDown { get; set; } // set if mouse buttons down over control
 
         public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
         public Bitmap GetLevelBitmap { get { return levelbmp; } }
 
         public virtual List<GLBaseControl> Controls { get { return children.ToList(); } }      // read only
 
-        public Action<Object, MouseEventArgs> MouseDown { get; set; } = null;  // location in client terms, NonClientArea set if on border with negative/too big x/y for clients
-        public Action<Object, MouseEventArgs> MouseUp { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseMove { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseClick { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseWheel { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseEnter { get; set; } = null;  // location in terms of whole window
-        public Action<Object, MouseEventArgs> MouseLeave { get; set; } = null;  // location in terms of whole window
-        public Action<Object, KeyEventArgs> KeyDown { get; set; } = null;
-        public Action<Object, KeyEventArgs> KeyUp { get; set; } = null;
-        public Action<Object, KeyEventArgs> KeyPress { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseDown { get; set; } = null;  // location in client terms, NonClientArea set if on border with negative/too big x/y for clients
+        public Action<Object, GLMouseEventArgs> MouseUp { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseMove { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseClick { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseWheel { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseEnter { get; set; } = null;  // location in terms of whole window
+        public Action<Object, GLMouseEventArgs> MouseLeave { get; set; } = null;  // location in terms of whole window
+        public Action<Object, GLKeyEventArgs> KeyDown { get; set; } = null;
+        public Action<Object, GLKeyEventArgs> KeyUp { get; set; } = null;
+        public Action<Object, GLKeyEventArgs> KeyPress { get; set; } = null;
         public Action<Object, bool> FocusChanged { get; set; } = null;
         public Action<Object> FontChanged { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
@@ -557,7 +557,7 @@ namespace OpenTKUtils.GL4.Controls
            // System.Diagnostics.Debug.WriteLine("Paint Into parent {0} to {1}", Name, parentarea);
         }
 
-        public virtual void OnMouseLeave(MouseEventArgs e)
+        public virtual void OnMouseLeave(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("leave " + Name + " " + e.Location);
             MouseLeave?.Invoke(this, e);
@@ -566,7 +566,7 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
         }
 
-        public virtual void OnMouseEnter(MouseEventArgs e)
+        public virtual void OnMouseEnter(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("enter " + Name + " " + e.Location);
             MouseEnter?.Invoke(this, e);
@@ -575,7 +575,7 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
         }
 
-        public virtual void OnMouseUp(MouseEventArgs e)
+        public virtual void OnMouseUp(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("up   " + Name + " " + e.Location + " " + e.Button);
             MouseUp?.Invoke(this, e);
@@ -584,7 +584,7 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
         }
 
-        public virtual void OnMouseDown(MouseEventArgs e)
+        public virtual void OnMouseDown(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
             MouseDown?.Invoke(this, e);
@@ -593,41 +593,41 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
         }
 
-        public virtual void OnMouseClick(MouseEventArgs e)
+        public virtual void OnMouseClick(GLMouseEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("click " + Name + " " + e.Button + " " + e.Clicks + " " + e.Location);
             MouseClick?.Invoke(this, e);
         }
 
-        public virtual void OnMouseMove(MouseEventArgs e)
+        public virtual void OnMouseMove(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
             MouseMove?.Invoke(this, e);
         }
 
-        public virtual void OnMouseWheel(MouseEventArgs e)
+        public virtual void OnMouseWheel(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("Over " + Name + " " + e.Location);
             MouseWheel?.Invoke(this, e);
         }
 
-        public delegate void KeyFunc(KeyEventArgs e);
-        public void CallKeyFunction(KeyFunc f, KeyEventArgs e)
+        public delegate void KeyFunc(GLKeyEventArgs e);
+        public void CallKeyFunction(KeyFunc f, GLKeyEventArgs e)
         {
             f.Invoke(e);
         }
 
-        public virtual void OnKeyDown(KeyEventArgs e)
+        public virtual void OnKeyDown(GLKeyEventArgs e)
         {
             KeyDown?.Invoke(this, e);
         }
 
-        public virtual void OnKeyUp(KeyEventArgs e)
+        public virtual void OnKeyUp(GLKeyEventArgs e)
         {
             KeyUp?.Invoke(this, e);
         }
 
-        public virtual void OnKeyPress(KeyEventArgs e)
+        public virtual void OnKeyPress(GLKeyEventArgs e)
         {
             KeyPress?.Invoke(this, e);
         }

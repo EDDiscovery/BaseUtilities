@@ -12,7 +12,7 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLCheckBox : GLButtonBase
     {
-        public Action<GLBaseControl, MouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
+        public Action<GLBaseControl, GLMouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
         public GL4.Controls.CheckState CheckState { get { return checkstate; } set { checkstate = value; Invalidate(); } }
         public bool Checked { get { return checkstate == CheckState.Checked; } set { checkstate = value ? CheckState.Checked : CheckState.Unchecked; Invalidate(); } }
@@ -216,17 +216,17 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseClick(MouseEventArgs e)
+        public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if ( e.Button == MouseEventArgs.MouseButtons.Left && AutoCheck )
+            if ( e.Button == GLMouseEventArgs.MouseButtons.Left && AutoCheck )
             {
                 Checked = !Checked;
                 OnCheckChanged(e);
             }
         }
 
-        public virtual void OnCheckChanged(MouseEventArgs e)
+        public virtual void OnCheckChanged(GLMouseEventArgs e)
         {
             CheckChanged?.Invoke(this, e);
         }

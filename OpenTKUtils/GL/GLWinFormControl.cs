@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
+ * Copyright 2019 Robbyxp1 @ github.com
  * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -25,16 +25,16 @@ namespace OpenTKUtils.WinForm
 
     public class GLWinFormControl : GLWindowControl
     {
-        public Action<Object, MouseEventArgs> MouseDown { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseUp { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseMove { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseEnter { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseLeave { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseClick { get; set; } = null;
-        public Action<Object, MouseEventArgs> MouseWheel { get; set; } = null;
-        public Action<Object, KeyEventArgs> KeyDown { get; set; } = null;
-        public Action<Object, KeyEventArgs> KeyUp { get; set; } = null;
-        public Action<Object, KeyEventArgs> KeyPress { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseDown { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseUp { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseMove { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseEnter { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseLeave { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseClick { get; set; } = null;
+        public Action<Object, GLMouseEventArgs> MouseWheel { get; set; } = null;
+        public Action<Object, GLKeyEventArgs> KeyDown { get; set; } = null;
+        public Action<Object, GLKeyEventArgs> KeyUp { get; set; } = null;
+        public Action<Object, GLKeyEventArgs> KeyPress { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
         public Action<Object> Paint { get; set; } = null;
 
@@ -91,6 +91,8 @@ namespace OpenTKUtils.WinForm
         public int Height { get { return glControl.Height; } }
         public bool Focused { get { return glControl.Focused; } }
 
+        public GLRenderControl RenderState { get; set; } = null;
+
         private Color backcolor { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");
 
         private Point FindCursorFormCoords()
@@ -103,79 +105,79 @@ namespace OpenTKUtils.WinForm
         private void Gc_MouseEnter(object sender, EventArgs e)
         {
             Point relcurpos = FindCursorFormCoords();
-            var ev = new MouseEventArgs(relcurpos);
+            var ev = new GLMouseEventArgs(relcurpos);
             MouseEnter?.Invoke(this, ev);
         }
 
         private void Gc_MouseLeave(object sender, EventArgs e)
         {
             Point relcurpos = FindCursorFormCoords();
-            var ev = new MouseEventArgs(relcurpos);
+            var ev = new GLMouseEventArgs(relcurpos);
             MouseLeave?.Invoke(this, ev);
         }
 
         private void Gc_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
+            GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
 
-            var ev = new MouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
             MouseUp?.Invoke(this, ev);
         }
 
         private void Gc_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
+            GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
 
-            var ev = new MouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
             MouseDown?.Invoke(this, ev);
         }
 
         private void Gc_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
-            var ev = new MouseEventArgs(b, e.Location, e.Clicks);
+            GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
             MouseClick?.Invoke(this, ev);
         }
 
         private void Gc_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
-            var ev = new MouseEventArgs(b, e.Location, e.Clicks);
+            GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
             MouseMove?.Invoke(this, ev);
         }
 
         private void Gc_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            MouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? MouseEventArgs.MouseButtons.Left : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? MouseEventArgs.MouseButtons.Middle : 0) |
-                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? MouseEventArgs.MouseButtons.Right : 0);
-            var ev = new MouseEventArgs(b,e.Location, e.Clicks, e.Delta);
+            GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
+                (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
+            var ev = new GLMouseEventArgs(b,e.Location, e.Clicks, e.Delta);
             MouseWheel?.Invoke(this, ev);
         }
 
         public void Gc_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)      
         {
-            KeyEventArgs ka = new KeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
+            GLKeyEventArgs ka = new GLKeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
             KeyDown?.Invoke(this, ka);
         }
 
         public void Gc_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            KeyEventArgs ka = new KeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
+            GLKeyEventArgs ka = new GLKeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
             KeyUp?.Invoke(this, ka);
         }
 
         public void Gc_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
         {
-            KeyEventArgs ka = new KeyEventArgs(e.KeyChar);     
+            GLKeyEventArgs ka = new GLKeyEventArgs(e.KeyChar);     
             KeyPress?.Invoke(this, ka);
         }
 
@@ -191,13 +193,11 @@ namespace OpenTKUtils.WinForm
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.FrontFace(FrontFaceDirection.Ccw);
-            GLStatics.DefaultDepthTest();
-            GLStatics.DefaultCullFace();
-            GLStatics.DefaultPointSize();                               // default is controlled by external not shaders
-            GLStatics.DefaultBlend();
-            GLStatics.DefaultPointSize();
-            GLStatics.DefaultPrimitiveRestart();
+            if ( RenderState == null )
+            {
+                RenderState = GLRenderControl.Unknown();
+                RenderState.ApplyState(GLRenderControl.Default());
+            }
 
             Paint?.Invoke(glControl);
 

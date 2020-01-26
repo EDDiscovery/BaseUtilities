@@ -58,11 +58,8 @@ namespace TestOpenTk
                 return (float)ms / 20.0f;
             };
 
-
             IGLTexture array2d = items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2,
                                 Properties.Resources.mipmap3, Properties.Resources.mipmap4 }, 9));
-
-            // INSTANCE POS VEC4
 
             items.Add("ShaderPos", new GLMultipleTexturedBlended(false, 2));
             items.Shader("ShaderPos").StartAction += (s) =>
@@ -76,8 +73,9 @@ namespace TestOpenTk
             instancepositions[2] = new Vector4(25, 0, 25, 2);
             instancepositions[3] = new Vector4(25, 0, 0, 2);
 
+            GLRenderControl rt = GLRenderControl.Tri(cullface:false);
             rObjects.Add(items.Shader("ShaderPos"),
-                       GLRenderableItem.CreateVector4Vector2Vector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                       GLRenderableItem.CreateVector4Vector2Vector4(items, rt,
                                GLSphereObjectFactory.CreateTexturedSphereFromTriangles(3, 20.0f),
                                instancepositions, ic: 4, separbuf: true
                                ));
@@ -104,8 +102,9 @@ namespace TestOpenTk
             pos2[2] *= Matrix4.CreateTranslation(new Vector3(25, 25, 25 ));
             pos2[2].M44 = 0;        // this is the image number
 
+            GLRenderControl rq = GLRenderControl.Quads(cullface:false);
             rObjects.Add(items.Shader("ShaderMat"),
-                GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
                         GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
                         pos2, ic: 3, separbuf: false
                         ));
@@ -129,7 +128,6 @@ namespace TestOpenTk
             // matrixbuffer.Write(Matrix4.CreateTranslation(new Vector3(zeroone * 20, 50, 0)),0,true);
 
 
-            OpenTKUtils.GLStatics.CullFace(false);
             ((GLMultipleTexturedBlended)items.Shader("ShaderPos")).CommonTransform.YRotDegrees = degrees;
             ((GLMultipleTexturedBlended)items.Shader("ShaderPos")).Blend = zerotwo5s;
             ((GLMultipleTexturedBlended)items.Shader("ShaderMat")).CommonTransform.ZRotDegrees = degrees;
@@ -138,7 +136,7 @@ namespace TestOpenTk
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.Set(gl3dcontroller.MatrixCalc);
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
 

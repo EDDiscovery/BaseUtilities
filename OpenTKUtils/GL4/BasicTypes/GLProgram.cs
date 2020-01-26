@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
+ * Copyright 2019 Robbyxp1 @ github.com
  * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -45,7 +45,8 @@ namespace OpenTKUtils.GL4
             shaders.Add(s);
         }
 
-        public string Compile( ShaderType st, string codelisting )        // code listing - with added #includes
+        // completeoutfile is output of file for debugging
+        public string Compile( ShaderType st, string codelisting, string completeoutfile = null )        // code listing - with added #includes
         {
             GLShader shader = new GLShader(st);
 
@@ -77,6 +78,8 @@ namespace OpenTKUtils.GL4
                     code += line + Environment.NewLine;
             }
 
+            if ( completeoutfile != null )
+                System.IO.File.WriteAllText(completeoutfile, code);
             string ret = shader.Compile(code);
 
             if (ret == null)

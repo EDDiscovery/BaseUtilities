@@ -128,7 +128,7 @@ void main(void)
 
     public class GLPLVertexShaderColorModelCoordWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
-        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
+        public GLRenderDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
         public string Code()
         {
@@ -160,7 +160,7 @@ void main(void)
 
         public GLPLVertexShaderColorModelCoordWithObjectCommonTranslation()
         {
-            Transform = new GLObjectDataTranslationRotation();
+            Transform = new GLRenderDataTranslationRotation();
             CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
 
@@ -186,7 +186,7 @@ void main(void)
 
     public class GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
-        public GLObjectDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
+        public GLRenderDataTranslationRotation Transform { get; set; }           // only use this for rotation - position set by object data
 
         public string Code()
         {
@@ -218,7 +218,7 @@ void main(void)
 
         public GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation()
         {
-            Transform = new GLObjectDataTranslationRotation();
+            Transform = new GLRenderDataTranslationRotation();
             CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
         }
 

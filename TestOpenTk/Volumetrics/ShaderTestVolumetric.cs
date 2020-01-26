@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTKUtils;
 using OpenTKUtils.Common;
@@ -65,78 +80,91 @@ namespace TestOpenTk
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINERED", new GLFixedShader(System.Drawing.Color.Red, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow, (a) => { GLStatics.PointSize(10); }));
-            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue), (a) => { GLStatics.PointSize(20); }));
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl1 = GLRenderControl.Lines(1);
 
-            items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
+            {
 
-           
-            rObjects.Add(items.Shader("COS-1L"), "L1",   // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Gray })
-                               );
+                rObjects.Add(items.Shader("COSW"), "L1",   // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Gray })
+                                   );
 
 
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Gray })
-                               );
+                rObjects.Add(items.Shader("COSW"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Gray })
+                                   );
+
+            }
 
             int hsize = 10, vsize = 5, zsize = 10;
             boundingbox = new Vector4[]
             {
-                new Vector4(-hsize,-vsize,zsize,1),
-                new Vector4(-hsize,vsize,zsize,1),
-                new Vector4(hsize,vsize,zsize,1),
-                new Vector4(hsize,-vsize,zsize,1),
+                    new Vector4(-hsize,-vsize,zsize,1),
+                    new Vector4(-hsize,vsize,zsize,1),
+                    new Vector4(hsize,vsize,zsize,1),
+                    new Vector4(hsize,-vsize,zsize,1),
 
-                new Vector4(-hsize,-vsize,-zsize,1),
-                new Vector4(-hsize,vsize,-zsize,1),
-                new Vector4(hsize,vsize,-zsize,1),
-                new Vector4(hsize,-vsize,-zsize,1),
+                    new Vector4(-hsize,-vsize,-zsize,1),
+                    new Vector4(-hsize,vsize,-zsize,1),
+                    new Vector4(hsize,vsize,-zsize,1),
+                    new Vector4(hsize,-vsize,-zsize,1),
             };
 
-            rObjects.Add(items.Shader("LINERED"),
-                        GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.LineLoop, boundingbox));
 
-            Vector4[] extralines = new Vector4[]
             {
-                new Vector4(-hsize,-vsize,zsize,1),
-                new Vector4(-hsize,-vsize,-zsize,1),
-                new Vector4(-hsize,vsize,zsize,1),
-                new Vector4(-hsize,vsize,-zsize,1),
-                new Vector4(hsize,vsize,zsize,1),
-                new Vector4(hsize,vsize,-zsize,1),
-                new Vector4(hsize,-vsize,zsize,1),
-                new Vector4(hsize,-vsize,-zsize,1),
+                GLRenderControl rll = GLRenderControl.LineLoop(4);
 
-                new Vector4(-hsize,-vsize,zsize,1),
-                new Vector4(hsize,-vsize,zsize,1),
-                new Vector4(-hsize,-vsize,-zsize,1),
-                new Vector4(hsize,-vsize,-zsize,1),
-            };
+                rObjects.Add(items.Shader("COSW"),
+                            GLRenderableItem.CreateVector4(items, rll, boundingbox));
 
-            rObjects.Add(items.Shader("LINEYELLOW"),
-                        GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, extralines));
+                Vector4[] extralines = new Vector4[]
+                {
+                    new Vector4(-hsize,-vsize,zsize,1),
+                    new Vector4(-hsize,-vsize,-zsize,1),
+
+                    new Vector4(-hsize,vsize,zsize,1),
+                    new Vector4(-hsize,vsize,-zsize,1),
+
+                    new Vector4(hsize,vsize,zsize,1),
+                    new Vector4(hsize,vsize,-zsize,1),
+
+                    new Vector4(hsize,-vsize,zsize,1),
+                    new Vector4(hsize,-vsize,-zsize,1),
+
+                    new Vector4(-hsize,-vsize,zsize,1),
+                    new Vector4(hsize,-vsize,zsize,1),
+
+                    new Vector4(-hsize,-vsize,-zsize,1),
+                    new Vector4(hsize,-vsize,-zsize,1),
+                };
+
+                GLRenderControl rl = GLRenderControl.Lines(4);
+                rObjects.Add(items.Shader("COSW"),
+                            GLRenderableItem.CreateVector4(items, rl, extralines));
+            }
+
+            items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple));
 
             indicatorlinebuffer = new GLBuffer();           // new buffer
             indicatorlinebuffer.Allocate(sizeof(float) * 4 * 2, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
-            rObjects.Add(items.Shader("LINEPURPLE"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, indicatorlinebuffer, 2));
+            rObjects.Add(items.Shader("LINEPURPLE"), GLRenderableItem.CreateVector4(items, rl1, indicatorlinebuffer, 2));
 
+            items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow));
             interceptpointbuffer = new GLBuffer();           // new buffer
             interceptpointbuffer.Allocate(sizeof(float) * 4 * 12, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
-            interceptri = GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, interceptpointbuffer, 0);
+            GLRenderControl rp1 = GLRenderControl.Points(10);
+            interceptri = GLRenderableItem.CreateVector4(items, rp1, interceptpointbuffer, 0);
             rObjects.Add(items.Shader("DOTYELLOW"), interceptri);
 
+            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue)));
             surfacebuffer = new GLBuffer();           // new buffer
             surfacebuffer.Allocate(sizeof(float) * 4 * (6+2), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
-            surfaceri = GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleFan, surfacebuffer, 0);
+            GLRenderControl rtf = GLRenderControl.TriFan();
+            surfaceri = GLRenderableItem.CreateVector4(items, rtf, surfacebuffer, 0);
             rObjects.Add(items.Shader("SURFACEBLUE"), surfaceri);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
@@ -183,7 +211,7 @@ namespace TestOpenTk
 
                 Vector4[] intercepts = new Vector4[6];
                 int count = 0;
-                modelboundingbox[0].FindVectorFromZ(modelboundingbox[1], ref intercepts, ref count, zpoint);       
+                modelboundingbox[0].FindVectorFromZ(modelboundingbox[1], ref intercepts, ref count, zpoint);
                 modelboundingbox[1].FindVectorFromZ(modelboundingbox[2], ref intercepts, ref count, zpoint);
                 modelboundingbox[2].FindVectorFromZ(modelboundingbox[3], ref intercepts, ref count, zpoint);
                 modelboundingbox[3].FindVectorFromZ(modelboundingbox[0], ref intercepts, ref count, zpoint);
@@ -200,13 +228,13 @@ namespace TestOpenTk
 
                 // texturecoords can be worked out by zpercent and knowing its direction (x,y,z)..
 
-                if (count>=3)
+                if (count >= 3)
                 {
                     Vector4 avg = intercepts.Average();
                     float[] angles = new float[6];
                     for (int i = 0; i < count; i++)
                     {
-                        angles[i] =-(float) Math.Atan2(intercepts[i].Y - avg.Y, intercepts[i].X - avg.X);        // all on the same z plane, so x/y only need be considered
+                        angles[i] = -(float)Math.Atan2(intercepts[i].Y - avg.Y, intercepts[i].X - avg.X);        // all on the same z plane, so x/y only need be considered
                         System.Diagnostics.Debug.WriteLine("C" + intercepts[i].ToStringVec() + " " + angles[i].Degrees());
                     }
 
@@ -214,7 +242,7 @@ namespace TestOpenTk
 
                     for (int i = 0; i < count; i++)
                     {
-                    //    System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
+                        //    System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
                     }
 
                     var p1 = interceptpointbuffer.Map(0, sizeof(float) * 4 * count);
@@ -224,7 +252,7 @@ namespace TestOpenTk
                     interceptpointbuffer.UnMap();
                     interceptri.DrawCount = count;
 
-                    var p2 = surfacebuffer.Map(0, sizeof(float) * 4 * (2+count));
+                    var p2 = surfacebuffer.Map(0, sizeof(float) * 4 * (2 + count));
                     surfacebuffer.MapWrite(ref p2, avg);
                     for (ji = 0; ji < count; ji++)
                         surfacebuffer.MapWrite(ref p2, intercepts[ji]);
@@ -238,7 +266,7 @@ namespace TestOpenTk
                 }
             }
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
         }

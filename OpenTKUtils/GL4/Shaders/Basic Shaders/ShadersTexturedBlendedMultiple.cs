@@ -95,13 +95,13 @@ void main(void)
         public float Blend { get; set; } = 0;                   // from 0 to BlendImages-0.0001
         public int BlendImages { get; set; } = 0;
 
-        public GLObjectDataTranslationRotation CommonTransform { get; set; }           // only use this for rotation - position set by object data
+        public GLRenderDataTranslationRotation CommonTransform { get; set; }           // only use this for rotation - position set by object data
 
         public GLMultipleTexturedBlended(bool matrix, int blendimages)      // give the number of images to blend over..
         {
             CompileLink(vertex: (matrix ? vertmat : vertpos),  frag: frag );
             BlendImages = blendimages;
-            CommonTransform = new GLObjectDataTranslationRotation();
+            CommonTransform = new GLRenderDataTranslationRotation();
         }
 
         public override void Start()

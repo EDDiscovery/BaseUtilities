@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils.GL4;
@@ -75,7 +90,6 @@ void main(void)
             public ShaderV2()
             {
                 CompileLink(vertex: vcode, frag: fcode, geo: "#include TestOpenTk.Volumetrics.volumetricgeo2.glsl");
-                StartAction += (s) => { GLStatics.PointSize(10); };
             }
         }
 
@@ -120,39 +134,39 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow, (a) => { GLStatics.PointSize(10); }));
-            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.Blue, (a) => {  }));
 
-            items.Add("V2", new ShaderV2());
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl1 = GLRenderControl.Lines(1);
 
-            rObjects.Add(items.Shader("COS-1L"), "L1",   // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Gray })
-                               );
+            {
+
+                rObjects.Add(items.Shader("COSW"), "L1",   // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Gray })
+                                   );
 
 
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Gray })
-                               );
+                rObjects.Add(items.Shader("COSW"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Gray })
+                                   );
 
-
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            }
 
             // New geo shader
 
             Vector4[] points = new Vector4[]
             {
-                new Vector4(20,-5,-10,1),
-                new Vector4(40,+5,+10,1),
+                new Vector4(20,-5,-10,1),       //PT1
+                new Vector4(40,+5,+10,1),       //PT7
             };
 
-            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, points,ic:9));
+            items.Add("V2", new ShaderV2());
+
+            GLRenderControl rltot = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines);
+            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateVector4(items, rltot, points, ic: 9));        // ic select number of slices
 
             int left = 20, right = 40, bottom = -5, top = +5, front = -10, back = 10;
             Vector4[] lines2 = new Vector4[]
@@ -174,15 +188,17 @@ void main(void)
 
             };
 
+            items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
             rObjects.Add(items.Shader("LINEYELLOW"),
-                        GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, lines2));
+                        GLRenderableItem.CreateVector4(items, rl1, lines2));
 
-            dataoutbuffer = items.NewStorageBlock(5);       
+            dataoutbuffer = items.NewStorageBlock(5);
             dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);
 
             atomicbuffer = items.NewAtomicBlock(6);
             atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
         }
 
         GLStorageBlock dataoutbuffer;
@@ -200,7 +216,7 @@ void main(void)
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
 

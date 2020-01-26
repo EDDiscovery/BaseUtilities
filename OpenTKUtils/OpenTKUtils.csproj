@@ -70,6 +70,7 @@
     <Compile Include="GL4\Controls\ControlImage.cs" />
     <Compile Include="GL4\Controls\ControlDisplay.cs" />
     <Compile Include="GL4\Controls\Control.cs" />
+    <Compile Include="GL\GLRenderControl.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeNoise.cs" />
@@ -82,7 +83,7 @@
     <Compile Include="GL4\ShapeFactory\FactorySphere.cs" />
     <Compile Include="GL4\ItemLists\GLItemsList.cs" />
     <Compile Include="GL4\IGLInterfaces.cs" />
-    <Compile Include="GL4\InstanceData\ObjectInstanceData.cs" />
+    <Compile Include="GL4\Renderers\RenderItemData.cs" />
     <Compile Include="GL4\Renderers\RenderableItem.cs" />
     <Compile Include="GL4\Renderers\RenderableLists.cs" />
     <Compile Include="GL4\BasicTypes\GLProgram.cs" />

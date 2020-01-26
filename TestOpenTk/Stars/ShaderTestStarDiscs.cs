@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils.GL4;
@@ -36,7 +51,6 @@ namespace TestOpenTk
         }
 
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
-        GLRenderProgramSortedList rObjects2 = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
 
         // Demonstrate buffer feedback AND geo shader add vertex/dump vertex
@@ -62,7 +76,7 @@ layout (location = 14) uniform float concentrationequator;
 layout (location = 15) uniform float unDTsurface;
 layout (location = 16) uniform float unDTspots;
 
-#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.snoise3.glsl
 
 void main(void)
 {
@@ -73,12 +87,12 @@ void main(void)
 
     float clip = s + (theta/concentrationequator);               // clip sets the pass criteria to do the sunspots
     vec3 sPosition = (position + unDTspots) * unRadius;
-    float t1 = snoise(sPosition * frequency) -clip;
-    float t2 = snoise((sPosition + unRadius) * frequency) -clip;
+    float t1 = simplexnoise(sPosition * frequency) -clip;
+    float t2 = simplexnoise((sPosition + unRadius) * frequency) -clip;
 	float ss = (max(t1, 0.0) * max(t2, 0.0)) * blackdeepness;
 
     vec3 p1 = vec3(position.x+unDTsurface,position.y,position.z);   // moving the noise across x produces a more realistic look
-    float n = (noise(p1, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
+    float n = (simplexnoise(p1, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
 
     vec3 baseColor = vec3(0.9, 0.9 ,0.0);
     baseColor = baseColor - ss - n/4;
@@ -99,7 +113,6 @@ void main(void)
             {
                 GL.ProgramUniform1(Id, 15, TimeDeltaSurface);
                 GL.ProgramUniform1(Id, 16, TimeDeltaSpots);
-                GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 OpenTKUtils.GLStatics.Check();
                 System.Diagnostics.Debug.WriteLine("Star draw");
 
@@ -141,7 +154,7 @@ void main(void)
     @"
 #version 450 core
 
-#include OpenTKUtils.GL4.Shaders.Functions.noise4.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.snoise4.glsl
 
 layout (location =0 ) in vec3 fposition;
 out vec4 color;
@@ -164,17 +177,17 @@ void main(void)
     float t = unDT - length(fposition);
 
     // Offset normal with noise
-    float ox = snoise(vec4(fposition, t) * frequency);
-    float oy = snoise(vec4((fposition + (1000.0 * irregularityMultiplier)), t) * frequency);
-    float oz = snoise(vec4((fposition + (2000.0 * irregularityMultiplier)), t) * frequency);
-	float om = snoise(vec4((fposition + (4000.0 * irregularityMultiplier)), t) * frequency) * snoise(vec4((fposition + (250.0 * irregularityMultiplier)), t) * frequency);
+    float ox = simplexnoise(vec4(fposition, t) * frequency);
+    float oy = simplexnoise(vec4((fposition + (1000.0 * irregularityMultiplier)), t) * frequency);
+    float oz = simplexnoise(vec4((fposition + (2000.0 * irregularityMultiplier)), t) * frequency);
+	float om = simplexnoise(vec4((fposition + (4000.0 * irregularityMultiplier)), t) * frequency) * simplexnoise(vec4((fposition + (250.0 * irregularityMultiplier)), t) * frequency);
     vec3 offsetVec = vec3(ox * om, oy * om, oz * om) * smootheningMultiplier;
 
     // Get the distance vector from the center
     vec3 nDistVec = normalize(fposition + offsetVec);
 
     // Get noise with normalized position to offset the original position
-    vec3 position = fposition + noise(vec4(nDistVec, t), iDetail, 1.5, fDetail) * smootheningMultiplier;
+    vec3 position = fposition + simplexnoise(vec4(nDistVec, t), iDetail, 1.5, fDetail) * smootheningMultiplier;
 
     // Calculate brightness based on distance
     float dist = length(position + offsetVec) * coronaSizeMultiplier;
@@ -205,9 +218,6 @@ void main(void)
                 base.Start();
 
                 GL.ProgramUniform1(Id, 15, TimeDelta);
-
-                //System.Diagnostics.Debug.WriteLine("DIR " + inveye);
-                GLStatics4.PolygonMode(OpenTK.Graphics.OpenGL4.MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL4.PolygonMode.Fill);        // need fill for fragment to work
                 OpenTKUtils.GLStatics.Check();
             }
         }
@@ -241,47 +251,58 @@ void main(void)
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { OpenTKUtils.GLStatics.LineWidth(1); }));
-            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+            {
+                items.Add("COS", new GLColourShaderWithWorldCoord());
+                GLRenderControl rl = GLRenderControl.Lines(1);
 
-            rObjects.Add(items.Shader("COS-1L"),
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(-40, 0, 40), new Vector3(10, 0, 0), 9),
-                                                    new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-                               );
-
-
-            rObjects.Add(items.Shader("COS-1L"),
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(40, 0, -40), new Vector3(0, 0, 10), 9),
-                                                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-                               );
+                rObjects.Add(items.Shader("COS"),
+                             GLRenderableItem.CreateVector4Color4(items, rl,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(-40, 0, 40), new Vector3(10, 0, 0), 9),
+                                                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                   );
 
 
-            items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+                rObjects.Add(items.Shader("COS"),
+                             GLRenderableItem.CreateVector4Color4(items, rl,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(40, 0, -40), new Vector3(0, 0, 10), 9),
+                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                   );
+            }
 
-            rObjects.Add(items.Shader("TEX"), "sphere7",
-                GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
-                        GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 20.0f),
-                        new GLObjectDataTranslationRotationTexture(items.Tex("moon"), new Vector3(30, 0, 0))
+            {
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+                items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+
+                GLRenderControl rt = GLRenderControl.Tri();
+
+                rObjects.Add(items.Shader("TEX"), "sphere7",
+                        GLRenderableItem.CreateVector4Vector2(items, rt,
+                            GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 20.0f),
+                            new GLRenderDataTranslationRotationTexture(items.Tex("moon"), new Vector3(30, 0, 0))
                         ));
+            }
 
+            {
+                items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLFragmentShaderStarTexture()));
 
-            items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(),
-                        new GLFragmentShaderStarTexture()));
+                GLRenderControl rt = GLRenderControl.Tri();
 
-            rObjects.Add(items.Shader("STAR"), "sun",
+                rObjects.Add(items.Shader("STAR"), "sun",
                        GLRenderableItem.CreateVector4(items,
-                               OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                               rt,
                                GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
-                               new GLObjectDataTranslationRotation(new Vector3(1, 1, 1)),
+                               new GLRenderDataTranslationRotation(new Vector3(1, 1, 1)),
                                ic: 1));
 
-            items.Add("CORONA", new GLShaderStarCorona());
+                items.Add("CORONA", new GLShaderStarCorona());
 
-            rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                GLRenderControl rq = GLRenderControl.Quads();
+
+                rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items,
+                                        rq,
                                         GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLObjectDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0,0,0), 40f, calclookat:true )));
+                                        new GLRenderDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0, 0, 0), 40f, calclookat: true)));
+            }
 
 
 
@@ -330,7 +351,7 @@ void main(void)
                 GL.ProgramUniform1(vid, 13, blackdeepness);
                 GL.ProgramUniform1(vid, 14, concentrationequator);
 
-                ((GLObjectDataTranslationRotation)(rObjects["sun"].InstanceControl)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+                ((GLRenderDataTranslationRotation)(rObjects["sun"].RenderData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
 
                 var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
                 stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
@@ -345,8 +366,7 @@ void main(void)
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.Set(gl3dcontroller.MatrixCalc);
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
-            rObjects2.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState,gl3dcontroller.MatrixCalc);
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
 
 

@@ -1,4 +1,19 @@
-﻿ using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils;
@@ -52,7 +67,7 @@ namespace TestOpenTk
             if ( galaxy != null )
                 galaxy.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 10.0f);        // set up the volumentric uniform
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
@@ -79,24 +94,34 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, -35000), new Vector3(126.75f, 0, 0), 0.31622F);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
-
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
-            boundingbox = new Vector4[]
-            {
-                new Vector4(left,-vsize,front,1),
-                new Vector4(left,vsize,front,1),
-                new Vector4(right,vsize,front,1),
-                new Vector4(right,-vsize,front,1),
 
-                new Vector4(left,-vsize,back,1),
-                new Vector4(left,vsize,back,1),
-                new Vector4(right,vsize,back,1),
-                new Vector4(right,-vsize,back,1),
-            };
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl1 = GLRenderControl.Lines(1);
 
-            Vector4[] displaylines = new Vector4[]
+            float h = -1;
+            if (h != -1)
             {
+                int dist = 1000;
+                Color cr = Color.FromArgb(20, Color.Red);
+                rObjects.Add(items.Shader("COS-1L"),    // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(left, h, back), new Vector3(dist, 0, 0), (back - front) / dist + 1),
+                                                        new Color4[] { cr })
+                                   );
+
+                rObjects.Add(items.Shader("COS-1L"),
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(right, h, front), new Vector3(0, 0, dist), (right - left) / dist + 1),
+                                                        new Color4[] { cr })
+                                   );
+
+            }
+
+            {
+
+                Vector4[] displaylines = new Vector4[]
+                {
                 new Vector4(left,-vsize,front,1),   new Vector4(left,+vsize,front,1),
                 new Vector4(left,+vsize,front,1),      new Vector4(right,+vsize,front,1),
                 new Vector4(right,+vsize,front,1),     new Vector4(right,-vsize,front,1),
@@ -111,13 +136,13 @@ namespace TestOpenTk
                 new Vector4(left,+vsize,front,1),      new Vector4(left,+vsize,back,1),
                 new Vector4(right,-vsize,front,1),  new Vector4(right,-vsize,back,1),
                 new Vector4(right,+vsize,front,1),     new Vector4(right,+vsize,back,1),
-            };
+                };
 
-            {
-                items.Add("LINEYELLOW", new GLFixedColourShaderWithWorldCoord(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
+                items.Add("LINEYELLOW", new GLFixedColourShaderWithWorldCoord(System.Drawing.Color.Yellow));
                 rObjects.Add(items.Shader("LINEYELLOW"),
-                GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, displaylines));
+                GLRenderableItem.CreateVector4(items, rl1, displaylines));
             }
+
 
             Bitmap[] numbitmaps = new Bitmap[116];
 
@@ -143,13 +168,14 @@ namespace TestOpenTk
 
                 GLShaderPipeline numshaderx = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
                 items.Add("IC-X", numshaderx);
-                numshaderx.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
-                numshaderx.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
+
+                GLRenderControl rq = GLRenderControl.Quads(cullface: false);
+                GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
 
                 rObjects.Add(numshaderx, "xnum",
-                                        GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                        GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
                                                 GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberposx,
-                                                null, numberposx.Length));
+                                                rt, numberposx.Length));
 
                 Matrix4[] numberposz = new Matrix4[(back - front) / 1000 + 1];
                 for (int i = 0; i < numberposz.Length; i++)
@@ -161,78 +187,70 @@ namespace TestOpenTk
 
                 GLShaderPipeline numshaderz = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(25));
                 items.Add("IC-Z", numshaderz);
-                numshaderz.StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
-                numshaderz.FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
 
                 rObjects.Add(numshaderz, "ynum",
-                                        GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                                        GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
                                                 GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberposz,
-                                                null, numberposz.Length));
+                                                rt, numberposz.Length));
             }
 
             {
                 items.Add("solmarker", new GLTexture2D(numbitmaps[45]));
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation((a) => { GLStatics.CullFace(false); }, (b)=> { GLStatics.DefaultCullFace(); }));
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+
+                GLRenderControl rq = GLRenderControl.Quads(cullface: false);
+
                 rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                             GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 1000, 0))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 1000, 0))
                              ));
                 rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                             GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, -1000, 0))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, -1000, 0))
                              ));
                 items.Add("sag", new GLTexture2D(Properties.Resources.dotted));
                 rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                             GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, 2000, 25899))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, 2000, 25899))
                              ));
                 rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                             GLRenderableItem.CreateVector4Vector2(items, rq, 
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, -2000, 25899))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, -2000, 25899))
                              ));
                 items.Add("bp", new GLTexture2D(Properties.Resources.dotted2));
                 rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                             GLRenderableItem.CreateVector4Vector2(items, rq, 
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLObjectDataTranslationRotationTexture(items.Tex("bp"), new Vector3(-1111f, 0, 65269))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("bp"), new Vector3(-1111f, 0, 65269))
                              ));
             }
 
-
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-
-            float h = -1;
-            if ( h != -1)
+            boundingbox = new Vector4[]
             {
-                int dist = 1000;
-                Color cr = Color.FromArgb(20, Color.Red);
-                rObjects.Add(items.Shader("COS-1L"),    // horizontal
-                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(left, h, back), new Vector3(dist, 0, 0), (back-front)/dist+1),
-                                                        new Color4[] { cr })
-                                   );
+                new Vector4(left,-vsize,front,1),
+                new Vector4(left,vsize,front,1),
+                new Vector4(right,vsize,front,1),
+                new Vector4(right,-vsize,front,1),
 
-                rObjects.Add(items.Shader("COS-1L"),  
-                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(right, h, front), new Vector3(0, 0,dist), (right-left)/dist+1),
-                                                        new Color4[] { cr })
-                                   );
+                new Vector4(left,-vsize,back,1),
+                new Vector4(left,vsize,back,1),
+                new Vector4(right,vsize,back,1),
+                new Vector4(right,-vsize,back,1),
+            };
 
-            }
-
-            if ( true )
+            if (true)
             {
                 volumetricblock = new GLVolumetricUniformBlock();
                 items.Add("VB", volumetricblock);
 
                 int sc = 1;
-                GLTexture3D noise3d = new GLTexture3D(1024*sc, 64*sc, 1024*sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
+                GLTexture3D noise3d = new GLTexture3D(1024 * sc, 64 * sc, 1024 * sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
                 items.Add("Noise", noise3d);
-                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128*sc, 16*sc, 128*sc);       // must be a multiple of localgroupsize in csn
+                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128 * sc, 16 * sc, 128 * sc);       // must be a multiple of localgroupsize in csn
                 csn.StartAction += (A) => { noise3d.BindImage(3); };
                 csn.Run();      // compute noise
 
@@ -241,7 +259,7 @@ namespace TestOpenTk
 
                 // set centre=width, higher widths means more curve, higher std dev compensate
 
-                ComputeShaderGaussian gsn = new ComputeShaderGaussian(gaussiantex.Width, 2.0f, 2.0f, 1.4f,4);       
+                ComputeShaderGaussian gsn = new ComputeShaderGaussian(gaussiantex.Width, 2.0f, 2.0f, 1.4f, 4);
                 gsn.StartAction += (A) => { gaussiantex.BindImage(4); };
                 gsn.Run();      // compute noise
 
@@ -250,15 +268,23 @@ namespace TestOpenTk
                 float[] gdata = gaussiantex.GetTextureImageAsFloats(OpenTK.Graphics.OpenGL4.PixelFormat.Red); // read back check
 
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
-                GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);     
+                GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
                 items.Add("gal", galtex);
                 GalaxyShader gs = new GalaxyShader();
                 items.Add("Galaxy", gs);
                 gs.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };
 
-                galaxy = GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);   // no vertexes, all data from bound volumetric uniform, no instances as yet
+                GLRenderControl rv = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
+                galaxy = GLRenderableItem.CreateNullVertex(rv);   // no vertexes, all data from bound volumetric uniform, no instances as yet
                 rObjects.Add(items.Shader("Galaxy"), galaxy);
             }
+
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+
+
+
+
+
         }
 
         public class GalaxyShader : GLShaderStandard

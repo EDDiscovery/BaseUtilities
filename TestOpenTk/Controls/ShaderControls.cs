@@ -37,7 +37,7 @@ namespace TestOpenTk
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
         Vector4[] boundingbox;
-        GLControlDisplay form;
+        GLControlDisplay displaycontrol;
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,41 +94,46 @@ namespace TestOpenTk
                 new Vector4(right,+vsize,front,1),     new Vector4(right,+vsize,back,1),
             };
 
+            GLRenderControl rl = GLRenderControl.Lines(1);
+
             {
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
+                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
                 rObjects.Add(items.Shader("LINEYELLOW"),
-                GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, displaylines));
+                GLRenderableItem.CreateVector4(items, rl, displaylines));
             }
 
             float h = 0;
             if ( h != -1)
             {
-                items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
+                items.Add("COS-1L", new GLColourShaderWithWorldCoord());
 
                 int dist = 1000;
                 Color cr = Color.FromArgb(100, Color.White);
                 rObjects.Add(items.Shader("COS-1L"),    // horizontal
-                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                             GLRenderableItem.CreateVector4Color4(items, rl,
                                                         GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(left, h, back), new Vector3(dist, 0, 0), (back - front) / dist + 1),
                                                         new Color4[] { cr })
                                    );
 
                 rObjects.Add(items.Shader("COS-1L"),
-                             GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+                             GLRenderableItem.CreateVector4Color4(items, rl,
                                                         GLShapeObjectFactory.CreateLines(new Vector3(left, h, front), new Vector3(right, h, front), new Vector3(0, 0, dist), (right - left) / dist + 1),
                                                         new Color4[] { cr })
                                    );
 
             }
 
+
             {
                 items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
                 items.Add("dotted2", new GLTexture2D(Properties.Resources.dotted2));
 
+                GLRenderControl rt = GLRenderControl.Tri();
+
                 rObjects.Add(items.Shader("TEX"),
-                    GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                    GLRenderableItem.CreateVector4Vector2(items, rt,
                             GLCubeObjectFactory.CreateSolidCubeFromTriangles(2000f), GLCubeObjectFactory.CreateCubeTexTriangles(),
-                            new GLObjectDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 0, 0))
+                            new GLRenderDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(-2, 0, 0))
                             ));
             }
 
@@ -136,20 +141,22 @@ namespace TestOpenTk
                 items.Add("FCS1", new GLFixedColourShaderWithWorldCoord(Color.FromArgb(150, Color.Green)));
                 items.Add("FCS2", new GLFixedColourShaderWithWorldCoord(Color.FromArgb(80, Color.Red)));
 
+                GLRenderControl rq = GLRenderControl.Quads();
+
                 rObjects.Add(items.Shader("FCS1"),
-                    GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                    GLRenderableItem.CreateVector4(items, rq,
                                                 GLShapeObjectFactory.CreateQuad(1000, pos: new Vector3(4000, 500, 0))));
                 rObjects.Add(items.Shader("FCS2"),
-                    GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                    GLRenderableItem.CreateVector4(items, rq,
                                                 GLShapeObjectFactory.CreateQuad(1000, pos: new Vector3(4000, 1000, 0))));
             }
 
             if (true)
             {
-                form = new GLControlDisplay(glwfc);       // hook form to the window - its the master
-                form.Focusable = true;          // we want to be able to focus and receive key presses.
-                form.Name = "form";
-                form.SuspendLayout();
+                displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
+                displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
+                displaycontrol.Name = "form";
+                displaycontrol.SuspendLayout();
 
                 GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
                 ptop.SuspendLayout();
@@ -160,7 +167,7 @@ namespace TestOpenTk
                 //GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.Transparent);
                 ptop.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                 ptop.ResumeLayout();
-                form.Add(ptop);
+                displaycontrol.Add(ptop);
 
                 if (true)
                 {
@@ -277,13 +284,13 @@ namespace TestOpenTk
                     ptop2.Bounds = new Rectangle(1012, 400, 400, 400);
                     ptop2.BackColor = Color.Blue;
                     ptop2.Name = "paneltop2";
-                    form.Add(ptop2);
+                    displaycontrol.Add(ptop2);
 
                     GLImage i1 = new GLImage("I1", new Rectangle(10, 120, 200, 200), Properties.Resources.dotted);
                     ptop2.Add(i1);
                 }
 
-                form.ResumeLayout();
+                displaycontrol.ResumeLayout();
             }
 
             gl3dcontroller = new Controller3D();    
@@ -301,15 +308,15 @@ namespace TestOpenTk
 
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
 
-            if ( form != null )
+            if ( displaycontrol != null )
             {
-                gl3dcontroller.Start(form, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);     // HOOK the 3dcontroller to the form so it gets Form events
+                gl3dcontroller.Start(displaycontrol, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);     // HOOK the 3dcontroller to the form so it gets Form events
 
-                form.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
+                displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
                 {                           // this is because we are at depth 0
                     GLMatrixCalc c = new GLMatrixCalc();
                     ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(c,glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
-                    form.Render();
+                    displaycontrol.Render(glwfc.RenderState);
                 };
 
             }
@@ -323,14 +330,14 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
         private void SystemTick(object sender, EventArgs e)
         {
-            if (form != null && form.RequestRender)
+            if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
             var cdmt = gl3dcontroller.HandleKeyboard(true);
             if (cdmt.AnythingChanged )

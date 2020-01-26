@@ -25,11 +25,11 @@ namespace OpenTKUtils.GL4
     // optional Lookat to look at viewer
     // optional texture bind
 
-    public class GLObjectDataTranslationRotation : IGLInstanceControl
+    public class GLRenderDataTranslationRotation : IGLRenderItemData
     {
-        public int LookAtUniform = 21;    
-        public int TransformUniform = 22;  
-        public int TextureBind = 1;
+        public int LookAtUniform { get; set; } = 21;    
+        public int TransformUniform { get; set; } = 22;
+        public int TextureBind { get; set; } = 1;
 
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
@@ -50,7 +50,7 @@ namespace OpenTKUtils.GL4
 
         bool lookatangle = false;
 
-        public GLObjectDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
         {
             pos = new Vector3(0, 0, 0);
             rot = new Vector3(rx, ry, rz);
@@ -59,7 +59,7 @@ namespace OpenTKUtils.GL4
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
@@ -68,7 +68,7 @@ namespace OpenTKUtils.GL4
             Calc();
         }
 
-        public GLObjectDataTranslationRotation(Vector3 p, Vector3 rotp, float sc = 1.0f , bool calclookat = false)
+        public GLRenderDataTranslationRotation(Vector3 p, Vector3 rotp, float sc = 1.0f , bool calclookat = false)
         {
             pos = p;
             rot = rotp;
@@ -86,12 +86,13 @@ namespace OpenTKUtils.GL4
             transform *= Matrix4.CreateRotationZ((float)(rot.Z * Math.PI / 180.0f));
             transform *= Matrix4.CreateTranslation(pos);
 
-            System.Diagnostics.Debug.WriteLine("Transform " + transform);
+          //  System.Diagnostics.Debug.WriteLine("Transform " + transform);
         }
 
-        public virtual void Bind(IGLProgramShader shader, IGLRenderableItem ri, GLMatrixCalc c)
+        public virtual void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
         {
-            GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, TransformUniform, false, ref transform);
+            int sid = shader.Get(ShaderType.VertexShader).Id;
+            GL.ProgramUniformMatrix4(sid, TransformUniform, false, ref transform);
 
             if (lookatangle)
             {
@@ -104,23 +105,43 @@ namespace OpenTKUtils.GL4
             }
 
             Texture?.Bind(TextureBind);
+            GLStatics.Check();
         }
     }
 
     // class to use above easily with textures
 
-    public class GLObjectDataTranslationRotationTexture : GLObjectDataTranslationRotation
+    public class GLRenderDataTranslationRotationTexture : GLRenderDataTranslationRotation
     {
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f) : base(p, rx, ry, rx, scale)
+        public GLRenderDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f) : base(p, rx, ry, rx, scale)
         {
             Texture = tex;
         }
 
-        public GLObjectDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, float scale = 1.0f) : base(p, rotp, scale)
+        public GLRenderDataTranslationRotationTexture(IGLTexture tex, Vector3 p, Vector3 rotp, float scale = 1.0f) : base(p, rotp, scale)
         {
             Texture = tex;
         }
 
+    }
+
+    // texture only
+
+    public class GLRenderDataTexture : IGLRenderItemData
+    {
+        public int TextureBind { get; set; } = 1;
+        protected IGLTexture Texture;                      
+
+        public GLRenderDataTexture(IGLTexture tex, int bind = 1)
+        {
+            Texture = tex;
+            TextureBind = bind;
+        }
+
+        public virtual void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
+        {
+            Texture?.Bind(TextureBind);
+        }
     }
 
 

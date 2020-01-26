@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils;
@@ -70,7 +85,6 @@ void main(void)
             public ShaderV2()
             {
                 CompileLink(vertex: vcode, frag: fcode, geo: "#include TestOpenTk.Volumetrics.volumetricgeo4.glsl");
-                StartAction += (s) => { GLStatics.PointSize(10); };
             }
         }
 
@@ -111,74 +125,64 @@ void main(void)
             gl3dcontroller.MovementTracker.MinimumCameraDirChange = 0.01f;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.1f;
 
-            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
-        
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple, (a) => { GLStatics.LineWidth(1); }));
-            items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow, (a) => { GLStatics.PointSize(10); }));
-            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.Blue, (a) => { }));
-
-            items.Add("V2", new ShaderV2());
-            //           items.Add("wooden", new GLTexture2D(Properties.Resources.wooden));
-
-            rObjects.Add(items.Shader("COS-1L"), "L1",   // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Gray })
-                               );
+            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
 
 
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Gray })
-                               );
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl1 = GLRenderControl.Lines(1);
 
-            // Number markers using instancing and 2d arrays, each with its own transform
-
-            Bitmap[] numbers = new Bitmap[20];
-            Matrix4[] numberpos = new Matrix4[20];
-
-            Font fnt = new Font("Arial", 44);
-
-            for (int i = 0; i < numbers.Length; i++)
             {
-                int v = -100 + i * 10;
-                numbers[i] = new Bitmap(100, 100);
-                BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
-                numberpos[i] = Matrix4.CreateScale(1);
-                numberpos[i] *= Matrix4.CreateRotationX(-80f.Radians());
-                numberpos[i] *= Matrix4.CreateTranslation(new Vector3(20, 0, v));
+
+                rObjects.Add(items.Shader("COSW"), "L1",   // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Gray })
+                                   );
+
+
+                rObjects.Add(items.Shader("COSW"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Gray })
+                                   );
+
             }
 
-            GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
-            items.Add("Nums", array);
-            items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)));
-            items.Shader("IC-2").StartAction += (s) => { items.Tex("Nums").Bind(1); GL.Disable(EnableCap.CullFace); };
-            items.Shader("IC-2").FinishAction += (s) => { GL.Enable(EnableCap.CullFace); };
-
-            // investigate why its wrapping when we asked for it TexQUAD 1 which should interpolate over surface..
-
-            rObjects.Add(items.Shader("IC-2"), "1-b",
-                                    GLRenderableItem.CreateVector4Vector2Matrix4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                                            GLShapeObjectFactory.CreateQuad(1.0f), GLShapeObjectFactory.TexQuad, numberpos,
-                                            null, numberpos.Length));
-
-
-
-
-
-
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
-
-            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateNullVertex(OpenTK.Graphics.OpenGL4.PrimitiveType.Points, ic: slices));
-
-            // bounding box
-
-            int left = -40, right = 40, bottom = -20, top = +20, front = -40, back = 40;
-            Vector4[] lines2 = new Vector4[]
+            // Number markers using instancing and 2d arrays, each with its own transform
             {
+                Bitmap[] numbers = new Bitmap[20];
+                Matrix4[] numberpos = new Matrix4[20];
+
+                Font fnt = new Font("Arial", 44);
+
+                for (int i = 0; i < numbers.Length; i++)
+                {
+                    int v = -100 + i * 10;
+                    numbers[i] = new Bitmap(100, 100);
+                    BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+                    numberpos[i] = Matrix4.CreateScale(1);
+                    numberpos[i] *= Matrix4.CreateRotationX(-80f.Radians());
+                    numberpos[i] *= Matrix4.CreateTranslation(new Vector3(20, 0, v));
+                }
+
+                GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
+                items.Add("Nums", array);
+                items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)));
+
+                GLRenderControl rq = GLRenderControl.Quads(cullface: false);
+                GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
+
+                rObjects.Add(items.Shader("IC-2"), "1-b",
+                                        GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
+                                                GLShapeObjectFactory.CreateQuad(1.0f), GLShapeObjectFactory.TexQuad, numberpos, rt,
+                                                numberpos.Length));
+            }
+
+
+            {
+                int left = -40, right = 40, bottom = -20, top = +20, front = -40, back = 40;
+                Vector4[] lines2 = new Vector4[]
+                {
                 new Vector4(left,bottom,front,1),   new Vector4(left,top,front,1),
                 new Vector4(left,top,front,1),      new Vector4(right,top,front,1),
                 new Vector4(right,top,front,1),     new Vector4(right,bottom,front,1),
@@ -194,19 +198,27 @@ void main(void)
                 new Vector4(right,bottom,front,1),  new Vector4(right,bottom,back,1),
                 new Vector4(right,top,front,1),     new Vector4(right,top,back,1),
 
-            };
+                };
 
-            rObjects.Add(items.Shader("LINEYELLOW"),
-                        GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines, lines2));
+                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+                rObjects.Add(items.Shader("LINEYELLOW"),
+                            GLRenderableItem.CreateVector4(items, rl1, lines2));
+            }
+
+
+            items.Add("V2", new ShaderV2());
+
+            GLRenderControl rltot = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
+            rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateNullVertex(rltot, ic: slices));
+
+
+
 
             dataoutbuffer = items.NewStorageBlock(5);
             dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             atomicbuffer = items.NewAtomicBlock(6);
             atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
-
-            dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             pointblock = items.NewUniformBlock(1);
             pointblock.Allocate(sizeof(float) * 4 * 8 + sizeof(float) * 30);        // plenty of space
@@ -225,6 +237,7 @@ void main(void)
                 new Vector4(hsize,-vsize,zsize,1),
             };
 
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
         }
 
         int slices =10;
@@ -260,29 +273,29 @@ void main(void)
             pointblock.MapWrite(ref pb, maxzv);
             pointblock.MapWrite(ref pb, Vector4.Transform(new Vector4(mc.EyePosition, 0), mc.ModelMatrix));
             float slicedist = (maxzv - minzv) / (float)slices;
-            float slicestart = (maxzv - minzv) / ((float)slices*2);
+            float slicestart = (maxzv - minzv) / ((float)slices * 2);
             pointblock.MapWrite(ref pb, slicestart); //slicestart
             pointblock.MapWrite(ref pb, slicedist); //slicedist
 
-       //     System.Diagnostics.Debug.WriteLine("slice start {0} dist {1}", slicestart, slicedist);
-           // for (int ic = 0; ic < slices; ic++)
+            //     System.Diagnostics.Debug.WriteLine("slice start {0} dist {1}", slicestart, slicedist);
+            // for (int ic = 0; ic < slices; ic++)
             //    System.Diagnostics.Debug.WriteLine("slice {0} {1} {2}", minzv, maxzv, minzv + slicestart + slicedist * ic);
             pointblock.UnMap();
 
             dataoutbuffer.ZeroBuffer();
             atomicbuffer.ZeroBuffer();
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
 
             Vector4[] databack = dataoutbuffer.ReadVector4(0, 5);
 
-          //  System.Diagnostics.Debug.WriteLine("avg {0} txtavg {1}", databack[0].ToStringVec(), databack[1].ToStringVec());
+            //  System.Diagnostics.Debug.WriteLine("avg {0} txtavg {1}", databack[0].ToStringVec(), databack[1].ToStringVec());
 
             for (int i = 0; i < databack.Length; i += 1)
             {
-         //       System.Diagnostics.Debug.WriteLine("db "+databack[i].ToStringVec());
+                //       System.Diagnostics.Debug.WriteLine("db "+databack[i].ToStringVec());
             }
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;

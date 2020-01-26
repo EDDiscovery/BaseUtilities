@@ -98,49 +98,38 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
 
-            var ss = new GLGalShader();
-            ss.StartAction = a => { GLStatics.CullFace(false); };
-            ss.FinishAction = a => { GLStatics.DefaultCullFace(); };
-            items.Add("TEX-NC", ss);
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl1 = GLRenderControl.Lines(1);
+
+            {
+
+                rObjects.Add(items.Shader("COSW"), "L1",   // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Gray })
+                                   );
+
+
+                rObjects.Add(items.Shader("COSW"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, rl1,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Gray })
+                                   );
+
+            }
 
             items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
 
-            // thoughts.
-            // the galmap, extended into 3d, with a function giving the opacity of the bit
-            // test this with a set of planes in normal transform above
+            items.Add("TEX-NC", new GLGalShader());
 
-            // use the volumetric system
-            // take a bounding box (-100,100,-20,20,-100,100)
-            // rotate to model view
-            // find polys to map to bounding box (pass in modelview vertexes)
-            // find texture co-ords at vertex edges
-            // pass to shader drawing triangles.
-            
-            #region coloured lines
-
-            rObjects.Add(items.Shader("COS-1L"),    // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Gray })
-                               );
-
-
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Gray })
-                               );
+            GLRenderControl rg = GLRenderControl.Quads(cullface: false);
 
             rObjects.Add(items.Shader("TEX-NC"),
-                        GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
+                        GLRenderableItem.CreateVector4Vector2(items, rg,
                         GLShapeObjectFactory.CreateQuad(200.0f, 200.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("gal"), new Vector3(0, 0, 0))
+                        new GLRenderDataTranslationRotationTexture(items.Tex("gal"), new Vector3(0, 0, 0))
                         ));
-
-
-            #endregion
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
@@ -155,7 +144,7 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
         }

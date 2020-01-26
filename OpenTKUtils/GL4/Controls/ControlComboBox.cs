@@ -142,16 +142,16 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseClick(MouseEventArgs e)
+        public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if ( e.Button == MouseEventArgs.MouseButtons.Left )
+            if ( e.Button == GLMouseEventArgs.MouseButtons.Left )
             {
                 Activate();
             }
         }
 
-        public override void OnKeyDown(KeyEventArgs e)
+        public override void OnKeyDown(GLKeyEventArgs e)
         {
             base.OnKeyDown(e);
 
@@ -207,7 +207,7 @@ namespace OpenTKUtils.GL4.Controls
             Invalidate();
         }
 
-        public virtual void OtherKeyPressed(GLBaseControl c, KeyEventArgs e)
+        public virtual void OtherKeyPressed(GLBaseControl c, GLKeyEventArgs e)
         {
             if ( e.KeyCode == System.Windows.Forms.Keys.Escape)
             {

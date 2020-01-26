@@ -202,20 +202,20 @@ namespace OpenTKUtils.Common
             PaintObjects?.Invoke(MatrixCalc, sysinterval.ElapsedMilliseconds);
         }
 
-        private void glControl_MouseDown(object sender, MouseEventArgs e)
+        private void glControl_MouseDown(object sender, GLMouseEventArgs e)
         {
             KillSlews();
 
             mouseDownPos.X = e.X;
             mouseDownPos.Y = e.Y;
 
-            if (e.Button.HasFlag(MouseEventArgs.MouseButtons.Left))
+            if (e.Button.HasFlag(GLMouseEventArgs.MouseButtons.Left))
             {
                 mouseStartRotate.X = e.X;
                 mouseStartRotate.Y = e.Y;
             }
 
-            if (e.Button.HasFlag(MouseEventArgs.MouseButtons.Right))
+            if (e.Button.HasFlag(GLMouseEventArgs.MouseButtons.Right))
             {
                 mouseStartTranslateXY.X = e.X;
                 mouseStartTranslateXY.Y = e.Y;
@@ -224,23 +224,23 @@ namespace OpenTKUtils.Common
             }
         }
 
-        private void glControl_MouseUp(object sender, MouseEventArgs e)
+        private void glControl_MouseUp(object sender, GLMouseEventArgs e)
         {
             bool notmovedmouse = Math.Abs(e.X - mouseDownPos.X) + Math.Abs(e.Y - mouseDownPos.Y) < 4;
 
             if (!notmovedmouse)     // if we moved it, its not a stationary click, ignore
                 return;
 
-            if (e.Button == MouseEventArgs.MouseButtons.Right)                    // right clicks are about bookmarks.
+            if (e.Button == GLMouseEventArgs.MouseButtons.Right)                    // right clicks are about bookmarks.
             {
                 mouseStartTranslateXY = new Point(int.MinValue, int.MinValue);         // indicate rotation is finished.
                 mouseStartTranslateXZ = new Point(int.MinValue, int.MinValue);
             }
         }
 
-        private void glControl_MouseMove(object sender, MouseEventArgs e)
+        private void glControl_MouseMove(object sender, GLMouseEventArgs e)
         {
-            if (e.Button == MouseEventArgs.MouseButtons.Left)
+            if (e.Button == GLMouseEventArgs.MouseButtons.Left)
             {
                 if (MatrixCalc.InPerspectiveMode && mouseStartRotate.X != int.MinValue) // on resize double click resize, we get a stray mousemove with left, so we need to make sure we actually had a down event
                 {
@@ -255,7 +255,7 @@ namespace OpenTKUtils.Common
                     Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
                 }
             }
-            else if (e.Button == MouseEventArgs.MouseButtons.Right)
+            else if (e.Button == GLMouseEventArgs.MouseButtons.Right)
             {
                 if (mouseStartTranslateXY.X != int.MinValue)
                 {
@@ -271,7 +271,7 @@ namespace OpenTKUtils.Common
                     Pos.Translate(new Vector3(0, -dy * (1.0f / Zoom.Current) * MouseUpDownAmountAtZoom1PerPixel, 0));
                 }
             }
-            else if (e.Button == (MouseEventArgs.MouseButtons.Left | MouseEventArgs.MouseButtons.Right))
+            else if (e.Button == (GLMouseEventArgs.MouseButtons.Left | GLMouseEventArgs.MouseButtons.Right))
             {
                 if (mouseStartTranslateXZ.X != int.MinValue)
                 {
@@ -300,7 +300,7 @@ namespace OpenTKUtils.Common
 
         }
 
-        private void glControl_MouseWheel(object sender, MouseEventArgs e)
+        private void glControl_MouseWheel(object sender, GLMouseEventArgs e)
         {
             if (e.Delta != 0)
             {
@@ -320,12 +320,12 @@ namespace OpenTKUtils.Common
             }
         }
 
-        private void glControl_KeyDown(object sender, KeyEventArgs e)
+        private void glControl_KeyDown(object sender, GLKeyEventArgs e)
         {
             keyboard.KeyDown(e.Control, e.Shift, e.Alt, e.KeyCode);
         }
 
-        private void glControl_KeyUp(object sender, KeyEventArgs e)
+        private void glControl_KeyUp(object sender, GLKeyEventArgs e)
         {
             keyboard.KeyUp(e.Control, e.Shift, e.Alt, e.KeyCode);
         }

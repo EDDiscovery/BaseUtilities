@@ -143,7 +143,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseClick(MouseEventArgs e)
+        public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
             if ( !e.Handled)
@@ -184,7 +184,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnKeyDown(KeyEventArgs e)
+        public override void OnKeyDown(GLKeyEventArgs e)
         {
             base.OnKeyDown(e);
             if (!e.Handled)
@@ -249,7 +249,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnKeyPress(KeyEventArgs e)
+        public override void OnKeyPress(GLKeyEventArgs e)
         {
             base.OnKeyPress(e);
             if (!e.Handled)

@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils.GL4;
@@ -87,24 +102,8 @@ void main(void)
     }
 }
 ";
-            public GLPointSprite(IGLTexture tex) : base()
+            public GLPointSprite() : base()
             {
-                StartAction = (a) => 
-                {
-                    tex.Bind(4);
-                    GLStatics.EnablePointSprite();
-                    GLStatics.PointSizeByProgram();
-                    GL.Enable(EnableCap.Blend);
-                    //GL.BlendFunc(BlendingFactor.One, BlendingFactor.One);
-                    //GL.BlendFunc(BlendingFactor.Src1Alpha, BlendingFactor.OneMinusDstAlpha);
-                };
-
-                FinishAction = (a) => 
-                {
-                    GLStatics.DefaultPointSprite();
-                    GL.Disable(EnableCap.Blend);
-                };
-
                 CompileLink(vert,frag:frag);
             }
 
@@ -130,25 +129,25 @@ void main(void)
             //items.Add("lensflarewhite", new GLTexture2D(Properties.Resources.lensflare_white64));
             items.Add("lensflare", new GLTexture2D(Properties.Resources.star_grey64));
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-
-            items.Add("PS1", new GLPointSprite(items.Tex("lensflare")));
+            items.Add("COS", new GLColourShaderWithWorldCoord());
 
             #region coloured lines
 
-            rObjects.Add(items.Shader("COS-1L"),    // horizontal
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                    new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-                               );
+            {
+                GLRenderControl rl = GLRenderControl.Lines(1);
+                rObjects.Add(items.Shader("COS"),    // horizontal
+                             GLRenderableItem.CreateVector4Color4(items, rl,
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                   );
 
 
-            rObjects.Add(items.Shader("COS-1L"),    // vertical
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                               GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                         new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-                               );
-
+                rObjects.Add(items.Shader("COS"),    // vertical
+                             GLRenderableItem.CreateVector4Color4(items, rl,
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
+                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                   );
+            }
 
             var p = GLPointsFactory.RandomStars4(100, -100, 100, 100, -100, 100, -100);
             //p = new Vector4[10];
@@ -156,9 +155,16 @@ void main(void)
             //{
             //    p[i] = new Vector4(i, 6.8f, 0,1);
             //}
+
+            items.Add("PS1", new GLPointSprite());
+
+            GLRenderControl rp = GLRenderControl.PointSprites();     // by program
+
+            GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("lensflare"),4);
+
             rObjects.Add(items.Shader("PS1"),
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points,
-                               p, new Color4[] { Color.Red, Color.Yellow, Color.Green }));
+                         GLRenderableItem.CreateVector4Color4(items, rp,
+                               p, new Color4[] { Color.Red, Color.Yellow, Color.Green },rt));
 
             #endregion
 
@@ -175,7 +181,7 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState,gl3dcontroller.MatrixCalc);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
         }

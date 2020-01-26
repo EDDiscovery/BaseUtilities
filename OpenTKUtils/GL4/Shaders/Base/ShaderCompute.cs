@@ -45,10 +45,11 @@ namespace OpenTKUtils.GL4
             StartAction = sa;
         }
 
-        public void CompileLink(string code)
+        // completeoutfile is output of file for debugging
+        public void CompileLink(string code, string completeoutfile = null )
         {
             program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.ComputeShader, code);
+            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.ComputeShader, code, completeoutfile);
             System.Diagnostics.Debug.Assert(ret == null, "Compute Shader", ret);
             ret = program.Link();
             System.Diagnostics.Debug.Assert(ret == null, "Link", ret);

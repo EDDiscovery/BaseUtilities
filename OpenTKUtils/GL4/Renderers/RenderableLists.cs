@@ -32,49 +32,52 @@ namespace OpenTKUtils.GL4
 
     public class GLRenderProgramSortedList
     {
-        private BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderableItem> renderables;
+        private Dictionary<IGLProgramShader, List<Tuple<string, IGLRenderableItem>>> renderables;
+        private Dictionary<string,IGLRenderableItem> byname;
         private int unnamed = 0;
 
         public GLRenderProgramSortedList()
         {
-            renderables = new BaseUtils.DictionaryOfDictionaries<IGLProgramShader, string, IGLRenderableItem>();
+            renderables = new Dictionary<IGLProgramShader, List<Tuple<string, IGLRenderableItem>>>();
+            byname = new Dictionary<string, IGLRenderableItem>();
         }
 
-        public void Add(IGLProgramShader prog, string name, IGLRenderableItem r)
+        public void Add(IGLProgramShader prog, string name, IGLRenderableItem r)        // name is the id given to this renderable
         {
-            renderables.Add(prog, name, r);
+            AddItem(prog, name, r);
+            byname.Add(name, r);
         }
 
         public void Add(IGLProgramShader prog, IGLRenderableItem r)
         {
             string n = prog.GetType().Name + ":" + r.GetType().Name + " # " + (unnamed++).ToStringInvariant();
-            Add(prog, n, r);
+            AddItem(prog, n, r);
         }
 
         public void Add(GLShaderCompute cprog)
         {
             string n = cprog.GetType().Name + " # " + (unnamed++).ToStringInvariant();
-            Add(cprog, n, null);
+            AddItem(cprog, n, null);
         }
 
-        public IGLRenderableItem this[string key] { get { return renderables[key]; } }
+        public IGLRenderableItem this[string renderitem] { get { return byname[renderitem]; } }
+        public bool Contains(string renderitem) { return byname.ContainsKey(renderitem); }
 
-        public bool Contains(string key) { return renderables.ContainsKey(key); }
-
-        public void Render(GLMatrixCalc c)
+        public void Render(GLRenderControl currentstate, GLMatrixCalc c)
         {
             foreach (var d in renderables)
             {
-                //System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
+               // System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
                 d.Key.Start();       // start the program
 
                 foreach (var g in d.Value)
                 {
-                    if (g.Value != null)  // may have added a null renderable item if its a compute shader.
+                    if (g.Item2 != null)  // may have added a null renderable item if its a compute shader.
                     {
-                        //System.Diagnostics.Debug.WriteLine("Render " + g.Key);
-                        g.Value.Bind(d.Key, c);
-                        g.Value.Render();
+                        System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
+                        g.Item2.Bind(currentstate, d.Key, c);
+                        g.Item2.Render();
+                        System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
                     }
                 }
 
@@ -83,6 +86,24 @@ namespace OpenTKUtils.GL4
 
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);
+        }
+
+
+        private void AddItem(IGLProgramShader prog, string name, IGLRenderableItem r)
+        {
+            if (!renderables.ContainsKey(prog))
+                renderables.Add(prog, new List<Tuple<string, IGLRenderableItem>>());
+
+            var list = renderables[prog];
+
+            foreach( var x in list)
+            {
+                int deltas = x.Item2.RenderControl.Deltas(r.RenderControl);
+                System.Diagnostics.Debug.WriteLine("Render list " + x.Item1 + " delta to " + name + " = " + deltas);
+            }
+
+
+            renderables[prog].Add(new Tuple<string, IGLRenderableItem>(name, r));
         }
     }
 
@@ -101,7 +122,7 @@ namespace OpenTKUtils.GL4
 
         public void Run()      
         {
-            Render(null);
+            Render(null,null);
         }
     }
 }

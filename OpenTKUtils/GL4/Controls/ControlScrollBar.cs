@@ -139,7 +139,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseMove(MouseEventArgs e)
+        public override void OnMouseMove(GLMouseEventArgs e)
         {
             base.OnMouseMove(e);
 
@@ -195,7 +195,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseDown(MouseEventArgs e)
+        public override void OnMouseDown(GLMouseEventArgs e)
         {
             base.OnMouseDown(e);
 
@@ -229,7 +229,7 @@ namespace OpenTKUtils.GL4.Controls
 
         }
 
-        public override void OnMouseUp(MouseEventArgs e)
+        public override void OnMouseUp(GLMouseEventArgs e)
         {
             if (mousepressed != MouseOver.MouseOverNone)
             {
@@ -249,7 +249,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        public override void OnMouseLeave(MouseEventArgs e)
+        public override void OnMouseLeave(GLMouseEventArgs e)
         {
             base.OnMouseLeave(e);
             if (!thumbmove && mouseover != MouseOver.MouseOverNone)

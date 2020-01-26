@@ -11,7 +11,7 @@ namespace OpenTKUtils.GL4.Controls
     public class GLListBox : GLForeDisplayBase
     {
         public Action<GLBaseControl, int> SelectedIndexChanged { get; set; } = null;     // not fired by programatically 
-        public Action<GLBaseControl, KeyEventArgs> OtherKeyPressed { get; set; } = null;     // not fired by programatically
+        public Action<GLBaseControl, GLKeyEventArgs> OtherKeyPressed { get; set; } = null;     // not fired by programatically
 
         public List<string> Items { get { return items; } set { items = value; Invalidate(); PerformLayout(); } }
         public List<Image> ImageItems { get { return images; } set { images = value; Invalidate(); PerformLayout(); } }
@@ -288,7 +288,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseClick(MouseEventArgs e)
+        public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
             if ( !e.Handled)
@@ -307,7 +307,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseWheel(MouseEventArgs e)
+        public override void OnMouseWheel(GLMouseEventArgs e)
         {
             base.OnMouseWheel(e);
 
@@ -320,7 +320,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseMove(MouseEventArgs e)
+        public override void OnMouseMove(GLMouseEventArgs e)
         {
             base.OnMouseMove(e);
 
@@ -340,7 +340,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        public override void OnKeyDown(KeyEventArgs e)
+        public override void OnKeyDown(GLKeyEventArgs e)
         {
             base.OnKeyDown(e);
             if (!e.Handled)

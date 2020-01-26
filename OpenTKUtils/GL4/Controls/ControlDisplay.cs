@@ -47,7 +47,9 @@ namespace OpenTKUtils.GL4.Controls
 
             vertexarray.Attribute(0, 0, vertexesperentry, OpenTK.Graphics.OpenGL4.VertexAttribType.Float); // bind 0 on attr 0, 2 components per vertex
 
-            ri = new GLRenderableItem(OpenTK.Graphics.OpenGL4.PrimitiveType.TriangleStrip, 0, vertexarray);     // create a renderable item
+            GLRenderControl rc = GLRenderControl.TriStrip();
+            rc.PrimitiveRestart = 0xff;
+            ri = new GLRenderableItem(rc, 0, vertexarray);     // create a renderable item
             ri.CreateRectangleRestartIndexByte(255 / 5);
 
             shader = new GLControlShader();
@@ -150,7 +152,7 @@ namespace OpenTKUtils.GL4.Controls
 
         // call this during your Paint to render
 
-        public void Render()
+        public void Render(GLRenderControl currentstate)
         {
             //System.Diagnostics.Debug.WriteLine("Form redraw start");
             //DebugWhoWantsRedraw();
@@ -177,9 +179,8 @@ namespace OpenTKUtils.GL4.Controls
             NeedRedraw = false;
 
             shader.Start();
-            ri.Bind(shader, null);                    // binds VA AND the element buffer
-            GLStatics.PrimitiveRestart(true, 0xff);
-            ri.Render();                            // draw using primitive restart on element index buffer with bindless textures
+            ri.Bind(currentstate, shader, null);                      // binds VA AND the element buffer
+            ri.Render();                                // draw using primitive restart on element index buffer with bindless textures
             shader.Finish();
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);
@@ -200,25 +201,25 @@ namespace OpenTKUtils.GL4.Controls
                 currentmouseover = null;
         }
 
-        private void Gc_MouseLeave(object sender, MouseEventArgs e)
+        private void Gc_MouseLeave(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null)
             {
-                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
                 currentmouseover.Hover = false;
-                currentmouseover.OnMouseLeave(new MouseEventArgs(e.Location));
+                currentmouseover.OnMouseLeave(new GLMouseEventArgs(e.Location));
                 currentmouseover = null;
             }
         }
 
-        private void Gc_MouseEnter(object sender, MouseEventArgs e)
+        private void Gc_MouseEnter(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null)
             {
-                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
                 currentmouseover.Hover = false;
                 if (currentmouseover.Enabled)
-                    currentmouseover.OnMouseLeave(new MouseEventArgs(e.Location));
+                    currentmouseover.OnMouseLeave(new GLMouseEventArgs(e.Location));
                 currentmouseover = null;
             }
 
@@ -239,17 +240,17 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void AdjustLocation(ref MouseEventArgs e)
+        private void AdjustLocation(ref GLMouseEventArgs e)
         {
             e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
             e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
         }
 
-        private void Gc_MouseUp(object sender, MouseEventArgs e)
+        private void Gc_MouseUp(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null)
             {
-                currentmouseover.MouseButtonsDown = MouseEventArgs.MouseButtons.None;
+                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
 
                 if (currentmouseover.Enabled)
                 {
@@ -260,7 +261,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_MouseDown(object sender, MouseEventArgs e)
+        private void Gc_MouseDown(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null)
             {
@@ -274,7 +275,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_MouseClick(object sender, MouseEventArgs e)
+        private void Gc_MouseClick(object sender, GLMouseEventArgs e)
         {
             SetFocus(currentmouseover);
 
@@ -285,7 +286,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_MouseWheel(object sender, MouseEventArgs e)
+        private void Gc_MouseWheel(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null && currentmouseover.Enabled)
             {
@@ -294,7 +295,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_MouseMove(object sender, MouseEventArgs e)
+        private void Gc_MouseMove(object sender, GLMouseEventArgs e)
         {
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
 
@@ -302,7 +303,7 @@ namespace OpenTKUtils.GL4.Controls
             {
                 if (currentmouseover != null)
                 {
-                    if (currentmouseover.MouseButtonsDown != MouseEventArgs.MouseButtons.None)   // click and drag, can't change control while mouse is down
+                    if (currentmouseover.MouseButtonsDown != GLMouseEventArgs.MouseButtons.None)   // click and drag, can't change control while mouse is down
                     {
                         if (currentmouseover.Enabled)
                         {
@@ -345,7 +346,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_KeyUp(object sender, KeyEventArgs e)
+        private void Gc_KeyUp(object sender, GLKeyEventArgs e)
         {
             if (currentfocus != null && currentfocus.Enabled)
             {
@@ -353,7 +354,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_KeyDown(object sender, KeyEventArgs e)
+        private void Gc_KeyDown(object sender, GLKeyEventArgs e)
         {
             if (currentfocus != null && currentfocus.Enabled)
             {
@@ -361,7 +362,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        private void Gc_KeyPress(object sender, KeyEventArgs e)
+        private void Gc_KeyPress(object sender, GLKeyEventArgs e)
         {
             if (currentfocus != null && currentfocus.Enabled)
             {

@@ -1,19 +1,12 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
-using OpenTKUtils.GL4;
+using OpenTKUtils;
 using OpenTKUtils.Common;
+using OpenTKUtils.GL4;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenTKUtils;
 
 namespace TestOpenTk
 {
@@ -53,7 +46,7 @@ layout (binding = 1, std430) buffer Positions
     float noisebuf[];
 };
 
-#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
+#include OpenTKUtils.GL4.Shaders.Functions.snoise3.glsl
 
 void write(float v)
 {
@@ -85,8 +78,8 @@ void main(void)
 
     float s = 0.36;
     float frequency = 1; //0.00001;
-    float t1 = snoise(sPosition * frequency) ;
-    float t2 = snoise((sPosition + unRadius) * frequency) ;
+    float t1 = simplexnoise(sPosition * frequency) ;
+    float t2 = simplexnoise((sPosition + unRadius) * frequency) ;
 	float ss = (max(t1, 0.0) * max(t2, 0.0)) * 2.0;
 
     write(vec4(position3,theta));
@@ -101,9 +94,6 @@ void main(void)
             }
         }
 
-
-        // Demonstrate buffer feedback AND geo shader add vertex/dump vertex
-
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -111,12 +101,11 @@ void main(void)
             Closed += ShaderTest_Closed;
 
             gl3dcontroller = new Controller3D();
+            gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.ZoomDistance = 100F;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
-            glwfc.BackColour = Color.FromArgb(0, 0, 60);
+            glwfc.BackColour = Color.FromArgb(0, 0, 20);
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(120f, 0, 0f), 1F);
-            gl3dcontroller.PaintObjects = ControllerDraw;
-
             gl3dcontroller.KeyboardTravelSpeed = (ms) =>
             {
                 return (float)ms / 20.0f;
@@ -124,29 +113,31 @@ void main(void)
 
             // this bit is eye candy just to show its working
 
-            items.Add("COS-1L", new GLColourShaderWithWorldCoord((a) => { GLStatics.LineWidth(1); }));
-            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            GLRenderControl rl = GLRenderControl.Lines(1);
 
-            rObjects.Add(items.Shader("COS-1L"),
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+            rObjects.Add(items.Shader("COSW"),
+                         GLRenderableItem.CreateVector4Color4(items, rl,
                                                     GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(-40, 0, 40), new Vector3(10, 0, 0), 9),
                                                     new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                );
 
 
-            rObjects.Add(items.Shader("COS-1L"),
-                         GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
+            rObjects.Add(items.Shader("COSW"),
+                         GLRenderableItem.CreateVector4Color4(items, rl,
                                GLShapeObjectFactory.CreateLines(new Vector3(-40, 0, -40), new Vector3(40, 0, -40), new Vector3(0, 0, 10), 9),
                                                          new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
                                );
 
 
             items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
 
+            GLRenderControl rt = GLRenderControl.Tri();
             rObjects.Add(items.Shader("TEX"), "sphere7",
-                GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles,
+                GLRenderableItem.CreateVector4Vector2(items, rt,
                         GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 20.0f),
-                        new GLObjectDataTranslationRotationTexture(items.Tex("moon"), new Vector3(0, 0, 0))
+                        new GLRenderDataTranslationRotationTexture(items.Tex("moon"), new Vector3(0, 0, 0))
                         ));
 
 
@@ -154,7 +145,7 @@ void main(void)
 
             items.Add("N1", new GLShaderPipeline(new GLVertexShaderCompute()));
 
-            vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index
+            vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index 1 which the vertex shader uses
             vecoutbuffer.Allocate(sizeof(float) * 2048 + sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             //Vector4[] data = new Vector4[] {
@@ -164,19 +155,20 @@ void main(void)
 
             Vector4[] data = GLSphereObjectFactory.CreateSphereFromTriangles(0, 1.0f);
 
-            rObjects.Add(items.Shader("N1"), GLRenderableItem.CreateVector4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Points, data));
+            GLRenderControl rp = GLRenderControl.Points();
+            rObjects.Add(items.Shader("N1"), GLRenderableItem.CreateVector4(items, rp, data));
 
-            for (double ang = -Math.PI/2; ang <= Math.PI/2+0.1; ang += 0.1)
+            for (double ang = -Math.PI / 2; ang <= Math.PI / 2 + 0.1; ang += 0.1)
             {
                 Vector3 pos = new Vector3((float)Math.Cos(ang), (float)Math.Sin(ang), 0);
                 Vector3 up = new Vector3(0, 1, 0);
                 float dotp = Vector3.Dot(up, pos);
                 float lens = (float)(up.Length * pos.Length);
                 double computedang = Math.Acos(dotp / lens);
-                System.Diagnostics.Debug.WriteLine(ang.Degrees() +  " " + pos + "-> dotp" + dotp + " " + computedang.Degrees());
+                System.Diagnostics.Debug.WriteLine(ang.Degrees() + " " + pos + "-> dotp" + dotp + " " + computedang.Degrees());
             }
 
-
+            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
         }
 
         GLStorageBlock vecoutbuffer;
@@ -189,17 +181,11 @@ void main(void)
 
         private void ControllerDraw(GLMatrixCalc mc, long time)
         {
-            // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
-
-            float zeroone10s = ((float)(time % 10000)) / 10000.0f;
-            float zeroone5s = ((float)(time % 5000)) / 5000.0f;
-            float zerotwo5s = ((float)(time % 5000)) / 2500.0f;
-            float degrees = zeroone10s * 360;
-            // matrixbuffer.Write(Matrix4.CreateTranslation(new Vector3(zeroone * 20, 50, 0)),0,true);
-
+            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+            mcub.Set(gl3dcontroller.MatrixCalc);
 
             vecoutbuffer.ZeroBuffer();
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             int count = vecoutbuffer.ReadInt(0);
             if (count > 0)

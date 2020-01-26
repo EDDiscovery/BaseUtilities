@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+ 
 // volumetric geo shader. 
 // Inputs are two vertex's describing point 0 and 6 in the volumetric box.
 
@@ -6,13 +21,14 @@
 layout(std140, binding=0) uniform MatrixCalc
 {
     mat4 ProjectionModelMatrix;
-    mat4 ProjectionMatrix;
+    mat4 ProjectionMatrix;		
     mat4 ModelMatrix;
-    vec4 TargetPosition;
-    vec4 EyePosition;
-    float EyeDistance;
-} mc;
+    vec4 TargetPosition;		// vertex position, before ModelMatrix
+    vec4 EyePosition;			// vertex position, before ModelMatrix
+    float EyeDistance;			// between eye and target
+	mat4 ScreenMatrix;			// for co-ordinate transforms between screen coords and display coords
 
+} mc;
 layout (lines) in;              // get two vertexes discribing p0 and p6 in
 layout (triangle_strip) out;
 layout (max_vertices=32) out;

@@ -119,8 +119,6 @@ void main(void)
         {
             base.Start();
             GL.ProgramUniform1(Id, 26, Phase);
-            OpenTKUtils.GLStatics.PatchSize(4);
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             OpenTKUtils.GLStatics.Check();
         }
 

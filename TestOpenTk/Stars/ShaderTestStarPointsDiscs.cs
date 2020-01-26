@@ -1,4 +1,19 @@
-﻿using OpenTK;
+﻿/*
+ * Copyright 2019 Robbyxp1 @ github.com
+ * Part of the EDDiscovery Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKUtils.GL4;
@@ -13,6 +28,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OpenTKUtils;
 
 namespace TestOpenTk
 {
@@ -110,18 +126,6 @@ void main(void)
             {
                 CompileLink(vertex: vertpos, frag: frag);
             }
-
-            public override void Start()
-            {
-                base.Start();
-                OpenTKUtils.GLStatics.PointSizeByProgram();
-                OpenTKUtils.GLStatics.Check();
-            }
-
-            public override void Finish()
-            {
-                base.Finish();
-            }
         }
 
 
@@ -140,38 +144,50 @@ void main(void)
                 return (float)ms / 20.0f;
             };
 
-            items.Add("STARS", new GLStarPoints());
-             
-            items.Add("COS", new GLColourShaderWithWorldCoord());
-            items.Add("COST", new GLColourShaderWithObjectTranslation());
-            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+            {
+                items.Add("COS", new GLColourShaderWithWorldCoord());
+                GLRenderControl rl = GLRenderControl.Lines(1);
 
-            rObjects.Add(items.Shader("COS"), GLRenderableItem.CreateVector4Color4(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Lines,
-                        GLShapeObjectFactory.CreateBox(400, 200, 40, new Vector3(0, 0, 0), new Vector3(0, 0, 0)),
-                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
+                rObjects.Add(items.Shader("COS"), GLRenderableItem.CreateVector4Color4(items, rl,
+                            GLShapeObjectFactory.CreateBox(400, 200, 40, new Vector3(0, 0, 0), new Vector3(0, 0, 0)),
+                            new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
+            }
 
-            Vector3[] stars = GLPointsFactory.RandomStars(10000, -200, 200, -100, 100, 20, -20);
+            {
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
 
-            rObjects.Add(items.Shader("STARS"), "Stars", GLRenderableItem.CreateVector3Packed2(items,OpenTK.Graphics.OpenGL4.PrimitiveType.Points, 
+                using (var bmp = BaseUtils.BitMapHelpers.DrawTextIntoAutoSizedBitmap("200,100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
+                {
+                    items.Add("200,100", new GLTexture2D(bmp));
+                }
+
+                using (var bmp = BaseUtils.BitMapHelpers.DrawTextIntoAutoSizedBitmap("-200,-100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
+                {
+                    items.Add("-200,-100", new GLTexture2D(bmp));
+                }
+
+                GLRenderControl rq = GLRenderControl.Quads();
+
+                rObjects.Add(items.Shader("TEX"), GLRenderableItem.CreateVector4Vector2(items, rq,
+                            GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
+                            new GLRenderDataTranslationRotationTexture(items.Tex("200,100"), new Vector3(200, 0, 100))));
+
+                rObjects.Add(items.Shader("TEX"), GLRenderableItem.CreateVector4Vector2(items, rq,
+                            GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
+                            new GLRenderDataTranslationRotationTexture(items.Tex("-200,-100"), new Vector3(-200, 0, -100))));
+            }
+
+            {
+                items.Add("STARS", new GLStarPoints());
+
+                Vector3[] stars = GLPointsFactory.RandomStars(10000, -200, 200, -100, 100, 20, -20);
+
+                GLRenderControl rp = GLRenderControl.PointsByProgram();
+
+                rObjects.Add(items.Shader("STARS"), "Stars", GLRenderableItem.CreateVector3Packed2(items, rp,
                                             stars, new Vector3(50000, 50000, 50000), 16));
-
-            using (var bmp = BaseUtils.BitMapHelpers.DrawTextIntoAutoSizedBitmap("200,100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
-            {
-                items.Add("200,100", new GLTexture2D(bmp));
             }
 
-            using (var bmp = BaseUtils.BitMapHelpers.DrawTextIntoAutoSizedBitmap("-200,-100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
-            {
-                items.Add("-200,-100", new GLTexture2D(bmp));
-            }
-
-            rObjects.Add(items.Shader("TEX"), GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                        GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("200,100"), new Vector3(200, 0, 100))));
-
-            rObjects.Add(items.Shader("TEX"), GLRenderableItem.CreateVector4Vector2(items, OpenTK.Graphics.OpenGL4.PrimitiveType.Quads,
-                        GLShapeObjectFactory.CreateQuad(20.0f, 20.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
-                        new GLObjectDataTranslationRotationTexture(items.Tex("-200,-100"), new Vector3(-200, 0, -100))));
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
 
@@ -192,7 +208,7 @@ void main(void)
             mcub.Set(gl3dcontroller.MatrixCalc);
 
             System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Lookat);
-            rObjects.Render(gl3dcontroller.MatrixCalc);
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
         }
 
         private void SystemTick(object sender, EventArgs e )

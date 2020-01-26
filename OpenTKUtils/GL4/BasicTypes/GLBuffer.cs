@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
+ * Copyright 2019 Robbyxp1 @ github.com
  * Part of the EDDiscovery Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -212,13 +212,13 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void FillRectangularIndices(int reccount)        // rectangular indicies with restart of 0xff
+        public void FillRectangularIndices(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff
         {
             Allocate(reccount * 5);
             IntPtr ip = Map(0, BufferSize);
             for (int r = 0; r < reccount; r++)
             {
-                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), 0xff };
+                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), (byte)restartindex};
                 MapWrite(ref ip, ar);
             }
 
