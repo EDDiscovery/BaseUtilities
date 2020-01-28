@@ -35,10 +35,9 @@ namespace OpenTKUtils.GL4.Controls
 
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
 
-        public GLControlDisplay(GLWindowControl win)
+        public GLControlDisplay(GLWindowControl win) : base("displaycontrol", new Rectangle(0, 0, win.Width, win.Height), Color.Transparent)
         {
             glwin = win;
-            window = new Rectangle(0, 0, glwin.Width, glwin.Height);
 
             vertexes = new GLBuffer();
 
@@ -70,7 +69,7 @@ namespace OpenTKUtils.GL4.Controls
             glwin.Resize += Gc_Resize;
             glwin.Paint += Gc_Paint;
 
-            font = new Font("Microsoft Sans Serif", 8.25f);
+            SetDefaultFont();
         }
 
         public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
@@ -109,9 +108,9 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void PerformLayout()
+        public override void PerformRecursiveLayout()
         {
-            base.PerformLayout();
+            base.PerformRecursiveLayout();
 
             vertexes.Allocate(children.Count * sizeof(float) * vertexesperentry * 4);
             IntPtr p = vertexes.Map(0, vertexes.BufferSize);
@@ -130,7 +129,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 vertexes.MapWrite(ref p, a);
 
-                if (textures[c].Id == -1 || textures[c].Width != c.GetLevelBitmap.Width || textures[c].Height != c.GetLevelBitmap.Height)      // if layout changed bitmap
+                if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
                 {
                     textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
                 }
@@ -168,7 +167,7 @@ namespace OpenTKUtils.GL4.Controls
 
                     if (redrawn)
                     {
-                        textures[c].LoadBitmap(c.GetLevelBitmap);  // and update texture unit with new bitmap
+                        textures[c].LoadBitmap(c.LevelBitmap);  // and update texture unit with new bitmap
                         //float[] p = textures[c].GetTextureImageAsFloats(end:100);
                     }
                 }

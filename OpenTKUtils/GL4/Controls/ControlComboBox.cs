@@ -12,7 +12,6 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLComboBox : GLBaseControl
     {
-
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
         public string Text { get { return dropdownbox.Text; } set { dropdownbox.Text = value; Invalidate(); } }
 
@@ -60,34 +59,30 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public GLComboBox()
+        public GLComboBox(string name, Rectangle location, List<string> itms, Color backcolour) : base(name, location, backcolour)
         {
+            Items = itms;
             InvalidateOnEnterLeave = true;
             Focusable = true;
             dropdownbox.Visible = false;
-            dropdownbox.Name = "CB-Dropdown";
+            dropdownbox.Name = name + "-Dropdown";
             dropdownbox.SelectedIndexChanged += SelectedIndexChanged;
             dropdownbox.OtherKeyPressed += OtherKeyPressed;
         }
 
-        public GLComboBox(string name, Rectangle location, List<string> itms, Color backcolour) : this()
+        public GLComboBox(string name, Rectangle location, Color backcolour) : this(name, location, null, backcolour)
         {
-            Name = name;
-            Items = itms;
-            Bounds = location;
-            if (location.Width == 0 || location.Height == 0)
-            {
-                location.Width = location.Height = 10;
-                AutoSize = true;
-            }
-            BackColor = backcolour;
+        }
+
+        public GLComboBox() : this("Combo?", DefaultWindowRectangle, DefaultBackColor)
+        {
         }
 
         private GLListBox dropdownbox = new GLListBox();
         private Color foreColor { get; set; } = Color.Black;
         private float disabledScaling = 0.5F;
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             string text = Text;
 
@@ -147,7 +142,10 @@ namespace OpenTKUtils.GL4.Controls
             base.OnMouseClick(e);
             if ( e.Button == GLMouseEventArgs.MouseButtons.Left )
             {
-                Activate();
+                if (!dropdownbox.Visible)
+                    Activate();
+                else
+                    Deactivate();
             }
         }
 
@@ -181,7 +179,6 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-
         private void Activate()
         {
             bool activatable = Enabled && Items.Count > 0 && Parent != null;
@@ -189,17 +186,18 @@ namespace OpenTKUtils.GL4.Controls
             if (!activatable)
                 return;
 
+            dropdownbox.SuspendLayout();
             dropdownbox.Bounds = new Rectangle(Left, Bottom + 1, Width, Height);
             dropdownbox.BackColor = BackColor;
             dropdownbox.AutoSize = true;
             dropdownbox.Font = Font;
-            dropdownbox.DropDownHeightMaximum = 100;
             dropdownbox.Visible = true;
+            dropdownbox.ResumeLayout();
             Parent.Add(dropdownbox);
             dropdownbox.SetFocus();
         }
 
-        public virtual void SelectedIndexChanged(GLBaseControl c, int v)
+        private void Deactivate()
         {
             dropdownbox.Visible = false;
             Parent.Remove(dropdownbox);
@@ -207,19 +205,17 @@ namespace OpenTKUtils.GL4.Controls
             Invalidate();
         }
 
+        public virtual void SelectedIndexChanged(GLBaseControl c, int v)
+        {
+            Deactivate();
+        }
+
         public virtual void OtherKeyPressed(GLBaseControl c, GLKeyEventArgs e)
         {
             if ( e.KeyCode == System.Windows.Forms.Keys.Escape)
             {
-                dropdownbox.Visible = false;
-                Parent.Remove(dropdownbox);
-                SetFocus();
-                Invalidate();
+                Deactivate();
             }
-
         }
-
-
-
     }
 }

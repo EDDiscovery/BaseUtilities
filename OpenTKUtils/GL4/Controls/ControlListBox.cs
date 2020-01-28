@@ -23,7 +23,7 @@ namespace OpenTKUtils.GL4.Controls
         public bool FitToItemsHeight { get { return fitToItemsHeight; } set { fitToItemsHeight = value; Invalidate(); } }
         public bool FitImagesToItemHeight { get { return fitImagesToItemHeight; } set { fitImagesToItemHeight = value; Invalidate(); } }
 
-        public int DropDownHeightMaximum { get { return dropDownHeightMaximum; } set { dropDownHeightMaximum = value; InvalidateLayoutParent(); } }
+        public int DropDownHeightMaximum { get { return dropDownHeightMaximum; } set { System.Diagnostics.Debug.WriteLine("DDH Set"); dropDownHeightMaximum = value; InvalidateLayoutParent(); } }
 
         public Color MouseOverBackColor { get { return mouseOverBackColor; } set { mouseOverBackColor = value; Invalidate(); } }
         public Color ItemSeperatorColor { get { return itemSeperatorColor; } set { itemSeperatorColor = value; Invalidate(); } }
@@ -60,8 +60,9 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public GLListBox()
+        public GLListBox(string n, Rectangle pos, List<string> texts, Color backcolor) : base(n,pos,backcolor)
         {
+            items = texts;
             Focusable = true;
             scrollbar = new GLScrollBar();
             scrollbar.Name = "GLLSB";
@@ -70,17 +71,12 @@ namespace OpenTKUtils.GL4.Controls
             scrollbar.LargeChange = 1;
             scrollbar.Width = 20;
             scrollbar.Visible = false;
-            scrollbar.Scroll += (s,e) => { if (firstindex != e.NewValue) { firstindex = e.NewValue; Invalidate(); } };
+            scrollbar.Scroll += (s, e) => { if (firstindex != e.NewValue) { firstindex = e.NewValue; Invalidate(); } };
             Add(scrollbar);
         }
 
-        public GLListBox(string n, Rectangle pos, List<string> texts, Color backcolor) : this()
+        public GLListBox() : this("LB?", DefaultWindowRectangle, null,DefaultBackColor)
         {
-            items = texts;
-            Focusable = true;
-            Name = n;
-            Bounds = pos;
-            BackColor = backcolor;
         }
 
         public override void OnFontChanged()
@@ -88,9 +84,9 @@ namespace OpenTKUtils.GL4.Controls
             PerformLayout();
         }
 
-        public override void PerformSize()
+        protected override void SizeControl()
         {
-            base.PerformSize();
+            base.SizeControl();
             if (AutoSize)       // measure text size and number of items to get idea of space required. Allow for scroll bar
             {
                 int items = (Items != null) ? Items.Count() : 0;        
@@ -108,17 +104,19 @@ namespace OpenTKUtils.GL4.Controls
                     }
                 }
                 int fh = (int)Font.GetHeight() + 2;
-                Size = new Size((int)max.Width+ScrollBarWidth+8,Math.Min(items*fh+4,DropDownHeightMaximum));
+                Size sz = new Size((int)max.Width+ScrollBarWidth+8,Math.Min(items*fh+4,DropDownHeightMaximum));
+                SetLocationSizeNI(size: sz);
+                System.Diagnostics.Debug.WriteLine("Autosize list box " + Size);
             }
         }
 
 
-        public override void PerformLayout()
+        public override void PerformRecursiveLayout()
         {
             if (scrollbar != null)  
                 scrollbar.Width = ScrollBarWidth;       // set width 
 
-            base.PerformLayout();                       // layout, scroll bar autodocks right
+            base.PerformRecursiveLayout();              // layout, scroll bar autodocks right
 
             if (Font != null)
             {
@@ -143,7 +141,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
            // System.Diagnostics.Debug.WriteLine("Paint List box");
             if (items != null && items.Count > 0)

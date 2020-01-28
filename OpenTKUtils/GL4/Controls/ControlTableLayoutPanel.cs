@@ -9,11 +9,11 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLTableLayoutPanel : GLPanel
     {
-        public GLTableLayoutPanel()
+        public GLTableLayoutPanel(string name, Rectangle location, Color back) : base(name, location, back)
         {
         }
 
-        public GLTableLayoutPanel(string name, Rectangle location, Color back) : base(name, location, back)
+        public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultBackColor)
         {
         }
 
@@ -26,18 +26,20 @@ namespace OpenTKUtils.GL4.Controls
             public Style(SizeTypeEnum ste, int v) { SizeType = ste; Value = v; }
         }
 
-        public List<Style> Rows { get { return rows; } set { rows = value; PerformLayout(); } }
-        public List<Style> Columns { get { return columns; } set { columns = value; PerformLayout(); } }
-        public GL4.Controls.Padding CellPadding { get { return cellPadding; } set { cellPadding = value; PerformLayout(); } }
+        public List<Style> Rows { get { return rows; } set { rows = value; InvalidateLayout(); } }
+        public List<Style> Columns { get { return columns; } set { columns = value; InvalidateLayout(); } }
+        public GL4.Controls.Padding CellPadding { get { return cellPadding; } set { cellPadding = value; InvalidateLayout(); } }
 
         private List<Style> rows { get; set; } = null;
         private List<Style> columns { get; set; } = null;
         private GL4.Controls.Padding cellPadding { get; set; } = new Padding(1);
 
-        public override void PerformLayout()     // override for other layouts
+        // Sizing has been recursively done for all children
+        // now we are laying out from top down
+
+        public override void PerformRecursiveLayout()
         {
-            if (CheckSuspendedLayout())
-                return;
+            bool okay = true;
 
             if (Columns != null && Rows != null)
             {
@@ -45,11 +47,8 @@ namespace OpenTKUtils.GL4.Controls
                 int[] maxrowsize = new int[Rows.Count];
                 Dictionary<Tuple<int, int>, List<GLBaseControl>> sortedbycell = new Dictionary<Tuple<int, int>, List<GLBaseControl>>();
 
-                bool okay = true;
-
                 foreach (var c in children)         // first let all children autosize
                 {
-                    PerformSizeChildren(c);
                     if (c.Column < maxcolsize.Length && c.Row < maxrowsize.Length)
                     {
                         maxcolsize[c.Column] = Math.Max(maxcolsize[c.Column], c.Width + CellPadding.TotalWidth);
@@ -68,7 +67,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     Rectangle panelarea = ClientRectangle;      // in terms of our client area
 
-                    var cols = CalcPos(Columns, panelarea.Width, maxcolsize);
+                    var cols = CalcPos(Columns, panelarea.Width, maxcolsize);       // calculate the positions
                     var rows = CalcPos(Rows, panelarea.Height, maxrowsize);
 
                     if (cols.Count > 0 && rows.Count > 0)
@@ -80,6 +79,7 @@ namespace OpenTKUtils.GL4.Controls
                             var clist = k.Value;
 
                             Rectangle cellarea = new Rectangle(cols[col], rows[row], cols[col + 1] - cols[col], rows[row + 1] - rows[row]);
+                            Rectangle flowarea = new Rectangle(cellarea.Left, cellarea.Top,0,0);
                             cellarea.X += CellPadding.Left;
                             cellarea.Width -= CellPadding.TotalWidth;
                             cellarea.Y += CellPadding.Top;
@@ -90,23 +90,26 @@ namespace OpenTKUtils.GL4.Controls
                                 System.Diagnostics.Debug.WriteLine("Table layout " + c.Name + " " + cellarea);
 
                                 if (c.Dock != DockingType.None)        // if docking,
-                                    cellarea = c.Layout(cellarea);     // allow docking to work in the cell area, it uses the area to set position
+                                    c.Layout(ref cellarea);     // allow docking to work in the cell area, it uses the area to set position
                                 else
                                 {
-                                    Size oldsize = c.Size;
                                     System.Diagnostics.Debug.WriteLine("Top Left layout " + c.Name + " " + cellarea);
-                                    c.Location = cellarea.Location;     // else just dock to top left.
-                                    c.SizeClipped(cellarea.Size);
-                                    if (oldsize != c.Size)
-                                        OnResize();
+                                    c.SetLocationSizeNI(cellarea.Location, cellarea.Size, true);
                                 }
 
-                                c.PerformLayout();
+                                c.PerformRecursiveLayout();
                             }
                         }
                     }
+                    else
+                        okay = false;
                 }
             }
+            else
+                okay = false;
+
+            if ( !okay )
+                base.PerformRecursiveLayout();      // default
         }
 
         protected List<int> CalcPos(List<Style> cr, int available, int[] foundsizes)

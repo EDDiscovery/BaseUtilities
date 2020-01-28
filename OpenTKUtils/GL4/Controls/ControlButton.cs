@@ -24,7 +24,7 @@ namespace OpenTKUtils.GL4.Controls
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
 
-        public GLButtonBase()
+        public GLButtonBase(string name, Rectangle window, Color backcolor) : base(name,window,backcolor)
         {
             InvalidateOnEnterLeave = true;
             InvalidateOnMouseDownUp = true;
@@ -41,6 +41,8 @@ namespace OpenTKUtils.GL4.Controls
         {
             Click?.Invoke(this, e);
         }
+
+        protected string TextNI { set { text = value; } }
 
         private string text;
         private Color buttonBackColor { get; set; } = Color.Gray;
@@ -68,30 +70,21 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public GLButton()
+        public GLButton(string name, Rectangle location, string text, Color backcolour, Color bordercolor) : base(name, location, backcolour)
         {
-            Padding = new Padding(1);       // standard format, a border with a pad of 1
-            BorderWidth = 1;
-            BorderColor = Color.Yellow;
+            PaddingNI = new Padding(1);       // standard format, a border with a pad of 1
+            BorderWidthNI = 1;
+            TextNI = text;
+            BorderColorNI = bordercolor;
         }
 
-        public GLButton(string name, Rectangle location, string text, Color backcolour) : this()
+        public GLButton() : this("But?", DefaultWindowRectangle, "", DefaultBackColor, DefaultBorderColor)
         {
-            Name = name;
-            Text = text;
-            if (location.Width == 0 || location.Height == 0)
-            {
-                location.Width = location.Height = 10;  // nominal
-                AutoSize = true;
-            }
-            Bounds = location;
-           
-            BackColor = backcolour;
         }
 
-        public override void PerformSize()
+        protected override void SizeControl()
         {
-            base.PerformSize();
+            base.SizeControl();
             if ( AutoSize )
             {
                 SizeF size = new Size(0, 0);
@@ -100,12 +93,14 @@ namespace OpenTKUtils.GL4.Controls
                 if (Image != null)
                     size = new SizeF(size.Width+Image.Width, Math.Max(Image.Height,(int)(size.Height+0.999)));
 
-                Size = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
+                Size s = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
                                  (int)(size.Height + 0.999) + Margin.TotalHeight + Padding.TotalHeight + BorderWidth + 4);
+
+                SetLocationSizeNI(size: s);
             }
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             Color colBack = Color.Empty;
 
@@ -157,7 +152,6 @@ namespace OpenTKUtils.GL4.Controls
 
         }
 
-        private Color buttonBorderColor { get; set; } = Color.Brown;
         private float buttonColorScaling = 0.5F;
 
     }

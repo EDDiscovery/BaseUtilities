@@ -25,39 +25,31 @@ namespace OpenTKUtils.GL4.Controls
         public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
-        public GLCheckBox()
+        public GLCheckBox(string name, Rectangle location, string text, Color backcolour) : base(name,location,backcolour)
         {
-
+            TextNI = text;
         }
 
-        public GLCheckBox(string name, Rectangle location, string text, Color backcolour)
+        public GLCheckBox() : this("CB?", DefaultWindowRectangle, "", DefaultBackColor)
         {
-            Name = name;
-            Text = text;
-            Bounds = location;
-            if (location.Width == 0 || location.Height == 0)
-            {
-                location.Width = location.Height = 10;
-                AutoSize = true;
-            }
-            BackColor = backcolour;
         }
 
-
-        public override void PerformSize()
+        protected override void SizeControl()
         {
-            base.PerformSize();
+            base.SizeControl();
             if ( AutoSize )
             {
                 SizeF size = BaseUtils.BitMapHelpers.MeasureStringInBitmap(Text, Font, ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign));
                 // tbd
 
-                Size = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
+                Size s = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
                                  (int)(size.Height + 0.999) + Margin.TotalHeight + Padding.TotalHeight + BorderWidth + 4);
+
+                SetLocationSizeNI(size:s);
             }
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             bool hasimages = Image != null;
 

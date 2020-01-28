@@ -30,6 +30,10 @@ namespace OpenTKUtils.GL4.Controls
         public bool ImageStretch { get { return imagestretch; } set { imagestretch = value; Invalidate(); } }
         public System.Drawing.ContentAlignment ImageAlign { get { return imagealign; } set { imagealign = value; Invalidate(); } }
 
+        public GLImageBase(string name, Rectangle window, Color backcolor) : base(name, window, backcolor)
+        {
+        }
+
         public float DisabledScaling
         {
             get { return disabledScaling; }
@@ -81,18 +85,16 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLImage : GLImageBase
     {
-        public GLImage()
+        public GLImage(string name, Rectangle location, Bitmap bmp) : base(name,location,DefaultBackColor)
         {
-        }
-
-        public GLImage(string name, Rectangle location, Bitmap bmp)
-        {
-            Name = name;
-            Bounds = location;
             Image = bmp;
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        public GLImage() : this("I?",DefaultWindowRectangle,null)
+        {
+        }
+
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             base.DrawImage(Image, area, gr);
         }

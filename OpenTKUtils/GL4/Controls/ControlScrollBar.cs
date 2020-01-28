@@ -46,19 +46,17 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbColorScaling { get { return thumbColorScaling; } set { thumbColorScaling = value; Invalidate(); } }
         public float ThumbDrawAngle { get { return thumbDrawAngle; } set { thumbDrawAngle = value; Invalidate(); } }
 
-        public GLScrollBar()
+        public GLScrollBar(string name, Rectangle pos, int min, int max) : base(name,pos,DefaultBackColor)
         {
+            thumbvalue = minimum = min;
+            maximum = max;
         }
 
-        public GLScrollBar(string name, Rectangle pos, int min, int max)
-        {
-            Name = name;
-            Bounds = pos;
-            Value = Minimum = min;
-            Maximum = max;
+        public GLScrollBar() : base("SB?",DefaultWindowRectangle,DefaultBackColor)
+        { 
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             using (Brush br = new SolidBrush(this.SliderColor))
                 gr.FillRectangle(br, new Rectangle(area.Left + sliderarea.Left, area.Top + sliderarea.Top, sliderarea.Width, sliderarea.Height));
@@ -260,9 +258,9 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-       public override Rectangle Layout(Rectangle area)
+        public override void Layout(ref Rectangle area)
         {
-            Rectangle areab = base.Layout(area);
+            base.Layout(ref area);
 
             sliderarea = ClientRectangle;
 
@@ -279,8 +277,6 @@ namespace OpenTKUtils.GL4.Controls
             sliderarea.Height -= 2 * scrollheight;
 
             CalculateThumb();
-
-            return areab;
         }
 
         private void CalculateThumb()

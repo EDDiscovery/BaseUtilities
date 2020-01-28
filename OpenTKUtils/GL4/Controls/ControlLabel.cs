@@ -31,38 +31,32 @@ namespace OpenTKUtils.GL4.Controls
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
         private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
 
-        public GLLabel()
+        public GLLabel(string name, Rectangle location, string text, Color backcolour) : base(name,location, backcolour)
+        {
+            this.text = text;
+        }
+
+        public GLLabel() : this("LB?", DefaultWindowRectangle, "", DefaultBackColor)
         {
         }
 
-        public GLLabel(string name, Rectangle location, string text, Color backcolour)
+        protected override void SizeControl()
         {
-            Name = name;
-            Text = text;
-            if (location.Width == 0 || location.Height == 0)
-            {
-                location.Width = location.Height = 10;  // nominal
-                AutoSize = true;
-            }
-            Bounds = location;
-            BackColor = backcolour;
-        }
-
-        public override void PerformSize()
-        {
-            base.PerformSize();
+            base.SizeControl();
             if (AutoSize)
             {
                 SizeF size = new Size(0, 0);
                 if (Text.HasChars())
                     size = BaseUtils.BitMapHelpers.MeasureStringInBitmap(Text, Font, ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign));
 
-                Size = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
+                Size s = new Size((int)(size.Width + 0.999) + Margin.TotalWidth + Padding.TotalWidth + BorderWidth + 4,
                                  (int)(size.Height + 0.999) + Margin.TotalHeight + Padding.TotalHeight + BorderWidth + 4);
+
+                SetLocationSizeNI(size: s);
             }
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             gr.SmoothingMode = SmoothingMode.AntiAlias;
 

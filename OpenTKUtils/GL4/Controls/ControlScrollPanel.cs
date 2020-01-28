@@ -12,15 +12,15 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLVerticalScrollPanel : GLPanel
     {
-        public GLVerticalScrollPanel()
-        {
-        }
-
         public GLVerticalScrollPanel(string name, Rectangle location, Color back) : base(name, location, back)
         {
         }
 
-        public int ScrollRange { get { return (levelbmp != null) ? (levelbmp.Height - Height) : 0; } }
+        public GLVerticalScrollPanel() : this("VSP?", DefaultWindowRectangle, DefaultBackColor)
+        {
+        }
+
+        public int ScrollRange { get { return (LevelBitmap != null) ? (LevelBitmap.Height - Height) : 0; } }
         public int ScrollPos { get { return scrollpos; } set { SetScrollPos(value); } }
         private int scrollpos = 0;
 
@@ -28,9 +28,9 @@ namespace OpenTKUtils.GL4.Controls
         // we layout the children within that area.
         // but if we have areas outside that, the bitmap is expanded to cover it
 
-        public override void PerformLayout()
+        public override void PerformRecursiveLayout()
         {
-            base.PerformLayout();               // layout the children
+            base.PerformRecursiveLayout();               // layout the children
 
             bool needbitmap = false;
 
@@ -43,32 +43,30 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (needbitmap)
                 {
-                    if (levelbmp == null )
+                    if (LevelBitmap == null )
                     {
                         System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
-                        levelbmp = new Bitmap(Width, childheight);
+                        SetLevelBitmap(Width, childheight);
                     }
-                    else if ( childheight != levelbmp.Height || levelbmp.Width != Width) // if height is different, or width is different
+                    else if ( childheight != LevelBitmap.Height || LevelBitmap.Width != Width) // if height is different, or width is different
                     {
-                        levelbmp.Dispose();
-                        levelbmp = new Bitmap(Width, childheight);
+                        SetLevelBitmap(Width, childheight);
                         System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
                     }
                 }
             }
 
-            if ( !needbitmap && levelbmp != null)
+            if ( !needbitmap && LevelBitmap != null)
             {
-                levelbmp.Dispose();
-                levelbmp = null;
+                SetLevelBitmap(0,0);
             }
         }
 
         private void SetScrollPos(int value)
         {
-            if (levelbmp != null)
+            if (LevelBitmap != null)
             {
-                int maxsp = levelbmp.Height - Height;
+                int maxsp = LevelBitmap.Height - Height;
                 scrollpos = Math.Max(0, Math.Min(value, maxsp));
                 System.Diagnostics.Debug.WriteLine("ScrollPanel scrolled to " + scrollpos);
                 Invalidate();
@@ -77,11 +75,11 @@ namespace OpenTKUtils.GL4.Controls
 
         // only will be called if we have a bitmap defined..
 
-        public override void PaintParent(Rectangle parentarea, Graphics parentgr)
+        protected override void PaintParent(Rectangle parentarea, Graphics parentgr)
         {
-            System.Diagnostics.Debug.WriteLine("Scroll panel {0} parea {1} Bitmap {2}", Name, parentarea, levelbmp.Size);
+            System.Diagnostics.Debug.WriteLine("Scroll panel {0} parea {1} Bitmap {2}", Name, parentarea, LevelBitmap.Size);
 
-            parentgr.DrawImage(levelbmp, parentarea.Left, parentarea.Top, new Rectangle(0, scrollpos, Width, Height), GraphicsUnit.Pixel);
+            parentgr.DrawImage(LevelBitmap, parentarea.Left, parentarea.Top, new Rectangle(0, scrollpos, Width, Height), GraphicsUnit.Pixel);
         }
     }
 }

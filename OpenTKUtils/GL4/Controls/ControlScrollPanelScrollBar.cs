@@ -32,10 +32,11 @@ namespace OpenTKUtils.GL4.Controls
 
         public int ScrollBarWidth { get { return Font?.ScalePixels(20) ?? 20; } }
 
-        public GLVerticalScrollPanelScrollBar()
+        public GLVerticalScrollPanelScrollBar(string name, Rectangle location, Color back) : base(name,location,back)
         {
             scrollpanel = new GLVerticalScrollPanel();
             scrollpanel.Dock = DockingType.Fill;
+            scrollpanel.BackColor = back;
             base.Add(scrollpanel);  // base because we don't want to use the overrides
 
             scrollbar = new GLScrollBar();
@@ -46,12 +47,10 @@ namespace OpenTKUtils.GL4.Controls
             scrollbar.Scroll += Scrolled;
         }
 
-        public GLVerticalScrollPanelScrollBar(string name, Rectangle location, Color back) : this()
+        public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle, DefaultBackColor)
         {
-            Name = name;
-            Bounds = location;
-            BackColor = back;
         }
+
 
         public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
         {
@@ -71,12 +70,12 @@ namespace OpenTKUtils.GL4.Controls
             scrollpanel.ScrollPos = scrollbar.Value;
         }
 
-        public override void PerformLayout()
+        public override void PerformRecursiveLayout()
         {
             if (scrollbar != null)
                 scrollbar.Width = ScrollBarWidth;
 
-            base.PerformLayout();   // the docking sorts out the positioning of the controls
+            base.PerformRecursiveLayout();   // the docking sorts out the positioning of the controls
 
             if ( scrollbar != null && scrollpanel != null)
             {

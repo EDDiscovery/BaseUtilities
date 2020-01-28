@@ -74,10 +74,10 @@ namespace OpenTKUtils.GL4
                 {
                     if (g.Item2 != null)  // may have added a null renderable item if its a compute shader.
                     {
-                        System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
+                       // System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
                         g.Item2.Bind(currentstate, d.Key, c);
                         g.Item2.Render();
-                        System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
+                       // System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
                     }
                 }
 

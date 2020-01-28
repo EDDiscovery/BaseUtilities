@@ -9,6 +9,10 @@ namespace OpenTKUtils.GL4.Controls
 {
     public abstract class GLForeDisplayBase : GLBaseControl
     {
+        public GLForeDisplayBase(string name, Rectangle location, Color backcolor ) : base(name,location,backcolor)
+        {
+        }
+
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
 
         public float DisabledScaling
@@ -45,21 +49,17 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
             } }
 
-        public GLTextBox()
+        public GLTextBox(string name, Rectangle pos, string text, Color backcolor) : base(name,pos,backcolor)
         {
             Focusable = true;
+            this.text = text;
         }
 
-        public GLTextBox(string name, Rectangle pos, string text, Color backcolor)
+        public GLTextBox() : this("TB?", DefaultWindowRectangle, "", DefaultBackColor)
         {
-            Focusable = true;
-            Name = name;
-            Bounds = pos;
-            Text = text;
-            BackColor = backcolor;
         }
 
-        public override void Paint(Rectangle area, Graphics gr)
+        protected override void Paint(Rectangle area, Graphics gr)
         {
             Rectangle drawbox = area;
 
