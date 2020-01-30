@@ -24,15 +24,16 @@ namespace OpenTKUtils
         [System.Flags]
         public enum MouseButtons { None = 0, Left = 1, Middle = 2, Right = 4, };
 
-        public GLMouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; NonClientArea = false; }
-        public GLMouseEventArgs(MouseButtons b, Point l, int c, int delta) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; NonClientArea = false; }
-        public GLMouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; NonClientArea = false; }
+        public GLMouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; Area = AreaType.Client; }
+        public GLMouseEventArgs(MouseButtons b, Point l, int c, int delta) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; Area = AreaType.Client; }
+        public GLMouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; Area = AreaType.Client; }
 
         public MouseButtons Button { get; set; }
         public Point Location { get; set; }
         public int X { get { return Location.X; } }
         public int Y { get { return Location.Y; } }
-        public bool NonClientArea { get; set; }
+        public enum AreaType { Client, Left, Top, Right, Bottom };
+        public AreaType Area { get; set; }
         public int Clicks { get; set; }
         public int Delta { get; set; }
         public bool Handled { get; set; }
@@ -59,6 +60,8 @@ namespace OpenTKUtils
         }
     }
 
+    public enum GLCursorType { Normal, Wait, NS, EW, Move};
+
     public interface GLWindowControl
     {
         Action<Object> Resize { get; set; }
@@ -78,5 +81,6 @@ namespace OpenTKUtils
         int Width { get; }
         int Height { get; }
         bool Focused { get; }
+        void SetCursor(GLCursorType t);
     }
 }

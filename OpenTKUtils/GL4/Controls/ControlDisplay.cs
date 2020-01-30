@@ -72,6 +72,11 @@ namespace OpenTKUtils.GL4.Controls
             SetDefaultFont();
         }
 
+        public void SetCursor(GLCursorType t)
+        {
+            glwin.SetCursor(t);
+        }
+
         public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
         {
             textures[other] = new GLTexture2D();                // we make a texture per top level control to render with
@@ -149,7 +154,7 @@ namespace OpenTKUtils.GL4.Controls
             //float[] d = vertexes.ReadFloats(0, children.Count * 4 * cperv);
         }
 
-        // call this during your Paint to render
+        // call this during your Paint to render.  Textures are initialised.
 
         public void Render(GLRenderControl currentstate)
         {
@@ -232,8 +237,7 @@ namespace OpenTKUtils.GL4.Controls
                 currentmouseover.Hover = true;
                 if (currentmouseover.Enabled)
                 {
-                    e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-                    e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
+                    AdjustLocation(ref e);
                     currentmouseover.OnMouseEnter(e);
                 }
             }
@@ -242,7 +246,16 @@ namespace OpenTKUtils.GL4.Controls
         private void AdjustLocation(ref GLMouseEventArgs e)
         {
             e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-            e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
+            if (e.Location.X < 0)
+                e.Area = GLMouseEventArgs.AreaType.Left;
+            else if (e.Location.X >= currentmouseover.ClientWidth)
+                e.Area = GLMouseEventArgs.AreaType.Right;
+            else if (e.Location.Y < 0)
+                e.Area = GLMouseEventArgs.AreaType.Top;
+            else if (e.Location.Y >= currentmouseover.ClientHeight)
+                e.Area = GLMouseEventArgs.AreaType.Bottom;
+            else
+                e.Area = GLMouseEventArgs.AreaType.Client;
         }
 
         private void Gc_MouseUp(object sender, GLMouseEventArgs e)
@@ -253,8 +266,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (currentmouseover.Enabled)
                 {
-                    e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
-                    e.NonClientArea = e.Location.X < 0 || e.Location.Y < 0 || e.Location.X >= currentmouseover.ClientWidth || e.Location.Y >= currentmouseover.ClientHeight;
+                    AdjustLocation(ref e);
                     currentmouseover.OnMouseUp(e);
                 }
             }

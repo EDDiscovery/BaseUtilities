@@ -153,13 +153,13 @@ namespace TestOpenTk
 
             if (true)
             {
-                bool testtable = true;
-                bool testflow = true;
-                bool testtextbox = true;
-                bool testcombobox = true;
-                bool testscrollbar = true;
-                bool testvsp = true;
-                bool testlb = true;
+                bool testtable = false;
+                bool testflow = false;
+                bool testtextbox = false;
+                bool testcombobox = false;
+                bool testscrollbar = false;
+                bool testvsp = false;
+                bool testlb = false;
                 bool testbuttons = true;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
@@ -167,15 +167,19 @@ namespace TestOpenTk
                 displaycontrol.Name = "form";
                 displaycontrol.SuspendLayout();
 
-                GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
+                GLForm ptop = new GLForm("form", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
                 ptop.SuspendLayout();
-
                 ptop.BackColorGradient = 90;
                 ptop.BackColorGradientAlt = Color.FromArgb(200,Color.Yellow);
 
-                //GLPanel ptop = new GLPanel("paneltop", new Rectangle(10, 0, 1000, 800), Color.Transparent);
-                ptop.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                 displaycontrol.Add(ptop);
+
+                GLPanel p2 = new GLPanel("P2", DockingType.Left, 0.15f, Color.Green);
+                p2.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
+                ptop.Add(p2);
+
+                GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
+                ptop.Add(p3);
 
                 if (testtable)
                 {
@@ -279,9 +283,6 @@ namespace TestOpenTk
 
                 if (testbuttons)
                 {
-                    GLPanel p2 = new GLPanel("P2", DockingType.Left, 0.15f, Color.Green);
-                    p2.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
-                    ptop.Add(p2);
 
                     GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1", Color.Gray, Color.Yellow);
                     b1.Margin = new Margin(5);
@@ -304,8 +305,6 @@ namespace TestOpenTk
                     GLLabel lb1 = new GLLabel("Lab1", new Rectangle(5, 100, 0, 0), "Hello", Color.Red);
                     p2.Add(lb1);
 
-                    GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
-                    ptop.Add(p3);
                 }
 
                 if (false)

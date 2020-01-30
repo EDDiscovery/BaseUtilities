@@ -91,6 +91,20 @@ namespace OpenTKUtils.WinForm
         public int Height { get { return glControl.Height; } }
         public bool Focused { get { return glControl.Focused; } }
 
+        public void SetCursor(GLCursorType t)
+        {
+            if (t == GLCursorType.Wait)
+                glControl.Cursor = Cursors.WaitCursor;
+            else if (t == GLCursorType.EW)
+                glControl.Cursor = Cursors.SizeWE;
+            else if (t == GLCursorType.NS)
+                glControl.Cursor = Cursors.SizeNS;
+            else if (t == GLCursorType.Move)
+                glControl.Cursor = Cursors.Hand;
+            else
+                glControl.Cursor = Cursors.Default;
+        }
+
         public GLRenderControl RenderState { get; set; } = null;
 
         private Color backcolor { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");

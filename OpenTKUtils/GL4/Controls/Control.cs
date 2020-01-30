@@ -149,6 +149,7 @@ namespace OpenTKUtils.GL4.Controls
         public Action<Object, bool> FocusChanged { get; set; } = null;
         public Action<Object> FontChanged { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
+        public Action<Object> Moved { get; set; } = null;
         public Action<GLBaseControl,GLBaseControl> ControlAdd { get; set; } = null;
         public Action<GLBaseControl,GLBaseControl> ControlRemove { get; set; } = null;
 
@@ -300,22 +301,38 @@ namespace OpenTKUtils.GL4.Controls
             this.backcolor = backcolor;
         }
 
+        // default color schemes and sizes
+        static protected readonly Color DefaultBackColor = Color.White;
+        static protected readonly Color DefaultForeColor = Color.Black;
+        static protected readonly Color DefaultBorderColor = Color.Gray;
+        static protected readonly Rectangle DefaultWindowRectangle = new Rectangle(0, 0, 10, 10);
+        static protected readonly int MinimumResizeWidth = 10;
+        static protected readonly int MinimumResizeHeight = 10;
+
         // these change without invalidation - for constructors
 
+        protected GL4.Controls.Margin MarginNI { set { margin = value; } }
         protected GL4.Controls.Padding PaddingNI { set { padding = value; } }
         protected int BorderWidthNI { set { borderwidth = value; } }
         protected Color BorderColorNI { set { bordercolor = value; } }
 
         public void SetLocationSizeNI( Point? location = null, Size? size = null, bool clipsize = false)      // use by inheritors only.  Does not invalidate/Layout.
         {
+            Point oldloc = Location;
             Size oldsize = Size;
+
             if (clipsize)
             {
                 size = new Size(Math.Min(Width, size.Value.Width), Math.Min(Height, size.Value.Height));
             }
 
             if (location.HasValue)
+            {
                 window.Location = location.Value;
+
+                if (window.Location != oldloc)
+                    OnMoved();
+            }
 
             if ( size.HasValue )
             {
@@ -333,12 +350,6 @@ namespace OpenTKUtils.GL4.Controls
             if (width > 0 && height > 0)
                 levelbmp = new Bitmap(width, height);
         }
-
-        // default color schemes and sizes
-        static protected readonly Color DefaultBackColor = Color.White;
-        static protected readonly Color DefaultForeColor = Color.Black;
-        static protected readonly Color DefaultBorderColor = Color.Gray;
-        static protected readonly Rectangle DefaultWindowRectangle = new Rectangle(0, 0, 10, 10); 
 
         protected GLBaseControl FindControlOver(Point p)       // p = form co-coords, finds including margin/padding/border area, so inside bounds
         {
@@ -457,22 +468,24 @@ namespace OpenTKUtils.GL4.Controls
 
             System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2} Area in {3} Area out {4}", Name, Dock, window, parentarea, areaout);
 
-            if (oldwindow.Size != window.Size) // if window size changed
-            {
-                OnResize();
-
-                if (levelbmp != null && !(this is GLVerticalScrollPanel))       // if changed size, and not a scroll panel, we resize the bitmap
-                {
-                    levelbmp.Dispose();
-                    levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
-                }
-            }
+            CheckBitmapAfterLayout();       // check bitmap, virtual as inheritors may need to override this, make sure bitmap is the same width/height as ours
+                                            // needs to be done in layout as ControlDisplay::PerformRecursiveLayout sets the textures up to match.
 
             parentarea = areaout;
         }
 
+        public virtual void CheckBitmapAfterLayout()
+        {
+            if (levelbmp != null && ( levelbmp.Width != Width || levelbmp.Height != Height ))
+            {
+                System.Diagnostics.Debug.WriteLine("Remake bitmap for " + Name);
+                levelbmp.Dispose();
+                levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
+            }
+        }
+
         // redraw, into usebmp
-        // drawarea = area that our control occupies on the bitmap, in bitmap co-ords, which may be outside of the clip area
+        // bounds = area that our control occupies on the bitmap, in bitmap co-ords, which may be outside of the clip area
         // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas
         // gr = graphics to draw into
         // we must be visible to be called. Children may not be visible
@@ -553,6 +566,11 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
             {
+                //Rectangle clippaint = new Rectangle(cliparea.Left + Padding.Left + Margin.Left + BorderWidth,
+                //                                     cliparea.Top + Padding.Top + Margin.Top + BorderWidth,
+                //                                     cliparea.Width - Padding.TotalWidth - Margin.TotalWidth - BorderWidth * 2,
+                //                                     cliparea.Height - Padding.TotalHeight - Margin.TotalHeight - BorderWidth * 2);
+
                 gr.SetClip(cliparea);   // set graphics to the clip area
                 Paint(clientarea, gr);
 
@@ -569,7 +587,7 @@ namespace OpenTKUtils.GL4.Controls
             return redrawn;
         }
 
-        // draw back area - call if you wish to override the background area with another colour
+        // draw back area - override or call if you wish to override the background area with another colour
 
         protected virtual void DrawBack(Rectangle bounds, Graphics gr, Color bc, Color bcgradientalt, int bcgradient)
         {
@@ -696,6 +714,11 @@ namespace OpenTKUtils.GL4.Controls
             Resize?.Invoke(this);
         }
 
+        public virtual void OnMoved()
+        {
+            Moved?.Invoke(this);
+        }
+
         public virtual void OnControlAdd(GLBaseControl parent, GLBaseControl child)
         {
             ControlAdd?.Invoke(parent, child);
@@ -719,7 +742,11 @@ namespace OpenTKUtils.GL4.Controls
             if (w != window)        // if changed
             {
                 bool resized = w.Size != window.Size;
+                bool moved = w.Location != window.Location;
                 window = w;
+
+                if (moved)
+                    OnMoved();
 
                 if (resized)
                     OnResize();

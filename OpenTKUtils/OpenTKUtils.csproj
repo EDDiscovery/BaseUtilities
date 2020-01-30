@@ -61,6 +61,7 @@
     <Compile Include="GL4\Controls\ControlButton.cs" />
     <Compile Include="GL4\Controls\ControlLabel.cs" />
     <Compile Include="GL4\Controls\ControlListBox.cs" />
+    <Compile Include="GL4\Controls\ControlForm.cs" />
     <Compile Include="GL4\Controls\ControlScrollBar.cs" />
     <Compile Include="GL4\Controls\ControlScrollPanelScrollBar.cs" />
     <Compile Include="GL4\Controls\ControlScrollPanel.cs" />

@@ -62,6 +62,10 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        public override void CheckBitmapAfterLayout()       // do nothing, we do not resize bitmap just because our client size has changed
+        {
+        }
+
         private void SetScrollPos(int value)
         {
             if (LevelBitmap != null)

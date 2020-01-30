@@ -40,6 +40,7 @@ namespace OpenTKUtils.GL4
         {
             if (Id == -1 || Width != width || Height != height)    // if not there, or changed, we can't just replace it, size is fixed. Delete it
             {
+                System.Diagnostics.Debug.WriteLine("Remake texture");
                 if ( Id != -1 )
                 { 
                     Dispose();
