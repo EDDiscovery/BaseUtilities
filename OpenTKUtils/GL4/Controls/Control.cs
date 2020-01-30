@@ -309,7 +309,7 @@ namespace OpenTKUtils.GL4.Controls
         static protected readonly int MinimumResizeWidth = 10;
         static protected readonly int MinimumResizeHeight = 10;
 
-        // these change without invalidation - for constructors
+        // these change without invalidation or layout - for constructors of inheritors or for SizeControl overrides
 
         protected GL4.Controls.Margin MarginNI { set { margin = value; } }
         protected GL4.Controls.Padding PaddingNI { set { padding = value; } }
@@ -384,7 +384,7 @@ namespace OpenTKUtils.GL4.Controls
             SizeControl();              // size ourselves after children sized
         }
 
-        protected virtual void SizeControl()        // override to auto size
+        protected virtual void SizeControl()        // override to auto size. Only use the NI functions to change size.
         {
             //System.Diagnostics.Debug.WriteLine("Control " + Name + " Size ");
         }
@@ -485,7 +485,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         // redraw, into usebmp
-        // bounds = area that our control occupies on the bitmap, in bitmap co-ords, which may be outside of the clip area
+        // bounds = area that our control occupies on the bitmap, in bitmap co-ords. This may be outside of the clip area below if the child is outside of the client area of its parent control
         // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas
         // gr = graphics to draw into
         // we must be visible to be called. Children may not be visible
@@ -547,16 +547,21 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (c.Visible)
                 {
-                    Rectangle childbounds = new Rectangle(clientarea.Left + c.Left,     // not bounded by clip area.
+                    Rectangle childbounds = new Rectangle(clientarea.Left + c.Left,     // not bounded by clip area, in bitmap coords
                                                           clientarea.Top + c.Top,
                                                           c.Width,
                                                           c.Height);
 
-                    int cleft = Math.Max(childbounds.Left, cliparea.Left); // update clip area for child based on its bounds, limited to current clip
-                    int ctop = Math.Max(childbounds.Top, cliparea.Top);
-                    int cright = Math.Min(childbounds.Left + c.Width, cliparea.Right);
-                    int cbot = Math.Min(childbounds.Top + c.Height, cliparea.Bottom);
-                    Rectangle childcliparea = new Rectangle(cleft, ctop, cright - cleft, cbot - ctop);
+                    // clip area is progressively narrowed as we go down the children
+
+                    int cleft = Math.Max(childbounds.Left, cliparea.Left);          // clipped to child left or cliparea left
+                    int ctop = Math.Max(childbounds.Top, cliparea.Top);             // clipped to child top or cliparea top
+                    int cright = Math.Min(childbounds.Left + c.Width, cliparea.Right);  // clipped to child left+width or the cliparea right
+                    cright = Math.Min(cright, bounds.Right - this.ClientRightMargin);     // additionally clipped to our bounds right less its client margin
+                    int cbot = Math.Min(childbounds.Top + c.Height, cliparea.Bottom);   // clipped to child bottom or cliparea bottom
+                    cbot = Math.Min(cbot, bounds.Bottom - this.ClientBottomMargin);       // additionally clipped to bounds bottom less its client margin
+
+                    Rectangle childcliparea = new Rectangle(cleft, ctop, cright - cleft, cbot - ctop);  // clip area to pass down in bitmap coords
 
                     redrawn |= c.Redraw(usebmp, childbounds, childcliparea, gr, forceredraw);
                 }
@@ -566,13 +571,8 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
             {
-                //Rectangle clippaint = new Rectangle(cliparea.Left + Padding.Left + Margin.Left + BorderWidth,
-                //                                     cliparea.Top + Padding.Top + Margin.Top + BorderWidth,
-                //                                     cliparea.Width - Padding.TotalWidth - Margin.TotalWidth - BorderWidth * 2,
-                //                                     cliparea.Height - Padding.TotalHeight - Margin.TotalHeight - BorderWidth * 2);
-
                 gr.SetClip(cliparea);   // set graphics to the clip area
-                Paint(clientarea, gr);
+                Paint(clientarea, gr);  // paint can overdraw border if it wishes
 
                 if (parentgr != null)      // give us a chance of parent paint thru
                 {
@@ -611,7 +611,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        protected virtual void Paint(Rectangle area, Graphics gr)      // normal override
+        protected virtual void Paint(Rectangle area, Graphics gr)      // normal override, you can overdraw border if required.
         {
             //System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
         }
@@ -733,7 +733,6 @@ namespace OpenTKUtils.GL4.Controls
 
 
         #region Implementation
-
 
         private void SetPos(int left, int top, int width, int height) // change window rectangle
         {

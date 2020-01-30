@@ -306,7 +306,7 @@ namespace OpenTKUtils.GL4
             //float[] ouwt = vb.ReadFloats(0, floats.Length); // test read back
 
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], sizeof(float)*components);     //tbd
+            vb.Bind(0, vb.Positions[0], sizeof(float)*components);    
             va.Attribute(0, 0, components, VertexAttribType.Float);
 
             return new GLRenderableItem(pt, floats.Length / components, va, id, ic);

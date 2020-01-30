@@ -1,23 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLForm : GLBaseControl
+    public class GLForm : GLForeDisplayBase
     {
-        public GLForm(string name, Rectangle location, Color back) : base(name, location, back)
+        public string Text { get { return text; } set { text = value; Invalidate(); } }
+        public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
+
+        public const int FormMargins = 2;
+        public const int FormPadding = 2;
+        public const int FormBorderWidth = 1;
+
+        public GLForm(string name, string title, Rectangle location, Color back) : base(name, location, back)
         {
-            BorderWidthNI = 1;
+            PaddingNI = new Padding(FormPadding);
+            MarginNI = new Margin(FormMargins);
+            BorderWidthNI = FormBorderWidth;
             BorderColorNI = DefaultBorderColor;
-            MarginNI = new Margin(2);
-            PaddingNI = new Padding(1);
+            text = title;
         }
 
-        public GLForm() : this("F?", DefaultWindowRectangle, DefaultBackColor)
+        public int TitleBarHeight { get { return (Font?.ScalePixels(20) ?? 20) + FormMargins * 2; } }
+
+        public GLForm() : this("F?", "", DefaultWindowRectangle, DefaultBackColor)
         {
         }
 
@@ -25,6 +36,32 @@ namespace OpenTKUtils.GL4.Controls
         private Point capturelocation;
         private Rectangle originalwindow;
         private bool cursorindicatingmovement = false;
+
+        public override void PerformRecursiveLayout()
+        {
+            if (text.HasChars())
+                MarginNI = new Margin(Margin.Left, TitleBarHeight + FormMargins*2, Margin.Right, Margin.Bottom);
+
+            base.PerformRecursiveLayout();
+        }
+
+        protected override void Paint(Rectangle area, Graphics gr)      // normal override, you can overdraw border if required.
+        {
+            if (Text.HasChars())
+            {
+                gr.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
+                {
+                    using (Brush textb = new SolidBrush((Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
+                    {
+                        Rectangle titlearea = new Rectangle(area.Left, area.Top - ClientTopMargin, area.Width, TitleBarHeight );
+                        gr.DrawString(this.Text, this.Font, textb, titlearea, fmt);
+                    }
+                }
+                gr.SmoothingMode = SmoothingMode.None;
+            }
+        }
 
         public override void OnMouseMove(GLMouseEventArgs e)
         {
@@ -35,8 +72,8 @@ namespace OpenTKUtils.GL4.Controls
                 if (captured != GLMouseEventArgs.AreaType.Client)
                 {
                     Point capturedelta = new Point(e.Location.X - capturelocation.X, e.Location.Y - capturelocation.Y);
-                    System.Diagnostics.Debug.WriteLine("***************************");
-                    System.Diagnostics.Debug.WriteLine("Form " + captured + " " + e.Location + " " + capturelocation + " " + capturedelta);
+                    //System.Diagnostics.Debug.WriteLine("***************************");
+                    //System.Diagnostics.Debug.WriteLine("Form " + captured + " " + e.Location + " " + capturelocation + " " + capturedelta);
 
                     if (captured == GLMouseEventArgs.AreaType.Left)
                     {
@@ -60,8 +97,17 @@ namespace OpenTKUtils.GL4.Controls
                     {
                         int bottom = originalwindow.Bottom + capturedelta.Y;
                         int height = bottom - originalwindow.Top;
-                        if ( height > MinimumResizeHeight)
+                        if (height > MinimumResizeHeight)
                             Bounds = new Rectangle(originalwindow.Left, originalwindow.Top, originalwindow.Width, height);
+                    }
+                    else if (captured == GLMouseEventArgs.AreaType.NWSE)
+                    {
+                        int right = originalwindow.Right + capturedelta.X;
+                        int bottom = originalwindow.Bottom + capturedelta.Y;
+                        int width = right - originalwindow.Left;
+                        int height = bottom - originalwindow.Top;
+                        if (height > MinimumResizeHeight && width >= MinimumResizeWidth)
+                            Bounds = new Rectangle(originalwindow.Left, originalwindow.Top, width, height);
                     }
                 }
                 else
@@ -79,6 +125,11 @@ namespace OpenTKUtils.GL4.Controls
                     else if (e.Area == GLMouseEventArgs.AreaType.Bottom)
                     {
                         FindDisplay()?.SetCursor(GLCursorType.NS);
+                        cursorindicatingmovement = true;
+                    }
+                    else if (e.Area == GLMouseEventArgs.AreaType.NWSE)
+                    {
+                        FindDisplay()?.SetCursor(GLCursorType.NWSE);
                         cursorindicatingmovement = true;
                     }
                     else if ( cursorindicatingmovement )
@@ -99,7 +150,6 @@ namespace OpenTKUtils.GL4.Controls
                 capturelocation = e.Location;
                 originalwindow = Bounds;
                 captured = e.Area;
-                System.Diagnostics.Debug.WriteLine("Capture");
             }
         }
 
@@ -123,10 +173,11 @@ namespace OpenTKUtils.GL4.Controls
                 FindDisplay()?.SetCursor(GLCursorType.Normal);
                 cursorindicatingmovement = false;
             }
-            System.Diagnostics.Debug.WriteLine("Leave Form");
-
         }
 
+
+        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
+        private string text = "";
     }
 }
 

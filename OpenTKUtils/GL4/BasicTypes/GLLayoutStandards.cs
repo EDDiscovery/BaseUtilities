@@ -63,8 +63,6 @@ namespace OpenTKUtils.GL4
             return WriteCacheFinish(fa, fillpos, sizeof(float), writebuffer);
         }
 
-        //TBD not sure they are not separ by vec4 in strides
-
         public int Write(float[] v, int pos = -1, bool writebuffer = false)
         {
             int sz = sizeof(float) * v.Length;

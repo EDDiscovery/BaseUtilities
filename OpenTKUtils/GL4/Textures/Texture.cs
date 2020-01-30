@@ -13,7 +13,6 @@
  * governing permissions and limitations under the License.
  */
 
-
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Drawing;

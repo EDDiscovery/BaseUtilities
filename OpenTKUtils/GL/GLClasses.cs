@@ -32,7 +32,7 @@ namespace OpenTKUtils
         public Point Location { get; set; }
         public int X { get { return Location.X; } }
         public int Y { get { return Location.Y; } }
-        public enum AreaType { Client, Left, Top, Right, Bottom };
+        public enum AreaType { Client, Left, Top, Right, Bottom , NWSE };
         public AreaType Area { get; set; }
         public int Clicks { get; set; }
         public int Delta { get; set; }
@@ -60,7 +60,7 @@ namespace OpenTKUtils
         }
     }
 
-    public enum GLCursorType { Normal, Wait, NS, EW, Move};
+    public enum GLCursorType { Normal, Wait, NS, EW, Move , NWSE};
 
     public interface GLWindowControl
     {

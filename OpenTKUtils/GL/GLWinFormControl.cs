@@ -101,6 +101,8 @@ namespace OpenTKUtils.WinForm
                 glControl.Cursor = Cursors.SizeNS;
             else if (t == GLCursorType.Move)
                 glControl.Cursor = Cursors.Hand;
+            else if (t == GLCursorType.NWSE)
+                glControl.Cursor = Cursors.SizeNWSE;
             else
                 glControl.Cursor = Cursors.Default;
         }

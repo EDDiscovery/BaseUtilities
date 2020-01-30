@@ -29,7 +29,6 @@ namespace OpenTKUtils.GL4.Controls
         public string Text { get { return text; } set { text = value; Invalidate(); } }
 
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
-        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
 
         public GLLabel(string name, Rectangle location, string text, Color backcolour) : base(name,location, backcolour)
         {
@@ -58,10 +57,10 @@ namespace OpenTKUtils.GL4.Controls
 
         protected override void Paint(Rectangle area, Graphics gr)
         {
-            gr.SmoothingMode = SmoothingMode.AntiAlias;
-
             if (Text.HasChars())
             {
+                gr.SmoothingMode = SmoothingMode.AntiAlias;
+
                 using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
                 {
                     using (Brush textb = new SolidBrush((Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
@@ -69,12 +68,12 @@ namespace OpenTKUtils.GL4.Controls
                         gr.DrawString(this.Text, this.Font, textb, area, fmt);
                     }
                 }
+
+                gr.SmoothingMode = SmoothingMode.None;
             }
-
-            gr.SmoothingMode = SmoothingMode.None;
-
         }
 
+        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
         private string text = "";
     }
 }

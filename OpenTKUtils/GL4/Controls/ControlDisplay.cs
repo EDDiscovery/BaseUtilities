@@ -249,7 +249,12 @@ namespace OpenTKUtils.GL4.Controls
             if (e.Location.X < 0)
                 e.Area = GLMouseEventArgs.AreaType.Left;
             else if (e.Location.X >= currentmouseover.ClientWidth)
-                e.Area = GLMouseEventArgs.AreaType.Right;
+            {
+                if (e.Location.Y >= currentmouseover.ClientHeight)
+                    e.Area = GLMouseEventArgs.AreaType.NWSE;
+                else
+                    e.Area = GLMouseEventArgs.AreaType.Right;
+            }
             else if (e.Location.Y < 0)
                 e.Area = GLMouseEventArgs.AreaType.Top;
             else if (e.Location.Y >= currentmouseover.ClientHeight)

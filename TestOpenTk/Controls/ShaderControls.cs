@@ -153,13 +153,13 @@ namespace TestOpenTk
 
             if (true)
             {
-                bool testtable = false;
-                bool testflow = false;
-                bool testtextbox = false;
-                bool testcombobox = false;
-                bool testscrollbar = false;
-                bool testvsp = false;
-                bool testlb = false;
+                bool testtable = true;
+                bool testflow = true;
+                bool testtextbox = true;
+                bool testcombobox = true;
+                bool testscrollbar = true;
+                bool testvsp = true;
+                bool testlb = true;
                 bool testbuttons = true;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
@@ -167,7 +167,7 @@ namespace TestOpenTk
                 displaycontrol.Name = "form";
                 displaycontrol.SuspendLayout();
 
-                GLForm ptop = new GLForm("form", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
+                GLForm ptop = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
                 ptop.SuspendLayout();
                 ptop.BackColorGradient = 90;
                 ptop.BackColorGradientAlt = Color.FromArgb(200,Color.Yellow);

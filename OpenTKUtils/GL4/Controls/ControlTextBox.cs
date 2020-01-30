@@ -272,13 +272,14 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-
-        // later.. tbd
+        // tbd
+        // shift-hightlight/copy
+        // make text stay in same place as you move cursor
         //public int StartPos { get { return startpos; } set { if (cursorpos == startpos) cursorpos = value; startpos = value; Invalidate(); } }
         //public int EndPos { get { return endpos; } set { if (cursorpos == endpos) cursorpos = value;  endpos = value; Invalidate(); } }
-
         //private int startpos = 0;
         //private int endpos = 0;
+
         private int cursorpos = -1; // not set
         private int displaystart = -1; // its either at startpos, or endpos. -1 means not set so set the string to display to end
         private string text = "";
