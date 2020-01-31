@@ -82,7 +82,7 @@ namespace OpenTKUtils.GL4
 
         public void Render()                                               // called by Render() to draw the item.
         {
-            // System.Diagnostics.Debug.WriteLine("Render " + RenderControl + " " + DrawCount + " " + InstanceCount);
+            //System.Diagnostics.Debug.WriteLine("Render " + RenderControl + " " + DrawCount + " " + InstanceCount);
 
             if ( ElementBuffer != null )
             {

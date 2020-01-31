@@ -57,6 +57,12 @@ namespace OpenTKUtils.GL4
             return disp;
         }
 
+        public IGLPipelineShader Add(string name, IGLPipelineShader disp)
+        {
+            items.Add(name, disp);
+            return disp;
+        }
+
         public GLVertexArray Add(string name, GLVertexArray disp)
         {
             items.Add(name, disp);
@@ -97,6 +103,11 @@ namespace OpenTKUtils.GL4
         public IGLProgramShader Shader(string name)
         {
             return (IGLProgramShader)items[name];
+        }
+
+        public IGLPipelineShader PLShader(string name)
+        {
+            return (IGLPipelineShader)items[name];
         }
 
         public GLVertexArray VA(string name)

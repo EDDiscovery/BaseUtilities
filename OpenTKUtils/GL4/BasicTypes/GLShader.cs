@@ -76,5 +76,36 @@ namespace OpenTKUtils.GL4
                 Id = -1;
             }
         }
+
+        // helpers
+
+        public static string CreateVars(params Object[] values)
+        {
+            string s = "";
+            for (int i = 0; i < values.Length;)
+            {
+                string name = values[i] as string;
+                Object o = values[i + 1];
+
+                if (o is int)
+                    s += "const int " + name + " = " + ((int)o).ToStringInvariant() + ";" + Environment.NewLine;
+                else if (o is System.Drawing.Color)
+                {
+                    System.Drawing.Color c = (System.Drawing.Color)o;
+                    s += "const vec4 " + name + " = vec4(" + ((float)c.R / 255).ToStringInvariant() + "," + ((float)c.G / 255).ToStringInvariant() + "," + ((float)c.B / 255).ToStringInvariant() + ",1);" + Environment.NewLine;
+                }
+                else if (o is OpenTK.Vector4)
+                {
+                    OpenTK.Vector4 v = (OpenTK.Vector4)o;
+                    s += "const vec4 " + name + " = vec4(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ");" + Environment.NewLine;
+                }
+                else
+                    s += "const float " + name + " = " + ((float)o).ToStringInvariant() + ";" + Environment.NewLine;
+
+                i += 2;
+            }
+
+            return s;
+        }
     }
 }

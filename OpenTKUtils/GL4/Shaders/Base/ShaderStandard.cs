@@ -102,13 +102,13 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public virtual void Start()                 // override.. but call back.
+        public virtual void Start()     
         {
             GL.UseProgram(Id);
             StartAction?.Invoke(this);
         }
 
-        public virtual void Finish()                // override if required
+        public virtual void Finish()                 
         {
             FinishAction?.Invoke(this);                           // any shader hooks get a chance.
         }

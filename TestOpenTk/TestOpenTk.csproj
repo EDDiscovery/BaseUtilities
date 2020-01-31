@@ -64,6 +64,12 @@
     <Compile Include="Controls\ShaderControls.designer.cs">
       <DependentUpon>ShaderControls.cs</DependentUpon>
     </Compile>
+    <Compile Include="Galaxy\ShaderDynamicGrid.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Galaxy\ShaderDynamicGrid.designer.cs">
+      <DependentUpon>ShaderDynamicGrid.cs</DependentUpon>
+    </Compile>
     <Compile Include="Galaxy\ShaderGalaxy.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -185,6 +191,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\ShaderControls.resx">
       <DependentUpon>ShaderControls.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Galaxy\ShaderDynamicGrid.resx">
+      <DependentUpon>ShaderDynamicGrid.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Galaxy\ShaderGalaxy.resx">
       <DependentUpon>ShaderGalaxy.cs</DependentUpon>
