@@ -303,7 +303,7 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             if (cdmt.AnythingChanged)
                 gl3dcontroller.Redraw();
         }

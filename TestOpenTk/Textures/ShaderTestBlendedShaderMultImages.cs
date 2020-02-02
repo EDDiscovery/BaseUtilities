@@ -53,7 +53,7 @@ namespace TestOpenTk
             glwfc.BackColour = Color.FromArgb(0, 0, 60);
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(120f, 0, 0f), 1F);
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms / 20.0f;
             };
@@ -144,7 +144,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             gl3dcontroller.Redraw();
         }
 

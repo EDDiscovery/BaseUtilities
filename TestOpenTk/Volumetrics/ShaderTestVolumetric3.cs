@@ -126,7 +126,7 @@ void main(void)
             gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms / 100.0f;
             };
@@ -261,7 +261,7 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             if (cdmt.AnythingChanged)
                 gl3dcontroller.Redraw();
         }

@@ -35,7 +35,7 @@ namespace OpenTKUtils.Common
       
         public float ProjectionZNear { get; private set; }
 
-        public Func<int, float> KeyboardTravelSpeed;                            // optional set to scale travel key commands given this time interval
+        public Func<int, float, float> KeyboardTravelSpeed;                     // optional set to scale travel key commands given this time interval and camera distance
         public Func<int, float> KeyboardRotateSpeed;                            // optional set to scale camera key rotation commands given this time interval
         public Func<int, float> KeyboardZoomSpeed;                              // optional set to scale zoom speed commands given this time interval
         public float MouseRotateAmountPerPixel { get; set; } = 0.25f;           // mouse speeds, degrees/pixel
@@ -123,7 +123,7 @@ namespace OpenTKUtils.Common
         // Owner should call this at regular intervals.
         // handle keyboard, indicate if activated, handle other keys if required, return movement calculated in case you need to use it
 
-        public CameraDirectionMovementTracker HandleKeyboard(bool activated, Action<BaseUtils.KeyboardState> handleotherkeys = null)
+        public CameraDirectionMovementTracker HandleKeyboardSlews(bool activated, Action<BaseUtils.KeyboardState> handleotherkeys = null)
         {
             long elapsed = sysinterval.ElapsedMilliseconds;         // stopwatch provides precision timing on last paint time.
             LastHandleInterval = (int)(elapsed - lastintervalcount);
@@ -134,6 +134,7 @@ namespace OpenTKUtils.Common
                 if (MatrixCalc.InPerspectiveMode)       // camera rotations are only in perspective mode
                 {
                     var ca = Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
+
                     if (ca != Camera.KeyboardAction.None)      // moving the camera around kills the pos slew (as well as its own slew)
                     {
                         Pos.KillSlew();
@@ -145,7 +146,7 @@ namespace OpenTKUtils.Common
                     }
                 }
 
-                if (Pos.Keyboard(keyboard, MatrixCalc.InPerspectiveMode, Camera.Current, KeyboardTravelSpeed?.Invoke(LastHandleInterval) ?? (0.1f*LastHandleInterval), EliteMovement))
+                if (Pos.Keyboard(keyboard, MatrixCalc.InPerspectiveMode, Camera.Current, KeyboardTravelSpeed?.Invoke(LastHandleInterval, MatrixCalc.EyeDistance) ?? (0.1f*LastHandleInterval), EliteMovement))
                     Camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
 
                 if ( Zoom.Keyboard(keyboard, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f))))      // zoom slew is not affected by the above
@@ -166,14 +167,20 @@ namespace OpenTKUtils.Common
                 keyboard.Reset();
             }
 
-            Pos.DoSlew(LastHandleInterval);
-            Camera.DoSlew(LastHandleInterval);
-            Zoom.DoSlew();
+            Pos.DoSlew(LastHandleInterval);     // changes here will be picked up by AnythingChanged
+
+            bool recalceye = Camera.DoSlew(LastHandleInterval);
+
+            recalceye |= Zoom.DoSlew();
+
+            if ( recalceye )
+                Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
 
             MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current);       // Gross limit allows you not to repaint due to a small movement. I've set it to all the time for now, prefer the smoothness to the frame rate.
 
             if (MovementTracker.AnythingChanged)
             {
+                //System.Diagnostics.Debug.WriteLine("Changed");
                 MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
                 glwin.Invalidate();
             }

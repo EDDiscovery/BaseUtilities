@@ -103,9 +103,9 @@ namespace OpenTKUtils.Common
             zoomtimer.Stop();
         }
 
-        public void DoSlew()                           // do dynamic Current adjustments..  true if a readjust Current needed
+        public bool DoSlew()                           // do dynamic Current adjustments..  true if a readjust Current needed
         {
-            if ( zoomtimer.IsRunning && zoomtimer.ElapsedMilliseconds >= zoomnextsteptime )
+            if (zoomtimer.IsRunning && zoomtimer.ElapsedMilliseconds >= zoomnextsteptime)
             {
                 float newzoom = (float)(Current * zoommultiplier);
                 bool stop = (zoomtarget > Current) ? (newzoom >= zoomtarget) : (newzoom <= zoomtarget);
@@ -122,7 +122,11 @@ namespace OpenTKUtils.Common
                     Current = newzoom;
                     zoomnextsteptime += zoomtimeperstep;
                 }
+
+                return true;
             }
+            else
+                return false;
         }
 
         public bool Keyboard(KeyboardState kbd, float adjustment)

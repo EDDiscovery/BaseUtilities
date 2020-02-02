@@ -94,7 +94,7 @@ namespace OpenTKUtils.Common
             cameraDirSlewProgress = 1.0f;
         }
 
-        public void DoSlew(int msticks)
+        public bool DoSlew(int msticks)
         {
             if (cameraDirSlewProgress < 1.0f)
             {
@@ -117,7 +117,11 @@ namespace OpenTKUtils.Common
 
                 CalcNormal();
                 cameraDirSlewProgress = (float)newprogress;
+
+                return true;
             }
+            else
+                return false;
         }
 
         public void CalcNormal()                // we need the normal for the perspective mode

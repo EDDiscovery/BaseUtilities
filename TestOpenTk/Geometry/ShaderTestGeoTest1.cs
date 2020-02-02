@@ -158,7 +158,7 @@ void main(void)
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(170f, 0, 0f), 1F);
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms / 20.0f;
             };
@@ -224,7 +224,7 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             gl3dcontroller.Redraw();
         }
 

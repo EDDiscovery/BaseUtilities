@@ -48,21 +48,25 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            int lines = 82;
+            int lines = 21;
             if (gl3dcontroller.MatrixCalc.EyeDistance < 200)
             {
-                lines = 164*2;
+                lines = 161*2;
             }
             else if (gl3dcontroller.MatrixCalc.EyeDistance < 1000)
             {
-                lines = 164;
+                lines = 81*2;
+            }
+            else if (gl3dcontroller.MatrixCalc.EyeDistance < 10000)
+            {
+                lines = 41*2;
             }
 
             //IGLShader s = items.Shader("DYNGRIDCourse");
-            IGLShader s = items.PLShader("PLGRIDShaderCourse");
+            //IGLShader s = items.PLShader("PLGRIDShaderCourse");
 
-            GL.ProgramUniform1(s.Id, 25, lines);
-            GLStatics.Check();
+//            GL.ProgramUniform1(s.Id, 25, lines);
+  //          GLStatics.Check();
 
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
             i.InstanceCount = lines;
@@ -81,8 +85,6 @@ namespace TestOpenTk
 #version 450 core
 " + GLShader.CreateVars(new object[] { "color" , c}) + @"
 
-layout (location = 25) uniform int lines;
-
 #include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 
 out gl_PerVertex {
@@ -100,78 +102,92 @@ void main(void)
 
     float dist = mc.EyeDistance;
 
-    int fadeinmajor  = 1000;
-    int fadeinminor  = 200;
+    ivec3 start;
+    int horzlines = 10;
+    int gridwidth = 10000;
+    int width = 90000;
 
-    int gridwidth = 1000;
-
-    if ( dist < fadeinminor )
+    if ( dist > 10000 ) 
     {
-        gridwidth = 10;
+        start = ivec3(-50000,int(mc.TargetPosition.y),-20000);
+        if ( line<horzlines)
+            width = 100000;
     }
-    else if ( dist < fadeinmajor )
+    else
     {
-        gridwidth = 100;
+        if ( dist < 200  )
+        {
+            horzlines = 161;
+            gridwidth = 10;
+        }
+        else if ( dist < 1000 )
+        {
+            horzlines = 81;
+            gridwidth = 100;
+        }
+        else if ( dist < 10000 )
+        {
+            horzlines = 41;
+            gridwidth = 1000;
+        }
+
+        int gridstart = (horzlines-1)*gridwidth/2;
+        width = (horzlines-1)*gridwidth;
+
+        int sx = int(mc.TargetPosition.x) / gridwidth * gridwidth - gridstart;
+        if ( sx < -50000 )
+            sx = -50000;
+        else if ( sx + width > 50000)
+            sx = 50000-width;
+
+        int sy = int(mc.TargetPosition.z) / gridwidth * gridwidth - gridstart;
+        if ( sy < -20000 )
+            sy = -20000;
+        else if ( sy + width > 70000)
+            sy = 70000-width;
+        start = ivec3(sx, int(mc.TargetPosition.y), sy );
+
     }
-
-    int horzlines = lines/2;
-    int gridstart = (horzlines-1)/2*gridwidth;
-
-    vec4 position;
-    int sx = int(mc.TargetPosition.x)/gridwidth*gridwidth-gridstart;
-    int sz = int(mc.TargetPosition.z)/gridwidth*gridwidth-gridstart;
-    int sy = int(mc.TargetPosition.y);
-    int width = (horzlines-1)*gridwidth;
 
     int lpos;
+    vec4 position;
+    float a=1;
 
-    if ( line>= horzlines) 
+    if ( line>= horzlines) // vertical
     {
         line -= horzlines;
-        lpos = sx + line * gridwidth;
-        position = vec4( lpos , sy, sz + width * linemod, 1);
+        lpos = start.x + line * gridwidth;
+        position = vec4( lpos , start.y, clamp(start.z + width * linemod,-20000,70000), 1);
+        if ( lpos < -50000 || lpos > 50000 ) // if line out of range..
+            a= 0;
     }
     else    
     {
-        lpos = sz + gridwidth * line;
-        position = vec4( sx + width * linemod, sy, lpos , 1);
+        lpos = start.z + gridwidth * line;
+        position = vec4( clamp(start.x + width * linemod,-50000,50000), start.y, lpos , 1);
+        if ( lpos < -20000 || lpos > 70000 ) 
+            a= 0;
     }
 
     gl_Position = mc.ProjectionModelMatrix * position;        // order important
 
-    float fade=1;
+    float b = 0.7;
 
-    if ( dist > fadeinmajor )
+    if ( a > 0 )
     {
-        fade = 1.0 - clamp((dist -fadeinmajor)/(fadeinmajor*2),0,1);
-    }
-    else if ( dist > fadeinminor )
-    {
-        if ( abs(lpos) % 1000 == 0 )
-            fade = 1;
+        if ( gridwidth == 10000 ) 
+        {
+        }
         else
-            fade =  0.7 - clamp((dist-fadeinminor)/(fadeinmajor-fadeinminor),0,1)*0.7;
-    }
-    else 
-    {
-        if ( abs(lpos) % 100 == 0 )
-            fade = 1;
-        else
-            fade = 0.7 - clamp((dist)/(fadeinminor),0,1)*0.7;
+        {
+            if ( abs(lpos) % (10*gridwidth) != 0 )
+            {
+                a = b = 1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
+            }
+        }
     }
 
-    //float cpos = 0.5-abs((float(line)/horzlines)-0.5);
-
-    //float fade = 0.1+cpos*1.7;
-
-    //float c1 = 1.0;
-
-    //if ( mc.EyeDistance>fadein)
-    //    c1 = 
-    //else if ( mc.EyeDistance < fadeout )
-    //    c1 = 1.0 - clamp((fadeout - mc.EyeDistance)/(fadeout),0,1);
-    //fade *= c1;
-    vs_color = vec4(color.x,color.y,color.z,fade);
+    vs_color = vec4(color.x*b,color.y*b,color.z*b,a);
 }
 "; }
 
@@ -205,15 +221,15 @@ void main(void)
             gl3dcontroller.EliteMovement = true;
             gl3dcontroller.PaintObjects = ControllerDraw;
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
-                return (float)ms * 1.0f;
+                return (float)ms * 1.0f * Math.Min(eyedist/1000,10);
             };
 
             gl3dcontroller.Zoom.ZoomFact = 1.1f;
 
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
+            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(140.75f, 0, 0), 0.5F);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
@@ -245,6 +261,19 @@ void main(void)
 
 
             {
+                items.Add("solmarker", new GLTexture2D(Properties.Resources.dotted));
+                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+                GLRenderControl rq = GLRenderControl.Quads(cullface: false);
+                rObjects.Add(items.Shader("TEX"),
+                             GLRenderableItem.CreateVector4Vector2(items, rq,
+                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
+                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 0, 0))
+                             ));
+            }
+
+
+
+            {
                 items.Add("PLGRIDShaderCourse", new DynamicGridShader(Color.Yellow));
                 items.Add("PLShaderColour", new GLPLFragmentShaderColour());
 
@@ -258,6 +287,7 @@ void main(void)
                 rObjects.Add(items.Shader("DYNGRIDCourse"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
                 
             }
+
 
 
 
@@ -332,9 +362,9 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
-            if (cdmt.AnythingChanged)
-                gl3dcontroller.Redraw();
+            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            //if (cdmt.AnythingChanged)
+            //    gl3dcontroller.Redraw();
         }
 
         private void OtherKeys(BaseUtils.KeyboardState kb)

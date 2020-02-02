@@ -331,7 +331,7 @@ namespace TestOpenTk
             gl3dcontroller.EliteMovement = true;
             gl3dcontroller.PaintObjects = Controller3dDraw;
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms * 10.0f;
             };
@@ -369,7 +369,7 @@ namespace TestOpenTk
         {
             if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
-            var cdmt = gl3dcontroller.HandleKeyboard(true);
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true);
             if (cdmt.AnythingChanged )
                 glwfc.Invalidate();
         }

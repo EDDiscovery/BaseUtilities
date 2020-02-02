@@ -121,7 +121,7 @@ void main(void)
             gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms / 50.0f;
             };
@@ -188,7 +188,7 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             gl3dcontroller.Redraw();
         }
 

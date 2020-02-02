@@ -86,7 +86,7 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 500000f;
             gl3dcontroller.ZoomDistance = 500F;
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms * 20.0f;
             };
@@ -309,7 +309,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             if (cdmt.AnythingChanged)
                 gl3dcontroller.Redraw();
         }

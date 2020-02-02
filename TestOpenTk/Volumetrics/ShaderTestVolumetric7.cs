@@ -86,7 +86,7 @@ namespace TestOpenTk
             gl3dcontroller.ZoomDistance = 5000F;
             gl3dcontroller.EliteMovement = true;
 
-            gl3dcontroller.KeyboardTravelSpeed = (ms) =>
+            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
                 return (float)ms * 10.0f;
             };
@@ -361,7 +361,7 @@ void main(void)
         
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboard(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
             if (cdmt.AnythingChanged)
                 gl3dcontroller.Redraw();
         }
