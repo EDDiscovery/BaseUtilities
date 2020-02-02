@@ -20,7 +20,7 @@ namespace OpenTKUtils.Common
 {
     public class Fov
     {
-        public float Current { get { return cameraFov; } }
+        public float Current { get { return cameraFov; } }          // in radians
         public float FovDeg { get { return (float)(cameraFov / Math.PI * 180); } }
 
         private const float fovdef = (float)(Math.PI / 2.0f);

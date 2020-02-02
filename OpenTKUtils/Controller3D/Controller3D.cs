@@ -51,6 +51,7 @@ namespace OpenTKUtils.Common
         public Zoom Zoom { get; private set; } = new Zoom();
         public Position Pos { get; private set; } = new Position();
         public Camera Camera { get; private set; } = new Camera();
+        public Fov Fov { get; private set; } = new Fov();
 
         public CameraDirectionMovementTracker MovementTracker { get; set; } = new CameraDirectionMovementTracker();        // these track movements and zoom
 
@@ -198,7 +199,7 @@ namespace OpenTKUtils.Common
 
         private void SetModelProjectionMatrixViewPort()
         {
-            MatrixCalc.CalculateProjectionMatrix(fov.Current, glwin.Width, glwin.Height, out float zn);
+            MatrixCalc.CalculateProjectionMatrix(Fov.Current, glwin.Width, glwin.Height, out float zn);
             ProjectionZNear = zn;
         }
 
@@ -313,7 +314,7 @@ namespace OpenTKUtils.Common
             {
                 if (keyboard.Ctrl)
                 {
-                    if (fov.Scale(e.Delta < 0))
+                    if (Fov.Scale(e.Delta < 0))
                     {
                         SetModelProjectionMatrixViewPort();
                         glwin.Invalidate();
@@ -338,7 +339,6 @@ namespace OpenTKUtils.Common
         }
 
 
-        private Fov fov = new Fov();
         private BaseUtils.KeyboardState keyboard = new BaseUtils.KeyboardState();        // needed to be held because it remembers key downs
 
         private Stopwatch sysinterval = new Stopwatch();    // to accurately measure interval between system ticks

@@ -48,18 +48,23 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
+            //float cameradir = gl3dcontroller.Camera.Current.Y;
+            //float fov = gl3dcontroller.Fov.FovDeg;
+
+            //System.Diagnostics.Debug.WriteLine("Camera " + cameradir + " Fov " + fov);
+
             int lines = 21;
             if (gl3dcontroller.MatrixCalc.EyeDistance < 200)
             {
-                lines = 161*2;
+                lines = 321*2;
             }
             else if (gl3dcontroller.MatrixCalc.EyeDistance < 1000)
             {
-                lines = 81*2;
+                lines = 321*2;
             }
             else if (gl3dcontroller.MatrixCalc.EyeDistance < 10000)
             {
-                lines = 41*2;
+                lines = 81*2;
             }
 
             //IGLShader s = items.Shader("DYNGRIDCourse");
@@ -107,27 +112,21 @@ void main(void)
     int gridwidth = 10000;
     int width = 90000;
 
-    if ( dist > 10000 ) 
-    {
-        start = ivec3(-50000,int(mc.TargetPosition.y),-20000);
-        if ( line<horzlines)
-            width = 100000;
-    }
-    else
+    if ( dist < 10000 ) 
     {
         if ( dist < 200  )
         {
-            horzlines = 161;
+            horzlines = 321;
             gridwidth = 10;
         }
         else if ( dist < 1000 )
         {
-            horzlines = 81;
+            horzlines = 321;
             gridwidth = 100;
         }
-        else if ( dist < 10000 )
+        else 
         {
-            horzlines = 41;
+            horzlines = 81;
             gridwidth = 1000;
         }
 
@@ -146,10 +145,16 @@ void main(void)
         else if ( sy + width > 70000)
             sy = 70000-width;
         start = ivec3(sx, int(mc.TargetPosition.y), sy );
-
+    }
+    else
+    {
+        start = ivec3(-50000,int(mc.TargetPosition.y),-20000);
+        if ( line<horzlines)
+            width = 100000;
     }
 
     int lpos;
+    int distfromnom;
     vec4 position;
     float a=1;
 
@@ -157,6 +162,7 @@ void main(void)
     {
         line -= horzlines;
         lpos = start.x + line * gridwidth;
+        distfromnom = abs(lpos-int(mc.TargetPosition.x));
         position = vec4( lpos , start.y, clamp(start.z + width * linemod,-20000,70000), 1);
         if ( lpos < -50000 || lpos > 50000 ) // if line out of range..
             a= 0;
@@ -165,6 +171,7 @@ void main(void)
     {
         lpos = start.z + gridwidth * line;
         position = vec4( clamp(start.x + width * linemod,-50000,50000), start.y, lpos , 1);
+        distfromnom = abs(lpos-int(mc.TargetPosition.z));
         if ( lpos < -20000 || lpos > 70000 ) 
             a= 0;
     }
@@ -175,18 +182,19 @@ void main(void)
 
     if ( a > 0 )
     {
-        if ( gridwidth == 10000 ) 
-        {
-        }
-        else
+        if ( gridwidth != 10000 ) 
         {
             if ( abs(lpos) % (10*gridwidth) != 0 )
             {
-                a = b = 1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
+                a =  1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
+                b = 0.5;
+
             }
         }
     }
 
+   // float as = 1.0-clamp(float(distfromnom)/gridwidth/horzlines*2,0,1);
+                
     vs_color = vec4(color.x*b,color.y*b,color.z*b,a);
 }
 "; }
