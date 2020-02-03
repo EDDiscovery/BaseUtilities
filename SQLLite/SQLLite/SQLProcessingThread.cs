@@ -125,23 +125,24 @@ namespace SQLLiteExtensions
         private void SqlThreadProc()    // SQL process thread
         {
             int recursiondepth = 0;
+            int threadnum = ReadOnlyThreads.Count;
 
             if (StopRequested)
             {
                 return;
             }
 
-            using (Connection.Value = CreateConnection())   // hold connection over whole period.
+            try
             {
-                try
-                {
-                    Interlocked.Increment(ref ThreadsAvailable);
-                    Interlocked.Increment(ref RunningThreads);
-                    StopCompleted.Reset();
+                Interlocked.Increment(ref ThreadsAvailable);
+                Interlocked.Increment(ref RunningThreads);
+                StopCompleted.Reset();
 
+                using (Connection.Value = CreateConnection())   // hold connection over whole period.
+                {
                     while (!StopRequested && !SwitchToReadOnlyRequested)
                     {
-                        switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }, ReadOnly ? 10000 : Timeout.Infinite))
+                        switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }, threadnum != 0 ? 10000 : Timeout.Infinite))
                         {
                             case 1:
                                 bool ro = ReadOnly;
@@ -181,18 +182,23 @@ namespace SQLLiteExtensions
                                 }
                                 break;
                             case 0:
-                            case WaitHandle.WaitTimeout:
                                 return;
+                            case WaitHandle.WaitTimeout:
+                                if (threadnum != 0)
+                                {
+                                    return;
+                                }
+                                break;
                         }
                     }
                 }
-                finally
+            }
+            finally
+            {
+                Interlocked.Decrement(ref ThreadsAvailable);
+                if (Interlocked.Decrement(ref RunningThreads) == 0)
                 {
-                    Interlocked.Decrement(ref ThreadsAvailable);
-                    if (Interlocked.Decrement(ref RunningThreads) == 0)
-                    {
-                        StopCompleted.Set();
-                    }
+                    StopCompleted.Set();
                 }
             }
         }
