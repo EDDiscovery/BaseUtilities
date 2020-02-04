@@ -43,7 +43,7 @@ namespace OpenTKUtils.GL4
         {
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Program.Dispose();
         }

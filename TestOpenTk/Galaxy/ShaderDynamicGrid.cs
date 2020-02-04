@@ -44,15 +44,26 @@ namespace TestOpenTk
             items.Dispose();
         }
 
+        float lasteyedistance = 100000000;
+        int lastgridwidth;
+
         private void ControllerDraw(GLMatrixCalc mc, long time)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            DynamicGridShader s = items.PLShader("PLGRIDVertShader") as DynamicGridShader;
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
-            i.InstanceCount = s.ComputeUniforms(gl3dcontroller.MatrixCalc, out int gridwidth, out Vector3 start);
+            DynamicGridShader s = items.PLShader("PLGRIDVertShader") as DynamicGridShader;
+
+            if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
+            {
+                i.InstanceCount = s.ComputeGridSize(gl3dcontroller.MatrixCalc, out lastgridwidth);
+                lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
+            }
+
+            s.SetUniforms(gl3dcontroller.MatrixCalc, lastgridwidth, i.InstanceCount);
+
             DynamicGridBitmapShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridBitmapShader;
-            bs.ComputeUniforms(gridwidth, start);
+            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, Color.Yellow);
 
             solmarker.Position = gl3dcontroller.MatrixCalc.TargetPosition;
             solmarker.Scale = gl3dcontroller.MatrixCalc.EyeDistance / 20;
@@ -64,33 +75,46 @@ namespace TestOpenTk
 
         public class DynamicGridShader : GLShaderPipelineShadersBase
         {
-            public int ComputeUniforms(GLMatrixCalc mc, out int gridwidth, out Vector3 start)
+            public int ComputeGridSize(GLMatrixCalc mc, out int gridwidth)
             {
                 int lines = 21;
                 gridwidth = 10000;
 
-                int sy = (int)ObjectExtensionsNumbersBool.Clamp(mc.TargetPosition.Y, -2000, 2000);
-
                 if (mc.EyeDistance >= 10000)
+                {
+                }
+                else if (mc.EyeDistance >= 1000)
+                {
+                    lines = 81 * 2;
+                    gridwidth = 1000;
+                }
+                else if (mc.EyeDistance >= 100)
+                {
+                    lines = 321 * 2;
+                    gridwidth = 100;
+                }
+                else 
+                {
+                    lines = 321 * 2;
+                    gridwidth = 10;
+                }
+
+                return lines;
+            }
+
+            public void SetUniforms(GLMatrixCalc mc, int gridwidth, int lines)
+            {
+                Vector3 start;
+
+                float sy = ObjectExtensionsNumbersBool.Clamp(mc.TargetPosition.Y, -2000, 2000); // need it floating to stop integer giggle at high res
+
+                if (gridwidth == 10000 )
                 {
                     start = new Vector3(-50000, sy, -20000);
                 }
                 else
                 {
-                    int horzlines = 321;
-                    gridwidth = 10;
-
-                    if (mc.EyeDistance >= 1000)
-                    {
-                        horzlines = 81;
-                        gridwidth = 1000;
-                    }
-                    else if (mc.EyeDistance >= 100)
-                    {
-                        gridwidth = 100;
-                    }
-
-                    lines = horzlines * 2;
+                    int horzlines = lines / 2;
 
                     int gridstart = (horzlines - 1) * gridwidth / 2;
                     int width = (horzlines - 1) * gridwidth;
@@ -113,8 +137,6 @@ namespace TestOpenTk
                 GL.ProgramUniform1(this.Id, 11, gridwidth);
                 GL.ProgramUniform3(this.Id, 12, ref start);
                 GLStatics.Check();
-
-                return lines;
             }
 
             string vcode()
@@ -188,18 +210,13 @@ void main(void)
 
         public class DynamicGridBitmapShader : GLShaderPipelineShadersBase
         {
-            public void ComputeUniforms(int gridwidth, Vector3 start)
-            {
-                GL.ProgramUniform1(this.Id, 11, gridwidth);
-                GL.ProgramUniform3(this.Id, 12, ref start);
-            }
-
             string vcode()
             { return @"
 #version 450 core
 
-layout (location=11) uniform int gridwidth;
+layout (location=11) uniform int majorlines;
 layout (location=12) uniform vec3 start;
+layout (location=13) uniform bool flip;
 
 #include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 
@@ -209,46 +226,131 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-out vec4 vs_color;
+out VS_OUT
+{
+    flat int vs_instanced;      // not sure why structuring is needed..
+} vs;
+
+out vec2 vs_textureCoordinate;
 
 void main(void)
 {
     int bitmap = gl_InstanceID;
+    vs.vs_instanced = bitmap;
     int vid = gl_VertexID;
     float dist = mc.EyeDistance;
-
-    int majorlines = clamp(gridwidth*5,0,10000);
-
-    int sy = int(clamp(mc.TargetPosition.y,-2000,2000));
-
-    int sx = int(clamp(mc.TargetPosition.x - majorlines,-50000,50000-majorlines*2)) + 50000;  //move to positive rep so rounding next is always down
-
-    if ( sx % majorlines > majorlines/2)                // if we are over 1/2 way across, move over
-        sx += majorlines;
-
-    sx = sx / majorlines * majorlines - 50000;         // round and adjust back
-
-    int sz = int(clamp(mc.TargetPosition.z,-20000,70000-majorlines*2)) + 50000;  //move to positive rep so rounding next is always down
-
-    sz = sz / majorlines * majorlines - 50000;         // round and adjust back
+    
+    float sx = start.x;
+    float sy = start.y;
+    float sz = start.z;
 
     sx += majorlines *(bitmap/3);
     sz += majorlines *(bitmap%3);
 
-    int textwidth = int(clamp(dist/3,0,2500));
-    sx +=(vid/2)*textwidth;
-    sz += (1-vid%2)*textwidth/3;
+    float textwidth = clamp(dist/3,1,2500);
+    if ( flip ) 
+    {
+        sx -=(1-vid/2)*textwidth;
+        sz -= (vid%2)*textwidth/8;
+        vs_textureCoordinate = vec2(1-vid/2,1-vid%2);
+    }
+    else
+    {
+        sx +=(vid/2)*textwidth;
+        sz += (1-vid%2)*textwidth/8;
+        vs_textureCoordinate = vec2((vid/2),vid%2);
+    }
 
     gl_Position = mc.ProjectionModelMatrix * vec4(sx,sy,sz,1);        // order important
 
 
-    vs_color = vec4(vid*0.2+0.2,0.0,0,1.0-0.3*(bitmap%3));
 }
 "; }
+            int lastsx = int.MinValue, lastsz = int.MinValue;
+            int lastsy = int.MinValue;
+
+            public void ComputeUniforms(int gridwidth, GLMatrixCalc mc, Vector3 cameradir, Color textcol)
+            {
+                float sy = mc.TargetPosition.Y.Clamp(-2000, 2000);
+
+                float multgrid = mc.EyeDistance / gridwidth;
+
+                int tw = 10;
+                if (multgrid < 2)
+                    tw = 1;
+                else if (multgrid < 5)
+                    tw = 5;
+
+                //                System.Diagnostics.Debug.WriteLine("Mult " + multgrid + " tw "+ tw);
+                int majorlines = (gridwidth * tw).Clamp(0, 10000);
+
+                int sx = (int)((mc.TargetPosition.X - majorlines).Clamp(-50000, 50000 - majorlines * 2)) + 50000;  //move to positive rep so rounding next is always down
+
+                if (sx % majorlines > majorlines / 2)                // if we are over 1/2 way across, move over
+                    sx += majorlines;
+
+                sx = sx / majorlines * majorlines - 50000;         // round and adjust back
+
+                bool lookbackwards = (cameradir.Y > 90 || cameradir.Y < -90);
+                int zoffset = lookbackwards ? majorlines : 0;
+
+                int sz = (int)((mc.TargetPosition.Z - zoffset).Clamp(-20000, 70000 - majorlines * 2)) + 50000;  //move to positive rep so rounding next is always down
+
+                sz = sz / majorlines * majorlines - 50000;         // round and adjust back
+
+                Vector3 start = new Vector3(sx, sy, sz);
+                GL.ProgramUniform1(this.Id, 11, majorlines);
+                GL.ProgramUniform3(this.Id, 12, ref start);
+                GL.ProgramUniform1(this.Id, 13, lookbackwards?1:0);
+                System.Diagnostics.Debug.WriteLine(majorlines + " " + start + " " + lookbackwards);
+
+                if (lastsx != sx || lastsz != sz || lastsy != (int)sy)
+                {
+                    for (int i = 0; i < texcoords.Depth; i++)
+                    {
+                        int bsx = sx + majorlines * (i / 3);
+                        int bsz = sz + majorlines * (i % 3);
+                        string label = bsx.ToStringInvariant() + "," + sy.ToStringInvariant("0") + "," + bsz.ToStringInvariant();
+                        BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, Color.Blue);// Color.Transparent);
+                        texcoords.LoadBitmap(texcoords.BitMaps[i], i);
+                    }
+
+                    lastsx = sx;
+                    lastsz = sz;
+                    lastsy = (int)sy;
+                }
+            }
+
+            private GLTexture2DArray texcoords;
+            private Font gridfnt;
 
             public DynamicGridBitmapShader()
             {
+                texcoords = new GLTexture2DArray();
+                texcoords.CreateTexture(200, 25, 9);        // size and number
+                texcoords.OwnBitmaps = true;                // it will own the bitmaps
+
+                gridfnt = new Font("MS Sans Serif", 16);
+
+                for (int i = 0; i < 9; i++)
+                {
+                    Bitmap bmp = new Bitmap(texcoords.Width, texcoords.Height); // a bitmap for each number
+                    texcoords.LoadBitmap(bmp, i);
+                }
+
                 CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode());
+            }
+
+            public override void Start()
+            {
+                base.Start();
+                texcoords.Bind(1);
+            }
+
+            public override void Dispose()
+            {
+                base.Dispose();
+                texcoords.Dispose();
             }
         }
 
@@ -262,6 +364,7 @@ void main(void)
         }
 
         GLRenderDataTranslationRotationTexture solmarker;
+        GLTexture2DArray texcoords;
 
         protected override void OnLoad(EventArgs e)
         {
@@ -340,14 +443,21 @@ void main(void)
 
             }
 
+
             {
                 items.Add("PLGRIDBitmapVertShader", new DynamicGridBitmapShader());
-                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderColour());
+                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
                 rl.DepthTest = false;
 
-                items.Add("DYNGRIDBitmap", new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader")));
+
+                texcoords = new GLTexture2DArray();
+                items.Add("PLGridBitmapTextures", texcoords);
+
+                GLShaderPipeline sp = new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader"));
+
+                items.Add("DYNGRIDBitmap", sp);
 
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic:9));
             }

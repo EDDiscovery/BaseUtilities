@@ -429,6 +429,10 @@ public static class ObjectExtensionsNumbersBool
     {
         return Math.Min(Math.Max(a, min), max);
     }
+    public static int Clamp(this int a, int min, int max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
     public static long Range(this long a, long min, long max)
     {
         return Math.Min(Math.Max(a, min), max);

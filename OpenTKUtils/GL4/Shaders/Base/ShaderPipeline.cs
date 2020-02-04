@@ -104,7 +104,7 @@ namespace OpenTKUtils.GL4
             GL.BindProgramPipeline(0);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             foreach (var x in shaders)
                 x.Value.Dispose();

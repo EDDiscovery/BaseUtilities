@@ -138,14 +138,29 @@ namespace BaseUtils
                                                     float backscale = 1.0F, bool centertext = false, StringFormat frmt = null)
         {
             Bitmap img = new Bitmap(size.Width, size.Height);
+            Color? back = null;
+            if (!b.IsFullyTransparent())
+                back = b;
+            return DrawTextIntoFixedSizeBitmap(ref img, text, dp, c, back, backscale, centertext, frmt);
+        }
 
+        public static Bitmap DrawTextIntoFixedSizeBitmap(ref Bitmap img, string text,Font dp, Color c, Color? b,
+                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null, int angleback = 90)
+        { 
             using (Graphics dgr = Graphics.FromImage(img))
             {
-                if (!b.IsFullyTransparent() && text.Length > 0)
+                if (b != null)           // no idea why "&& text.Length > 0" was in there
                 {
-                    Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
-                    using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, b, b.Multiply(backscale), 90))
-                        dgr.FillRectangle(bb, backarea);
+                    if (b.Value.IsFullyTransparent())       // if transparent colour to paint in, need to fill clear it completely
+                    {
+                        dgr.Clear(Color.Transparent);
+                    }
+                    else
+                    {
+                        Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
+                        using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, b.Value, b.Value.Multiply(backscale), angleback))
+                            dgr.FillRectangle(bb, backarea);
+                    }
 
                     dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; // only if filled
                 }
@@ -157,10 +172,10 @@ namespace BaseUtils
                         SizeF sizef = dgr.MeasureString(text, dp);
                         int w = (int)(sizef.Width + 1);
                         int h = (int)(sizef.Height + 1);
-                        dgr.DrawString(text, dp, textb, size.Width / 2 - w / 2, size.Height / 2 - h / 2);
+                        dgr.DrawString(text, dp, textb, img.Width / 2 - w / 2, img.Height / 2 - h / 2);
                     }
                     else if (frmt != null)
-                        dgr.DrawString(text, dp, textb, new Rectangle(0, 0, size.Width, size.Height), frmt);
+                        dgr.DrawString(text, dp, textb, new Rectangle(0, 0, img.Width, img.Height), frmt);
                     else
                         dgr.DrawString(text, dp, textb, 0, 0);
                 }

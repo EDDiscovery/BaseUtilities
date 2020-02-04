@@ -28,13 +28,13 @@ namespace OpenTKUtils.GL4
 
     public class GLPLFragmentShaderTexture : GLShaderPipelineShadersBase
     {
-        public string Code()
+        public string Code(int binding)
         {
             return
 @"
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2D textureObject;
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2D textureObject;
 out vec4 color;
 
 void main(void)
@@ -44,15 +44,9 @@ void main(void)
 ";
         }
 
-        public GLPLFragmentShaderTexture()
+        public GLPLFragmentShaderTexture(int binding = 1)
         {
-            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
-        }
-
-        public override void Start()
-        {
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            OpenTKUtils.GLStatics.Check();
+            CompileLink(ShaderType.FragmentShader, Code(binding), auxname: GetType().Name);
         }
     }
 
@@ -64,13 +58,13 @@ void main(void)
 
     public class GLPLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
     {
-        public string Code(int offset)
+        public string Code(int offset, int binding)
         {
             return
 @"
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2DArray textureObject2D;
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
 out vec4 color;
 
 in VS_IN
@@ -85,15 +79,9 @@ void main(void)
 ";
         }
 
-        public GLPLFragmentShaderTexture2DIndexed(int offset)
+        public GLPLFragmentShaderTexture2DIndexed(int offset, int binding = 1)
         {
-            CompileLink(ShaderType.FragmentShader, Code(offset), auxname: GetType().Name);
-        }
-
-        public override void Start()
-        {
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            OpenTKUtils.GLStatics.Check();
+            CompileLink(ShaderType.FragmentShader, Code(offset,binding), auxname: GetType().Name);
         }
     }
 
@@ -105,13 +93,13 @@ void main(void)
 
     public class GLPLFragmentShaderTexture2DBlend : GLShaderPipelineShadersBase
     {
-        public string Code()
+        public string Code(int binding)
         {
             return
 @"
 #version 450 core
 in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2DArray textureObject;
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject;
 out vec4 color;
 layout (location = 30) uniform float blend;
 
@@ -126,16 +114,14 @@ void main(void)
 
         public float Blend { get; set; } = 0.0f;
 
-        public GLPLFragmentShaderTexture2DBlend()
+        public GLPLFragmentShaderTexture2DBlend(int binding = 1)
         {
-            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(binding), auxname: GetType().Name);
         }
 
         public override void Start()
         {
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);        // need fill for fragment to work
             GL.ProgramUniform1(Id, 30, Blend);
-            OpenTKUtils.GLStatics.Check();
         }
     }
 
@@ -149,13 +135,13 @@ void main(void)
 
     public class GLPLFragmentShaderTextureTriangleStrip : GLShaderPipelineShadersBase
     {
-        public string Code(bool backtoback)
+        public string Code(bool backtoback, int binding)
         {
             return
 @"
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=1) uniform sampler2D textureObject;
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2D textureObject;
 layout (location = 24) uniform  vec2 offset;
 out vec4 color;
 
@@ -181,16 +167,14 @@ void main(void)
 
         public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
 
-        public GLPLFragmentShaderTextureTriangleStrip(bool backtobackrect)
+        public GLPLFragmentShaderTextureTriangleStrip(bool backtobackrect, int binding=1)
         {
-            CompileLink(ShaderType.FragmentShader, Code(backtobackrect), auxname: GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(backtobackrect,binding), auxname: GetType().Name);
         }
 
         public override void Start()
         {
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.ProgramUniform2(Id, 24, TexOffset);
-            OpenTKUtils.GLStatics.Check();
         }
     }
 
@@ -236,9 +220,7 @@ void main(void)
 
         public override void Start()
         {
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.ProgramUniform2(Id, 24, TexOffset);
-            OpenTKUtils.GLStatics.Check();
         }
     }
 

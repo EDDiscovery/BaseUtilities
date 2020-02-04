@@ -120,7 +120,6 @@ void main(void)
             GL.ProgramUniform1(Id, 27, image2);
 
            // System.Diagnostics.Debug.WriteLine("Blend " + image1 + " to " + image2 + " Mix of" + mix);
-            GLStatics4.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             OpenTKUtils.GLStatics.Check();
         }

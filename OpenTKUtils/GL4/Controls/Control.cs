@@ -13,13 +13,11 @@
  */
 
 // Rules - no winforms in Control land except for Keys
- 
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
@@ -59,11 +57,7 @@ namespace OpenTKUtils.GL4.Controls
         Button = 1
     }
 
-    // Others - DockFlowRight - pass to next item the position of last item, and flow left, with wrap, keep the area to the max height used
-    // Others - DockFlowDown- pass to next item the position of last item, and flow Down, then top down again, with wrap, keep the area to the max width used
-    // bottomcentre, topcentre.
-
-    public enum DockingType { None, Left, Right, Top, Bottom, Fill, Center, LeftCenter, RightCenter, FlowRight, FlowTop };
+    public enum DockingType { None, Left, Right, Top, Bottom, Fill, Center, LeftCenter, RightCenter};
 
     [System.Diagnostics.DebuggerDisplay("Control {Name} {window}")]
     public abstract class GLBaseControl
