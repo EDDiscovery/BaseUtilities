@@ -228,7 +228,7 @@ void main(void)
             gl3dcontroller.Redraw();
         }
 
-        private void OtherKeys( BaseUtils.KeyboardState kb )
+        private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )
         {
         }
     }

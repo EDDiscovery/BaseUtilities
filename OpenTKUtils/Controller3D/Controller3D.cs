@@ -124,7 +124,7 @@ namespace OpenTKUtils.Common
         // Owner should call this at regular intervals.
         // handle keyboard, indicate if activated, handle other keys if required, return movement calculated in case you need to use it
 
-        public CameraDirectionMovementTracker HandleKeyboardSlews(bool activated, Action<BaseUtils.KeyboardState> handleotherkeys = null)
+        public CameraDirectionMovementTracker HandleKeyboardSlews(bool activated, Action<KeyboardMonitor> handleotherkeys = null)
         {
             long elapsed = sysinterval.ElapsedMilliseconds;         // stopwatch provides precision timing on last paint time.
             LastHandleInterval = (int)(elapsed - lastintervalcount);
@@ -132,18 +132,17 @@ namespace OpenTKUtils.Common
 
             if (activated && glwin.Focused)                      // if we can accept keys
             {
-                if (MatrixCalc.InPerspectiveMode)       // camera rotations are only in perspective mode
+                if (MatrixCalc.InPerspectiveMode)               // camera rotations are only in perspective mode
                 {
                     var ca = Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
 
-                    if (ca != Camera.KeyboardAction.None)      // moving the camera around kills the pos slew (as well as its own slew)
+                    if (ca != Camera.KeyboardAction.None)       // moving the camera around kills the pos slew (as well as its own slew)
                     {
                         Pos.KillSlew();
                         if (ca == Camera.KeyboardAction.MovePosition)
                             Pos.SetLookatPositionFromEye(Camera.Current, Zoom.EyeDistance);
                         else
                             Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
-
                     }
                 }
 
@@ -155,13 +154,15 @@ namespace OpenTKUtils.Common
                     Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
                 }
 
-                if (keyboard.IsPressedRemove(Keys.M, BaseUtils.KeyboardState.ShiftState.Ctrl))
+                if (keyboard.HasBeenPressed(Keys.M, KeyboardMonitor.ShiftState.Ctrl))
                     EliteMovement = !EliteMovement;
 
-                if (keyboard.IsPressedRemove(Keys.P, BaseUtils.KeyboardState.ShiftState.Ctrl))
+                if (keyboard.HasBeenPressed(Keys.P, KeyboardMonitor.ShiftState.Ctrl))
                     ChangePerspectiveMode(!MatrixCalc.InPerspectiveMode);
 
                 handleotherkeys?.Invoke(keyboard);
+
+                keyboard.ClearHasBeenPressed();
             }
             else
             {
@@ -339,7 +340,7 @@ namespace OpenTKUtils.Common
         }
 
 
-        private BaseUtils.KeyboardState keyboard = new BaseUtils.KeyboardState();        // needed to be held because it remembers key downs
+        private KeyboardMonitor keyboard = new KeyboardMonitor();        // needed to be held because it remembers key downs
 
         private Stopwatch sysinterval = new Stopwatch();    // to accurately measure interval between system ticks
         private long lastintervalcount = 0;                   // last update tick at previous update

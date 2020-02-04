@@ -13,7 +13,7 @@
  *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using BaseUtils;
+
 using OpenTK;
 using System;
 using System.Diagnostics;
@@ -143,7 +143,7 @@ namespace OpenTKUtils.Common
 
         public enum KeyboardAction { None, MoveEye, MovePosition };
 
-        public KeyboardAction Keyboard(KeyboardState kbd, float angle)
+        public KeyboardAction Keyboard(KeyboardMonitor kbd, float angle)
         {
             Vector3 cameraActionRotation = Vector3.Zero;
             KeyboardAction act = KeyboardAction.MoveEye;
@@ -151,39 +151,39 @@ namespace OpenTKUtils.Common
             if (kbd.Shift)
                 angle *= 2.0F;
 
-            if (kbd.IsPressed(Keys.NumPad4) != null)
+            if (kbd.IsCurrentlyPressed(Keys.NumPad4) != null)
             {
                 cameraActionRotation.Z = -angle;
             }
-            if (kbd.IsPressed(Keys.NumPad6) != null)
+            if (kbd.IsCurrentlyPressed(Keys.NumPad6) != null)
             {
                 cameraActionRotation.Z = angle;
             }
 
-            if (kbd.IsAnyPressed(Keys.NumPad5, Keys.NumPad2,Keys.Z) != null)
+            if (kbd.IsCurrentlyPressed(Keys.NumPad5, Keys.NumPad2,Keys.Z) != null)
             {
                 cameraActionRotation.X = -angle;
             }
-            if (kbd.IsAnyPressed(Keys.NumPad8,Keys.X) != null)
+            if (kbd.IsCurrentlyPressed(Keys.NumPad8,Keys.X) != null)
             {
                 cameraActionRotation.X = angle;
             }
 
-            if (kbd.IsPressed(KeyboardState.ShiftState.Ctrl, Keys.Q))
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.Ctrl, Keys.Q))
             {
                 cameraActionRotation.Y = angle;
             }
-            else if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q) != null)
+            else if (kbd.IsCurrentlyPressed(Keys.NumPad7, Keys.Q) != null)
             {
                 cameraActionRotation.Y = -angle;
                 act = KeyboardAction.MovePosition;
             }
 
-            if (kbd.IsPressed(KeyboardState.ShiftState.Ctrl, Keys.E))
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.Ctrl, Keys.E))
             {
                 cameraActionRotation.Y = -angle;
             }
-            else if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E) != null)
+            else if (kbd.IsCurrentlyPressed(Keys.NumPad9, Keys.E) != null)
             {
                 cameraActionRotation.Y = angle;
                 act = KeyboardAction.MovePosition;

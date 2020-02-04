@@ -98,24 +98,24 @@ namespace TestOpenTk
             gl3dcontroller.Redraw();
         }
 
-        private void OtherKeys( BaseUtils.KeyboardState kb )
+        private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )
         {
-            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.IsPressedRemove(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(0, 0, 0), 1, 2);
             }
 
-            if (kb.IsPressedRemove(Keys.F2, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.IsPressedRemove(Keys.F2, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(4, 0, 0), 1, 2);
             }
 
-            if (kb.IsPressedRemove(Keys.F3, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.IsPressedRemove(Keys.F3, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(10, 0, -10), 1, 2);
             }
 
-            if (kb.IsPressedRemove(Keys.F4, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.IsPressedRemove(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(50, 0, 50), 1, 2);
             }

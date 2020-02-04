@@ -382,28 +382,28 @@ void main(void)
             gl3dcontroller.Redraw();
         }
 
-        private void OtherKeys( BaseUtils.KeyboardState kb )
+        private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )
         {
             float fact = kb.Shift ? 10 : kb.Alt ? 100 : 1;
-            if (kb.IsPressed(Keys.F1) != null)
+            if (kb.IsCurrentlyPressed(Keys.F1) != null)
                 frequency -= 0.000001f * fact;
-            if (kb.IsPressed(Keys.F2) != null)
+            if (kb.IsCurrentlyPressed(Keys.F2) != null)
                 frequency += 0.000001f * fact;
-            if (kb.IsPressed(Keys.F5) != null)
+            if (kb.IsCurrentlyPressed(Keys.F5) != null)
                 unRadius -= 10 * fact;
-            if (kb.IsPressed(Keys.F6) != null)
+            if (kb.IsCurrentlyPressed(Keys.F6) != null)
                 unRadius += 10 * fact;
-            if (kb.IsPressed(Keys.F7) != null)
+            if (kb.IsCurrentlyPressed(Keys.F7) != null)
                 scutoff -= 0.001f * fact;
-            if (kb.IsPressed(Keys.F8) != null)
+            if (kb.IsCurrentlyPressed(Keys.F8) != null)
                 scutoff += 0.001f * fact;
-            if (kb.IsPressed(Keys.F9) != null)
+            if (kb.IsCurrentlyPressed(Keys.F9) != null)
                 blackdeepness -= 0.1f * fact;
-            if (kb.IsPressed(Keys.F10) != null)
+            if (kb.IsCurrentlyPressed(Keys.F10) != null)
                 blackdeepness += 0.1f * fact;
-            if (kb.IsPressed(Keys.F11) != null)
+            if (kb.IsCurrentlyPressed(Keys.F11) != null)
                 concentrationequator -= 0.1f * fact;
-            if (kb.IsPressed(Keys.F12) != null)
+            if (kb.IsCurrentlyPressed(Keys.F12) != null)
                 concentrationequator += 0.1f * fact;
         }
     }

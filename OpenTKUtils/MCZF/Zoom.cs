@@ -13,7 +13,7 @@
  *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using BaseUtils;
+
 using OpenTK;
 using System;
 using System.Diagnostics;
@@ -129,17 +129,17 @@ namespace OpenTKUtils.Common
                 return false;
         }
 
-        public bool Keyboard(KeyboardState kbd, float adjustment)
+        public bool Keyboard(KeyboardMonitor kbd, float adjustment)
         {
             bool changed = false;
 
-            if (kbd.IsAnyPressed(KeyboardState.ShiftState.None,Keys.Add, Keys.M))
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.None,Keys.Add, Keys.M))
             {
                 Multiply(adjustment);
                 changed = true;
             }
 
-            if (kbd.IsAnyPressed(KeyboardState.ShiftState.None, Keys.Subtract, Keys.N) )
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.None, Keys.Subtract, Keys.N) )
             {
                 Multiply(1.0f / adjustment);
                 changed = true;
@@ -147,23 +147,23 @@ namespace OpenTKUtils.Common
 
             float newzoom = 0;
 
-            if (kbd.IsPressedRemove(Keys.D1))
+            if (kbd.HasBeenPressed(Keys.D1))
                 newzoom = ZoomMax;
-            if (kbd.IsPressedRemove(Keys.D2))
+            if (kbd.HasBeenPressed(Keys.D2))
                 newzoom = 100;                                                      // Factor 3 scale
-            if (kbd.IsPressedRemove(Keys.D3))
+            if (kbd.HasBeenPressed(Keys.D3))
                 newzoom = 33;
-            if (kbd.IsPressedRemove(Keys.D4))
+            if (kbd.HasBeenPressed(Keys.D4))
                 newzoom = 11F;
-            if (kbd.IsPressedRemove(Keys.D5))
+            if (kbd.HasBeenPressed(Keys.D5))
                 newzoom = 3.7F;
-            if (kbd.IsPressedRemove(Keys.D6))
+            if (kbd.HasBeenPressed(Keys.D6))
                 newzoom = 1.23F;
-            if (kbd.IsPressedRemove(Keys.D7))
+            if (kbd.HasBeenPressed(Keys.D7))
                 newzoom = 0.4F;
-            if (kbd.IsPressedRemove(Keys.D8))
+            if (kbd.HasBeenPressed(Keys.D8))
                 newzoom = 0.133F;
-            if (kbd.IsPressedRemove(Keys.D9))
+            if (kbd.HasBeenPressed(Keys.D9))
                 newzoom = ZoomMin;
 
             if (newzoom != 0)

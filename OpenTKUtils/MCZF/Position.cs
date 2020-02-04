@@ -13,7 +13,7 @@
 *
 * EDDiscovery is not affiliated with Frontier Developments plc.
 */
-using BaseUtils;
+
 using OpenTK;
 using System;
 using System.Diagnostics;
@@ -150,36 +150,36 @@ namespace OpenTKUtils.Common
             }
         }
 
-        public bool Keyboard(KeyboardState kbd, bool inperspectivemode, Vector3 cameraDir, float distance, bool elitemovement)
+        public bool Keyboard(KeyboardMonitor kbd, bool inperspectivemode, Vector3 cameraDir, float distance, bool elitemovement)
         {
             Vector3 positionMovement = Vector3.Zero;
 
             if (kbd.Shift)
                 distance *= 2.0F;
 
-            if (kbd.IsAnyPressed(Keys.Left, Keys.A) != null)                // x axis
+            if (kbd.IsCurrentlyPressed(Keys.Left, Keys.A) != null)                // x axis
             {
                 positionMovement.X = -distance;
             }
-            else if (kbd.IsAnyPressed(Keys.Right, Keys.D) != null)
+            else if (kbd.IsCurrentlyPressed(Keys.Right, Keys.D) != null)
             {
                 positionMovement.X = distance;
             }
 
-            if (kbd.IsAnyPressed(Keys.PageUp, Keys.R) != null)              // y axis
+            if (kbd.IsCurrentlyPressed(Keys.PageUp, Keys.R) != null)              // y axis
             {
                 positionMovement.Y = distance;
             }
-            else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F) != null)
+            else if (kbd.IsCurrentlyPressed(Keys.PageDown, Keys.F) != null)
             {
                 positionMovement.Y = -distance;
             }
 
-            if (kbd.IsAnyPressed(Keys.Up, Keys.W) != null)                  // z axis
+            if (kbd.IsCurrentlyPressed(Keys.Up, Keys.W) != null)                  // z axis
             {
                 positionMovement.Z = distance;
             }
-            else if (kbd.IsAnyPressed(Keys.Down, Keys.S) != null)
+            else if (kbd.IsCurrentlyPressed(Keys.Down, Keys.S) != null)
             {
                 positionMovement.Z = -distance;
             }

@@ -366,9 +366,9 @@ void main(void)
                 gl3dcontroller.Redraw();
         }
 
-        private void OtherKeys(BaseUtils.KeyboardState kb)
+        private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)
         {
-            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 int times = 1000;
                 System.Diagnostics.Debug.WriteLine("Start test");

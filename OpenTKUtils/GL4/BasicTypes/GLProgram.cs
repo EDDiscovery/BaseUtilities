@@ -15,8 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using BaseUtils;
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4

@@ -18,11 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace BaseUtils
+namespace OpenTKUtils.Common
 {
     // hook Keydown/Keyup to it, then it keeps track of what keys are currently pressed
 
-    public class KeyboardState
+    public class KeyboardMonitor
     {
         public enum ShiftState
         {

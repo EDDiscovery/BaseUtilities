@@ -251,13 +251,13 @@ void main(void)
     if ( flip ) 
     {
         sx -=(1-vid/2)*textwidth;
-        sz -= (vid%2)*textwidth/8;
+        sz -= (vid%2)*textwidth/6;
         vs_textureCoordinate = vec2(1-vid/2,1-vid%2);
     }
     else
     {
         sx +=(vid/2)*textwidth;
-        sz += (1-vid%2)*textwidth/8;
+        sz += (1-vid%2)*textwidth/6;
         vs_textureCoordinate = vec2((vid/2),vid%2);
     }
 
@@ -541,9 +541,9 @@ void main(void)
             //    gl3dcontroller.Redraw();
         }
 
-        private void OtherKeys(BaseUtils.KeyboardState kb)
+        private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)
         {
-            if (kb.IsPressedRemove(Keys.F1, BaseUtils.KeyboardState.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 int times = 1000;
                 System.Diagnostics.Debug.WriteLine("Start test");
