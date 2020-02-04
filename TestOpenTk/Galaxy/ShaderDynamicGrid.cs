@@ -48,9 +48,14 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            DynamicGridShader s = items.PLShader("PLGRIDShaderCourse") as DynamicGridShader;
+            DynamicGridShader s = items.PLShader("PLGRIDVertShader") as DynamicGridShader;
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
-            i.InstanceCount = s.ComputeUniforms(gl3dcontroller.MatrixCalc);
+            i.InstanceCount = s.ComputeUniforms(gl3dcontroller.MatrixCalc, out int gridwidth, out Vector3 start);
+            DynamicGridBitmapShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridBitmapShader;
+            bs.ComputeUniforms(gridwidth, start);
+
+            solmarker.Position = gl3dcontroller.MatrixCalc.TargetPosition;
+            solmarker.Scale = gl3dcontroller.MatrixCalc.EyeDistance / 20;
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -59,15 +64,16 @@ namespace TestOpenTk
 
         public class DynamicGridShader : GLShaderPipelineShadersBase
         {
-            public int ComputeUniforms(GLMatrixCalc mc)
+            public int ComputeUniforms(GLMatrixCalc mc, out int gridwidth, out Vector3 start)
             {
                 int lines = 21;
-                int gridwidth = 10000;
-                Vector3 start;
+                gridwidth = 10000;
+
+                int sy = (int)ObjectExtensionsNumbersBool.Clamp(mc.TargetPosition.Y, -2000, 2000);
 
                 if (mc.EyeDistance >= 10000)
                 {
-                    start = new Vector3(-50000, (int)(mc.TargetPosition.Y), -20000);
+                    start = new Vector3(-50000, sy, -20000);
                 }
                 else
                 {
@@ -79,7 +85,7 @@ namespace TestOpenTk
                         horzlines = 81;
                         gridwidth = 1000;
                     }
-                    else if (mc.EyeDistance >= 200)
+                    else if (mc.EyeDistance >= 100)
                     {
                         gridwidth = 100;
                     }
@@ -95,12 +101,12 @@ namespace TestOpenTk
                     else if (sx + width > 50000)
                         sx = 50000 - width;
 
-                    int sy = (int)(mc.TargetPosition.Z) / gridwidth * gridwidth - gridstart;
-                    if (sy < -20000)
-                        sy = -20000;
-                    else if (sy + width > 70000)
-                        sy = 70000 - width;
-                    start = new Vector3(sx, (int)(mc.TargetPosition.Y), sy);
+                    int sz = (int)(mc.TargetPosition.Z) / gridwidth * gridwidth - gridstart;
+                    if (sz < -20000)
+                        sz = -20000;
+                    else if (sz + width > 70000)
+                        sz = 70000 - width;
+                    start = new Vector3(sx, sy, sz);
                 }
 
                 GL.ProgramUniform1(this.Id, 10, lines);
@@ -164,7 +170,7 @@ void main(void)
     {
         if ( abs(lpos) % (10*gridwidth) != 0 )
         {
-            a =  1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
+            a =  1.0 - clamp((dist - gridwidth)/float(10*gridwidth),0,0.95f);
             b = 0.5;
         }
     }
@@ -178,10 +184,74 @@ void main(void)
                 CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode(), new object[] { "color", c }, completeoutfile:@"c:\code\sh.txt");
             }
 
-            public override void Start()
+        }
+
+        public class DynamicGridBitmapShader : GLShaderPipelineShadersBase
+        {
+            public void ComputeUniforms(int gridwidth, Vector3 start)
             {
+                GL.ProgramUniform1(this.Id, 11, gridwidth);
+                GL.ProgramUniform3(this.Id, 12, ref start);
+            }
+
+            string vcode()
+            { return @"
+#version 450 core
+
+layout (location=11) uniform int gridwidth;
+layout (location=12) uniform vec3 start;
+
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+out vec4 vs_color;
+
+void main(void)
+{
+    int bitmap = gl_InstanceID;
+    int vid = gl_VertexID;
+    float dist = mc.EyeDistance;
+
+    int majorlines = clamp(gridwidth*5,0,10000);
+
+    int sy = int(clamp(mc.TargetPosition.y,-2000,2000));
+
+    int sx = int(clamp(mc.TargetPosition.x - majorlines,-50000,50000-majorlines*2)) + 50000;  //move to positive rep so rounding next is always down
+
+    if ( sx % majorlines > majorlines/2)                // if we are over 1/2 way across, move over
+        sx += majorlines;
+
+    sx = sx / majorlines * majorlines - 50000;         // round and adjust back
+
+    int sz = int(clamp(mc.TargetPosition.z,-20000,70000-majorlines*2)) + 50000;  //move to positive rep so rounding next is always down
+
+    sz = sz / majorlines * majorlines - 50000;         // round and adjust back
+
+    sx += majorlines *(bitmap/3);
+    sz += majorlines *(bitmap%3);
+
+    int textwidth = int(clamp(dist/3,0,2500));
+    sx +=(vid/2)*textwidth;
+    sz += (1-vid%2)*textwidth/3;
+
+    gl_Position = mc.ProjectionModelMatrix * vec4(sx,sy,sz,1);        // order important
+
+
+    vs_color = vec4(vid*0.2+0.2,0.0,0,1.0-0.3*(bitmap%3));
+}
+"; }
+
+            public DynamicGridBitmapShader()
+            {
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode());
             }
         }
+
 
         public class GLFixedShader : GLShaderPipeline
         {
@@ -190,6 +260,8 @@ void main(void)
                 AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(c));
             }
         }
+
+        GLRenderDataTranslationRotationTexture solmarker;
 
         protected override void OnLoad(EventArgs e)
         {
@@ -246,25 +318,38 @@ void main(void)
                 items.Add("solmarker", new GLTexture2D(Properties.Resources.dotted));
                 items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
                 GLRenderControl rq = GLRenderControl.Quads(cullface: false);
+                solmarker = new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 0, 0));
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 0, 0))
+                             GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
+                             solmarker
                              ));
             }
 
 
 
             {
-                items.Add("PLGRIDShaderCourse", new DynamicGridShader(Color.Cyan));
-                items.Add("PLShaderColour", new GLPLFragmentShaderColour());
+                items.Add("PLGRIDVertShader", new DynamicGridShader(Color.Cyan));
+                items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
 
-                items.Add("DYNGRIDCourse", new GLShaderPipeline(items.PLShader("PLGRIDShaderCourse"), items.PLShader("PLShaderColour")));
-                rObjects.Add(items.Shader("DYNGRIDCourse"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
-                
+                items.Add("DYNGRID", new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")));
+                rObjects.Add(items.Shader("DYNGRID"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
+
+            }
+
+            {
+                items.Add("PLGRIDBitmapVertShader", new DynamicGridBitmapShader());
+                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderColour());
+
+                GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
+                rl.DepthTest = false;
+
+                items.Add("DYNGRIDBitmap", new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader")));
+
+                rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic:9));
             }
 
 

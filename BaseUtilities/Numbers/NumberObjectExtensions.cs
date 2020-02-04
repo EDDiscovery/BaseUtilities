@@ -433,6 +433,18 @@ public static class ObjectExtensionsNumbersBool
     {
         return Math.Min(Math.Max(a, min), max);
     }
+    public static float Range(this float a, float min, float max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+    public static float Clamp(this float a, float min, float max)   // opengl name
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+    public static double Range(this double a, double min, double max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
 
     public static float Radians(this float x)
     {

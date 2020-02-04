@@ -74,10 +74,10 @@ namespace OpenTKUtils.GL4
 
             Vector4[] vertices1 =
             {
-                new Vector4(-width, 0, -height, 1.0f),
-                new Vector4(+width, 0, -height, 1.0f),
-                new Vector4(+width, 0, +height, 1.0f),
-                new Vector4(-width, 0, +height, 1.0f),
+                new Vector4(-width, 0, -height, 1.0f),          // -, -
+                new Vector4(+width, 0, -height, 1.0f),          // +, -
+                new Vector4(+width, 0, +height, 1.0f),          // +, +
+                new Vector4(-width, 0, +height, 1.0f),          // -, +
             };
 
             vertices1.RotPos(rotation, pos);

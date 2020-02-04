@@ -31,6 +31,7 @@ namespace OpenTKUtils.GL4
         public int TextureBind { get; set; } = 1;
 
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
+        public float Scale { get { return scale; } set { scale = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
 
         public Vector3 Rotation { get { return rot; } set { rot = value; Calc(); } }
