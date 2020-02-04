@@ -53,28 +53,9 @@ namespace TestOpenTk
 
             //System.Diagnostics.Debug.WriteLine("Camera " + cameradir + " Fov " + fov);
 
-            int lines = 21;
-            if (gl3dcontroller.MatrixCalc.EyeDistance < 200)
-            {
-                lines = 321*2;
-            }
-            else if (gl3dcontroller.MatrixCalc.EyeDistance < 1000)
-            {
-                lines = 321*2;
-            }
-            else if (gl3dcontroller.MatrixCalc.EyeDistance < 10000)
-            {
-                lines = 81*2;
-            }
-
-            //IGLShader s = items.Shader("DYNGRIDCourse");
-            //IGLShader s = items.PLShader("PLGRIDShaderCourse");
-
-//            GL.ProgramUniform1(s.Id, 25, lines);
-  //          GLStatics.Check();
-
+            DynamicGridShader s = items.PLShader("PLGRIDShaderCourse") as DynamicGridShader;
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
-            i.InstanceCount = lines;
+            i.InstanceCount = s.ComputeUniforms(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -83,12 +64,66 @@ namespace TestOpenTk
 
         public class DynamicGridShader : GLShaderPipelineShadersBase
         {
+            public int ComputeUniforms(GLMatrixCalc mc)
+            {
+                int lines = 21;
+                int gridwidth = 10000;
+                Vector3 start;
 
+                if (mc.EyeDistance >= 10000)
+                {
+                    start = new Vector3(-50000, (int)(mc.TargetPosition.Y), -20000);
+                }
+                else
+                {
+                    int horzlines = 321;
+                    gridwidth = 10;
+
+                    if (mc.EyeDistance >= 1000)
+                    {
+                        horzlines = 81;
+                        gridwidth = 1000;
+                    }
+                    else if (mc.EyeDistance >= 200)
+                    {
+                        gridwidth = 100;
+                    }
+
+                    lines = horzlines * 2;
+
+                    int gridstart = (horzlines - 1) * gridwidth / 2;
+                    int width = (horzlines - 1) * gridwidth;
+
+                    int sx = (int)(mc.TargetPosition.X) / gridwidth * gridwidth - gridstart;
+                    if (sx < -50000)
+                        sx = -50000;
+                    else if (sx + width > 50000)
+                        sx = 50000 - width;
+
+                    int sy = (int)(mc.TargetPosition.Z) / gridwidth * gridwidth - gridstart;
+                    if (sy < -20000)
+                        sy = -20000;
+                    else if (sy + width > 70000)
+                        sy = 70000 - width;
+                    start = new Vector3(sx, (int)(mc.TargetPosition.Y), sy);
+                }
+
+                GL.ProgramUniform1(this.Id, 10, lines);
+                GL.ProgramUniform1(this.Id, 11, gridwidth);
+                GL.ProgramUniform3(this.Id, 12, ref start);
+                GLStatics.Check();
+
+                return lines;
+            }
 
             string vcode(Color c)
             { return @"
 #version 450 core
 " + GLShader.CreateVars(new object[] { "color" , c}) + @"
+
+layout (location=10) uniform int lines;
+layout (location=11) uniform int gridwidth;
+layout (location=12) uniform vec3 start;
 
 #include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
 
@@ -107,93 +142,39 @@ void main(void)
 
     float dist = mc.EyeDistance;
 
-    ivec3 start;
-    int horzlines = 10;
-    int gridwidth = 10000;
-    int width = 90000;
-
-    if ( dist < 10000 ) 
-    {
-        if ( dist < 200  )
-        {
-            horzlines = 321;
-            gridwidth = 10;
-        }
-        else if ( dist < 1000 )
-        {
-            horzlines = 321;
-            gridwidth = 100;
-        }
-        else 
-        {
-            horzlines = 81;
-            gridwidth = 1000;
-        }
-
-        int gridstart = (horzlines-1)*gridwidth/2;
-        width = (horzlines-1)*gridwidth;
-
-        int sx = int(mc.TargetPosition.x) / gridwidth * gridwidth - gridstart;
-        if ( sx < -50000 )
-            sx = -50000;
-        else if ( sx + width > 50000)
-            sx = 50000-width;
-
-        int sy = int(mc.TargetPosition.z) / gridwidth * gridwidth - gridstart;
-        if ( sy < -20000 )
-            sy = -20000;
-        else if ( sy + width > 70000)
-            sy = 70000-width;
-        start = ivec3(sx, int(mc.TargetPosition.y), sy );
-    }
-    else
-    {
-        start = ivec3(-50000,int(mc.TargetPosition.y),-20000);
-        if ( line<horzlines)
-            width = 100000;
-    }
+    int horzlines = lines/2;
+    int width = (horzlines-1)*gridwidth;
+    if ( gridwidth==10000 && line < horzlines)
+        width = 100000;
 
     int lpos;
-    int distfromnom;
     vec4 position;
-    float a=1;
 
     if ( line>= horzlines) // vertical
     {
         line -= horzlines;
-        lpos = start.x + line * gridwidth;
-        distfromnom = abs(lpos-int(mc.TargetPosition.x));
+        lpos = int(start.x) + line * gridwidth;
         position = vec4( lpos , start.y, clamp(start.z + width * linemod,-20000,70000), 1);
-        if ( lpos < -50000 || lpos > 50000 ) // if line out of range..
-            a= 0;
     }
     else    
     {
-        lpos = start.z + gridwidth * line;
+        lpos = int(start.z) + gridwidth * line;
         position = vec4( clamp(start.x + width * linemod,-50000,50000), start.y, lpos , 1);
-        distfromnom = abs(lpos-int(mc.TargetPosition.z));
-        if ( lpos < -20000 || lpos > 70000 ) 
-            a= 0;
     }
 
     gl_Position = mc.ProjectionModelMatrix * position;        // order important
 
+    float a=1;
     float b = 0.7;
 
-    if ( a > 0 )
+    if ( gridwidth != 10000 ) 
     {
-        if ( gridwidth != 10000 ) 
+        if ( abs(lpos) % (10*gridwidth) != 0 )
         {
-            if ( abs(lpos) % (10*gridwidth) != 0 )
-            {
-                a =  1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
-                b = 0.5;
-
-            }
+            a =  1.0 - clamp((dist - gridwidth)/float(9*gridwidth),0.0,1.0);
+            b = 0.5;
         }
     }
-
-   // float as = 1.0-clamp(float(distfromnom)/gridwidth/horzlines*2,0,1);
                 
     vs_color = vec4(color.x*b,color.y*b,color.z*b,a);
 }
@@ -282,14 +263,11 @@ void main(void)
 
 
             {
-                items.Add("PLGRIDShaderCourse", new DynamicGridShader(Color.Yellow));
+                items.Add("PLGRIDShaderCourse", new DynamicGridShader(Color.Cyan));
                 items.Add("PLShaderColour", new GLPLFragmentShaderColour());
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
-
-            //  items.Add("DYNGRIDFine", new GLShaderPipeline(items.PLShader("PLGRIDShaderFine"), items.PLShader("PLShaderColour")));
-              //  rObjects.Add(items.Shader("DYNGRIDFine"), GLRenderableItem.CreateNullVertex(rl, dc: 2, ic: 82));
 
                 items.Add("DYNGRIDCourse", new GLShaderPipeline(items.PLShader("PLGRIDShaderCourse"), items.PLShader("PLShaderColour")));
                 rObjects.Add(items.Shader("DYNGRIDCourse"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
