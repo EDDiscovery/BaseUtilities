@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
+ * 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -46,41 +46,11 @@ namespace OpenTKUtils.GL4
         }
 
         // completeoutfile is output of file for debugging
-        public string Compile( ShaderType st, string codelisting, string completeoutfile = null )        // code listing - with added #includes
+        public string Compile( ShaderType st, string codelisting, Object[] constvalues = null, string completeoutfile = null )        // code listing - with added #includes
         {
             GLShader shader = new GLShader(st);
 
-            LineReader lr = new LineReader();
-            lr.OpenString(codelisting);
-
-            string code = "", line;
-            bool doneversion = false;
-
-            while( (line = lr.ReadLine())!=null)
-            {
-                line = line.Trim();
-                if (line.StartsWith("#include", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("//Include", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    line = line.Mid(line[0]=='#' ? 8 : 9).Trim();
-                    string include = BaseUtils.ResourceHelpers.GetResourceAsString(line);
-                    System.Diagnostics.Debug.Assert(include != null, "Cannot include " + line);
-                    lr.OpenString(include);     // include it
-                }
-                else if ( line.StartsWith("#version", StringComparison.InvariantCultureIgnoreCase))        // one and only one #version
-                {
-                    if ( !doneversion)
-                    {
-                        code += line + Environment.NewLine;
-                        doneversion = true;
-                    }
-                }
-                else
-                    code += line + Environment.NewLine;
-            }
-
-            if ( completeoutfile != null )
-                System.IO.File.WriteAllText(completeoutfile, code);
-            string ret = shader.Compile(code);
+            string ret = shader.Compile(codelisting, constvalues, completeoutfile);
 
             if (ret == null)
             {

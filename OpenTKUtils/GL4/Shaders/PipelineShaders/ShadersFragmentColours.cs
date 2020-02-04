@@ -1,6 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -42,7 +41,7 @@ void main(void)
         public GLPLFragmentShaderFixedColour(OpenTK.Graphics.Color4 c)
         {
             col = c;
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
         }
     }
 
@@ -69,7 +68,7 @@ void main(void)
 
         public GLPLFragmentShaderColour()
         {
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
         }
     }
 
@@ -95,7 +94,7 @@ void main(void)
 
         public GLPLFragmentIDShaderColour(int divisor)
         {
-            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(divisor), GetType().Name);
+            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Code(divisor), auxname: GetType().Name);
         }
     }
 

@@ -1,6 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -53,41 +52,44 @@ namespace OpenTKUtils.GL4
         }
 
         // Compile/link various shaders
-        // for varyings, you must set up a start action of Gl.BindBuffer(GL.TRANSFORM_FEEDBACK_BUFFER,bufid) AND BeingTransformFeedback.
+        // you can give any combo, and any combo of const vars
+        // if you specify varyings, you must set up a buffer, and a start action of Gl.BindBuffer(GL.TRANSFORM_FEEDBACK_BUFFER,bufid) AND BeingTransformFeedback.
 
-        public void CompileLink( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null, string[] varyings = null , 
-                                    TransformFeedbackMode varymode = TransformFeedbackMode.InterleavedAttribs )
+        public void CompileLink( string vertex=null, string tcs=null, string tes=null, string geo=null, string frag=null, 
+                                 object[] vertexconstvars = null , object[] tcsconstvars = null, object[] tesconstvars = null, object[] geoconstvars = null, object[] fragconstvars = null,
+                                 string[] varyings = null, TransformFeedbackMode varymode = TransformFeedbackMode.InterleavedAttribs
+                                )
         {
             program = new OpenTKUtils.GL4.GLProgram();
             string ret;
 
             if (vertex != null)
             {
-                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertex);
+                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vertex, vertexconstvars);
                 System.Diagnostics.Debug.Assert(ret == null, "Vertex Shader", ret);
             }
 
             if (tcs != null)
             {
-                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs);
+                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessControlShader, tcs, tcsconstvars);
                 System.Diagnostics.Debug.Assert(ret == null, "Tesselation Control Shader", ret);
             }
 
             if (tes != null)
             {
-                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes);
+                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.TessEvaluationShader, tes , tesconstvars );
                 System.Diagnostics.Debug.Assert(ret == null, "Tesselation Evaluation Shader", ret);
             }
 
             if (geo != null)
             {
-                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader, geo);
+                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader, geo, geoconstvars);
                 System.Diagnostics.Debug.Assert(ret == null, "Geometry shader", ret);
             }
 
             if (frag != null)
             {
-                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag);
+                ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, frag ,fragconstvars);
                 System.Diagnostics.Debug.Assert(ret == null, "Fragment Shader", ret);
             }
 

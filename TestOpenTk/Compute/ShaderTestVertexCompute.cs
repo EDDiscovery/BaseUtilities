@@ -90,7 +90,7 @@ void main(void)
 
             public GLVertexShaderCompute()
             {
-                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), GetType().Name);
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, Code(), auxname:GetType().Name);
             }
         }
 

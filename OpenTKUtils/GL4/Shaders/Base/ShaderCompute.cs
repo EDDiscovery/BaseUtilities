@@ -1,6 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -46,10 +45,10 @@ namespace OpenTKUtils.GL4
         }
 
         // completeoutfile is output of file for debugging
-        public void CompileLink(string code, string completeoutfile = null )
+        public void CompileLink(string code, Object[] constvalues = null, string completeoutfile = null )
         {
             program = new OpenTKUtils.GL4.GLProgram();
-            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.ComputeShader, code, completeoutfile);
+            string ret = program.Compile(OpenTK.Graphics.OpenGL4.ShaderType.ComputeShader, code, constvalues, completeoutfile);
             System.Diagnostics.Debug.Assert(ret == null, "Compute Shader", ret);
             ret = program.Link();
             System.Diagnostics.Debug.Assert(ret == null, "Link", ret);

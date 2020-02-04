@@ -106,7 +106,7 @@ void main(void)
 
             public GLFragmentShaderStarTexture()
             {
-                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Fragment(), GetType().Name);
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Fragment(), auxname:GetType().Name);
             }
 
             public override void Start()

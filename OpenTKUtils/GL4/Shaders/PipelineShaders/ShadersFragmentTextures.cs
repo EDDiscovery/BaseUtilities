@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
+ * 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -46,7 +46,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture()
         {
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
         }
 
         public override void Start()
@@ -87,7 +87,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture2DIndexed(int offset)
         {
-            CompileLink(ShaderType.FragmentShader, Code(offset), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(offset), auxname: GetType().Name);
         }
 
         public override void Start()
@@ -128,7 +128,7 @@ void main(void)
 
         public GLPLFragmentShaderTexture2DBlend()
         {
-            CompileLink(ShaderType.FragmentShader, Code(), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
         }
 
         public override void Start()
@@ -183,7 +183,7 @@ void main(void)
 
         public GLPLFragmentShaderTextureTriangleStrip(bool backtobackrect)
         {
-            CompileLink(ShaderType.FragmentShader, Code(backtobackrect), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(backtobackrect), auxname: GetType().Name);
         }
 
         public override void Start()
@@ -231,7 +231,7 @@ void main(void)
 
         public GLPLBindlessFragmentShaderTextureTriangleStrip(int arbblock = 10)
         {
-            CompileLink(ShaderType.FragmentShader, Code(arbblock), GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(arbblock), auxname: GetType().Name);
         }
 
         public override void Start()

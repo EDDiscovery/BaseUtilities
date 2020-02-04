@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
+ * 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -58,7 +58,7 @@ void main(void)
 
         public GLPLVertexShaderMatrixModelCoordWithMatrixTranslation()
         {
-            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
     }
 
@@ -111,7 +111,7 @@ void main(void)
 
         public GLPLVertexShaderTextureModelCoordWithMatrixTranslation()
         {
-            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
     }
 
@@ -161,7 +161,7 @@ void main(void)
         public GLPLVertexShaderColorModelCoordWithObjectCommonTranslation()
         {
             Transform = new GLRenderDataTranslationRotation();
-            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
 
         public override void Start()
@@ -219,7 +219,7 @@ void main(void)
         public GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation()
         {
             Transform = new GLRenderDataTranslationRotation();
-            CompileLink(ShaderType.VertexShader, Code(), GetType().Name);
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
 
         public override void Start()

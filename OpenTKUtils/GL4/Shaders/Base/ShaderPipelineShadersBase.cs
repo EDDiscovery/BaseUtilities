@@ -1,6 +1,5 @@
 ﻿/*
- * Copyright © 2019 Robbyxp1 @ github.com
- * Part of the EDDiscovery Project
+ * Copyright 2019-2020 Robbyxp1 @ github.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -27,10 +26,10 @@ namespace OpenTKUtils.GL4
         public int Id { get { return Program.Id; } }
         protected GLProgram Program;
 
-        protected void CompileLink( OpenTK.Graphics.OpenGL4.ShaderType st, string code, string auxname = "")
+        protected void CompileLink( OpenTK.Graphics.OpenGL4.ShaderType st, string code, Object[] constvalues = null, string auxname = "", string completeoutfile = null)
         {
             Program = new OpenTKUtils.GL4.GLProgram();
-            string ret = Program.Compile(st, code);
+            string ret = Program.Compile(st, code, constvalues, completeoutfile);
             System.Diagnostics.Debug.Assert(ret == null, auxname, ret);
             ret = Program.Link(separable: true);
             System.Diagnostics.Debug.Assert(ret == null, auxname, ret);

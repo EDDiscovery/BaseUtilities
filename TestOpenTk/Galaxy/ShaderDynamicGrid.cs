@@ -48,11 +48,6 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            //float cameradir = gl3dcontroller.Camera.Current.Y;
-            //float fov = gl3dcontroller.Fov.FovDeg;
-
-            //System.Diagnostics.Debug.WriteLine("Camera " + cameradir + " Fov " + fov);
-
             DynamicGridShader s = items.PLShader("PLGRIDShaderCourse") as DynamicGridShader;
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
             i.InstanceCount = s.ComputeUniforms(gl3dcontroller.MatrixCalc);
@@ -116,10 +111,9 @@ namespace TestOpenTk
                 return lines;
             }
 
-            string vcode(Color c)
+            string vcode()
             { return @"
 #version 450 core
-" + GLShader.CreateVars(new object[] { "color" , c}) + @"
 
 layout (location=10) uniform int lines;
 layout (location=11) uniform int gridwidth;
@@ -139,7 +133,6 @@ void main(void)
 {
     int line = gl_InstanceID;
     int linemod = gl_VertexID;
-
     float dist = mc.EyeDistance;
 
     int horzlines = lines/2;
@@ -182,7 +175,7 @@ void main(void)
 
             public DynamicGridShader(Color c)
             {
-                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode(c));
+                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode(), new object[] { "color", c }, completeoutfile:@"c:\code\sh.txt");
             }
 
             public override void Start()
