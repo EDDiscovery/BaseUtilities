@@ -70,12 +70,14 @@
     <Compile Include="Galaxy\ShaderDynamicGrid.designer.cs">
       <DependentUpon>ShaderDynamicGrid.cs</DependentUpon>
     </Compile>
-    <Compile Include="Galaxy\ShaderGalaxy.cs">
+    <Compile Include="Galaxy\ShaderGalaxyDemo1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Galaxy\ShaderGalaxy.designer.cs">
-      <DependentUpon>ShaderGalaxy.cs</DependentUpon>
+    <Compile Include="Galaxy\ShaderGalaxyDemo1.designer.cs">
+      <DependentUpon>ShaderGalaxyDemo1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Galaxy\ShaderGalaxy.cs" />
+    <Compile Include="Galaxy\ShaderGrid.cs" />
     <Compile Include="Geometry\ShaderTestGeoTest1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -195,8 +197,8 @@
     <EmbeddedResource Include="Galaxy\ShaderDynamicGrid.resx">
       <DependentUpon>ShaderDynamicGrid.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Galaxy\ShaderGalaxy.resx">
-      <DependentUpon>ShaderGalaxy.cs</DependentUpon>
+    <EmbeddedResource Include="Galaxy\ShaderGalaxyDemo1.resx">
+      <DependentUpon>ShaderGalaxyDemo1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Geometry\ShaderTestGeoTest1.resx">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>

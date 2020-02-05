@@ -72,6 +72,7 @@
     <Compile Include="GL4\Controls\ControlImage.cs" />
     <Compile Include="GL4\Controls\ControlDisplay.cs" />
     <Compile Include="GL4\Controls\Control.cs" />
+    <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL\GLRenderControl.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />

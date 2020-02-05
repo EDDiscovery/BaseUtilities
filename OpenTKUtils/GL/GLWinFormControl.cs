@@ -25,6 +25,15 @@ namespace OpenTKUtils.WinForm
 
     public class GLWinFormControl : GLWindowControl
     {
+        public OpenTK.GLControl glControl { get; private set; }      // use only in extreams for back compat
+
+        public Color BackColour { get { return backcolor; } set { backcolor = value; GL.ClearColor(backcolor); } }
+        public int Width { get { return glControl.Width; } }
+        public int Height { get { return glControl.Height; } }
+        public bool Focused { get { return glControl.Focused; } }
+        public GLRenderControl RenderState { get; set; } = null;
+        public bool MakeCurrentOnPaint { get; set; } = false;           // set if using multiple opengl in one thread
+
         public Action<Object, GLMouseEventArgs> MouseDown { get; set; } = null;
         public Action<Object, GLMouseEventArgs> MouseUp { get; set; } = null;
         public Action<Object, GLMouseEventArgs> MouseMove { get; set; } = null;
@@ -58,6 +67,27 @@ namespace OpenTKUtils.WinForm
             glControl.Paint += GlControl_Paint;
         }
 
+        public void Invalidate()        // repaint
+        {
+            glControl.Invalidate();
+        }
+
+        public void SetCursor(GLCursorType t)
+        {
+            if (t == GLCursorType.Wait)
+                glControl.Cursor = Cursors.WaitCursor;
+            else if (t == GLCursorType.EW)
+                glControl.Cursor = Cursors.SizeWE;
+            else if (t == GLCursorType.NS)
+                glControl.Cursor = Cursors.SizeNS;
+            else if (t == GLCursorType.Move)
+                glControl.Cursor = Cursors.Hand;
+            else if (t == GLCursorType.NWSE)
+                glControl.Cursor = Cursors.SizeNWSE;
+            else
+                glControl.Cursor = Cursors.Default;
+        }
+
         private OpenTK.GLControl CreateGLClass()
         {
             OpenTK.GLControl gl;
@@ -77,37 +107,6 @@ namespace OpenTKUtils.WinForm
             if ( e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down )
                 e.IsInputKey = true;
         }
-
-        public void Invalidate()
-        {
-            glControl.Invalidate();
-        }
-
-        public Color BackColour { get { return backcolor; } set { backcolor = value; GL.ClearColor(backcolor); } } 
-
-        public OpenTK.GLControl glControl { get; private set; }      // use only in extreams for back compat
-
-        public int Width { get { return glControl.Width; } }
-        public int Height { get { return glControl.Height; } }
-        public bool Focused { get { return glControl.Focused; } }
-
-        public void SetCursor(GLCursorType t)
-        {
-            if (t == GLCursorType.Wait)
-                glControl.Cursor = Cursors.WaitCursor;
-            else if (t == GLCursorType.EW)
-                glControl.Cursor = Cursors.SizeWE;
-            else if (t == GLCursorType.NS)
-                glControl.Cursor = Cursors.SizeNS;
-            else if (t == GLCursorType.Move)
-                glControl.Cursor = Cursors.Hand;
-            else if (t == GLCursorType.NWSE)
-                glControl.Cursor = Cursors.SizeNWSE;
-            else
-                glControl.Cursor = Cursors.Default;
-        }
-
-        public GLRenderControl RenderState { get; set; } = null;
 
         private Color backcolor { get; set; } = (Color)System.Drawing.ColorTranslator.FromHtml("#0D0D10");
 
@@ -179,19 +178,19 @@ namespace OpenTKUtils.WinForm
             MouseWheel?.Invoke(this, ev);
         }
 
-        public void Gc_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)      
+        private void Gc_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)      
         {
             GLKeyEventArgs ka = new GLKeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
             KeyDown?.Invoke(this, ka);
         }
 
-        public void Gc_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
+        private void Gc_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             GLKeyEventArgs ka = new GLKeyEventArgs(e.Alt, e.Control, e.Shift, e.KeyCode, e.KeyValue, e.Modifiers);
             KeyUp?.Invoke(this, ka);
         }
 
-        public void Gc_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        private void Gc_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
         {
             GLKeyEventArgs ka = new GLKeyEventArgs(e.KeyChar);     
             KeyPress?.Invoke(this, ka);
@@ -203,10 +202,13 @@ namespace OpenTKUtils.WinForm
             Resize?.Invoke(this);
         }
 
-        // called by window after invalidate. Set up and call painter of objects
+        // called by gl window after invalidate. Set up and call painter of objects
 
         private void GlControl_Paint(object sender, PaintEventArgs e)
         {
+            if ( MakeCurrentOnPaint )
+                glControl.MakeCurrent();    // only needed if running multiple GLs windows in same thread
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             if ( RenderState == null )
