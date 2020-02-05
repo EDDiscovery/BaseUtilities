@@ -66,21 +66,24 @@ namespace OpenTKUtils.GL4
         {
             foreach (var d in renderables)
             {
-               // System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
-                d.Key.Start();       // start the program
-
-                foreach (var g in d.Value)
+                if (d.Key.Enabled && d.Value.Find((x)=>x.Item2.Visible)!=null)      // shader must be enabled and at least 1 item visible
                 {
-                    if (g.Item2 != null)  // may have added a null renderable item if its a compute shader.
-                    {
-                       // System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
-                        g.Item2.Bind(currentstate, d.Key, c);
-                        g.Item2.Render();
-                       // System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
-                    }
-                }
+                    // System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
+                    d.Key.Start();                                                  // start the program - if compute shader, this executes the code
 
-                d.Key.Finish();
+                    foreach (var g in d.Value)
+                    {
+                        if (g.Item2 != null && g.Item2.Visible )                    // may have added a null renderable item if its a compute shader.  Make sure its visible.
+                        {
+                            // System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
+                            g.Item2.Bind(currentstate, d.Key, c);
+                            g.Item2.Render();
+                            // System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
+                        }
+                    }
+
+                    d.Key.Finish();
+                }
             }
 
             GL.UseProgram(0);           // final clean up

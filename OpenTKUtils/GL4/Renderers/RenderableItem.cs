@@ -31,6 +31,8 @@ namespace OpenTKUtils.GL4
 
     public class GLRenderableItem : IGLRenderableItem
     {
+        public bool Visible { get; set; } = true;                           // is visible?
+
         public GLRenderControl RenderControl { get; set; }                  // Draw type and other GL states needed for a correct render
 
         public IGLVertexArray VertexArray { get; set; }                     // may be null - if so no vertex data. Does not own

@@ -24,6 +24,7 @@ namespace OpenTKUtils.GL4
     public abstract class GLShaderPipelineShadersBase : IGLPipelineShader
     {
         public int Id { get { return Program.Id; } }
+
         protected GLProgram Program;
 
         protected void CompileLink( OpenTK.Graphics.OpenGL4.ShaderType st, string code, Object[] constvalues = null, string auxname = "", string completeoutfile = null)

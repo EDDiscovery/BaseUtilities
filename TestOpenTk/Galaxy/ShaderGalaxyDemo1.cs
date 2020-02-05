@@ -447,6 +447,24 @@ namespace TestOpenTk
                 long tickcount = gl3dcontroller.Redraw(times);
                 System.Diagnostics.Debug.WriteLine("Redraw {0} ms per {1}", tickcount, (float)tickcount / (float)times);
             }
+            if (kb.HasBeenPressed(Keys.F5, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                IGLProgramShader ps = items.Shader("Galaxy");
+                if (ps != null)
+                {
+                    ps.Enabled = !ps.Enabled;
+                    glwfc.Invalidate();
+                }
+            }
+            if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                IGLProgramShader ps = items.Shader("SD");
+                if (ps != null)
+                {
+                    ps.Enabled = !ps.Enabled;
+                    glwfc.Invalidate();
+                }
+            }
         }
 
 

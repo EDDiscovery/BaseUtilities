@@ -30,6 +30,8 @@ namespace OpenTKUtils.GL4
     public abstract class GLShaderStandard : IGLProgramShader
     {
         public int Id { get { return program.Id; } }
+        public bool Enabled { get; set; } = true;                        // if not enabled, no render items below it will be visible
+
         public IGLShader Get(ShaderType t) { return this; }
         public Action<IGLProgramShader> StartAction { get; set; }
         public Action<IGLProgramShader> FinishAction { get; set; }

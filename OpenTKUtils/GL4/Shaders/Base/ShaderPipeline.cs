@@ -32,6 +32,8 @@ namespace OpenTKUtils.GL4
     public class GLShaderPipeline : IGLProgramShader
     {
         public int Id { get { return pipelineid + 100000; } }            // to avoid clash with standard ProgramIDs, use an offset for pipeline IDs
+        public bool Enabled { get; set; } = true;                        // if not enabled, no render items below it will be visible
+
         public Action<IGLProgramShader> StartAction { get; set; }
         public Action<IGLProgramShader> FinishAction { get; set; }
 

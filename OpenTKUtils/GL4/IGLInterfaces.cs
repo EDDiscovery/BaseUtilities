@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     public interface IGLShader : IDisposable                // All shaders inherit from this
     {
         int Id { get; }
-        void Start();                         // Renders call this when program has just started
+        void Start();                                       // Renders call this when program has just started
         void Finish();                                      // Renders call this when program has ended
     }
 
@@ -36,6 +36,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
+        bool Enabled { get; set; }
         IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.
         Action<IGLProgramShader> StartAction { get; set; }      // allow start and finish actions to be added to the shader..
         Action<IGLProgramShader> FinishAction { get; set; }
@@ -58,6 +59,7 @@ namespace OpenTKUtils.GL4
         IGLRenderItemData RenderData { get; set; }          // may be null - no instance data/Control.  Allows instance data to be modified in the main program
         int DrawCount { get; set; }                         // Draw count
         int InstanceCount { get; set; }                     // Instances
+        bool Visible { get; set; }
     }
 
     public interface IGLRenderItemData                     // to be attached to a rendableitem, instance control/data need to be based on this. Should not need to be disposable..
