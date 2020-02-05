@@ -112,7 +112,7 @@ namespace OpenTKUtils.WinForm
 
         private Point FindCursorFormCoords()
         {
-            BaseUtils.Win32.UnsafeNativeMethods.GetCursorPos(out BaseUtils.Win32.UnsafeNativeMethods.POINT p);
+            UnsafeNativeMethods.GetCursorPos(out UnsafeNativeMethods.POINT p);
             Point gcsp = glControl.PointToScreen(new Point(0, 0));
             return new Point(p.X - gcsp.X, p.Y - gcsp.Y);
         }

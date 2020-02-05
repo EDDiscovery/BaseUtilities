@@ -103,7 +103,7 @@ namespace OpenTKUtils.GL4.Controls
             {
                 SizeF size = new Size(0, 0);
                 if ( Text.HasChars() )
-                    size = BaseUtils.BitMapHelpers.MeasureStringInBitmap(Text, Font, ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign));
+                    size = BitMapHelpers.MeasureStringInBitmap(Text, Font, ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign));
                 if (Image != null)
                     size = new SizeF(size.Width+Image.Width, Math.Max(Image.Height,(int)(size.Height+0.999)));
 

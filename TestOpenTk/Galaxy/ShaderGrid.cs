@@ -249,7 +249,7 @@ void main(void)
                     int bsx = sx + majorlines * (i / 3);
                     int bsz = sz + majorlines * (i % 3);
                     string label = bsx.ToStringInvariant() + "," + sy.ToStringInvariant("0") + "," + bsz.ToStringInvariant();
-                    BaseUtils.BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, backcol);// Color.Transparent);
+                    BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, backcol);// Color.Transparent);
                     texcoords.LoadBitmap(texcoords.BitMaps[i], i);
                 }
 

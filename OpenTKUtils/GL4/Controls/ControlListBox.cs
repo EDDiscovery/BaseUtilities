@@ -111,7 +111,7 @@ namespace OpenTKUtils.GL4.Controls
                     {
                         foreach (var s in Items)
                         {
-                            SizeF cur = BaseUtils.BitMapHelpers.MeasureStringInBitmap(s, Font, f);
+                            SizeF cur = BitMapHelpers.MeasureStringInBitmap(s, Font, f);
                             if (cur.Width > max.Width)
                                 max.Width = cur.Width;
                         }

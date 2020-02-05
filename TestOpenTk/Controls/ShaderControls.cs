@@ -7,7 +7,6 @@ using OpenTKUtils.GL4;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using BaseUtils;
 using System.Collections.Generic;
 using OpenTKUtils.GL4.Controls;
 

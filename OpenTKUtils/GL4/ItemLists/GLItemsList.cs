@@ -29,7 +29,7 @@ namespace OpenTKUtils.GL4
 
     public class GLItemsList : IDisposable
     {
-        BaseUtils.DisposableDictionary<string, IDisposable> items = new BaseUtils.DisposableDictionary<string, IDisposable>();
+        DisposableDictionary<string, IDisposable> items = new DisposableDictionary<string, IDisposable>();
         private int unnamed = 0;
 
         public void Dispose()

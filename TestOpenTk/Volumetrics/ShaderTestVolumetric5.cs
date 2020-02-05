@@ -149,7 +149,7 @@ namespace TestOpenTk
                 {
                     int v = -35000 + i * 1000;
                     numbers[i] = new Bitmap(100, 100);
-                    BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+                    BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
                     numberpos[i] = Matrix4.CreateScale(1);
                     numberpos[i] *= Matrix4.CreateRotationX(-25f.Radians());
                     numberpos[i] *= Matrix4.CreateTranslation(new Vector3(35500, 0, v));

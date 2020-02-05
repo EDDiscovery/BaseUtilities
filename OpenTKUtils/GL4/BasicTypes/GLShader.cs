@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4
         // take a codelisting, with optional includes, optional variables, and optional output of the code listing
         public static string PreprocessShaderCode(string codelisting, Object[] constvalues = null, string completeoutfile = null)
         {
-            BaseUtils.LineReader lr = new BaseUtils.LineReader();
+            LineReader lr = new LineReader();
             lr.OpenString(codelisting);
 
             string code = "", line;
@@ -50,7 +50,7 @@ namespace OpenTKUtils.GL4
                 if (line.StartsWith("#include", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("//Include", StringComparison.InvariantCultureIgnoreCase))
                 {
                     line = line.Mid(line[0] == '#' ? 8 : 9).Trim();
-                    string include = BaseUtils.ResourceHelpers.GetResourceAsString(line);
+                    string include = ResourceHelpers.GetResourceAsString(line);
                     System.Diagnostics.Debug.Assert(include != null, "Cannot include " + line);
                     lr.OpenString(include);     // include it
                 }

@@ -163,7 +163,7 @@ void main(void)
                 {
                     int v = -100 + i * 10;
                     numbers[i] = new Bitmap(100, 100);
-                    BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+                    BitMapHelpers.DrawTextCentreIntoBitmap(ref numbers[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
                     numberpos[i] = Matrix4.CreateScale(1);
                     numberpos[i] *= Matrix4.CreateRotationX(-80f.Radians());
                     numberpos[i] *= Matrix4.CreateTranslation(new Vector3(20, 0, v));

@@ -7,7 +7,6 @@ using OpenTKUtils.GL4;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using BaseUtils;
 using System.Collections.Generic;
 
 // Demonstrate the volumetric calculations needed to compute a plane facing the user inside a bounding box done inside a geo shader

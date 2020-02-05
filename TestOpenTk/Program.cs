@@ -1,5 +1,4 @@
-﻿using BaseUtils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace TestOpenTk
         [STAThread]
         static void Main(string[] stringargs)
         {
-            CommandArgs args = new CommandArgs(stringargs);
+            OpenTKUtils.CommandArgs args = new OpenTKUtils.CommandArgs(stringargs);
 
             using (OpenTK.Toolkit.Init(new OpenTK.ToolkitOptions { EnableHighResolution = false, Backend = OpenTK.PlatformBackend.PreferNative }))
             {

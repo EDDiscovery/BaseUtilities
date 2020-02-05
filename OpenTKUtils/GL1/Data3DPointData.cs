@@ -106,7 +106,7 @@ namespace OpenTKUtils.GL1
         protected int VtxColorVboId = 0;
         protected GLControl GLContext;
 
-        private bool UsePointDataColour { get { return this.Color.IsFullyTransparent(); } }
+        private bool UsePointDataColour { get { return this.Color == Color.Transparent; } }
 
         public PointDataCollection(string name, Color color, float pointsize)       // Color Transparent to use Point Data colours.
             : base(name, color, pointsize)

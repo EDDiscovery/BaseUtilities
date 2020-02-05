@@ -152,7 +152,7 @@ namespace TestOpenTk
                 {
                     int v = -45000 + 1000 * i;      // range from -45000 to +70000 
                     numbitmaps[i] = new Bitmap(100, 100);
-                    BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbitmaps[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
+                    BitMapHelpers.DrawTextCentreIntoBitmap(ref numbitmaps[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
                 }
 
                 GLTexture2DArray numtextures = new GLTexture2DArray(numbitmaps, ownbitmaps: true);

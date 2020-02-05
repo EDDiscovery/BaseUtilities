@@ -125,13 +125,19 @@
     <Compile Include="Controller3D\Controller3D.cs" />
     <Compile Include="MCZF\Zoom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="BaseUtils\ColorObjectExtensions.cs" />
+    <Compile Include="BaseUtils\CommandArgs.cs" />
+    <Compile Include="BaseUtils\ControlHelpers.cs" />
+    <Compile Include="BaseUtils\BitMapHelpers.cs" />
+    <Compile Include="BaseUtils\DisposableDictionary.cs" />
+    <Compile Include="BaseUtils\LineReader.cs" />
+    <Compile Include="BaseUtils\NativeMethods.cs" />
+    <Compile Include="BaseUtils\NumberObjectExtensions.cs" />
     <Compile Include="Utils\Polygon.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BaseUtilities\BaseUtils.csproj">
-      <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
-      <Name>BaseUtils</Name>
-    </ProjectReference>
+    <Compile Include="BaseUtils\ResourceHelpers.cs" />
+    <Compile Include="BaseUtils\StringObjectExtensions.cs" />
+    <Compile Include="BaseUtils\StringObjectExtensionsLines.cs" />
+    <Compile Include="BaseUtils\StringObjectExtensionsNumbers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
