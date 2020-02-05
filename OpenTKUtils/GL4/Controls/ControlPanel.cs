@@ -31,10 +31,17 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public GLPanel(string name, DockingType type, float dockpercent, Color back) : base(name,DefaultWindowRectangle,back)
+        public GLPanel(string name, DockingType type, float dockpercent, Color back) : base(name, DefaultWindowRectangle, back)
         {
             Dock = type;
             DockPercent = dockpercent;
+        }
+
+        public GLPanel(string name, Size sizep, DockingType type, float dockpercentage, Color back) : base(name, DefaultWindowRectangle, back)
+        {
+            Dock = type;
+            DockPercent = dockpercentage;
+            SetLocationSizeNI(size: sizep);
         }
     }
 }

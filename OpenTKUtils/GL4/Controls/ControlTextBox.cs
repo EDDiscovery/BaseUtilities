@@ -79,78 +79,89 @@ namespace OpenTKUtils.GL4.Controls
 
             if (Text.HasChars())
             {
-                var fmt = new StringFormat();
-                fmt.Alignment = StringAlignment.Near;
-
-                int widthavailable = drawbox.Width - 6;
-
-                if (displaystart == -1)     //not set, move to show end of string
+                using (var fmt = new StringFormat())
                 {
-                    cursorpos = Text.Length;
+                    fmt.Alignment = StringAlignment.Near;
+                    fmt.LineAlignment = StringAlignment.Near;
+                    fmt.FormatFlags = StringFormatFlags.NoWrap;        // need to tell it not to wrap for estimate
 
-                    if (cursorpos > 0)
+                    int widthavailable = drawbox.Width - 6;
+
+                    if (displaystart == -1)     //not set, move to show end of string
                     {
-                        displaystart = Math.Max(0, cursorpos - 1);
+                        cursorpos = Text.Length;
 
+                        if (cursorpos > 0)
+                        {
+                            displaystart = Math.Max(0, cursorpos - 1);
+
+                            while (true)
+                            {
+                                string p = Text.Substring(displaystart);
+                                CharacterRange[] characterRanges = { new CharacterRange(0, p.Length) };
+                                fmt.SetMeasurableCharacterRanges(characterRanges);
+                                var rect = gr.MeasureCharacterRanges(p, Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
+
+                                if (rect.Width < widthavailable) // back off until we fill the box
+                                    displaystart--;
+                                else
+                                    break;
+                            }
+
+                            displaystart++; // then move 1 forward.
+                        }
+                        else
+                            displaystart = 0;
+                    }
+                    else if (displaystart >= cursorpos)    // if we are beyond or AT the cursor pos, reset to cursor pos. the >= means we don't do the below at the cursor pos.
+                    {
+                        displaystart = cursorpos;
+                    }
+                    else
+                    {
                         while (true)
                         {
-                            string p = Text.Substring(displaystart);
-                            CharacterRange[] characterRanges = { new CharacterRange(0, p.Length) };
+                            CharacterRange[] characterRanges = { new CharacterRange(0, cursorpos - displaystart) };   // find where cursor pos is..
                             fmt.SetMeasurableCharacterRanges(characterRanges);
-                            var rect = gr.MeasureCharacterRanges(p, Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
-
-                            if (rect.Width < widthavailable) // back off until we fill the box
-                                displaystart--;
+                            var rect = gr.MeasureCharacterRanges(Text.Substring(displaystart), Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
+                            //System.Diagnostics.Debug.WriteLine("Measured " + rect + " allowed " + drawbox);
+                            if (rect.Width >= widthavailable) // if width > available, move DS on one and try again...
+                                displaystart++;
                             else
                                 break;
                         }
-
-                        displaystart++; // then move 1 forward.
                     }
-                    else
-                        displaystart = 0;
-                }
-                else if (displaystart >= cursorpos)    // if we are beyond or AT the cursor pos, reset to cursor pos. the >= means we don't do the below at the cursor pos.
-                {
-                    displaystart = cursorpos;
-                }
-                else
-                {
-                    while (true)
+
+                    string s = Text.Substring(displaystart);
+
+                    using (var fmt2 = new StringFormat())   // for some reasons, using set measurable characters above on fmt screws it up when it comes to paint, vs not using it
                     {
-                        CharacterRange[] characterRanges = { new CharacterRange(0, cursorpos - displaystart) };   // find where cursor pos is..
+                        fmt2.Alignment = StringAlignment.Near;
+                        fmt2.LineAlignment = StringAlignment.Near;
+
+                        using (Brush textb = new SolidBrush(Enabled ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
+                        {
+                            // System.Diagnostics.Debug.WriteLine("String " + s + " " + drawbox + " " + fmt2 + " " + Font + " "+ cursorpos + " " +displaystart + fmt2.FormatFlags );
+
+                            // we draw at point, and let the clipping box deal with it. using the rectangle with no wrap caused movement when different chars were present.
+                            gr.DrawString(s, Font, textb, new Point(drawbox.Left, (drawbox.Top + drawbox.Bottom) / 2 - Font.Height / 2 - 1), fmt2);
+                        }
+                    }
+
+                    if (Enabled && Focused)
+                    {
+                        int offset = cursorpos - displaystart;
+                        CharacterRange[] characterRanges = { new CharacterRange(0, Math.Max(1, offset)) };   // if offset=0, 1 char and we use the left pos
                         fmt.SetMeasurableCharacterRanges(characterRanges);
-                        var rect = gr.MeasureCharacterRanges(Text.Substring(displaystart), Font, new Rectangle(0, 0, 10000, 1000), fmt)[0].GetBounds(gr);
-                        //System.Diagnostics.Debug.WriteLine("Measured " + rect + " allowed " + drawbox);
-                        if (rect.Width >= widthavailable) // if width > available, move DS on one and try again...
-                            displaystart++;
-                        else
-                            break;
-                    }
-                }
+                        var rect = gr.MeasureCharacterRanges(s + "@", Font, drawbox, fmt)[0].GetBounds(gr);    // ensure at least 1 char
 
-                fmt.FormatFlags = StringFormatFlags.NoWrap;
+                        int curpos = (int)((offset == 0) ? rect.Left : rect.Right);
+                        int botpos = (int)rect.Bottom + 1;
 
-                string s = Text.Substring(displaystart);
-
-                using (Brush textb = new SolidBrush(Enabled ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
-                {
-                    gr.DrawString(s, Font, textb, drawbox, fmt);
-                }
-
-                if (Enabled && Focused)
-                {
-                    int offset = cursorpos - displaystart;
-                    CharacterRange[] characterRanges = { new CharacterRange(0, Math.Max(1, offset)) };   // if offset=0, 1 char and we use the left pos
-                    fmt.SetMeasurableCharacterRanges(characterRanges);
-                    var rect = gr.MeasureCharacterRanges(s + "@", Font, drawbox, fmt)[0].GetBounds(gr);    // ensure at least 1 char
-
-                    int curpos = (int)((offset == 0) ? rect.Left : rect.Right);
-                    int botpos = (int)rect.Bottom + 1;
-
-                    using (Pen p = new Pen(this.ForeColor))
-                    {
-                        gr.DrawLine(p, new Point(curpos, drawbox.Top), new Point(curpos, botpos));
+                        using (Pen p = new Pen(this.ForeColor))
+                        {
+                            gr.DrawLine(p, new Point(curpos, drawbox.Top), new Point(curpos, botpos));
+                        }
                     }
                 }
 
@@ -176,6 +187,7 @@ namespace OpenTKUtils.GL4.Controls
                                 using (var fmt = new StringFormat())
                                 {
                                     fmt.Alignment = StringAlignment.Near;
+                                    fmt.FormatFlags = StringFormatFlags.NoWrap;
                                     CharacterRange[] characterRanges = { new CharacterRange(i, 1) };
                                     fmt.SetMeasurableCharacterRanges(characterRanges);
 

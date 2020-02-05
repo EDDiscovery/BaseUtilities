@@ -57,7 +57,12 @@ namespace OpenTKUtils.GL4.Controls
         Button = 1
     }
 
-    public enum DockingType { None, Left, Right, Top, Bottom, Fill, Center, LeftCenter, RightCenter};
+    public enum DockingType {   None, Fill, Center,
+                                Left, LeftCenter, LeftTop, LeftBottom,              // order vital to layout test, keep
+                                Right, RightCenter, RightTop, RightBottom,
+                                Top, TopCenter, TopLeft, TopRight,
+                                Bottom, BottomCentre, BottomLeft, BottomRight,
+                              };
 
     [System.Diagnostics.DebuggerDisplay("Control {Name} {window}")]
     public abstract class GLBaseControl
@@ -90,6 +95,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public DockingType Dock { get { return docktype; } set { if (docktype != value) { docktype = value; InvalidateLayoutParent(); } } }
         public float DockPercent { get { return dockpercent; } set { if (value != dockpercent) { dockpercent = value; InvalidateLayoutParent(); } } }        // % in 0-1 terms used to dock on left,top,right,bottom.  0 means just use width/height
+        public Margin DockingMargin { get { return dockingmargin; } set { if (dockingmargin != value) { dockingmargin = value; InvalidateLayout(); } } }
 
         public GLBaseControl Parent { get { return parent; } }
         public Font Font { get { return font ?? parent?.Font; } set { SetFont(value); InvalidateLayout(); } }
@@ -365,7 +371,9 @@ namespace OpenTKUtils.GL4.Controls
 
         #region Overridables
 
-        protected virtual void PerformRecursiveSize()   // do children first, then do us
+        // first,perform recursive sizing. do children first, then do us
+
+        protected virtual void PerformRecursiveSize()   
         {
             foreach (var c in children)
             {
@@ -378,10 +386,13 @@ namespace OpenTKUtils.GL4.Controls
             SizeControl();              // size ourselves after children sized
         }
 
-        protected virtual void SizeControl()        // override to auto size. Only use the NI functions to change size.
+        // override to auto size. Only use the NI functions to change size.
+        protected virtual void SizeControl()        
         {
             //System.Diagnostics.Debug.WriteLine("Control " + Name + " Size ");
         }
+
+        // second, layout after sizing, layout children.  We are layedout by parent
 
         public virtual void PerformRecursiveLayout()     // go down the tree
         {
@@ -397,18 +408,14 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public virtual void Layout(ref Rectangle parentarea)      // layout yourself inside the area, return area left.
+        // standard layout function, layout yourself inside the area, return area left.
+        public virtual void Layout(ref Rectangle parentarea)     
         {
-            System.Diagnostics.Debug.WriteLine("Control " + Name + " " + window);
-            int ws = DockPercent > 0 ? ((int)(parentarea.Width * DockPercent)) : window.Width;
-            int hs = DockPercent > 0 ? ((int)(parentarea.Height * DockPercent)) : window.Height;
+            //System.Diagnostics.Debug.WriteLine("Control " + Name + " " + window + " " + Dock);
+            int dockedwidth = DockPercent > 0 ? ((int)(parentarea.Width * DockPercent)) : (window.Width);
+            int dockedheight = DockPercent > 0 ? ((int)(parentarea.Height * DockPercent)) : (window.Height);
             int wl = Width;
             int hl = Height;
-
-            //ws = Math.Min(ws, area.Width);        // rejected limiting to area width because now we have clipping it does not matter if its outside
-            //hs = Math.Min(hs, area.Height);
-            //int wl = Math.Min(area.Width, Width);
-            //int hl = Math.Min(area.Height, Height);
 
             Rectangle oldwindow = window;
             Rectangle areaout = parentarea;
@@ -426,38 +433,60 @@ namespace OpenTKUtils.GL4.Controls
                 Height = Math.Min(parentarea.Height, Height);
                 window = new Rectangle(xcentre - Width / 2, ycentre - Height / 2, Width, Height);       // centre in area, bounded by area, no change in area in
             }
-            else if (docktype == DockingType.Left)
+            else if (docktype == DockingType.None)
             {
-                window = new Rectangle(parentarea.Left, parentarea.Top, ws, parentarea.Height);
-                areaout = new Rectangle(parentarea.Left + ws, parentarea.Top, parentarea.Width - ws, parentarea.Height);
             }
-            else if (docktype == DockingType.LeftCenter)
+            else if (docktype >= DockingType.Bottom)
             {
-                window = new Rectangle(parentarea.Left, parentarea.Top + parentarea.Height / 2 - hl / 2, ws, hl);
-                areaout = new Rectangle(parentarea.Left + ws, parentarea.Top, parentarea.Width - ws, parentarea.Height);
+                if (docktype == DockingType.Bottom)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Bottom - dockedheight - dockingmargin.Bottom, parentarea.Width - dockingmargin.TotalWidth, dockedheight);
+                else if (docktype == DockingType.BottomCentre)
+                    window = new Rectangle(parentarea.Left + parentarea.Width / 2 - wl / 2, parentarea.Bottom - dockedheight - dockingmargin.Bottom, wl, dockedheight);
+                else if (docktype == DockingType.BottomLeft)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Bottom - dockedheight - dockingmargin.Bottom, wl, dockedheight);
+                else // bottomright
+                    window = new Rectangle(parentarea.Right - dockingmargin.Right - wl, parentarea.Bottom - dockedheight - dockingmargin.Bottom, wl, dockedheight);
+
+                areaout = new Rectangle(parentarea.Left, parentarea.Top, parentarea.Width, parentarea.Height - dockedheight - dockingmargin.TotalWidth);
             }
-            else if (docktype == DockingType.Right)
+            else if (docktype >= DockingType.Top)
             {
-                window = new Rectangle(parentarea.Right - ws, parentarea.Top, ws, parentarea.Height);
-                areaout = new Rectangle(parentarea.Left, parentarea.Top, parentarea.Width - window.Width, parentarea.Height);
+                if (docktype == DockingType.Top)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Top + dockingmargin.Top, parentarea.Width - dockingmargin.TotalWidth, dockedheight);
+                else if (docktype == DockingType.TopCenter)
+                    window = new Rectangle(parentarea.Left + parentarea.Width / 2 - wl / 2, parentarea.Top + dockingmargin.Top, wl, dockedheight);
+                else if (docktype == DockingType.TopLeft)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Top + dockingmargin.Top, wl, dockedheight);
+                else // topright
+                    window = new Rectangle(parentarea.Right - dockingmargin.Right - wl, parentarea.Top + dockingmargin.Top, wl, dockedheight);
+
+                areaout = new Rectangle(parentarea.Left, parentarea.Top + dockedheight + dockingmargin.TotalHeight, parentarea.Width, parentarea.Height - dockedheight - dockingmargin.TotalHeight);
             }
-            else if (docktype == DockingType.RightCenter)
+            else if (docktype >= DockingType.Right)
             {
-                window = new Rectangle(parentarea.Right - ws, parentarea.Top + parentarea.Height / 2 - hl / 2, ws, hl);
-                areaout = new Rectangle(window.Left, parentarea.Top, parentarea.Width - window.Width, parentarea.Height);
+                if (docktype == DockingType.Right)
+                    window = new Rectangle(parentarea.Right - dockedwidth - dockingmargin.Right, parentarea.Top + dockingmargin.Top, dockedwidth, parentarea.Height - dockingmargin.TotalHeight);
+                else if (docktype == DockingType.RightCenter)
+                    window = new Rectangle(parentarea.Right - dockedwidth - dockingmargin.Right, parentarea.Top + parentarea.Height / 2 - hl / 2, dockedwidth, hl);
+                else if (docktype == DockingType.RightTop)
+                    window = new Rectangle(parentarea.Right - dockedwidth - dockingmargin.Right, parentarea.Top + dockingmargin.Top, dockedwidth, hl);
+                else // rightbottom
+                    window = new Rectangle(parentarea.Right - dockedwidth - dockingmargin.Right, parentarea.Bottom - dockingmargin.Bottom - hl, dockedwidth, hl);
+
+                areaout = new Rectangle(parentarea.Left, parentarea.Top, parentarea.Width - window.Width - dockingmargin.TotalWidth, parentarea.Height);
             }
-            else if (docktype == DockingType.Top)
+            else // must be left!
             {
-                window = new Rectangle(parentarea.Left, parentarea.Top, parentarea.Width, hs);
-                areaout = new Rectangle(parentarea.Left, parentarea.Top + hs, parentarea.Width, parentarea.Height - hs);
-            }
-            else if (docktype == DockingType.Bottom)
-            {
-                window = new Rectangle(parentarea.Left, parentarea.Bottom - hs, parentarea.Width, hs);
-                areaout = new Rectangle(parentarea.Left, parentarea.Top, parentarea.Width, parentarea.Height - hs);
-            }
-            else
-            {   // any other docking - we just leave window alone and area alone.
+                if (docktype == DockingType.Left)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Top + dockingmargin.Top, dockedwidth, parentarea.Height - dockingmargin.TotalHeight);
+                else if (docktype == DockingType.LeftCenter)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Top + parentarea.Height / 2 - hl / 2, dockedwidth, hl);
+                else if (docktype == DockingType.LeftTop)
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Top + dockingmargin.Top, dockedwidth, hl);
+                else  // leftbottom
+                    window = new Rectangle(parentarea.Left + dockingmargin.Left, parentarea.Bottom - dockingmargin.Bottom - hl, dockedwidth, hl);
+
+                areaout = new Rectangle(parentarea.Left + dockedwidth + dockingmargin.TotalWidth, parentarea.Top, parentarea.Width - dockedwidth - dockingmargin.TotalWidth, parentarea.Height);
             }
 
             System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2} Area in {3} Area out {4}", Name, Dock, window, parentarea, areaout);
@@ -467,6 +496,8 @@ namespace OpenTKUtils.GL4.Controls
 
             parentarea = areaout;
         }
+
+        // Override if required if you run a bitmap
 
         public virtual void CheckBitmapAfterLayout()
         {
@@ -480,7 +511,7 @@ namespace OpenTKUtils.GL4.Controls
 
         // redraw, into usebmp
         // bounds = area that our control occupies on the bitmap, in bitmap co-ords. This may be outside of the clip area below if the child is outside of the client area of its parent control
-        // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas
+        // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas above us.
         // gr = graphics to draw into
         // we must be visible to be called. Children may not be visible
 
@@ -615,6 +646,10 @@ namespace OpenTKUtils.GL4.Controls
            // System.Diagnostics.Debug.WriteLine("Paint Into parent {0} to {1}", Name, parentarea);
         }
 
+        #endregion
+
+        #region UI Overrides
+
         public virtual void OnMouseLeave(GLMouseEventArgs e)
         {
             //System.Diagnostics.Debug.WriteLine("leave " + Name + " " + e.Location);
@@ -728,7 +763,7 @@ namespace OpenTKUtils.GL4.Controls
 
         #region Implementation
 
-        private void SetPos(int left, int top, int width, int height) // change window rectangle
+        private void SetPos(int left, int top, int width, int height) // change window rectangle, with layout
         {
             Rectangle w = new Rectangle(left, top, width, height);
 
@@ -802,6 +837,7 @@ namespace OpenTKUtils.GL4.Controls
         private int borderwidth { get; set; } = 0;
         private GL4.Controls.Padding padding { get; set; }
         private GL4.Controls.Margin margin { get; set; }
+        private GL4.Controls.Margin dockingmargin { get; set; }
         private bool autosize { get; set; }
         private int column { get; set; } = 0;     // for table layouts
         private int row { get; set; } = 0;        // for table layouts
