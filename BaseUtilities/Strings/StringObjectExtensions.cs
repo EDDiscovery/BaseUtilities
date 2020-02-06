@@ -388,56 +388,6 @@ public static class ObjectExtensionsStrings
         return ans;
     }
 
-    static public string StackTrace(this string trace, string enclosingfunc, int lines)
-    {
-        int offset = trace.IndexOf(enclosingfunc);
-
-        string ret = "";
-
-        if (offset != -1)
-        {
-            CutLine(ref trace, offset);
-
-            while (lines-- > 0)
-            {
-                string l = CutLine(ref trace, 0);
-                if (l != "")
-                {
-                    if (ret != "")
-                        ret = ret + Environment.NewLine + l;
-                    else
-                        ret = l;
-                }
-                else
-                    break;
-            }
-        }
-        else
-            ret = trace;
-
-        return ret;
-    }
-
-    static public string CutLine(ref string trace, int offset)
-    {
-        int nloffset = trace.IndexOf(Environment.NewLine, offset);
-        string ret;
-        if (nloffset != -1)
-        {
-            ret = trace.Substring(offset, nloffset - offset);
-            trace = trace.Substring(nloffset);
-            if (trace.Length >= Environment.NewLine.Length)
-                trace = trace.Substring(Environment.NewLine.Length);
-        }
-        else
-        {
-            ret = trace;
-            trace = "";
-        }
-
-        return ret;
-    }
-
     static public int IndexOf(this string s, string[] array, out int fi)   // in array, find one with first occurance, return which one in i
     {
         int found = -1;
@@ -576,88 +526,6 @@ public static class ObjectExtensionsStrings
         return text;
     }
 
-    static public int Lines(this string s, string lineterm = null)      // Newline standard  
-    {
-        if (lineterm == null)
-            lineterm = Environment.NewLine;
-
-        int count = 1;         // supposedly the fastest https://www.codeproject.com/Tips/312312/Counting-Lines-in-a-String
-        int position = 0;
-        while ((position = s.IndexOf(lineterm, position)) != -1)
-        {
-            count++;
-            position++;         // Skip this occurrence!
-        }
-        return count;
-    }
-
-    static public string LineLimit(this string s, int limit, string cutindicator)   // love extension methods
-    {
-        int count = 1;
-        int position = 0;
-        while ((position = s.IndexOf(Environment.NewLine, position)) != -1)
-        {
-            if (count == limit)
-            {
-                return s.Substring(0, position) + cutindicator;
-            }
-
-            count++;
-            position++;         // Skip this occurrence!
-        }
-
-        return s;
-    }
-
-    static public string LineNumbering(this string s, int start, string fmt = "N", string newline = null)   // love extension methods
-    {
-        if (newline == null)
-            newline = Environment.NewLine;
-
-        StringBuilder sb = new StringBuilder();
-        int position = 0, positions = 0;
-        while ((positions = s.IndexOf(newline, position)) != -1)
-        {
-            sb.Append(start.ToStringInvariant(fmt));
-            sb.Append(':');
-            sb.Append(s.Substring(position, positions - position));
-            sb.Append(newline);
-            position = positions + newline.Length;
-            start++;
-        }
-
-        if (position < s.Length)
-            sb.Append(s.Substring(position));
-
-        return sb.ToNullSafeString();
-    }
-
-    static public string LineTextInsersion(this string s, string insertatlinestart, string insertafternewline = "", string newline = null)   
-    {
-        if (newline == null)
-            newline = Environment.NewLine;
-
-        StringBuilder sb = new StringBuilder();
-        int position = 0, positions = 0;
-        while ((positions = s.IndexOf(newline, position)) != -1)
-        {
-            sb.Append(insertatlinestart);
-            sb.Append(s.Substring(position, positions - position));
-            sb.Append(newline);
-            sb.Append(insertafternewline);
-            position = positions + newline.Length;
-        }
-
-        if (position < s.Length)
-        {
-            sb.Append(insertatlinestart);
-            sb.Append(s.Substring(position));
-            sb.Append(newline);
-            sb.Append(insertafternewline);
-        }
-
-        return sb.ToNullSafeString();
-    }
 
     // find the next instance of one of the chars in set, in str, and return it in res. Return string after it.  Null if not found 
     static public string NextOneOf(this string str, char[] set, out char res)
@@ -673,38 +541,6 @@ public static class ObjectExtensionsStrings
         return null;
     }
 
-    static public int? ToHex(this char c)
-    {
-        if (char.IsDigit(c))
-            return c - '0';
-        else if ("ABCDEF".Contains(c))
-            return c - 'A' + 10;
-        else if ("abcdef".Contains(c))
-            return c - 'a' + 10;
-        else
-            return null;
-    }
-
-    // Format into lines, breaking at linelimit.
-    public static string FormatIntoLines(this IEnumerable<string> list, int linelimit = 80)     
-    {
-        StringBuilder res = new StringBuilder();
-        int lastlf = 0;
-
-        foreach (var s in list)
-        {
-            if (res.Length != lastlf)
-                res.Append(",");
-            res.Append(s);
-            if (res.Length - lastlf >= linelimit)
-            {
-                res.Append(Environment.NewLine);
-                lastlf = res.Length;
-            }
-        }
-
-        return res.ToNullSafeString();
-    }
 
 
 }

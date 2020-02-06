@@ -108,7 +108,7 @@ namespace OpenTKUtils.Common
                 float newzoom = (float)(zoom * zoommultiplier);
                 bool stop = (zoomtarget > zoom) ? (newzoom >= zoomtarget) : (newzoom <= zoomtarget);
 
-                //Console.WriteLine("{0} Zoom {1} -> {2} m {3} t {4} stop {5}", _zoomtimer.ElapsedMilliseconds, _zoom , newzoom, _zoommultiplier, _zoomtarget, stop);
+                //System.Diagnostics.Debug.WriteLine("{0} Zoom {1} -> {2} m {3} t {4} stop {5}", zoomtimer.ElapsedMilliseconds, zoom, newzoom, zoommultiplier, zoomtarget, stop);
 
                 if (stop)
                 {

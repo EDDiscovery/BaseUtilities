@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2018 EDDiscovery development team
+ * Copyright © 2018-2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -25,12 +25,12 @@ namespace BaseUtils
     {
         class Stack : IDisposable
         {
-            public Stack( StreamReader s, string p )
+            public Stack( TextReader s, string p )
             {
                 SR = s; Path=p;
             }
 
-            public StreamReader SR;
+            public TextReader SR;
             public string Path;
 
             public void Dispose()
@@ -53,7 +53,7 @@ namespace BaseUtils
 
                 if ( sr != null )
                 {
-                    filestack.Add(new Stack(sr,path));
+                    filestack.Add(new Stack(sr, path));
                     return true;
                 }
             }
@@ -62,6 +62,12 @@ namespace BaseUtils
             }
 
             return false;
+        }
+
+        public void OpenString( string text )
+        {
+            StringReader tr = new StringReader(text);
+            filestack.Add(new Stack(tr, "string"));
         }
 
         public string ReadLine()

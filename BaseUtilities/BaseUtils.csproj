@@ -54,6 +54,8 @@
   <ItemGroup>
     <Compile Include="CHash\ResourceHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
+    <Compile Include="Collections\DictionaryOfDictionaries.cs" />
+    <Compile Include="Collections\DisposableDictionary.cs" />
     <Compile Include="Collections\RangeLists.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
     <Compile Include="Collections\StackOfDictionaries.cs" />
@@ -65,6 +67,7 @@
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />

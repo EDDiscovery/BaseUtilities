@@ -142,6 +142,11 @@ public static class ControlHelpersStaticFunc
 
     static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliptorectangle = false)
     {
+        return ImagePositionFromContentAlignment(c, client, image, cliptorectangle, cliptorectangle);
+    }
+
+    static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliplefttop,  bool stayinrectangle)
+    {
         int left = client.Left;
 
         if (c == ContentAlignment.BottomCenter || c == ContentAlignment.MiddleCenter || c == ContentAlignment.TopCenter)
@@ -160,13 +165,22 @@ public static class ControlHelpersStaticFunc
         else
             top += 0;
 
-        if (cliptorectangle)        // ensure we start in rectangle..
+        if (cliplefttop)        // ensure we start in rectangle..
         {
-            left = Math.Max(0, left);
-            top = Math.Max(0, top);
+            left = Math.Max(Math.Min(client.Right, left), client.Left);
+            top = Math.Max(Math.Min(client.Bottom, top), client.Top);
         }
 
-        return new Rectangle(left, top, image.Width, image.Height);
+        int ih = image.Height;
+        int iw = image.Width;
+
+        if ( stayinrectangle)
+        { 
+            ih = Math.Min(client.Height, ih);
+            iw = Math.Min(client.Width, iw);
+        }
+
+        return new Rectangle(left, top, iw,ih);
     }
 
     static public GraphicsPath RectCutCorners(int x, int y, int width, int height, int roundnessleft, int roundnessright)

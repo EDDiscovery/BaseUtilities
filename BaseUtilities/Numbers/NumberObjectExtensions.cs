@@ -13,12 +13,9 @@
  *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 public static class ObjectExtensionsNumbersBool
 {
@@ -100,6 +97,18 @@ public static class ObjectExtensionsNumbersBool
             }
         }
         return null;
+    }
+
+    static public int? ToHex(this char c)
+    {
+        if (char.IsDigit(c))
+            return c - '0';
+        else if ("ABCDEF".Contains(c))
+            return c - 'A' + 10;
+        else if ("abcdef".Contains(c))
+            return c - 'a' + 10;
+        else
+            return null;
     }
 
     #endregion
@@ -416,14 +425,87 @@ public static class ObjectExtensionsNumbersBool
 
     #region stuff that should have been in Math
 
-    static public int Range(this int a, int min, int max)
+    public static int Range(this int a, int min, int max)
     {
         return Math.Min(Math.Max(a, min), max);
     }
-    static public long Range(this long a, long min, long max)
+    public static int Clamp(this int a, int min, int max)
     {
         return Math.Min(Math.Max(a, min), max);
     }
+    public static long Range(this long a, long min, long max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+    public static float Range(this float a, float min, float max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+    public static float Clamp(this float a, float min, float max)   // opengl name
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+    public static double Range(this double a, double min, double max)
+    {
+        return Math.Min(Math.Max(a, min), max);
+    }
+
+    public static float Radians(this float x)
+    {
+        return x * (float)(Math.PI / 180.0);
+    }
+
+    public static float Degrees(this float x)
+    {
+        return x * (float)(180.0 / Math.PI);
+    }
+
+    public static double Radians(this double x)
+    {
+        return x * (Math.PI / 180.0);
+    }
+
+    public static double Degrees(this double x)
+    {
+        return x * (180.0 / Math.PI);
+    }
+
+    public static float BoundedAngle(this float angle)
+    {
+        return ((angle + 360 + 180) % 360) - 180;
+    }
+
+    public static float BoundedAngle(this float angle, float add)
+    {
+        return ((angle + add + 360 + 180) % 360) - 180;
+    }
+
+    public static float Fract(this float a)
+    {
+        return a - (float)Math.Floor(a);
+    }
+
+    public static float Mix(float a, float b, float mix)
+    {
+        return a + (b - a) * mix;
+    }
+
+    public static float Abs(this float a)
+    {
+        return (a < 0) ? -a : a;
+    }
+
+    public static double GaussianDist(double x, double centre, double stddist)     // https://en.wikipedia.org/wiki/Gaussian_function
+    {
+        return Math.Exp(-(x - centre) * (x - centre) / (2 * stddist * stddist));
+    }
+
+    public static double GaussianNoise(double x, double u, double stddist)
+    {
+        return 1 / Math.Sqrt(2 * Math.PI * stddist) * Math.Exp(-(x - u) * (x - u) / (2 * stddist * stddist));       // Wichura 1998, Gentle 2003, https://www.statsdirect.com/help/randomization/generate_random_numbers.htm
+    }
+
+
 
     #endregion
 }
