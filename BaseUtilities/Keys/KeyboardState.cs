@@ -139,7 +139,7 @@ namespace BaseUtils
             Shift = s;
             keyspressed[keycode] = SetShift(c,s,a);
             hasbeenpressed[keycode] = SetShift(c, s, a);
-            System.Diagnostics.Debug.WriteLine("Keycode down " + keycode);
+            //System.Diagnostics.Debug.WriteLine("Keycode down " + keycode);
         }
 
         public void KeyUp(bool c, bool s, bool a, Keys keycode)      // hook to handler
@@ -148,7 +148,7 @@ namespace BaseUtils
             Alt = a;
             Shift = s;
             keyspressed.Remove(keycode);
-            System.Diagnostics.Debug.WriteLine("Keycode up " + keycode);
+            //System.Diagnostics.Debug.WriteLine("Keycode up " + keycode);
         }
     }
 }
