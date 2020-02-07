@@ -37,6 +37,7 @@ namespace OpenTKUtils.Common
 
         public void Translate(Vector3 pos)
         {
+            Debug.Assert(!(float.IsNaN(pos.X) || float.IsNaN(pos.Y) || float.IsNaN(pos.Z)));
             KillSlew();
             position += pos;
         }
@@ -48,8 +49,10 @@ namespace OpenTKUtils.Common
         // time <0 estimate, 0 instance >0 time
         public void GoTo(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F)       // may pass a Nan Position - no action. Y is normal sense
         {
-            if (!float.IsNaN(normpos.X))
+            if (!float.IsNaN(normpos.X) && !float.IsNaN(normpos.Y) && !float.IsNaN(normpos.Z))
             {
+                Debug.Assert(!(float.IsNaN(normpos.X) || float.IsNaN(normpos.Y) || float.IsNaN(normpos.Z)));
+
                 //System.Diagnostics.Debug.WriteLine("Goto " + normpos + " in " + timeslewsec + " at " + unitspersecond);
 
                 Vector3 pos = new Vector3(normpos);
@@ -98,6 +101,8 @@ namespace OpenTKUtils.Common
                     var slewend = Math.Sin((newprogress - 0.5) * Math.PI);
                     Debug.Assert((1 - 0 - slewstart) != 0);
                     var slewfact = (slewend - slewstart) / (1.0 - slewstart);
+
+
 
                     var totvector = new Vector3((float)(targetposSlewPosition.X - position.X), (float)(targetposSlewPosition.Y - position.Y), (float)(targetposSlewPosition.Z - position.Z));
                     position += Vector3.Multiply(totvector, (float)slewfact);

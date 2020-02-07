@@ -62,30 +62,38 @@ namespace OpenTKUtils.Common
                 cameraDir.X = 180;
         }
 
-        public void Pan(Vector3 pos, float timeslewsec = 0)       // may pass a Nan Position - no action
+        public void Pan(Vector3 normpos, float timeslewsec = 0)       // may pass a Nan Position - no action
         {
-            if (!float.IsNaN(pos.X))
+            if (!float.IsNaN(normpos.X) && !float.IsNaN(normpos.Y) && !float.IsNaN(normpos.Z))
             {
                 if (timeslewsec == 0)
                 {
-                    cameraDir = pos;
+                    cameraDir = normpos;
                 }
                 else
                 {
-                    cameraDirSlewPosition = pos;
+                    cameraDirSlewPosition = normpos;
                     cameraDirSlewProgress = 0.0f;
-                    cameraDirSlewTime = (timeslewsec == 0) ? (1.0F) : timeslewsec;
+                    cameraDirSlewTime = (timeslewsec<0) ? (2.0F) : timeslewsec;
                 }
             }
         }
 
-        public void LookAt(Vector3 curpos, Vector3 target, float zoom, float time = 0)            // real world
+        public void LookAt(Vector3 normpos, Vector3 target, float zoom, float time = 0)            // real world
         {
-            Vector3 targetinv = new Vector3(target.X, -target.Y, target.Z);
-            Vector3 eye = curpos;
-            Vector3 camera = AzEl(eye, targetinv);
-            camera.Y = 180 - camera.Y;      // adjust to this system
-            Pan(camera, time);
+            if (!float.IsNaN(target.X) && !float.IsNaN(target.Y) && !float.IsNaN(target.Z))
+            {
+                Vector3 targetinv = new Vector3(target.X, target.Y, target.Z);
+                Vector3 eye = normpos;
+                Vector3 camera = AzEl(eye, targetinv);
+                camera.Y = 180 - camera.Y;      // adjust to this system
+
+                //Vector3 posinv= new Vector3(pos.X, -pos.Y, pos.Z);
+                //Vector3 camera = AzEl(posinv, target);
+                //camera.X = 180 - camera.X;
+                System.Diagnostics.Debug.WriteLine("From " + normpos + " to " + target + " " + camera);
+                Pan(camera, time);
+            }
         }
 
         public void KillSlew()
@@ -102,6 +110,7 @@ namespace OpenTKUtils.Common
                 if (newprogress >= 1.0f)
                 {
                     cameraDir = cameraDirSlewPosition;
+                    System.Diagnostics.Debug.WriteLine("Camera at " + cameraDir);
                 }
                 else
                 {
