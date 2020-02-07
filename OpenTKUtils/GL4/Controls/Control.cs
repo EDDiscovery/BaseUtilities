@@ -155,6 +155,14 @@ namespace OpenTKUtils.GL4.Controls
         public Action<GLBaseControl,GLBaseControl> ControlAdd { get; set; } = null;
         public Action<GLBaseControl,GLBaseControl> ControlRemove { get; set; } = null;
 
+        // default color schemes and sizes
+
+        public static Action<GLBaseControl> Themer = null;                 // set this up, will be called during construction with the class for you to theme the colours/options
+
+        static public Color DefaultBackColor = Color.White;
+        static public Color DefaultForeColor = Color.Black;
+        static public Color DefaultBorderColor = Color.Gray;
+
         public void Invalidate()
         {
             //System.Diagnostics.Debug.WriteLine("Invalidate " + Name);
@@ -310,12 +318,10 @@ namespace OpenTKUtils.GL4.Controls
 
             this.window = location;
             this.backcolor = backcolor;
+
+            Themer?.Invoke(this);
         }
 
-        // default color schemes and sizes
-        static protected readonly Color DefaultBackColor = Color.White;
-        static protected readonly Color DefaultForeColor = Color.Black;
-        static protected readonly Color DefaultBorderColor = Color.Gray;
         static protected readonly Rectangle DefaultWindowRectangle = new Rectangle(0, 0, 10, 10);
         static protected readonly int MinimumResizeWidth = 10;
         static protected readonly int MinimumResizeHeight = 10;
@@ -369,7 +375,7 @@ namespace OpenTKUtils.GL4.Controls
             if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)     
                 return null;
 
-            foreach (GLBaseControl c in ControlsZ)       // in Z order
+            foreach (GLBaseControl c in childrenz)       // in Z order
             {
                 if (c.Visible)      // must be visible to be found..
                 {
@@ -390,7 +396,7 @@ namespace OpenTKUtils.GL4.Controls
 
         protected virtual void PerformRecursiveSize()   
         {
-            foreach (var c in ControlsZ) // in Z order
+            foreach (var c in childrenz) // in Z order
             {
                 if (c.Visible)      // invisible children don't layout
                 {
@@ -413,7 +419,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Rectangle area = ClientRectangle;
 
-            foreach (var c in ControlsZ)     // in z order, top gets first go
+            foreach (var c in childrenz)     // in z order, top gets first go
             {
                 if (c.Visible)      // invisible children don't layout
                 {
@@ -580,7 +586,7 @@ namespace OpenTKUtils.GL4.Controls
             // client area, in terms of last bitmap
             Rectangle clientarea = new Rectangle(bounds.Left + ClientLeftMargin, bounds.Top + ClientTopMargin, ClientWidth, ClientHeight);
 
-            foreach( var c in ControlsIZ)       // in inverse Z order, last is top Z
+            foreach( var c in childreniz)       // in inverse Z order, last is top Z
             {
                 if (c.Visible)
                 {
@@ -834,7 +840,7 @@ namespace OpenTKUtils.GL4.Controls
         private void SetEnabled(bool v)
         {
             enabled = v;
-            foreach (var c in ControlsZ)
+            foreach (var c in childrenz)
                 SetEnabled(v);
         }
 
@@ -847,7 +853,7 @@ namespace OpenTKUtils.GL4.Controls
         private void PropergateFontChanged(GLBaseControl p)
         {
             p.OnFontChanged();
-            foreach (var c in p.ControlsZ)
+            foreach (var c in p.childrenz)
             {
                 if (c.Font == null)
                     PropergateFontChanged(c);

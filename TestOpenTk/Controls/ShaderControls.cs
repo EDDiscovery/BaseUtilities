@@ -190,10 +190,10 @@ namespace TestOpenTk
 
                 if ( testtabcontrol )
                 {
-                    GLTabControl tc = new GLTabControl("Tabc", new Rectangle(150, 560, 200, 200), Color.DarkCyan);
+                    GLTabControl tc = new GLTabControl("Tabc", new Rectangle(360, 450, 200, 200), Color.DarkCyan);
                     tc.TabStyle = new TabStyleRoundedEdge();
-                    tc.TabStyle = new TabStyleAngled();
                     tc.TabStyle = new TabStyleSquare();
+                    tc.TabStyle = new TabStyleAngled();
                     tc.Font = new Font("Ms Sans Serif", 11);
 
                     GLTabPage tabp1 = new GLTabPage("tab1", "TAB 1", Color.Blue);

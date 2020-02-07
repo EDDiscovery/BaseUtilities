@@ -27,6 +27,15 @@ namespace OpenTKUtils.GL4.Controls
         public int SelectedTab { get { return seltab; } set { if (seltab != value) { seltab = value; ReselectTab(); } } }
         public TabStyleCustom TabStyle { get { return tabstyle; } set { tabstyle = value;InvalidateLayout();; } }
 
+        Color TabSelectedColor { get { return tabSelectedColor; } set { tabSelectedColor = value; Invalidate(); } }
+        Color TabNotSelectedColor { get { return tabNotSelectedColor; } set { tabNotSelectedColor = value; Invalidate(); } }
+        Color TextNotSelectedColor { get { return textNotSelectedColor; } set { textNotSelectedColor = value; Invalidate(); } }
+        Color TextNotEnabledColor { get { return textNotEnabledColor; } set { textNotEnabledColor = value; Invalidate(); } }
+        Color TabMouseOverColor { get { return tabMouseOverColor; } set { tabMouseOverColor = value; Invalidate(); } }
+        Color TabControlBorderColor { get { return tabControlBorderColor; } set { tabControlBorderColor = value; Invalidate(); } }
+        Color TabNotSelectedBorderColor { get { return tabNotSelectedBorderColor; } set { tabNotSelectedBorderColor = value; Invalidate(); } }
+        float TabColorScaling { get { return tabColorScaling; } set { tabColorScaling = value; Invalidate(); } }
+
         public GLTabControl(string name, Rectangle location, Color back) : base(name, location, back)
         {
         }
@@ -137,28 +146,19 @@ namespace OpenTKUtils.GL4.Controls
 
         }
 
-        Color TabSelectedColor = Color.Green;
-        Color TabNotSelectedColor = Color.Red;
-        Color TextNotSelectedColor = Color.Black;
-        Color TextNotEnabledColor = Color.Black;
-        Color TabMouseOverColor = Color.Cyan;
-        Color TabControlBorderColor = Color.Gray;
-        Color TabNotSelectedBorderColor = Color.DimGray;
-        float TabDisabledScaling = 0.5f;
-        float TabColorScaling = 0.5f;
 
         private void DrawTab(Graphics gr, Rectangle area, string text, Image img, bool selected, bool mouseover)
         {
             if (TabStyle == null)
                 throw new ArgumentNullException("Custom style not attached");
 
-            Color tabc1 = (Enabled) ? (mouseover ? TabMouseOverColor : (selected ? TabSelectedColor : TabNotSelectedColor)) : TabNotSelectedColor.Multiply(TabDisabledScaling);
+            Color tabc1 = (Enabled) ? (mouseover ? TabMouseOverColor : (selected ? TabSelectedColor : TabNotSelectedColor)) : TabNotSelectedColor.Multiply(DisabledScaling);
             Color tabc2 = tabc1.Multiply(TabColorScaling);
             Color taboutline = (selected) ? TabControlBorderColor : TabNotSelectedBorderColor;
 
             TabStyle.DrawTab(gr, area, selected, tabc1, tabc2, taboutline, TabStyleCustom.TabAlignment.Top);
 
-            Color tabtextc = (Enabled) ? ((selected) ? ForeColor : TextNotSelectedColor) : TextNotSelectedColor.Multiply(TabDisabledScaling);
+            Color tabtextc = (Enabled) ? ((selected) ? ForeColor : TextNotSelectedColor) : TextNotSelectedColor.Multiply(DisabledScaling);
             TabStyle.DrawText(gr, area, selected, tabtextc, text, Font, img);
 
             gr.SmoothingMode = SmoothingMode.Default;
@@ -221,6 +221,14 @@ namespace OpenTKUtils.GL4.Controls
         private int seltab = -1;
         private int mouseover = -1;
         private TabStyleCustom tabstyle = new TabStyleSquare();    // change for the shape of tabs.
+        private Color tabSelectedColor = Color.Green;
+        private Color tabNotSelectedColor = Color.Red;
+        private Color textNotSelectedColor = Color.Black;
+        private Color textNotEnabledColor = Color.Black;
+        private Color tabMouseOverColor = Color.Cyan;
+        private Color tabControlBorderColor = Color.Gray;
+        private Color tabNotSelectedBorderColor = Color.DimGray;
+        private float tabColorScaling = 0.5f;
     }
 
     /////////////////////////////////////////////////////////
