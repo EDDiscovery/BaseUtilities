@@ -61,7 +61,7 @@ namespace OpenTKUtils.GL4.Controls
                 int[] maxrowsize = new int[Rows.Count];
                 Dictionary<Tuple<int, int>, List<GLBaseControl>> sortedbycell = new Dictionary<Tuple<int, int>, List<GLBaseControl>>();
 
-                foreach (var c in children)         // first let all children autosize
+                foreach (var c in ControlsZ)         // first let all children autosize
                 {
                     if (c.Column < maxcolsize.Length && c.Row < maxrowsize.Length)
                     {

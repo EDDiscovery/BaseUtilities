@@ -80,7 +80,7 @@ namespace OpenTKUtils.GL4.Controls
         public int Bottom { get { return window.Bottom; } set { SetPos(window.Left, window.Top, window.Width, value - window.Top); } }
         public int Width { get { return window.Width; } set { SetPos(window.Left, window.Top, value, window.Height); } }
         public int Height { get { return window.Height; } set { SetPos(window.Left, window.Top, window.Width, value); } }
-        public Point Location { get { return new Point(window.Left, window.Top); } set { SetPos(value.X, value.Y, window.Width, window.Height); } }
+        public Point Location { get { return new Point(window.Left, window.Top); } set { SetLocation(value.X, value.Y); } }
         public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left, window.Top, value.Width, value.Height); } }
 
         // this is the client area, inside the margin/padding/border
@@ -134,7 +134,9 @@ namespace OpenTKUtils.GL4.Controls
 
         public Bitmap LevelBitmap { get { return levelbmp; } }
 
-        public virtual List<GLBaseControl> Controls { get { return children.ToList(); } }      // read only
+        public virtual List<GLBaseControl> ControlsIZ { get { return childreniz; } }      // read only, in inv zorder, so 0 = last layout first drawn
+        public virtual List<GLBaseControl> ControlsOrderAdded { get { return childreniz; } }      // in order added
+        public virtual List<GLBaseControl> ControlsZ { get { return childrenz; } }          // read only, in zorder, so 0 = first layout last painted
 
         public Action<Object, GLMouseEventArgs> MouseDown { get; set; } = null;  // location in client terms, NonClientArea set if on border with negative/too big x/y for clients
         public Action<Object, GLMouseEventArgs> MouseUp { get; set; } = null;
@@ -157,7 +159,14 @@ namespace OpenTKUtils.GL4.Controls
         {
             //System.Diagnostics.Debug.WriteLine("Invalidate " + Name);
             NeedRedraw = true;
-            var f = FindDisplay();
+
+            if ( BackColor == Color.Transparent )   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
+            { //tbd
+                System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " Parent need it too");
+                Parent?.Invalidate();
+            }
+
+            var f = FindDisplay();                  // set the display to request render
             if (f != null)
                 f.RequestRender = true;
         }
@@ -171,7 +180,7 @@ namespace OpenTKUtils.GL4.Controls
         public void InvalidateLayoutParent()
         {
             //System.Diagnostics.Debug.WriteLine("Invalidate Layout Parent " + Name);
-            NeedRedraw = true;
+            // removed - should not need, if parent redraws, we should not need redraw NeedRedraw = true;
             if (parent != null)
             {
                 var f = FindDisplay();
@@ -204,7 +213,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             int left = int.MaxValue, right = int.MinValue, top = int.MaxValue, bottom = int.MinValue;
 
-            foreach (var c in children)         // first let all children autosize
+            foreach (var c in childrenz)         
             {
                 if (c.Left < left)
                     left = c.Left;
@@ -252,7 +261,8 @@ namespace OpenTKUtils.GL4.Controls
         public virtual void Add(GLBaseControl other)
         {
             other.parent = this;
-            children.AddFirst(other);
+            childrenz.Insert(0,other);   // in z order.  First is top of z
+            childreniz.Add(other);       // in inv z order. Last is top of z
 
             if (this is GLControlDisplay) // if adding to a form, the child must have a bitmap
             {
@@ -267,7 +277,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void Remove(GLBaseControl other)
         {
-            if (children.Contains(other))
+            if (childrenz.Contains(other))
             {
                 OnControlRemove(this, other);
 
@@ -276,8 +286,9 @@ namespace OpenTKUtils.GL4.Controls
                 if (other.levelbmp != null)
                     other.levelbmp.Dispose();
 
-                children.Remove(other);
-                
+                childrenz.Remove(other);
+                childreniz.Remove(other);
+
                 Invalidate();
                 PerformLayout();        // reperform layout
             }
@@ -315,6 +326,7 @@ namespace OpenTKUtils.GL4.Controls
         protected GL4.Controls.Padding PaddingNI { set { padding = value; } }
         protected int BorderWidthNI { set { borderwidth = value; } }
         protected Color BorderColorNI { set { bordercolor = value; } }
+        public bool VisbileNI { set { visible = value; } }
 
         public void SetLocationSizeNI( Point? location = null, Size? size = null, bool clipsize = false)      // use by inheritors only.  Does not invalidate/Layout.
         {
@@ -357,11 +369,14 @@ namespace OpenTKUtils.GL4.Controls
             if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)     
                 return null;
 
-            foreach (GLBaseControl c in children)
+            foreach (GLBaseControl c in ControlsZ)       // in Z order
             {
-                var r = c.FindControlOver(new Point(p.X - Left - ClientLeftMargin, p.Y - Top - ClientTopMargin));   // find, converting co-ords into child co-ords
-                if (r != null)
-                    return r;
+                if (c.Visible)      // must be visible to be found..
+                {
+                    var r = c.FindControlOver(new Point(p.X - Left - ClientLeftMargin, p.Y - Top - ClientTopMargin));   // find, converting co-ords into child co-ords
+                    if (r != null)
+                        return r;
+                }
             }
 
             return this;
@@ -375,7 +390,7 @@ namespace OpenTKUtils.GL4.Controls
 
         protected virtual void PerformRecursiveSize()   
         {
-            foreach (var c in children)
+            foreach (var c in ControlsZ) // in Z order
             {
                 if (c.Visible)      // invisible children don't layout
                 {
@@ -394,11 +409,11 @@ namespace OpenTKUtils.GL4.Controls
 
         // second, layout after sizing, layout children.  We are layedout by parent
 
-        public virtual void PerformRecursiveLayout()     // go down the tree
+        public virtual void PerformRecursiveLayout()     // go down the tree.  
         {
             Rectangle area = ClientRectangle;
 
-            foreach (var c in children)
+            foreach (var c in ControlsZ)     // in z order, top gets first go
             {
                 if (c.Visible)      // invisible children don't layout
                 {
@@ -497,7 +512,7 @@ namespace OpenTKUtils.GL4.Controls
             parentarea = areaout;
         }
 
-        // Override if required if you run a bitmap
+        // Override if required if you run a bitmap. Standard actions is to replace it if width/height is different.
 
         public virtual void CheckBitmapAfterLayout()
         {
@@ -565,11 +580,8 @@ namespace OpenTKUtils.GL4.Controls
             // client area, in terms of last bitmap
             Rectangle clientarea = new Rectangle(bounds.Left + ClientLeftMargin, bounds.Top + ClientTopMargin, ClientWidth, ClientHeight);
 
-            LinkedListNode<GLBaseControl> pos = children.Last;      // render in order from last z to first z.
-            while( pos != null)
+            foreach( var c in ControlsIZ)       // in inverse Z order, last is top Z
             {
-                var c = pos.Value;
-
                 if (c.Visible)
                 {
                     Rectangle childbounds = new Rectangle(clientarea.Left + c.Left,     // not bounded by clip area, in bitmap coords
@@ -590,8 +602,6 @@ namespace OpenTKUtils.GL4.Controls
 
                     redrawn |= c.Redraw(usebmp, childbounds, childcliparea, gr, forceredraw);
                 }
-
-                pos = pos.Previous;
             }
 
             if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
@@ -616,9 +626,13 @@ namespace OpenTKUtils.GL4.Controls
 
         protected virtual void DrawBack(Rectangle bounds, Graphics gr, Color bc, Color bcgradientalt, int bcgradient)
         {
-            if (bc != Color.Transparent)
+            if ( levelbmp != null)                  // if we own a bitmap, reset back to transparent, erasing anything that we drew before
+                gr.Clear(Color.Transparent);        // tbd check
+
+            if (bc != Color.Transparent)            // and draw what the back colour is
             {
-                gr.Clear(Color.Transparent);        // reset back to transparent, if we don't, and we draw with alpha, successive draws cause the colour to build up
+                if ( levelbmp == null )             // if we are a normal control, we need to start from the pixels inside us being transparent
+                    gr.Clear(Color.Transparent);    // erasing anything that we drew before, because if we have half alpha in the colour, it will build up
 
                 if (bcgradient != int.MinValue)
                 {
@@ -679,7 +693,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void OnMouseDown(GLMouseEventArgs e)
         {
-            //System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
+            System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
             MouseDown?.Invoke(this, e);
 
             if (InvalidateOnMouseDownUp)
@@ -763,6 +777,36 @@ namespace OpenTKUtils.GL4.Controls
 
         #region Implementation
 
+        // set location - allowing override of invalidate behaviour
+
+        private void SetLocation(int left, int top)
+        {
+            Rectangle w = new Rectangle(left, top, Width, Height);
+            if (w != window)
+            {
+                window = w;
+
+                OnMoved();
+
+                if ( (Parent?.ChildLocationChanged(this) ?? false) == false)     // give a class a chance to move windows in a different manner than causing a bit repaint/invalidate
+                {
+                    NeedRedraw = true;      // we need a redraw
+                    parent?.Invalidate();   // parent is invalidated as well, and the whole form needs reendering
+                    parent?.PerformLayout();     // go up one and perform layout on all its children, since we are part of it.
+                }
+            }
+        }
+
+        // normally a location changed (left,top) means a invalidate of parent and re-layout. But for top level windows under GLDisplayControl
+        // we don't need to lay them out as they are top level GL objects and we just need to move the texture co-ords
+        // this bit does that - allows the top level parent to not have to invalidate if it returns true
+        protected virtual bool ChildLocationChanged(GLBaseControl child)
+        {
+            return false;
+        }
+
+        // Set Position, causing an invalidation layout at parent level
+
         private void SetPos(int left, int top, int width, int height) // change window rectangle, with layout
         {
             Rectangle w = new Rectangle(left, top, width, height);
@@ -790,7 +834,7 @@ namespace OpenTKUtils.GL4.Controls
         private void SetEnabled(bool v)
         {
             enabled = v;
-            foreach (var c in children)
+            foreach (var c in ControlsZ)
                 SetEnabled(v);
         }
 
@@ -803,20 +847,11 @@ namespace OpenTKUtils.GL4.Controls
         private void PropergateFontChanged(GLBaseControl p)
         {
             p.OnFontChanged();
-            foreach (var c in p.children)
+            foreach (var c in p.ControlsZ)
             {
                 if (c.Font == null)
                     PropergateFontChanged(c);
             }
-        }
-
-        public virtual void DebugWhoWantsRedraw()
-        {
-            //if (NeedRedraw)
-                System.Diagnostics.Debug.WriteLine("Debug Redraw Flag " + Name + " " + NeedRedraw);
-
-            foreach (var c in children)
-                c.DebugWhoWantsRedraw();
         }
 
         protected bool NeedRedraw { get; set; } = true;         // we need to redraw, therefore all children also redraw
@@ -845,7 +880,9 @@ namespace OpenTKUtils.GL4.Controls
         private bool focusable { get; set; } = false;
 
         private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
-        protected LinkedList<GLBaseControl> children = new LinkedList<GLBaseControl>();   // its children.  First is at the top of the Z list and gets first layed out and last rendered
+
+        private List<GLBaseControl> childrenz = new List<GLBaseControl>();
+        private List<GLBaseControl> childreniz = new List<GLBaseControl>();
 
 
         #endregion

@@ -46,7 +46,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Rectangle flowpos = new Rectangle(ClientRectangle.Location,new Size(0,0));      // in terms of our client area
 
-            foreach (GLBaseControl c in children)
+            foreach (GLBaseControl c in ControlsZ)
             {
                 System.Diagnostics.Debug.WriteLine("flow layout " + c.Name + " " + flowpos);
 

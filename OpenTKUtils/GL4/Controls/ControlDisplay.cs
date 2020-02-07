@@ -84,7 +84,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void Remove(GLBaseControl other)
         {
-            if (Controls.Contains(other))
+            if (ControlsZ.Contains(other))
             {
                 base.Remove(other);
                 textures[other].Dispose();
@@ -115,24 +115,39 @@ namespace OpenTKUtils.GL4.Controls
         public override void PerformRecursiveLayout()
         {
             base.PerformRecursiveLayout();
+            UpdateVertexPositions();
+            UpdateTextures();
+        }
 
-            vertexes.Allocate(children.Count * sizeof(float) * vertexesperentry * 4);
+        private void UpdateVertexPositions()
+        {
+            vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
             IntPtr p = vertexes.Map(0, vertexes.BufferSize);
 
-            List<IGLTexture> tlist = new List<IGLTexture>();
-
-            foreach (var c in children)
+            foreach (var c in ControlsZ)
             {
                 float z = 0f;
-                float[] a = new float[] {
-                                                c.Left, c.Top, z, 1,
+                float[] a = new float[] {       c.Left, c.Top, z, 1,
                                                 c.Left, c.Bottom , z, 1,
                                                 c.Right, c.Top, z, 1,
                                                 c.Right, c.Bottom , z, 1,
-                                            };
-
+                                         };
                 vertexes.MapWrite(ref p, a);
+            }
 
+            vertexes.UnMap();
+            OpenTKUtils.GLStatics.Check();
+
+            ri.DrawCount = ControlsZ.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
+            RequestRender = true;
+        }
+
+        private void UpdateTextures()
+        {
+            List<IGLTexture> tlist = new List<IGLTexture>();
+
+            foreach (var c in ControlsZ)
+            {
                 if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
                 {
                     textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
@@ -141,30 +156,24 @@ namespace OpenTKUtils.GL4.Controls
                 tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles, and the dictionary does not guarantee this
             }
 
-            vertexes.UnMap();
-            OpenTKUtils.GLStatics.Check();
-
-            ri.DrawCount = children.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
-
             texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..
-
-            RequestRender = true;
-
-            //float[] d = vertexes.ReadFloats(0, children.Count * 4 * cperv);
         }
 
-        // call this during your Paint to render.  Textures are initialised.
+        // overriding this indicates all we have to do if child location changes is update the vertex positions, and that we have dealt with it
+        protected override bool ChildLocationChanged(GLBaseControl child)
+        {
+            UpdateVertexPositions();
+            return true;
+        }
 
+        // call this during your Paint to render.
         public void Render(GLRenderControl currentstate)
         {
             //System.Diagnostics.Debug.WriteLine("Form redraw start");
             //DebugWhoWantsRedraw();
 
-            LinkedListNode<GLBaseControl> pos = children.Last;      // render in order from last z to first z.
-            while (pos != null)
-            {
-                var c = pos.Value;
-
+            foreach( var c in ControlsIZ)
+            { 
                 if (c.Visible)
                 {
                     bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
@@ -175,8 +184,6 @@ namespace OpenTKUtils.GL4.Controls
                         //float[] p = textures[c].GetTextureImageAsFloats(end:100);
                     }
                 }
-
-                pos = pos.Previous;
             }
 
             NeedRedraw = false;

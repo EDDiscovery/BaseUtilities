@@ -42,7 +42,9 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbDrawAngle { get { return scrollbar.ThumbDrawAngle; } set { scrollbar.ThumbDrawAngle = value;  } }
 
         public new string Name { get { return base.Name; } set { base.Name = value; scrollbar.Name = base.Name + "-SB"; scrollpanel.Name = base.Name + "-SP"; } }
-        public override List<GLBaseControl> Controls { get { return scrollpanel.Controls; } }      // read only
+        public override List<GLBaseControl> ControlsZ { get { return scrollpanel.ControlsZ; } }      // read only
+        public override List<GLBaseControl> ControlsIZ { get { return scrollpanel.ControlsIZ; } }      // read only
+        public override List<GLBaseControl> ControlsOrderAdded { get { return scrollpanel.ControlsIZ; } }      // read only
 
         public int ScrollBarWidth { get { return Font?.ScalePixels(20) ?? 20; } }
 

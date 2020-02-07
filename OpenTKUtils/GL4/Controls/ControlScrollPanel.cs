@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4.Controls
 
             bool needbitmap = false;
 
-            if (children.Count > 0)
+            if (ControlsZ.Count > 0)
             {
                 Rectangle r = ChildArea();
                 int childheight = r.Bottom;

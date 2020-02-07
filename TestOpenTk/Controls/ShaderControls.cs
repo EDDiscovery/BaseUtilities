@@ -160,8 +160,9 @@ namespace TestOpenTk
                 bool testvsp = true;
                 bool testlb = true;
                 bool testbuttons = true;
+                bool testtabcontrol = true;
 
-               // testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = false;
+            //    testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = false;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
@@ -186,6 +187,33 @@ namespace TestOpenTk
 
                 GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
                 pform.Add(p3);
+
+                if ( testtabcontrol )
+                {
+                    GLTabControl tc = new GLTabControl("Tabc", new Rectangle(150, 560, 200, 200), Color.DarkCyan);
+                    tc.TabStyle = new TabStyleRoundedEdge();
+                    tc.TabStyle = new TabStyleAngled();
+                    tc.TabStyle = new TabStyleSquare();
+                    tc.Font = new Font("Ms Sans Serif", 11);
+
+                    GLTabPage tabp1 = new GLTabPage("tab1", "TAB 1", Color.Blue);
+                    tc.Add(tabp1);
+
+                    GLButton tabp1b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1", Color.Gray, Color.Yellow);
+                    tabp1.Add(tabp1b1);
+                    tabp1b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
+
+                    GLTabPage tabp2 = new GLTabPage("tab1", "TAB Page 2", Color.Yellow);
+                    tc.Add(tabp2);
+
+                    GLTabPage tabp3 = new GLTabPage("tab1", "TAB Page 3", Color.Yellow);
+                    tc.Add(tabp3);
+                    GLTabPage tabp4 = new GLTabPage("tab1", "TAB Page 4", Color.Yellow);
+                    tc.Add(tabp4);
+
+                    pform.Add(tc);
+                    tc.SelectedTab = 0;
+                }
 
                 if (testtable)
                 {
