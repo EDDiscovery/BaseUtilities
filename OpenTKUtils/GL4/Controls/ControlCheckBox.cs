@@ -24,19 +24,35 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLCheckBox : GLButtonBase
+    public enum CheckBoxAppearance
     {
-        public Action<GLBaseControl, GLMouseEventArgs> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
+        Normal = 0,
+        Button = 1,
+        Radio = 2,
+    }
 
-        public GL4.Controls.CheckState CheckState { get { return checkstate; } set { checkstate = value; Invalidate(); } }
-        public bool Checked { get { return checkstate == CheckState.Checked; } set { checkstate = value ? CheckState.Checked : CheckState.Unchecked; Invalidate(); } }
-        public bool AutoCheck { get; set; } = false;
+    public enum CheckState { Unchecked, Checked, Indeterminate };
 
-        public Appearance Appearance { get { return appearance; } set { appearance = value; Invalidate(); } }
-        public ContentAlignment CheckAlign { get { return checkalign; } set { checkalign = value; Invalidate(); } }
+    public class GLCheckBox : GLButtonTextBase
+    {
+        public Action<GLBaseControl> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
+
+        public CheckState CheckState { get { return checkstate; } set { SetCheckState(value); } }
+        public bool Checked { get { return checkstate == CheckState.Checked; } set { SetCheckState(value ? CheckState.Checked : CheckState.Unchecked); } }
+        public bool AutoCheck { get; set; } = false;            // if true, autocheck on click
+
+        public CheckBoxAppearance Appearance { get { return appearance; } set { appearance = value; Invalidate(); } }
+
+        // Fore (text), ButtonBack, MouseOverBackColor, MouseDownBackColor from inherited class
+        private Color CheckBoxInnerColor { get { return checkBoxInnerColor; } set { checkBoxInnerColor = value; Invalidate(); } } 
+        private Color CheckColor { get { return checkColor; } set { checkColor = value; Invalidate(); } }
+
+        public bool GroupRadioButton { get; set; } = false;     // if true, on check, turn off all other CheckBox of parents
+
+        public ContentAlignment CheckAlign { get { return checkalign; } set { checkalign = value; Invalidate(); } }     // appearance Normal only
         public float TickBoxReductionRatio { get; set; } = 0.75f;       // Normal - size reduction
 
-        public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }
+        public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }        // apperance normal/button only
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
         public GLCheckBox(string name, Rectangle location, string text, Color backcolour) : base(name,location,backcolour)
@@ -66,7 +82,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             bool hasimages = Image != null;
 
-            if (Appearance == Appearance.Button)
+            if (Appearance == CheckBoxAppearance.Button)
             {
                 if (Enabled)
                 {
@@ -75,27 +91,25 @@ namespace OpenTKUtils.GL4.Controls
 
                     if (Hover)
                     {
-                        using (Brush mover = new SolidBrush(MouseOverBackColor))
-                           gr.FillRectangle(mover, marea);
+                        using (var b = new LinearGradientBrush(marea, MouseOverBackColor, MouseOverBackColor.Multiply(BackColorScaling), 90))
+                            gr.FillRectangle(b, marea);
                     }
                     else if (CheckState == CheckState.Checked)
                     {
-                        using (Brush mover = new SolidBrush(ButtonBackColor))
-                            gr.FillRectangle(mover, marea);
+                        using (var b = new LinearGradientBrush(marea, ButtonBackColor, ButtonBackColor.Multiply(BackColorScaling), 90))
+                            gr.FillRectangle(b, marea);
                     }
                 }
 
                 if (hasimages)
                     DrawImage(area, gr);
 
+                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
                 using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
-                {
-                    gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                     DrawText(area, gr, fmt);
-                    gr.SmoothingMode = SmoothingMode.Default;
-                }
             }
-            else
+            else if ( Appearance == CheckBoxAppearance.Normal )
             {
                 Rectangle tickarea = area;
                 Rectangle textarea = area;
@@ -193,10 +207,64 @@ namespace OpenTKUtils.GL4.Controls
                         }
                     }
                 }
+            }
+            else
+            {
+                Rectangle rect = area;
 
-                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+                rect.Height -= 6;
+                rect.Y += 2;
+                rect.Width = rect.Height;
+
+                Rectangle textarea = area;
+                textarea.X += rect.Width;
+                textarea.Width -= rect.Width;
+
+                Color basecolor = Hover ? MouseOverBackColor : ButtonBackColor;
+
+                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                using (Brush outer = new SolidBrush(basecolor))
+                    gr.FillEllipse(outer, rect);
+
+                rect.Inflate(-1, -1);
+
+                if (Enabled)
+                {
+                    using (Brush second = new SolidBrush(CheckBoxInnerColor))
+                        gr.FillEllipse(second, rect);
+
+                    rect.Inflate(-1, -1);
+
+                    using (Brush inner = new LinearGradientBrush(rect, CheckBoxInnerColor, basecolor, 225))
+                        gr.FillEllipse(inner, rect);      // fill slightly over size to make sure all pixels are painted
+                }
+                else
+                {
+                    using (Brush disabled = new SolidBrush(CheckBoxInnerColor))
+                    {
+                        gr.FillEllipse(disabled, rect);
+                    }
+                }
+
+                rect.Inflate(-1, -1);
+
+                if (Checked)
+                {
+                    Color c1 = Color.FromArgb(255, CheckColor);
+
+                    using (Brush inner = new LinearGradientBrush(rect, CheckBoxInnerColor, c1, 45))
+                        gr.FillEllipse(inner, rect);      // fill slightly over size to make sure all pixels are painted
+
+                    using (Pen ring = new Pen(CheckColor))
+                        gr.DrawEllipse(ring, rect);
+                }
+
+                using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center })
+                    DrawText(textarea, gr, fmt);
             }
 
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
         }
 
         private void DrawImage(Rectangle box, Graphics g)
@@ -226,24 +294,47 @@ namespace OpenTKUtils.GL4.Controls
             base.OnMouseClick(e);
             if ( e.Button == GLMouseEventArgs.MouseButtons.Left && AutoCheck )
             {
-                Checked = !Checked;
-                OnCheckChanged(e);
+                SetCheckState(checkstate == CheckState.Unchecked ? CheckState.Checked : CheckState.Unchecked);
             }
         }
 
-        public virtual void OnCheckChanged(GLMouseEventArgs e)
+        private void SetCheckState(CheckState value)
         {
-            CheckChanged?.Invoke(this, e);
+            if (checkstate != value)
+            {
+                checkstate = value;
+
+                if (GroupRadioButton && Parent != null && checkstate == CheckState.Checked)
+                {
+                    foreach (GLCheckBox c in Parent.ControlsZ.OfType<GLCheckBox>())
+                    {
+                        if (c != this && c.GroupRadioButton == true && c.checkstate != CheckState.Unchecked)    // if not us, in a group, and not unchecked
+                        {
+                            c.checkstate = CheckState.Unchecked;        // set directly
+                            c.OnCheckChanged();                         // fire change
+                            c.Invalidate();
+                        }
+                    }
+                }
+
+                OnCheckChanged();   // fire change on us
+                Invalidate();
+            }
+        }
+
+        protected virtual void OnCheckChanged()
+        {
+            CheckChanged?.Invoke(this);
         }
 
         private GL4.Controls.CheckState checkstate { get; set; } = CheckState.Unchecked;
-        private GL4.Controls.Appearance appearance { get; set; } = Appearance.Normal;
+        private GL4.Controls.CheckBoxAppearance appearance { get; set; } = CheckBoxAppearance.Normal;
         private ContentAlignment checkalign { get; set; } = ContentAlignment.MiddleCenter;
         private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
         private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
-        private Color CheckBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
-        private Color CheckColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
 
+        private Color checkBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
+        private Color checkColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
 
     }
 }

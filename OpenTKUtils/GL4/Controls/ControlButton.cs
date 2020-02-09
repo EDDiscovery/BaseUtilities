@@ -26,63 +26,9 @@ namespace OpenTKUtils.GL4.Controls
 {
     // a button type control
 
-    public abstract class GLButtonBase : GLImageBase
+    public class GLButton : GLButtonTextBase
     {
-        public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;         
-
-        public Color ButtonBackColor { get { return buttonBackColor; } set { buttonBackColor = value; Invalidate(); } }
-        public Color MouseOverBackColor { get { return mouseOverBackColor; } set { mouseOverBackColor = value; Invalidate(); } }
-        public Color MouseDownBackColor { get { return mouseDownBackColor; } set { mouseDownBackColor = value; Invalidate(); } }
-
-        public string Text { get { return text; } set { text = value; Invalidate(); } }
-        public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
-        public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
-
-        public GLButtonBase(string name, Rectangle window, Color backcolor) : base(name,window,backcolor)
-        {
-            InvalidateOnEnterLeave = true;
-            InvalidateOnMouseDownUp = true;
-        }
-
-        public override void OnMouseClick(GLMouseEventArgs e)
-        {
-            base.OnMouseClick(e);
-            if (e.Button == GLMouseEventArgs.MouseButtons.Left)
-                OnClick(e);
-        }
-
-        public virtual void OnClick(GLMouseEventArgs e)
-        {
-            Click?.Invoke(this, e);
-        }
-
-        protected string TextNI { set { text = value; } }
-
-        private string text;
-        private Color buttonBackColor { get; set; } = Color.Gray;
-        private Color mouseOverBackColor { get; set; } = Color.Green;
-        private Color mouseDownBackColor { get; set; } = Color.YellowGreen;
-        private Color foreColor { get; set; } = Color.Black;
-        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleCenter;
-
-    }
-
-    public class GLButton : GLButtonBase
-    {
-        public float ButtonColorScaling
-        {
-            get { return buttonColorScaling; }
-            set
-            {
-                if (float.IsNaN(value) || float.IsInfinity(value))
-                    return;
-                else if (buttonColorScaling != value)
-                {
-                    buttonColorScaling = value;
-                    Invalidate();
-                }
-            }
-        }
+        public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;
 
         public GLButton(string name, Rectangle location, string text, Color backcolour, Color bordercolor) : base(name, location, backcolour)
         {
@@ -141,7 +87,7 @@ namespace OpenTKUtils.GL4.Controls
             gr.SmoothingMode = SmoothingMode.None;
 
             //tbd not filling top line
-            using (var b = new LinearGradientBrush(area, colBack, colBack.Multiply(buttonColorScaling), 90))
+            using (var b = new LinearGradientBrush(area, colBack, colBack.Multiply(BackColorScaling), 90))
                 gr.FillRectangle(b, area);       // linear grad brushes do not respect smoothing mode, btw
 
             if (Image != null)
@@ -166,7 +112,17 @@ namespace OpenTKUtils.GL4.Controls
 
         }
 
-        private float buttonColorScaling = 0.5F;
+        
+        public override void OnMouseClick(GLMouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (e.Button == GLMouseEventArgs.MouseButtons.Left)
+                OnClick(e);
+        }
 
+        public virtual void OnClick(GLMouseEventArgs e)
+        {
+            Click?.Invoke(this, e);
+        }
     }
 }

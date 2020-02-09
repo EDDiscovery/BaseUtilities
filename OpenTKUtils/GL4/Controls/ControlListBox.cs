@@ -312,7 +312,7 @@ namespace OpenTKUtils.GL4.Controls
                     if (index >= 0 && index < items.Count)
                     {
                         selectedIndex = index;
-                        SelectedIndexChanged?.Invoke(this, SelectedIndex);
+                        OnSelectedIndexChanged();
                     }
                 }
 
@@ -371,15 +371,26 @@ namespace OpenTKUtils.GL4.Controls
                 if ((e.KeyCode == System.Windows.Forms.Keys.Enter || e.KeyCode == System.Windows.Forms.Keys.Return) || (e.Alt && (e.KeyCode == System.Windows.Forms.Keys.Up || e.KeyCode == System.Windows.Forms.Keys.Down)))
                 {
                     selectedIndex = focusindex;
-                    SelectedIndexChanged?.Invoke(this, SelectedIndex);
+                    OnSelectedIndexChanged();
                 }
 
                 if (e.KeyCode == System.Windows.Forms.Keys.Delete || e.KeyCode == System.Windows.Forms.Keys.Escape || e.KeyCode == System.Windows.Forms.Keys.Back)
                 {
-                    OtherKeyPressed?.Invoke(this, e);
+                    OnOtherKeyPressed(e);
                 }
             }
         }
+
+        protected virtual void OnSelectedIndexChanged()
+        {
+            SelectedIndexChanged?.Invoke(this, SelectedIndex);
+        }
+
+        protected virtual void OnOtherKeyPressed(GLKeyEventArgs e)
+        {
+            OtherKeyPressed?.Invoke(this, e);
+        }
+
 
         private bool fitToItemsHeight { get; set; } = true;              // if set, move the border to integer of item height.
         private bool fitImagesToItemHeight { get; set; } = false;        // if set images scaled to fit within item height

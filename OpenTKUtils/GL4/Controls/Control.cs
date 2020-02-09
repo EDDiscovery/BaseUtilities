@@ -49,14 +49,6 @@ namespace OpenTKUtils.GL4.Controls
         public override int GetHashCode() { return base.GetHashCode(); }
     };
 
-    public enum CheckState { Unchecked, Checked, Indeterminate };
-
-    public enum Appearance
-    {
-        Normal = 0,
-        Button = 1
-    }
-
     public enum DockingType {   None, Fill, Center,
                                 Left, LeftCenter, LeftTop, LeftBottom,              // order vital to layout test, keep
                                 Right, RightCenter, RightTop, RightBottom,
@@ -532,14 +524,14 @@ namespace OpenTKUtils.GL4.Controls
 
         // redraw, into usebmp
         // bounds = area that our control occupies on the bitmap, in bitmap co-ords. This may be outside of the clip area below if the child is outside of the client area of its parent control
-        // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas above us.
+        // cliparea = area that we can draw into, in bitmap co-ords, so we don't exceed the bounds of any parent clip areas above us. clipareas are continually narrowed
         // gr = graphics to draw into
         // we must be visible to be called. Children may not be visible
 
         public virtual bool Redraw(Bitmap usebmp, Rectangle bounds, Rectangle cliparea, Graphics gr, bool forceredraw)
         {
             Graphics parentgr = null;                           // if we changed level bmp, we need to give the control the opportunity
-            Rectangle parentarea = bounds;                    // to paint thru its level bmp to the parent bmp
+            Rectangle parentarea = bounds;                      // to paint thru its level bmp to the parent bmp
 
             if (levelbmp != null)                               // bitmap on this level, use it for itself and its children
             {
@@ -548,7 +540,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 usebmp = levelbmp;
 
-                cliparea = bounds = new Rectangle(0, 0, usebmp.Width, usebmp.Height);      // restate area in terms of bitmap, this is the bounds
+                cliparea = bounds = new Rectangle(0, 0, usebmp.Width, usebmp.Height);      // restate area in terms of bitmap, this is the bounds and the clip area
 
                 gr = Graphics.FromImage(usebmp);        // get graphics for it
                 gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
@@ -558,24 +550,13 @@ namespace OpenTKUtils.GL4.Controls
 
             if (NeedRedraw || forceredraw)          // if we need a redraw, or we are forced to draw by a parent redrawing above us.
             {
-                System.Diagnostics.Debug.WriteLine("redraw {0}->{1} Bounds {2} clip {3} nr {4} fr {5}", Parent?.Name, Name, bounds, cliparea, NeedRedraw, forceredraw);
+                System.Diagnostics.Debug.WriteLine("redraw {0}->{1} Bounds {2} clip {3} client {4} ({5},{6},{7},{8}) nr {9} fr {10}", Parent?.Name, Name, bounds, cliparea, 
+                                            ClientRectangle, ClientLeftMargin, ClientTopMargin, ClientRightMargin, ClientBottomMargin, NeedRedraw, forceredraw);
 
                 gr.SetClip(cliparea);   // set graphics to the clip area so we can draw the background/border
 
-                DrawBack(bounds,gr, BackColor, BackColorGradientAlt, BackColorGradient);
-
-                if (BorderWidth>0)
-                {
-                    Rectangle rectarea = new Rectangle(bounds.Left + Margin.Left,
-                                                    bounds.Top + Margin.Top,
-                                                    bounds.Width - Margin.TotalWidth - 1,
-                                                    bounds.Height - Margin.TotalHeight - 1);
-
-                    using (var p = new Pen(BorderColor, BorderWidth))
-                    {
-                        gr.DrawRectangle(p, rectarea);
-                    }
-                }
+                DrawBack(bounds, gr, BackColor, BackColorGradientAlt, BackColorGradient);
+                DrawBorder(bounds, gr, BorderColor, BorderWidth);
 
                 forceredraw = true;             // all children, force redraw
                 NeedRedraw = false;             // we have been redrawn
@@ -596,9 +577,14 @@ namespace OpenTKUtils.GL4.Controls
                                                           c.Height);
 
                     // clip area is progressively narrowed as we go down the children
-
+                    // its the minimum of the previous clip area
+                    // the child bounds
+                    // and the client rectangle
+ 
                     int cleft = Math.Max(childbounds.Left, cliparea.Left);          // clipped to child left or cliparea left
+                    cleft = Math.Max(cleft, bounds.Left + this.ClientLeftMargin);
                     int ctop = Math.Max(childbounds.Top, cliparea.Top);             // clipped to child top or cliparea top
+                    ctop = Math.Max(ctop, bounds.Top + this.ClientTopMargin);
                     int cright = Math.Min(childbounds.Left + c.Width, cliparea.Right);  // clipped to child left+width or the cliparea right
                     cright = Math.Min(cright, bounds.Right - this.ClientRightMargin);     // additionally clipped to our bounds right less its client margin
                     int cbot = Math.Min(childbounds.Top + c.Height, cliparea.Bottom);   // clipped to child bottom or cliparea bottom
@@ -613,7 +599,8 @@ namespace OpenTKUtils.GL4.Controls
             if ( forceredraw)       // will be set if NeedRedrawn or forceredrawn
             {
                 gr.SetClip(cliparea);   // set graphics to the clip area
-                Paint(clientarea, gr);  // paint can overdraw border if it wishes
+
+                Paint(clientarea, gr); // Paint, nominally in the client area, but you can access the whole of the cliparea which includes the margins
 
                 if (parentgr != null)      // give us a chance of parent paint thru
                 {
@@ -622,14 +609,30 @@ namespace OpenTKUtils.GL4.Controls
                 }
             }
 
-            if (levelbmp != null)                               // bitmap on this level, we made a GR, dispose
+            if (levelbmp != null)        // bitmap on this level, we made a GR, dispose
                 gr.Dispose();
 
             return redrawn;
         }
 
-        // draw back area - override or call if you wish to override the background area with another colour
+        // draw border area, override to draw something different
+        protected virtual void DrawBorder(Rectangle bounds, Graphics gr, Color bc, float bw)
+        {
+            if (bw > 0)
+            {
+                Rectangle rectarea = new Rectangle(bounds.Left + Margin.Left,
+                                                bounds.Top + Margin.Top,
+                                                bounds.Width - Margin.TotalWidth - 1,
+                                                bounds.Height - Margin.TotalHeight - 1);
 
+                using (var p = new Pen(bc, bw))
+                {
+                    gr.DrawRectangle(p, rectarea);
+                }
+            }
+        }
+
+        // draw back area - override to paint something different
         protected virtual void DrawBack(Rectangle bounds, Graphics gr, Color bc, Color bcgradientalt, int bcgradient)
         {
             if ( levelbmp != null)                  // if we own a bitmap, reset back to transparent, erasing anything that we drew before
@@ -655,7 +658,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-
+        
         protected virtual void Paint(Rectangle area, Graphics gr)      // normal override, you can overdraw border if required.
         {
             //System.Diagnostics.Debug.WriteLine("Paint {0} to {1}", Name, area);
@@ -699,7 +702,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void OnMouseDown(GLMouseEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
+           // System.Diagnostics.Debug.WriteLine("down " + Name + " " + e.Location +" " + e.Button);
             MouseDown?.Invoke(this, e);
 
             if (InvalidateOnMouseDownUp)
@@ -708,7 +711,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void OnMouseClick(GLMouseEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("click " + Name + " " + e.Button + " " + e.Clicks + " " + e.Location);
+            //System.Diagnostics.Debug.WriteLine("click " + Name + " " + e.Button + " " + e.Clicks + " " + e.Location);
             MouseClick?.Invoke(this, e);
         }
 

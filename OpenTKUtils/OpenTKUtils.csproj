@@ -56,9 +56,13 @@
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
+    <Compile Include="GL4\Controls\ControlBaseButton.cs" />
     <Compile Include="GL4\Controls\ControlComboBox.cs" />
     <Compile Include="GL4\Controls\ControlCheckBox.cs" />
     <Compile Include="GL4\Controls\ControlButton.cs" />
+    <Compile Include="GL4\Controls\ControlGroupBox.cs" />
+    <Compile Include="GL4\Controls\ControlBaseText.cs" />
+    <Compile Include="GL4\Controls\ControlUpDown.cs" />
     <Compile Include="GL4\Controls\ControlLabel.cs" />
     <Compile Include="GL4\Controls\ControlListBox.cs" />
     <Compile Include="GL4\Controls\ControlForm.cs" />
@@ -66,6 +70,7 @@
     <Compile Include="GL4\Controls\ControlScrollPanelScrollBar.cs" />
     <Compile Include="GL4\Controls\ControlScrollPanel.cs" />
     <Compile Include="GL4\Controls\ControlFlowLayoutPanel.cs" />
+    <Compile Include="GL4\Controls\ControlDateTimePicker.cs" />
     <Compile Include="GL4\Controls\ControlTab.cs" />
     <Compile Include="GL4\Controls\ControlTableLayoutPanel.cs" />
     <Compile Include="GL4\Controls\ControlTextBox.cs" />

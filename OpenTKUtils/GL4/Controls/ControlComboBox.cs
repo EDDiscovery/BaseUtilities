@@ -26,6 +26,8 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLComboBox : GLBaseControl
     {
+        public Action<GLBaseControl> SelectedIndexChanged { get; set; } = null;     // not fired by programatically changing CheckState
+
         public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
         public string Text { get { return dropdownbox.Text; } set { dropdownbox.Text = value; Invalidate(); } }
 
@@ -35,7 +37,7 @@ namespace OpenTKUtils.GL4.Controls
         public List<Image> ImageItems { get { return dropdownbox.ImageItems; } set { dropdownbox.ImageItems = value; } }
         public int[] ItemSeperators { get { return dropdownbox.ItemSeperators; } set { dropdownbox.ItemSeperators = value;  } }
 
-        public int SelectedIndex { get { return dropdownbox.SelectedIndex; } set { dropdownbox.SelectedIndex = value; Invalidate();} }
+        public int SelectedIndex { get { return dropdownbox.SelectedIndex; } set { if (value != dropdownbox.SelectedIndex) { dropdownbox.SelectedIndex = value; OnSelectedIndexChanged(); Invalidate(); } } }
 
         public int DropDownHeightMaximum { get { return dropdownbox.DropDownHeightMaximum; } set { dropdownbox.DropDownHeightMaximum = value; } }
 
@@ -80,8 +82,8 @@ namespace OpenTKUtils.GL4.Controls
             Focusable = true;
             dropdownbox.Visible = false;
             dropdownbox.Name = name + "-Dropdown";
-            dropdownbox.SelectedIndexChanged += SelectedIndexChanged;
-            dropdownbox.OtherKeyPressed += OtherKeyPressed;
+            dropdownbox.SelectedIndexChanged += dropdownchanged;
+            dropdownbox.OtherKeyPressed += dropdownotherkey;
         }
 
         public GLComboBox(string name, Rectangle location, Color backcolour) : this(name, location, null, backcolour)
@@ -219,17 +221,23 @@ namespace OpenTKUtils.GL4.Controls
             Invalidate();
         }
 
-        public virtual void SelectedIndexChanged(GLBaseControl c, int v)
+        private void dropdownchanged(GLBaseControl c, int v)
         {
+            OnSelectedIndexChanged();
             Deactivate();
         }
 
-        public virtual void OtherKeyPressed(GLBaseControl c, GLKeyEventArgs e)
+        private void dropdownotherkey(GLBaseControl c, GLKeyEventArgs e)
         {
             if ( e.KeyCode == System.Windows.Forms.Keys.Escape)
             {
                 Deactivate();
             }
+        }
+
+        protected virtual void OnSelectedIndexChanged()
+        {
+            SelectedIndexChanged?.Invoke(this);
         }
     }
 }

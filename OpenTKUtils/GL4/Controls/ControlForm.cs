@@ -22,11 +22,8 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLForm : GLForeDisplayBase
+    public class GLForm : GLForeDisplayTextBase
     {
-        public string Text { get { return text; } set { text = value; Invalidate(); } }
-        public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
-
         public const int FormMargins = 2;
         public const int FormPadding = 2;
         public const int FormBorderWidth = 1;
@@ -59,8 +56,11 @@ namespace OpenTKUtils.GL4.Controls
             base.PerformRecursiveLayout();
         }
 
-        protected override void Paint(Rectangle area, Graphics gr)      // normal override, you can overdraw border if required.
+        // move this to border paint
+        protected override void DrawBorder(Rectangle bounds, Graphics gr, Color bc, float bw)      // normal override, you can overdraw border if required.
         {
+            base.DrawBorder(bounds, gr, bc, bw);
+
             if (Text.HasChars())
             {
                 gr.SmoothingMode = SmoothingMode.AntiAlias;
@@ -69,7 +69,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     using (Brush textb = new SolidBrush((Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
                     {
-                        Rectangle titlearea = new Rectangle(area.Left, area.Top - ClientTopMargin, area.Width, TitleBarHeight );
+                        Rectangle titlearea = new Rectangle(bounds.Left, bounds.Top, bounds.Width, TitleBarHeight );
                         gr.DrawString(this.Text, this.Font, textb, titlearea, fmt);
                     }
                 }
@@ -190,8 +190,6 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
-        private string text = "";
     }
 }
 

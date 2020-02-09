@@ -21,47 +21,12 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public abstract class GLForeDisplayBase : GLBaseControl
-    {
-        public GLForeDisplayBase(string name, Rectangle location, Color backcolor ) : base(name,location,backcolor)
-        {
-        }
-
-        public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
-
-        public float DisabledScaling
-        {
-            get { return disabledScaling; }
-            set
-            {
-                if (float.IsNaN(value) || float.IsInfinity(value))
-                    return;
-                else if (disabledScaling != value)
-                {
-                    disabledScaling = value;
-                    Invalidate();
-                }
-            }
-        }
-
-        private Color foreColor { get; set; } = Color.Black;
-        private float disabledScaling = 0.5F;
-    }
-
-    public class GLTextBox : GLForeDisplayBase
+    public class GLTextBox : GLForeDisplayTextBase
     {
         public Action<GLBaseControl> TextChanged { get; set; } = null;     // not fired by programatically changing Text
         public Action<GLBaseControl> ReturnPressed { get; set; } = null;     // not fired by programatically changing Text
 
-        public string Text { get { return text; } set
-            {
-                text = value;
-                if ( text.HasChars() && (cursorpos < 0 || cursorpos > text.Length ))    
-                {
-                    cursorpos = 0; displaystart = -1;
-                }
-                Invalidate();
-            } }
+        public new ContentAlignment TextAlign { get { return ContentAlignment.MiddleLeft; } }
 
         public GLTextBox(string name, Rectangle pos, string text, Color backcolor) : base(name,pos,backcolor)
         {
@@ -255,7 +220,7 @@ namespace OpenTKUtils.GL4.Controls
                     if (cursorpos < Text.Length)
                     {
                         Text = Text.Substring(0, cursorpos) + Text.Substring(cursorpos + 1);
-                        TextChanged?.Invoke(this);
+                        OnTextChanged();
                     }
                 }
                 else if (e.KeyCode == System.Windows.Forms.Keys.Home)
@@ -286,16 +251,21 @@ namespace OpenTKUtils.GL4.Controls
                     {
                         Text = Text.Substring(0, cursorpos - 1) + Text.Substring(cursorpos);
                         cursorpos--;
-                        TextChanged?.Invoke(this);
+                        OnTextChanged();
                     }
                 }
                 else
                 {
                     Text = Text.Substring(0, cursorpos) + e.KeyChar + Text.Substring(cursorpos);
                     cursorpos++;
-                    TextChanged?.Invoke(this);
+                    OnTextChanged();
                 }
             }
+        }
+
+        protected virtual void OnTextChanged()
+        {
+            TextChanged?.Invoke(this);
         }
 
         // tbd
@@ -308,7 +278,6 @@ namespace OpenTKUtils.GL4.Controls
 
         private int cursorpos = -1; // not set
         private int displaystart = -1; // its either at startpos, or endpos. -1 means not set so set the string to display to end
-        private string text = "";
 
     }
 }

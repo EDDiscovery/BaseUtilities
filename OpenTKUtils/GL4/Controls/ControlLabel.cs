@@ -23,12 +23,8 @@ using System.Threading.Tasks;
 namespace OpenTKUtils.GL4.Controls
 {
 
-    public class GLLabel : GLForeDisplayBase
+    public class GLLabel : GLForeDisplayTextBase
     {
-        public string Text { get { return text; } set { text = value; Invalidate(); } }
-
-        public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
-
         public GLLabel(string name, Rectangle location, string text, Color backcolour) : base(name,location, backcolour)
         {
             this.text = text;
@@ -71,8 +67,5 @@ namespace OpenTKUtils.GL4.Controls
                 gr.SmoothingMode = SmoothingMode.None;
             }
         }
-
-        private ContentAlignment textAlign { get; set; } = ContentAlignment.MiddleLeft;
-        private string text = "";
     }
 }

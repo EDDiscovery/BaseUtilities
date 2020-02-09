@@ -161,12 +161,13 @@ namespace TestOpenTk
                 bool testlb = true;
                 bool testbuttons = true;
                 bool testtabcontrol = true;
+                bool testdatetime = true;
 
-            //    testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = false;
+                //testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
-                displaycontrol.Name = "form";
+                displaycontrol.Name = "displaycontrol";
                 displaycontrol.SuspendLayout();
 
                 GLForm pform = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
@@ -180,12 +181,12 @@ namespace TestOpenTk
                 p1.DockingMargin = new Margin(50,20,10,20);
                 pform.Add(p1);
 
-                GLPanel p2 = new GLPanel("P2", DockingType.Left, 0.15f, Color.Green);
+                GLPanel p2 = new GLPanel("P2", new Size(200, 300), DockingType.LeftTop, 0.15f, Color.Green);
                 p2.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                 p2.DockingMargin = new Margin(10, 20, 1, 10);
                 pform.Add(p2);
 
-                GLPanel p3 = new GLPanel("P3", DockingType.Right, 0.1f, Color.Yellow);
+                GLGroupBox p3 = new GLGroupBox("GB1", "Group Box", DockingType.Right, 0.15f, Color.Yellow);
                 pform.Add(p3);
 
                 if ( testtabcontrol )
@@ -240,7 +241,7 @@ namespace TestOpenTk
 
                 if (testflow)
                 {
-                    GLFlowLayoutPanel ptable = new GLFlowLayoutPanel("flowlayout", new Rectangle(150, 450, 200, 200), Color.Gray);
+                    GLFlowLayoutPanel ptable = new GLFlowLayoutPanel("flowlayout", new Rectangle(360, 10, 200, 200), Color.Gray);
                     ptable.SuspendLayout();
                     ptable.SetMarginBorderWidth(new Margin(2), 1, Color.Wheat, new OpenTKUtils.GL4.Controls.Padding(2));
                     ptable.FlowPadding = new OpenTKUtils.GL4.Controls.Padding(10, 5, 0, 0);
@@ -321,37 +322,47 @@ namespace TestOpenTk
                     GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1", Color.Gray, Color.Yellow);
                     b1.Margin = new Margin(5);
                     b1.Padding = new OpenTKUtils.GL4.Controls.Padding(5);
-                    b1.Dock = DockingType.LeftCenter;
                     b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
                     p2.Add(b1);
 
-                    GLButton b2 = new GLButton("B2", new Rectangle(5, 30, 0, 0), "Button 2", Color.Gray, Color.Yellow);
+                    GLButton b2 = new GLButton("B2", new Rectangle(5, 50, 0, 0), "Button 2", Color.Gray, Color.Yellow);
                     b2.Image = Properties.Resources.ImportSphere;
                     b2.ImageAlign = ContentAlignment.MiddleLeft;
                     b2.TextAlign = ContentAlignment.MiddleRight;
                     p2.Add(b2);
 
-                    GLCheckBox cb1 = new GLCheckBox("CB1", new Rectangle(5, 70, 100, 20), "Check Box 1", Color.Transparent);
-                    cb1.AutoCheck = true;
-                    cb1.CheckChanged += (c, ev) => { System.Diagnostics.Debug.WriteLine("Check changed " + c.Name + " " + ev.Button); };
+                    GLCheckBox cb1 = new GLCheckBox("CB1", new Rectangle(5, 100, 100, 20), "Check Box 1", Color.Transparent);
+                    cb1.AutoCheck = cb1.GroupRadioButton = true;
+                    cb1.CheckChanged += (c) => { System.Diagnostics.Debug.WriteLine("Check 1 changed " + c.Name); };
                     p2.Add(cb1);
+                    GLCheckBox cb2 = new GLCheckBox("CB1", new Rectangle(5, 130, 100, 20), "Check Box 2", Color.Transparent);
+                    cb2.AutoCheck = cb2.GroupRadioButton = true;
+                    cb2.CheckChanged += (c) => { System.Diagnostics.Debug.WriteLine("Check 2 changed " + c.Name); };
+                    p2.Add(cb2);
+                    GLCheckBox cb3 = new GLCheckBox("CB3", new Rectangle(5, 160, 100, 20), "Radio Box 1", Color.Transparent);
+                    cb3.AutoCheck = true;
+                    cb3.Appearance = CheckBoxAppearance.Radio;
+                    p2.Add(cb3);
 
-                    GLLabel lb1 = new GLLabel("Lab1", new Rectangle(5, 100, 0, 0), "Hello", Color.Red);
+                    GLUpDownControl upc1 = new GLUpDownControl("UPC1", new Rectangle(5, 190, 26, 26), Color.AliceBlue);
+                    p2.Add(upc1);
+                    upc1.ValueChanged += (s, upe) => System.Diagnostics.Debug.WriteLine("Up down control {0} {1}", s.Name, upe.Delta);
+
+
+                    GLLabel lb1 = new GLLabel("Lab1", new Rectangle(5, 220, 0, 0), "Hello", Color.Red);
                     p2.Add(lb1);
 
                 }
 
-                if (false)
+                if ( testdatetime)
                 {
-                    GLPanel ptop2 = new GLPanel();
-                    ptop2.Bounds = new Rectangle(1012, 400, 400, 400);
-                    ptop2.BackColor = Color.Blue;
-                    ptop2.Name = "paneltop2";
-                    displaycontrol.Add(ptop2);
-
-                    GLImage i1 = new GLImage("I1", new Rectangle(10, 120, 200, 200), Properties.Resources.dotted);
-                    ptop2.Add(i1);
+                    GLDateTimePicker dtp = new GLDateTimePicker("DTP", new Rectangle(5, 500, 300, 30), DateTime.Now, Color.DarkCyan);
+                    dtp.Font = new Font("Ms Sans Serif", 11);
+                    dtp.ShowCheckBox = true;
+                    dtp.ShowUpDown = true;
+                    pform.Add(dtp);
                 }
+
 
                 pform.ResumeLayout();
                 displaycontrol.ResumeLayout();
