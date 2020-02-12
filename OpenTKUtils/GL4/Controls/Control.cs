@@ -91,7 +91,8 @@ namespace OpenTKUtils.GL4.Controls
         public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
         public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth*2; } }
         public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } }
-        public Size ClientSize { get { return new Size(ClientWidth,ClientHeight); } }
+        public Size ClientSize { get { return new Size(ClientWidth, ClientHeight); } }
+        public Point ClientLocation { get { return new Point(ClientLeftMargin, ClientTopMargin); } }
         public Rectangle ClientRectangle { get { return new Rectangle(0,0,ClientWidth,ClientHeight); }  }
 
         // docking control
@@ -178,7 +179,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( BackColor == Color.Transparent )   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
             {
-                System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " is transparent, parent needs it too");
+                //System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " is transparent, parent needs it too");
                 Parent?.Invalidate();
             }
 
@@ -256,7 +257,7 @@ namespace OpenTKUtils.GL4.Controls
             if (suspendLayoutSet)
             {
                 needLayout = true;
-                //System.Diagnostics.Debug.WriteLine("Suspend layout on " + Name);
+                //System.Diagnostics.Debug.WriteLine("Suspended layout on " + Name);
             }
             else
             {
@@ -272,12 +273,13 @@ namespace OpenTKUtils.GL4.Controls
 
         public void ResumeLayout()
         {
+            //if ( suspendLayoutSet )   System.Diagnostics.Debug.WriteLine("Resume Layout on " + Name);
+
             suspendLayoutSet = false;
             if (needLayout)
             {
-                //System.Diagnostics.Debug.WriteLine("Resumed layout on " + Name);
+                //System.Diagnostics.Debug.WriteLine("Required layout " + Name);
                 PerformLayout();
-                needLayout = false;
             }
         }
 
@@ -396,6 +398,7 @@ namespace OpenTKUtils.GL4.Controls
                 if (oldsize != size.Value)
                     OnResize();
             }
+            //System.Diagnostics.Debug.WriteLine("SetPosNI {0}", window);
         }
 
         protected void SetLevelBitmap(int width , int height)
@@ -438,7 +441,7 @@ namespace OpenTKUtils.GL4.Controls
             int height = (Dock == DockingType.Left || Dock == DockingType.Right) ? (parentclientrect.Height-DockingMargin.TotalHeight) : ClientHeight;
             Size estsize = new Size(width, height);
 
-            System.Diagnostics.Debug.WriteLine("Size " + Name + " Estsize " + estsize);
+            //System.Diagnostics.Debug.WriteLine("Size " + Name + " Estsize " + estsize);
             foreach (var c in childrenz) // in Z order
             {
                 if (c.Visible)      // invisible children don't layout
@@ -454,13 +457,14 @@ namespace OpenTKUtils.GL4.Controls
 
         protected virtual void SizeControl(Size parentclientrect)        
         {
-            System.Diagnostics.Debug.WriteLine("..Size " + Name + " area est is " + parentclientrect);
+            //System.Diagnostics.Debug.WriteLine("..Size " + Name + " area est is " + parentclientrect);
         }
 
         // second, layout after sizing, layout children.  We are layedout by parent, and lay out our children inside our client rectangle
 
         public virtual void PerformRecursiveLayout()     // go down the tree.  
         {
+            //System.Diagnostics.Debug.WriteLine("Laying out " + Name);
             Rectangle area = ClientRectangle;
 
             foreach (var c in childrenz)     // in z order, top gets first go
@@ -471,6 +475,13 @@ namespace OpenTKUtils.GL4.Controls
                     c.PerformRecursiveLayout();
                 }
             }
+
+            //System.Diagnostics.Debug.WriteLine("Finished Laying out " + Name);
+
+            //if (suspendLayoutSet)  System.Diagnostics.Debug.WriteLine("Removing suspend on " + Name);
+
+            suspendLayoutSet = false;   // we can't be suspended
+            needLayout = false;     // we have layed out
         }
 
         // standard layout function, layout yourself inside the area, return area left.

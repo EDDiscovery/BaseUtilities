@@ -23,12 +23,25 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLFlowLayoutPanel : GLPanel
     {
+        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultBackColor)
+        {
+        }
+
         public GLFlowLayoutPanel(string name, Rectangle location, Color back) : base(name, location, back)
         {
         }
 
-        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultBackColor)
+        public GLFlowLayoutPanel(string name, DockingType type, float dockpercent, Color back) : base(name, DefaultWindowRectangle, back)
         {
+            Dock = type;
+            DockPercent = dockpercent;
+        }
+
+        public GLFlowLayoutPanel(string name, Size sizep, DockingType type, float dockpercentage, Color back) : base(name, DefaultWindowRectangle, back)
+        {
+            Dock = type;
+            DockPercent = dockpercentage;
+            SetLocationSizeNI(size: sizep);
         }
 
         public enum ControlFlowDirection { Right };
@@ -45,49 +58,48 @@ namespace OpenTKUtils.GL4.Controls
         {
             base.SizeControl(parentsize);
     
-            //if (AutoSize)       // width stays the same, height changes
-            //{
-            //    // TBD CHECK
-            //    Rectangle area = Flow((c, p) => { });
-            //    SetLocationSizeNI(size: new Size(Width, area.Bottom + 2));
-            //}
+            if (AutoSize)       // width stays the same, height changes, width based on what parent says we can have (either our width, or docked width)
+            {
+                int maxh = Flow(new Size(parentsize.Width,0), (c, p) => { });
+                SetLocationSizeNI(size: new Size(Width, maxh + ClientBottomMargin + flowPadding.Bottom));
+            }
         }
 
         // now we are laying out from top down
 
         public override void PerformRecursiveLayout()
         {
-            Flow((c, p) => 
+            //System.Diagnostics.Debug.WriteLine("Flow Laying out " + Name);
+
+            Flow(ClientSize, (c, p) => 
             {
-                c.SetLocationSizeNI(p);
+                c.SetLocationSizeNI(location:p);
                 c.PerformRecursiveLayout();
             });
         }
 
-        private Rectangle Flow(Action<GLBaseControl, Point> action)
+        private int Flow(Size area, Action<GLBaseControl, Point> action)
         {
-            Rectangle flowpos = new Rectangle(ClientRectangle.Location, new Size(0, 0));      // in terms of our client area
-
+            Point flowpos = ClientLocation;
+            int maxh = 0;
             foreach (GLBaseControl c in ControlsZ)
             {
-                System.Diagnostics.Debug.WriteLine("flow layout " + c.Name + " " + flowpos);
+                //System.Diagnostics.Debug.WriteLine("flow layout " + c.Name + " " + flowpos + " h " + maxh);
 
-                if (flowpos.X + FlowPadding.Left + c.Width + flowPadding.Right >= ClientRectangle.Right)    // if beyond client right, more down
+                if (flowpos.X + c.Width + flowPadding.TotalWidth >= area.Width)    // if beyond client right, more down
                 {
-                    flowpos = new Rectangle(ClientRectangle.X, flowpos.Bottom, 0, 0);
+                    flowpos = new Point(ClientLeftMargin, maxh);
                 }
 
                 Point pos = new Point(flowpos.X + FlowPadding.Left, flowpos.Y + flowPadding.Top);
 
                 action(c, pos);
 
-                int right = pos.X + c.Width + flowPadding.Right;
-                int bot = Math.Max(flowpos.Bottom, pos.Y + c.Height + flowPadding.Bottom);
-
-                flowpos = new Rectangle(right, flowpos.Top, 0, bot);
+                flowpos.X += c.Width + flowPadding.TotalWidth;
+                maxh = Math.Max(maxh, flowpos.Y + c.Height + FlowPadding.TotalHeight);
             }
 
-            return flowpos;
+            return maxh;
         }
     }
 }
