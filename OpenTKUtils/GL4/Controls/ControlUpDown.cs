@@ -27,7 +27,9 @@ namespace OpenTKUtils.GL4.Controls
     {
         public Action<GLBaseControl, GLMouseEventArgs> ValueChanged { get; set; } = null;           // Delta holds the direction
 
-        public float MouseSelectedColorScaling { get { return mouseSelectedColorScaling; } set { mouseSelectedColorScaling = value; Invalidate(); } } 
+        public float MouseSelectedColorScaling { get { return mouseSelectedColorScaling; } set { mouseSelectedColorScaling = value; Invalidate(); } }
+        public int UpDownInitialDelay { get; set; } = 500;
+        public int UpDownRepeatRate { get; set; } = 200;
 
         public GLUpDownControl(string name, Rectangle location, Color back) : base(name, location, back)
         {
@@ -51,8 +53,8 @@ namespace OpenTKUtils.GL4.Controls
 
         protected override void Paint(Rectangle area, Graphics gr)
         {
-            Color pcup = (Enabled) ? ((mousedown == MouseOver.MouseOverUp) ? MouseDownBackColor : ((mouseover == MouseOver.MouseOverUp) ? MouseOverBackColor : this.BackColor)) : this.BackColor.Multiply(0.5F);
-            Color pcdown = (Enabled) ? ((mousedown == MouseOver.MouseOverDown) ? MouseDownBackColor : ((mouseover == MouseOver.MouseOverDown) ? MouseOverBackColor : this.BackColor)) : this.BackColor.Multiply(0.5F);
+            Color pcup = (Enabled) ? ((mousedown == MouseOver.MouseOverUp) ? MouseDownBackColor : ((mouseover == MouseOver.MouseOverUp) ? MouseOverBackColor : this.BackColor)) : this.BackColor.Multiply(DisabledScaling);
+            Color pcdown = (Enabled) ? ((mousedown == MouseOver.MouseOverDown) ? MouseDownBackColor : ((mouseover == MouseOver.MouseOverDown) ? MouseOverBackColor : this.BackColor)) : this.BackColor.Multiply(DisabledScaling);
 
             Rectangle drawupper = new Rectangle(area.Left + upperbuttonarea.Left, area.Top + upperbuttonarea.Top, upperbuttonarea.Width, upperbuttonarea.Height);  // seems to make it paint better
             Rectangle drawlower = new Rectangle(area.Left + lowerbuttonarea.Left, area.Top + lowerbuttonarea.Top, lowerbuttonarea.Width, lowerbuttonarea.Height);  // seems to make it paint better
@@ -67,35 +69,35 @@ namespace OpenTKUtils.GL4.Controls
             using (Brush b = new LinearGradientBrush(sarealower, pcdown, pcdown.Multiply(BackColorScaling), 270))
                 gr.FillRectangle(b, drawlower);
 
-            if (Enabled)
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            Color pencolorup = Enabled ? (mousedown == MouseOver.MouseOverUp ? ForeColor.Multiply(MouseSelectedColorScaling) : ForeColor) : ForeColor.Multiply(DisabledScaling);
+            Color pencolordown = Enabled ? (mousedown == MouseOver.MouseOverDown ? ForeColor.Multiply(MouseSelectedColorScaling) : ForeColor) : ForeColor.Multiply(DisabledScaling);
+
+            using (Pen p = new Pen(pencolorup))
             {
-                gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                int hoffset = drawupper.Width / 3;
+                int voffset = drawupper.Height / 3;
 
-                using (Pen p = new Pen(mousedown == MouseOver.MouseOverUp ? ForeColor.Multiply(MouseSelectedColorScaling) : ForeColor))
-                {
-                    int hoffset = drawupper.Width / 3;
-                    int voffset = drawupper.Height / 3;
+                Point arrowpt1u = new Point(drawupper.X + hoffset, drawupper.Y + drawupper.Height - voffset);
+                Point arrowpt2u = new Point(drawupper.X + drawupper.Width / 2, drawupper.Y + voffset);
+                Point arrowpt3u = new Point(drawupper.X + drawupper.Width - hoffset, arrowpt1u.Y);
+                gr.DrawLine(p, arrowpt1u, arrowpt2u);            // the arrow!
+                gr.DrawLine(p, arrowpt2u, arrowpt3u);
+            }
 
-                    Point arrowpt1u = new Point(drawupper.X + hoffset, drawupper.Y + drawupper.Height - voffset);
-                    Point arrowpt2u = new Point(drawupper.X + drawupper.Width / 2, drawupper.Y + voffset);
-                    Point arrowpt3u = new Point(drawupper.X + drawupper.Width - hoffset, arrowpt1u.Y);
-                    gr.DrawLine(p, arrowpt1u, arrowpt2u);            // the arrow!
-                    gr.DrawLine(p, arrowpt2u, arrowpt3u);
-                }
+            using (Pen p = new Pen(pencolordown))
+            {
+                int hoffset = drawlower.Width / 3;
+                int voffset = drawlower.Height / 3;
 
-                using (Pen p = new Pen(mousedown == MouseOver.MouseOverDown ? ForeColor.Multiply(MouseSelectedColorScaling) : ForeColor))
-                {
-                    int hoffset = drawlower.Width / 3;
-                    int voffset = drawlower.Height / 3;
+                Point arrowpt1d = new Point(drawlower.X + hoffset, drawlower.Y + voffset);
+                Point arrowpt2d = new Point(drawlower.X + drawlower.Width / 2, drawlower.Y + drawlower.Height - voffset);
+                Point arrowpt3d = new Point(drawlower.X + drawlower.Width - hoffset, arrowpt1d.Y);
 
-                    Point arrowpt1d = new Point(drawlower.X + hoffset, drawlower.Y + voffset);
-                    Point arrowpt2d = new Point(drawlower.X + drawlower.Width / 2, drawlower.Y + drawlower.Height - voffset);
-                    Point arrowpt3d = new Point(drawlower.X + drawlower.Width - hoffset, arrowpt1d.Y);
+                gr.DrawLine(p, arrowpt1d, arrowpt2d);            // the arrow!
+                gr.DrawLine(p, arrowpt2d, arrowpt3d);
 
-                    gr.DrawLine(p, arrowpt1d, arrowpt2d);            // the arrow!
-                    gr.DrawLine(p, arrowpt2d, arrowpt3d);
-
-                }
             }
 
             gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
@@ -183,7 +185,7 @@ namespace OpenTKUtils.GL4.Controls
             if (!repeattimer.Running)
             {
                 savedmevent = e;
-                repeattimer.Start(50, true);
+                repeattimer.Start(UpDownInitialDelay, UpDownRepeatRate);
             }
         }
 

@@ -50,6 +50,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLCheckBox checkbox = new GLCheckBox();              // access for setting colours
         public GLUpDownControl updown = new GLUpDownControl();
+        public GLImage cal = new GLImage();
 
 
         public GLDateTimePicker(string name, Rectangle location, DateTime t, Color back) : base(name, location, back)
@@ -60,7 +61,14 @@ namespace OpenTKUtils.GL4.Controls
             Add(checkbox);
             updown.ValueChanged += updownchanged;
             updown.BackColor = Color.Transparent;
+            updown.Enabled = false;
+            updown.FocusChanged += OnFocusChangedUpdown;
             Add(updown);
+            cal.Image = Properties.Resources.Calendar;
+            cal.BackColor = Color.Transparent;
+            cal.ImageStretch = true;
+            cal.MouseDown += calclicked;
+            Add(cal);
             Focusable = true;
         }
 
@@ -77,24 +85,16 @@ namespace OpenTKUtils.GL4.Controls
             int borderoffset = 0;
             int height = ClientHeight - 2;
 
-            checkbox.Visible = ShowCheckBox;
-            checkbox.Location = new Point(2, borderoffset);
-            checkbox.Size = new Size(height, height);
+            // NI versions stops repeated invalidates/layouts
+            checkbox.VisibleNI = ShowCheckBox;
+            checkbox.SetLocationSizeNI(location: new Point(2, borderoffset), size: new Size(height, height));
 
-            updown.Visible = ShowUpDown;
-            updown.Location = new Point(ClientRectangle.Width - height - 2, borderoffset);
-            updown.Size = new Size(height, height);
+            updown.VisibleNI = ShowUpDown;
+            updown.SetLocationSizeNI(location: new Point(ClientRectangle.Width - height - 2, borderoffset), size: new Size(height, height));
 
-            //Image ci = calendaricon.Image = ExtendedControls.Properties.Resources.Calendar;
-
-            //int caliconh = height - 4;
-            //int caliconw = (int)((float)caliconh / (float)ci.Height * ci.Width);
-
-            //calendaricon.Size = new Size(caliconw, caliconh);
-            //calendaricon.Image = ci;
-            //calendaricon.Location = new Point(ClientRectangle.Width - borderoffset - caliconw - 4, ClientRectangle.Height / 2 - caliconh / 2);
-            //calendaricon.SizeMode = PictureBoxSizeMode.StretchImage;
-            //calendaricon.Visible = !ShowUpDown;
+            cal.VisibleNI = false; // tbd
+            int ch = ClientHeight * 3 / 5;
+            cal.SetLocationSizeNI(location: new Point(updown.Left - 4 - cal.Width, (ClientHeight / 2 - ch/2)), size: new Size(ch * 20 / 12, ch));
 
             xstart = (showcheckbox ? (checkbox.Right + 2) : 2);
 
@@ -105,8 +105,6 @@ namespace OpenTKUtils.GL4.Controls
 
         protected override void Paint(Rectangle area, Graphics gr)
         {
-            // draw icons
-
             using (Brush textb = new SolidBrush(this.ForeColor))
             {
                 for (int i = 0; i < partlist.Count; i++)
@@ -149,6 +147,7 @@ namespace OpenTKUtils.GL4.Controls
                         else
                         {
                             selectedpart = i;
+                            updown.Enabled = true;
                             Invalidate();
                             break;
                         }
@@ -412,10 +411,18 @@ namespace OpenTKUtils.GL4.Controls
 
         private void updownchanged(GLBaseControl b, GLMouseEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("Up down");
             if (e.Delta > 0)
                 UpDown(1);
             else
                 UpDown(-1);
+        }
+
+        private System.Windows.Forms.MonthCalendar calendar = new System.Windows.Forms.MonthCalendar();
+
+        private void calclicked(Object b, GLMouseEventArgs e)
+        { 
+            // tbd
         }
 
         protected virtual void OnCheckBoxChanged()
@@ -426,6 +433,23 @@ namespace OpenTKUtils.GL4.Controls
         protected virtual void OnValueChanged()
         {
             ValueChanged?.Invoke(this);
+        }
+
+        public override void OnFocusChanged(bool focused, GLBaseControl fromto)
+        {
+            base.OnFocusChanged(focused, fromto);
+            System.Diagnostics.Debug.WriteLine("DTP Focus chg {0} {1}", focused, fromto?.Name);
+
+            if (!focused && (fromto != updown && fromto != this))
+            {
+                selectedpart = -1;
+                updown.Enabled = false;
+                Invalidate();
+            }
+        }
+        public void OnFocusChangedUpdown(Object s, bool focused, GLBaseControl fromto)
+        {
+            OnFocusChanged(focused, fromto);
         }
 
         private DateTime datetimevalue = DateTime.Now;
@@ -458,4 +482,3 @@ namespace OpenTKUtils.GL4.Controls
 
     }
 }
-

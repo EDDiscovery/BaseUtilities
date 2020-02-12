@@ -31,6 +31,7 @@ namespace OpenTKUtils.WinForm
         public int Width { get { return glControl.Width; } }
         public int Height { get { return glControl.Height; } }
         public bool Focused { get { return glControl.Focused; } }
+        public Rectangle ClientScreenPos { get { return new Rectangle(glControl.PointToScreen(new Point(0, 0)),glControl.ClientRectangle.Size); } }
         public GLRenderControl RenderState { get; set; } = null;
         public bool MakeCurrentOnPaint { get; set; } = false;           // set if using multiple opengl in one thread
 

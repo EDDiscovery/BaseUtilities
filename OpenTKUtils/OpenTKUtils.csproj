@@ -141,6 +141,11 @@
     <Compile Include="BaseUtils\LineReader.cs" />
     <Compile Include="BaseUtils\NativeMethods.cs" />
     <Compile Include="BaseUtils\NumberObjectExtensions.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Utils\Polygon.cs" />
     <Compile Include="BaseUtils\ResourceHelpers.cs" />
     <Compile Include="BaseUtils\StringObjectExtensions.cs" />
@@ -148,6 +153,10 @@
     <Compile Include="BaseUtils\StringObjectExtensionsNumbers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <None Include="app.config" />
     <EmbeddedResource Include="GL4\Shaders\Functions\distribution.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\snoise3.glsl" />
@@ -164,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="GL4\Shaders\Base\PlanShaders.txt" />
+    <None Include="Resources\Calendar.png" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -71,6 +71,8 @@ namespace OpenTKUtils.GL4.Controls
             SetDefaultFont();
         }
 
+        public Rectangle ClientScreenPos { get { return glwin.ClientScreenPos; } }
+        
         public void SetCursor(GLCursorType t)
         {
             glwin.SetCursor(t);
@@ -99,16 +101,19 @@ namespace OpenTKUtils.GL4.Controls
             if (ctrl == currentfocus)
                 return;
 
+            GLBaseControl oldfocus = currentfocus;
+            GLBaseControl newfocus = (ctrl != null && ctrl.Enabled && ctrl.Focusable) ? ctrl : null;
+
             if (currentfocus != null)
             {
-                currentfocus.OnFocusChanged(false);
+                currentfocus.OnFocusChanged(false, newfocus);
                 currentfocus = null;
             }
             
-            if (ctrl != null && ctrl.Enabled && ctrl.Focusable)
+            if (newfocus != null)
             {
                 currentfocus = ctrl;
-                currentfocus.OnFocusChanged(true);
+                currentfocus.OnFocusChanged(true, oldfocus);
             }
         }
 
@@ -215,7 +220,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         #endregion
-        #region Implementation
+        #region UI
 
         public void ControlRemoved(GLBaseControl other)
         {
@@ -417,6 +422,8 @@ namespace OpenTKUtils.GL4.Controls
             Paint?.Invoke(sender);
         }
 
+        #endregion
+
         public class GLControlShader : GLShaderPipeline
         {
             public GLControlShader()
@@ -436,8 +443,6 @@ namespace OpenTKUtils.GL4.Controls
         private GLBaseControl currentmouseover = null;
         private Point currentmouseoverlocation;
         private GLBaseControl currentfocus = null;
-
-        #endregion
-
+        
     }
 }

@@ -78,6 +78,7 @@ namespace OpenTKUtils
         Action<Object, GLKeyEventArgs> KeyPress { get; set; }
 
         void Invalidate();
+        Rectangle ClientScreenPos { get; }
         int Width { get; }
         int Height { get; }
         bool Focused { get; }

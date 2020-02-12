@@ -156,7 +156,7 @@ namespace OpenTKUtils.GL4.Controls
         public Action<Object, GLKeyEventArgs> KeyDown { get; set; } = null;
         public Action<Object, GLKeyEventArgs> KeyUp { get; set; } = null;
         public Action<Object, GLKeyEventArgs> KeyPress { get; set; } = null;
-        public Action<Object, bool> FocusChanged { get; set; } = null;
+        public Action<Object, bool, GLBaseControl> FocusChanged { get; set; } = null;
         public Action<Object> FontChanged { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
         public Action<Object> Moved { get; set; } = null;
@@ -177,7 +177,7 @@ namespace OpenTKUtils.GL4.Controls
             NeedRedraw = true;
 
             if ( BackColor == Color.Transparent )   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
-            { //tbd
+            {
                 System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " is transparent, parent needs it too");
                 Parent?.Invalidate();
             }
@@ -196,7 +196,6 @@ namespace OpenTKUtils.GL4.Controls
         public void InvalidateLayoutParent()
         {
             //System.Diagnostics.Debug.WriteLine("Invalidate Layout Parent " + Name);
-            // removed - should not need, if parent redraws, we should not need redraw NeedRedraw = true;
             if (parent != null)
             {
                 var f = FindDisplay();
@@ -208,7 +207,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public Point DisplayControlCoords(bool adjustclient)       
+        public Point DisplayControlCoords(bool clienttopleft)       // return in display co-ord terms either the bounds top left or the client rectangle top left
         {
             Point p = Location;     // Left/Top of bounding box
             GLBaseControl b = this;
@@ -217,12 +216,20 @@ namespace OpenTKUtils.GL4.Controls
                 p = new Point(p.X + b.parent.Left + b.parent.ClientLeftMargin, p.Y + b.parent.Top + b.parent.ClientTopMargin);
                 b = b.parent;
             }
-            if (adjustclient)
+            if (clienttopleft)
             {
                 p.X += ClientLeftMargin;
                 p.Y += ClientTopMargin;
             }
             return p;
+        }
+
+        public Point ScreenCoords(bool clienttopleft)           // return in windows screen co-ords the top left of the selected control
+        {
+            Point p = DisplayControlCoords(clienttopleft);
+            GLControlDisplay d = FindDisplay();
+            Rectangle sp = d.ClientScreenPos;
+            return new Point(p.X + sp.Left, p.Y + sp.Top);
         }
 
         public Rectangle ChildArea()
@@ -356,13 +363,13 @@ namespace OpenTKUtils.GL4.Controls
         static protected readonly int MinimumResizeWidth = 10;
         static protected readonly int MinimumResizeHeight = 10;
 
-        // these change without invalidation or layout - for constructors of inheritors or for SizeControl overrides
+        // these change without invalidation or layout - for constructors of inheritors or for Layout/SizeControl overrides
 
         protected GL4.Controls.Margin MarginNI { set { margin = value; } }
         protected GL4.Controls.Padding PaddingNI { set { padding = value; } }
         protected int BorderWidthNI { set { borderwidth = value; } }
         protected Color BorderColorNI { set { bordercolor = value; } }
-        public bool VisbileNI { set { visible = value; } }
+        public bool VisibleNI { set { visible = value; } }
 
         public void SetLocationSizeNI( Point? location = null, Size? size = null, bool clipsize = false)      // use by inheritors only.  Does not invalidate/Layout.
         {
@@ -793,12 +800,12 @@ namespace OpenTKUtils.GL4.Controls
             KeyPress?.Invoke(this, e);
         }
 
-        public virtual void OnFocusChanged(bool focused)
+        public virtual void OnFocusChanged(bool focused, GLBaseControl fromto)      // false, fromto = where it going to
         {
             this.focused = focused;
             if (InvalidateOnFocusChange)
                 Invalidate();
-            FocusChanged?.Invoke(this, focused);
+            FocusChanged?.Invoke(this, focused, fromto);
         }
 
         public virtual void OnFontChanged()

@@ -169,7 +169,7 @@ namespace OpenTKUtils.GL4.Controls
             int i = 0;
             foreach (var c in ControlsOrderAdded)     // first is last one entered
             {
-                c.VisbileNI = seltab == i;
+                c.VisibleNI = seltab == i;
                 i--;
             }
 

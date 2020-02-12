@@ -23,7 +23,6 @@ namespace OpenTKUtils.Timers
     public class Timer : IDisposable
     {
         public bool Running { get; private set; } = false;
-        public bool Recurring { get; set; } = false;
         public Action<Timer, long> Tick { get; set; } = null;
         public Object Tag { get; set; } = null;
 
@@ -31,29 +30,29 @@ namespace OpenTKUtils.Timers
         {
         }
 
-        public Timer(int msdelta, Action<Timer, long> tickaction, bool recurring = false)
+        public Timer(int initialdelayms, Action<Timer, long> tickaction, int repeatdelay = 0)
         {
             Tick = tickaction;
-            Start(msdelta, recurring);
+            Start(initialdelayms, repeatdelay);
         }
 
-        public Timer(int msdelta, bool recurring = false)
+        public Timer(int initialdelayms, int repeatdelay = 0)
         {
-            Start(msdelta, recurring);
+            Start(initialdelayms, repeatdelay);
         }
 
-        public void Start(int msdelta, bool recurring = false)
+        public void Start(int initialdelayms, int repeatdelay = 0)
         {
             if (!mastertimer.IsRunning)
                 mastertimer.Start();
 
-            this.Recurring = recurring;
+            recurringtickdelta = Stopwatch.Frequency * repeatdelay / 1000;
+
+            long timeout = mastertimer.ElapsedTicks + (Stopwatch.Frequency * initialdelayms / 1000);
+
             this.Running = true;
-
-            this.tickdelta = Stopwatch.Frequency / 1000 * msdelta;
-
-            long timeout = mastertimer.ElapsedTicks + this.tickdelta;
             timerlist.Add(timeout, this);
+
             System.Diagnostics.Debug.WriteLine("Start timer");
         }
 
@@ -82,9 +81,9 @@ namespace OpenTKUtils.Timers
 
                 timerlist.RemoveAt(timerlist.IndexOfValue(t));  // remove from list
 
-                if ( t.Recurring )  // add back if recurring
+                if ( t.recurringtickdelta > 0  )  // add back if recurring
                 {
-                    timerlist.Add(tickout + t.tickdelta, t);     // add back to list
+                    timerlist.Add(tickout + t.recurringtickdelta, t);     // add back to list
                 }
             }
         }
@@ -94,7 +93,7 @@ namespace OpenTKUtils.Timers
             Stop();
         }
 
-        long tickdelta;
+        long recurringtickdelta;
 
         static SortedList<long,Timer> timerlist = new SortedList<long,Timer>();
         static Stopwatch mastertimer = new Stopwatch();
