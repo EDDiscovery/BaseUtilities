@@ -119,7 +119,8 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLBaseControl Parent { get { return parent; } }
         public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
-        public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
+        public GLBaseControl FindControlUnderDisplay() { return Parent is GLControlDisplay ? this : parent?.FindControlUnderDisplay(); }
+        //public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
@@ -134,7 +135,8 @@ namespace OpenTKUtils.GL4.Controls
         public GLMouseEventArgs.MouseButtons MouseButtonsDown { get; set; } // set if mouse buttons down over control
 
         public Bitmap LevelBitmap { get { return levelbmp; } }  // return level bitmap, null if not a bitmap control
-       // public GLTexture2D Texture { get; set; }            // return texture, null if not a top level element
+
+        public Object Tag { get; set; }                         // control tag, user controlled
 
         // control lists
 
@@ -310,17 +312,20 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual bool BringToFront()      // bring to the front, true if it was at the front
         {
-            if (Parent != null && Parent.childrenz[0] != this)
+            return Parent?.BringToFront(this) ?? true;
+        }
+
+        public virtual bool BringToFront(GLBaseControl child)   // bring child to front
+        {
+            if (childrenz.Contains(child) && childrenz[0] != child)
             {
-                System.Diagnostics.Debug.WriteLine("Bring {0} to front in {1}", this.Name, Parent?.Name);
-                Parent.childreniz.Remove(this);
-                Parent.childrenz.Remove(this);
+                childreniz.Remove(child);
+                childrenz.Remove(child);
 
-                Parent.childrenz.Insert(0, this);   // in z order.  First is top of z
-                Parent.childreniz.Add(this);       // in inv z order. Last is top of z
+                childrenz.Insert(0, child);   // in z order.  First is top of z
+                childreniz.Add(child);       // in inv z order. Last is top of z
 
-                Parent.Invalidate();
-
+                Invalidate();
                 return false;
             }
             else

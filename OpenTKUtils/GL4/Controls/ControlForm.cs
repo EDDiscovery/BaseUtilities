@@ -164,10 +164,6 @@ namespace OpenTKUtils.GL4.Controls
                 capturelocation = e.Location;
                 originalwindow = Bounds;
                 captured = e.Area;
-
-                if ( captured == GLMouseEventArgs.AreaType.Top)
-                    BringToFront();
-
             }
         }
 

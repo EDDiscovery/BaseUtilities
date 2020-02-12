@@ -119,20 +119,34 @@ namespace OpenTKUtils.GL4.Controls
             UpdateTextures();
         }
 
-        private void UpdateVertexPositions()
+        public override bool BringToFront(GLBaseControl other)  // if we change the z order, we need to update vertex list, keyed to z order
+        {                                                       // and the textures, since the bindless IDs are written in z order        
+            if (!base.BringToFront(other))
+            {
+                UpdateVertexPositions();        // we changed z order, update
+                UpdateTextures();
+                return false;
+            }
+            else
+                return true;
+        }
+
+        private void UpdateVertexPositions()        // write to vertex buffer the addresses of the windows.
         {
             vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
             IntPtr p = vertexes.Map(0, vertexes.BufferSize);
+            
+            float z = 0.1f;
 
-            foreach (var c in ControlsZ)
+            foreach (var c in ControlsIZ)       // we paint in IZ order, and we set the Z (bigger is more in the back) from a notional 0.1 to 0 so the depth test works
             {
-                float z = 0f;
                 float[] a = new float[] {       c.Left, c.Top, z, 1,
                                                 c.Left, c.Bottom , z, 1,
                                                 c.Right, c.Top, z, 1,
                                                 c.Right, c.Bottom , z, 1,
                                          };
                 vertexes.MapWrite(ref p, a);
+                z -= 0.001f;
             }
 
             vertexes.UnMap();
@@ -146,17 +160,17 @@ namespace OpenTKUtils.GL4.Controls
         {
             List<IGLTexture> tlist = new List<IGLTexture>();
 
-            foreach (var c in ControlsZ)
+            foreach (var c in ControlsIZ)   // we paint in the render in IZ order, so we add the textures to the list and check them in IZ order for the bindless texture handles
             {
                 if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
                 {
                     textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
                 }
 
-                tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles, and the dictionary does not guarantee this
+                tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles
             }
 
-            texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..
+            texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..  written in iz order
         }
 
         // overriding this indicates all we have to do if child location changes is update the vertex positions, and that we have dealt with it
@@ -189,7 +203,7 @@ namespace OpenTKUtils.GL4.Controls
             NeedRedraw = false;
 
             shader.Start();
-            ri.Bind(currentstate, shader, null);                      // binds VA AND the element buffer
+            ri.Bind(currentstate, shader, null);        // binds VA AND the element buffer
             ri.Render();                                // draw using primitive restart on element index buffer with bindless textures
             shader.Finish();
             GL.UseProgram(0);           // final clean up
@@ -287,7 +301,8 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentmouseover != null)
             {
-                var x = e.Button;
+                currentmouseover.FindControlUnderDisplay()?.BringToFront();     // this brings to the front of the z-order the top level element holding this element and makes it visible.
+
                 if (currentmouseover.Enabled)
                 {
                     currentmouseover.MouseButtonsDown = e.Button;
