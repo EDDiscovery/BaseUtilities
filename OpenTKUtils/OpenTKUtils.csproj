@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseUtils\Timers.cs" />
     <Compile Include="Controller3D\KeyboardState.cs" />
     <Compile Include="GL1\Data3DCollection.cs" />
     <Compile Include="GL1\Data3DLineData.cs" />

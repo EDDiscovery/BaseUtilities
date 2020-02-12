@@ -32,6 +32,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLUpDownControl(string name, Rectangle location, Color back) : base(name, location, back)
         {
             Focusable = true;
+            repeattimer.Tick += RepeatClick;
         }
 
         public GLUpDownControl() : this("UD?", DefaultWindowRectangle, DefaultBackColor)
@@ -151,6 +152,7 @@ namespace OpenTKUtils.GL4.Controls
                     Invalidate();
                     mevent.Delta = 1;
                     OnValueChanged(mevent);
+                    StartRepeatClick(mevent);
                 }
                 else if (lowerbuttonarea.Contains(mevent.Location))
                 {
@@ -158,6 +160,7 @@ namespace OpenTKUtils.GL4.Controls
                     Invalidate();
                     mevent.Delta = -1;
                     OnValueChanged(mevent);
+                    StartRepeatClick(mevent);
                 }
             }
         }
@@ -166,6 +169,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             base.OnMouseUp(mevent);
             mousedown = MouseOver.MouseOverNone;
+            repeattimer.Stop();
             Invalidate();
         }
 
@@ -174,12 +178,30 @@ namespace OpenTKUtils.GL4.Controls
             ValueChanged?.Invoke(this,e);
         }
 
+        private void StartRepeatClick(GLMouseEventArgs e)
+        {
+            if (!repeattimer.Running)
+            {
+                savedmevent = e;
+                repeattimer.Start(50, true);
+            }
+        }
+
+        private void RepeatClick(Timers.Timer t, long timeout)
+        {
+            OnValueChanged(savedmevent);
+        }
+
         enum MouseOver { MouseOverUp, MouseOverDown, MouseOverNone };
         private MouseOver mouseover = MouseOver.MouseOverNone;
         private MouseOver mousedown = MouseOver.MouseOverNone;
-        Rectangle upperbuttonarea;
-        Rectangle lowerbuttonarea;
-        public float mouseSelectedColorScaling { get; set; } = 1.5F;
+        private Rectangle upperbuttonarea;
+        private Rectangle lowerbuttonarea;
+        private float mouseSelectedColorScaling { get; set; } = 1.5F;
+        private OpenTKUtils.Timers.Timer repeattimer = new Timers.Timer();
+        private GLMouseEventArgs savedmevent;
+
+
     }
 }
 

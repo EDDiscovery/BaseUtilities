@@ -98,9 +98,10 @@ namespace OpenTKUtils.GL4.Controls
             PerformLayout();
         }
 
-        protected override void SizeControl()
+        protected override void SizeControl(Size parentsize)
         {
-            base.SizeControl();
+            base.SizeControl(parentsize);
+
             if (AutoSize)       // measure text size and number of items to get idea of space required. Allow for scroll bar
             {
                 int items = (Items != null) ? Items.Count() : 0;        

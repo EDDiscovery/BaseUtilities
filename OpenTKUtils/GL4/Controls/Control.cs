@@ -75,6 +75,14 @@ namespace OpenTKUtils.GL4.Controls
         public Point Location { get { return new Point(window.Left, window.Top); } set { SetLocation(value.X, value.Y); } }
         public Size Size { get { return new Size(window.Width, window.Height); } set { SetPos(window.Left, window.Top, value.Width, value.Height); } }
 
+        // padding/margin and border control
+
+        public GL4.Controls.Padding Padding { get { return padding; } set { if (padding != value) { padding = value; InvalidateLayout(); } } }
+        public GL4.Controls.Margin Margin { get { return margin; } set { if (margin != value) { margin = value; InvalidateLayout(); } } }
+        public void SetMarginBorderWidth(Margin m, int borderw, Color borderc, Padding p) { margin = m; padding = p; bordercolor = borderc; borderwidth = borderw; InvalidateLayout(); }
+        public Color BorderColor { get { return bordercolor; } set { if (bordercolor != value) { bordercolor = value; Invalidate(); } } }
+        public int BorderWidth { get { return borderwidth; } set { if (borderwidth != value) { borderwidth = value; InvalidateLayout(); } } }
+
         // this is the client area, inside the margin/padding/border
 
         public int ClientLeftMargin { get { return Margin.Left + Padding.Left + BorderWidth; } }
@@ -82,38 +90,41 @@ namespace OpenTKUtils.GL4.Controls
         public int ClientTopMargin { get { return Margin.Top + Padding.Top + BorderWidth; } }
         public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
         public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth*2; } }
-        public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth*2; } }
+        public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } }
+        public Size ClientSize { get { return new Size(ClientWidth,ClientHeight); } }
         public Rectangle ClientRectangle { get { return new Rectangle(0,0,ClientWidth,ClientHeight); }  }
+
+        // docking control
 
         public DockingType Dock { get { return docktype; } set { if (docktype != value) { docktype = value; InvalidateLayoutParent(); } } }
         public float DockPercent { get { return dockpercent; } set { if (value != dockpercent) { dockpercent = value; InvalidateLayoutParent(); } } }        // % in 0-1 terms used to dock on left,top,right,bottom.  0 means just use width/height
         public Margin DockingMargin { get { return dockingmargin; } set { if (dockingmargin != value) { dockingmargin = value; InvalidateLayout(); } } }
 
-        public GLBaseControl Parent { get { return parent; } }
+        // toggle controls
+        public bool Enabled { get { return enabled; } set { if (enabled != value) { SetEnabled(value); Invalidate(); } } }
+        public bool Visible { get { return visible; } set { if (visible != value) { visible = value; InvalidateLayoutParent(); } } }
+        public virtual bool Focused { get { return focused; } }
+        public virtual bool Focusable { get { return focusable; } set { focusable = value; } }
+        public virtual void SetFocus() { FindDisplay()?.SetFocus(this); }
+
+        // colour font
+
         public Font Font { get { return font ?? parent?.Font; } set { SetFont(value); InvalidateLayout(); } }
         public void SetDefaultFont() { font = new Font("Microsoft Sans Serif", 8.25f); }
-
         public Color BackColor { get { return backcolor; } set { if (backcolor != value) { backcolor = value; Invalidate(); } } }
         public int BackColorGradient { get { return backcolorgradient;} set { if ( backcolorgradient != value) { backcolorgradient = value;Invalidate(); } } }
         public Color BackColorGradientAlt { get { return backcolorgradientalt; } set { if (backcolorgradientalt != value) { backcolorgradientalt = value; Invalidate(); } } }
-        public Color BorderColor { get { return bordercolor; } set { if (bordercolor != value) { bordercolor = value; Invalidate(); } } }
-        public int BorderWidth { get { return borderwidth; } set { if (borderwidth != value) { borderwidth = value; InvalidateLayout(); } } }
 
-        public GL4.Controls.Padding Padding { get { return padding; } set { if (padding != value) { padding = value; InvalidateLayout(); } } }
-        public GL4.Controls.Margin Margin { get { return margin; } set { if (margin != value) { margin = value; InvalidateLayout(); } } }
-        public void SetMarginBorderWidth(Margin m, int borderw, Color borderc, Padding p) { margin = m; padding = p; bordercolor = borderc; borderwidth = borderw; InvalidateLayout(); }
+        // other
 
-        public bool Enabled { get { return enabled; } set { if (enabled != value) { SetEnabled(value); Invalidate(); } } }
-        public bool Visible { get { return visible; } set { if (visible != value) { visible = value; InvalidateLayoutParent(); } } }
+        public GLBaseControl Parent { get { return parent; } }
+        public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
+        public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
-        public virtual bool Focused { get { return focused; }  } 
-        public virtual bool Focusable { get { return focusable; } set { focusable = value; } }
-        public virtual void SetFocus()  { FindDisplay()?.SetFocus(this); }
-
-        public int Row { get { return row; } set { row = value; InvalidateLayoutParent(); } }
-        public int Column { get { return column; } set { column = value; InvalidateLayoutParent(); } }
+        public int Row { get { return row; } set { row = value; InvalidateLayoutParent(); } }       // for table layouts
+        public int Column { get { return column; } set { column = value; InvalidateLayoutParent(); } } // for table layouts
 
         public bool InvalidateOnEnterLeave { get; set; } = false;       // if set, invalidate on enter/leave to force a redraw
         public bool InvalidateOnMouseDownUp { get; set; } = false;      // if set, invalidate on mouse button down/up to force a redraw
@@ -122,13 +133,16 @@ namespace OpenTKUtils.GL4.Controls
         public bool Hover { get; set; } = false;            // mouse is over control
         public GLMouseEventArgs.MouseButtons MouseButtonsDown { get; set; } // set if mouse buttons down over control
 
-        public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
+        public Bitmap LevelBitmap { get { return levelbmp; } }  // return level bitmap, null if not a bitmap control
+       // public GLTexture2D Texture { get; set; }            // return texture, null if not a top level element
 
-        public Bitmap LevelBitmap { get { return levelbmp; } }
+        // control lists
 
         public virtual List<GLBaseControl> ControlsIZ { get { return childreniz; } }      // read only, in inv zorder, so 0 = last layout first drawn
         public virtual List<GLBaseControl> ControlsOrderAdded { get { return childreniz; } }      // in order added
         public virtual List<GLBaseControl> ControlsZ { get { return childrenz; } }          // read only, in zorder, so 0 = first layout last painted
+
+        // events
 
         public Action<Object, GLMouseEventArgs> MouseDown { get; set; } = null;  // location in client terms, NonClientArea set if on border with negative/too big x/y for clients
         public Action<Object, GLMouseEventArgs> MouseUp { get; set; } = null;
@@ -162,7 +176,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( BackColor == Color.Transparent )   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
             { //tbd
-                System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " Parent need it too");
+                System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " is transparent, parent needs it too");
                 Parent?.Invalidate();
             }
 
@@ -237,7 +251,7 @@ namespace OpenTKUtils.GL4.Controls
             }
             else
             {
-                PerformRecursiveSize();         // we recusively size, from lowest child up
+                PerformRecursiveSize(Parent?.ClientSize ?? ClientSize);         // we recusively size, from lowest child up
                 PerformRecursiveLayout();       // and we layout, top down
             }
         }
@@ -261,7 +275,7 @@ namespace OpenTKUtils.GL4.Controls
         public virtual void Add(GLBaseControl other)
         {
             other.parent = this;
-            childrenz.Insert(0,other);   // in z order.  First is top of z
+            childrenz.Insert(0, other);   // in z order.  First is top of z
             childreniz.Add(other);       // in inv z order. Last is top of z
 
             if (this is GLControlDisplay) // if adding to a form, the child must have a bitmap
@@ -292,6 +306,25 @@ namespace OpenTKUtils.GL4.Controls
                 Invalidate();
                 PerformLayout();        // reperform layout
             }
+        }
+
+        public virtual bool BringToFront()      // bring to the front, true if it was at the front
+        {
+            if (Parent != null && Parent.childrenz[0] != this)
+            {
+                System.Diagnostics.Debug.WriteLine("Bring {0} to front in {1}", this.Name, Parent?.Name);
+                Parent.childreniz.Remove(this);
+                Parent.childrenz.Remove(this);
+
+                Parent.childrenz.Insert(0, this);   // in z order.  First is top of z
+                Parent.childreniz.Add(this);       // in inv z order. Last is top of z
+
+                Parent.Invalidate();
+
+                return false;
+            }
+            else
+                return true;
         }
 
         #endregion
@@ -385,27 +418,34 @@ namespace OpenTKUtils.GL4.Controls
         #region Overridables
 
         // first,perform recursive sizing. do children first, then do us
+        // pass in the parent size of client rectangle to each size to give them a hint what they can autosize into
 
-        protected virtual void PerformRecursiveSize()   
+        protected virtual void PerformRecursiveSize(Size parentclientrect)   
         {
+            int width = (Dock == DockingType.Top || Dock == DockingType.Bottom) ? (parentclientrect.Width-DockingMargin.TotalWidth) : ClientWidth;
+            int height = (Dock == DockingType.Left || Dock == DockingType.Right) ? (parentclientrect.Height-DockingMargin.TotalHeight) : ClientHeight;
+            Size estsize = new Size(width, height);
+
+            System.Diagnostics.Debug.WriteLine("Size " + Name + " Estsize " + estsize);
             foreach (var c in childrenz) // in Z order
             {
                 if (c.Visible)      // invisible children don't layout
                 {
-                    c.PerformRecursiveSize();
+                    c.PerformRecursiveSize(estsize);
                 }
             }
 
-            SizeControl();              // size ourselves after children sized
+            SizeControl(estsize);              // size ourselves after children sized
         }
 
-        // override to auto size. Only use the NI functions to change size.
-        protected virtual void SizeControl()        
+        // override to auto size. Only use the NI functions to change size.  size is size of parent before layout occurs, but takes into account docking.
+
+        protected virtual void SizeControl(Size parentclientrect)        
         {
-            //System.Diagnostics.Debug.WriteLine("Control " + Name + " Size ");
+            System.Diagnostics.Debug.WriteLine("..Size " + Name + " area est is " + parentclientrect);
         }
 
-        // second, layout after sizing, layout children.  We are layedout by parent
+        // second, layout after sizing, layout children.  We are layedout by parent, and lay out our children inside our client rectangle
 
         public virtual void PerformRecursiveLayout()     // go down the tree.  
         {

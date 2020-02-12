@@ -136,14 +136,14 @@ namespace OpenTKUtils
             {
                 CullFace = newstate.CullFace;
                 GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.CullFace, CullFace.Value);
-                System.Diagnostics.Debug.WriteLine("Cull mode " + CullFace.Value);
+               // System.Diagnostics.Debug.WriteLine("Cull mode " + CullFace.Value);
             }
 
             if (newstate.DepthTest.HasValue && DepthTest != newstate.DepthTest)
             {
                 DepthTest = newstate.DepthTest;
                 GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.DepthTest, DepthTest.Value);
-                System.Diagnostics.Debug.WriteLine("Depth Test " + DepthTest.Value);
+             //   System.Diagnostics.Debug.WriteLine("Depth Test " + DepthTest.Value);
             }
 
             if (newstate.DepthClamp.HasValue && DepthClamp != newstate.DepthClamp)
@@ -244,10 +244,7 @@ namespace OpenTKUtils
 
         }
 
-        // LineSmooth
-        //
-
-
+        
         private GLRenderControl(PrimitiveType p)
         {
             PrimitiveType = p;

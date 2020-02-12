@@ -42,9 +42,9 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        protected override void SizeControl()
+        protected override void SizeControl(Size parentsize)
         {
-            base.SizeControl();
+            base.SizeControl(parentsize);
             if ( AutoSize )
             {
                 SizeF size = new Size(0, 0);

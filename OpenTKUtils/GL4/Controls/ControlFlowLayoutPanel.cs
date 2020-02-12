@@ -39,12 +39,34 @@ namespace OpenTKUtils.GL4.Controls
         private GL4.Controls.Padding flowPadding { get; set; } = new Padding(1);
         private ControlFlowDirection flowDirection = ControlFlowDirection.Right;
 
-        // Sizing has been recursively done for all children
+        // Sizing has been recursively done for all children, now size us
+
+        protected override void SizeControl(Size parentsize)
+        {
+            base.SizeControl(parentsize);
+    
+            //if (AutoSize)       // width stays the same, height changes
+            //{
+            //    // TBD CHECK
+            //    Rectangle area = Flow((c, p) => { });
+            //    SetLocationSizeNI(size: new Size(Width, area.Bottom + 2));
+            //}
+        }
+
         // now we are laying out from top down
 
         public override void PerformRecursiveLayout()
         {
-            Rectangle flowpos = new Rectangle(ClientRectangle.Location,new Size(0,0));      // in terms of our client area
+            Flow((c, p) => 
+            {
+                c.SetLocationSizeNI(p);
+                c.PerformRecursiveLayout();
+            });
+        }
+
+        private Rectangle Flow(Action<GLBaseControl, Point> action)
+        {
+            Rectangle flowpos = new Rectangle(ClientRectangle.Location, new Size(0, 0));      // in terms of our client area
 
             foreach (GLBaseControl c in ControlsZ)
             {
@@ -57,15 +79,15 @@ namespace OpenTKUtils.GL4.Controls
 
                 Point pos = new Point(flowpos.X + FlowPadding.Left, flowpos.Y + flowPadding.Top);
 
-                c.SetLocationSizeNI(pos);
+                action(c, pos);
 
                 int right = pos.X + c.Width + flowPadding.Right;
                 int bot = Math.Max(flowpos.Bottom, pos.Y + c.Height + flowPadding.Bottom);
 
                 flowpos = new Rectangle(right, flowpos.Top, 0, bot);
-
-                c.PerformRecursiveLayout();
             }
+
+            return flowpos;
         }
     }
 }

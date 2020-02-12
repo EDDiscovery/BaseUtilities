@@ -163,7 +163,7 @@ namespace TestOpenTk
                 bool testtabcontrol = true;
                 bool testdatetime = true;
 
-                //testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
+//                testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
@@ -173,7 +173,7 @@ namespace TestOpenTk
                 GLForm pform = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 1000, 800), Color.FromArgb(200, Color.Red));
                 pform.SuspendLayout();
                 pform.BackColorGradient = 90;
-                pform.BackColorGradientAlt = Color.FromArgb(200,Color.Yellow);
+                pform.BackColorGradientAlt = Color.FromArgb(200, Color.Yellow);
 
                 displaycontrol.Add(pform);
 
@@ -363,10 +363,25 @@ namespace TestOpenTk
                     pform.Add(dtp);
                 }
 
-
                 pform.ResumeLayout();
+
+                bool testform2 = true;
+
+                if (testform2)
+                {
+                    GLForm pform2 = new GLForm("form", "Form 2 GL Control demonstration", new Rectangle(500, 0, 1000, 800), Color.FromArgb(200, Color.Red));
+                    pform2.SuspendLayout();
+                    pform2.BackColorGradient = 90;
+                    pform2.BackColorGradientAlt = Color.FromArgb(200, Color.Blue);
+
+                    displaycontrol.Add(pform2);
+                    pform2.ResumeLayout();
+                }
+
                 displaycontrol.ResumeLayout();
+
             }
+
 
             gl3dcontroller = new Controller3D();    
 
@@ -412,6 +427,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e)
         {
+            OpenTKUtils.Timers.Timer.ProcessTimers();
             if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
             var cdmt = gl3dcontroller.HandleKeyboardSlews(true);

@@ -221,5 +221,6 @@ namespace OpenTKUtils.WinForm
 
             glControl.SwapBuffers();
         }
+
     }
 }
