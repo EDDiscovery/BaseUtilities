@@ -82,7 +82,7 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLImage : GLImageBase
     {
-        public GLImage(string name, Rectangle location, Bitmap bmp) : base(name,location,DefaultBackColor)
+        public GLImage(string name, Rectangle location, Bitmap bmp) : base(name,location,DefaultControlBackColor)
         {
             Image = bmp;
         }

@@ -53,7 +53,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public int GroupBoxHeight { get { return (Font?.ScalePixels(20) ?? 20) + GBMargins * 2; } }
 
-        public GLGroupBox() : this("GB?", "", DefaultWindowRectangle, DefaultBackColor)
+        public GLGroupBox() : this("GB?", "", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
 

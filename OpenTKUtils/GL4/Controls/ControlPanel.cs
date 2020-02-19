@@ -27,7 +27,7 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public GLPanel() : this("P?", DefaultWindowRectangle,DefaultBackColor)
+        public GLPanel() : this("P?", DefaultWindowRectangle,DefaultControlBackColor)
         {
         }
 

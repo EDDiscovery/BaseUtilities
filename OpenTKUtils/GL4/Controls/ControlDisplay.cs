@@ -189,7 +189,10 @@ namespace OpenTKUtils.GL4.Controls
             //System.Diagnostics.Debug.WriteLine("Form redraw start");
             //DebugWhoWantsRedraw();
 
-            foreach( var c in ControlsIZ)
+            NeedRedraw = false;
+            RequestRender = false;
+
+            foreach ( var c in ControlsIZ)
             { 
                 if (c.Visible)
                 {
@@ -203,7 +206,6 @@ namespace OpenTKUtils.GL4.Controls
                 }
             }
 
-            NeedRedraw = false;
 
             shader.Start();
             ri.Bind(currentstate, shader, null);        // binds VA AND the element buffer
@@ -212,7 +214,6 @@ namespace OpenTKUtils.GL4.Controls
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);
 
-            RequestRender = false;
 
             //System.Diagnostics.Debug.WriteLine("Form redraw end");
         }

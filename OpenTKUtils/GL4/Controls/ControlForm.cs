@@ -12,17 +12,12 @@
  * governing permissions and limitations under the License.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLForm : GLForeDisplayTextBase
+    public class GLForm : GLForeDisplayTextBase, IForm
     {
         public const int FormMargins = 2;
         public const int FormPadding = 2;
@@ -39,7 +34,21 @@ namespace OpenTKUtils.GL4.Controls
 
         public int TitleBarHeight { get { return (Font?.ScalePixels(20) ?? 20) + FormMargins * 2; } }
 
-        public GLForm() : this("F?", "", DefaultWindowRectangle, DefaultBackColor)
+        public GLForm() : this("F?", "", DefaultWindowRectangle, DefaultFormBackColor)
+        {
+        }
+
+        public void Close()
+        {
+            OnClose();
+            Parent?.Remove(this);
+        }
+
+        public void OnShown()
+        {
+        }
+
+        public void OnClose()
         {
         }
 
@@ -51,7 +60,9 @@ namespace OpenTKUtils.GL4.Controls
         public override void PerformRecursiveLayout()
         {
             if (text.HasChars())
-                MarginNI = new Margin(Margin.Left, TitleBarHeight + FormMargins*2, Margin.Right, Margin.Bottom);
+                MarginNI = new Margin(Margin.Left, TitleBarHeight + FormMargins * 2, Margin.Right, Margin.Bottom);
+            else
+                MarginNI = new Margin(Margin.Left, FormMargins, Margin.Right, Margin.Bottom);
 
             base.PerformRecursiveLayout();
         }

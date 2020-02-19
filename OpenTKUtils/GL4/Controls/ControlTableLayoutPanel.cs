@@ -27,7 +27,7 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultBackColor)
+        public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultControlBackColor)
         {
         }
 

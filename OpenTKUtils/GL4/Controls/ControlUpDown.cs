@@ -37,7 +37,7 @@ namespace OpenTKUtils.GL4.Controls
             repeattimer.Tick += RepeatClick;
         }
 
-        public GLUpDownControl() : this("UD?", DefaultWindowRectangle, DefaultBackColor)
+        public GLUpDownControl() : this("UD?", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
 

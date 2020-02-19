@@ -24,20 +24,18 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLComboBox : GLBaseControl
+    public class GLComboBox : GLForeDisplayBase
     {
         public Action<GLBaseControl> SelectedIndexChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
-        public Color ForeColor { get { return foreColor; } set { foreColor = value; Invalidate(); } }       // of text
-        public string Text { get { return dropdownbox.Text; } set { dropdownbox.Text = value; Invalidate(); } }
-
-        // list box
+        public string Text { get { return dropdownbox.Text; } }
 
         public List<string> Items { get { return dropdownbox.Items; } set { dropdownbox.Items = value; } }
         public List<Image> ImageItems { get { return dropdownbox.ImageItems; } set { dropdownbox.ImageItems = value; } }
         public int[] ItemSeperators { get { return dropdownbox.ItemSeperators; } set { dropdownbox.ItemSeperators = value;  } }
 
         public int SelectedIndex { get { return dropdownbox.SelectedIndex; } set { if (value != dropdownbox.SelectedIndex) { dropdownbox.SelectedIndex = value; OnSelectedIndexChanged(); Invalidate(); } } }
+        public string SelectedItem { get { return dropdownbox.SelectedItem; } set { dropdownbox.SelectedItem = value; OnSelectedIndexChanged(); Invalidate(); } }
 
         public int DropDownHeightMaximum { get { return dropdownbox.DropDownHeightMaximum; } set { dropdownbox.DropDownHeightMaximum = value; } }
 
@@ -60,21 +58,6 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbColorScaling { get { return dropdownbox.ThumbColorScaling; } set { dropdownbox.ThumbColorScaling = value; } }
         public float ThumbDrawAngle { get { return dropdownbox.ThumbDrawAngle; } set { dropdownbox.ThumbDrawAngle = value; } }
 
-        public float DisabledScaling
-        {
-            get { return disabledScaling; }
-            set
-            {
-                if (float.IsNaN(value) || float.IsInfinity(value))
-                    return;
-                else if (disabledScaling != value)
-                {
-                    disabledScaling = value;
-                    Invalidate();
-                }
-            }
-        }
-
         public GLComboBox(string name, Rectangle location, List<string> itms, Color backcolour) : base(name, location, backcolour)
         {
             Items = itms;
@@ -86,23 +69,17 @@ namespace OpenTKUtils.GL4.Controls
             dropdownbox.OtherKeyPressed += dropdownotherkey;
         }
 
-        public GLComboBox(string name, Rectangle location, Color backcolour) : this(name, location, null, backcolour)
+        public GLComboBox(string name, Rectangle location, Color backcolour) : this(name, location, new List<string>(), backcolour)
         {
         }
 
-        public GLComboBox() : this("Combo?", DefaultWindowRectangle, DefaultBackColor)
+        public GLComboBox() : this("Combo?", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
-
-        private GLListBox dropdownbox = new GLListBox();
-        private Color foreColor { get; set; } = Color.Black;
-        private float disabledScaling = 0.5F;
 
         protected override void Paint(Rectangle area, Graphics gr)
         {
-            string text = Text;
-
-            if (text != null)
+            if (Text != null)
             {
                 bool enabled = Enabled && Items.Count > 0;
 
@@ -120,7 +97,7 @@ namespace OpenTKUtils.GL4.Controls
                     fmt.Alignment = StringAlignment.Near;
                     using (Brush textb = new SolidBrush(enabled ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
                     {
-                        gr.DrawString(text, Font, textb, textbox, fmt);
+                        gr.DrawString(Text, Font, textb, textbox, fmt);
                     }
                 }
 
@@ -239,5 +216,8 @@ namespace OpenTKUtils.GL4.Controls
         {
             SelectedIndexChanged?.Invoke(this);
         }
+
+        private GLListBox dropdownbox = new GLListBox();
+
     }
 }

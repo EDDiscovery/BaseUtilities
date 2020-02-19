@@ -30,7 +30,7 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public GLVerticalScrollPanel() : this("VSP?", DefaultWindowRectangle, DefaultBackColor)
+        public GLVerticalScrollPanel() : this("VSP?", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
 

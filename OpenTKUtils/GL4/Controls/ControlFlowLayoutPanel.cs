@@ -23,7 +23,7 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLFlowLayoutPanel : GLPanel
     {
-        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultBackColor)
+        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultControlBackColor)
         {
         }
 

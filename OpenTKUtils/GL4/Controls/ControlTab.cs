@@ -40,7 +40,7 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public GLTabControl() : this("TBC?", DefaultWindowRectangle, DefaultBackColor)
+        public GLTabControl() : this("TBC?", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
 
@@ -250,7 +250,7 @@ namespace OpenTKUtils.GL4.Controls
             text = title;
         }
 
-        public GLTabPage() : this("TPC?", "", DefaultBackColor)
+        public GLTabPage() : this("TPC?", "", DefaultControlBackColor)
         {
         }
 

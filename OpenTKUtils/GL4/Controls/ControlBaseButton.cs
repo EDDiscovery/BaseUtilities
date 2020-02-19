@@ -35,10 +35,10 @@ namespace OpenTKUtils.GL4.Controls
             InvalidateOnMouseDownUp = true;
         }
 
-        private Color buttonBackColor { get; set; } = Color.Gray;
-        private Color mouseOverBackColor { get; set; } = Color.Green;
-        private Color mouseDownBackColor { get; set; } = Color.YellowGreen;
-        private Color foreColor { get; set; } = Color.Black;
+        private Color buttonBackColor { get; set; } = DefaultButtonBackColor;
+        private Color mouseOverBackColor { get; set; } = DefaultMouseOverButtonColor;
+        private Color mouseDownBackColor { get; set; } = DefaultMouseDownButtonColor;
+        private Color foreColor { get; set; } = DefaultForeColor;
         private float backColorScaling = 0.5F;
 
     }

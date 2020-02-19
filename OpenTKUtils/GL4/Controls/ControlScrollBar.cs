@@ -60,13 +60,13 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbColorScaling { get { return thumbColorScaling; } set { thumbColorScaling = value; Invalidate(); } }
         public float ThumbDrawAngle { get { return thumbDrawAngle; } set { thumbDrawAngle = value; Invalidate(); } }
 
-        public GLScrollBar(string name, Rectangle pos, int min, int max) : base(name,pos,DefaultBackColor)
+        public GLScrollBar(string name, Rectangle pos, int min, int max) : base(name,pos,DefaultControlBackColor)
         {
             thumbvalue = minimum = min;
             maximum = max;
         }
 
-        public GLScrollBar() : base("SB?",DefaultWindowRectangle,DefaultBackColor)
+        public GLScrollBar() : base("SB?",DefaultWindowRectangle,DefaultControlBackColor)
         { 
         }
 
@@ -390,19 +390,19 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        private Color arrowcolor { get; set; } = Color.Black;
-        private Color slidercolor { get; set; } = Color.DarkGray;
+        private Color arrowcolor { get; set; } = DefaultForeColor;
+        private Color slidercolor { get; set; } = DefaultButtonBackColor;
 
-        private Color arrowButtonColor { get; set; } = Color.LightGray;
-        private Color arrowBorderColor { get; set; } = Color.LightBlue;
+        private Color arrowButtonColor { get; set; } = DefaultButtonBackColor;
+        private Color arrowBorderColor { get; set; } = DefaultButtonBackColor.Multiply(1.5f);
         private float arrowUpDrawAngle { get; set; } = 90F;
         private float arrowDownDrawAngle { get; set; } = 270F;
         private float arrowColorScaling { get; set; } = 0.5F;
 
-        private Color mouseOverButtonColor { get; set; } = Color.Green;
-        private Color mousePressedButtonColor { get; set; } = Color.Red;
-        private Color thumbButtonColor { get; set; } = Color.DarkBlue;
-        private Color thumbBorderColor { get; set; } = Color.Yellow;
+        private Color mouseOverButtonColor { get; set; } = DefaultMouseOverButtonColor;
+        private Color mousePressedButtonColor { get; set; } = DefaultMouseDownButtonColor;
+        private Color thumbButtonColor { get; set; } = DefaultButtonBackColor;
+        private Color thumbBorderColor { get; set; } = DefaultButtonBackColor.Multiply(1.5f);
         private float thumbColorScaling { get; set; } = 0.5F;
         private float thumbDrawAngle { get; set; } = 0F;
 

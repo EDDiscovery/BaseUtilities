@@ -32,7 +32,8 @@ namespace OpenTKUtils.GL4.Controls
         public int[] ItemSeperators { get { return itemSeperators; } set { itemSeperators = value; Invalidate(); } }
 
         public int SelectedIndex { get { return selectedIndex; } set { SetSelectedIndex(value); } }
-        public string Text { get { return (items != null && selectedIndex>=0)?items[selectedIndex]:null; } set { SetSelectedIndex(value); } }
+        public string SelectedItem { get { return selectedIndex>=0 ? Items[selectedIndex] : null; } set { SetSelectedItem(value); } }
+        public string Text { get { return (items != null && selectedIndex >= 0) ? items[selectedIndex] : null; } set { SetSelectedIndex(value); } }
 
         public bool FitToItemsHeight { get { return fitToItemsHeight; } set { fitToItemsHeight = value; Invalidate(); } }
         public bool FitImagesToItemHeight { get { return fitImagesToItemHeight; } set { fitImagesToItemHeight = value; Invalidate(); } }
@@ -44,6 +45,7 @@ namespace OpenTKUtils.GL4.Controls
 
         // scroll bar
         public Color ArrowColor { get { return scrollbar.ArrowColor; } set { scrollbar.ArrowColor = value; } }       // of text
+
         public Color SliderColor { get { return scrollbar.SliderColor; } set { scrollbar.SliderColor = value; } }
         public Color ArrowButtonColor { get { return scrollbar.ArrowButtonColor; } set { scrollbar.ArrowButtonColor = value; } }
         public Color ArrowBorderColor { get { return scrollbar.ArrowBorderColor; } set { scrollbar.ArrowBorderColor = value; } }
@@ -89,9 +91,20 @@ namespace OpenTKUtils.GL4.Controls
             Add(scrollbar);
         }
 
-        public GLListBox() : this("LB?", DefaultWindowRectangle, null,DefaultBackColor)
+        public GLListBox() : this("LB?", DefaultWindowRectangle, null,DefaultControlBackColor)
         {
         }
+
+        public void SetSelectedItem(string v, StringComparison c = StringComparison.InvariantCultureIgnoreCase)
+        {
+            if (items != null)
+            {
+                int i = items.FindIndex((x) => x.Equals(v, c));
+                if (i >= 0 && i < items.Count)
+                    SetSelectedIndex(v);
+            }
+        }
+
 
         public override void OnFontChanged()
         {
@@ -395,9 +408,9 @@ namespace OpenTKUtils.GL4.Controls
 
         private bool fitToItemsHeight { get; set; } = true;              // if set, move the border to integer of item height.
         private bool fitImagesToItemHeight { get; set; } = false;        // if set images scaled to fit within item height
-        private Color mouseOverBackColor { get; set; } = Color.Green;
         private float gradientColorScaling = 0.5F;
-        private Color itemSeperatorColor { get; set; } = Color.Red;
+        private Color mouseOverBackColor { get; set; } = DefaultMouseOverButtonColor;
+        private Color itemSeperatorColor { get; set; } = DefaultLineSeparColor;
         private GLScrollBar scrollbar;
         private List<string> items;
         private List<Image> images;

@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLMultilineTextBox : GLForeDisplayTextBase
+    public class GLMultiLineTextBox : GLForeDisplayTextBase
     {
         public Action<GLBaseControl> TextChanged { get; set; } = null;      // not fired by programatically changing Text
         public Action<GLBaseControl> ReturnPressed { get; set; } = null;    // not fired by programatically changing Text, only if AllowLF = false
@@ -29,16 +29,18 @@ namespace OpenTKUtils.GL4.Controls
         public bool AllowLF { get; set; } = true;                           // clear to prevent multiline
         public Margin TextBoundary { get; set; } = new Margin(0);
         public Color HighlightColor { get { return highlightColor; } set { highlightColor = value; Invalidate(); } }       // of text
+        public Color LineColor { get { return lineColor; } set { lineColor = value; Invalidate(); } }       // lined text, default off
         private int DisplayableLines { get { return Font != null ? ClientRectangle.Height / Font.Height : 1; } }
+        public bool IsSelectionSet { get { return startpos != cursorpos; } }
 
-        public GLMultilineTextBox(string name, Rectangle pos, string text, Color backcolor) : base(name, pos, backcolor)
+        public GLMultiLineTextBox(string name, Rectangle pos, string text, Color backcolor = DefaultControlBackColor) : base(name, pos, backcolor)
         {
             Focusable = true;
             this.text = text;
             OnTextSet();
         }
 
-        public GLMultilineTextBox() : this("TBML?", DefaultWindowRectangle, "", DefaultBackColor)
+        public GLMultiLineTextBox() : this("TBML?", DefaultWindowRectangle, "")
         {
         }
 
@@ -300,8 +302,6 @@ namespace OpenTKUtils.GL4.Controls
             Invalidate();
         }
 
-        public bool Selection { get { return startpos != cursorpos; } }
-
         public bool DeleteSelection()
         {
             if (DeleteSelectionInt())
@@ -313,6 +313,45 @@ namespace OpenTKUtils.GL4.Controls
             else
                 return false;
         }
+
+        public string SelectedText {
+            get
+            {
+                if (IsSelectionSet)
+                {
+                    int min = Math.Min(startpos, cursorpos);
+                    int max = Math.Max(startpos, cursorpos);
+                    return text.Substring(min, max - min);
+                }
+                else
+                    return null;
+            }
+        }
+
+        public void Copy()
+        {
+            string sel = SelectedText;
+            if (sel != null)
+                System.Windows.Forms.Clipboard.SetText(sel);
+        }
+
+        public void Cut()
+        {
+            string sel = SelectedText;
+            if (sel != null)
+            {
+                System.Windows.Forms.Clipboard.SetText(sel);
+                DeleteSelection();
+            }
+        }
+
+        public void Paste()
+        {
+            string s = System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.UnicodeText);
+            if ( !s.IsEmpty() )
+                InsertTextWithCRLF(s);
+        }
+
 
         #region Implementation
 
@@ -424,10 +463,11 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (startpos < Text.Length)
             {
-                if (offsetin > linelengths[lineno])
+                int avtext = linelengths[lineno] - lineendlengths[lineno];
+                if (offsetin > avtext)
                     return string.Empty;
                 else
-                    return text.Substring(startpos + offsetin, linelengths[lineno] - lineendlengths[lineno] - offsetin);
+                    return text.Substring(startpos + offsetin, avtext - offsetin);
             }
             else
                 return string.Empty;
@@ -527,6 +567,9 @@ namespace OpenTKUtils.GL4.Controls
                         if (cursorline.IsEmpty())
                             break;
 
+                        Rectangle ma = usablearea;
+                        ma.Width = 7000;        // more due to us trying to find the maximum
+
                         using (var sfmt = new StringFormat())       // measure where the cursor will be and move startx to make it visible
                         {
                             sfmt.Alignment = StringAlignment.Near;
@@ -534,10 +577,10 @@ namespace OpenTKUtils.GL4.Controls
 
                             CharacterRange[] characterRanges = { new CharacterRange(0, cursoroffset - startx) };   // measure where the cursor is..
                             sfmt.SetMeasurableCharacterRanges(characterRanges);
-                            var rect = gr.MeasureCharacterRanges(cursorline + "@", Font, new Rectangle(0, 0, 4000, 80), sfmt)[0].GetBounds(gr);    // ensure at least 1 char
+                            var rect = gr.MeasureCharacterRanges(cursorline + "@", Font, ma, sfmt)[0].GetBounds(gr);    // ensure at least 1 char
 
                             //System.Diagnostics.Debug.WriteLine("{0} {1} {2}", startx, cursoroffset, rect);
-                            if ((int)(rect.Width + 1) > usablearea.Width - Font.Height)      // Font.Height is to allow for an overlap
+                            if ((int)(rect.Width + 1) > usablearea.Width - Font.Height)      // Font.Height is to allow for an overlap  TBD fix this later
                             {
                                 System.Diagnostics.Debug.WriteLine("Display start move right");
                                 startx++;
@@ -552,13 +595,21 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     pfmt.Alignment = StringAlignment.Near;
                     pfmt.LineAlignment = StringAlignment.Near;
+                    pfmt.FormatFlags = StringFormatFlags.LineLimit | StringFormatFlags.NoWrap | StringFormatFlags.NoClip;   // still jumps 1 pixel sometimes.. fix later TBD
 
-                    bool highlight = (startpos != cursorpos) && startlineno <= lineno;      // if startlineno is less or equal to lineno, its on
-
-                    Point pos = usablearea.Location;
-
-                    while (pos.Y < usablearea.Bottom)       // paint each line
+                    int bottom = usablearea.Bottom;
+                    usablearea.Height = Font.Height;        // move the area down the screen progressively
+                        
+                    while (usablearea.Top < bottom)       // paint each line
                     {
+                        if (!lineColor.IsFullyTransparent())        // lined paper
+                        {
+                            using (Pen p = new Pen(Color.Green))
+                            {
+                                gr.DrawLine(p, new Point(usablearea.Left, usablearea.Bottom-1), new Point(usablearea.Right-1, usablearea.Bottom-1));
+                            }
+                        }
+
                         int highlightstart = 0, highlightend = 0;
 
                         if (startpos < cursorpos)       // start less than cursor, so estimate s/e this way. 
@@ -566,7 +617,7 @@ namespace OpenTKUtils.GL4.Controls
                             highlightstart = cpos == startlinecpos ? startpos - startlinecpos : 0;
                             highlightend = (cpos >= startlinecpos && cpos < cursorlinecpos) ? (linelengths[lineno] - lineendlengths[lineno]) : cpos == cursorlinecpos ? (cursorpos - cursorlinecpos) : 0;
                         }
-                        else if ( startpos > cursorpos )
+                        else if ( startpos > cursorpos )    // other way
                         {
                             highlightstart = cpos == cursorlinecpos ? cursorpos - cursorlinecpos : 0;
                             highlightend = (cpos >= cursorlinecpos && cpos < startlinecpos) ? (linelengths[lineno] - lineendlengths[lineno]) : cpos == startlinecpos ? (startpos - startlinecpos) : 0;
@@ -578,11 +629,11 @@ namespace OpenTKUtils.GL4.Controls
                             highlightend = Math.Max(highlightend - startx, 0);          // and the end points
                         }
 
-                        string s = LineWithoutCRLF(cpos, lineno, startx);
+                        string s = LineWithoutCRLF(cpos, lineno, startx);   // text without cr/lf, empty if none
 
-                        if (highlightstart != 0 || highlightend != 0)
+                        if (highlightstart != 0 || highlightend != 0)       // and highlight if on
                         {
-                            System.Diagnostics.Debug.WriteLine("{0} {1}-{2}", cpos, highlightstart, highlightend);
+                            //System.Diagnostics.Debug.WriteLine("{0} {1}-{2}", cpos, highlightstart, highlightend);
 
                             using (var sfmt = new StringFormat())   // new measurer, don't trust reuse
                             {
@@ -596,7 +647,6 @@ namespace OpenTKUtils.GL4.Controls
 
                                 using (Brush b1 = new SolidBrush(HighlightColor))
                                 {
-                                    rect.Y = pos.Y;
                                     gr.FillRectangle(b1, rect);
                                 }
                             }
@@ -604,7 +654,7 @@ namespace OpenTKUtils.GL4.Controls
 
                         if (s.Length>0)
                         {
-                            gr.DrawString(s, Font, textb, pos, pfmt);        // need to paint to pos not in an area
+                            gr.DrawString(s, Font, textb, usablearea, pfmt);        // need to paint to pos not in an area
                         }
 
                         if (cursorlineno == lineno)
@@ -634,7 +684,7 @@ namespace OpenTKUtils.GL4.Controls
 
                                 using (Pen p = new Pen(this.ForeColor))
                                 {
-                                    gr.DrawLine(p, new Point(xpos, pos.Y), new Point(xpos, pos.Y + Font.Height - 2));
+                                    gr.DrawLine(p, new Point(xpos, usablearea.Y), new Point(xpos, usablearea.Y + Font.Height - 2));
                                 }
                             }
                         }
@@ -643,7 +693,7 @@ namespace OpenTKUtils.GL4.Controls
                             break;
 
                         cpos += linelengths[lineno];
-                        pos.Y += Font.Height;
+                        usablearea.Y += Font.Height;
                         lineno++;
                     }
                 }
@@ -666,11 +716,24 @@ namespace OpenTKUtils.GL4.Controls
                 else if (e.KeyCode == System.Windows.Forms.Keys.Up)
                     CursorUp(!e.Shift);
                 else if (e.KeyCode == System.Windows.Forms.Keys.Delete)
-                    Delete();
+                {
+                    if (e.Shift)
+                        Cut();
+                    else
+                        Delete();
+                }
                 else if (e.KeyCode == System.Windows.Forms.Keys.Home)
                     Home(!e.Shift);
                 else if (e.KeyCode == System.Windows.Forms.Keys.End)
                     End(!e.Shift);
+                else if (e.KeyCode == System.Windows.Forms.Keys.Insert)
+                {
+                    if (e.Control)      
+                        Copy();
+                    else if (e.Shift)
+                        Paste();
+                }
+
                 else if (e.KeyCode == System.Windows.Forms.Keys.F1)
                     InsertTextWithCRLF("Hello\rThere\rFred");
             }
@@ -684,6 +747,18 @@ namespace OpenTKUtils.GL4.Controls
                 if (e.KeyChar == 8)
                 {
                     Backspace();
+                }
+                else if (e.KeyChar == 3)    // ctrl-c
+                {
+                    Copy();
+                }
+                else if (e.KeyChar == 22)    // ctrl-v
+                {
+                    Paste();
+                }
+                else if (e.KeyChar == 24)    // ctrl-x
+                {
+                    Cut();
                 }
                 else if (e.KeyChar == 13)
                 {
@@ -813,11 +888,9 @@ namespace OpenTKUtils.GL4.Controls
         private int startx = 0;
 
         private Color highlightColor { get; set; } = Color.Red;
+        private Color lineColor { get; set; } = Color.Transparent;
 
 
     }
 }
 
-// copy/paste now, remove other one, check single line op
-// message box simple
-// do star menu

@@ -329,7 +329,7 @@ namespace TestOpenTk
                         GLButton b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1", Color.Gray, Color.Yellow);
                         b1.Margin = new Margin(5);
                         b1.Padding = new OpenTKUtils.GL4.Controls.Padding(5);
-                        b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
+                        b1.Click += (c, ev) => { ConfDialog(); };
                         p2.Add(b1);
 
                         GLButton b2 = new GLButton("B2", new Rectangle(5, 50, 0, 0), "Button 2", Color.Gray, Color.Yellow);
@@ -402,15 +402,20 @@ namespace TestOpenTk
                     }
 
                     string l = "";
-                    for (int i = 0; i < 4; i++)
-                        l += string.Format("This is line " + i)+ "\r\n";
+                    for (int i = 0; i < 2; i++)
+                        l += string.Format("This is line " + i) + "\r\n";
+                    l += "And a much much longer Line which should break the width\r\n";
+                    for (int i = 10; i < 12; i++)
+                        l += string.Format("This is line " + i) + "\r\n";
                     //l += "This is a longer line\r\n";
-                    //l += "And a much much longer line which should break the width\r\n";
+                    l += "And a much much longer Line which should break the width\r\n";
                     l += "trail ";
                    // l = "";
 
                     //l = "One\r\n" + "two";
-                    GLMultilineTextBox mtb = new GLMultilineTextBox("mltb", new Rectangle(100, 200, 200, 200), l, Color.White);
+                    GLMultiLineTextBox mtb = new GLMultiLineTextBox("mltb", new Rectangle(100, 200, 200, 200), l, Color.White);
+                    mtb.Font = new Font("Ms Sans Serif", 12);
+                    mtb.LineColor = Color.Green;
                     mtb.SetSelection(16 * 2 + 2, 16 * 3 + 4);
                     pform2.Add(mtb);
 
@@ -457,6 +462,17 @@ namespace TestOpenTk
 
         }
 
+        private void ConfDialog()
+        {
+            GLFormConfigurable c1 = new GLFormConfigurable();
+            c1.Add(new GLFormConfigurable.Entry("Lab1", typeof(GLLabel), "Label 1 ", new Point(10, 10), new Size(200, 24), "TT"));
+            c1.Add(new GLFormConfigurable.Entry("But1", typeof(GLButton), "But 1", new Point(10, 40), new Size(200, 24), "TT"));
+            c1.Add(new GLFormConfigurable.Entry("Com1", "two", new Point(10, 70), new Size(200, 24), "TT", new List<string>() { "one", "two", "three" }));
+            c1.Size = new Size(400, 400);
+            c1.Init(new Point(200, 200), "Config Form Test");
+            displaycontrol.Add(c1);
+
+        }
 
         private void Controller3dDraw(GLMatrixCalc mc, long time)
         {

@@ -63,7 +63,7 @@ namespace OpenTKUtils.GL4.Controls
             scrollbar.Scroll += Scrolled;
         }
 
-        public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle, DefaultBackColor)
+        public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle, DefaultControlBackColor)
         {
         }
 

@@ -72,7 +72,7 @@ namespace OpenTKUtils.GL4.Controls
             Focusable = true;
         }
 
-        public GLDateTimePicker() : this("DTP?", DefaultWindowRectangle, DateTime.Now, DefaultBackColor)
+        public GLDateTimePicker() : this("DTP?", DefaultWindowRectangle, DateTime.Now, DefaultControlBackColor)
         {
         }
 

@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4.Controls
             BorderColorNI = bordercolor;
         }
 
-        public GLButton() : this("But?", DefaultWindowRectangle, "", DefaultBackColor, DefaultBorderColor)
+        public GLButton() : this("But?", DefaultWindowRectangle, "", DefaultControlBackColor, DefaultBorderColor)
         {
         }
 

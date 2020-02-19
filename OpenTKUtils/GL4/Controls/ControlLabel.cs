@@ -28,9 +28,10 @@ namespace OpenTKUtils.GL4.Controls
         public GLLabel(string name, Rectangle location, string text, Color backcolour) : base(name,location, backcolour)
         {
             this.text = text;
+            ForeColor = DefaultLabelForeColor;
         }
 
-        public GLLabel() : this("LB?", DefaultWindowRectangle, "", DefaultBackColor)
+        public GLLabel() : this("LB?", DefaultWindowRectangle, "", Color.Transparent)
         {
         }
 

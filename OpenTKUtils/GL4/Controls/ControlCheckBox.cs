@@ -60,7 +60,7 @@ namespace OpenTKUtils.GL4.Controls
             TextNI = text;
         }
 
-        public GLCheckBox() : this("CB?", DefaultWindowRectangle, "", DefaultBackColor)
+        public GLCheckBox() : this("CB?", DefaultWindowRectangle, "", DefaultControlBackColor)
         {
         }
 

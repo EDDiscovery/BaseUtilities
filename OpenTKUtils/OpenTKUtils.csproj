@@ -57,6 +57,7 @@
     <Compile Include="GL1\Data3DTexturedQuadData.cs" />
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
+    <Compile Include="GL4\Controls\FormConfigurable.cs" />
     <Compile Include="GL4\Controls\ControlBaseButton.cs" />
     <Compile Include="GL4\Controls\ControlComboBox.cs" />
     <Compile Include="GL4\Controls\ControlCheckBox.cs" />

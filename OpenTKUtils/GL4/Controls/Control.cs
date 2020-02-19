@@ -56,6 +56,12 @@ namespace OpenTKUtils.GL4.Controls
                                 Bottom, BottomCentre, BottomLeft, BottomRight,
                               };
 
+    interface IForm
+    {
+        void OnShown();
+        void OnClose();
+    }
+
     [System.Diagnostics.DebuggerDisplay("Control {Name} {window}")]
     public abstract class GLBaseControl
     {
@@ -168,9 +174,15 @@ namespace OpenTKUtils.GL4.Controls
 
         public static Action<GLBaseControl> Themer = null;                 // set this up, will be called during construction with the class for you to theme the colours/options
 
-        static public Color DefaultBackColor = Color.White;
-        static public Color DefaultForeColor = Color.Black;
+        static public Color DefaultControlBackColor = Color.Gray;
+        static public Color DefaultFormBackColor = Color.White;
+        static public Color DefaultForeColor = Color.White;
+        static public Color DefaultLabelForeColor = Color.Black;
         static public Color DefaultBorderColor = Color.Gray;
+        static public Color DefaultButtonBackColor = Color.Gray;
+        static public Color DefaultMouseOverButtonColor = Color.FromArgb(200, 200, 200);
+        static public Color DefaultMouseDownButtonColor = Color.FromArgb(230, 230, 230);
+        static public Color DefaultLineSeparColor = Color.Green;
 
         public void Invalidate()
         {
@@ -671,6 +683,12 @@ namespace OpenTKUtils.GL4.Controls
                     parentgr.SetClip(parentarea);       // must set the clip area again to address the parent area
                     PaintParent(parentarea, parentgr);
                 }
+
+                if ( this is IForm && onshown == false)
+                {
+                    (this as IForm).OnShown();
+                    onshown = true;
+                }
             }
 
             if (levelbmp != null)        // bitmap on this level, we made a GR, dispose
@@ -951,6 +969,8 @@ namespace OpenTKUtils.GL4.Controls
         private int row { get; set; } = 0;        // for table layouts
         private bool focused { get; set; } = false;
         private bool focusable { get; set; } = false;
+
+        private bool onshown { get; set; } = false; // if implements IForm, onShown is called, this is set true
 
         private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
 

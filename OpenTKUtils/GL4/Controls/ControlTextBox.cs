@@ -16,14 +16,14 @@ using System.Drawing;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLTextBox : GLMultilineTextBox
+    public class GLTextBox : GLMultiLineTextBox
     {
         public GLTextBox(string name, Rectangle pos, string text, Color backcolor) : base(name, pos, text, backcolor)
         {
             AllowLF = false;
         }
 
-        public GLTextBox() : this("TB?", DefaultWindowRectangle, "", DefaultBackColor)
+        public GLTextBox() : this("TB?", DefaultWindowRectangle, "", DefaultControlBackColor)
         {
         }
     }
