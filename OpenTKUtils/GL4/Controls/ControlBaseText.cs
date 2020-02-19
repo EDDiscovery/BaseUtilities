@@ -23,7 +23,7 @@ namespace OpenTKUtils.GL4.Controls
 {
     public abstract class GLForeDisplayBase : GLBaseControl
     {
-        public GLForeDisplayBase(string name, Rectangle location, Color backcolor) : base(name, location, backcolor)
+        public GLForeDisplayBase(string name, Rectangle location) : base(name, location)
         {
         }
 
@@ -36,7 +36,7 @@ namespace OpenTKUtils.GL4.Controls
 
     public abstract class GLForeDisplayTextBase : GLForeDisplayBase
     {
-        public GLForeDisplayTextBase(string name, Rectangle location, Color backcolor) : base(name, location, backcolor)
+        public GLForeDisplayTextBase(string name, Rectangle location) : base(name, location)
         {
         }
 

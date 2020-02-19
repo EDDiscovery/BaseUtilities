@@ -29,7 +29,7 @@ namespace OpenTKUtils.GL4.Controls
         public Color MouseDownBackColor { get { return mouseDownBackColor; } set { mouseDownBackColor = value; Invalidate(); } }
         public float BackColorScaling { get { return backColorScaling; } set { backColorScaling = value; Invalidate(); } }
 
-        public GLButtonBase(string name, Rectangle window, Color backcolor) : base(name, window, backcolor)
+        public GLButtonBase(string name, Rectangle window) : base(name, window)
         {
             InvalidateOnEnterLeave = true;
             InvalidateOnMouseDownUp = true;
@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4.Controls
         public string Text { get { return text; } set { text = value; Invalidate(); } }
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
 
-        public GLButtonTextBase(string name, Rectangle window, Color backcolor) : base(name, window, backcolor)
+        public GLButtonTextBase(string name, Rectangle window) : base(name, window)
         {
         }
 

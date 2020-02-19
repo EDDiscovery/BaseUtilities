@@ -55,12 +55,14 @@ namespace OpenTKUtils.GL4.Controls
         public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }        // apperance normal/button only
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
-        public GLCheckBox(string name, Rectangle location, string text, Color backcolour) : base(name,location,backcolour)
+        public GLCheckBox(string name, Rectangle location, string text) : base(name,location)
         {
+            BackColor = Color.Transparent;
             TextNI = text;
+            Themer?.Invoke(this);
         }
 
-        public GLCheckBox() : this("CB?", DefaultWindowRectangle, "", DefaultControlBackColor)
+        public GLCheckBox() : this("CB?", DefaultWindowRectangle, "")
         {
         }
 

@@ -30,32 +30,33 @@ namespace OpenTKUtils.GL4.Controls
         public const int GBXoffset = 8;
         public const int GBXpad = 2;
 
-        public GLGroupBox(string name, string title, Rectangle location, Color back) : base(name, location, back)
+        public GLGroupBox(string name, string title, Rectangle location) : base(name, location)
         {
             PaddingNI = new Padding(GBPadding);
             MarginNI = new Margin(GBMargins);
             BorderWidthNI = GBBorderWidth;
             BorderColorNI = DefaultBorderColor;
             text = title;
+            Themer?.Invoke(this);
         }
 
-        public GLGroupBox(string name, string title, DockingType type, float dockpercent, Color back) : this(name, title, DefaultWindowRectangle, back)
+        public GLGroupBox(string name, string title, DockingType type, float dockpercent) : this(name, title, DefaultWindowRectangle)
         {
             Dock = type;
             DockPercent = dockpercent;
         }
 
-        public GLGroupBox(string name, string title, Size sizep, DockingType type, float dockpercentage, Color back) : this(name, title, new Rectangle(new Point(0,0),sizep), back)
+        public GLGroupBox(string name, string title, Size sizep, DockingType type, float dockpercentage) : this(name, title, new Rectangle(new Point(0,0),sizep))
         {
             Dock = type;
             DockPercent = dockpercentage;
         }
 
-        public int GroupBoxHeight { get { return (Font?.ScalePixels(20) ?? 20) + GBMargins * 2; } }
-
-        public GLGroupBox() : this("GB?", "", DefaultWindowRectangle, DefaultControlBackColor)
+        public GLGroupBox() : this("GB?", "", DefaultWindowRectangle)
         {
         }
+
+        public int GroupBoxHeight { get { return (Font?.ScalePixels(20) ?? 20) + GBMargins * 2; } }
 
         public override void PerformRecursiveLayout()
         {

@@ -34,7 +34,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
 
-        public GLControlDisplay(GLWindowControl win) : base("displaycontrol", new Rectangle(0, 0, win.Width, win.Height), Color.Transparent)
+        public GLControlDisplay(GLWindowControl win) : base("displaycontrol", new Rectangle(0, 0, win.Width, win.Height))
         {
             glwin = win;
 

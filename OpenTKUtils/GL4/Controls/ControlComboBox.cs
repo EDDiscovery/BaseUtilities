@@ -58,7 +58,7 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbColorScaling { get { return dropdownbox.ThumbColorScaling; } set { dropdownbox.ThumbColorScaling = value; } }
         public float ThumbDrawAngle { get { return dropdownbox.ThumbDrawAngle; } set { dropdownbox.ThumbDrawAngle = value; } }
 
-        public GLComboBox(string name, Rectangle location, List<string> itms, Color backcolour) : base(name, location, backcolour)
+        public GLComboBox(string name, Rectangle location, List<string> itms) : base(name, location)
         {
             Items = itms;
             InvalidateOnEnterLeave = true;
@@ -67,13 +67,14 @@ namespace OpenTKUtils.GL4.Controls
             dropdownbox.Name = name + "-Dropdown";
             dropdownbox.SelectedIndexChanged += dropdownchanged;
             dropdownbox.OtherKeyPressed += dropdownotherkey;
+            Themer?.Invoke(this);
         }
 
-        public GLComboBox(string name, Rectangle location, Color backcolour) : this(name, location, new List<string>(), backcolour)
+        public GLComboBox(string name, Rectangle location) : this(name, location, new List<string>())
         {
         }
 
-        public GLComboBox() : this("Combo?", DefaultWindowRectangle, DefaultControlBackColor)
+        public GLComboBox() : this("Combo?", DefaultWindowRectangle)
         {
         }
 

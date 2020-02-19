@@ -33,14 +33,19 @@ namespace OpenTKUtils.GL4.Controls
         private int DisplayableLines { get { return Font != null ? ClientRectangle.Height / Font.Height : 1; } }
         public bool IsSelectionSet { get { return startpos != cursorpos; } }
 
-        public GLMultiLineTextBox(string name, Rectangle pos, string text, Color backcolor = DefaultControlBackColor) : base(name, pos, backcolor)
+        public GLMultiLineTextBox(string name, Rectangle pos, string text) : base(name, pos)
         {
             Focusable = true;
             this.text = text;
             OnTextSet();
+            Themer?.Invoke(this);
         }
 
         public GLMultiLineTextBox() : this("TBML?", DefaultWindowRectangle, "")
+        {
+        }
+
+        protected GLMultiLineTextBox(string name, Rectangle pos) : base(name,pos)
         {
         }
 

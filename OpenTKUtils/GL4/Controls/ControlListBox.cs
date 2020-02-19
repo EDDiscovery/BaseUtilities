@@ -76,7 +76,7 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public GLListBox(string n, Rectangle pos, List<string> texts, Color backcolor) : base(n,pos,backcolor)
+        public GLListBox(string n, Rectangle pos, List<string> texts) : base(n,pos)
         {
             items = texts;
             Focusable = true;
@@ -89,9 +89,10 @@ namespace OpenTKUtils.GL4.Controls
             scrollbar.Visible = false;
             scrollbar.Scroll += (s, e) => { if (firstindex != e.NewValue) { firstindex = e.NewValue; Invalidate(); } };
             Add(scrollbar);
+            Themer?.Invoke(this);
         }
 
-        public GLListBox() : this("LB?", DefaultWindowRectangle, null,DefaultControlBackColor)
+        public GLListBox() : this("LB?", DefaultWindowRectangle, null)
         {
         }
 
@@ -199,9 +200,10 @@ namespace OpenTKUtils.GL4.Controls
                 if ( selectedindexset )     // we set the selected index, move to this and set focus to it, make sure its displayed
                 {
                     focusindex = SelectedIndex;
-                    if (focusindex > firstindex)         
+
+                    if (firstindex >= focusindex)       // must display focusindex
                         firstindex = focusindex;
-                    else if (focusindex >= firstindex + displayableitems)
+                    else  if ( focusindex >= firstindex + displayableitems ) // if too far back..
                         firstindex = focusindex - displayableitems - 1;
 
                     selectedindexset = false;

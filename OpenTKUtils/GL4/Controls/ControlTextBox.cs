@@ -18,12 +18,16 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLTextBox : GLMultiLineTextBox
     {
-        public GLTextBox(string name, Rectangle pos, string text, Color backcolor) : base(name, pos, text, backcolor)
+        public GLTextBox(string name, Rectangle pos, string text) : base(name, pos)
         {
+            Focusable = true;
+            this.text = text;
+            OnTextSet();
             AllowLF = false;
+            Themer?.Invoke(this);
         }
 
-        public GLTextBox() : this("TB?", DefaultWindowRectangle, "", DefaultControlBackColor)
+        public GLTextBox() : this("TB?", DefaultWindowRectangle, "")
         {
         }
     }

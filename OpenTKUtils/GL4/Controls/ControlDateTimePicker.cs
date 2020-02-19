@@ -53,7 +53,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLImage cal = new GLImage();
 
 
-        public GLDateTimePicker(string name, Rectangle location, DateTime t, Color back) : base(name, location, back)
+        public GLDateTimePicker(string name, Rectangle location, DateTime t) : base(name, location)
         {
             checkbox.CheckChanged += checkboxchanged;
             checkbox.BackColor = Color.Transparent;
@@ -70,9 +70,10 @@ namespace OpenTKUtils.GL4.Controls
             cal.MouseDown += calclicked;
             Add(cal);
             Focusable = true;
+            Themer?.Invoke(this);
         }
 
-        public GLDateTimePicker() : this("DTP?", DefaultWindowRectangle, DateTime.Now, DefaultControlBackColor)
+        public GLDateTimePicker() : this("DTP?", DefaultWindowRectangle, DateTime.Now)
         {
         }
 

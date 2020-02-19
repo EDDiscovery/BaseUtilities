@@ -36,11 +36,12 @@ namespace OpenTKUtils.GL4.Controls
         Color TabNotSelectedBorderColor { get { return tabNotSelectedBorderColor; } set { tabNotSelectedBorderColor = value; Invalidate(); } }
         float TabColorScaling { get { return tabColorScaling; } set { tabColorScaling = value; Invalidate(); } }
 
-        public GLTabControl(string name, Rectangle location, Color back) : base(name, location, back)
+        public GLTabControl(string name, Rectangle location) : base(name, location)
         {
+            Themer?.Invoke(this);
         }
 
-        public GLTabControl() : this("TBC?", DefaultWindowRectangle, DefaultControlBackColor)
+        public GLTabControl() : this("TBC?", DefaultWindowRectangle)
         {
         }
 
@@ -245,12 +246,18 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public GLTabPage(string name, string title, Color back) : base(name, DefaultWindowRectangle, back)
+        public GLTabPage(string name, string title) : base(name, DefaultWindowRectangle)
         {
             text = title;
         }
 
-        public GLTabPage() : this("TPC?", "", DefaultControlBackColor)
+        public GLTabPage(string name, string title, Color back) : base(name, DefaultWindowRectangle)
+        {
+            BackColor = back;
+            text = title;
+        }
+
+        public GLTabPage() : this("TPC?", "")
         {
         }
 

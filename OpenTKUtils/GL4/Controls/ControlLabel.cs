@@ -25,13 +25,15 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLLabel : GLForeDisplayTextBase
     {
-        public GLLabel(string name, Rectangle location, string text, Color backcolour) : base(name,location, backcolour)
+        public GLLabel(string name, Rectangle location, string text) : base(name,location)
         {
             this.text = text;
             ForeColor = DefaultLabelForeColor;
+            BackColor = Color.Transparent;
+            Themer?.Invoke(this);
         }
 
-        public GLLabel() : this("LB?", DefaultWindowRectangle, "", Color.Transparent)
+        public GLLabel() : this("LB?", DefaultWindowRectangle, "")
         {
         }
 

@@ -30,15 +30,17 @@ namespace OpenTKUtils.GL4.Controls
     {
         public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;
 
-        public GLButton(string name, Rectangle location, string text, Color backcolour, Color bordercolor) : base(name, location, backcolour)
+        public GLButton(string name, Rectangle location, string text) : base(name, location)
         {
             PaddingNI = new Padding(1);       // standard format, a border with a pad of 1
             BorderWidthNI = 1;
             TextNI = text;
-            BorderColorNI = bordercolor;
+            BorderColorNI = DefaultButtonBorderColor;
+
+            Themer?.Invoke(this);
         }
 
-        public GLButton() : this("But?", DefaultWindowRectangle, "", DefaultControlBackColor, DefaultBorderColor)
+        public GLButton() : this("But?", DefaultWindowRectangle, "")
         {
         }
 

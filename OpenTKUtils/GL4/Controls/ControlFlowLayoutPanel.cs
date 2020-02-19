@@ -23,25 +23,29 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLFlowLayoutPanel : GLPanel
     {
-        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultControlBackColor)
+        public GLFlowLayoutPanel(string name, Rectangle location) : base(name, location)
         {
+            Themer?.Invoke(this);
         }
 
-        public GLFlowLayoutPanel(string name, Rectangle location, Color back) : base(name, location, back)
-        {
-        }
-
-        public GLFlowLayoutPanel(string name, DockingType type, float dockpercent, Color back) : base(name, DefaultWindowRectangle, back)
+        public GLFlowLayoutPanel(string name, DockingType type, float dockpercent) : base(name, DefaultWindowRectangle)
         {
             Dock = type;
             DockPercent = dockpercent;
+            Themer?.Invoke(this);
+
         }
 
-        public GLFlowLayoutPanel(string name, Size sizep, DockingType type, float dockpercentage, Color back) : base(name, DefaultWindowRectangle, back)
+        public GLFlowLayoutPanel(string name, Size sizep, DockingType type, float dockpercentage) : base(name, DefaultWindowRectangle)
         {
             Dock = type;
             DockPercent = dockpercentage;
             SetLocationSizeNI(size: sizep);
+            Themer?.Invoke(this);
+        }
+
+        public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle)
+        {
         }
 
         public enum ControlFlowDirection { Right };

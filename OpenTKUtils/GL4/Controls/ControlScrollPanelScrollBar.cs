@@ -48,11 +48,11 @@ namespace OpenTKUtils.GL4.Controls
 
         public int ScrollBarWidth { get { return Font?.ScalePixels(20) ?? 20; } }
 
-        public GLVerticalScrollPanelScrollBar(string name, Rectangle location, Color back) : base(name,location,back)
+        public GLVerticalScrollPanelScrollBar(string name, Rectangle location) : base(name,location)
         {
             scrollpanel = new GLVerticalScrollPanel();
             scrollpanel.Dock = DockingType.Fill;
-            scrollpanel.BackColor = back;
+            scrollpanel.BackColor = BackColor;
             base.Add(scrollpanel);  // base because we don't want to use the overrides
 
             scrollbar = new GLScrollBar();
@@ -61,9 +61,10 @@ namespace OpenTKUtils.GL4.Controls
             base.Add(scrollbar);     // last added always goes to top of z-order
 
             scrollbar.Scroll += Scrolled;
+            Themer?.Invoke(this);
         }
 
-        public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle, DefaultControlBackColor)
+        public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle)
         {
         }
 

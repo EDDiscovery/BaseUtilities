@@ -60,13 +60,14 @@ namespace OpenTKUtils.GL4.Controls
         public float ThumbColorScaling { get { return thumbColorScaling; } set { thumbColorScaling = value; Invalidate(); } }
         public float ThumbDrawAngle { get { return thumbDrawAngle; } set { thumbDrawAngle = value; Invalidate(); } }
 
-        public GLScrollBar(string name, Rectangle pos, int min, int max) : base(name,pos,DefaultControlBackColor)
+        public GLScrollBar(string name, Rectangle pos, int min, int max) : base(name,pos)
         {
             thumbvalue = minimum = min;
             maximum = max;
+            Themer?.Invoke(this);
         }
 
-        public GLScrollBar() : base("SB?",DefaultWindowRectangle,DefaultControlBackColor)
+        public GLScrollBar() : this("SB?",DefaultWindowRectangle,0,100)
         { 
         }
 

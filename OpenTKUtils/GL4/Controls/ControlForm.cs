@@ -23,20 +23,23 @@ namespace OpenTKUtils.GL4.Controls
         public const int FormPadding = 2;
         public const int FormBorderWidth = 1;
 
-        public GLForm(string name, string title, Rectangle location, Color back) : base(name, location, back)
+        public GLForm(string name, string title, Rectangle location) : base(name, location)
         {
+            BackColor = DefaultFormBackColor;
             PaddingNI = new Padding(FormPadding);
             MarginNI = new Margin(FormMargins);
             BorderWidthNI = FormBorderWidth;
             BorderColorNI = DefaultBorderColor;
             text = title;
+            Themer?.Invoke(this);
+        }
+
+        public GLForm() : this("F?", "", DefaultWindowRectangle)
+        {
         }
 
         public int TitleBarHeight { get { return (Font?.ScalePixels(20) ?? 20) + FormMargins * 2; } }
 
-        public GLForm() : this("F?", "", DefaultWindowRectangle, DefaultFormBackColor)
-        {
-        }
 
         public void Close()
         {

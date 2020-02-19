@@ -180,6 +180,7 @@ namespace OpenTKUtils.GL4.Controls
         static public Color DefaultLabelForeColor = Color.Black;
         static public Color DefaultBorderColor = Color.Gray;
         static public Color DefaultButtonBackColor = Color.Gray;
+        static public Color DefaultButtonBorderColor = Color.FromArgb(100, 100, 100);
         static public Color DefaultMouseOverButtonColor = Color.FromArgb(200, 200, 200);
         static public Color DefaultMouseDownButtonColor = Color.FromArgb(230, 230, 230);
         static public Color DefaultLineSeparColor = Color.Green;
@@ -358,7 +359,7 @@ namespace OpenTKUtils.GL4.Controls
 
         #region For Inheritors
 
-        protected GLBaseControl(string name, Rectangle location, Color backcolor)
+        protected GLBaseControl(string name, Rectangle location)
         {
             this.Name = name;
 
@@ -369,9 +370,6 @@ namespace OpenTKUtils.GL4.Controls
             }
 
             this.window = location;
-            this.backcolor = backcolor;
-
-            Themer?.Invoke(this);
         }
 
         static protected readonly Rectangle DefaultWindowRectangle = new Rectangle(0, 0, 10, 10);
@@ -956,8 +954,8 @@ namespace OpenTKUtils.GL4.Controls
         private bool visible { get; set; } = true;
         private DockingType docktype { get; set; } = DockingType.None;
         private float dockpercent { get; set; } = 0;
-        private Color backcolor { get; set; } = Color.Transparent;
-        private Color backcolorgradientalt { get; set; } = Color.Black;
+        private Color backcolor { get; set; } = DefaultControlBackColor;
+        private Color backcolorgradientalt { get; set; } = DefaultControlBackColor;
         private int backcolorgradient { get; set; } = int.MinValue;           // in degrees
         private Color bordercolor { get; set; } = Color.Transparent;         // Margin - border - padding is common to all controls. Area left is control area to draw in
         private int borderwidth { get; set; } = 0;

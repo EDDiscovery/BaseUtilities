@@ -31,13 +31,14 @@ namespace OpenTKUtils.GL4.Controls
         public int UpDownInitialDelay { get; set; } = 500;
         public int UpDownRepeatRate { get; set; } = 200;
 
-        public GLUpDownControl(string name, Rectangle location, Color back) : base(name, location, back)
+        public GLUpDownControl(string name, Rectangle location) : base(name, location)
         {
             Focusable = true;
             repeattimer.Tick += RepeatClick;
+            Themer?.Invoke(this);
         }
 
-        public GLUpDownControl() : this("UD?", DefaultWindowRectangle, DefaultControlBackColor)
+        public GLUpDownControl() : this("UD?", DefaultWindowRectangle)
         {
         }
 

@@ -23,11 +23,12 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLTableLayoutPanel : GLPanel
     {
-        public GLTableLayoutPanel(string name, Rectangle location, Color back) : base(name, location, back)
+        public GLTableLayoutPanel(string name, Rectangle location) : base(name, location)
         {
+            Themer?.Invoke(this);
         }
 
-        public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle,DefaultControlBackColor)
+        public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle)
         {
         }
 
