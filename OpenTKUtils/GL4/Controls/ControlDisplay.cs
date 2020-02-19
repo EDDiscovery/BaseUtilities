@@ -67,8 +67,6 @@ namespace OpenTKUtils.GL4.Controls
             glwin.KeyPress += Gc_KeyPress;
             glwin.Resize += Gc_Resize;
             glwin.Paint += Gc_Paint;
-
-            SetDefaultFont();
         }
 
         public Rectangle ClientScreenPos { get { return glwin.ClientScreenPos; } }

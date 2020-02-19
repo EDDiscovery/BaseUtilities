@@ -40,16 +40,7 @@ namespace OpenTKUtils.GL4.Controls
         {
         }
 
-        public string Text
-        {
-            get { return text; }
-            set
-            {
-                text = value;
-                OnTextSet();
-                Invalidate();
-            }
-        }
+        public string Text { get { return text; } set { text = value; OnTextSet(); Invalidate(); } }
 
         public ContentAlignment TextAlign { get { return textAlign; } set { textAlign = value; Invalidate(); } }
 

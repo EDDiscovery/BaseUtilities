@@ -24,9 +24,9 @@ namespace OpenTKUtils
         [System.Flags]
         public enum MouseButtons { None = 0, Left = 1, Middle = 2, Right = 4, };
 
-        public GLMouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; Area = AreaType.Client; }
-        public GLMouseEventArgs(MouseButtons b, Point l, int c, int delta) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; Area = AreaType.Client; }
-        public GLMouseEventArgs(MouseButtons b, Point l, int c) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; Area = AreaType.Client; }
+        public GLMouseEventArgs(Point l) { Button = MouseButtons.None; Location = l; Clicks = 0; Delta = 0; Handled = false; Area = AreaType.Client; Alt = Control = Shift = false; }
+        public GLMouseEventArgs(MouseButtons b, Point l, int c, int delta, bool alt, bool ctrl, bool sh) { Button = MouseButtons.None; Location = l; Clicks = c; Delta = delta; Handled = false; Area = AreaType.Client; Alt = alt; Shift = sh; Control = ctrl; }
+        public GLMouseEventArgs(MouseButtons b, Point l, int c, bool alt, bool ctrl, bool sh) { Button = b; Location = l; Clicks = c;Delta = 0; Handled = false; Area = AreaType.Client; Alt = alt; Shift = sh; Control = ctrl; }
 
         public MouseButtons Button { get; set; }
         public Point Location { get; set; }
@@ -37,6 +37,9 @@ namespace OpenTKUtils
         public int Clicks { get; set; }
         public int Delta { get; set; }
         public bool Handled { get; set; }
+        public bool Alt { get; private set; }
+        public bool Control { get; private set; }
+        public bool Shift { get; private set; }
     }
 
     public struct GLKeyEventArgs

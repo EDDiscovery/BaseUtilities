@@ -63,6 +63,7 @@
     <Compile Include="GL4\Controls\ControlButton.cs" />
     <Compile Include="GL4\Controls\ControlGroupBox.cs" />
     <Compile Include="GL4\Controls\ControlBaseText.cs" />
+    <Compile Include="GL4\Controls\ControlMultiLineTextBox.cs" />
     <Compile Include="GL4\Controls\ControlUpDown.cs" />
     <Compile Include="GL4\Controls\ControlLabel.cs" />
     <Compile Include="GL4\Controls\ControlListBox.cs" />

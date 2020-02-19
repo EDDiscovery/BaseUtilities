@@ -153,6 +153,7 @@ namespace TestOpenTk
             if (true)
             {
                 bool testform1 = true;
+                bool testform2 = true;
                 bool testtable = true;
                 bool testflow = true;
                 bool testtextbox = true;
@@ -166,6 +167,7 @@ namespace TestOpenTk
 
                 //                testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
                 //testform1 = false;
+                testform2 = true;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
@@ -371,8 +373,6 @@ namespace TestOpenTk
                     pform.ResumeLayout();
                 }
 
-                bool testform2 = true;
-
                 if (testform2)
                 {
                     GLForm pform2 = new GLForm("form", "Form 2 GL Control demonstration", new Rectangle(500, 0, 1000, 800), Color.FromArgb(200, Color.Red));
@@ -400,6 +400,23 @@ namespace TestOpenTk
                         GLImage pti4 = new GLImage("PTI00" + i, new Rectangle(0, 0, 64, 64), Properties.Resources.Logo8bpp);
                         ptable.Add(pti4);
                     }
+
+                    string l = "";
+                    for (int i = 0; i < 4; i++)
+                        l += string.Format("This is line " + i)+ "\r\n";
+                    //l += "This is a longer line\r\n";
+                    //l += "And a much much longer line which should break the width\r\n";
+                    l += "trail ";
+                   // l = "";
+
+                    //l = "One\r\n" + "two";
+                    GLMultilineTextBox mtb = new GLMultilineTextBox("mltb", new Rectangle(100, 200, 200, 200), l, Color.White);
+                    mtb.SetSelection(16 * 2 + 2, 16 * 3 + 4);
+                    pform2.Add(mtb);
+
+
+
+
                     pform2.ResumeLayout();
                 }
 

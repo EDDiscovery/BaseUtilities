@@ -138,7 +138,8 @@ namespace OpenTKUtils.WinForm
                 (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
 
-            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks,
+                            Control.ModifierKeys.HasFlag(Keys.Alt), Control.ModifierKeys.HasFlag(Keys.Control), Control.ModifierKeys.HasFlag(Keys.Shift));
             MouseUp?.Invoke(this, ev);
         }
 
@@ -148,7 +149,8 @@ namespace OpenTKUtils.WinForm
                 (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
 
-            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks,
+                            Control.ModifierKeys.HasFlag(Keys.Alt), Control.ModifierKeys.HasFlag(Keys.Control), Control.ModifierKeys.HasFlag(Keys.Shift));
             MouseDown?.Invoke(this, ev);
         }
 
@@ -157,7 +159,8 @@ namespace OpenTKUtils.WinForm
             GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
-            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks,
+                            Control.ModifierKeys.HasFlag(Keys.Alt), Control.ModifierKeys.HasFlag(Keys.Control), Control.ModifierKeys.HasFlag(Keys.Shift));
             MouseClick?.Invoke(this, ev);
         }
 
@@ -166,7 +169,8 @@ namespace OpenTKUtils.WinForm
             GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
-            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks);
+            var ev = new GLMouseEventArgs(b, e.Location, e.Clicks,
+                            Control.ModifierKeys.HasFlag(Keys.Alt), Control.ModifierKeys.HasFlag(Keys.Control), Control.ModifierKeys.HasFlag(Keys.Shift));
             MouseMove?.Invoke(this, ev);
         }
 
@@ -175,7 +179,8 @@ namespace OpenTKUtils.WinForm
             GLMouseEventArgs.MouseButtons b = (((e.Button & System.Windows.Forms.MouseButtons.Left) != 0) ? GLMouseEventArgs.MouseButtons.Left : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Middle) != 0) ? GLMouseEventArgs.MouseButtons.Middle : 0) |
                 (((e.Button & System.Windows.Forms.MouseButtons.Right) != 0) ? GLMouseEventArgs.MouseButtons.Right : 0);
-            var ev = new GLMouseEventArgs(b,e.Location, e.Clicks, e.Delta);
+            var ev = new GLMouseEventArgs(b,e.Location, e.Clicks, e.Delta,
+                        Control.ModifierKeys.HasFlag(Keys.Alt), Control.ModifierKeys.HasFlag(Keys.Control), Control.ModifierKeys.HasFlag(Keys.Shift));
             MouseWheel?.Invoke(this, ev);
         }
 

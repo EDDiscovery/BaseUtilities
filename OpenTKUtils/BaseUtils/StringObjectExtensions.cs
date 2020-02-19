@@ -541,6 +541,13 @@ public static class ObjectExtensionsStrings
         return null;
     }
 
+    public static string EscapeControlChars(this string obj)
+    {
+        string s = obj.Replace(@"\", @"\\");        // order vital
+        s = obj.Replace("\r", @"\r");
+        return s.Replace("\n", @"\n");
+    }
+
 
 
 }

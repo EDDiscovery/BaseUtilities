@@ -110,8 +110,8 @@ namespace OpenTKUtils.GL4.Controls
 
         // colour font
 
-        public Font Font { get { return font ?? parent?.Font; } set { SetFont(value); InvalidateLayout(); } }
-        public void SetDefaultFont() { font = new Font("Microsoft Sans Serif", 8.25f); }
+        private Font DefaultFont = new Font("Ms Sans Serif", 8.25f);
+        public Font Font { get { return font ?? parent?.Font ?? DefaultFont; } set { SetFont(value); InvalidateLayout(); } }
         public Color BackColor { get { return backcolor; } set { if (backcolor != value) { backcolor = value; Invalidate(); } } }
         public int BackColorGradient { get { return backcolorgradient;} set { if ( backcolorgradient != value) { backcolorgradient = value;Invalidate(); } } }
         public Color BackColorGradientAlt { get { return backcolorgradientalt; } set { if (backcolorgradientalt != value) { backcolorgradientalt = value; Invalidate(); } } }
@@ -257,7 +257,7 @@ namespace OpenTKUtils.GL4.Controls
             if (suspendLayoutSet)
             {
                 needLayout = true;
-                //System.Diagnostics.Debug.WriteLine("Suspended layout on " + Name);
+                System.Diagnostics.Debug.WriteLine("Suspended layout on " + Name);
             }
             else
             {
@@ -269,11 +269,12 @@ namespace OpenTKUtils.GL4.Controls
         public void SuspendLayout()
         {
             suspendLayoutSet = true;
+            System.Diagnostics.Debug.WriteLine("Suspend layout on " + Name);
         }
 
         public void ResumeLayout()
         {
-            //if ( suspendLayoutSet )   System.Diagnostics.Debug.WriteLine("Resume Layout on " + Name);
+            if ( suspendLayoutSet )   System.Diagnostics.Debug.WriteLine("Resume Layout on " + Name);
 
             suspendLayoutSet = false;
             if (needLayout)
@@ -613,18 +614,18 @@ namespace OpenTKUtils.GL4.Controls
 
             if (NeedRedraw || forceredraw)          // if we need a redraw, or we are forced to draw by a parent redrawing above us.
             {
-                System.Diagnostics.Debug.WriteLine("redraw {0}->{1} Bounds {2} clip {3} client {4} ({5},{6},{7},{8}) nr {9} fr {10}", Parent?.Name, Name, bounds, cliparea, 
-                                            ClientRectangle, ClientLeftMargin, ClientTopMargin, ClientRightMargin, ClientBottomMargin, NeedRedraw, forceredraw);
+                //System.Diagnostics.Debug.WriteLine("redraw {0}->{1} Bounds {2} clip {3} client {4} ({5},{6},{7},{8}) nr {9} fr {10}", Parent?.Name, Name, bounds, cliparea, 
+                //                          ClientRectangle, ClientLeftMargin, ClientTopMargin, ClientRightMargin, ClientBottomMargin, NeedRedraw, forceredraw);
+
+                forceredraw = true;             // all children, force redraw       // clear in case need to re-invalidate
+                NeedRedraw = false;             // we have been redrawn
+                redrawn = true;                 // and signal up we have been redrawn
 
                 gr.SetClip(cliparea);   // set graphics to the clip area so we can draw the background/border
 
                 DrawBack(bounds, gr, BackColor, BackColorGradientAlt, BackColorGradient);
                 DrawBorder(bounds, gr, BorderColor, BorderWidth);
 
-                forceredraw = true;             // all children, force redraw
-                NeedRedraw = false;             // we have been redrawn
-
-                redrawn = true;                 // and signal up we have been redrawn
             }
 
             // client area, in terms of last bitmap
@@ -921,7 +922,7 @@ namespace OpenTKUtils.GL4.Controls
             p.OnFontChanged();
             foreach (var c in p.childrenz)
             {
-                if (c.Font == null)
+                if (c.font == null)     // if child does not override font..
                     PropergateFontChanged(c);
             }
         }
