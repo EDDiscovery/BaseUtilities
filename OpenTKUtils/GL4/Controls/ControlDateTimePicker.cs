@@ -70,7 +70,6 @@ namespace OpenTKUtils.GL4.Controls
             cal.MouseDown += calclicked;
             Add(cal);
             Focusable = true;
-            Themer?.Invoke(this);
         }
 
         public GLDateTimePicker() : this("DTP?", DefaultWindowRectangle, DateTime.Now)

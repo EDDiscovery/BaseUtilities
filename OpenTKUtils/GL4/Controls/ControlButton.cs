@@ -36,8 +36,7 @@ namespace OpenTKUtils.GL4.Controls
             BorderWidthNI = 1;
             TextNI = text;
             BorderColorNI = DefaultButtonBorderColor;
-
-            Themer?.Invoke(this);
+            BackColor = DefaultButtonBorderBackColor;
         }
 
         public GLButton() : this("But?", DefaultWindowRectangle, "")

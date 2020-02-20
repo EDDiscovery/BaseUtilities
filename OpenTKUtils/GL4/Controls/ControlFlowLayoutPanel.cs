@@ -25,14 +25,12 @@ namespace OpenTKUtils.GL4.Controls
     {
         public GLFlowLayoutPanel(string name, Rectangle location) : base(name, location)
         {
-            Themer?.Invoke(this);
         }
 
         public GLFlowLayoutPanel(string name, DockingType type, float dockpercent) : base(name, DefaultWindowRectangle)
         {
             Dock = type;
             DockPercent = dockpercent;
-            Themer?.Invoke(this);
 
         }
 
@@ -41,7 +39,6 @@ namespace OpenTKUtils.GL4.Controls
             Dock = type;
             DockPercent = dockpercentage;
             SetLocationSizeNI(size: sizep);
-            Themer?.Invoke(this);
         }
 
         public GLFlowLayoutPanel() : this("TLP?",DefaultWindowRectangle)

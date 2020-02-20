@@ -37,7 +37,7 @@ namespace OpenTKUtils.GL4.Controls
             BorderWidthNI = GBBorderWidth;
             BorderColorNI = DefaultBorderColor;
             text = title;
-            Themer?.Invoke(this);
+
         }
 
         public GLGroupBox(string name, string title, DockingType type, float dockpercent) : this(name, title, DefaultWindowRectangle)

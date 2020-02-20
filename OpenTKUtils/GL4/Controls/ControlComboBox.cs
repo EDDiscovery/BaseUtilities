@@ -67,7 +67,6 @@ namespace OpenTKUtils.GL4.Controls
             dropdownbox.Name = name + "-Dropdown";
             dropdownbox.SelectedIndexChanged += dropdownchanged;
             dropdownbox.OtherKeyPressed += dropdownotherkey;
-            Themer?.Invoke(this);
         }
 
         public GLComboBox(string name, Rectangle location) : this(name, location, new List<string>())

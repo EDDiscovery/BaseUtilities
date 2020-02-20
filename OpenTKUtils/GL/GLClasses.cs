@@ -19,7 +19,7 @@ using System.Windows.Forms;
 
 namespace OpenTKUtils
 {
-    public struct GLMouseEventArgs
+    public class GLMouseEventArgs
     {
         [System.Flags]
         public enum MouseButtons { None = 0, Left = 1, Middle = 2, Right = 4, };
@@ -42,7 +42,7 @@ namespace OpenTKUtils
         public bool Shift { get; private set; }
     }
 
-    public struct GLKeyEventArgs
+    public class GLKeyEventArgs     // class so passed by ref
     {
         public bool Alt { get; private set; }
         public bool Control { get; private set; }

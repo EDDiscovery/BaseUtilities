@@ -59,7 +59,6 @@ namespace OpenTKUtils.GL4.Controls
         {
             BackColor = Color.Transparent;
             TextNI = text;
-            Themer?.Invoke(this);
         }
 
         public GLCheckBox() : this("CB?", DefaultWindowRectangle, "")
@@ -336,8 +335,8 @@ namespace OpenTKUtils.GL4.Controls
         private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
         private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
 
-        private Color checkBoxInnerColor { get; set; } = Color.White;    // Normal only inner colour
-        private Color checkColor { get; set; } = Color.DarkBlue;         // Button - back colour when checked, Normal - check colour
+        private Color checkBoxInnerColor { get; set; } = DefaultCheckBoxInnerColor;    // Normal only inner colour
+        private Color checkColor { get; set; } = DefaultCheckColor;         // Button - back colour when checked, Normal - check colour
 
     }
 }

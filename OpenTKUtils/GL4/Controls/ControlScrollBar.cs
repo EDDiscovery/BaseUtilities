@@ -64,7 +64,6 @@ namespace OpenTKUtils.GL4.Controls
         {
             thumbvalue = minimum = min;
             maximum = max;
-            Themer?.Invoke(this);
         }
 
         public GLScrollBar() : this("SB?",DefaultWindowRectangle,0,100)
@@ -391,7 +390,7 @@ namespace OpenTKUtils.GL4.Controls
         }
 
 
-        private Color arrowcolor { get; set; } = DefaultForeColor;
+        private Color arrowcolor { get; set; } = DefaultControlForeColor;
         private Color slidercolor { get; set; } = DefaultButtonBackColor;
 
         private Color arrowButtonColor { get; set; } = DefaultButtonBackColor;

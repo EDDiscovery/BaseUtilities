@@ -61,7 +61,6 @@ namespace OpenTKUtils.GL4.Controls
             base.Add(scrollbar);     // last added always goes to top of z-order
 
             scrollbar.Scroll += Scrolled;
-            Themer?.Invoke(this);
         }
 
         public GLVerticalScrollPanelScrollBar() : this("VSPSB?", DefaultWindowRectangle)

@@ -13,13 +13,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
@@ -35,7 +30,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Focusable = true;
             repeattimer.Tick += RepeatClick;
-            Themer?.Invoke(this);
+            BackColor = DefaultButtonBackColor;
         }
 
         public GLUpDownControl() : this("UD?", DefaultWindowRectangle)

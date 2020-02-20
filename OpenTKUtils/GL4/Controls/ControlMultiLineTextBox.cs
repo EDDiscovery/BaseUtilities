@@ -16,8 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
@@ -25,27 +23,33 @@ namespace OpenTKUtils.GL4.Controls
     {
         public Action<GLBaseControl> TextChanged { get; set; } = null;      // not fired by programatically changing Text
         public Action<GLBaseControl> ReturnPressed { get; set; } = null;    // not fired by programatically changing Text, only if AllowLF = false
+
         public bool CRLF { get; set; } = true;                              // set to determine CRLF or LF is used
         public bool AllowLF { get; set; } = true;                           // clear to prevent multiline
+        public bool ClearOnFirstChar { get; set; } = false;                 // clear on first char
+        public bool AllowControlChars { get; set; } = false;                // other controls chars allowed
         public Margin TextBoundary { get; set; } = new Margin(0);
         public Color HighlightColor { get { return highlightColor; } set { highlightColor = value; Invalidate(); } }       // of text
         public Color LineColor { get { return lineColor; } set { lineColor = value; Invalidate(); } }       // lined text, default off
+
         private int DisplayableLines { get { return Font != null ? ClientRectangle.Height / Font.Height : 1; } }
+
         public bool IsSelectionSet { get { return startpos != cursorpos; } }
+        public int SelectionStart { get { return Math.Min(startpos, cursorpos); } }
+        public int SelectionEnd { get { return Math.Max(startpos, cursorpos); } }
+
+        public bool InErrorCondition { get { return inerror; } set { inerror = value; Invalidate(); } }
+        public Color BackErrorColor { get { return backerrorcolor; } set { backerrorcolor = value; Invalidate(); } } 
 
         public GLMultiLineTextBox(string name, Rectangle pos, string text) : base(name, pos)
         {
             Focusable = true;
             this.text = text;
             OnTextSet();
-            Themer?.Invoke(this);
+            cursortimer.Tick += cursortick;
         }
 
         public GLMultiLineTextBox() : this("TBML?", DefaultWindowRectangle, "")
-        {
-        }
-
-        protected GLMultiLineTextBox(string name, Rectangle pos) : base(name,pos)
         {
         }
 
@@ -81,7 +85,8 @@ namespace OpenTKUtils.GL4.Controls
                 if (clearstart)
                     ClearStart();
 
-                EnsureCursorWithinDisplay(true);
+                CursorTimerRestart();
+                EnsureCursorYWithinDisplay(true);
             }
         }
 
@@ -105,7 +110,8 @@ namespace OpenTKUtils.GL4.Controls
                 System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
                 System.Diagnostics.Debug.WriteLine("..Start line {0} cpos {1} cur {2}", startlineno, startlinecpos, startpos);
 
-                EnsureCursorWithinDisplay(true);
+                CursorTimerRestart();
+                EnsureCursorYWithinDisplay(true);
             }
         }
 
@@ -123,7 +129,8 @@ namespace OpenTKUtils.GL4.Controls
                 System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
                 System.Diagnostics.Debug.WriteLine("..Start line {0} cpos {1} cur {2}", startlineno, startlinecpos, startpos);
 
-                EnsureCursorWithinDisplay(true);
+                CursorTimerRestart();
+                EnsureCursorYWithinDisplay(true);
             }
         }
 
@@ -141,8 +148,8 @@ namespace OpenTKUtils.GL4.Controls
                 System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
                 System.Diagnostics.Debug.WriteLine("..Start line {0} cpos {1} cur {2}", startlineno, startlinecpos, startpos);
 
-                EnsureCursorWithinDisplay(true);
-                Invalidate();
+                CursorTimerRestart();
+                EnsureCursorYWithinDisplay(true);
             }
         }
 
@@ -153,6 +160,7 @@ namespace OpenTKUtils.GL4.Controls
             if (clearstart)
                 ClearStart();
 
+            CursorTimerRestart();
             Invalidate();
         }
 
@@ -163,12 +171,13 @@ namespace OpenTKUtils.GL4.Controls
             if (clearstart)
                 ClearStart();
 
+            CursorTimerRestart();
             Invalidate();
         }
 
         public void InsertTextWithCRLF(string str, bool insertinplace = false)        // any type of lf/cr combo, replaced by selected combo
         {
-            DeleteSelectionInt();
+            DeleteSelectionClearInt();
 
             int cpos = 0;
             while (true)
@@ -208,7 +217,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public void InsertText(string t, bool insertinplace = false)        // no lf in text
         {
-            DeleteSelectionInt();
+            DeleteSelectionClearInt();
             InsertTextInt(t,insertinplace);
             System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
             ClearStart();
@@ -218,7 +227,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public void InsertCRLF()        // insert the selected cr/lf pattern
         {
-            DeleteSelectionInt();
+            DeleteSelectionClearInt();
             InsertCRLFInt();
             ClearStart();
             System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
@@ -240,6 +249,7 @@ namespace OpenTKUtils.GL4.Controls
                     cursorpos--;
                     ClearStart();
                     OnTextChanged();
+                    CursorTimerRestart();
                     Invalidate();
                 }
                 else if (cursorlinecpos > 0)    // not at start of text
@@ -254,6 +264,7 @@ namespace OpenTKUtils.GL4.Controls
                     lineendlengths.RemoveAt(cursorlineno + 1);
                     ClearStart();
                     OnTextChanged();
+                    CursorTimerRestart();
                     Invalidate();
                 }
 
@@ -274,6 +285,7 @@ namespace OpenTKUtils.GL4.Controls
                     linelengths[cursorlineno]--;
                     ClearStart();
                     OnTextChanged();
+                    CursorTimerRestart();
                     Invalidate();
                 }
                 else if ( cursorpos < Text.Length ) // not at end of text
@@ -284,6 +296,7 @@ namespace OpenTKUtils.GL4.Controls
                     lineendlengths.RemoveAt(cursorlineno);  // and we remove our line ends and keep the next one
                     ClearStart();
                     OnTextChanged();
+                    CursorTimerRestart();
                     Invalidate();
                 }
 
@@ -309,7 +322,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public bool DeleteSelection()
         {
-            if (DeleteSelectionInt())
+            if (DeleteSelectionClearInt())
             {
                 OnTextChanged();
                 Invalidate();
@@ -357,6 +370,13 @@ namespace OpenTKUtils.GL4.Controls
                 InsertTextWithCRLF(s);
         }
 
+        public void Clear()
+        {
+            text = string.Empty;
+            cursorpos = startpos = 0;
+            OnTextSet();
+            Invalidate();
+        }
 
         #region Implementation
 
@@ -454,7 +474,7 @@ namespace OpenTKUtils.GL4.Controls
 
             }
 
-            EnsureCursorWithinDisplay(false);
+            EnsureCursorYWithinDisplay(false);
         }
 
         private void ClearStart()
@@ -478,7 +498,7 @@ namespace OpenTKUtils.GL4.Controls
                 return string.Empty;
         }
 
-        private void EnsureCursorWithinDisplay(bool invalidate)
+        private void EnsureCursorYWithinDisplay(bool invalidate)
         {
             if (Font == null)
                 return;
@@ -505,6 +525,7 @@ namespace OpenTKUtils.GL4.Controls
             linelengths[cursorlineno] += t.Length;
             if (!insertinplace)
                 cursorpos += t.Length;
+            CursorTimerRestart();
         }
 
         private void InsertCRLFInt()
@@ -518,11 +539,17 @@ namespace OpenTKUtils.GL4.Controls
             lineendlengths.Insert(cursorlineno + 1, lineendlengths[cursorlineno]);  // copy end down
             lineendlengths[cursorlineno] = CRLF ? 2 : 1;    // and set ours to CR type
             cursorpos = cursorlinecpos += linelengths[cursorlineno++];
+            CursorTimerRestart();
         }
 
-        private bool DeleteSelectionInt()
+        private bool DeleteSelectionClearInt()
         {
-            if (startpos > cursorpos)
+            if ( ClearOnFirstChar )
+            {
+                ClearOnFirstChar = false;
+                Clear();
+            }
+            else  if (startpos > cursorpos)
             {
                 text = text.Substring(0, cursorpos) + text.Substring(startpos);
                 System.Diagnostics.Debug.WriteLine("Delete {0} to {1} text '{2}'", startpos, cursorpos, text.EscapeControlChars());
@@ -545,7 +572,45 @@ namespace OpenTKUtils.GL4.Controls
         public override void OnFontChanged()
         {
             base.OnFontChanged();
-            EnsureCursorWithinDisplay(false);
+            EnsureCursorYWithinDisplay(false);
+        }
+
+        public override void OnFocusChanged(bool focused, GLBaseControl fromto)
+        {
+            base.OnFocusChanged(focused, fromto);
+
+            if (focused)
+            {
+                CursorTimerRestart();
+                Invalidate();
+            }
+            else
+            {
+                cursortimer.Stop();
+                Invalidate();
+            }
+        }
+
+        private void CursorTimerRestart()
+        {
+            cursortimer.Start(1000, 500);
+            cursorshowing = true;
+        }
+
+        private void cursortick(OpenTKUtils.Timers.Timer t, long tick)
+        {
+            cursorshowing = !cursorshowing;
+            Invalidate();
+        }
+
+        protected override void DrawBack(Rectangle bounds, Graphics gr, Color bc, Color bcgradientalt, int bcgradient)
+        {
+            if (InErrorCondition)       // override colour for error condition, so much easier in this scheme than winforms
+            {
+                bc = BackErrorColor;
+                bcgradientalt = BackErrorColor.Multiply(0.9f);
+            }
+            base.DrawBack(bounds, gr, bc, bcgradientalt, bcgradient);
         }
 
         protected override void Paint(Rectangle clientarea, Graphics gr)
@@ -587,7 +652,7 @@ namespace OpenTKUtils.GL4.Controls
                             //System.Diagnostics.Debug.WriteLine("{0} {1} {2}", startx, cursoroffset, rect);
                             if ((int)(rect.Width + 1) > usablearea.Width - Font.Height)      // Font.Height is to allow for an overlap  TBD fix this later
                             {
-                                System.Diagnostics.Debug.WriteLine("Display start move right");
+                              //  System.Diagnostics.Debug.WriteLine("Display start move right");
                                 startx++;
                             }
                             else
@@ -662,35 +727,32 @@ namespace OpenTKUtils.GL4.Controls
                             gr.DrawString(s, Font, textb, usablearea, pfmt);        // need to paint to pos not in an area
                         }
 
-                        if (cursorlineno == lineno)
+                        if (cursorlineno == lineno && Enabled && Focused && cursorshowing)
                         {
-                            if (Enabled)
+                            int xpos = 0;
+
+                            using (var sfmt = new StringFormat())   
                             {
-                                int xpos = 0;
+                                sfmt.Alignment = StringAlignment.Near;
+                                sfmt.LineAlignment = StringAlignment.Near;
+                                sfmt.FormatFlags = StringFormatFlags.NoWrap;
+                                int offset = cursorpos - cpos - startx;
 
-                                using (var sfmt = new StringFormat())   
-                                {
-                                    sfmt.Alignment = StringAlignment.Near;
-                                    sfmt.LineAlignment = StringAlignment.Near;
-                                    sfmt.FormatFlags = StringFormatFlags.NoWrap;
-                                    int offset = cursorpos - cpos - startx;
+                                CharacterRange[] characterRanges = { new CharacterRange(0, Math.Max(1, offset)) };   // if offset=0, 1 char and we use the left pos
 
-                                    CharacterRange[] characterRanges = { new CharacterRange(0, Math.Max(1, offset)) };   // if offset=0, 1 char and we use the left pos
+                                string t = s + "a";
+                                //                                    System.Diagnostics.Debug.WriteLine(" Offset '{0}' {1} {2}" ,t, characterRanges[0].First , characterRanges[0].Length);
+                                sfmt.SetMeasurableCharacterRanges(characterRanges);
+                                var rect = gr.MeasureCharacterRanges(t, Font, usablearea, sfmt)[0].GetBounds(gr);    // ensure at least 1 char, need to do it in area otherwise it does not works:
 
-                                    string t = s + "a";
-                                    //                                    System.Diagnostics.Debug.WriteLine(" Offset '{0}' {1} {2}" ,t, characterRanges[0].First , characterRanges[0].Length);
-                                    sfmt.SetMeasurableCharacterRanges(characterRanges);
-                                    var rect = gr.MeasureCharacterRanges(t, Font, usablearea, sfmt)[0].GetBounds(gr);    // ensure at least 1 char, need to do it in area otherwise it does not works:
+                                //using (Pen p = new Pen(this.ForeColor)) { gr.DrawRectangle(p, new Rectangle((int)rect.Left, (int)rect.Top, (int)rect.Width, (int)rect.Height)); }
 
-                                    //using (Pen p = new Pen(this.ForeColor)) { gr.DrawRectangle(p, new Rectangle((int)rect.Left, (int)rect.Top, (int)rect.Width, (int)rect.Height)); }
+                                xpos = (int)((offset == 0) ? rect.Left : rect.Right);
+                            }
 
-                                    xpos = (int)((offset == 0) ? rect.Left : rect.Right);
-                                }
-
-                                using (Pen p = new Pen(this.ForeColor))
-                                {
-                                    gr.DrawLine(p, new Point(xpos, usablearea.Y), new Point(xpos, usablearea.Y + Font.Height - 2));
-                                }
+                            using (Pen p = new Pen(this.ForeColor))
+                            {
+                                gr.DrawLine(p, new Point(xpos, usablearea.Y), new Point(xpos, usablearea.Y + Font.Height - 2));
                             }
                         }
 
@@ -772,7 +834,7 @@ namespace OpenTKUtils.GL4.Controls
                     else
                         OnReturnPressed();
                 }
-                else 
+                else if ( !char.IsControl(e.KeyChar) || AllowControlChars)
                 {
                     InsertText(new string(e.KeyChar, 1));
                 }
@@ -892,8 +954,15 @@ namespace OpenTKUtils.GL4.Controls
         private int firstline = 0;
         private int startx = 0;
 
-        private Color highlightColor { get; set; } = Color.Red;
+        private Color highlightColor { get; set; } = DefaultHighlightColor;
         private Color lineColor { get; set; } = Color.Transparent;
+
+        private bool inerror = false;
+        private Color backerrorcolor { get; set; } = DefaultErrorColor;
+
+        private bool cursorshowing = true;
+
+        private OpenTKUtils.Timers.Timer cursortimer = new Timers.Timer();
 
 
     }

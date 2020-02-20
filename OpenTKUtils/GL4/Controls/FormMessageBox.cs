@@ -10,21 +10,20 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
+ * 
  */
 
+using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLTextBox : GLMultiLineTextBox
+    public static class GLMessageBox 
     {
-        public GLTextBox(string name, Rectangle pos, string text = "") : base(name, pos, text)
-        {
-            AllowLF = false;
-        }
-
-        public GLTextBox() : this("TB?", DefaultWindowRectangle, "")
-        {
-        }
     }
 }
+

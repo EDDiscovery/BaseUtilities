@@ -94,7 +94,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public void SetFocus(GLBaseControl ctrl)    // null to clear focus
         {
-            System.Diagnostics.Debug.WriteLine("Focus to " + ctrl.Name);
+            System.Diagnostics.Debug.WriteLine("Focus to " + ctrl?.Name);
 
             if (ctrl == currentfocus)
                 return;
@@ -192,8 +192,8 @@ namespace OpenTKUtils.GL4.Controls
             NeedRedraw = false;
             RequestRender = false;
 
-            foreach ( var c in ControlsIZ)
-            { 
+            foreach (var c in ControlsIZ)
+            {
                 if (c.Visible)
                 {
                     bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
@@ -214,6 +214,26 @@ namespace OpenTKUtils.GL4.Controls
             GL.UseProgram(0);           // final clean up
             GL.BindProgramPipeline(0);
 
+            foreach (var c in ControlsIZ)
+            {
+                var form = c as GLForm;
+                if ( form != null && form.Shown == false )
+                {
+                    form.OnShown();
+                    form.Shown = true;
+                }
+
+                if (c.Visible)
+                {
+                    bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
+
+                    if (redrawn)
+                    {
+                        textures[c].LoadBitmap(c.LevelBitmap);  // and update texture unit with new bitmap
+                        //float[] p = textures[c].GetTextureImageAsFloats(end:100);
+                    }
+                }
+            }
 
             //System.Diagnostics.Debug.WriteLine("Form redraw end");
         }
@@ -391,7 +411,12 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentfocus != null && currentfocus.Enabled)
             {
-                currentfocus.OnKeyUp(e);
+                if (!(currentfocus is GLForm))
+                    currentfocus.FindForm()?.OnKeyUp(e);        // reflect to form
+
+                if ( !e.Handled)
+                    currentfocus.OnKeyUp(e);
+
             }
         }
 
@@ -399,7 +424,12 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentfocus != null && currentfocus.Enabled)
             {
-                currentfocus.OnKeyDown(e);
+                if (!(currentfocus is GLForm))
+                    currentfocus.FindForm()?.OnKeyDown(e);        // reflect to form
+
+                if ( !e.Handled )
+                    currentfocus.OnKeyDown(e);
+
             }
         }
 
@@ -407,7 +437,11 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (currentfocus != null && currentfocus.Enabled)
             {
-                currentfocus.OnKeyPress(e);
+                if (!(currentfocus is GLForm))
+                    currentfocus.FindForm()?.OnKeyPress(e);        // reflect to form
+
+                if ( !e.Handled )
+                    currentfocus.OnKeyPress(e);
             }
         }
 

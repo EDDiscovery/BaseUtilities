@@ -56,12 +56,6 @@ namespace OpenTKUtils.GL4.Controls
                                 Bottom, BottomCentre, BottomLeft, BottomRight,
                               };
 
-    interface IForm
-    {
-        void OnShown();
-        void OnClose();
-    }
-
     [System.Diagnostics.DebuggerDisplay("Control {Name} {window}")]
     public abstract class GLBaseControl
     {
@@ -127,7 +121,7 @@ namespace OpenTKUtils.GL4.Controls
         public GLBaseControl Parent { get { return parent; } }
         public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
         public GLBaseControl FindControlUnderDisplay() { return Parent is GLControlDisplay ? this : parent?.FindControlUnderDisplay(); }
-        //public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
+        public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
@@ -174,15 +168,23 @@ namespace OpenTKUtils.GL4.Controls
 
         public static Action<GLBaseControl> Themer = null;                 // set this up, will be called during construction with the class for you to theme the colours/options
 
-        static public Color DefaultControlBackColor = Color.Gray;
         static public Color DefaultFormBackColor = Color.White;
-        static public Color DefaultForeColor = Color.White;
+        static public Color DefaultFormTextColor = Color.Black;
+        static public Color DefaultControlBackColor = Color.Gray;
+        static public Color DefaultControlForeColor = Color.White;
+        static public Color DefaultPanelBackColor = Color.FromArgb(140, 140, 140);
         static public Color DefaultLabelForeColor = Color.Black;
         static public Color DefaultBorderColor = Color.Gray;
+        static public Color DefaultButtonBorderBackColor = Color.FromArgb(80, 80, 80);
         static public Color DefaultButtonBackColor = Color.Gray;
         static public Color DefaultButtonBorderColor = Color.FromArgb(100, 100, 100);
         static public Color DefaultMouseOverButtonColor = Color.FromArgb(200, 200, 200);
         static public Color DefaultMouseDownButtonColor = Color.FromArgb(230, 230, 230);
+        static public Color DefaultCheckBoxInnerColor = Color.Wheat;
+        static public Color DefaultCheckColor = Color.DarkBlue;
+        static public Color DefaultErrorColor = Color.OrangeRed;
+        static public Color DefaultHighlightColor = Color.Red;
+
         static public Color DefaultLineSeparColor = Color.Green;
 
         public void Invalidate()
@@ -250,7 +252,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             int left = int.MaxValue, right = int.MinValue, top = int.MaxValue, bottom = int.MinValue;
 
-            foreach (var c in childrenz)         
+            foreach (var c in childrenz)
             {
                 if (c.Left < left)
                     left = c.Left;
@@ -263,6 +265,22 @@ namespace OpenTKUtils.GL4.Controls
             }
 
             return new Rectangle(left, top, right - left, bottom - top);
+        }
+
+        public GLBaseControl FirstChildYOfType(Type[] types)        // may be null
+        {
+            int miny = int.MaxValue;
+            GLBaseControl ret = null;
+            foreach (var c in childreniz)   // backwards, last z wins
+            {
+                if (Array.IndexOf(types, c.GetType()) >= 0 && c.Top < miny)
+                {
+                    ret = c;
+                    miny = c.Top;
+                }
+            }
+
+            return ret;
         }
 
         public void PerformLayout()     // override for other layouts
@@ -308,6 +326,8 @@ namespace OpenTKUtils.GL4.Controls
                 System.Diagnostics.Debug.Assert(other is GLVerticalScrollPanel == false, "GLScrollPanel must not be child of GLForm");
                 other.levelbmp = new Bitmap(other.Width, other.Height);
             }
+
+            Themer?.Invoke(other);      // added to control, theme it
 
             OnControlAdd(this, other);
             Invalidate();           // we are invalidated
@@ -681,12 +701,6 @@ namespace OpenTKUtils.GL4.Controls
                     parentgr.SetClip(parentarea);       // must set the clip area again to address the parent area
                     PaintParent(parentarea, parentgr);
                 }
-
-                if ( this is IForm && onshown == false)
-                {
-                    (this as IForm).OnShown();
-                    onshown = true;
-                }
             }
 
             if (levelbmp != null)        // bitmap on this level, we made a GR, dispose
@@ -725,13 +739,13 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (bcgradient != int.MinValue)
                 {
-                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + bounds + " " + bc + " -> " + bcgradientalt );
+                    System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + bounds + " " + bc + " -> " + bcgradientalt );
                     using (var b = new System.Drawing.Drawing2D.LinearGradientBrush(bounds, bc, bcgradientalt, bcgradient))
                         gr.FillRectangle(b, bounds);       // linear grad brushes do not respect smoothing mode, btw
                 }
                 else
                 {
-                    //System.Diagnostics.Debug.WriteLine("Background " + Name + " " + bounds + " " + backcolor);
+                    System.Diagnostics.Debug.WriteLine("Background " + Name + " " + bounds + " " + backcolor);
                     using (Brush b = new SolidBrush(bc))     // always fill, so we get back to start
                         gr.FillRectangle(b, bounds);
                 }
@@ -968,13 +982,10 @@ namespace OpenTKUtils.GL4.Controls
         private bool focused { get; set; } = false;
         private bool focusable { get; set; } = false;
 
-        private bool onshown { get; set; } = false; // if implements IForm, onShown is called, this is set true
-
         private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
 
         private List<GLBaseControl> childrenz = new List<GLBaseControl>();
         private List<GLBaseControl> childreniz = new List<GLBaseControl>();
-
 
         #endregion
 

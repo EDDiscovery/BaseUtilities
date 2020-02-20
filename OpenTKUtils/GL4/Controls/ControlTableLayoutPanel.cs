@@ -25,7 +25,6 @@ namespace OpenTKUtils.GL4.Controls
     {
         public GLTableLayoutPanel(string name, Rectangle location) : base(name, location)
         {
-            Themer?.Invoke(this);
         }
 
         public GLTableLayoutPanel() : this("TLP?",DefaultWindowRectangle)

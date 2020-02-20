@@ -25,7 +25,7 @@ namespace OpenTKUtils.GL4.Controls
     {
         public GLPanel(string name, Rectangle location) : base(name, location)
         {
-            Themer?.Invoke(this);
+            BackColor = DefaultPanelBackColor;
         }
 
         public GLPanel() : this("P?", DefaultWindowRectangle)
@@ -36,6 +36,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Dock = type;
             DockPercent = dockpercent;
+            BackColor = DefaultPanelBackColor;
         }
 
         public GLPanel(string name, Size sizep, DockingType type, float dockpercentage) : base(name, DefaultWindowRectangle)
@@ -43,6 +44,7 @@ namespace OpenTKUtils.GL4.Controls
             Dock = type;
             DockPercent = dockpercentage;
             SetLocationSizeNI(size: sizep);
+            BackColor = DefaultPanelBackColor;
         }
     }
 }

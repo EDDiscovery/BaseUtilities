@@ -30,15 +30,12 @@ namespace OpenTKUtils.GL4.Controls
         Color TabSelectedColor { get { return tabSelectedColor; } set { tabSelectedColor = value; Invalidate(); } }
         Color TabNotSelectedColor { get { return tabNotSelectedColor; } set { tabNotSelectedColor = value; Invalidate(); } }
         Color TextNotSelectedColor { get { return textNotSelectedColor; } set { textNotSelectedColor = value; Invalidate(); } }
-        Color TextNotEnabledColor { get { return textNotEnabledColor; } set { textNotEnabledColor = value; Invalidate(); } }
         Color TabMouseOverColor { get { return tabMouseOverColor; } set { tabMouseOverColor = value; Invalidate(); } }
         Color TabControlBorderColor { get { return tabControlBorderColor; } set { tabControlBorderColor = value; Invalidate(); } }
-        Color TabNotSelectedBorderColor { get { return tabNotSelectedBorderColor; } set { tabNotSelectedBorderColor = value; Invalidate(); } }
         float TabColorScaling { get { return tabColorScaling; } set { tabColorScaling = value; Invalidate(); } }
 
         public GLTabControl(string name, Rectangle location) : base(name, location)
         {
-            Themer?.Invoke(this);
         }
 
         public GLTabControl() : this("TBC?", DefaultWindowRectangle)
@@ -109,17 +106,14 @@ namespace OpenTKUtils.GL4.Controls
         {
             int tabuse = CalcRectangles();
 
-            Rectangle area = ClientRectangle;
-            area.Y += tabuse;
-            area.Height -= tabuse;
-
-            foreach (var c in ControlsZ)
+            foreach (var c in ControlsZ)        // all tab controls even if invisible
             {
-                if (c.Visible)      // invisible children don't layout
-                {
-                    c.Layout(ref area);
-                    c.PerformRecursiveLayout();
-                }
+                Rectangle area = ClientRectangle;       // recalc every time since layout changes it
+                area.Y += tabuse;
+                area.Height -= tabuse;
+                //System.Diagnostics.Debug.WriteLine("Dock tab {0} to {1}", c.Name, area);
+                c.Layout(ref area);
+                c.PerformRecursiveLayout();
             }
         }
 
@@ -155,7 +149,7 @@ namespace OpenTKUtils.GL4.Controls
 
             Color tabc1 = (Enabled) ? (mouseover ? TabMouseOverColor : (selected ? TabSelectedColor : TabNotSelectedColor)) : TabNotSelectedColor.Multiply(DisabledScaling);
             Color tabc2 = tabc1.Multiply(TabColorScaling);
-            Color taboutline = (selected) ? TabControlBorderColor : TabNotSelectedBorderColor;
+            Color taboutline = TabControlBorderColor;
 
             TabStyle.DrawTab(gr, area, selected, tabc1, tabc2, taboutline, TabStyleCustom.TabAlignment.Top);
 
@@ -171,7 +165,7 @@ namespace OpenTKUtils.GL4.Controls
             foreach (var c in ControlsOrderAdded)     // first is last one entered
             {
                 c.VisibleNI = seltab == i;
-                i--;
+                i++;
             }
 
             Invalidate();
@@ -222,13 +216,11 @@ namespace OpenTKUtils.GL4.Controls
         private int seltab = -1;
         private int mouseover = -1;
         private TabStyleCustom tabstyle = new TabStyleSquare();    // change for the shape of tabs.
-        private Color tabSelectedColor = Color.Green;
-        private Color tabNotSelectedColor = Color.Red;
-        private Color textNotSelectedColor = Color.Black;
-        private Color textNotEnabledColor = Color.Black;
-        private Color tabMouseOverColor = Color.Cyan;
-        private Color tabControlBorderColor = Color.Gray;
-        private Color tabNotSelectedBorderColor = Color.DimGray;
+        private Color tabSelectedColor = DefaultMouseDownButtonColor;
+        private Color tabNotSelectedColor = DefaultButtonBackColor;
+        private Color textNotSelectedColor = DefaultControlForeColor;
+        private Color tabMouseOverColor = DefaultMouseOverButtonColor;
+        private Color tabControlBorderColor = DefaultButtonBorderColor;
         private float tabColorScaling = 0.5f;
     }
 
@@ -248,6 +240,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLTabPage(string name, string title) : base(name, DefaultWindowRectangle)
         {
+            BackColor = DefaultPanelBackColor;
             text = title;
         }
 

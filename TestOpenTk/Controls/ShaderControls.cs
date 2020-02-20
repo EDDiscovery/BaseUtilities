@@ -165,14 +165,19 @@ namespace TestOpenTk
                 bool testtabcontrol = true;
                 bool testdatetime = true;
 
-                //                testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
+                                testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
                 //testform1 = false;
-                testform2 = true;
+                testform2 = false;
+                testbuttons = true;
+
+
+                //GLBaseControl.DefaultControlBackColor = Color.Orange;
 
                 displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
                 displaycontrol.Name = "displaycontrol";
                 displaycontrol.SuspendLayout();
+
 
 
                 if (testform1)
@@ -205,19 +210,21 @@ namespace TestOpenTk
                         tc.TabStyle = new TabStyleAngled();
                         tc.Font = new Font("Ms Sans Serif", 11);
 
-                        GLTabPage tabp1 = new GLTabPage("tab1", "TAB 1", Color.Blue);
+                        GLTabPage tabp1 = new GLTabPage("tabp1", "TAB 1", Color.Blue);
                         tc.Add(tabp1);
 
                         GLButton tabp1b1 = new GLButton("B1", new Rectangle(5, 5, 80, 40), "Button 1");
                         tabp1.Add(tabp1b1);
                         tabp1b1.Click += (c, ev) => { System.Diagnostics.Debug.WriteLine("On click for " + c.Name + " " + ev.Button); };
 
-                        GLTabPage tabp2 = new GLTabPage("tab1", "TAB Page 2", Color.Yellow);
+                        GLTabPage tabp2 = new GLTabPage("tabp2", "TAB Page 2", Color.Yellow);
+                        GLButton tabp2b1 = new GLButton("B2-2", new Rectangle(5, 25, 80, 40), "Button 2-2");
+                        tabp2.Add(tabp2b1);
                         tc.Add(tabp2);
 
-                        GLTabPage tabp3 = new GLTabPage("tab1", "TAB Page 3", Color.Yellow);
+                        GLTabPage tabp3 = new GLTabPage("tabp3", "TAB Page 3", Color.Green);
                         tc.Add(tabp3);
-                        GLTabPage tabp4 = new GLTabPage("tab1", "TAB Page 4", Color.Yellow);
+                        GLTabPage tabp4 = new GLTabPage("tabp4", "TAB Page 4", Color.Magenta);
                         tc.Add(tabp4);
 
                         pform.Add(tc);
@@ -414,16 +421,17 @@ namespace TestOpenTk
                     //l += "This is a longer line\r\n";
                     l += "And a much much longer Line which should break the width\r\n";
                     l += "trail ";
-                   // l = "";
+                    // l = "";
 
-                    //l = "One\r\n" + "two";
-                    GLMultiLineTextBox mtb = new GLMultiLineTextBox("mltb", new Rectangle(100, 200, 200, 200), l);
+                    GLMultiLineTextBox mtb = new GLMultiLineTextBox("mltb", new Rectangle(10, 200, 200, 200), l);
                     mtb.Font = new Font("Ms Sans Serif", 12);
                     mtb.LineColor = Color.Green;
                     mtb.SetSelection(16 * 2 + 2, 16 * 3 + 4);
                     pform2.Add(mtb);
 
-
+                    GLNumberBoxFloat glf = new GLNumberBoxFloat("FLOAT", new Rectangle(10, 450, 100, 25),23.4f);
+                    glf.Font = new Font("Ms Sans Serif", 12);
+                    pform2.Add(glf);
 
 
                     pform2.ResumeLayout();
@@ -472,11 +480,18 @@ namespace TestOpenTk
             c1.Add(new GLFormConfigurable.Entry("Lab1", typeof(GLLabel), "Label 1 ", new Point(10, 10), new Size(200, 24), "TT"));
             c1.Add(new GLFormConfigurable.Entry("But1", typeof(GLButton), "But 1", new Point(10, 40), new Size(200, 24), "TT"));
             c1.Add(new GLFormConfigurable.Entry("Com1", "two", new Point(10, 70), new Size(200, 24), "TT", new List<string>() { "one", "two", "three" }));
-            c1.Size = new Size(400, 400);
+            c1.Add(new GLFormConfigurable.Entry("Textb", typeof(GLTextBox), "text box", new Point(10, 100), new Size(200, 24), "TT"));
+            c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(160, 300), new Size(100, 24), "TT"));
+           // c1.Size = new Size(400, 400);
             c1.Init(new Point(200, 200), "Config Form Test");
+            c1.Trigger += (logname, ctrlname, args) => 
+            {
+                if (ctrlname == "OK")
+                    c1.Close();
+            };
             displaycontrol.Add(c1);
-
         }
+
 
         private void Controller3dDraw(GLMatrixCalc mc, long time)
         {

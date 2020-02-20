@@ -17,21 +17,25 @@ using System.Drawing.Drawing2D;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    public class GLForm : GLForeDisplayTextBase, IForm
+    // Forms are usually placed below DisplayControl, but can act as movable controls inside other controls
+
+    public class GLForm : GLForeDisplayTextBase
     {
         public const int FormMargins = 2;
         public const int FormPadding = 2;
         public const int FormBorderWidth = 1;
 
+        public bool Shown { get; set; } = false; 
+
         public GLForm(string name, string title, Rectangle location) : base(name, location)
         {
+            ForeColor = DefaultFormTextColor;
             BackColor = DefaultFormBackColor;
             PaddingNI = new Padding(FormPadding);
             MarginNI = new Margin(FormMargins);
             BorderWidthNI = FormBorderWidth;
             BorderColorNI = DefaultBorderColor;
             text = title;
-            Themer?.Invoke(this);
         }
 
         public GLForm() : this("F?", "", DefaultWindowRectangle)
@@ -47,11 +51,11 @@ namespace OpenTKUtils.GL4.Controls
             Parent?.Remove(this);
         }
 
-        public void OnShown()
+        public virtual void OnShown()   // only called if top level form
         {
         }
 
-        public void OnClose()
+        public virtual void OnClose()   
         {
         }
 

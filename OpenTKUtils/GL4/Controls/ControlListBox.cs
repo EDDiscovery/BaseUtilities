@@ -89,7 +89,6 @@ namespace OpenTKUtils.GL4.Controls
             scrollbar.Visible = false;
             scrollbar.Scroll += (s, e) => { if (firstindex != e.NewValue) { firstindex = e.NewValue; Invalidate(); } };
             Add(scrollbar);
-            Themer?.Invoke(this);
         }
 
         public GLListBox() : this("LB?", DefaultWindowRectangle, null)

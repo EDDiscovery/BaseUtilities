@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4.Controls
         private Color buttonBackColor { get; set; } = DefaultButtonBackColor;
         private Color mouseOverBackColor { get; set; } = DefaultMouseOverButtonColor;
         private Color mouseDownBackColor { get; set; } = DefaultMouseDownButtonColor;
-        private Color foreColor { get; set; } = DefaultForeColor;
+        private Color foreColor { get; set; } = DefaultControlForeColor;
         private float backColorScaling = 0.5F;
 
     }

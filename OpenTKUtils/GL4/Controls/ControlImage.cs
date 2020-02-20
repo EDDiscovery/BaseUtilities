@@ -29,7 +29,6 @@ namespace OpenTKUtils.GL4.Controls
 
         public GLImageBase(string name, Rectangle window) : base(name, window)
         {
-            Themer?.Invoke(this);
         }
 
         public float DisabledScaling

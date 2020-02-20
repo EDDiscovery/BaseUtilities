@@ -41,10 +41,12 @@ namespace OpenTKUtils.Timers
             Start(initialdelayms, repeatdelay);
         }
 
-        public void Start(int initialdelayms, int repeatdelay = 0)
+        public void Start(int initialdelayms, int repeatdelay = 0)  // can call repeatedly
         {
             if (!mastertimer.IsRunning)
                 mastertimer.Start();
+
+            Stop();
 
             recurringtickdelta = Stopwatch.Frequency * repeatdelay / 1000;
 

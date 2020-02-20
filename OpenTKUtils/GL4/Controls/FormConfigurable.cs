@@ -1,6 +1,7 @@
 ﻿
 /*
  * Copyright © 2017-2019 EDDiscovery development team
+ * Copyright 2019-2020 Robbyxp1 @ github.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -39,7 +40,7 @@ namespace OpenTKUtils.GL4.Controls
         private string logicalname;
 
         // You give an array of Entries describing the controls
-        // either added programatically by Add(entry) or via a string descriptor Add(string)
+        // either added programatically by Add(entry) or via a string descriptor Add(string) (disabled for now)
         // Directly Supported Types (string name/base type)
         //      "button" ButtonExt, "textbox" TextBoxBorder, "checkbox" CheckBoxCustom, 
         //      "label" Label, "datetime" CustomDateTimePicker, 
@@ -88,7 +89,7 @@ namespace OpenTKUtils.GL4.Controls
 
         #region Public interface
 
-        public GLFormConfigurable()
+        public GLFormConfigurable() : base("ConfigForm","ConfigForm",DefaultWindowRectangle)
         {
             entries = new List<Entry>();
         }
@@ -119,13 +120,6 @@ namespace OpenTKUtils.GL4.Controls
             InitInt(pos, caption, lname, callertag);
         }
 
-        //public void ReturnResult(DialogResult result)
-        //{
-        //    ProgClose = true;
-        //    DialogResult = result;
-        //    base.Close();
-        //}
-
         public T GetControl<T>(string controlname) where T : GLBaseControl      // return value of dialog control
         {
             Entry t = entries.Find(x => x.controlname.Equals(controlname, StringComparison.InvariantCultureIgnoreCase));
@@ -147,16 +141,16 @@ namespace OpenTKUtils.GL4.Controls
                     return (c as GLCheckBox).Checked ? "1" : "0";
                 else if (c is GLDateTimePicker)
                     return (c as GLDateTimePicker).Value.ToString("yyyy/dd/MM HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-                //else if (c is ExtendedControls.NumberBoxDouble)
-                //{
-                //    var cn = c as ExtendedControls.NumberBoxDouble;
-                //    return cn.IsValid ? cn.Value.ToStringInvariant() : "INVALID";
-                //}
-                //else if (c is ExtendedControls.NumberBoxLong)
-                //{
-                //    var cn = c as ExtendedControls.NumberBoxLong;
-                //    return cn.IsValid ? cn.Value.ToStringInvariant() : "INVALID";
-                //}
+                else if (c is GLNumberBoxDouble)
+                {
+                    var cn = c as GLNumberBoxDouble;
+                    return cn.IsValid ? cn.Value.ToStringInvariant() : "INVALID";
+                }
+                else if (c is GLNumberBoxLong)
+                {
+                    var cn = c as GLNumberBoxLong;
+                    return cn.IsValid ? cn.Value.ToStringInvariant() : "INVALID";
+                }
                 else if (c is GLComboBox)
                 {
                     GLComboBox cb = c as GLComboBox;
@@ -167,29 +161,29 @@ namespace OpenTKUtils.GL4.Controls
             return null;
         }
 
-        //public double? GetDouble(string controlname)     // Null if not valid
-        //{
-        //    Entry t = entries.Find(x => x.controlname.Equals(controlname, StringComparison.InvariantCultureIgnoreCase));
-        //    if (t != null)
-        //    {
-        //        var cn = t.control as ExtendedControls.NumberBoxDouble;
-        //        if (cn.IsValid)
-        //            return cn.Value;
-        //    }
-        //    return null;
-        //}
+        public double? GetDouble(string controlname)     // Null if not valid
+        {
+            Entry t = entries.Find(x => x.controlname.Equals(controlname, StringComparison.InvariantCultureIgnoreCase));
+            if (t != null)
+            {
+                var cn = t.control as GLNumberBoxDouble;
+                if (cn.IsValid)
+                    return cn.Value;
+            }
+            return null;
+        }
 
-        //public long? GetLong(string controlname)     // Null if not valid
-        //{
-        //    Entry t = entries.Find(x => x.controlname.Equals(controlname, StringComparison.InvariantCultureIgnoreCase));
-        //    if (t != null)
-        //    {
-        //        var cn = t.control as ExtendedControls.NumberBoxLong;
-        //        if (cn.IsValid)
-        //            return cn.Value;
-        //    }
-        //    return null;
-        //}
+        public long? GetLong(string controlname)     // Null if not valid
+        {
+            Entry t = entries.Find(x => x.controlname.Equals(controlname, StringComparison.InvariantCultureIgnoreCase));
+            if (t != null)
+            {
+                var cn = t.control as GLNumberBoxLong;
+                if (cn.IsValid)
+                    return cn.Value;
+            }
+            return null;
+        }
 
         public DateTime? GetDateTime(string controlname)
         {
@@ -236,26 +230,26 @@ namespace OpenTKUtils.GL4.Controls
                         return true;
                     }
                 }
-                //else if (c is ExtendedControls.NumberBoxDouble)
-                //{
-                //    var cn = c as ExtendedControls.NumberBoxDouble;
-                //    double? v = value.InvariantParseDoubleNull();
-                //    if (v.HasValue)
-                //    {
-                //        cn.Value = v.Value;
-                //        return true;
-                //    }
-                //}
-                //else if (c is ExtendedControls.NumberBoxLong)
-                //{
-                //    var cn = c as ExtendedControls.NumberBoxLong;
-                //    long? v = value.InvariantParseLongNull();
-                //    if (v.HasValue)
-                //    {
-                //        cn.Value = v.Value;
-                //        return true;
-                //    }
-                //}
+                else if (c is GLNumberBoxDouble)
+                {
+                    var cn = c as GLNumberBoxDouble;
+                    double? v = value.InvariantParseDoubleNull();
+                    if (v.HasValue)
+                    {
+                        cn.Value = v.Value;
+                        return true;
+                    }
+                }
+                else if (c is GLNumberBoxLong)
+                {
+                    var cn = c as GLNumberBoxLong;
+                    long? v = value.InvariantParseLongNull();
+                    if (v.HasValue)
+                    {
+                        cn.Value = v.Value;
+                        return true;
+                    }
+                }
             }
 
             return false;
@@ -302,7 +296,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     GLMultiLineTextBox tb = c as GLMultiLineTextBox;
                     tb.Text = ent.text;
-                    // tbd tb.ClearOnFirstChar = ent.clearonfirstchar;
+                    tb.ClearOnFirstChar = ent.clearonfirstchar;
 
                     tb.ReturnPressed += (box) =>        // only works for text box
                     {
@@ -372,120 +366,82 @@ namespace OpenTKUtils.GL4.Controls
                     };
 
                 }
-
-                //else if (c is ExtendedControls.NumberBoxDouble)
-                //{
-                //    ExtendedControls.NumberBoxDouble cb = c as ExtendedControls.NumberBoxDouble;
-                //    cb.Minimum = ent.numberboxdoubleminimum;
-                //    cb.Maximum = ent.numberboxdoublemaximum;
-                //    double? v = ent.text.InvariantParseDoubleNull();
-                //    cb.Value = v.HasValue ? v.Value : cb.Minimum;
-                //    if (ent.numberboxformat != null)
-                //        cb.Format = ent.numberboxformat;
-                //    cb.ReturnPressed += (box) =>
-                //    {
-                //        SwallowReturn = false;
-                //        if (!ProgClose)
-                //        {
-                //            Entry en = (Entry)(box.Tag);
-                //            Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
-                //        }
-
-                //        return SwallowReturn;
-                //    };
-                //    cb.ValidityChanged += (box, s) =>
-                //    {
-                //        if (!ProgClose)
-                //        {
-                //            Entry en = (Entry)(box.Tag);
-                //            Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
-                //        }
-                //    };
-                //}
-                //else if (c is ExtendedControls.NumberBoxLong)
-                //{
-                //    ExtendedControls.NumberBoxLong cb = c as ExtendedControls.NumberBoxLong;
-                //    cb.Minimum = ent.numberboxlongminimum;
-                //    cb.Maximum = ent.numberboxlongmaximum;
-                //    long? v = ent.text.InvariantParseLongNull();
-                //    cb.Value = v.HasValue ? v.Value : cb.Minimum;
-                //    if (ent.numberboxformat != null)
-                //        cb.Format = ent.numberboxformat;
-                //    cb.ReturnPressed += (box) =>
-                //    {
-                //        SwallowReturn = false;
-                //        if (!ProgClose)
-                //        {
-                //            Entry en = (Entry)(box.Tag);
-                //            Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
-                //        }
-                //        return SwallowReturn;
-                //    };
-                //    cb.ValidityChanged += (box, s) =>
-                //    {
-                //        if (!ProgClose)
-                //        {
-                //            Entry en = (Entry)(box.Tag);
-                //            Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
-                //        }
-                //    };
-                //}
+                else if (c is GLNumberBoxDouble)
+                {
+                    GLNumberBoxDouble cb = c as GLNumberBoxDouble;
+                    cb.Minimum = ent.numberboxdoubleminimum;
+                    cb.Maximum = ent.numberboxdoublemaximum;
+                    double? v = ent.text.InvariantParseDoubleNull();
+                    cb.Value = v.HasValue ? v.Value : cb.Minimum;
+                    if (ent.numberboxformat != null)
+                        cb.Format = ent.numberboxformat;
+                    cb.ReturnPressed += (box) =>
+                    {
+                        Entry en = (Entry)(box.Tag);
+                        Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                    };
+                    cb.ValidityChanged += (box, s) =>
+                    {
+                        Entry en = (Entry)(box.Tag);
+                        Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                    };
+                }
+                else if (c is GLNumberBoxLong)
+                {
+                    GLNumberBoxLong cb = c as GLNumberBoxLong;
+                    cb.Minimum = ent.numberboxlongminimum;
+                    cb.Maximum = ent.numberboxlongmaximum;
+                    long? v = ent.text.InvariantParseLongNull();
+                    cb.Value = v.HasValue ? v.Value : cb.Minimum;
+                    if (ent.numberboxformat != null)
+                        cb.Format = ent.numberboxformat;
+                    cb.ReturnPressed += (box) =>
+                    {
+                        Entry en = (Entry)(box.Tag);
+                        Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                    };
+                    cb.ValidityChanged += (box, s) =>
+                    {
+                        Entry en = (Entry)(box.Tag);
+                        Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                    };
+                }
 
                 Add(c);
             }
 
             Location = pos;
-            //int fh = (int)this.Font.GetHeight();        // use the FH to nerf the extra area so it scales with FH.. this helps keep the controls within a framed window
-
-            //// measure the items after scaling. Exclude the scroll bar
-            //Size measureitemsinwindow = outer.FindMaxSubControlArea(fh + 8, (theme.WindowsFrame ? 50 : 16) + fh, new Type[] { typeof(ExtScrollBar) });
-
-            //StartPosition = FormStartPosition.Manual;
-
-            //Location = pos;
-
-            //this.PositionSizeWithinScreen(measureitemsinwindow.Width, measureitemsinwindow.Height, false, 64, centrecoords: posiscentrecoords);
+            Rectangle area = ChildArea();
+            Size = new Size(area.Right + Margin.TotalHeight, area.Bottom + Margin.TotalHeight *2 + Padding.TotalHeight + BorderWidth);
         }
 
-        //protected override void OnShown(EventArgs e)
-        //{
-        //    Control firsttextbox = Controls[0].Controls.FirstY(new Type[] { typeof(ExtRichTextBox), typeof(ExtTextBox), typeof(ExtTextBoxAutoComplete) });
-        //    if (firsttextbox != null)
-        //        firsttextbox.Focus();       // focus on first text box
-        //    base.OnShown(e);
-        //}
+        public override void OnShown()
+        {
+            GLBaseControl firsty = FirstChildYOfType(new Type[] { typeof(GLMultiLineTextBox), typeof(GLTextBox) });
+            if (firsty != null)
+                firsty.SetFocus();
 
-        //protected override void OnFormClosing(FormClosingEventArgs e)
-        //{
-        //    if (ProgClose == false)
-        //    {
-        //        e.Cancel = true; // stop it working. program does the close
-        //        Trigger?.Invoke(logicalname, "Cancel", callertag);
-        //    }
-        //    else
-        //        base.OnFormClosing(e);
-        //}
+            base.OnShown();
+        }
 
-        //protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        //{
-        //    if (keyData == Keys.Escape)
-        //    {
-        //        Trigger?.Invoke(logicalname, "Escape", callertag);
-        //        return true;
-        //    }
+        public override void OnClose()
+        {
+            GLBaseControl firsty = FirstChildYOfType(new Type[] { typeof(GLMultiLineTextBox), typeof(GLTextBox) });
+            if (firsty != null)
+                firsty.SetFocus();
 
-        //    return base.ProcessCmdKey(ref msg, keyData);
-        //}
+            base.OnShown();
+        }
 
-        //private void FormMouseDown(object sender, MouseEventArgs e)
-        //{
-        //    OnCaptionMouseDown((Control)sender, e);
-        //}
-
-        //private void FormMouseUp(object sender, MouseEventArgs e)
-        //{
-        //    OnCaptionMouseUp((Control)sender, e);
-        //}
+        public override void OnKeyPress(GLKeyEventArgs e)       // forms gets first dibs at keys of children
+        {
+            base.OnKeyPress(e);
+            if ( !e.Handled && e.KeyChar == 27 )
+            {
+                Trigger?.Invoke(logicalname, "Escape", callertag);
+                e.Handled = true;
+            }
+        }
 
         #endregion
 

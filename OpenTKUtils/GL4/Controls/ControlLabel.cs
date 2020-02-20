@@ -30,7 +30,6 @@ namespace OpenTKUtils.GL4.Controls
             this.text = text;
             ForeColor = DefaultLabelForeColor;
             BackColor = Color.Transparent;
-            Themer?.Invoke(this);
         }
 
         public GLLabel() : this("LB?", DefaultWindowRectangle, "")
