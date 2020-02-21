@@ -217,10 +217,10 @@ namespace OpenTKUtils.GL4.Controls
             foreach (var c in ControlsIZ)
             {
                 var form = c as GLForm;
-                if ( form != null && form.Shown == false )
+                if ( form != null && form.FormShown == false )
                 {
                     form.OnShown();
-                    form.Shown = true;
+                    form.FormShown = true;
                 }
 
                 if (c.Visible)
@@ -275,9 +275,6 @@ namespace OpenTKUtils.GL4.Controls
 
             if (currentmouseover != null)
             {
-                currentmouseoverlocation = currentmouseover.DisplayControlCoords(true);
-                System.Diagnostics.Debug.WriteLine("Set mouse over loc " + currentmouseoverlocation);
-
                 currentmouseover.Hover = true;
                 if (currentmouseover.Enabled)
                 {
@@ -289,7 +286,9 @@ namespace OpenTKUtils.GL4.Controls
 
         private void AdjustLocation(ref GLMouseEventArgs e)
         {
-            e.Location = new Point(e.Location.X - currentmouseoverlocation.X, e.Location.Y - currentmouseoverlocation.Y);
+            e.ControlLocation = currentmouseover.DisplayControlCoords(true);
+            e.Location = new Point(e.Location.X - e.ControlLocation.X, e.Location.Y - e.ControlLocation.Y);
+            System.Diagnostics.Debug.WriteLine("Control " + currentmouseover.Name + " " + e.ControlLocation + " " + e.Location);
             if (e.Location.X < 0)
                 e.Area = GLMouseEventArgs.AreaType.Left;
             else if (e.Location.X >= currentmouseover.ClientWidth)
@@ -306,6 +305,8 @@ namespace OpenTKUtils.GL4.Controls
             else
                 e.Area = GLMouseEventArgs.AreaType.Client;
         }
+
+        bool movedsincedown = false;
 
         private void Gc_MouseUp(object sender, GLMouseEventArgs e)
         {
@@ -333,17 +334,22 @@ namespace OpenTKUtils.GL4.Controls
                     AdjustLocation(ref e);
                     currentmouseover.OnMouseDown(e);
                 }
+
+                movedsincedown = false;
             }
         }
 
         private void Gc_MouseClick(object sender, GLMouseEventArgs e)
         {
-            SetFocus(currentmouseover);
-
-            if (currentmouseover != null && currentmouseover.Enabled)
+            if (movedsincedown == false)
             {
-                AdjustLocation(ref e);
-                currentmouseover.OnMouseClick(e);
+                SetFocus(currentmouseover);
+
+                if (currentmouseover != null && currentmouseover.Enabled)
+                {
+                    AdjustLocation(ref e);
+                    currentmouseover.OnMouseClick(e);
+                }
             }
         }
 
@@ -358,6 +364,8 @@ namespace OpenTKUtils.GL4.Controls
 
         private void Gc_MouseMove(object sender, GLMouseEventArgs e)
         {
+            movedsincedown = true;
+
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
 
             if (c != currentmouseover)
@@ -387,8 +395,6 @@ namespace OpenTKUtils.GL4.Controls
                 if (currentmouseover != null)
                 {
                     currentmouseover.Hover = true;
-                    currentmouseoverlocation = currentmouseover.DisplayControlCoords(true);
-                    //System.Diagnostics.Debug.WriteLine("2Set mouse over loc " + currentmouseoverlocation);
 
                     if (currentmouseover.Enabled)
                     {
@@ -474,7 +480,6 @@ namespace OpenTKUtils.GL4.Controls
         private GLRenderableItem ri;
         private IGLProgramShader shader;
         private GLBaseControl currentmouseover = null;
-        private Point currentmouseoverlocation;
         private GLBaseControl currentfocus = null;
         
     }

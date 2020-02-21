@@ -89,11 +89,11 @@ namespace OpenTKUtils.GL4.Controls
         public int ClientRightMargin { get { return Margin.Right + Padding.Right + BorderWidth; } }
         public int ClientTopMargin { get { return Margin.Top + Padding.Top + BorderWidth; } }
         public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
-        public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth*2; } }
+        public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth * 2; } }
         public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } }
         public Size ClientSize { get { return new Size(ClientWidth, ClientHeight); } }
         public Point ClientLocation { get { return new Point(ClientLeftMargin, ClientTopMargin); } }
-        public Rectangle ClientRectangle { get { return new Rectangle(0,0,ClientWidth,ClientHeight); }  }
+        public Rectangle ClientRectangle { get { return new Rectangle(0, 0, ClientWidth, ClientHeight); } }
 
         // docking control
 
@@ -113,7 +113,7 @@ namespace OpenTKUtils.GL4.Controls
         private Font DefaultFont = new Font("Ms Sans Serif", 8.25f);
         public Font Font { get { return font ?? parent?.Font ?? DefaultFont; } set { SetFont(value); InvalidateLayout(); } }
         public Color BackColor { get { return backcolor; } set { if (backcolor != value) { backcolor = value; Invalidate(); } } }
-        public int BackColorGradient { get { return backcolorgradient;} set { if ( backcolorgradient != value) { backcolorgradient = value;Invalidate(); } } }
+        public int BackColorGradient { get { return backcolorgradient; } set { if (backcolorgradient != value) { backcolorgradient = value; Invalidate(); } } }
         public Color BackColorGradientAlt { get { return backcolorgradientalt; } set { if (backcolorgradientalt != value) { backcolorgradientalt = value; Invalidate(); } } }
 
         // other
@@ -139,6 +139,10 @@ namespace OpenTKUtils.GL4.Controls
 
         public Object Tag { get; set; }                         // control tag, user controlled
 
+        public int TabOrder { get; set; } = -1;                 // set, the lowest tab order wins the form focus
+
+        public bool TopMost { get { return topMost; } set { topMost = value; if (topMost) BringToFront(); } }
+
         // control lists
 
         public virtual List<GLBaseControl> ControlsIZ { get { return childreniz; } }      // read only, in inv zorder, so 0 = last layout first drawn
@@ -161,8 +165,8 @@ namespace OpenTKUtils.GL4.Controls
         public Action<Object> FontChanged { get; set; } = null;
         public Action<Object> Resize { get; set; } = null;
         public Action<Object> Moved { get; set; } = null;
-        public Action<GLBaseControl,GLBaseControl> ControlAdd { get; set; } = null;
-        public Action<GLBaseControl,GLBaseControl> ControlRemove { get; set; } = null;
+        public Action<GLBaseControl, GLBaseControl> ControlAdd { get; set; } = null;
+        public Action<GLBaseControl, GLBaseControl> ControlRemove { get; set; } = null;
 
         // default color schemes and sizes
 
@@ -192,7 +196,7 @@ namespace OpenTKUtils.GL4.Controls
             //System.Diagnostics.Debug.WriteLine("Invalidate " + Name);
             NeedRedraw = true;
 
-            if ( BackColor == Color.Transparent )   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
+            if (BackColor == Color.Transparent)   // if we are transparent, we need the parent also to redraw to force it to redraw its background.
             {
                 //System.Diagnostics.Debug.WriteLine("Invalidate " + Name + " is transparent, parent needs it too");
                 Parent?.Invalidate();
@@ -227,7 +231,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             Point p = Location;     // Left/Top of bounding box
             GLBaseControl b = this;
-            while ( b.Parent != null )
+            while (b.Parent != null)
             {       // we need to add on the parent left and clientleftmargin, top the same, to move the point up to the next level
                 p = new Point(p.X + b.parent.Left + b.parent.ClientLeftMargin, p.Y + b.parent.Top + b.parent.ClientTopMargin);
                 b = b.parent;
@@ -267,13 +271,13 @@ namespace OpenTKUtils.GL4.Controls
             return new Rectangle(left, top, right - left, bottom - top);
         }
 
-        public GLBaseControl FirstChildYOfType(Type[] types)        // may be null
+        public GLBaseControl FirstChildYOfType(Type[] types, Func<GLBaseControl, bool> predate = null)        // may be null return, if types=null any type
         {
             int miny = int.MaxValue;
             GLBaseControl ret = null;
             foreach (var c in childreniz)   // backwards, last z wins
             {
-                if (Array.IndexOf(types, c.GetType()) >= 0 && c.Top < miny)
+                if (c.Visible && c.Top < miny && (types == null || Array.IndexOf(types, c.GetType()) >= 0) && (predate == null || predate(c) == true))
                 {
                     ret = c;
                     miny = c.Top;
@@ -281,6 +285,35 @@ namespace OpenTKUtils.GL4.Controls
             }
 
             return ret;
+        }
+
+        public GLBaseControl FindChildWithFocus()
+        {
+            foreach (var c in ControlsZ)
+            {
+                if (c.Focused)
+                    return c;
+            }
+
+            return null;
+        }
+
+        public GLBaseControl FindNextTabChild(int tabno, bool greater = true)
+        {
+            GLBaseControl found = null;
+            foreach (var c in ControlsZ)
+            {
+                if (c.Focusable && c.Visible && c.Enabled && c.TabOrder >= 0)
+                {
+                    if (greater ? (c.TabOrder > tabno) : (c.TabOrder<tabno))
+                    {
+                        tabno = c.TabOrder;
+                        found = c;
+                    }
+                }
+            }
+
+            return found;
         }
 
         public void PerformLayout()     // override for other layouts
@@ -315,38 +348,49 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public virtual void Add(GLBaseControl other)
+        public virtual void Add(GLBaseControl child)
         {
-            other.parent = this;
-            childrenz.Insert(0, other);   // in z order.  First is top of z
-            childreniz.Add(other);       // in inv z order. Last is top of z
+            child.parent = this;
+
+            int ipos = 0;
+            if (!child.TopMost)
+            {
+                while (ipos < childrenz.Count && childrenz[ipos].TopMost)     // find first place we can insert
+                    ipos++;
+            }
+
+            childrenz.Insert(ipos, child);   // in z order.  First is top of z.  inser puts it before existing
+            childreniz.Insert(childreniz.Count - ipos, child);       // in inv z order. Last is top of z.  if ipos=0, at end. if ipos=1, inserted just before end
+
+            CheckZOrder();
 
             if (this is GLControlDisplay) // if adding to a form, the child must have a bitmap
             {
-                System.Diagnostics.Debug.Assert(other is GLVerticalScrollPanel == false, "GLScrollPanel must not be child of GLForm");
-                other.levelbmp = new Bitmap(other.Width, other.Height);
+                System.Diagnostics.Debug.Assert(child is GLVerticalScrollPanel == false, "GLScrollPanel must not be child of GLForm");
+                child.levelbmp = new Bitmap(child.Width, child.Height);
             }
 
-            Themer?.Invoke(other);      // added to control, theme it
+            Themer?.Invoke(child);      // added to control, theme it
 
-            OnControlAdd(this, other);
-            Invalidate();           // we are invalidated
-            PerformLayout();        // reperform layout
+            OnControlAdd(this, child);
+            InvalidateLayout();        // we are invalidated and layout
         }
 
-        public virtual void Remove(GLBaseControl other)
+        public virtual void Remove(GLBaseControl child)
         {
-            if (childrenz.Contains(other))
+            if (childrenz.Contains(child))
             {
-                OnControlRemove(this, other);
+                OnControlRemove(this, child);
 
-                FindDisplay()?.ControlRemoved(other);
+                FindDisplay()?.ControlRemoved(child);
 
-                if (other.levelbmp != null)
-                    other.levelbmp.Dispose();
+                if (child.levelbmp != null)
+                    child.levelbmp.Dispose();
 
-                childrenz.Remove(other);
-                childreniz.Remove(other);
+                childrenz.Remove(child);
+                childreniz.Remove(child);
+
+                CheckZOrder();
 
                 Invalidate();
                 PerformLayout();        // reperform layout
@@ -360,19 +404,43 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual bool BringToFront(GLBaseControl child)   // bring child to front
         {
-            if (childrenz.Contains(child) && childrenz[0] != child)
-            {
-                childreniz.Remove(child);
-                childrenz.Remove(child);
+            int curpos = childrenz.IndexOf(child);
 
-                childrenz.Insert(0, child);   // in z order.  First is top of z
-                childreniz.Add(child);       // in inv z order. Last is top of z
+            if (curpos>=0)
+            { 
+                int ipos = 0;
 
-                Invalidate();
-                return false;
+                if ( !child.TopMost )
+                {
+                    while (ipos < childrenz.Count && childrenz[ipos].TopMost)     // find first place we can move to
+                        ipos++;
+                }
+
+                if ( curpos != ipos )       // if not in first position possible
+                {
+                    childrenz.Remove(child);
+                    childreniz.Remove(child);
+                                            // list now has child removed, now insert back into position
+                    childrenz.Insert(ipos, child);   // in z order.  First is top of z
+                    childreniz.Insert(childreniz.Count-ipos,child);       // in inv z order. Last is top of z
+
+                    CheckZOrder();
+                    InvalidateLayout();
+                    return false;
+                }
             }
-            else
-                return true;
+
+            return true;
+        }
+
+        [System.Diagnostics.Conditional("DEBUG")]
+        private void CheckZOrder()
+        {
+            int pos = childreniz.Count - 1;
+            foreach( var c in childrenz)
+            {
+                System.Diagnostics.Debug.Assert(c == childreniz[pos--]);
+            }
         }
 
         #endregion
@@ -981,6 +1049,7 @@ namespace OpenTKUtils.GL4.Controls
         private int row { get; set; } = 0;        // for table layouts
         private bool focused { get; set; } = false;
         private bool focusable { get; set; } = false;
+        private bool topMost { get; set; } = false;              // if set, always force to top
 
         private GLBaseControl parent { get; set; } = null;       // its parent, null if top of top
 

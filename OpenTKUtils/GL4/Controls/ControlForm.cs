@@ -12,6 +12,7 @@
  * governing permissions and limitations under the License.
  */
 
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
@@ -19,13 +20,30 @@ namespace OpenTKUtils.GL4.Controls
 {
     // Forms are usually placed below DisplayControl, but can act as movable controls inside other controls
 
+    public enum DialogResult
+    {
+        None = 0,
+        OK = 1,
+        Cancel = 2,
+        Abort = 3,
+        Retry = 4,
+        Ignore = 5,
+        Yes = 6,
+        No = 7
+    }
+
     public class GLForm : GLForeDisplayTextBase
     {
         public const int FormMargins = 2;
         public const int FormPadding = 2;
         public const int FormBorderWidth = 1;
 
-        public bool Shown { get; set; } = false; 
+        public bool FormShown { get; set; } = false;        // only applies to top level forms
+        public bool TabChangesFocus { get; set; } = true; 
+        public Action<GLForm> Shown;
+
+        public DialogResult DialogResult { get { return dialogResult; } set { SetDialogResult(value); }  }
+        public Action<GLForm, DialogResult> DialogCallback { get; set; } // if a form sets a dialog result, this callback gets called
 
         public GLForm(string name, string title, Rectangle location) : base(name, location)
         {
@@ -44,25 +62,42 @@ namespace OpenTKUtils.GL4.Controls
 
         public int TitleBarHeight { get { return (Font?.ScalePixels(20) ?? 20) + FormMargins * 2; } }
 
-
         public void Close()
         {
             OnClose();
             Parent?.Remove(this);
         }
 
+        #region For inheritors
+
         public virtual void OnShown()   // only called if top level form
         {
+            GLBaseControl lowest = FindNextTabChild(int.MaxValue, false);      // try the tab order, 0 first
+            if (lowest != null)
+                lowest.SetFocus();
+            else
+            {
+                GLBaseControl firsty = FirstChildYOfType(null, (x) => x.Enabled && x.Focusable);     // focus on highest child
+                if (firsty != null)
+                    firsty.SetFocus();
+            }
+
+            Shown?.Invoke(this);
         }
 
-        public virtual void OnClose()   
+        public virtual void OnClose()   // called all the time
         {
         }
 
-        private GLMouseEventArgs.AreaType captured = GLMouseEventArgs.AreaType.Client;  // meaning none
-        private Point capturelocation;
-        private Rectangle originalwindow;
-        private bool cursorindicatingmovement = false;
+        #endregion
+
+        #region Implementation
+
+        private void SetDialogResult(DialogResult v)
+        {
+            dialogResult = v;
+            DialogCallback?.Invoke(this, dialogResult);
+        }
 
         public override void PerformRecursiveLayout()
         {
@@ -101,9 +136,11 @@ namespace OpenTKUtils.GL4.Controls
 
             if (e.Handled == false)
             {
+//                System.Diagnostics.Debug.WriteLine("Form drag " + e.Location +" " +  e.Area);
                 if (captured != GLMouseEventArgs.AreaType.Client)
                 {
-                    Point capturedelta = new Point(e.Location.X - capturelocation.X, e.Location.Y - capturelocation.Y);
+                    Point curscrlocation = new Point(e.ControlLocation.X + e.Location.X, e.ControlLocation.Y + e.Location.Y);
+                    Point capturedelta = new Point(curscrlocation.X - capturelocation.X, curscrlocation.Y - capturelocation.Y);
                     //System.Diagnostics.Debug.WriteLine("***************************");
                     //System.Diagnostics.Debug.WriteLine("Form " + captured + " " + e.Location + " " + capturelocation + " " + capturedelta);
 
@@ -179,7 +216,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if (!e.Handled && e.Area != GLMouseEventArgs.AreaType.Client)
             {
-                capturelocation = e.Location;
+                capturelocation = new Point(e.ControlLocation.X + e.Location.X, e.ControlLocation.Y + e.Location.Y);    // absolute screen location of capture
                 originalwindow = Bounds;
                 captured = e.Area;
             }
@@ -191,6 +228,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if (captured != GLMouseEventArgs.AreaType.Client)
             {
+                FindDisplay()?.SetCursor(GLCursorType.Normal);
                 captured = GLMouseEventArgs.AreaType.Client;
                 FindDisplay()?.SetCursor(GLCursorType.Normal);
             }
@@ -207,7 +245,32 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        public override void OnKeyDown(GLKeyEventArgs e)       // forms gets first dibs at keys of children
+        {
+            base.OnKeyDown(e);
+            if (!e.Handled && TabChangesFocus && e.KeyCode == System.Windows.Forms.Keys.Tab)
+            {
+                GLBaseControl f = FindChildWithFocus();
+                if ( f != null && f.TabOrder != -1)
+                {
+                    GLBaseControl next = FindNextTabChild(f.TabOrder, true);
+                    if (next == null)
+                        next = FindNextTabChild(int.MaxValue, false);
+                    if (next != null)
+                        next.SetFocus();
+                }
+                e.Handled = true;
+            }
+        }
 
+
+        private GLMouseEventArgs.AreaType captured = GLMouseEventArgs.AreaType.Client;  // meaning none
+        private Point capturelocation;
+        private Rectangle originalwindow;
+        private bool cursorindicatingmovement = false;
+        private DialogResult dialogResult = DialogResult.None;
+
+        #endregion
     }
 }
 

@@ -167,7 +167,7 @@ namespace TestOpenTk
 
                                 testtable = testflow = testtextbox = testcombobox = testscrollbar = testvsp = testlb = testbuttons = testtabcontrol = testdatetime = false;
                 //testform1 = false;
-                testform2 = false;
+            //    testform2 = false;
                 testbuttons = true;
 
 
@@ -346,6 +346,7 @@ namespace TestOpenTk
                         b2.Image = Properties.Resources.ImportSphere;
                         b2.ImageAlign = ContentAlignment.MiddleLeft;
                         b2.TextAlign = ContentAlignment.MiddleRight;
+                        b2.Click += (c, ev) => { MsgDialog(); };
                         p2.Add(b2);
 
                         GLCheckBox cb1 = new GLCheckBox("CB1", new Rectangle(5, 100, 100, 20), "Check Box 1");
@@ -482,15 +483,27 @@ namespace TestOpenTk
             c1.Add(new GLFormConfigurable.Entry("Com1", "two", new Point(10, 70), new Size(200, 24), "TT", new List<string>() { "one", "two", "three" }));
             c1.Add(new GLFormConfigurable.Entry("Textb", typeof(GLTextBox), "text box", new Point(10, 100), new Size(200, 24), "TT"));
             c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(160, 300), new Size(100, 24), "TT"));
-           // c1.Size = new Size(400, 400);
+            // c1.Size = new Size(400, 400);
             c1.Init(new Point(200, 200), "Config Form Test");
-            c1.Trigger += (logname, ctrlname, args) => 
+            c1.Trigger += (cb, en, ctrlname, args) =>
             {
                 if (ctrlname == "OK")
                     c1.Close();
             };
             displaycontrol.Add(c1);
         }
+
+        private void MsgDialog()
+        {
+            GLMessageBox msg = new GLMessageBox( displaycontrol, MsgReturn, "text text", "Caption", GLMessageBox.MessageBoxButtons.OKCancel);
+        }
+
+        private void MsgReturn(GLMessageBox msg, OpenTKUtils.GL4.Controls.DialogResult res)
+        {
+            System.Diagnostics.Debug.WriteLine("!!! Message box " + res);
+        }
+
+
 
 
         private void Controller3dDraw(GLMatrixCalc mc, long time)

@@ -26,18 +26,18 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLFormConfigurable : GLForm
     {
-        // returns dialog logical name, name of control (plus options), caller tag object
-        // name of control on click for button / Checkbox / ComboBox
-        // name:Return for number box, textBox.  Set SwallowReturn to true before returning to swallow the return
-        // name:Validity:true/false for Number boxes,
-        // Cancel for ending dialog,
-        // Escape for escape.
+        // returns GLformConfiguratble, Entry (or null) actioning, logical string action, callertag
+        // logical string action:
+        //  Return for number box, textBox.  
+        //  Cancel for ending dialog,
+        //  Validity:value for number boxes
+        //  otherwise logical control name
+        //  Escape for escape (Entry = null)
 
-        public event Action<string, string, Object> Trigger;
+        public event Action<GLFormConfigurable, Entry, string, Object> Trigger;
 
         private List<Entry> entries;
         private Object callertag;
-        private string logicalname;
 
         // You give an array of Entries describing the controls
         // either added programatically by Add(entry) or via a string descriptor Add(string) (disabled for now)
@@ -62,15 +62,20 @@ namespace OpenTKUtils.GL4.Controls
             public string tooltip;                      // can be null.
 
             // normal ones
-            public Entry(string nam, Type c, string t, System.Drawing.Point p, System.Drawing.Size s, string tt)
+            public Entry(string nam, Type c, string t, System.Drawing.Point p, System.Drawing.Size s, string tt = null, Object tag = null)
             {
-                controltype = c; text = t; pos = p; size = s; tooltip = tt; controlname = nam; customdateformat = "long";
+                controltype = c; text = t; pos = p; size = s; tooltip = tt; controlname = nam; customdateformat = "long"; this.tag = tag;
+            }
+
+            public Entry( GLBaseControl ctrl, string tt = null, Object tag = null)
+            {
+                control = ctrl; tooltip = tt; this.tag = tag;
             }
 
             // ComboBox
-            public Entry(string nam, string t, System.Drawing.Point p, System.Drawing.Size s, string tt, List<string> comboitems)
+            public Entry(string nam, string t, System.Drawing.Point p, System.Drawing.Size s, string tt, List<string> comboitems, Object tag = null)
             {
-                controltype = typeof(GLComboBox); text = t; pos = p; size = s; tooltip = tt; controlname = nam;
+                controltype = typeof(GLComboBox); text = t; pos = p; size = s; tooltip = tt; controlname = nam; this.tag = null;
                 comboboxitems = string.Join(",", comboitems);
             }
 
@@ -83,6 +88,8 @@ namespace OpenTKUtils.GL4.Controls
             public long numberboxlongminimum = long.MinValue;   // for long box
             public long numberboxlongmaximum = long.MaxValue;
             public string numberboxformat;      // for both number boxes
+            public int taborder = -1;           // tab order
+            public Object tag;                  // for use by caller
 
             public GLBaseControl control; // if controltype is set, don't set.  If contrDaveoltype=null, pass your control type.
         }
@@ -100,20 +107,6 @@ namespace OpenTKUtils.GL4.Controls
         }
 
         public Entry Last { get { return entries.Last(); } }
-
-        // pos.x <= -999 means autocentre to parent.
-
-        //public DialogResult ShowDialogCentred(Form p, Icon icon, string caption, string lname = null, Object callertag = null, Action callback = null)
-        //{
-        //    InitCentred(p, icon, caption, lname, callertag);
-        //    callback?.Invoke();
-        //    return ShowDialog(p);
-        //}
-
-        //public void InitCentred(Form p, Icon icon, string caption, string lname = null, Object callertag = null, AutoScaleMode asm = AutoScaleMode.Font)
-        //{
-        //    Init(icon, new Point((p.Left + p.Right) / 2, (p.Top + p.Bottom) / 2), caption, lname, callertag, true, asm);
-        //}
 
         public void Init(Point pos, string caption, string lname = null, Object callertag = null)
         {
@@ -275,62 +268,88 @@ namespace OpenTKUtils.GL4.Controls
 
         private void InitInt(System.Drawing.Point pos, string caption, string lname, Object callertag)
         {
-            this.logicalname = lname;    // passed back to caller via trigger
+            this.Name = lname;    // passed back to caller via trigger
             this.callertag = callertag;      // passed back to caller via trigger
             this.Text = caption;
 
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry ent = entries[i];
-                GLBaseControl c = ent.controltype != null ? (GLBaseControl)Activator.CreateInstance(ent.controltype) : ent.control;
-                ent.control = c;
-                c.Size = ent.size;
-                c.Location = ent.pos;
+
+                bool oursmade = ent.control == null;
+
+                if (oursmade)
+                {
+                    ent.control = (GLBaseControl)Activator.CreateInstance(ent.controltype);
+                    ent.control.Size = ent.size;
+                    ent.control.Location = ent.pos;
+                    ent.control.Name = ent.controlname;
+                }
+
+                GLBaseControl c = ent.control;
                 c.Tag = ent;     // point control tag at ent structure
+                c.TabOrder = ent.taborder;
 
                 if ( c is GLLabel)
                 {
-                    ((GLLabel)c).Text = ent.text;
+                    if (oursmade)
+                        ((GLLabel)c).Text = ent.text;
                 }
                 else if ( c is GLMultiLineTextBox ) // also TextBox as its inherited
                 {
                     GLMultiLineTextBox tb = c as GLMultiLineTextBox;
-                    tb.Text = ent.text;
-                    tb.ClearOnFirstChar = ent.clearonfirstchar;
+
+                    if (oursmade)
+                    {
+                        tb.Text = ent.text;
+                        tb.ClearOnFirstChar = ent.clearonfirstchar;
+                    }
 
                     tb.ReturnPressed += (box) =>        // only works for text box
                     {
                         Entry en = (Entry)(box.Tag);
-                        Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, "Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
 
                 }
                 else if ( c is GLButton )
                 { 
                     GLButton b = c as GLButton;
-                    b.Text = ent.text;
+                    if (oursmade)
+                        b.Text = ent.text;
+
                     b.Click += (sender, ev) =>
                     {
                         Entry en = (Entry)(((GLBaseControl)sender).Tag);
-                        Trigger?.Invoke(logicalname, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                    };
+
+                    b.Return += (sender) =>
+                    {
+                        Entry en = (Entry)(((GLBaseControl)sender).Tag);
+                        Trigger?.Invoke(this, en, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                 }
                 else if (c is GLCheckBox)
                 {
                     GLCheckBox cb = c as GLCheckBox;
-                    cb.Checked = ent.checkboxchecked;
+                    if (oursmade)
+                        cb.Checked = ent.checkboxchecked;
                     cb.CheckChanged = (sender) =>
                     {
                         Entry en = (Entry)(((GLBaseControl)sender).Tag);
-                        Trigger?.Invoke(logicalname, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                 }
                 else if (c is GLDateTimePicker)
                 {
                     GLDateTimePicker dt = c as GLDateTimePicker;
-                    DateTime t;
-                    if (DateTime.TryParse(ent.text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out t))     // assume local, so no conversion
-                        dt.Value = t;
+                    if (oursmade)
+                    {
+                        DateTime t;
+                        if (DateTime.TryParse(ent.text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out t))     // assume local, so no conversion
+                            dt.Value = t;
+                    }
 
                     switch (ent.customdateformat.ToLowerInvariant())
                     {
@@ -352,16 +371,20 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     GLComboBox cb = c as GLComboBox;
 
-                    cb.Items.AddRange(ent.comboboxitems.Split(','));
-                    if (cb.Items.Contains(ent.text))
-                        cb.SelectedItem = ent.text;
+                    if (oursmade)
+                    {
+                        cb.Items.AddRange(ent.comboboxitems.Split(','));
+                        if (cb.Items.Contains(ent.text))
+                            cb.SelectedItem = ent.text;
+                    }
+
                     cb.SelectedIndexChanged += (sender) =>
                     {
                         GLBaseControl ctr = (GLBaseControl)sender;
                         if (ctr.Enabled)
                         {
                             Entry en = (Entry)(ctr.Tag);
-                            Trigger?.Invoke(logicalname, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                            Trigger?.Invoke(this, en, en.controlname, this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                         }
                     };
 
@@ -369,41 +392,50 @@ namespace OpenTKUtils.GL4.Controls
                 else if (c is GLNumberBoxDouble)
                 {
                     GLNumberBoxDouble cb = c as GLNumberBoxDouble;
-                    cb.Minimum = ent.numberboxdoubleminimum;
-                    cb.Maximum = ent.numberboxdoublemaximum;
-                    double? v = ent.text.InvariantParseDoubleNull();
-                    cb.Value = v.HasValue ? v.Value : cb.Minimum;
-                    if (ent.numberboxformat != null)
-                        cb.Format = ent.numberboxformat;
+
+                    if (oursmade)
+                    {
+                        cb.Minimum = ent.numberboxdoubleminimum;
+                        cb.Maximum = ent.numberboxdoublemaximum;
+                        double? v = ent.text.InvariantParseDoubleNull();
+                        cb.Value = v.HasValue ? v.Value : cb.Minimum;
+                        if (ent.numberboxformat != null)
+                            cb.Format = ent.numberboxformat;
+                    }
+
                     cb.ReturnPressed += (box) =>
                     {
                         Entry en = (Entry)(box.Tag);
-                        Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, "Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                     cb.ValidityChanged += (box, s) =>
                     {
                         Entry en = (Entry)(box.Tag);
-                        Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, "Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                 }
                 else if (c is GLNumberBoxLong)
                 {
                     GLNumberBoxLong cb = c as GLNumberBoxLong;
-                    cb.Minimum = ent.numberboxlongminimum;
-                    cb.Maximum = ent.numberboxlongmaximum;
-                    long? v = ent.text.InvariantParseLongNull();
-                    cb.Value = v.HasValue ? v.Value : cb.Minimum;
-                    if (ent.numberboxformat != null)
-                        cb.Format = ent.numberboxformat;
+                    if (oursmade)
+                    {
+                        cb.Minimum = ent.numberboxlongminimum;
+                        cb.Maximum = ent.numberboxlongmaximum;
+                        long? v = ent.text.InvariantParseLongNull();
+                        cb.Value = v.HasValue ? v.Value : cb.Minimum;
+                        if (ent.numberboxformat != null)
+                            cb.Format = ent.numberboxformat;
+                    }
+
                     cb.ReturnPressed += (box) =>
                     {
                         Entry en = (Entry)(box.Tag);
-                        Trigger?.Invoke(logicalname, en.controlname + ":Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, "Return", this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                     cb.ValidityChanged += (box, s) =>
                     {
                         Entry en = (Entry)(box.Tag);
-                        Trigger?.Invoke(logicalname, en.controlname + ":Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
+                        Trigger?.Invoke(this, en, "Validity:" + s.ToString(), this.callertag);       // pass back the logical name of dialog, the name of the control, the caller tag
                     };
                 }
 
@@ -415,30 +447,12 @@ namespace OpenTKUtils.GL4.Controls
             Size = new Size(area.Right + Margin.TotalHeight, area.Bottom + Margin.TotalHeight *2 + Padding.TotalHeight + BorderWidth);
         }
 
-        public override void OnShown()
-        {
-            GLBaseControl firsty = FirstChildYOfType(new Type[] { typeof(GLMultiLineTextBox), typeof(GLTextBox) });
-            if (firsty != null)
-                firsty.SetFocus();
-
-            base.OnShown();
-        }
-
-        public override void OnClose()
-        {
-            GLBaseControl firsty = FirstChildYOfType(new Type[] { typeof(GLMultiLineTextBox), typeof(GLTextBox) });
-            if (firsty != null)
-                firsty.SetFocus();
-
-            base.OnShown();
-        }
-
         public override void OnKeyPress(GLKeyEventArgs e)       // forms gets first dibs at keys of children
         {
             base.OnKeyPress(e);
             if ( !e.Handled && e.KeyChar == 27 )
             {
-                Trigger?.Invoke(logicalname, "Escape", callertag);
+                Trigger?.Invoke(this, null, "Escape", callertag);
                 e.Handled = true;
             }
         }

@@ -23,9 +23,20 @@ namespace OpenTKUtils.WinForm
 {
     // a win form control version of GLWindowControl
 
+    public class GLControlKeyOverride : OpenTK.GLControl
+    {
+        protected override bool IsInputKey(Keys keyData)    // disable normal windows control change
+        {
+            if (keyData == Keys.Tab || keyData == Keys.Up || keyData == Keys.Down || keyData == Keys.Left || keyData == Keys.Right)
+                return true;
+            else
+                return base.IsInputKey(keyData);
+        }
+    }
+    
     public class GLWinFormControl : GLWindowControl
     {
-        public OpenTK.GLControl glControl { get; private set; }      // use only in extreams for back compat
+        public GLControlKeyOverride glControl { get; private set; }      // use only in extreams for back compat
 
         public Color BackColour { get { return backcolor; } set { backcolor = value; GL.ClearColor(backcolor); } }
         public int Width { get { return glControl.Width; } }
@@ -89,10 +100,10 @@ namespace OpenTKUtils.WinForm
                 glControl.Cursor = Cursors.Default;
         }
 
-        private OpenTK.GLControl CreateGLClass()
+        private GLControlKeyOverride CreateGLClass()
         {
-            OpenTK.GLControl gl;
-            gl = new OpenTK.GLControl();
+            GLControlKeyOverride gl;
+            gl = new GLControlKeyOverride();
             gl.Dock = DockStyle.Fill;
             gl.BackColor = System.Drawing.Color.Black;
             gl.Name = "glControl";

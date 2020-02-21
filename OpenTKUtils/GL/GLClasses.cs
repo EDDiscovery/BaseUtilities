@@ -30,6 +30,7 @@ namespace OpenTKUtils
 
         public MouseButtons Button { get; set; }
         public Point Location { get; set; }
+        public Point ControlLocation { get; set; }
         public int X { get { return Location.X; } }
         public int Y { get { return Location.Y; } }
         public enum AreaType { Client, Left, Top, Right, Bottom , NWSE };

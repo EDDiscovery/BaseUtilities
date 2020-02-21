@@ -19,6 +19,8 @@ using System.Linq;
 
 namespace OpenTKUtils.GL4.Controls
 {
+    // TBD scroll box vert and horz.. later.
+
     public class GLMultiLineTextBox : GLForeDisplayTextBase
     {
         public Action<GLBaseControl> TextChanged { get; set; } = null;      // not fired by programatically changing Text
@@ -28,6 +30,7 @@ namespace OpenTKUtils.GL4.Controls
         public bool AllowLF { get; set; } = true;                           // clear to prevent multiline
         public bool ClearOnFirstChar { get; set; } = false;                 // clear on first char
         public bool AllowControlChars { get; set; } = false;                // other controls chars allowed
+        public bool ReadOnly { get; set; } = false;                         // can edit it
         public Margin TextBoundary { get; set; } = new Margin(0);
         public Color HighlightColor { get { return highlightColor; } set { highlightColor = value; Invalidate(); } }       // of text
         public Color LineColor { get { return lineColor; } set { lineColor = value; Invalidate(); } }       // lined text, default off
@@ -177,130 +180,145 @@ namespace OpenTKUtils.GL4.Controls
 
         public void InsertTextWithCRLF(string str, bool insertinplace = false)        // any type of lf/cr combo, replaced by selected combo
         {
-            DeleteSelectionClearInt();
-
-            int cpos = 0;
-            while (true)
+            if (!ReadOnly)
             {
-                if (cpos < str.Length)
+                DeleteSelectionClearInt();
+
+                int cpos = 0;
+                while (true)
                 {
-                    int nextlf = str.IndexOfAny(new char[] { '\r', '\n' }, cpos);
-
-                    if (nextlf >= 0)
+                    if (cpos < str.Length)
                     {
-                        InsertTextInt(str.Substring(cpos, nextlf-cpos), insertinplace);
-                        InsertCRLFInt();
+                        int nextlf = str.IndexOfAny(new char[] { '\r', '\n' }, cpos);
 
-                        if (str[nextlf] == '\r')
+                        if (nextlf >= 0)
                         {
-                            nextlf++;
+                            InsertTextInt(str.Substring(cpos, nextlf - cpos), insertinplace);
+                            InsertCRLFInt();
+
+                            if (str[nextlf] == '\r')
+                            {
+                                nextlf++;
+                            }
+
+                            if (nextlf < str.Length && str[nextlf] == '\n')
+                                nextlf++;
+
+                            cpos = nextlf;
                         }
-
-                        if (nextlf < str.Length && str[nextlf] == '\n')
-                            nextlf++;
-
-                        cpos = nextlf;
-                    }
-                    else
-                    {
-                        InsertTextInt(str.Substring(cpos), insertinplace);
-                        break;
+                        else
+                        {
+                            InsertTextInt(str.Substring(cpos), insertinplace);
+                            break;
+                        }
                     }
                 }
-            }
 
-            ClearStart();
-            System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
-            OnTextChanged();
-            Invalidate();
+                ClearStart();
+                System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                OnTextChanged();
+                Invalidate();
+            }
         }
 
         public void InsertText(string t, bool insertinplace = false)        // no lf in text
         {
-            DeleteSelectionClearInt();
-            InsertTextInt(t,insertinplace);
-            System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
-            ClearStart();
-            OnTextChanged();
-            Invalidate();
+            if (!ReadOnly)
+            {
+                DeleteSelectionClearInt();
+                InsertTextInt(t, insertinplace);
+                System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                ClearStart();
+                OnTextChanged();
+                Invalidate();
+            }
         }
 
         public void InsertCRLF()        // insert the selected cr/lf pattern
         {
-            DeleteSelectionClearInt();
-            InsertCRLFInt();
-            ClearStart();
-            System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
-            OnTextChanged();
-            Invalidate();
+            if (!ReadOnly)
+            {
+                DeleteSelectionClearInt();
+                InsertCRLFInt();
+                ClearStart();
+                System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                OnTextChanged();
+                Invalidate();
+            }
         }
 
         public void Backspace()
         {
-            if (!DeleteSelection())     // if we deleted a selection, no other action
+            if (!ReadOnly)
             {
-                int offsetin = cursorpos - cursorlinecpos;
-
-                if (offsetin > 0)   // simple backspace
+                if (!DeleteSelection())     // if we deleted a selection, no other action
                 {
-                    //System.Diagnostics.Debug.WriteLine("Text '" + text.EscapeControlChars() + "' cursor text '" + text.Substring(cursorpos).EscapeControlChars() + "'");
-                    text = text.Substring(0, cursorpos - 1) + text.Substring(cursorpos);
-                    linelengths[cursorlineno]--;
-                    cursorpos--;
-                    ClearStart();
-                    OnTextChanged();
-                    CursorTimerRestart();
-                    Invalidate();
-                }
-                else if (cursorlinecpos > 0)    // not at start of text
-                {
-                    cursorlinecpos -= linelengths[--cursorlineno];      // back 1 line
-                    int textlen = linelengths[cursorlineno] - lineendlengths[cursorlineno];
-                    text = text.Substring(0, cursorpos - lineendlengths[cursorlineno]) + text.Substring(cursorpos); // remove lf/cr from previous line
-                    linelengths[cursorlineno] = textlen + linelengths[cursorlineno + 1];
-                    lineendlengths[cursorlineno] = lineendlengths[cursorlineno + 1];        // copy end type
-                    cursorpos = cursorlinecpos + textlen;
-                    linelengths.RemoveAt(cursorlineno + 1);
-                    lineendlengths.RemoveAt(cursorlineno + 1);
-                    ClearStart();
-                    OnTextChanged();
-                    CursorTimerRestart();
-                    Invalidate();
-                }
+                    int offsetin = cursorpos - cursorlinecpos;
 
-                System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                    if (offsetin > 0)   // simple backspace
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Text '" + text.EscapeControlChars() + "' cursor text '" + text.Substring(cursorpos).EscapeControlChars() + "'");
+                        text = text.Substring(0, cursorpos - 1) + text.Substring(cursorpos);
+                        linelengths[cursorlineno]--;
+                        cursorpos--;
+                        ClearStart();
+                        OnTextChanged();
+                        CursorTimerRestart();
+                        Invalidate();
+                    }
+                    else if (cursorlinecpos > 0)    // not at start of text
+                    {
+                        cursorlinecpos -= linelengths[--cursorlineno];      // back 1 line
+                        int textlen = linelengths[cursorlineno] - lineendlengths[cursorlineno];
+                        text = text.Substring(0, cursorpos - lineendlengths[cursorlineno]) + text.Substring(cursorpos); // remove lf/cr from previous line
+                        linelengths[cursorlineno] = textlen + linelengths[cursorlineno + 1];
+                        lineendlengths[cursorlineno] = lineendlengths[cursorlineno + 1];        // copy end type
+                        cursorpos = cursorlinecpos + textlen;
+                        linelengths.RemoveAt(cursorlineno + 1);
+                        lineendlengths.RemoveAt(cursorlineno + 1);
+                        ClearStart();
+                        OnTextChanged();
+                        CursorTimerRestart();
+                        Invalidate();
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                }
             }
         }
 
         public void Delete()
         {
-            if (!DeleteSelection())      // if we deleted a selection, no other action
+            if (!ReadOnly)
             {
-                int offsetin = cursorpos - cursorlinecpos;
-
-                if (offsetin < linelengths[cursorlineno] - lineendlengths[cursorlineno])   // simple delete
+                if (!DeleteSelection())      // if we deleted a selection, no other action
                 {
-                    //System.Diagnostics.Debug.WriteLine("Text '" + text.EscapeControlChars() + "' cursor text '" + text.Substring(cursorpos).EscapeControlChars() + "'");
-                    text = text.Substring(0, cursorpos) + text.Substring(cursorpos + 1);
-                    linelengths[cursorlineno]--;
-                    ClearStart();
-                    OnTextChanged();
-                    CursorTimerRestart();
-                    Invalidate();
-                }
-                else if ( cursorpos < Text.Length ) // not at end of text
-                {
-                    text = text.Substring(0, cursorpos) + text.Substring(cursorpos + lineendlengths[cursorlineno]); // remove lf/cr from out line
-                    linelengths[cursorlineno] += linelengths[cursorlineno + 1] - lineendlengths[cursorlineno];   // our line is whole of next less our lf/cr
-                    linelengths.RemoveAt(cursorlineno + 1);     // next line disappears
-                    lineendlengths.RemoveAt(cursorlineno);  // and we remove our line ends and keep the next one
-                    ClearStart();
-                    OnTextChanged();
-                    CursorTimerRestart();
-                    Invalidate();
-                }
+                    int offsetin = cursorpos - cursorlinecpos;
 
-                System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                    if (offsetin < linelengths[cursorlineno] - lineendlengths[cursorlineno])   // simple delete
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Text '" + text.EscapeControlChars() + "' cursor text '" + text.Substring(cursorpos).EscapeControlChars() + "'");
+                        text = text.Substring(0, cursorpos) + text.Substring(cursorpos + 1);
+                        linelengths[cursorlineno]--;
+                        ClearStart();
+                        OnTextChanged();
+                        CursorTimerRestart();
+                        Invalidate();
+                    }
+                    else if (cursorpos < Text.Length) // not at end of text
+                    {
+                        text = text.Substring(0, cursorpos) + text.Substring(cursorpos + lineendlengths[cursorlineno]); // remove lf/cr from out line
+                        linelengths[cursorlineno] += linelengths[cursorlineno + 1] - lineendlengths[cursorlineno];   // our line is whole of next less our lf/cr
+                        linelengths.RemoveAt(cursorlineno + 1);     // next line disappears
+                        lineendlengths.RemoveAt(cursorlineno);  // and we remove our line ends and keep the next one
+                        ClearStart();
+                        OnTextChanged();
+                        CursorTimerRestart();
+                        Invalidate();
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("Move cpos to line {0} cpos {1} cur {2} off {3} len {4} text '{5}'", cursorlineno, cursorlinecpos, cursorpos, cursorpos - cursorlinecpos, linelengths[cursorlineno], text.EscapeControlChars());
+                }
             }
         }
 
@@ -322,7 +340,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public bool DeleteSelection()
         {
-            if (DeleteSelectionClearInt())
+            if (!ReadOnly && DeleteSelectionClearInt())
             {
                 OnTextChanged();
                 Invalidate();
@@ -355,27 +373,36 @@ namespace OpenTKUtils.GL4.Controls
 
         public void Cut()
         {
-            string sel = SelectedText;
-            if (sel != null)
+            if (!ReadOnly)
             {
-                System.Windows.Forms.Clipboard.SetText(sel);
-                DeleteSelection();
+                string sel = SelectedText;
+                if (sel != null)
+                {
+                    System.Windows.Forms.Clipboard.SetText(sel);
+                    DeleteSelection();
+                }
             }
         }
 
         public void Paste()
         {
-            string s = System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.UnicodeText);
-            if ( !s.IsEmpty() )
-                InsertTextWithCRLF(s);
+            if (!ReadOnly)
+            {
+                string s = System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.UnicodeText);
+                if (!s.IsEmpty())
+                    InsertTextWithCRLF(s);
+            }
         }
 
         public void Clear()
         {
-            text = string.Empty;
-            cursorpos = startpos = 0;
-            OnTextSet();
-            Invalidate();
+            if (!ReadOnly)
+            {
+                text = string.Empty;
+                cursorpos = startpos = 0;
+                OnTextSet();
+                Invalidate();
+            }
         }
 
         #region Implementation

@@ -29,14 +29,17 @@ namespace OpenTKUtils.GL4.Controls
     public class GLButton : GLButtonTextBase
     {
         public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;
+        public Action<GLBaseControl> Return { get; set; } = null;
 
         public GLButton(string name, Rectangle location, string text) : base(name, location)
         {
-            PaddingNI = new Padding(1);       // standard format, a border with a pad of 1
+            PaddingNI = new Padding(2);       // standard format, a border with a pad of 1
             BorderWidthNI = 1;
             TextNI = text;
             BorderColorNI = DefaultButtonBorderColor;
             BackColor = DefaultButtonBorderBackColor;
+            Focusable = true;
+            InvalidateOnFocusChange = true;
         }
 
         public GLButton() : this("But?", DefaultWindowRectangle, "")
@@ -87,8 +90,16 @@ namespace OpenTKUtils.GL4.Controls
 
             gr.SmoothingMode = SmoothingMode.None;
 
-            //tbd not filling top line
-            using (var b = new LinearGradientBrush(area, colBack, colBack.Multiply(BackColorScaling), 90))
+            if ( Focused )
+            {
+                using (var p = new Pen(MouseDownBackColor))
+                {
+                    gr.DrawRectangle(p, new Rectangle(area.Left,area.Top,area.Width-1,area.Height-1));
+                    area.Inflate(new Size(-1, -1));
+                }
+            }
+
+            using (var b = new LinearGradientBrush(new Rectangle(area.Left,area.Top-1,area.Width,area.Height+1), colBack, colBack.Multiply(BackColorScaling), 90))
                 gr.FillRectangle(b, area);       // linear grad brushes do not respect smoothing mode, btw
 
             if (Image != null)
@@ -125,5 +136,19 @@ namespace OpenTKUtils.GL4.Controls
         {
             Click?.Invoke(this, e);
         }
+
+        public override void OnKeyPress(GLKeyEventArgs e)
+        {
+            if ( e.KeyChar == 13 )
+            {
+                OnReturn();
+            }
+        }
+
+        public virtual void OnReturn()
+        {
+            Return?.Invoke(this);
+        }
+
     }
 }
