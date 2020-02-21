@@ -34,50 +34,62 @@ namespace OpenTKUtils.GL4.Controls
             RetryCancel = 5
         }
 
-        public GLMessageBox( GLBaseControl c, Action<GLMessageBox, DialogResult> callback, string text, string caption, MessageBoxButtons but = MessageBoxButtons.OK )
+        public GLMessageBox( GLBaseControl c, Action<GLMessageBox, DialogResult> callback, string text, string caption, MessageBoxButtons but = MessageBoxButtons.OK, Font fnt = null )
         {
             callbackfunc = callback;
 
+            if (fnt == null)
+                fnt = new Font("Ms Sans Serif", 12);
+
             GLFormConfigurable c1 = new GLFormConfigurable();
             c1.TopMost = true;
-            int butpos1 = 300, butpos2= 400, butpos3 = 500;
+            c1.Font = fnt;
+
+            int butright;
             int butwidth = 80;
             int butheight = 20;
-            int butline = 300;
+            int butline;
+
+            using (var fmt = new StringFormat())
+            {
+                var textsize = BitMapHelpers.MeasureStringInBitmap(text, fnt, fmt);
+                butline = 10 + (int)textsize.Height + 10;
+                butright = Math.Max((butwidth + 20) * 2 + 20, Math.Min((int)textsize.Width + 20, 1600));
+            }
 
             if (but == MessageBoxButtons.AbortRetryIgnore)
             {
-                c1.Add(new GLFormConfigurable.Entry("Ignore", typeof(GLButton), "Ignore", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.Ignore));
-                c1.Add(new GLFormConfigurable.Entry("Retry", typeof(GLButton), "Retry", new Point(butpos2, butline), new Size(butwidth, butheight), null, DialogResult.Retry));
-                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butpos1, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
+                c1.Add(new GLFormConfigurable.Entry("Ignore", typeof(GLButton), "Ignore", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.Ignore));
+                c1.Add(new GLFormConfigurable.Entry("Retry", typeof(GLButton), "Retry", new Point(butright-butwidth-20, butline), new Size(butwidth, butheight), null, DialogResult.Retry));
+                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butright-butwidth*2-40, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
             }
             else if (but == MessageBoxButtons.OKCancel)
             {
-                c1.Add(new GLFormConfigurable.Entry("Cancel", typeof(GLButton), "Cancel", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.Cancel) { taborder = 1 });
-                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butpos2, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
+                c1.Add(new GLFormConfigurable.Entry("Cancel", typeof(GLButton), "Cancel", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.Cancel) { taborder = 1 });
+                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butright-butwidth-20, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
             }
             else if (but == MessageBoxButtons.RetryCancel)
             {
-                c1.Add(new GLFormConfigurable.Entry("Retry", typeof(GLButton), "Retry", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.Retry));
-                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butpos2, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
+                c1.Add(new GLFormConfigurable.Entry("Retry", typeof(GLButton), "Retry", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.Retry));
+                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butright-butwidth-20, butline), new Size(butwidth, butheight), null, DialogResult.OK) { taborder = 0 });
             }
             else if (but == MessageBoxButtons.YesNo)
             {
-                c1.Add(new GLFormConfigurable.Entry("No", typeof(GLButton), "No", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.No));
-                c1.Add(new GLFormConfigurable.Entry("Yes", typeof(GLButton), "Yes", new Point(butpos2, butline), new Size(butwidth, butheight), null, DialogResult.Yes) { taborder = 0 });
+                c1.Add(new GLFormConfigurable.Entry("No", typeof(GLButton), "No", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.No));
+                c1.Add(new GLFormConfigurable.Entry("Yes", typeof(GLButton), "Yes", new Point(butright-butwidth-20, butline), new Size(butwidth, butheight), null, DialogResult.Yes) { taborder = 0 });
             }
             else if (but == MessageBoxButtons.YesNo)
             {
-                c1.Add(new GLFormConfigurable.Entry("Cancel", typeof(GLButton), "Cancel", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.Cancel));
-                c1.Add(new GLFormConfigurable.Entry("No", typeof(GLButton), "No", new Point(butpos2, butline), new Size(butwidth, butheight), null, DialogResult.No));
-                c1.Add(new GLFormConfigurable.Entry("Yes", typeof(GLButton), "Yes", new Point(butpos1, butline), new Size(butwidth, butheight), null, DialogResult.Yes) { taborder = 0 });
+                c1.Add(new GLFormConfigurable.Entry("Cancel", typeof(GLButton), "Cancel", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.Cancel));
+                c1.Add(new GLFormConfigurable.Entry("No", typeof(GLButton), "No", new Point(butright-butwidth-20, butline), new Size(butwidth, butheight), null, DialogResult.No));
+                c1.Add(new GLFormConfigurable.Entry("Yes", typeof(GLButton), "Yes", new Point(butright-butwidth*2-40, butline), new Size(butwidth, butheight), null, DialogResult.Yes) { taborder = 0 });
             }
             else 
             {
-                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butpos3, butline), new Size(butwidth, butheight), null, DialogResult.OK));
+                c1.Add(new GLFormConfigurable.Entry("OK", typeof(GLButton), "OK", new Point(butright, butline), new Size(butwidth, butheight), null, DialogResult.OK));
             }
 
-            GLMultiLineTextBox tb = new GLMultiLineTextBox("MLT", new Rectangle(10, 10, butpos3 + butwidth - 10, butline - 20),text);
+            GLMultiLineTextBox tb = new GLMultiLineTextBox("MLT", new Rectangle(10, 10, butright + butwidth - 10, butline - 20),text);
             tb.BackColor = Color.Transparent;
             tb.ForeColor = GLBaseControl.DefaultFormTextColor;
             tb.ReadOnly = true;

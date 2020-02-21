@@ -495,7 +495,7 @@ namespace TestOpenTk
 
         private void MsgDialog()
         {
-            GLMessageBox msg = new GLMessageBox( displaycontrol, MsgReturn, "text text", "Caption", GLMessageBox.MessageBoxButtons.OKCancel);
+            GLMessageBox msg = new GLMessageBox( displaycontrol, MsgReturn, "text text\r\nwskwkkw\r\nsksksk\r\nskksks end", "Caption", GLMessageBox.MessageBoxButtons.OKCancel);
         }
 
         private void MsgReturn(GLMessageBox msg, OpenTKUtils.GL4.Controls.DialogResult res)

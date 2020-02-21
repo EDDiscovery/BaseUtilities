@@ -444,7 +444,7 @@ namespace OpenTKUtils.GL4.Controls
 
             Location = pos;
             Rectangle area = ChildArea();
-            Size = new Size(area.Right + Margin.TotalHeight, area.Bottom + Margin.TotalHeight *2 + Padding.TotalHeight + BorderWidth);
+            Size = new Size(area.Right + Margin.TotalWidth + 20, area.Bottom + Margin.TotalHeight + 10 + Padding.TotalHeight + BorderWidth);
         }
 
         public override void OnKeyPress(GLKeyEventArgs e)       // forms gets first dibs at keys of children
