@@ -49,6 +49,7 @@ namespace OpenTKUtils.GL4.Controls
             rc.PrimitiveRestart = 0xff;
             ri = new GLRenderableItem(rc, 0, vertexarray);     // create a renderable item
             ri.CreateRectangleRestartIndexByte(255 / 5);
+            ri.DrawCount = 0;                               // nothing to draw at this point
 
             shader = new GLControlShader();
 
@@ -136,44 +137,53 @@ namespace OpenTKUtils.GL4.Controls
 
         private void UpdateVertexPositions()        // write to vertex buffer the addresses of the windows.
         {
-            vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
-            IntPtr p = vertexes.Map(0, vertexes.BufferSize);
-            
-            float z = 0.1f;
-
-            foreach (var c in ControlsIZ)       // we paint in IZ order, and we set the Z (bigger is more in the back) from a notional 0.1 to 0 so the depth test works
+            if (ControlsZ.Count > 0)            // may end up with nothing to draw, in which case, don't update the vertexes
             {
-                float[] a = new float[] {       c.Left, c.Top, z, 1,
-                                                c.Left, c.Bottom , z, 1,
-                                                c.Right, c.Top, z, 1,
-                                                c.Right, c.Bottom , z, 1,
-                                         };
-                vertexes.MapWrite(ref p, a);
-                z -= 0.001f;
+                vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
+                IntPtr p = vertexes.Map(0, vertexes.BufferSize);
+
+                float z = 0.1f;
+
+                foreach (var c in ControlsIZ)       // we paint in IZ order, and we set the Z (bigger is more in the back) from a notional 0.1 to 0 so the depth test works
+                {
+                    float[] a = new float[] {       c.Left, c.Top, z, 1,
+                                                    c.Left, c.Bottom , z, 1,
+                                                    c.Right, c.Top, z, 1,
+                                                    c.Right, c.Bottom , z, 1,
+                                             };
+                    vertexes.MapWrite(ref p, a);
+                    z -= 0.001f;
+                }
+
+                vertexes.UnMap();
+                OpenTKUtils.GLStatics.Check();
+
+                ri.DrawCount = ControlsZ.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
             }
+            else
+                ri.DrawCount = 0;           // and set count to zero.
 
-            vertexes.UnMap();
-            OpenTKUtils.GLStatics.Check();
-
-            ri.DrawCount = ControlsZ.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
             RequestRender = true;
         }
 
         private void UpdateTextures()
         {
-            List<IGLTexture> tlist = new List<IGLTexture>();
-
-            foreach (var c in ControlsIZ)   // we paint in the render in IZ order, so we add the textures to the list and check them in IZ order for the bindless texture handles
+            if (ControlsIZ.Count > 0)       // only perform if we have something to paint
             {
-                if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
+                List<IGLTexture> tlist = new List<IGLTexture>();
+
+                foreach (var c in ControlsIZ)   // we paint in the render in IZ order, so we add the textures to the list and check them in IZ order for the bindless texture handles
                 {
-                    textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
+                    if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
+                    {
+                        textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
+                    }
+
+                    tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles
                 }
 
-                tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles
+                texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..  written in iz order
             }
-
-            texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..  written in iz order
         }
 
         // overriding this indicates all we have to do if child location changes is update the vertex positions, and that we have dealt with it
@@ -192,45 +202,38 @@ namespace OpenTKUtils.GL4.Controls
             NeedRedraw = false;
             RequestRender = false;
 
-            foreach (var c in ControlsIZ)
+            if (ControlsIZ.Count > 0)       // only action if children present
             {
-                if (c.Visible)
+                foreach (var c in ControlsIZ)
                 {
-                    bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
-
-                    if (redrawn)
+                    if (c.Visible)
                     {
-                        textures[c].LoadBitmap(c.LevelBitmap);  // and update texture unit with new bitmap
-                        //float[] p = textures[c].GetTextureImageAsFloats(end:100);
+                        bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
+
+                        if (redrawn)
+                        {
+                            textures[c].LoadBitmap(c.LevelBitmap);  // and update texture unit with new bitmap
+                            //float[] p = textures[c].GetTextureImageAsFloats(end:100);
+                        }
                     }
                 }
-            }
 
 
-            shader.Start();
-            ri.Bind(currentstate, shader, null);        // binds VA AND the element buffer
-            ri.Render();                                // draw using primitive restart on element index buffer with bindless textures
-            shader.Finish();
-            GL.UseProgram(0);           // final clean up
-            GL.BindProgramPipeline(0);
+                shader.Start();
+                ri.Bind(currentstate, shader, null);        // binds VA AND the element buffer
+                ri.Render();                                // draw using primitive restart on element index buffer with bindless textures
+                shader.Finish();
+                GL.UseProgram(0);           // final clean up
+                GL.BindProgramPipeline(0);
+                GLStatics.Check();
 
-            foreach (var c in ControlsIZ)
-            {
-                var form = c as GLForm;
-                if ( form != null && form.FormShown == false )
+                foreach (var c in ControlsIZ)
                 {
-                    form.OnShown();
-                    form.FormShown = true;
-                }
-
-                if (c.Visible)
-                {
-                    bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
-
-                    if (redrawn)
+                    var form = c as GLForm;
+                    if (form != null && form.FormShown == false)
                     {
-                        textures[c].LoadBitmap(c.LevelBitmap);  // and update texture unit with new bitmap
-                        //float[] p = textures[c].GetTextureImageAsFloats(end:100);
+                        form.OnShown();
+                        form.FormShown = true;
                     }
                 }
             }

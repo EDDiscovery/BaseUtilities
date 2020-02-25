@@ -12,22 +12,22 @@ using System.Threading.Tasks;
 
 namespace TestOpenTk
 {
-    public class DynamicGridShader : GLShaderPipelineShadersBase
+    public class DynamicGridVertexShader : GLShaderPipelineShadersBase
     {
-        public int ComputeGridSize(GLMatrixCalc mc, out int gridwidth)
+        public int ComputeGridSize(float eyedistance, out int gridwidth)
         {
             int lines = 21;
             gridwidth = 10000;
 
-            if (mc.EyeDistance >= 10000)
+            if (eyedistance >= 10000)
             {
             }
-            else if (mc.EyeDistance >= 1000)
+            else if (eyedistance >= 1000)
             {
                 lines = 81 * 2;
                 gridwidth = 1000;
             }
-            else if (mc.EyeDistance >= 100)
+            else if (eyedistance >= 100)
             {
                 lines = 321 * 2;
                 gridwidth = 100;
@@ -142,14 +142,14 @@ void main(void)
 }
 "; }
 
-        public DynamicGridShader(Color c)
+        public DynamicGridVertexShader(Color c)
         {
-            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode(), new object[] { "color", c }, completeoutfile: @"c:\code\sh.txt");
+            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader, vcode(), new object[] { "color", c });
         }
 
     }
 
-    public class DynamicGridCoordShader : GLShaderPipelineShadersBase
+    public class DynamicGridCoordVertexShader : GLShaderPipelineShadersBase
     {
         string vcode()
         { return @"
@@ -266,7 +266,7 @@ void main(void)
         private GLTexture2DArray texcoords;
         private Font gridfnt;
 
-        public DynamicGridCoordShader(Font f = null)
+        public DynamicGridCoordVertexShader(Font f = null)
         {
             texcoords = new GLTexture2DArray();
             texcoords.CreateTexture(200, 25, 9);        // size and number

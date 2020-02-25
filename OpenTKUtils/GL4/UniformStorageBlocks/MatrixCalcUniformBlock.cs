@@ -29,10 +29,12 @@ namespace OpenTKUtils.GL4
         {
         }
 
+        const int maxmcubsize = Mat4size * 3 + Vec4size * 2 + sizeof(float) * 4 + Mat4size; // always use max so we can swap between.
+
         public void SetMinimal(GLMatrixCalc c)
         {
             if (NotAllocated)
-                Allocate(Mat4size * 1, BufferUsageHint.DynamicCopy);
+                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
             MapWrite(ref ptr, c.ProjectionModelMatrix);
@@ -42,7 +44,7 @@ namespace OpenTKUtils.GL4
         public void Set(GLMatrixCalc c)
         {
             if (NotAllocated)
-                Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float), BufferUsageHint.DynamicCopy);
+                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
             MapWrite(ref ptr, c.ProjectionModelMatrix);
@@ -57,7 +59,7 @@ namespace OpenTKUtils.GL4
         public void Set(GLMatrixCalc c, int width, int height)  // set ProjectionModelMatrix to transform (x,y,0,1) screen coords to display coords (-1..+1, 1 to -1)
         {
             if (NotAllocated)
-                Allocate(Mat4size * 3 + Vec4size * 2 + sizeof(float)*4 + Mat4size, BufferUsageHint.DynamicCopy);
+                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             //Matrix4 pm = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0f), (float)width / height, 1, 100000);
 
@@ -65,7 +67,6 @@ namespace OpenTKUtils.GL4
             //pm.M14 += -1;
             //pm.M22 *= -2.0f / height;
             //pm.M24 += 1;
-
 
             Matrix4 mat = Matrix4.Zero;
             mat.Column0 = new Vector4(2.0f / width, 0, 0, -1);      // transform of x

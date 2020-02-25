@@ -64,11 +64,18 @@
     <Compile Include="Controls\TestControls.designer.cs">
       <DependentUpon>TestControls.cs</DependentUpon>
     </Compile>
+    <Compile Include="Galaxy\ShaderStarDots.cs" />
     <Compile Include="Galaxy\TestDynamicGrid.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Galaxy\TestDynamicGrid.designer.cs">
       <DependentUpon>TestDynamicGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Galaxy\TestGalaxyDemo3.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Galaxy\TestGalaxyDemo3.designer.cs">
+      <DependentUpon>TestGalaxyDemo3.cs</DependentUpon>
     </Compile>
     <Compile Include="Galaxy\TestGalaxyDemo2.cs">
       <SubType>Form</SubType>
@@ -202,6 +209,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Galaxy\TestDynamicGrid.resx">
       <DependentUpon>TestDynamicGrid.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Galaxy\TestGalaxyDemo3.resx">
+      <DependentUpon>TestGalaxyDemo3.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Galaxy\TestGalaxyDemo2.resx">
       <DependentUpon>TestGalaxyDemo2.cs</DependentUpon>

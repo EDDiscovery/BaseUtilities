@@ -8,18 +8,13 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
-
+using OpenTKUtils.GL4.Controls;
 
 namespace TestOpenTk
 {
-    public partial class TestGalaxyDemo2 : Form
+    public partial class TestGalaxyDemo3 : Form
     {
-        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
-        private Controller3D gl3dcontroller;
-
-        private Timer systemtimer = new Timer();
-
-        public TestGalaxyDemo2()
+        public TestGalaxyDemo3()
         {
             InitializeComponent();
 
@@ -30,12 +25,24 @@ namespace TestOpenTk
             systemtimer.Start();
         }
 
-        GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
-        GLItemsList items = new GLItemsList();
-        Vector4[] boundingbox;
-        GLVolumetricUniformBlock volumetricblock;
-        GLRenderableItem galaxy;
-        GLTexture2DArray gridtexcoords;
+        private GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
+        private GLItemsList items = new GLItemsList();
+
+        private OpenTKUtils.WinForm.GLWinFormControl glwfc;
+        private Controller3D gl3dcontroller;
+        private GLControlDisplay displaycontrol;
+
+        private Timer systemtimer = new Timer();
+
+        private Vector4[] volumetricboundingbox;
+        private GLVolumetricUniformBlock volumetricblock;
+        private GLRenderableItem galaxyrendererable;
+        private GalaxyShader galaxyshader;
+        private DynamicGridCoordVertexShader gridbitmapvertshader;
+        private GLRenderableItem gridrenderable;
+        private DynamicGridVertexShader gridvertshader;
+
+        private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,50 +50,6 @@ namespace TestOpenTk
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
             items.Dispose();
-        }
-
-        float lasteyedistance = 100000000;
-        int lastgridwidth;
-
-        private void ControllerDraw(GLMatrixCalc mc, long time)
-        {
-            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
-
-            IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
-            DynamicGridVertexShader s = items.PLShader("PLGRIDVertShader") as DynamicGridVertexShader;
-
-            if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
-            {
-                i.InstanceCount = s.ComputeGridSize(gl3dcontroller.MatrixCalc.EyeDistance, out lastgridwidth);
-                lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
-            }
-
-            s.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, i.InstanceCount);
-
-            float dist = mc.EyeDistance;
-            float d1 = dist - lastgridwidth;
-            float suc = d1 / (9.0f * lastgridwidth);
-            float cf = 1.0f - suc.Clamp(0f, 1f);
-            float a = 0.7f * cf;
-
-            float coordfade = lastgridwidth == 10000 ? (0.7f - (mc.EyeDistance / 20000).Clamp(0.0f, 0.7f)) : 0.7f;
-            Color coordscol = Color.FromArgb(coordfade<0.05 ? 0 : 150, Color.Cyan);
-
-            System.Diagnostics.Debug.WriteLine("Dist {0} grid {1} suc {2} cf {3} a {4} coord {5} {6}", dist, lastgridwidth, suc, cf, a , coordfade, coordscol);
-
-            DynamicGridCoordVertexShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordVertexShader;
-            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, coordscol, Color.Transparent);
-
-            galaxy.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 50.0f);        // set up the volumentric uniform
-
-            IGLProgramShader p = items.Shader("Galaxy");
-            var fsgalaxy = p.Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader) as GalaxyFragmentPipeline;
-            fsgalaxy.SetUniforms(mc.EyeDistance);
-
-            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
-
-
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
         public class GLFixedShader : GLShaderPipeline
@@ -102,27 +65,12 @@ namespace TestOpenTk
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
 
-            gl3dcontroller = new Controller3D();
-            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
-            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 100000f;
-            gl3dcontroller.ZoomDistance = 5000F;
-            gl3dcontroller.Zoom.ZoomMin = 0.1f;
-            gl3dcontroller.Zoom.ZoomFact = 1.1f;
-            gl3dcontroller.EliteMovement = true;
-            gl3dcontroller.PaintObjects = ControllerDraw;
-
-            gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
-            {
-                return (float)ms * 1.0f * Math.Min(eyedist / 1000, 10);
-            };
-
-            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
-            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
+            sw.Start();
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
-            boundingbox = new Vector4[]
+            volumetricboundingbox = new Vector4[]
             {
                 new Vector4(left,-vsize,front,1),
                 new Vector4(left,vsize,front,1),
@@ -227,14 +175,14 @@ namespace TestOpenTk
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
                 items.Add("gal", galtex);
-                GalaxyShader gs = new GalaxyShader();
-                items.Add("Galaxy", gs);
+                galaxyshader = new GalaxyShader();
+                items.Add("Galaxy-sh", galaxyshader);
                 // bind the galaxy texture, the 3dnoise, and the gaussian 1-d texture for the shader
-                gs.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };      // shader requires these, so bind using shader
+                galaxyshader.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };      // shader requires these, so bind using shader
 
                 GLRenderControl rt = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
-                galaxy = GLRenderableItem.CreateNullVertex(rt);   // no vertexes, all data from bound volumetric uniform, no instances as yet
-                rObjects.Add(items.Shader("Galaxy"), galaxy);
+                galaxyrendererable = GLRenderableItem.CreateNullVertex(rt);   // no vertexes, all data from bound volumetric uniform, no instances as yet
+                rObjects.Add(galaxyshader, galaxyrendererable);
             }
 
             if (true) // star points
@@ -306,27 +254,34 @@ namespace TestOpenTk
 
             }
 
+            // grids
             {
-                items.Add("PLGRIDVertShader", new DynamicGridVertexShader(Color.Cyan));
+                gridvertshader = new DynamicGridVertexShader(Color.Cyan);
+                items.Add("PLGRIDVertShader", gridvertshader );
                 items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
 
                 items.Add("DYNGRID", new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")));
-                rObjects.Add(items.Shader("DYNGRID"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
+
+                gridrenderable = GLRenderableItem.CreateNullVertex(rl, dc: 2);
+
+                rObjects.Add(items.Shader("DYNGRID"), "DYNGRIDRENDER", gridrenderable);
 
             }
 
-
+            // grid coords
             {
-                items.Add("PLGRIDBitmapVertShader", new DynamicGridCoordVertexShader());
+
+                gridbitmapvertshader = new DynamicGridCoordVertexShader();
+                items.Add("PLGRIDBitmapVertShader", gridbitmapvertshader);
                 items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
                 rl.DepthTest = false;
 
-                gridtexcoords = new GLTexture2DArray();
+                GLTexture2DArray gridtexcoords = new GLTexture2DArray();
                 items.Add("PLGridBitmapTextures", gridtexcoords);
 
                 GLShaderPipeline sp = new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader"));
@@ -336,11 +291,91 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic: 9));
             }
 
+           
+            displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
+            displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
+
+            GLForm pform = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 200, 400));
+            pform.BackColor = Color.FromArgb(200, Color.Red);
+            displaycontrol.Add(pform);
+
+            gl3dcontroller = new Controller3D();
+            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
+            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 100000f;
+            gl3dcontroller.ZoomDistance = 5000F;
+            gl3dcontroller.Zoom.ZoomMin = 0.1f;
+            gl3dcontroller.Zoom.ZoomFact = 1.1f;
+            gl3dcontroller.EliteMovement = true;
+            gl3dcontroller.PaintObjects = Controller3DDraw;
+            gl3dcontroller.KeyboardTravelSpeed = (ms, eyedist) =>
+            {
+                return (float)ms * 1.0f * Math.Min(eyedist / 1000, 10);
+            };
+
+            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
+
+            gl3dcontroller.Start(displaycontrol, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
+            //gl3dcontroller.Start(glwfc, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
+
+            if (displaycontrol != null)
+            {
+                displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
+                {
+                    GLMatrixCalc c = new GLMatrixCalc();
+                    ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(c, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+                    displaycontrol.Render(glwfc.RenderState);
+                };
+            }
 
         }
 
+        float lasteyedistance = 100000000;
+        int lastgridwidth;
+
+        private void Controller3DDraw(GLMatrixCalc mc, long time)
+        {
+            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+
+            if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
+            {
+                gridrenderable.InstanceCount = gridvertshader.ComputeGridSize(gl3dcontroller.MatrixCalc.EyeDistance, out lastgridwidth);
+                lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
+            }
+
+            gridvertshader.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, gridrenderable.InstanceCount);
+
+            float coordfade = lastgridwidth == 10000 ? (0.7f - (mc.EyeDistance / 20000).Clamp(0.0f, 0.7f)) : 0.7f;
+            Color coordscol = Color.FromArgb(coordfade < 0.05 ? 0 : 150, Color.Cyan);
+
+            gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, coordscol, Color.Transparent);
+
+            galaxyrendererable.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, volumetricboundingbox, 50.0f);        // set up the volumentric uniform
+
+            galaxyshader.SetDistance(mc.EyeDistance);
+
+            rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
+
+            long t = sw.ElapsedMilliseconds;
+            long diff = t - lastms;
+            lastms = t;
+            double fps = (1000.0 / diff);
+            if (fpsavg <= 1)
+                fpsavg = fps;
+            else
+                fpsavg = (fpsavg * 0.9) + fps * 0.1;
+
+            this.Text = "FPS " + fpsavg.ToString("N0") + " Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+        }
+
+        double fpsavg = 0;
+        long lastms;
+
+
         private void SystemTick(object sender, EventArgs e)
         {
+            OpenTKUtils.Timers.Timer.ProcessTimers();
+//            if (displaycontrol != null && displaycontrol.RequestRender)
+                glwfc.Invalidate();
             var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
         }
 
@@ -355,7 +390,7 @@ namespace TestOpenTk
             }
             if (kb.HasBeenPressed(Keys.F5, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                IGLProgramShader ps = items.Shader("Galaxy");
+                IGLProgramShader ps = items.Shader("Galaxy-sh");
                 if (ps != null)
                 {
                     ps.Enabled = !ps.Enabled;
@@ -365,6 +400,15 @@ namespace TestOpenTk
             if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 IGLProgramShader ps = items.Shader("SD");
+                if (ps != null)
+                {
+                    ps.Enabled = !ps.Enabled;
+                    glwfc.Invalidate();
+                }
+            }
+            if (kb.HasBeenPressed(Keys.F7, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                IGLProgramShader ps = items.Shader("PS1");
                 if (ps != null)
                 {
                     ps.Enabled = !ps.Enabled;

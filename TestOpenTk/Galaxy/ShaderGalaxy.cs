@@ -76,51 +76,20 @@ void main(void)
 
     public class GalaxyShader : GLShaderPipeline
     {
+        private GalaxyFragmentPipeline frag;
+
         public GalaxyShader()
         {
             Add(new GLPLVertexShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
             Add(new GLPLGeometricShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
-            Add(new GalaxyFragmentPipeline(), OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+            frag = new GalaxyFragmentPipeline();
+            Add(frag, OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+        }
+
+        public void SetDistance(float eyedist)
+        {
+            frag.SetUniforms(eyedist);
         }
     }
-
-
-    public class GalaxyStarDots : GLShaderStandard
-    {
-        string vert =
-@"
-        #version 450 core
-
-        #include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
-
-        layout (location = 0) in vec4 position;     // has w=1
-        out vec4 vs_color;
-
-        void main(void)
-        {
-            vec4 p = position;
-            p.w = 1;
-            gl_Position = mc.ProjectionModelMatrix * p;        // order important
-            vs_color = vec4(position.w,position.w,position.w,0.1);
-        }
-        ";
-        string frag =
-@"
-        #version 450 core
-
-        in vec4 vs_color;
-        out vec4 color;
-
-        void main(void)
-        {
-            color = vs_color;
-        }
-        ";
-        public GalaxyStarDots() : base()
-        {
-            CompileLink(vert, frag: frag);
-        }
-    }
-
 
 }

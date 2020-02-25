@@ -51,17 +51,17 @@ namespace TestOpenTk
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
             IGLRenderableItem i = rObjects["DYNGRIDRENDER"];
-            DynamicGridShader s = items.PLShader("PLGRIDVertShader") as DynamicGridShader;
+            DynamicGridVertexShader s = items.PLShader("PLGRIDVertShader") as DynamicGridVertexShader;
 
             if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
             {
-                i.InstanceCount = s.ComputeGridSize(gl3dcontroller.MatrixCalc, out lastgridwidth);
+                i.InstanceCount = s.ComputeGridSize(gl3dcontroller.MatrixCalc.EyeDistance, out lastgridwidth);
                 lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
             }
 
             s.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, i.InstanceCount);
 
-            DynamicGridCoordShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordShader;
+            DynamicGridCoordVertexShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordVertexShader;
             bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, Color.Yellow);
 
             solmarker.Position = gl3dcontroller.MatrixCalc.TargetPosition;
@@ -143,7 +143,7 @@ namespace TestOpenTk
 
 
             {
-                items.Add("PLGRIDVertShader", new DynamicGridShader(Color.Cyan));
+                items.Add("PLGRIDVertShader", new DynamicGridVertexShader(Color.Cyan));
                 items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
@@ -156,7 +156,7 @@ namespace TestOpenTk
 
 
             {
-                items.Add("PLGRIDBitmapVertShader", new DynamicGridCoordShader());
+                items.Add("PLGRIDBitmapVertShader", new DynamicGridCoordVertexShader());
                 items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);

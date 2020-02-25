@@ -9,9 +9,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 
-// Demonstrate the volumetric calculations needed to compute a plane facing the user inside a bounding box done inside a geo shader
-// this one add on tex coord calculation and using a single tight quad shows its working
-
 namespace TestOpenTk
 {
     public partial class TestGalaxyDemo1 : Form
