@@ -14,14 +14,14 @@ using System.Collections.Generic;
 
 namespace TestOpenTk
 {
-    public partial class ShaderDynamicGrid : Form
+    public partial class TestDynamicGrid : Form
     {
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
         private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
-        public ShaderDynamicGrid()
+        public TestDynamicGrid()
         {
             InitializeComponent();
 
@@ -59,7 +59,7 @@ namespace TestOpenTk
                 lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
             }
 
-            s.SetUniforms(gl3dcontroller.MatrixCalc, lastgridwidth, i.InstanceCount);
+            s.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, i.InstanceCount);
 
             DynamicGridCoordShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordShader;
             bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, Color.Yellow);
@@ -172,77 +172,6 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic:9));
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            //Bitmap[] numbitmaps = new Bitmap[116];
-
-            //{
-            //    Font fnt = new Font("Arial", 20);
-            //    for (int i = 0; i < numbitmaps.Length; i++)
-            //    {
-            //        int v = -45000 + 1000 * i;      // range from -45000 to +70000 
-            //        numbitmaps[i] = new Bitmap(100, 100);
-            //        BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref numbitmaps[i], v.ToString(), fnt, Color.Red, Color.AliceBlue);
-            //    }
-
-            //    GLTexture2DArray numtextures = new GLTexture2DArray(numbitmaps, ownbitmaps: true);
-            //    items.Add("Nums", numtextures);
-
-            //    Matrix4[] numberposx = new Matrix4[(right - left) / 1000 + 1];
-            //    for (int i = 0; i < numberposx.Length; i++)
-            //    {
-            //        numberposx[i] = Matrix4.CreateScale(1);
-            //        numberposx[i] *= Matrix4.CreateRotationX(-25f.Radians());
-            //        numberposx[i] *= Matrix4.CreateTranslation(new Vector3(left + 1000 * i, 0, front));
-            //    }
-
-            //    GLShaderPipeline numshaderx = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
-            //    items.Add("IC-X", numshaderx);
-
-            //    GLRenderControl rq = GLRenderControl.Quads(cullface: false);
-            //    GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
-
-            //    rObjects.Add(numshaderx, "xnum",
-            //                            GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
-            //                                    GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberposx,
-            //                                    rt, numberposx.Length));
-
-            //    Matrix4[] numberposz = new Matrix4[(back - front) / 1000 + 1];
-            //    for (int i = 0; i < numberposz.Length; i++)
-            //    {
-            //        numberposz[i] = Matrix4.CreateScale(1);
-            //        numberposz[i] *= Matrix4.CreateRotationX(-25f.Radians());
-            //        numberposz[i] *= Matrix4.CreateTranslation(new Vector3(right + 1000, 0, front + 1000 * i));
-            //    }
-
-            //    GLShaderPipeline numshaderz = new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(25));
-            //    items.Add("IC-Z", numshaderz);
-
-            //    rObjects.Add(numshaderz, "ynum",
-            //                            GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,
-            //                                    GLShapeObjectFactory.CreateQuad(500.0f), GLShapeObjectFactory.TexQuad, numberposz,
-            //                                    rt, numberposz.Length));
-            //}
-
-
-
-
         }
 
         private void SystemTick(object sender, EventArgs e)

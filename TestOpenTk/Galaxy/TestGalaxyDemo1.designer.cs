@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class ShaderTestMain
+    partial class TestGalaxyDemo1
     {
         /// <summary>
         /// Required designer variable.

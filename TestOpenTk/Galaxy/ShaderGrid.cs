@@ -41,11 +41,11 @@ namespace TestOpenTk
             return lines;
         }
 
-        public void SetUniforms(GLMatrixCalc mc, int gridwidth, int lines)
+        public void SetUniforms(Vector3 target, int gridwidth, int lines)
         {
             Vector3 start;
 
-            float sy = ObjectExtensionsNumbersBool.Clamp(mc.TargetPosition.Y, -2000, 2000); // need it floating to stop integer giggle at high res
+            float sy = ObjectExtensionsNumbersBool.Clamp(target.Y, -2000, 2000); // need it floating to stop integer giggle at high res
 
             if (gridwidth == 10000)
             {
@@ -58,13 +58,13 @@ namespace TestOpenTk
                 int gridstart = (horzlines - 1) * gridwidth / 2;
                 int width = (horzlines - 1) * gridwidth;
 
-                int sx = (int)(mc.TargetPosition.X) / gridwidth * gridwidth - gridstart;
+                int sx = (int)(target.X) / gridwidth * gridwidth - gridstart;
                 if (sx < -50000)
                     sx = -50000;
                 else if (sx + width > 50000)
                     sx = 50000 - width;
 
-                int sz = (int)(mc.TargetPosition.Z) / gridwidth * gridwidth - gridstart;
+                int sz = (int)(target.Z) / gridwidth * gridwidth - gridstart;
                 if (sz < -20000)
                     sz = -20000;
                 else if (sz + width > 70000)
@@ -124,16 +124,18 @@ void main(void)
 
     gl_Position = mc.ProjectionModelMatrix * position;        // order important
 
-    float a=1;
-    float b = 0.7;
 
-    if ( gridwidth != 10000 ) 
+    int ff = (gridwidth == 10000 ) ? 2 : 9;
+    
+    float sf =  1.0 - clamp((dist - gridwidth)/float(ff*gridwidth),0,1f);
+        
+    float a = 0.7 * sf;
+    float b = 0.3;
+
+    if ( gridwidth != 10000 && abs(lpos) % (10*gridwidth) == 0 )
     {
-        if ( abs(lpos) % (10*gridwidth) != 0 )
-        {
-            a =  1.0 - clamp((dist - gridwidth)/float(10*gridwidth),0,0.95f);
-            b = 0.5;
-        }
+        a = 0.7;
+        b = 0.6;
     }
                 
     vs_color = vec4(color.x*b,color.y*b,color.z*b,a);
@@ -206,6 +208,7 @@ void main(void)
 
         int lastsx = int.MinValue, lastsz = int.MinValue;
         int lastsy = int.MinValue;
+        Color lasttextcol = Color.Red;
 
         public void ComputeUniforms(int gridwidth, GLMatrixCalc mc, Vector3 cameradir, Color textcol, Color? backcol = null)
         {
@@ -242,20 +245,21 @@ void main(void)
             GL.ProgramUniform1(this.Id, 13, lookbackwards ? 1 : 0);
             //System.Diagnostics.Debug.WriteLine(majorlines + " " + start + " " + lookbackwards);
 
-            if (lastsx != sx || lastsz != sz || lastsy != (int)sy)
+            if (lastsx != sx || lastsz != sz || lastsy != (int)sy || lasttextcol != textcol)
             {
                 for (int i = 0; i < texcoords.Depth; i++)
                 {
                     int bsx = sx + majorlines * (i / 3);
                     int bsz = sz + majorlines * (i % 3);
                     string label = bsx.ToStringInvariant() + "," + sy.ToStringInvariant("0") + "," + bsz.ToStringInvariant();
-                    BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, backcol);// Color.Transparent);
+                    BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, backcol);
                     texcoords.LoadBitmap(texcoords.BitMaps[i], i);
                 }
 
                 lastsx = sx;
                 lastsz = sz;
                 lastsy = (int)sy;
+                lasttextcol = textcol;
             }
         }
 

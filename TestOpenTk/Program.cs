@@ -25,7 +25,10 @@ namespace TestOpenTk
 
                 Type t = Type.GetType("TestOpenTk." + arg1, false, true);
 
-                if ( t == null )
+                if (t == null)
+                    t = Type.GetType("TestOpenTk.Test" + arg1, false, true);
+
+                if (t == null)
                     t = Type.GetType("TestOpenTk.Shader" + arg1, false, true);
 
                 if ( t == null )
@@ -37,7 +40,7 @@ namespace TestOpenTk
                 }
                 else
                 {
-                    Application.Run(new ShaderTestMain());
+                    Application.Run(new TestMain());
                 }
 
             }

@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class ShaderGalaxyDemo1
+    partial class TestControls
     {
         /// <summary>
         /// Required designer variable.
@@ -40,13 +40,13 @@
             this.glControlContainer.Size = new System.Drawing.Size(1555, 1005);
             this.glControlContainer.TabIndex = 0;
             // 
-            // ShaderTest4
+            // ShaderControls
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1555, 1005);
             this.Controls.Add(this.glControlContainer);
-            this.Name = "ShaderTest4";
+            this.Name = "ShaderControls";
             this.Text = "Form1";
             this.ResumeLayout(false);
 

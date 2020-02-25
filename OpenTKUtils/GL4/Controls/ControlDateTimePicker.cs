@@ -92,7 +92,7 @@ namespace OpenTKUtils.GL4.Controls
             updown.VisibleNI = ShowUpDown;
             updown.SetLocationSizeNI(location: new Point(ClientRectangle.Width - height - 2, borderoffset), size: new Size(height, height));
 
-            cal.VisibleNI = false; // tbd
+            cal.VisibleNI = false; // tbd cal is turned off since the winform calendar is a control and needs a form to live in.. we don't have a form ready for it
             int ch = ClientHeight * 3 / 5;
             cal.SetLocationSizeNI(location: new Point(updown.Left - 4 - cal.Width, (ClientHeight / 2 - ch/2)), size: new Size(ch * 20 / 12, ch));
 

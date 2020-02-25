@@ -32,7 +32,7 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class ShaderTestMain : Form
+    public partial class TestMain : Form
     {
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
         private Controller3D gl3dcontroller;
@@ -43,7 +43,7 @@ namespace TestOpenTk
         GLItemsList items = new GLItemsList();
         GLStorageBlock dataoutbuffer;
 
-        public ShaderTestMain()
+        public TestMain()
         {
             InitializeComponent();
 

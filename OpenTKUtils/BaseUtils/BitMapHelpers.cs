@@ -145,11 +145,13 @@ namespace OpenTKUtils
         }
 
         public static Bitmap DrawTextIntoFixedSizeBitmap(ref Bitmap img, string text,Font dp, Color c, Color? b,
-                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null, int angleback = 90)
+                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null, int angleback = 90 , bool antialias = true)
         { 
             using (Graphics dgr = Graphics.FromImage(img))
             {
-                if (b != null)           // no idea why "&& text.Length > 0" was in there
+                dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+
+                if (b != null)           
                 {
                     if (b.Value.IsFullyTransparent())       // if transparent colour to paint in, need to fill clear it completely
                     {
@@ -160,9 +162,10 @@ namespace OpenTKUtils
                         Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
                         using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, b.Value, b.Value.Multiply(backscale), angleback))
                             dgr.FillRectangle(bb, backarea);
+
+                        dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; // only if filled
                     }
 
-                    dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; // only if filled
                 }
 
                 using (Brush textb = new SolidBrush(c))

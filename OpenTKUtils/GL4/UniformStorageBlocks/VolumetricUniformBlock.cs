@@ -37,7 +37,7 @@ namespace OpenTKUtils.GL4
             {
                 Vector4 m = Vector4.Transform(boundingbox[i], c.ModelMatrix);
                 Vector4 p = Vector4.Transform(m, c.ProjectionMatrix);
-                System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec(), p.ToStringVec());
+               // System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec(), p.ToStringVec());
                 if (m.Z < minzv)
                 {
                     minzv = m.Z;
@@ -63,7 +63,7 @@ namespace OpenTKUtils.GL4
             MapWrite(ref pb, minzv);
             MapWrite(ref pb, (float)slicesize);
             UnMap();
-            System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} slices {4} dist {5}", minv, minzv, maxv, maxzv, slices, slicesize);
+            //System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} slices {4} dist {5}", minv, minzv, maxv, maxzv, slices, slicesize);
 
             return slices;
         }

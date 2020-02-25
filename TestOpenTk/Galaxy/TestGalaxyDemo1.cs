@@ -14,14 +14,14 @@ using System.Collections.Generic;
 
 namespace TestOpenTk
 {
-    public partial class ShaderGalaxyDemo1 : Form
+    public partial class TestGalaxyDemo1 : Form
     {
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
         private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
-        public ShaderGalaxyDemo1()
+        public TestGalaxyDemo1()
         {
             InitializeComponent();
 

@@ -15,14 +15,14 @@ using OpenTKUtils.GL4.Controls;
 
 namespace TestOpenTk
 {
-    public partial class ShaderControls : Form
+    public partial class TestControls : Form
     {
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
         private Controller3D gl3dcontroller;
 
         private Timer systemtimer = new Timer();
 
-        public ShaderControls()
+        public TestControls()
         {
             InitializeComponent();
 

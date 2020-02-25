@@ -798,7 +798,7 @@ namespace OpenTKUtils.GL4.Controls
         protected virtual void DrawBack(Rectangle bounds, Graphics gr, Color bc, Color bcgradientalt, int bcgradient)
         {
             if ( levelbmp != null)                  // if we own a bitmap, reset back to transparent, erasing anything that we drew before
-                gr.Clear(Color.Transparent);        // tbd check
+                gr.Clear(Color.Transparent);       
 
             if (bc != Color.Transparent)            // and draw what the back colour is
             {

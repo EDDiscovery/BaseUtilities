@@ -24,13 +24,10 @@ layout (binding=1) uniform sampler2D tex;
 layout (binding=3) uniform sampler3D noise;     
 layout (binding=4) uniform sampler1D gaussian;  
 
+layout (location=10) uniform float fadeout;
+
 void main(void)
 {
-//color = texture(tex,vec2(vs_texcoord.x,vs_texcoord.z));     
-//color = vec4(vs_texcoord.x, vs_texcoord.z,0,0);
-//color.w = 0.5;
-//color = vec4(vs_texcoord.x,vs_texcoord.y,vs_texcoord.z,1);
-
     float dx = abs(0.5-vs_texcoord.x);
     float dz = abs(0.5-vs_texcoord.z);
     float d = 0.7073-sqrt(dx*dx+dz*dz);     // 0 - 0.7
@@ -50,7 +47,7 @@ void main(void)
             {
                 float nv = texture(noise,vs_texcoord.xyz).x;
                 float alpha = min(max(brightness,0.5),(brightness>0.05) ? 0.3 : brightness);    // beware the 8 bit alpha (0.0039 per bit).
-                color = vec4(c.xyz*(1.0+nv*0.2),alpha*(1.0+nv*0.1));        // noise adjusting brightness and alpha a little
+                color = vec4(c.xyz*(1.0+nv*0.2) * fadeout,alpha*(1.0+nv*0.1) * fadeout);        // noise adjusting brightness and alpha a little
             }
             else 
                 discard;
@@ -67,6 +64,13 @@ void main(void)
         public GalaxyFragmentPipeline()
         {
             CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fcode);
+        }
+
+        public void SetUniforms(float eyedist)
+        {
+            float fade = eyedist > 100 ? 1.0f : eyedist/100f;
+            System.Diagnostics.Debug.WriteLine("Fade out " + fade);
+            GL.ProgramUniform1(this.Id, 10, fade);
         }
     }
 

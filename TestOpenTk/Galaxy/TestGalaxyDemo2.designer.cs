@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class ShaderDynamicGrid
+    partial class TestGalaxyDemo2
     {
         /// <summary>
         /// Required designer variable.

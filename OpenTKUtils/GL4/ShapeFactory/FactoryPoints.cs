@@ -62,6 +62,29 @@ namespace OpenTKUtils.GL4
             return array;
         }
 
+        public static Vector4[] RandomStars4(int number, float x, float z, float dist, float top, float bottom, Random rnd = null, int seed = 23, float w = 1)
+        {
+            if (rnd == null)
+                rnd = new Random(seed);
+
+            Vector4[] array = new Vector4[number];
+
+            int s = 0;
+            while( s < number)
+            {
+                float xd = rnd.Next(100000) * dist*2 / 100000.0f - dist;
+                float zd = rnd.Next(100000) * dist*2 / 100000.0f - dist;
+
+                if ( xd*xd + zd*zd < dist*dist)
+                {
+                    float yp = rnd.Next(100000) * (top - bottom) / 100000.0f + bottom;
+                    array[s++] = new Vector4(x+xd, yp, z+zd, w);
+                }
+            }
+
+            return array;
+        }
+
         public static void RandomStars4(ref IntPtr ptr, int number, float left, float right, float front, float back, float top, float bottom, Random rnd = null, int seed = 23, float w = 1)
         {
             if (rnd == null)

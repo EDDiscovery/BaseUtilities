@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4
             float d = distance(mc.EyePosition,pn);
             float sf = maxsize-d/scale;
 
-            calc_size = gl_PointSize = clamp(sf,1.0,maxsize);
+            calc_size = gl_PointSize = clamp(sf,2.0,maxsize);
             gl_Position = mc.ProjectionModelMatrix * position;        // order important
             vs_color = color;
         }
@@ -62,7 +62,7 @@ namespace OpenTKUtils.GL4
                 vec4 texcol =texture(texin, gl_PointCoord);
                 float l = texcol.x*texcol.x+texcol.y*texcol.y+texcol.z*texcol.z;
 
-                if ( l< 0.1 )
+                if ( l< 0.05)
                     discard;
                 else
                     color = texcol * vs_color;
