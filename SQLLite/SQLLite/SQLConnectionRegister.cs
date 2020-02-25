@@ -43,6 +43,11 @@ namespace SQLLiteExtensions
                 if (utctimeindicator)   // indicate treat dates as UTC.
                     connection.ConnectionString += "DateTimeKind=Utc;";
 
+                if (mode == AccessMode.Reader)
+                {
+                    connection.ConnectionString += "Read Only=True;";
+                }
+
                 // System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
 
                 connection.Open();
