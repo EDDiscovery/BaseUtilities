@@ -31,15 +31,26 @@ namespace OpenTKUtils.GL4.Controls
         public Action<GLBaseControl, GLMouseEventArgs> Click { get; set; } = null;
         public Action<GLBaseControl> Return { get; set; } = null;
 
-        public GLButton(string name, Rectangle location, string text) : base(name, location)
+        public GLButton(string name, Rectangle location) : base(name, location)
         {
             PaddingNI = new Padding(2);       // standard format, a border with a pad of 1
             BorderWidthNI = 1;
-            TextNI = text;
             BorderColorNI = DefaultButtonBorderColor;
-            BackColor = DefaultButtonBorderBackColor;
+            BackColorNI = DefaultButtonBorderBackColor;
             Focusable = true;
             InvalidateOnFocusChange = true;
+        }
+
+        public GLButton(string name, Rectangle location, string text) : this(name, location)
+        {
+            TextNI = text;
+        }
+
+        public GLButton(string name, Rectangle location, Image img, bool stretch) : this(name, location)
+        {
+            TextNI = "";
+            Image = img;
+            ImageStretch = stretch;
         }
 
         public GLButton() : this("But?", DefaultWindowRectangle, "")
@@ -104,7 +115,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if (Image != null)
             {
-                base.DrawImage(Image, area, gr);
+                base.DrawImage(Image, area, gr, (Enabled) ? drawnImageAttributesEnabled : drawnImageAttributesDisabled);
             }
 
             gr.SmoothingMode = SmoothingMode.AntiAlias;

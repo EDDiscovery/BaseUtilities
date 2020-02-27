@@ -74,7 +74,8 @@ namespace OpenTKUtils.Common
             Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
             MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current); // set up here so ready for action.. below uses it.
 
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
+            MatrixCalc.ScreenSize = win.Size;
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
             SetModelProjectionMatrixViewPort();
 
             sysinterval.Start();
@@ -101,7 +102,7 @@ namespace OpenTKUtils.Common
         public void ChangePerspectiveMode(bool on)
         {
             MatrixCalc.InPerspectiveMode = on;
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
             SetModelProjectionMatrixViewPort();
             glwin.Invalidate();
         }
@@ -183,7 +184,7 @@ namespace OpenTKUtils.Common
             if (MovementTracker.AnythingChanged)
             {
                 //System.Diagnostics.Debug.WriteLine("Changed");
-                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal, glwin.Width, glwin.Height);
+                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
                 glwin.Invalidate();
             }
 
@@ -194,13 +195,14 @@ namespace OpenTKUtils.Common
 
         private void GlControl_Resize(object sender)           // there was a gate in the original around OnShown.. not sure why.
         {
+            MatrixCalc.ScreenSize = glwin.Size;
             SetModelProjectionMatrixViewPort();
             glwin.Invalidate();
         }
 
         private void SetModelProjectionMatrixViewPort()
         {
-            MatrixCalc.CalculateProjectionMatrix(Fov.Current, glwin.Width, glwin.Height, out float zn);
+            MatrixCalc.CalculateProjectionMatrix(Fov.Current, out float zn);
             ProjectionZNear = zn;
         }
 

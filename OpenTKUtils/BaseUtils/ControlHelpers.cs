@@ -47,24 +47,24 @@ public static class ControlHelpersStaticFunc
     }
 
     // used to compute ImageAttributes, given a disabled scaling, a remap table, and a optional color matrix
-    static public void ComputeDrawnPanel(out ImageAttributes Enabled,
-                    out ImageAttributes Disabled,
-                    float disabledscaling, System.Drawing.Imaging.ColorMap[] remap, float[][] colormatrix = null)
+    static public void ComputeDrawnPanel(out ImageAttributes enabled,
+                    out ImageAttributes disabled, float disabledscaling, 
+                    System.Drawing.Imaging.ColorMap[] remap, float[][] colormatrix = null)
     {
-        Enabled = new ImageAttributes();
-        Enabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
+        enabled = new ImageAttributes();
+        enabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
         if (colormatrix != null)
-            Enabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            enabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
 
-        Disabled = new ImageAttributes();
-        Disabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
+        disabled = new ImageAttributes();
+        disabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
 
         if (colormatrix != null)
         {
             colormatrix[0][0] *= disabledscaling;     // the identity positions are scaled by BDS
             colormatrix[1][1] *= disabledscaling;
             colormatrix[2][2] *= disabledscaling;
-            Disabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            disabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
         }
         else
         {
@@ -75,7 +75,7 @@ public static class ControlHelpersStaticFunc
                         new float[] {0,  0,  0,  1, 0},        // alpha scaling factor of 1
                         new float[] {0,0,0, 0, 1}};    // three translations of 0
 
-            Disabled.SetColorMatrix(new ColorMatrix(disabledMatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            disabled.SetColorMatrix(new ColorMatrix(disabledMatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
         }
     }
 

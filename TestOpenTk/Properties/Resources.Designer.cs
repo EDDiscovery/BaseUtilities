@@ -63,6 +63,26 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _2d {
+            get {
+                object obj = ResourceManager.GetObject("_2d", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _3d {
+            get {
+                object obj = ResourceManager.GetObject("_3d", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap dotted {
             get {
                 object obj = ResourceManager.GetObject("dotted", resourceCulture);
@@ -116,6 +136,16 @@ namespace TestOpenTk.Properties {
         internal static System.Drawing.Bitmap golden {
             get {
                 object obj = ResourceManager.GetObject("golden", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap hamburgermenu {
+            get {
+                object obj = ResourceManager.GetObject("hamburgermenu", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

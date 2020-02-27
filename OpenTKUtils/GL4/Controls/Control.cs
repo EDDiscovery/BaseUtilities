@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 
 namespace OpenTKUtils.GL4.Controls
 {
@@ -135,7 +134,7 @@ namespace OpenTKUtils.GL4.Controls
         public bool Hover { get; set; } = false;            // mouse is over control
         public GLMouseEventArgs.MouseButtons MouseButtonsDown { get; set; } // set if mouse buttons down over control
 
-        public Bitmap LevelBitmap { get { return levelbmp; } }  // return level bitmap, null if not a bitmap control
+        public Bitmap LevelBitmap { get { return levelbmp; } }  // return level bitmap, null if does not have a level bitmap 
 
         public Object Tag { get; set; }                         // control tag, user controlled
 
@@ -148,6 +147,7 @@ namespace OpenTKUtils.GL4.Controls
         public virtual List<GLBaseControl> ControlsIZ { get { return childreniz; } }      // read only, in inv zorder, so 0 = last layout first drawn
         public virtual List<GLBaseControl> ControlsOrderAdded { get { return childreniz; } }      // in order added
         public virtual List<GLBaseControl> ControlsZ { get { return childrenz; } }          // read only, in zorder, so 0 = first layout last painted
+        public GLBaseControl this[string s] { get { return ControlsZ.Find((x)=>x.Name == s); } }    // null if not
 
         // events
 
@@ -350,6 +350,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual void Add(GLBaseControl child)
         {
+            System.Diagnostics.Debug.Assert(!childrenz.Contains(child));
             child.parent = this;
 
             int ipos = 0;
@@ -361,14 +362,7 @@ namespace OpenTKUtils.GL4.Controls
 
             childrenz.Insert(ipos, child);   // in z order.  First is top of z.  inser puts it before existing
             childreniz.Insert(childreniz.Count - ipos, child);       // in inv z order. Last is top of z.  if ipos=0, at end. if ipos=1, inserted just before end
-
             CheckZOrder();
-
-            if (this is GLControlDisplay) // if adding to a form, the child must have a bitmap
-            {
-                System.Diagnostics.Debug.Assert(child is GLVerticalScrollPanel == false, "GLScrollPanel must not be child of GLForm");
-                child.levelbmp = new Bitmap(child.Width, child.Height);
-            }
 
             Themer?.Invoke(child);      // added to control, theme it
 
@@ -380,21 +374,28 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (childrenz.Contains(child))
             {
-                OnControlRemove(this, child);
-
-                FindDisplay()?.ControlRemoved(child);
-
-                if (child.levelbmp != null)
-                    child.levelbmp.Dispose();
-
-                childrenz.Remove(child);
-                childreniz.Remove(child);
-
-                CheckZOrder();
-
+                RemoveSubControl(child);
                 Invalidate();
                 PerformLayout();        // reperform layout
             }
+        }
+
+        protected virtual void RemoveSubControl(GLBaseControl child)        // recursively go thru children, bottom child first, and remove everything 
+        {
+            foreach (var cc in child.childrenz)     // do children of child first
+            {
+                RemoveSubControl(cc);
+            }
+
+            OnControlRemove(this,child);
+            System.Diagnostics.Debug.WriteLine("Dispose {0} {1}", child.GetType().Name, child.Name);
+            FindDisplay()?.ControlRemoved(child);   // display may be pointing to it
+
+            child.levelbmp?.Dispose();
+
+            childrenz.Remove(child);
+            childreniz.Remove(child);
+            CheckZOrder();
         }
 
         public virtual bool BringToFront()      // bring to the front, true if it was at the front
@@ -425,6 +426,7 @@ namespace OpenTKUtils.GL4.Controls
                     childreniz.Insert(childreniz.Count-ipos,child);       // in inv z order. Last is top of z
 
                     CheckZOrder();
+
                     InvalidateLayout();
                     return false;
                 }
@@ -470,6 +472,7 @@ namespace OpenTKUtils.GL4.Controls
         protected GL4.Controls.Padding PaddingNI { set { padding = value; } }
         protected int BorderWidthNI { set { borderwidth = value; } }
         protected Color BorderColorNI { set { bordercolor = value; } }
+        protected Color BackColorNI { set { backcolor = value; } }
         public bool VisibleNI { set { visible = value; } }
 
         public void SetLocationSizeNI( Point? location = null, Size? size = null, bool clipsize = false)      // use by inheritors only.  Does not invalidate/Layout.
@@ -500,7 +503,7 @@ namespace OpenTKUtils.GL4.Controls
             //System.Diagnostics.Debug.WriteLine("SetPosNI {0}", window);
         }
 
-        protected void SetLevelBitmap(int width , int height)
+        public void MakeLevelBitmap(int width , int height)
         {
             levelbmp?.Dispose();
             levelbmp = null;

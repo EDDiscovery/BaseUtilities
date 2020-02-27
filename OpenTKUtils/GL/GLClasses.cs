@@ -64,6 +64,16 @@ namespace OpenTKUtils
         }
     }
 
+    public class GLHandledArgs     // class so passed by ref
+    {
+        public bool Handled { get; set; }
+
+        public GLHandledArgs()
+        {
+            Handled = false;
+        }
+    }
+
     public enum GLCursorType { Normal, Wait, NS, EW, Move , NWSE};
 
     public interface GLWindowControl
@@ -85,6 +95,7 @@ namespace OpenTKUtils
         Rectangle ClientScreenPos { get; }
         int Width { get; }
         int Height { get; }
+        Size Size { get; }
         bool Focused { get; }
         void SetCursor(GLCursorType t);
     }

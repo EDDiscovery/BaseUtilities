@@ -52,13 +52,29 @@ namespace OpenTKUtils.GL4.Controls
         public ContentAlignment CheckAlign { get { return checkalign; } set { checkalign = value; Invalidate(); } }     // appearance Normal only
         public float TickBoxReductionRatio { get; set; } = 0.75f;       // Normal - size reduction
 
-        public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }        // apperance normal/button only
+        public Image ImageUnchecked { get { return imageUnchecked; } set { imageUnchecked = value; Invalidate(); } }        // apperance normal/button only.  
         public Image ImageIndeterminate { get { return imageIndeterminate; } set { imageIndeterminate = value; Invalidate(); } }
 
-        public GLCheckBox(string name, Rectangle location, string text) : base(name,location)
+        public void SetDrawnBitmapUnchecked(System.Drawing.Imaging.ColorMap[] remap, float[][] colormatrix = null)
         {
-            BackColor = Color.Transparent;
+            drawnImageAttributesUnchecked?.Dispose();
+            ControlHelpersStaticFunc.ComputeDrawnPanel(out drawnImageAttributesUnchecked, out System.Drawing.Imaging.ImageAttributes drawnImageAttributesDisabled, 1.0f, remap, colormatrix);
+            Invalidate();
+        }
+
+        public GLCheckBox(string name, Rectangle location, string text) : base(name, location)
+        {
+            BackColorNI = Color.Transparent;
             TextNI = text;
+        }
+
+        public GLCheckBox(string name, Rectangle location, Image chk, Image unchk) : base(name, location)
+        {
+            BackColorNI = Color.Transparent;
+            TextNI = "";
+            Image = chk;
+            ImageUnchecked = unchk;
+            Appearance = CheckBoxAppearance.Button;
         }
 
         public GLCheckBox() : this("CB?", DefaultWindowRectangle, "")
@@ -271,8 +287,15 @@ namespace OpenTKUtils.GL4.Controls
 
         private void DrawImage(Rectangle box, Graphics g)
         {
-            Image image = CheckState == CheckState.Checked ? Image : ((CheckState == CheckState.Indeterminate && ImageIndeterminate != null) ? ImageIndeterminate : (ImageUnchecked != null ? ImageUnchecked : Image));
-            base.DrawImage(image, box, g);
+            if (ImageUnchecked != null)     // if we have an alt image for unchecked
+            {
+                Image image = CheckState == CheckState.Checked ? Image : ((CheckState == CheckState.Indeterminate && ImageIndeterminate != null) ? ImageIndeterminate : (ImageUnchecked != null ? ImageUnchecked : Image));
+                base.DrawImage(image, box, g, (Enabled) ? drawnImageAttributesEnabled : drawnImageAttributesDisabled);
+            }
+            else
+            {
+                base.DrawImage(Image, box, g, (Enabled) ? ((Checked) ? drawnImageAttributesEnabled: drawnImageAttributesUnchecked) :drawnImageAttributesDisabled);
+            }
         }
 
         private Font FontToUse;
@@ -332,8 +355,10 @@ namespace OpenTKUtils.GL4.Controls
         private GL4.Controls.CheckState checkstate { get; set; } = CheckState.Unchecked;
         private GL4.Controls.CheckBoxAppearance appearance { get; set; } = CheckBoxAppearance.Normal;
         private ContentAlignment checkalign { get; set; } = ContentAlignment.MiddleCenter;
-        private Image imageUnchecked { get; set; } = null;               // Both - set image when unchecked.  Also set Image
-        private Image imageIndeterminate { get; set; } = null;           // Both - optional - can set this, if required, if using indeterminate value
+
+        private Image imageUnchecked { get; set; } = null;               // set if using different images for unchecked
+        private Image imageIndeterminate { get; set; } = null;           // optional for intermediate
+        private System.Drawing.Imaging.ImageAttributes drawnImageAttributesUnchecked = null;         // if unchecked image does not exist, use this for image scaling
 
         private Color checkBoxInnerColor { get; set; } = DefaultCheckBoxInnerColor;    // Normal only inner colour
         private Color checkColor { get; set; } = DefaultCheckColor;         // Button - back colour when checked, Normal - check colour

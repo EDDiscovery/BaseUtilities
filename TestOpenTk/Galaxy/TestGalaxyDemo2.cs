@@ -81,7 +81,7 @@ namespace TestOpenTk
 
             IGLProgramShader p = items.Shader("Galaxy");
             var fsgalaxy = p.Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader) as GalaxyFragmentPipeline;
-            fsgalaxy.SetUniforms(mc.EyeDistance);
+            fsgalaxy.SetFader(mc.EyeDistance);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -272,7 +272,7 @@ namespace TestOpenTk
                             d = d * 2 - 1;  // -1 to +1
                             double dist = ObjectExtensionsNumbersBool.GaussianDist(d, 1, 1.4);
 
-                            int c = Math.Min(Math.Max(ii / 140000, 0), 40);
+                            int c = Math.Min(Math.Max(ii / 140000, 0), 20);
 
                             dist *= 2000;
 

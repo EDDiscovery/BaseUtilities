@@ -69,12 +69,12 @@ namespace OpenTKUtils
             }
         }
 
-        static public string ToStringVec(this Vector4 vertices, bool w = false)
+        static public string ToStringVec(this Vector4 vertices, string wformat = null)
         {
-            if ( w )
-                return String.Format("{0,9:0.##},{1,9:0.##},{2,9:0.##},{3,9:0.##}", vertices.X, vertices.Y, vertices.Z, vertices.W);
+            if ( wformat != null )
+                return String.Format("{0,10:0.00},{1,10:0.00},{2,10:0.00},{3," + wformat +"}", vertices.X, vertices.Y, vertices.Z, vertices.W);
             else
-                return String.Format("{0,9:0.##},{1,9:0.##},{2,9:0.##}", vertices.X, vertices.Y, vertices.Z);
+                return String.Format("{0,10:0.00},{1,10:0.00},{2,10:0.00}", vertices.X, vertices.Y, vertices.Z);
         }
 
         static public Color4 ColorFrom(this Color4[] array, int index)      // helper for color arrays
@@ -123,11 +123,31 @@ namespace OpenTKUtils
                 veclist.Add(new Vector4(x0.X + (x1.X - x0.X) * zpercent, x0.Y + (x1.Y - x0.Y) * zpercent, z, w));
         }
 
-        public static void FindVectorFromZ(this Vector4 x0, Vector4 x1, ref Vector4[] vec, ref int count, float z, float w = 1)
+        public static float FindVectorFromZ(this Vector4 x0, Vector4 x1, ref Vector4[] vec, ref int count, float z, float w = 1)
         {
             float zpercent = (z - x0.Z) / (x1.Z - x0.Z);        // distance from z to x0, divided by total distance.
             if (zpercent >= 0 && zpercent <= 1.0)
                 vec[count++] = new Vector4(x0.X + (x1.X - x0.X) * zpercent, x0.Y + (x1.Y - x0.Y) * zpercent, z, w);
+
+            return zpercent;
+        }
+
+        public static float FindVectorFromZ(this Vector4 x0, Vector4 x1, ref Vector4[] vec, ref Vector3[] tex, Vector3 template, ref int count, float z, float w = 1)
+        {
+            float zpercent = (z - x0.Z) / (x1.Z - x0.Z);        // distance from z to x0, divided by total distance.
+            if (zpercent >= 0 && zpercent <= 1.0)
+            {
+                if (template.X == 9)
+                    tex[count] = new Vector3(zpercent, template.Y, template.Z);
+                else if (template.Y == 9)
+                    tex[count] = new Vector3(template.X, zpercent, template.Z);
+                else 
+                    tex[count] = new Vector3(template.X, template.Y, zpercent );
+
+                vec[count++] = new Vector4(x0.X + (x1.X - x0.X) * zpercent, x0.Y + (x1.Y - x0.Y) * zpercent, z, w);
+            }
+
+            return zpercent;
         }
 
         public static Vector4 PointAlongPath(this Vector4 x0, Vector4 x1, float i) // i = 0 to 1.0, on the path. Negative before the path, >1 after the path

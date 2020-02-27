@@ -79,7 +79,9 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
         {
+            System.Diagnostics.Debug.Assert(other is GLVerticalScrollPanel == false, "Child must not be a child of GLForm");
             textures[other] = new GLTexture2D();                // we make a texture per top level control to render with
+            other.MakeLevelBitmap(Math.Max(1,other.Width),Math.Max(1,other.Height));    // ensure we make a bitmap
             base.Add(other);
         }
 
@@ -119,46 +121,71 @@ namespace OpenTKUtils.GL4.Controls
         public override void PerformRecursiveLayout()
         {
             base.PerformRecursiveLayout();
-            UpdateVertexPositions();
-            UpdateTextures();
+            UpdateVertexTexturePositions(true);
         }
 
         public override bool BringToFront(GLBaseControl other)  // if we change the z order, we need to update vertex list, keyed to z order
         {                                                       // and the textures, since the bindless IDs are written in z order        
             if (!base.BringToFront(other))
             {
-                UpdateVertexPositions();        // we changed z order, update
-                UpdateTextures();
+                UpdateVertexTexturePositions(true);        // we changed z order, update
                 return false;
             }
             else
                 return true;
         }
 
-        private void UpdateVertexPositions()        // write to vertex buffer the addresses of the windows.
+        // overriding this indicates all we have to do if child location changes is update the vertex positions, and that we have dealt with it
+        protected override bool ChildLocationChanged(GLBaseControl child)
         {
-            if (ControlsZ.Count > 0)            // may end up with nothing to draw, in which case, don't update the vertexes
+            UpdateVertexTexturePositions(false);
+            return true;
+        }
+
+        private void UpdateVertexTexturePositions(bool updatetextures)        // update vertexes, maybe update textures
+        {
+            if (ControlsZ.Count > 0)            // may end up with nothing to draw, in which case, don't update anything
             {
                 vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
                 IntPtr p = vertexes.Map(0, vertexes.BufferSize);
 
-                float z = 0.1f;
+                float z = 0.0001f;      // we place it in clip space at a z near 0
+                int visible = 0;
+
+                List<IGLTexture> tlist = new List<IGLTexture>();
 
                 foreach (var c in ControlsIZ)       // we paint in IZ order, and we set the Z (bigger is more in the back) from a notional 0.1 to 0 so the depth test works
                 {
-                    float[] a = new float[] {       c.Left, c.Top, z, 1,
-                                                    c.Left, c.Bottom , z, 1,
-                                                    c.Right, c.Top, z, 1,
-                                                    c.Right, c.Bottom , z, 1,
-                                             };
-                    vertexes.MapWrite(ref p, a);
-                    z -= 0.001f;
+                    if (c.Visible)  // must be visible to be added to vlist
+                    {
+                        float[] a = new float[] {       c.Left, c.Top, z, 1,
+                                                        c.Left, c.Bottom , z, 1,
+                                                        c.Right, c.Top, z, 1,
+                                                        c.Right, c.Bottom , z, 1,
+                                                 };
+                        vertexes.MapWrite(ref p, a);
+                        z -= 0.0000001f;
+                        visible++;
+
+                        if (updatetextures)
+                        {
+                            if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
+                            {
+                                textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
+                            }
+
+                            tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles
+                        }
+                    }
                 }
 
                 vertexes.UnMap();
                 OpenTKUtils.GLStatics.Check();
 
-                ri.DrawCount = ControlsZ.Count * 5 - 1;    // 4 vertexes per rectangle, 1 restart
+                if ( tlist.Count>0)     // only if we had visible ones
+                    texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..  written in iz order
+
+                ri.DrawCount = (visible>0) ? (visible * 5 - 1) : 0;    // 4 vertexes per rectangle, 1 restart
             }
             else
                 ri.DrawCount = 0;           // and set count to zero.
@@ -166,34 +193,8 @@ namespace OpenTKUtils.GL4.Controls
             RequestRender = true;
         }
 
-        private void UpdateTextures()
-        {
-            if (ControlsIZ.Count > 0)       // only perform if we have something to paint
-            {
-                List<IGLTexture> tlist = new List<IGLTexture>();
-
-                foreach (var c in ControlsIZ)   // we paint in the render in IZ order, so we add the textures to the list and check them in IZ order for the bindless texture handles
-                {
-                    if (textures[c].Id == -1 || textures[c].Width != c.LevelBitmap.Width || textures[c].Height != c.LevelBitmap.Height)      // if layout changed bitmap
-                    {
-                        textures[c].CreateOrUpdateTexture(c.Width, c.Height);   // and make a texture, this will dispose of the old one 
-                    }
-
-                    tlist.Add(textures[c]);     // need to have them in the same order as the client rectangles
-                }
-
-                texturebinds.WriteHandles(tlist.ToArray()); // write texture handles to the buffer..  written in iz order
-            }
-        }
-
-        // overriding this indicates all we have to do if child location changes is update the vertex positions, and that we have dealt with it
-        protected override bool ChildLocationChanged(GLBaseControl child)
-        {
-            UpdateVertexPositions();
-            return true;
-        }
-
         // call this during your Paint to render.
+
         public void Render(GLRenderControl currentstate)
         {
             //System.Diagnostics.Debug.WriteLine("Form redraw start");
@@ -208,6 +209,7 @@ namespace OpenTKUtils.GL4.Controls
                 {
                     if (c.Visible)
                     {
+                        //System.Diagnostics.Debug.WriteLine("Draw " + c.Name);
                         bool redrawn = c.Redraw(null, new Rectangle(0, 0, 0, 0), new Rectangle(0, 0, 0, 0), null, false);      // see if redraw done
 
                         if (redrawn)
@@ -217,7 +219,6 @@ namespace OpenTKUtils.GL4.Controls
                         }
                     }
                 }
-
 
                 shader.Start();
                 ri.Bind(currentstate, shader, null);        // binds VA AND the element buffer
@@ -291,7 +292,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             e.ControlLocation = currentmouseover.DisplayControlCoords(true);
             e.Location = new Point(e.Location.X - e.ControlLocation.X, e.Location.Y - e.ControlLocation.Y);
-            System.Diagnostics.Debug.WriteLine("Control " + currentmouseover.Name + " " + e.ControlLocation + " " + e.Location);
+            //System.Diagnostics.Debug.WriteLine("Control " + currentmouseover.Name + " " + e.ControlLocation + " " + e.Location);
             if (e.Location.X < 0)
                 e.Area = GLMouseEventArgs.AreaType.Left;
             else if (e.Location.X >= currentmouseover.ClientWidth)
@@ -309,21 +310,7 @@ namespace OpenTKUtils.GL4.Controls
                 e.Area = GLMouseEventArgs.AreaType.Client;
         }
 
-        bool movedsincedown = false;
-
-        private void Gc_MouseUp(object sender, GLMouseEventArgs e)
-        {
-            if (currentmouseover != null)
-            {
-                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
-
-                if (currentmouseover.Enabled)
-                {
-                    AdjustLocation(ref e);
-                    currentmouseover.OnMouseUp(e);
-                }
-            }
-        }
+        private GLBaseControl mousedowninitialcontrol = null;       // track where mouse down occurred
 
         private void Gc_MouseDown(object sender, GLMouseEventArgs e)
         {
@@ -338,41 +325,18 @@ namespace OpenTKUtils.GL4.Controls
                     currentmouseover.OnMouseDown(e);
                 }
 
-                movedsincedown = false;
-            }
-        }
-
-        private void Gc_MouseClick(object sender, GLMouseEventArgs e)
-        {
-            if (movedsincedown == false)
-            {
-                SetFocus(currentmouseover);
-
-                if (currentmouseover != null && currentmouseover.Enabled)
-                {
-                    AdjustLocation(ref e);
-                    currentmouseover.OnMouseClick(e);
-                }
-            }
-        }
-
-        private void Gc_MouseWheel(object sender, GLMouseEventArgs e)
-        {
-            if (currentmouseover != null && currentmouseover.Enabled)
-            {
-                AdjustLocation(ref e);
-                currentmouseover.OnMouseWheel(e);
+                mousedowninitialcontrol = currentmouseover;
             }
         }
 
         private void Gc_MouseMove(object sender, GLMouseEventArgs e)
         {
-            movedsincedown = true;
-
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
 
             if (c != currentmouseover)
             {
+                mousedowninitialcontrol = null;
+
                 if (currentmouseover != null)
                 {
                     if (currentmouseover.MouseButtonsDown != GLMouseEventArgs.MouseButtons.None)   // click and drag, can't change control while mouse is down
@@ -416,6 +380,46 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        private void Gc_MouseUp(object sender, GLMouseEventArgs e)
+        {
+            if (currentmouseover != null)
+            {
+                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
+
+                if (currentmouseover.Enabled)
+                {
+                    AdjustLocation(ref e);
+                    currentmouseover.OnMouseUp(e);
+                }
+            }
+
+            mousedowninitialcontrol = null;
+        }
+
+        private void Gc_MouseClick(object sender, GLMouseEventArgs e)
+        {
+            if (mousedowninitialcontrol == currentmouseover)        // clicks only occur if mouse is still over initial control
+            {
+                SetFocus(currentmouseover);
+
+                if (currentmouseover != null && currentmouseover.Enabled)
+                {
+                    AdjustLocation(ref e);
+                    currentmouseover.OnMouseClick(e);
+                }
+            }
+        }
+
+
+
+        private void Gc_MouseWheel(object sender, GLMouseEventArgs e)
+        {
+            if (currentmouseover != null && currentmouseover.Enabled)
+            {
+                AdjustLocation(ref e);
+                currentmouseover.OnMouseWheel(e);
+            }
+        }
         private void Gc_KeyUp(object sender, GLKeyEventArgs e)
         {
             if (currentfocus != null && currentfocus.Enabled)
@@ -431,6 +435,7 @@ namespace OpenTKUtils.GL4.Controls
 
         private void Gc_KeyDown(object sender, GLKeyEventArgs e)
         {
+        //    System.Diagnostics.Debug.WriteLine("Control keydown on " + currentfocus?.Name);
             if (currentfocus != null && currentfocus.Enabled)
             {
                 if (!(currentfocus is GLForm))

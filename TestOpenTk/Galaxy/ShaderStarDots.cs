@@ -26,9 +26,9 @@ namespace TestOpenTk
         void main(void)
         {
             vec4 p = position;
+            vs_color = vec4(position.w,position.w,position.w,0.2);
             p.w = 1;
             gl_Position = mc.ProjectionModelMatrix * p;        // order important
-            vs_color = vec4(position.w,position.w,position.w,0.1);
         }
         ";
         string frag =

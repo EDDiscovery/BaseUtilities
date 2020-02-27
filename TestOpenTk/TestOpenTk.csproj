@@ -64,6 +64,7 @@
     <Compile Include="Controls\TestControls.designer.cs">
       <DependentUpon>TestControls.cs</DependentUpon>
     </Compile>
+    <Compile Include="Galaxy\GalaxyMenu.cs" />
     <Compile Include="Galaxy\ShaderStarDots.cs" />
     <Compile Include="Galaxy\TestDynamicGrid.cs">
       <SubType>Form</SubType>
@@ -382,6 +383,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\StarFlare2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\hamburgermenu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\2d.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\3d.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

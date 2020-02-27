@@ -18,11 +18,14 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    public class GLVolumetricUniformBlock : GLUniformBlock 
+    public class GLVolumetricUniformBlock : GLUniformBlock
     {
         public GLVolumetricUniformBlock() : base(1)         // binding block 1 fixed
         {
         }
+
+        // if slicesize=0, we take 1 slice in the middle of the z volume
+        // otherwise we slice up min/max z by slicesize
 
         public int Set(GLMatrixCalc c, Vector4[] boundingbox, float slicesize) // return slices to show
         {
@@ -32,42 +35,123 @@ namespace OpenTKUtils.GL4
             IntPtr pb = Map(0, BufferSize);        // the whole schebang
 
             float minzv = float.MaxValue, maxzv = float.MinValue;
-            int minv = 0, maxv = 0;
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < boundingbox.Length; i++)
             {
                 Vector4 m = Vector4.Transform(boundingbox[i], c.ModelMatrix);
-                Vector4 p = Vector4.Transform(m, c.ProjectionMatrix);
-               // System.Diagnostics.Debug.WriteLine("{0} {1} -> {2} -> {3}", i, boundingbox[i].ToStringVec(), m.ToStringVec(), p.ToStringVec());
+                MapWrite(ref pb, m);
                 if (m.Z < minzv)
                 {
                     minzv = m.Z;
-                    minv = i;
                 }
                 if (m.Z > maxzv)
                 {
                     maxzv = m.Z;
-                    maxv = i;
                 }
-                MapWrite(ref pb, m);
+
+                c.WorldToScreen(boundingbox[i], i.ToString() + " " );
             }
 
-            if (maxzv > 0)      // 0 is the eye plane in z, no point above it
-                maxzv = 0;
+            //if (maxzv > 0)      // 0 is the eye plane in z, no point above it tbd
+            //maxzv = 0;
 
-            if (minzv > maxzv)
-                minzv = -1;
+            //if (minzv > maxzv)
+            //  minzv = -1;
 
-            float zdist = maxzv - minzv;
-            int slices = Math.Max(1, (int)(zdist / slicesize));
+            int slices = 1;
+            if (slicesize == 0 )
+            {
+                minzv = (minzv + maxzv) / 2;
+            }
+            else
+            {
+                slices = Math.Max(1, (int)((maxzv-minzv) / slicesize));
+            }
+
+            System.Diagnostics.Debug.WriteLine("..Z Calc {0} {1} slices {2} slicesize {3}", minzv, maxzv, slices, slicesize);
 
             MapWrite(ref pb, minzv);
             MapWrite(ref pb, (float)slicesize);
             UnMap();
-            //System.Diagnostics.Debug.WriteLine("Z from {0}:{1} to {2}:{3} slices {4} dist {5}", minv, minzv, maxv, maxzv, slices, slicesize);
+
+            Vector4 t0 = new Vector4(0, 12000, 25666, 1);
+            c.WorldToScreen(t0, "Sv");
+            Vector4 t01 = new Vector4(0, -6000, 25666, 1);
+            c.WorldToScreen(t01, "Sm");
+            Vector4 t1 = new Vector4(0, 2000, 25666, 1);
+            c.WorldToScreen(t1, "Sh");
+            Vector4 t2 = new Vector4(0, 0, 25666, 1);
+            c.WorldToScreen(t2, "sa");
+            Vector4 t3 = new Vector4(0, 0, 0, 1);
+            c.WorldToScreen(t3, "so");
+
+            //   TestZ(c, boundingbox, minzv);
 
             return slices;
         }
 
+        // code from the volumetric testers to help debug stuff
+
+        void Test(GLMatrixCalc c, Vector4[] boundingbox, float percent)
+        {
+            Vector4[] modelboundingbox = boundingbox.Transform(c.ModelMatrix);
+
+            float minzv = float.MaxValue, maxzv = float.MinValue;
+            foreach (var m in modelboundingbox)
+            {
+                if (m.Z < minzv)
+                {
+                    minzv = m.Z;
+                }
+                if (m.Z > maxzv)
+                {
+                    maxzv = m.Z;
+                }
+
+                Vector4[] proj = modelboundingbox.Transform(c.ProjectionMatrix);
+                System.Diagnostics.Debug.WriteLine("Model {0} -> {1}", m, proj);
+            }
+
+
+            System.Diagnostics.Debug.WriteLine("Min {0} Max {1}", minzv, maxzv);
+
+            float zpoint = minzv + (maxzv - minzv) * percent;
+            TestZ(c, boundingbox, zpoint);
+        }
+
+        void TestZ(GLMatrixCalc c, Vector4[] boundingbox, float zpoint)
+        {
+            Vector4[] modelboundingbox = boundingbox.Transform(c.ModelMatrix);
+
+            Vector4[] intercepts = new Vector4[6];
+            Vector3[] texpoints = new Vector3[6];
+            int count = 0;
+            modelboundingbox[0].FindVectorFromZ(modelboundingbox[1], ref intercepts, ref texpoints, new Vector3(0, 9, 0), ref count, zpoint);  
+            modelboundingbox[1].FindVectorFromZ(modelboundingbox[2], ref intercepts, ref texpoints, new Vector3(9, 1, 0), ref count, zpoint);
+            modelboundingbox[3].FindVectorFromZ(modelboundingbox[2], ref intercepts, ref texpoints, new Vector3(1, 9, 0), ref count, zpoint);
+            modelboundingbox[0].FindVectorFromZ(modelboundingbox[3], ref intercepts, ref texpoints, new Vector3(9, 0, 0), ref count, zpoint);
+
+            modelboundingbox[4].FindVectorFromZ(modelboundingbox[5], ref intercepts, ref texpoints, new Vector3(0, 9, 1), ref count, zpoint);
+            modelboundingbox[5].FindVectorFromZ(modelboundingbox[6], ref intercepts, ref texpoints, new Vector3(9, 1, 1), ref count, zpoint);
+            modelboundingbox[7].FindVectorFromZ(modelboundingbox[6], ref intercepts, ref texpoints, new Vector3(1, 9, 1), ref count, zpoint);
+            modelboundingbox[4].FindVectorFromZ(modelboundingbox[7], ref intercepts, ref texpoints, new Vector3(9, 0, 1), ref count, zpoint);
+
+            modelboundingbox[0].FindVectorFromZ(modelboundingbox[4], ref intercepts, ref texpoints, new Vector3(0, 0, 9), ref count, zpoint);
+            modelboundingbox[1].FindVectorFromZ(modelboundingbox[5], ref intercepts, ref texpoints, new Vector3(0, 1, 9), ref count, zpoint);
+            modelboundingbox[2].FindVectorFromZ(modelboundingbox[6], ref intercepts, ref texpoints, new Vector3(1, 1, 9), ref count, zpoint);
+            modelboundingbox[3].FindVectorFromZ(modelboundingbox[7], ref intercepts, ref texpoints, new Vector3(1, 0, 9), ref count, zpoint);   
+
+            if (count >= 3)
+            {
+                Vector4 avg = intercepts.Average();
+                float[] angles = new float[6];
+                for (int i = 0; i < count; i++)
+                {
+                    angles[i] = -(float)Math.Atan2(intercepts[i].Y - avg.Y, intercepts[i].X - avg.X);        // all on the same z plane, so x/y only need be considered
+                    System.Diagnostics.Debug.WriteLine("C" + intercepts[i].ToStringVec() + " ang " + angles[i].Degrees() + " t " + texpoints[i]);
+                }
+
+            }
+        }
     }
 }
 

@@ -23,28 +23,26 @@ namespace OpenTKUtils.GL4.Controls
 {
     public class GLPanel : GLBaseControl
     {
-        public GLPanel(string name, Rectangle location) : base(name, location)
+        public GLPanel(string name, Rectangle location, Color? backcolour = null) : base(name, location)
         {
-            BackColor = DefaultPanelBackColor;
+            BackColor = backcolour.HasValue ? backcolour.Value : DefaultPanelBackColor;
         }
 
         public GLPanel() : this("P?", DefaultWindowRectangle)
         {
         }
 
-        public GLPanel(string name, DockingType type, float dockpercent) : base(name, DefaultWindowRectangle)
+        public GLPanel(string name, DockingType type, float dockpercent, Color? backcolour = null) : this(name, DefaultWindowRectangle, backcolour)
         {
             Dock = type;
             DockPercent = dockpercent;
-            BackColor = DefaultPanelBackColor;
         }
 
-        public GLPanel(string name, Size sizep, DockingType type, float dockpercentage) : base(name, DefaultWindowRectangle)
+        public GLPanel(string name, Size sizep, DockingType type, float dockpercentage, Color? backcolour = null) : this(name, DefaultWindowRectangle, backcolour)
         {
             Dock = type;
             DockPercent = dockpercentage;
             SetLocationSizeNI(size: sizep);
-            BackColor = DefaultPanelBackColor;
         }
     }
 }

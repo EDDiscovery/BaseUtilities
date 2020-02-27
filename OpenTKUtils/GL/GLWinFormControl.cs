@@ -41,6 +41,7 @@ namespace OpenTKUtils.WinForm
         public Color BackColour { get { return backcolor; } set { backcolor = value; GL.ClearColor(backcolor); } }
         public int Width { get { return glControl.Width; } }
         public int Height { get { return glControl.Height; } }
+        public Size Size { get { return glControl.Size; } }
         public bool Focused { get { return glControl.Focused; } }
         public Rectangle ClientScreenPos { get { return new Rectangle(glControl.PointToScreen(new Point(0, 0)),glControl.ClientRectangle.Size); } }
         public GLRenderControl RenderState { get; set; } = null;

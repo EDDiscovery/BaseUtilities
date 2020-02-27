@@ -61,7 +61,8 @@ namespace TestOpenTk
 
             gl3dcontroller = new Controller3D();
             gl3dcontroller.PaintObjects = ControllerDraw;
-            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
+            gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
+            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance= 100f;
             gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 
@@ -660,7 +661,7 @@ namespace TestOpenTk
 
             GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
-            mcub.Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);
+            mcub.SetFull(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -691,25 +692,31 @@ namespace TestOpenTk
 
         private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )
         {
-            if (kb.HasBeenPressed(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F5, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(0, 0, 0), 1, 2);
             }
 
-            if (kb.HasBeenPressed(Keys.F2, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(4, 0, 0), 1, 2);
             }
 
-            if (kb.HasBeenPressed(Keys.F3, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F7, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(10, 0, -10), 1, 2);
             }
 
-            if (kb.HasBeenPressed(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F8, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 gl3dcontroller.CameraLookAt(new Vector3(50, 0, 50), 1, 2);
             }
+
+            if (kb.HasBeenPressed(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                gl3dcontroller.ChangePerspectiveMode(!gl3dcontroller.MatrixCalc.InPerspectiveMode);
+            }
+
 
         }
 

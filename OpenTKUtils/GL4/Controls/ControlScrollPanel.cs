@@ -60,11 +60,11 @@ namespace OpenTKUtils.GL4.Controls
                     if (LevelBitmap == null )
                     {
                         System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
-                        SetLevelBitmap(Width, childheight);
+                        MakeLevelBitmap(Width, childheight);
                     }
                     else if ( childheight != LevelBitmap.Height || LevelBitmap.Width != Width) // if height is different, or width is different
                     {
-                        SetLevelBitmap(Width, childheight);
+                        MakeLevelBitmap(Width, childheight);
                         System.Diagnostics.Debug.WriteLine("Make SP bitmap " + Width + "," + childheight);
                     }
                 }
@@ -72,7 +72,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if ( !needbitmap && LevelBitmap != null)
             {
-                SetLevelBitmap(0,0);
+                MakeLevelBitmap(0,0);
             }
         }
 

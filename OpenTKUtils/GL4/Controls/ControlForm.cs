@@ -39,8 +39,12 @@ namespace OpenTKUtils.GL4.Controls
         public const int FormBorderWidth = 1;
 
         public bool FormShown { get; set; } = false;        // only applies to top level forms
-        public bool TabChangesFocus { get; set; } = true; 
+        public bool TabChangesFocus { get; set; } = true;
+        public bool ShowClose { get; set; } = true;     // show close symbol
+
         public Action<GLForm> Shown;
+        public Action<GLForm,GLHandledArgs> FormClosing;
+        public Action<GLForm> FormClosed;
 
         public DialogResult DialogResult { get { return dialogResult; } set { SetDialogResult(value); }  }
         public Action<GLForm, DialogResult> DialogCallback { get; set; } // if a form sets a dialog result, this callback gets called
@@ -64,8 +68,13 @@ namespace OpenTKUtils.GL4.Controls
 
         public void Close()
         {
-            OnClose();
-            Parent?.Remove(this);
+            GLHandledArgs e = new GLHandledArgs();
+            OnClose(e);
+            if ( !e.Handled )
+            {
+                OnClosed();
+                Parent?.Remove(this);
+            }
         }
 
         #region For inheritors
@@ -85,8 +94,14 @@ namespace OpenTKUtils.GL4.Controls
             Shown?.Invoke(this);
         }
 
-        public virtual void OnClose()   // called all the time
+        public virtual void OnClose(GLHandledArgs e)   
         {
+            FormClosing?.Invoke(this, e);
+        }
+
+        public virtual void OnClosed()   
+        {
+            FormClosed?.Invoke(this);
         }
 
         #endregion
@@ -109,24 +124,55 @@ namespace OpenTKUtils.GL4.Controls
             base.PerformRecursiveLayout();
         }
 
-        // move this to border paint
-        protected override void DrawBorder(Rectangle bounds, Graphics gr, Color bc, float bw)      // normal override, you can overdraw border if required.
+        protected override void DrawBorder(Rectangle bounds, Graphics gr, Color bc, float bw)     
         {
-            base.DrawBorder(bounds, gr, bc, bw);
+            base.DrawBorder(bounds, gr, bc, bw);    // draw basic border
+
+            Color c = (Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling);
+
+            gr.SmoothingMode = SmoothingMode.AntiAlias;
 
             if (Text.HasChars())
             {
-                gr.SmoothingMode = SmoothingMode.AntiAlias;
 
                 using (var fmt = ControlHelpersStaticFunc.StringFormatFromContentAlignment(TextAlign))
                 {
-                    using (Brush textb = new SolidBrush((Enabled) ? this.ForeColor : this.ForeColor.Multiply(DisabledScaling)))
+                    using (Brush textb = new SolidBrush(c))
                     {
-                        Rectangle titlearea = new Rectangle(bounds.Left, bounds.Top, bounds.Width, TitleBarHeight );
+                        Rectangle titlearea = new Rectangle(bounds.Left, bounds.Top, bounds.Width, TitleBarHeight);
                         gr.DrawString(this.Text, this.Font, textb, titlearea, fmt);
                     }
                 }
-                gr.SmoothingMode = SmoothingMode.None;
+
+            }
+
+            if ( ShowClose )
+            {
+                Rectangle closearea = new Rectangle(bounds.Right- TitleBarHeight, bounds.Top, TitleBarHeight, TitleBarHeight);
+                closearea.Inflate(new Size(-5,-5));
+
+                using (Pen p = new Pen(c))
+                {
+                    gr.DrawLine(p, new Point(closearea.Left, closearea.Top), new Point(closearea.Right, closearea.Bottom));
+                    gr.DrawLine(p, new Point(closearea.Left, closearea.Bottom), new Point(closearea.Right, closearea.Top));
+                }
+            }
+
+            gr.SmoothingMode = SmoothingMode.None;
+        }
+
+        public override void OnMouseDown(GLMouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+
+            if (!e.Handled && e.Area != GLMouseEventArgs.AreaType.Client )
+            {
+                if (!OverClose(e))
+                {
+                    capturelocation = new Point(e.ControlLocation.X + e.Location.X, e.ControlLocation.Y + e.Location.Y);    // absolute screen location of capture
+                    originalwindow = Bounds;
+                    captured = e.Area;
+                }
             }
         }
 
@@ -186,7 +232,7 @@ namespace OpenTKUtils.GL4.Controls
                         FindDisplay()?.SetCursor(GLCursorType.EW);
                         cursorindicatingmovement = true;
                     }
-                    else if (e.Area == GLMouseEventArgs.AreaType.Top)
+                    else if (e.Area == GLMouseEventArgs.AreaType.Top && !OverClose(e))
                     {
                         FindDisplay()?.SetCursor(GLCursorType.Move);
                         cursorindicatingmovement = true;
@@ -210,17 +256,6 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
-        public override void OnMouseDown(GLMouseEventArgs e)
-        {
-            base.OnMouseDown(e);
-
-            if (!e.Handled && e.Area != GLMouseEventArgs.AreaType.Client)
-            {
-                capturelocation = new Point(e.ControlLocation.X + e.Location.X, e.ControlLocation.Y + e.Location.Y);    // absolute screen location of capture
-                originalwindow = Bounds;
-                captured = e.Area;
-            }
-        }
 
         public override void OnMouseUp(GLMouseEventArgs e)
         {
@@ -238,10 +273,24 @@ namespace OpenTKUtils.GL4.Controls
         {
             base.OnMouseLeave(e);
 
-            if ( cursorindicatingmovement )
+            if (cursorindicatingmovement)
             {
                 FindDisplay()?.SetCursor(GLCursorType.Normal);
                 cursorindicatingmovement = false;
+            }
+        }
+
+        public override void OnMouseClick(GLMouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+
+            if (!e.Handled)
+            {
+                if (OverClose(e))
+                {
+                    System.Diagnostics.Debug.WriteLine("Click Close!");
+                    Close();
+                }
             }
         }
 
@@ -263,6 +312,11 @@ namespace OpenTKUtils.GL4.Controls
             }
         }
 
+        private bool OverClose(GLMouseEventArgs e)
+        {
+            //System.Diagnostics.Debug.WriteLine("Over close {0} {1} {2} {3}", e.Area == GLMouseEventArgs.AreaType.Top && e.X >= Width - TitleBarHeight, e.Area, e.X , Width - TitleBarHeight);
+            return ShowClose && e.Area == GLMouseEventArgs.AreaType.Top && e.X >= Width - TitleBarHeight;
+        }
 
         private GLMouseEventArgs.AreaType captured = GLMouseEventArgs.AreaType.Client;  // meaning none
         private Point capturelocation;

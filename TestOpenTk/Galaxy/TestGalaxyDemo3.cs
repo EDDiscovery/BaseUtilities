@@ -44,6 +44,8 @@ namespace TestOpenTk
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
+        private GalaxyMenu galaxymenu;
+
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -110,6 +112,7 @@ namespace TestOpenTk
 
             {
                 items.Add("solmarker", new GLTexture2D(Properties.Resources.golden));
+                items.Add("solbotmarker", new GLTexture2D(Properties.Resources.ImportSphere));
                 items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
                 GLRenderControl rq = GLRenderControl.Quads(cullface: false);
                 rObjects.Add(items.Shader("TEX"),
@@ -120,7 +123,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, -1000, 0))
+                             new GLRenderDataTranslationRotationTexture(items.Tex("solbotmarker"), new Vector3(0, -1000, 0))
                              ));
                 items.Add("sag", new GLTexture2D(Properties.Resources.dotted));
                 rObjects.Add(items.Shader("TEX"),
@@ -185,7 +188,7 @@ namespace TestOpenTk
                 rObjects.Add(galaxyshader, galaxyrendererable);
             }
 
-            if (true) // star points
+            if (false) // star points
             {
                 int gran = 8;
                 Bitmap img = Properties.Resources.Galaxy_L180;
@@ -194,7 +197,7 @@ namespace TestOpenTk
 
                 Random rnd = new Random(23);
 
-                GLBuffer buf = new GLBuffer(16 * 500000);     // since RND is fixed, should get the same number every time.
+                GLBuffer buf = new GLBuffer(16 * 350000);     // since RND is fixed, should get the same number every time.
                 IntPtr bufptr = buf.Map(0, buf.BufferSize); // get a ptr to the whole schebang
 
                 int xcw = (right - left) / heat.Width;
@@ -207,8 +210,7 @@ namespace TestOpenTk
                     for (int z = 0; z < heat.Height; z++)
                     {
                         int i = heat.GetPixel(x, z).R;
-                        int ii = i * i * i;
-                        if (ii > 32 * 32 * 32)
+                        if (i> 32)
                         {
                             int gx = left + x * xcw;
                             int gz = front + z * zch;
@@ -220,15 +222,17 @@ namespace TestOpenTk
                             d = d * 2 - 1;  // -1 to +1
                             double dist = ObjectExtensionsNumbersBool.GaussianDist(d, 1, 1.4);
 
-                            int c = Math.Min(Math.Max(ii / 140000, 0), 40);
+                            int c = Math.Min(Math.Max(i*i*i/120000, 1), 40);
 
                             dist *= 2000;
-
-                            GLPointsFactory.RandomStars4(ref bufptr, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: i);
+                            //System.Diagnostics.Debug.WriteLine("{0} {1} : dist {2} c {3}", x, z, dist, c);
+                            //System.Diagnostics.Debug.Write(c);
+                            GLPointsFactory.RandomStars4(ref bufptr, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: 0.8f);
                             points += c;
                             System.Diagnostics.Debug.Assert(points < buf.BufferSize / 16);
                         }
                     }
+                    //System.Diagnostics.Debug.WriteLine(".");
                 }
 
                 buf.UnMap();
@@ -294,14 +298,14 @@ namespace TestOpenTk
            
             displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
             displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
+            displaycontrol.SetFocus();
 
-            GLForm pform = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 200, 400));
-            pform.BackColor = Color.FromArgb(200, Color.Red);
-            displaycontrol.Add(pform);
+
 
             gl3dcontroller = new Controller3D();
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
-            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 100000f;
+            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 120000f;
+            gl3dcontroller.MatrixCalc.InPerspectiveMode = false;
             gl3dcontroller.ZoomDistance = 5000F;
             gl3dcontroller.Zoom.ZoomMin = 0.1f;
             gl3dcontroller.Zoom.ZoomFact = 1.1f;
@@ -312,7 +316,6 @@ namespace TestOpenTk
                 return (float)ms * 1.0f * Math.Min(eyedist / 1000, 10);
             };
 
-            gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
 
             gl3dcontroller.Start(displaycontrol, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
             //gl3dcontroller.Start(glwfc, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
@@ -321,12 +324,12 @@ namespace TestOpenTk
             {
                 displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
                 {
-                    GLMatrixCalc c = new GLMatrixCalc();
-                    ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(c, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+                    // MCUB set up by Controller3DDraw which did the work first
                     displaycontrol.Render(glwfc.RenderState);
                 };
             }
 
+            galaxymenu = new GalaxyMenu(displaycontrol, gl3dcontroller);
         }
 
         float lasteyedistance = 100000000;
@@ -334,7 +337,7 @@ namespace TestOpenTk
 
         private void Controller3DDraw(GLMatrixCalc mc, long time)
         {
-            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
             if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
             {
@@ -349,9 +352,12 @@ namespace TestOpenTk
 
             gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, coordscol, Color.Transparent);
 
-            galaxyrendererable.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, volumetricboundingbox, 50.0f);        // set up the volumentric uniform
-
-            galaxyshader.SetDistance(mc.EyeDistance);
+            if (galaxyrendererable != null)
+            {
+                galaxyrendererable.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, volumetricboundingbox, gl3dcontroller.MatrixCalc.InPerspectiveMode ? 50.0f : 0);        // set up the volumentric uniform
+                System.Diagnostics.Debug.WriteLine("GI {0}", galaxyrendererable.InstanceCount);
+                galaxyshader.SetDistance(gl3dcontroller.MatrixCalc.InPerspectiveMode ? mc.EyeDistance : -1f);
+            }
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -374,7 +380,7 @@ namespace TestOpenTk
         private void SystemTick(object sender, EventArgs e)
         {
             OpenTKUtils.Timers.Timer.ProcessTimers();
-//            if (displaycontrol != null && displaycontrol.RequestRender)
+            if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
             var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
         }
@@ -396,6 +402,10 @@ namespace TestOpenTk
                     ps.Enabled = !ps.Enabled;
                     glwfc.Invalidate();
                 }
+            }
+            if (kb.HasBeenPressed(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                gl3dcontroller.ChangePerspectiveMode(!gl3dcontroller.MatrixCalc.InPerspectiveMode);
             }
             if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {

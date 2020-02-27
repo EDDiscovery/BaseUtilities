@@ -66,15 +66,15 @@ namespace OpenTKUtils.GL4.Controls
         protected System.Drawing.Imaging.ImageAttributes drawnImageAttributesEnabled = null;         // Image override (colour etc) for background when using Image while Enabled.
         protected System.Drawing.Imaging.ImageAttributes drawnImageAttributesDisabled = null;        // Image override (colour etc) for background when using Image while !Enabled.
 
-        protected void DrawImage(Image image, Rectangle box, Graphics g)
+        protected void DrawImage(Image image, Rectangle box, Graphics g, System.Drawing.Imaging.ImageAttributes imgattr )
         {
             Size isize = ImageStretch ? box.Size : image.Size;
             Rectangle drawarea = ImageAlign.ImagePositionFromContentAlignment(box, isize,true,true);
 
             //System.Diagnostics.Debug.WriteLine("Image for " + Name + " " + Enabled + " " + DrawnImageAttributesEnabled);
 
-            if (drawnImageAttributesEnabled != null)
-                g.DrawImage(image, drawarea, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, (Enabled) ? drawnImageAttributesEnabled : drawnImageAttributesDisabled);
+            if (imgattr != null)
+                g.DrawImage(image, drawarea, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, imgattr);
             else
                 g.DrawImage(image, drawarea, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel);
         }
@@ -82,8 +82,9 @@ namespace OpenTKUtils.GL4.Controls
 
     public class GLImage : GLImageBase
     {
-        public GLImage(string name, Rectangle location, Bitmap bmp) : base(name,location)
+        public GLImage(string name, Rectangle location, Bitmap bmp, Color? backcolour = null) : base(name,location)
         {
+            BackColor = backcolour.HasValue ? backcolour.Value: Color.Transparent;
             Image = bmp;
         }
 
@@ -93,7 +94,7 @@ namespace OpenTKUtils.GL4.Controls
 
         protected override void Paint(Rectangle area, Graphics gr)
         {
-            base.DrawImage(Image, area, gr);
+            base.DrawImage(Image, area, gr, (Enabled) ? drawnImageAttributesEnabled : drawnImageAttributesDisabled);
         }
     }
 }

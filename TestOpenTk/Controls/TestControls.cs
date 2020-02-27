@@ -388,6 +388,7 @@ namespace TestOpenTk
                 {
                     GLForm pform2 = new GLForm("form", "Form 2 GL Control demonstration", new Rectangle(500, 0, 1000, 800));
                     pform2.BackColor = Color.FromArgb(200, Color.Red);
+                    pform2.Font = new Font("Ms sans serif", 12);
                     pform2.SuspendLayout();
                     pform2.BackColorGradient = 90;
                     pform2.BackColorGradientAlt = Color.FromArgb(200, Color.Blue);
@@ -465,7 +466,7 @@ namespace TestOpenTk
                 displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
                 {                           // this is because we are at depth 0
                     GLMatrixCalc c = new GLMatrixCalc();
-                    ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(c,glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+                    ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(c);       // set the matrix unform block to the controller 3d matrix calc.
                     displaycontrol.Render(glwfc.RenderState);
                 };
 
@@ -508,7 +509,7 @@ namespace TestOpenTk
 
         private void Controller3dDraw(GLMatrixCalc mc, long time)
         {
-            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc, glwfc.Width, glwfc.Height);        // set the matrix unform block to the controller 3d matrix calc.
+            ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
