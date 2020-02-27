@@ -62,7 +62,7 @@ namespace TestOpenTk
             gl3dcontroller = new Controller3D();
             gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
-            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance= 100f;
+            gl3dcontroller.MatrixCalc.PerspectiveFarZDistance= 1000f;
             gl3dcontroller.ZoomDistance = 20F;
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(110f, 0, 0f), 1F);
 

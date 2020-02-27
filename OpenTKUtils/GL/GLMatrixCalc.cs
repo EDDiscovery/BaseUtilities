@@ -57,9 +57,6 @@ namespace OpenTKUtils
         public Matrix4 GetResMat { get { return ProjectionModelMatrix; } }      // used for calculating positions on the screen from pixel positions.  Remembering Apollo
 
         // Calculate the model matrix, which is the model translated to world space then to view space..
-        // Model matrix does not have any Y inversion (axis flip 180 around x).
-        // We want +z away, y up, x to right
-        // we use the normal in lookup to position the axis to +z away, y down, x to right (180 rot).  then use the projection model to flip y.
 
         public void CalculateModelMatrix(Vector3 position, Vector3 eyeposition, Vector3 normal)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
@@ -90,7 +87,6 @@ namespace OpenTKUtils
         }
 
         // Projection matrix - projects the 3d model space to the 2D screen
-        // Has a Y flip so that +Y is going up.
 
         public void CalculateProjectionMatrix(float fov, out float znear)
         {
@@ -112,7 +108,7 @@ namespace OpenTKUtils
             //System.Diagnostics.Debug.WriteLine("PM\r\n{0}", ProjectionMatrix);
 
             // we want the axis orientation with +z away from us, +x to right, +y upwards.
-            // this means we need to rotate the normal opengl model (+z towards us) 180 degrees around x - therefore flip y
+            // this means we need to rotate the normal opengl model (+y down) 180 degrees around x - therefore flip y
             // we do it here since its the end of the chain - easier to keep the rest in the other method
             // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
             // to make the ccw cull test work.

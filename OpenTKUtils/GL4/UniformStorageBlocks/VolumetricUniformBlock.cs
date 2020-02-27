@@ -73,18 +73,18 @@ namespace OpenTKUtils.GL4
             MapWrite(ref pb, (float)slicesize);
             UnMap();
 
-            Vector4 t0 = new Vector4(0, 12000, 25666, 1);
-            c.WorldToScreen(t0, "Sv");
-            Vector4 t01 = new Vector4(0, -6000, 25666, 1);
-            c.WorldToScreen(t01, "Sm");
-            Vector4 t1 = new Vector4(0, 2000, 25666, 1);
-            c.WorldToScreen(t1, "Sh");
-            Vector4 t2 = new Vector4(0, 0, 25666, 1);
-            c.WorldToScreen(t2, "sa");
-            Vector4 t3 = new Vector4(0, 0, 0, 1);
-            c.WorldToScreen(t3, "so");
+            //Vector4 t0 = new Vector4(0, 12000, 25666, 1);
+            //c.WorldToScreen(t0, "Sv");
+            //Vector4 t01 = new Vector4(0, -6000, 25666, 1);
+            //c.WorldToScreen(t01, "Sm");
+            //Vector4 t1 = new Vector4(0, 2000, 25666, 1);
+            //c.WorldToScreen(t1, "Sh");
+            //Vector4 t2 = new Vector4(0, 0, 25666, 1);
+            //c.WorldToScreen(t2, "sa");
+            //Vector4 t3 = new Vector4(0, 0, 0, 1);
+            //c.WorldToScreen(t3, "so");
 
-            //   TestZ(c, boundingbox, minzv);
+            ////   TestZ(c, boundingbox, minzv);
 
             return slices;
         }
@@ -110,7 +110,6 @@ namespace OpenTKUtils.GL4
                 Vector4[] proj = modelboundingbox.Transform(c.ProjectionMatrix);
                 System.Diagnostics.Debug.WriteLine("Model {0} -> {1}", m, proj);
             }
-
 
             System.Diagnostics.Debug.WriteLine("Min {0} Max {1}", minzv, maxzv);
 
