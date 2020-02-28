@@ -66,6 +66,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             BackColorNI = Color.Transparent;
             TextNI = text;
+            AutoCheck = true;
         }
 
         public GLCheckBox(string name, Rectangle location, Image chk, Image unchk) : base(name, location)
@@ -75,6 +76,7 @@ namespace OpenTKUtils.GL4.Controls
             Image = chk;
             ImageUnchecked = unchk;
             Appearance = CheckBoxAppearance.Button;
+            AutoCheck = true;
         }
 
         public GLCheckBox() : this("CB?", DefaultWindowRectangle, "")

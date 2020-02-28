@@ -193,10 +193,10 @@ void main(void)
                         GLRenderableItem.CreateVector4(items, rl1, lines2));
 
             dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);
+            dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);
 
             atomicbuffer = items.NewAtomicBlock(6);
-            atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
+            atomicbuffer.AllocateBytes(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
         }

@@ -405,6 +405,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public virtual bool BringToFront(GLBaseControl child)   // bring child to front
         {
+            System.Diagnostics.Debug.WriteLine("Bring to front" + child.Name);
             int curpos = childrenz.IndexOf(child);
 
             if (curpos>=0)

@@ -213,7 +213,7 @@ void main(void)
     modelpos = position.xyz;
     vec4 p = position;
 	gl_Position = mc.ProjectionModelMatrix * p;        // order important
-    vs_textureCoordinate = vcoords[ gl_VertexID % 4];
+    vs_textureCoordinate = vcoords[ gl_VertexID % 4];       // gl_vertextid is either an autocounter, or the actual element index given in an element draw
 }
 ";
         }

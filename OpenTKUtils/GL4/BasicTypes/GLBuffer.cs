@@ -38,10 +38,10 @@ namespace OpenTKUtils.GL4
 
         public GLBuffer(int allocatesize, bool std430 = false, BufferUsageHint bh = BufferUsageHint.StaticDraw) : this(std430)
         {
-            Allocate(allocatesize, bh);
+            AllocateBytes(allocatesize, bh);
         }
 
-        #region Cache function. Cache functions are in LayoutStandards. Write to cache them complete
+        #region Cache function. Cache functions are in LayoutStandards. Call complete to finish
 
         public void Complete()
         {
@@ -71,9 +71,9 @@ namespace OpenTKUtils.GL4
 
         #region Allocate first, then Fill Direct - cache is not involved, so you can't use the cache write functions 
         
-        public void Allocate(int size, BufferUsageHint uh = BufferUsageHint.StaticDraw)  // call first to set buffer size.. allow for alignment in your size
+        public void AllocateBytes(int bytessize, BufferUsageHint uh = BufferUsageHint.StaticDraw)  // call first to set buffer size.. allow for alignment in your size
         {                                                                    // can call twice - get fresh buffer each time
-            BufferSize = size;
+            BufferSize = bytessize;
             GL.NamedBufferData(Id, BufferSize, (IntPtr)0, uh);                  // set buffer size
             CurrentPos = 0;                                                  // reset back to zero as this clears the buffer
             OpenTKUtils.GLStatics.Check();
@@ -89,7 +89,7 @@ namespace OpenTKUtils.GL4
 
         public void AllocateFill(float[] vertices)
         {
-            Allocate(sizeof(float) * vertices.Length);
+            AllocateBytes(sizeof(float) * vertices.Length);
             Fill(vertices);
         }
 
@@ -103,7 +103,7 @@ namespace OpenTKUtils.GL4
 
         public void AllocateFill(Vector2[] vertices)
         {
-            Allocate(Vec2size * vertices.Length);
+            AllocateBytes(Vec2size * vertices.Length);
             Fill(vertices);
         }
 
@@ -117,7 +117,7 @@ namespace OpenTKUtils.GL4
 
         public void AllocateFill(Vector4[] vertices)
         {
-            Allocate(Vec4size * vertices.Length);
+            AllocateBytes(Vec4size * vertices.Length);
             Fill(vertices);
         }
 
@@ -131,7 +131,7 @@ namespace OpenTKUtils.GL4
 
         public void AllocateFill(Matrix4[] mats)
         {
-            Allocate(Mat4size * mats.Length);
+            AllocateBytes(Mat4size * mats.Length);
             Fill(mats);
         }
 
@@ -156,7 +156,21 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void Fill(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void Fill(ushort[] words)
+        {
+            int datasize = words.Length * sizeof(ushort);
+            int posv = Align(sizeof(ushort), datasize);
+            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, words);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void AllocateFill(ushort[] words)
+        {
+            AllocateBytes(sizeof(ushort) * words.Length);
+            Fill(words);
+        }
+
+        public void Fill(uint[] data)
         {
             int datasize = data.Length * sizeof(uint);
             int pos = Align(sizeof(uint), datasize);
@@ -164,13 +178,13 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void AllocateFill(uint[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void AllocateFill(uint[] data)
         {
-            Allocate(sizeof(uint) * data.Length);
-            Fill(data,uh);
+            AllocateBytes(sizeof(uint) * data.Length);
+            Fill(data);
         }
 
-        public void Fill(byte[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void Fill(byte[] data)
         {
             int datasize = data.Length;
             int pos = Align(sizeof(byte), datasize);        //tbd
@@ -178,10 +192,10 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void AllocateFill(byte[] data, BufferStorageFlags uh = BufferStorageFlags.MapWriteBit)
+        public void AllocateFill(byte[] data)
         {
-            Allocate(data.Length);
-            Fill(data, uh);
+            AllocateBytes(data.Length);
+            Fill(data);
         }
 
         public void FillPacked2vec(Vector3[] vertices, Vector3 offsets, float mult)
@@ -207,18 +221,31 @@ namespace OpenTKUtils.GL4
 
         public void ZeroBuffer(int size)
         {
-            Allocate(size);
+            AllocateBytes(size);
             GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, BufferSize, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void FillRectangularIndices(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff
+        public void FillRectangularIndicesBytes(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff
         {
-            Allocate(reccount * 5);
+            AllocateBytes(reccount * 5);
             IntPtr ip = Map(0, BufferSize);
             for (int r = 0; r < reccount; r++)
             {
-                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), (byte)restartindex};
+                byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), (byte)restartindex };
+                MapWrite(ref ip, ar);
+            }
+
+            UnMap();
+        }
+
+        public void FillRectangularIndicesShort(int reccount, int restartindex = 0xffff)        // rectangular indicies with restart of 0xff
+        {
+            AllocateBytes(reccount * 5 * sizeof(short));     // lets use short because we don't have a marshall copy ushort.. ignore the overflow
+            IntPtr ip = Map(0, BufferSize);
+            for (int r = 0; r < reccount; r++)
+            {
+                short[] ar = new short[] { (short)(r * 4), (short)(r * 4 + 1), (short)(r * 4 + 2), (short)(r * 4 + 3), (short)restartindex };
                 MapWrite(ref ip, ar);
             }
 
@@ -229,10 +256,11 @@ namespace OpenTKUtils.GL4
 
         #region GL MAP into memory so you can use a IntPtr
 
-        int mapoffset;
+        int mapoffset = int.MinValue;
 
         public IntPtr Map(int fillpos, int datasize)        // update the buffer with an area of updated cache on a write..
         {
+            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue && fillpos+datasize<=BufferSize); // catch double maps
             IntPtr p = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
             mapoffset = fillpos;
             OpenTKUtils.GLStatics.Check();
@@ -242,11 +270,13 @@ namespace OpenTKUtils.GL4
         public void UnMap()
         { 
             GL.UnmapNamedBuffer(Id);
+            mapoffset = int.MinValue;
             OpenTKUtils.GLStatics.Check();
         }
 
         public void MapWrite(ref IntPtr pos, Matrix4 mat)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, Vec4size);
             float[] r = new float[] {   mat.Row0.X, mat.Row0.Y, mat.Row0.Z, mat.Row0.W ,
                                         mat.Row1.X, mat.Row1.Y, mat.Row1.Z, mat.Row1.W ,
@@ -256,99 +286,143 @@ namespace OpenTKUtils.GL4
             System.Runtime.InteropServices.Marshal.Copy(r, 0, pos, 4*4);          // number of units, not byte length!
             pos += Vec4size*4;
             mapoffset += Vec4size*4;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, Vector4 v4)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, Vec4size);
             float[] a = new float[] { v4.X, v4.Y, v4.Z, v4.W };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
             pos += Vec4size;
             mapoffset += Vec4size;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, System.Drawing.Rectangle r)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, Vec4size);
             float[] a = new float[] { r.Left, r.Top, r.Right, r.Bottom };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
             pos += Vec4size;
             mapoffset += Vec4size;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, Vector3 mat, float vec4other)      // write vec3 as vec4.
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, Vec4size);
             float[] a = new float[] { mat.X, mat.Y, mat.Z, vec4other };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
             pos += Vec4size;
             mapoffset += Vec4size;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, float v)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             float[] a = new float[] { v };
             pos = Align(pos, mapoffset, sizeof(float));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(float);
             mapoffset += sizeof(float);
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, float[] a)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, sizeof(float));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);       // number of units, not byte length!
             pos += sizeof(float) * a.Length;
             mapoffset += sizeof(float) * a.Length;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, int v)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             int[] a = new int[] { v };
             pos = Align(pos, mapoffset, sizeof(int));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(int);
             mapoffset += sizeof(int);
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, int[] a)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, sizeof(int));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
             pos += sizeof(int) * a.Length;
             mapoffset += sizeof(int) * a.Length;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
+        }
+
+        public void MapWrite(ref IntPtr pos, short v)
+        {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
+            short[] a = new short[] { v };
+            pos = Align(pos, mapoffset, sizeof(short));
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += sizeof(short);
+            mapoffset += sizeof(short);
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
+        }
+
+        public void MapWrite(ref IntPtr pos, short[] a)
+        {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
+            pos = Align(pos, mapoffset, sizeof(short));
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            pos += sizeof(short) * a.Length;
+            mapoffset += sizeof(short) * a.Length;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, long v)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, sizeof(long));
             long[] a = new long[] { v };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += sizeof(long);
             mapoffset += sizeof(long);
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, long[] a)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             pos = Align(pos, mapoffset, sizeof(long));
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
             pos += sizeof(long) * a.Length;
             mapoffset += sizeof(long) * a.Length;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, byte[] a)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
             pos += a.Length;
             mapoffset += a.Length;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         public void MapWrite(ref IntPtr pos, byte v)
         {
+            System.Diagnostics.Debug.Assert(mapoffset != int.MinValue);
             byte[] a = new byte[] { v };
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
             pos += 1;
             mapoffset++;
+            System.Diagnostics.Debug.Assert(mapoffset <= BufferSize);
         }
 
         // write an Indirect Array draw command to the buffer
@@ -366,11 +440,6 @@ namespace OpenTKUtils.GL4
             int[] i = new int[] { vertexcount, instancecount, firstindex, basevertex, baseinstance };
             MapWrite(ref pos, i);
         }
-
-
-        #endregion
-
-        #region DrawElements indexs
 
 
         #endregion
@@ -450,15 +519,31 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
-        #region Binding a buffer to a binding index on the currently bound VA
+        #region Binding a buffer to target 
 
-        public void Bind(int bindingindex, int start, int stride, int divisor = 0)
+        public void Bind(int bindingindex, int start, int stride, int divisor = 0)      // a binding index on the currently bound VA
         {
+            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue && BufferSize > 0);     // catch unmap missing or nothing in buffer
             GL.BindVertexBuffer(bindingindex, Id, (IntPtr)start, stride);      // this buffer to binding index
             GL.VertexBindingDivisor(bindingindex, divisor);
             OpenTKUtils.GLStatics.Check();
             //System.Diagnostics.Debug.WriteLine("BUFBIND " + bindingindex + " To B" + Id + " pos " + start + " stride " + stride + " divisor " + divisor);
         }
+
+        public void BindElement()
+        {
+            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue && BufferSize > 0);     // catch unmap missing or nothing in buffer
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Id);
+            OpenTKUtils.GLStatics.Check();
+        }
+
+        public void BindIndirect()
+        {
+            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue && BufferSize > 0);     // catch unmap missing or nothing in buffer
+            GL.BindBuffer(BufferTarget.DrawIndirectBuffer, Id);
+            OpenTKUtils.GLStatics.Check();
+        }
+
         #endregion
 
         #region Implementation

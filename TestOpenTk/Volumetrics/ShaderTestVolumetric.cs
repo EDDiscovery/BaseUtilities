@@ -150,19 +150,19 @@ namespace TestOpenTk
             items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple));
 
             indicatorlinebuffer = new GLBuffer();           // new buffer
-            indicatorlinebuffer.Allocate(sizeof(float) * 4 * 2, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            indicatorlinebuffer.AllocateBytes(sizeof(float) * 4 * 2, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             rObjects.Add(items.Shader("LINEPURPLE"), GLRenderableItem.CreateVector4(items, rl1, indicatorlinebuffer, 2));
 
             items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow));
             interceptpointbuffer = new GLBuffer();           // new buffer
-            interceptpointbuffer.Allocate(sizeof(float) * 4 * 12, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            interceptpointbuffer.AllocateBytes(sizeof(float) * 4 * 12, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             GLRenderControl rp1 = GLRenderControl.Points(10);
             interceptri = GLRenderableItem.CreateVector4(items, rp1, interceptpointbuffer, 0);
             rObjects.Add(items.Shader("DOTYELLOW"), interceptri);
 
             items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue)));
             surfacebuffer = new GLBuffer();           // new buffer
-            surfacebuffer.Allocate(sizeof(float) * 4 * (6+2), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            surfacebuffer.AllocateBytes(sizeof(float) * 4 * (6+2), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             GLRenderControl rtf = GLRenderControl.TriFan();
             surfaceri = GLRenderableItem.CreateVector4(items, rtf, surfacebuffer, 0);
             rObjects.Add(items.Shader("SURFACEBLUE"), surfaceri);

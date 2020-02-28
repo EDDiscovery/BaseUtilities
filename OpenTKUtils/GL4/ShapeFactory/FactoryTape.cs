@@ -26,19 +26,63 @@ namespace OpenTKUtils.GL4
     {
         // tape is segmented, and rotx determines if its flat to Y or not, use with TriangleStrip
 
-        public static Vector4[] CreateTape(Vector3 start, Vector3 end, float width, float segmentlength = 1, float rotationaroundy = 0, bool ensureintegersamples = false)
+
+        // series of tapes with a margin between them.  Set up to provide the element index buffer indices as well
+        // aligns the element indexes for each tape to mod 4 to allow trianglestrip to work properly
+
+        public static Tuple<List<Vector4>, List<uint>> CreateTape(Vector3[] points, float width, float segmentlength = 1, float rotationaroundy = 0, 
+                                                        bool ensureintegersamples = false, float margin = 0, uint restartindex = 0xffffffff)
         {
+            List<Vector4> vec = new List<Vector4>();
+            List<uint> eids = new List<uint>();
+
+            uint vno = 0;
+
+            for( int  i = 0; i < points.Length-1; i++)
+            {
+                if (vec.Count % 4 == 2)   // must start each line on a mod 4 vector index boundary for the triangle strip to work (vertex shader)
+                {
+                    vec.Add(Vector4.Zero);
+                    vec.Add(Vector4.Zero);
+                    vno += 2;
+                }
+
+                Vector4[] vec1 = CreateTape(points[i], points[i + 1], width, segmentlength, rotationaroundy, ensureintegersamples,margin);
+                vec.AddRange(vec1);
+
+                for (int l = 0; l < vec1.Length; l++)
+                    eids.Add(vno++);
+
+                eids.Add(restartindex);
+            }
+
+            eids.RemoveAt(eids.Count - 1);  // remove last restart
+
+            return new Tuple<List<Vector4>, List<uint>>(vec, eids);
+        }
+        
+
+        public static Vector4[] CreateTape(Vector3 start, Vector3 end, float width, float segmentlength = 1, float rotationaroundy = 0, bool ensureintegersamples = false, float margin = 0)
+        {
+            Vector3 vectorto = Vector3.Normalize(end - start);                  // vector between the points, normalised
+
+            if (margin > 0)
+            {
+                start = new Vector3(start.X + vectorto.X * margin, start.Y + vectorto.Y * margin, start.Z + vectorto.Z * margin);
+                end = new Vector3(end.X - vectorto.X * margin, end.Y - vectorto.Y * margin, end.Z - vectorto.Z * margin);
+            }
+
             float length = (end - start).Length;
             int innersegments = (int)(length / segmentlength);
             if ( ensureintegersamples )
             {
+                if (innersegments % 2 == 1)         // for the triangle strip to work, across a primitive restart, we must have an even set of segments..
+                    innersegments++;                // fragment shader expects first primitive to be mod 4
+
                 segmentlength = length / innersegments;
             }
 
-            Vector4[] tape = new Vector4[4 + 2 * innersegments];                // 4 start/end, plus 2 for any inners
-
-            Vector3 vectorto = Vector3.Normalize(end - start);                  // vector between the points, normalised
-
+            Vector4[] tape = new Vector4[2 + 2 * innersegments];                // 2 start, plus 2 for any inners
             double xzangle = Math.Atan2(end.Z - start.Z, end.X - start.X);      // angle on the ZX plane between start/end
 
             Vector3 leftnormal = Vector3.TransformNormal(vectorto, Matrix4.CreateRotationY(-(float)Math.PI / 2)); // + is clockwise.  Generate normal to vector on left side
@@ -66,7 +110,7 @@ namespace OpenTKUtils.GL4
             Vector4 l = new Vector4(start.X + leftnormal.X, start.Y + leftnormal.Y, start.Z + leftnormal.Z, 1);
             Vector4 r = new Vector4(start.X + rightnormal.X, start.Y + rightnormal.Y, start.Z + rightnormal.Z, 1);
             Vector4 segoff = new Vector4((end.X - start.X) / length * segmentlength, (end.Y - start.Y) / length * segmentlength, (end.Z - start.Z) / length * segmentlength, 0);
-
+            
             int i;
             for ( i = 0; i <= innersegments; i++ )   // include at least the start
             {
@@ -75,9 +119,6 @@ namespace OpenTKUtils.GL4
                 l += segoff;
                 r += segoff;
             }
-
-            tape[i * 2 + 1] = new Vector4(end.X + rightnormal.X, end.Y + rightnormal.Y, end.Z + rightnormal.Z, 1);
-            tape[i * 2 + 0] = new Vector4(end.X + leftnormal.X, end.Y + leftnormal.Y, end.Z + leftnormal.Z, 1);
 
             return tape;
         }

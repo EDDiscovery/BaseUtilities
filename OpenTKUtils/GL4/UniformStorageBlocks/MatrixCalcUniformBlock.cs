@@ -34,7 +34,7 @@ namespace OpenTKUtils.GL4
         public void SetMinimal(GLMatrixCalc c)
         {
             if (NotAllocated)
-                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
+                AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
             MapWrite(ref ptr, c.ProjectionModelMatrix);
@@ -44,7 +44,7 @@ namespace OpenTKUtils.GL4
         public void Set(GLMatrixCalc c)
         {
             if (NotAllocated)
-                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
+                AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             IntPtr ptr = Map(0, BufferSize);        // the whole schebang
             MapWrite(ref ptr, c.ProjectionModelMatrix);
@@ -59,7 +59,7 @@ namespace OpenTKUtils.GL4
         public void SetFull(GLMatrixCalc c) 
         {
             if (NotAllocated)
-                Allocate(maxmcubsize, BufferUsageHint.DynamicCopy);
+                AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
             Matrix4 screenmat = Matrix4.Zero;
             screenmat.Column0 = new Vector4(2.0f / c.ScreenSize.Width, 0, 0, -1);      // transform of x = x * 2 / width - 1

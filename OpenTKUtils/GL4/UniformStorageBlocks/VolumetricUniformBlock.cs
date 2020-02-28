@@ -30,7 +30,7 @@ namespace OpenTKUtils.GL4
         public int Set(GLMatrixCalc c, Vector4[] boundingbox, float slicesize) // return slices to show
         {
             if (NotAllocated)
-                Allocate(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment, not important to get precise
+                AllocateBytes(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment, not important to get precise
 
             IntPtr pb = Map(0, BufferSize);        // the whole schebang
 
@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4
                     maxzv = m.Z;
                 }
 
-                c.WorldToScreen(boundingbox[i], i.ToString() + " " );
+                //c.WorldToScreen(boundingbox[i], i.ToString() + " " );
             }
 
             //if (maxzv > 0)      // 0 is the eye plane in z, no point above it tbd
@@ -67,7 +67,7 @@ namespace OpenTKUtils.GL4
                 slices = Math.Max(1, (int)((maxzv-minzv) / slicesize));
             }
 
-            System.Diagnostics.Debug.WriteLine("..Z Calc {0} {1} slices {2} slicesize {3}", minzv, maxzv, slices, slicesize);
+           // System.Diagnostics.Debug.WriteLine("..Z Calc {0} {1} slices {2} slicesize {3}", minzv, maxzv, slices, slicesize);
 
             MapWrite(ref pb, minzv);
             MapWrite(ref pb, (float)slicesize);

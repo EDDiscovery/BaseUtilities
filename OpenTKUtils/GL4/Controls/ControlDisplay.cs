@@ -30,15 +30,17 @@ namespace OpenTKUtils.GL4.Controls
 
         public override bool Focused { get { return glwin.Focused; } }          // override focused to report if whole window is focused.
 
+        public Action<GLControlDisplay, GLBaseControl, GLBaseControl> GlobalFocusChanged { get; set; } = null;     // subscribe to get any focus changes (from old to new, may be null)
+
         // from Control, override the Mouse* and Key* events
 
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
 
-        public GLControlDisplay(GLWindowControl win) : base("displaycontrol", new Rectangle(0, 0, win.Width, win.Height))
+        public GLControlDisplay(GLItemsList items, GLWindowControl win) : base("displaycontrol", new Rectangle(0, 0, win.Width, win.Height))
         {
             glwin = win;
 
-            vertexes = new GLBuffer();
+            vertexes = items.NewBuffer();
 
             vertexarray = new GLVertexArray();
             vertexes.Bind(0, 0, vertexesperentry * sizeof(float));             // bind to 0, from 0, 2xfloats. Must bind after vertexarray is made as its bound during construction
@@ -48,7 +50,7 @@ namespace OpenTKUtils.GL4.Controls
             GLRenderControl rc = GLRenderControl.TriStrip();
             rc.PrimitiveRestart = 0xff;
             ri = new GLRenderableItem(rc, 0, vertexarray);     // create a renderable item
-            ri.CreateRectangleRestartIndexByte(255 / 5);
+            ri.CreateRectangleElementIndexByte(items,255 / 5);
             ri.DrawCount = 0;                               // nothing to draw at this point
 
             shader = new GLControlShader();
@@ -105,6 +107,8 @@ namespace OpenTKUtils.GL4.Controls
             GLBaseControl oldfocus = currentfocus;
             GLBaseControl newfocus = (ctrl != null && ctrl.Enabled && ctrl.Focusable) ? ctrl : null;
 
+            GlobalFocusChanged?.Invoke(this, oldfocus, newfocus);
+
             if (currentfocus != null)
             {
                 currentfocus.OnFocusChanged(false, newfocus);
@@ -146,7 +150,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (ControlsZ.Count > 0)            // may end up with nothing to draw, in which case, don't update anything
             {
-                vertexes.Allocate(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
+                vertexes.AllocateBytes(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
                 IntPtr p = vertexes.Map(0, vertexes.BufferSize);
 
                 float z = 0.0001f;      // we place it in clip space at a z near 0
@@ -482,6 +486,7 @@ namespace OpenTKUtils.GL4.Controls
         const int vertexesperentry = 4;
         private GLWindowControl glwin;
         private GLBuffer vertexes;
+        private GLBuffer elements;
         private GLVertexArray vertexarray;
         private Dictionary<GLBaseControl, GLTexture2D> textures;
         private GLBindlessTextureHandleBlock texturebinds;

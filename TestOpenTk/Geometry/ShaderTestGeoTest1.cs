@@ -170,10 +170,10 @@ void main(void)
             storagebuffer.AllocateFill(vertexes);
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index 1 for vector out
-            vecoutbuffer.Allocate(sizeof(float) * 4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            vecoutbuffer.AllocateBytes(sizeof(float) * 4 * 128, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             countbuffer = new GLStorageBlock(2);           // new storage block on binding index 2 for count out
-            countbuffer.Allocate(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.
+            countbuffer.AllocateBytes(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.
 
             items.Add("Shader", new ShaderT3());            // geo shader
             GLRenderControl ri = GLRenderControl.PointsByProgram();

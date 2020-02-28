@@ -215,13 +215,13 @@ void main(void)
 
 
             dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
+            dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             atomicbuffer = items.NewAtomicBlock(6);
-            atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
+            atomicbuffer.AllocateBytes(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
             pointblock = items.NewUniformBlock(1);
-            pointblock.Allocate(sizeof(float) * 4 * 8 + sizeof(float) * 30);        // plenty of space
+            pointblock.AllocateBytes(sizeof(float) * 4 * 8 + sizeof(float) * 30);        // plenty of space
 
             int hsize = 40, vsize = 20, zsize = 40;
             boundingbox = new Vector4[]

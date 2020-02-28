@@ -76,7 +76,7 @@ namespace OpenTKUtils.GL4
 
         public void WriteHandles( IGLTexture[] textures)
         {
-            Allocate(sizeof(long) * textures.Length * 2);
+            AllocateBytes(sizeof(long) * textures.Length * 2);
             IntPtr p = Map(0, BufferSize);
 
             for (int i = 0; i < textures.Length; i++)

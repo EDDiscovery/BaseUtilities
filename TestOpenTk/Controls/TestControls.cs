@@ -173,7 +173,7 @@ namespace TestOpenTk
 
                 //GLBaseControl.DefaultControlBackColor = Color.Orange;
 
-                displaycontrol = new GLControlDisplay(glwfc);       // hook form to the window - its the master
+                displaycontrol = new GLControlDisplay(items, glwfc);       // hook form to the window - its the master
                 displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
                 displaycontrol.Name = "displaycontrol";
                 displaycontrol.SuspendLayout();

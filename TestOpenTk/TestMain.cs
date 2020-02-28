@@ -102,6 +102,8 @@ namespace TestOpenTk
             #endregion
 
             #region coloured lines
+
+            if (true)
             {
                 GLRenderControl lines = GLRenderControl.Lines(1);
 
@@ -115,8 +117,13 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
-                                   );
+                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
+            }
+
+            if ( false )
+            {
+                GLRenderControl lines = GLRenderControl.Lines(1);
+
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
@@ -412,6 +419,7 @@ namespace TestOpenTk
 
             #region Tape
 
+            if (true)
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(0, 5, 10), new Vector3(100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
@@ -427,6 +435,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("tapeshader"), "tape1", GLRenderableItem.CreateVector4(items, rts, p , new GLRenderDataTexture(items.Tex("tapelogo"))));
             }
 
+            if (true)
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(-0, 5, 10), new Vector3(-100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
@@ -439,11 +448,30 @@ namespace TestOpenTk
                 GLRenderControl rts = GLRenderControl.TriStrip();
                 rts.CullFace = false;
 
-                rObjects.Add(items.Shader("tapeshader2"), "tape2", GLRenderableItem.CreateVector4(items, rts, p, new GLRenderDataTexture(items.Tex("tapelogo"))));
+                rObjects.Add(items.Shader("tapeshader2"), "tape2", GLRenderableItem.CreateVector4(items, rts, p, new GLRenderDataTexture(items.Tex("tapelogo2"))));
+            }
+
+            if (true)
+            {
+                Vector3[] points = new Vector3[] { new Vector3(100, 5, 40), new Vector3(0, 5, 100), new Vector3(-50, 5, 80), new Vector3(-60, 5, 40) };
+
+                var p = GLTapeObjectFactory.CreateTape(points.ToArray(), 4, 20, 90F.Radians(), ensureintegersamples: true, margin:0.5f);
+
+                items.Add("tapelogo3", new GLTexture2D(Properties.Resources.chevron));
+                items.Tex("tapelogo3").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
+                items.Add("tapeshader3", new GLTexturedShaderTriangleStripWithWorldCoord(true));
+
+                GLRenderControl rts = GLRenderControl.TriStrip(0xff);
+                rts.CullFace = false;
+
+                GLRenderableItem ri = GLRenderableItem.CreateVector4(items, rts, p.Item1.ToArray(), new GLRenderDataTexture(items.Tex("tapelogo3")));
+                ri.CreateElementIndexByte(items, p.Item2);
+
+                rObjects.Add(items.Shader("tapeshader3"), "tape3", ri);
             }
 
             #endregion
-            
+
             #region Screen coords
             // fixed point on screen
             {
@@ -500,7 +528,7 @@ namespace TestOpenTk
 
                 GLRenderControl rt = GLRenderControl.Tri();
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rt, v, 3);
-                ri.CreateByteIndex(vertex_indices,1);
+                ri.CreateElementIndexByte(items, vertex_indices,1);
 
                 items.Add("es1", new GLColourShaderWithWorldCoordXX());
                 rObjects.Add(items.Shader("es1"), "es1", ri);
@@ -527,7 +555,7 @@ namespace TestOpenTk
                 rts.CullFace = false;
 
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
-                ri.CreateRectangleRestartIndexByte(2,0xff);
+                ri.CreateRectangleElementIndexByte(items, 2,0xff);
 
                 items.Add("es2", new GLColourShaderWithWorldCoordXX());
 
@@ -555,11 +583,11 @@ namespace TestOpenTk
                 rts.CullFace = false;
 
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
-                ri.CreateRectangleRestartIndexByte(2);  // put the primitive restart markers in, but we won't use them
+                ri.CreateRectangleElementIndexByte(items,2);  // put the primitive restart markers in, but we won't use them
 
                 ri.IndirectBuffer = new GLBuffer();
                 ri.MultiDrawCount = 2;
-                ri.IndirectBuffer.Allocate(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
+                ri.IndirectBuffer.AllocateBytes(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
                 IntPtr p = ri.IndirectBuffer.Map(0, ri.IndirectBuffer.BufferSize);
                 ri.IndirectBuffer.MapWrite(ref p, 1.0f);        // dummy float to demo index offset
                 ri.BaseIndex = 4;       // and indicate that the base command index is 4
@@ -604,7 +632,7 @@ namespace TestOpenTk
                 GLRenderControl rts = GLRenderControl.TriStrip(0xff);
 
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
-                ri.CreateRectangleRestartIndexByte(2);
+                ri.CreateRectangleElementIndexByte(items,2);
 
                 items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord());
 
@@ -621,7 +649,7 @@ namespace TestOpenTk
 #endregion
 
             dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
+            dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
         }
 
@@ -654,8 +682,12 @@ namespace TestOpenTk
             ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("TEXOCT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
             ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
-            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees / 360f, 0.0f);
-            ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader2")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
+            if (items.Contains("tapeshader"))
+                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees / 360f, 0.0f);
+            if (items.Contains("tapeshader2"))
+                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader2")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
+            if (items.Contains("tapeshader3"))
+                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader3")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
 
             ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
 

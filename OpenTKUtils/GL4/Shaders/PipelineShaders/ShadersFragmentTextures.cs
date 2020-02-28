@@ -149,6 +149,17 @@ void main(void)
 {" +
 (backtoback ?
 @"
+// keep for debugging
+//    vec4 col[] = { vec4(0.4,0,0,1), vec4(0,0.4,0,1), vec4(0,0,0.4,1), vec4(0.4,0.4,0,1),vec4(0,0.4,0.4,1), vec4(0.4,0.4,0.4,1),
+//                   vec4(0.6,0.2,0,1), vec4(0,0.6,0,1), vec4(0,0,0.6,1), vec4(0.6,0.6,0,1),vec4(0,0.6,0.6,1), vec4(0.6,0.6,0.6,1),
+//                   vec4(0.8,0.4,0,1), vec4(0,0.8,0,1), vec4(0,0,0.8,1), vec4(0.8,0.8,0,1),vec4(0,0.8,0.8,1), vec4(0.8,0.8,0.8,1),
+//                   vec4(1.0,0.6,0,1), vec4(0,1.0,0,1), vec4(0,0,1.0,1), vec4(1.0,1.0,0,1),vec4(0,1.0,1.0,1), vec4(1.0,1.0,1.0,1),
+//};
+//if ( gl_PrimitiveID==12)
+//color = vec4(1,1,1,1);
+//else
+//color = col[gl_PrimitiveID];
+
     if ( gl_PrimitiveID % 4 < 2 )   // first two primitives have coords okay
     {
         color = texture(textureObject, vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f
@@ -157,6 +168,7 @@ void main(void)
     {
         color = texture(textureObject, vec2(1.0-vs_textureCoordinate.x,vs_textureCoordinate.y)+offset);       // vs_texture coords normalised 0 to 1.0f
     }
+
 " :
 @"
         color = texture(textureObject, vs_textureCoordinate+offset);       // vs_texture coords normalised 0 to 1.0f

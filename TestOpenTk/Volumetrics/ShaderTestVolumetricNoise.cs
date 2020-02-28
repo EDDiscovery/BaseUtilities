@@ -153,13 +153,13 @@ namespace TestOpenTk
             items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
 
             dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
+            dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             atomicbuffer = items.NewAtomicBlock(6);
-            atomicbuffer.Allocate(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
+            atomicbuffer.AllocateBytes(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
             dataoutbuffer = items.NewStorageBlock(5);
-            dataoutbuffer.Allocate(sizeof(float) * 4 * 256, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
+            dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 256, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             volumetricblock = new GLVolumetricUniformBlock();
             items.Add("VB",volumetricblock);

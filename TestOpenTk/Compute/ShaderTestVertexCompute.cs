@@ -146,7 +146,7 @@ void main(void)
             items.Add("N1", new GLShaderPipeline(new GLVertexShaderCompute()));
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index 1 which the vertex shader uses
-            vecoutbuffer.Allocate(sizeof(float) * 2048 + sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
+            vecoutbuffer.AllocateBytes(sizeof(float) * 2048 + sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
 
             //Vector4[] data = new Vector4[] {
             //    new Vector4(1, 2, 3, 0),
