@@ -142,53 +142,63 @@ namespace SQLLiteExtensions
                 {
                     while (!StopRequested && !SwitchToReadOnlyRequested)
                     {
-                        switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }, threadnum != 0 ? 10000 : Timeout.Infinite))
+                        switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }))
                         {
                             case 1:
                                 bool ro = ReadOnly;
+                                bool gotlock = false;
                                 try
                                 {
                                     Interlocked.Decrement(ref ThreadsAvailable);
 
-                                    if (ro)
+                                    while (JobQueue.Count != 0 && !StopRequested && !SwitchToReadOnlyRequested)
                                     {
-                                        ReadOnlyLock.AcquireReaderLock(Timeout.Infinite);
-                                    }
-                                    else
-                                    {
-                                        ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
-                                    }
+                                        try
+                                        {
+                                            if (ro)
+                                            {
+                                                ReadOnlyLock.AcquireReaderLock(1000);
+                                            }
+                                            else
+                                            {
+                                                ReadOnlyLock.AcquireWriterLock(1000);
+                                            }
 
-                                    while (JobQueue.TryDequeue(out Job job))
-                                    {
-                                        System.Diagnostics.Debug.Assert(recursiondepth++ == 0); // we must not have a call to Job.Exec() calling back. Should never happen but check
-                                                                                                //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
-                                        job.Exec();
-                                        recursiondepth--;
+                                            gotlock = true;
+                                        }
+                                        catch (ApplicationException)
+                                        {
+                                            continue;
+                                        }
+
+                                        while (JobQueue.TryDequeue(out Job job))
+                                        {
+                                            System.Diagnostics.Debug.Assert(recursiondepth++ == 0); // we must not have a call to Job.Exec() calling back. Should never happen but check
+                                                                                                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
+                                            job.Exec();
+                                            recursiondepth--;
+                                        }
                                     }
                                 }
                                 finally
                                 {
                                     Interlocked.Increment(ref ThreadsAvailable);
 
-                                    if (ro)
+                                    if (gotlock)
                                     {
-                                        ReadOnlyLock.ReleaseReaderLock();
-                                    }
-                                    else
-                                    {
-                                        ReadOnlyLock.ReleaseWriterLock();
+                                        if (ro)
+                                        {
+                                            ReadOnlyLock.ReleaseReaderLock();
+                                        }
+                                        else
+                                        {
+                                            ReadOnlyLock.ReleaseWriterLock();
+                                        }
                                     }
                                 }
                                 break;
                             case 0:
                                 return;
-                            case WaitHandle.WaitTimeout:
-                                if (threadnum != 0)
-                                {
-                                    return;
-                                }
-                                break;
                         }
                     }
                 }
@@ -281,8 +291,9 @@ namespace SQLLiteExtensions
         {
             if (!ReadOnly && !StopRequested)
             {
-                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
                 SwitchToReadOnlyRequested = true;
+                Interlocked.MemoryBarrier();
+                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
 
                 if (SqlThread != null)
                 {
@@ -305,15 +316,18 @@ namespace SQLLiteExtensions
         {
             if (ReadOnly)
             {
-                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
                 SwitchToReadOnlyRequested = true;
                 StopRequestedEvent.Set();
+                Interlocked.MemoryBarrier();
+                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
                 StopCompleted.WaitOne();
                 ReadOnly = false;
                 ReadOnlyLock.ReleaseWriterLock();
                 StopRequestedEvent.Reset();
 
                 while (ReadOnlyThreads.TryTake(out var thread));
+
+                SwitchToReadOnlyRequested = false;
 
                 SqlThread = new Thread(SqlThreadProc);
                 SqlThread.Name = SqlThreadName;
