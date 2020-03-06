@@ -12,11 +12,10 @@
  * governing permissions and limitations under the License.
  */
 
-
 using OpenTK;
-using OpenTK.Graphics;
 using System;
 using System.Collections.Generic;
+using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
@@ -30,7 +29,7 @@ namespace OpenTKUtils.GL4
         // series of tapes with a margin between them.  Set up to provide the element index buffer indices as well
         // aligns the element indexes for each tape to mod 4 to allow trianglestrip to work properly
 
-        public static Tuple<List<Vector4>, List<uint>> CreateTape(Vector3[] points, float width, float segmentlength = 1, float rotationaroundy = 0, 
+        public static Tuple<List<Vector4>, List<uint>, DrawElementsType> CreateTape(Vector3[] points, float width, float segmentlength = 1, float rotationaroundy = 0, 
                                                         bool ensureintegersamples = false, float margin = 0, uint restartindex = 0xffffffff)
         {
             List<Vector4> vec = new List<Vector4>();
@@ -58,7 +57,7 @@ namespace OpenTKUtils.GL4
 
             eids.RemoveAt(eids.Count - 1);  // remove last restart
 
-            return new Tuple<List<Vector4>, List<uint>>(vec, eids);
+            return new Tuple<List<Vector4>, List<uint>,DrawElementsType>(vec, eids,GL4Statics.DrawElementsTypeFromMaxEID(vno-1));
         }
         
 

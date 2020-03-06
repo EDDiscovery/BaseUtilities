@@ -66,7 +66,7 @@
     </Compile>
     <Compile Include="Galaxy\Map.cs" />
     <Compile Include="Galaxy\MapMenu.cs" />
-    <Compile Include="Galaxy\ShaderTravelPath.cs" />
+    <Compile Include="Galaxy\TravelPath.cs" />
     <Compile Include="Galaxy\ShaderStarDots.cs" />
     <Compile Include="Galaxy\TestDynamicGrid.cs">
       <SubType>Form</SubType>

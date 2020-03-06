@@ -521,9 +521,10 @@ namespace OpenTKUtils.GL4
 
         #region Binding a buffer to target 
 
-        public void Bind(int bindingindex, int start, int stride, int divisor = 0)      // a binding index on the currently bound VA
+        public void Bind(GLVertexArray va, int bindingindex, int start, int stride, int divisor = 0)      // set buffer binding to a VA
         {
-            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue && BufferSize > 0);     // catch unmap missing or nothing in buffer
+            System.Diagnostics.Debug.Assert(mapoffset == int.MinValue);     // catch unmap missing. Since binding to VA can be done before buffer is full, then don't check
+            va.Bind();
             GL.BindVertexBuffer(bindingindex, Id, (IntPtr)start, stride);      // this buffer to binding index
             GL.VertexBindingDivisor(bindingindex, divisor);
             OpenTKUtils.GLStatics.Check();

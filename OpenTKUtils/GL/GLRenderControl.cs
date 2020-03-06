@@ -13,10 +13,7 @@
  * governing permissions and limitations under the License.
  */
 
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
-using System;
 
 namespace OpenTKUtils
 {
@@ -28,11 +25,17 @@ namespace OpenTKUtils
         static public GLRenderControl TriStrip(FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
         { return new GLRenderControl(PrimitiveType.TriangleStrip) { FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
 
+        static public GLRenderControl TriStrip(uint primitiverestart, FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
+        { return new GLRenderControl(PrimitiveType.TriangleStrip) { PrimitiveRestart = primitiverestart, FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
+
+        static public GLRenderControl TriStrip(DrawElementsType primitiverestarttype, FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
+        { return new GLRenderControl(PrimitiveType.TriangleStrip) { PrimitiveRestart = GL4Statics.DrawElementsRestartValue(primitiverestarttype), FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
+
         static public GLRenderControl TriFan(FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
         { return new GLRenderControl(PrimitiveType.TriangleFan) { FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
 
-        static public GLRenderControl TriStrip(int primitiverestart, FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
-        { return new GLRenderControl(PrimitiveType.TriangleStrip) { PrimitiveRestart = primitiverestart, FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
+        static public GLRenderControl TriFan(DrawElementsType primitiverestarttype, FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
+        { return new GLRenderControl(PrimitiveType.TriangleFan) { PrimitiveRestart = GL4Statics.DrawElementsRestartValue(primitiverestarttype), FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
 
         static public GLRenderControl Quads(FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
         { return new GLRenderControl(PrimitiveType.Quads) { FrontFace = frontface, CullFace = cullface, PolygonModeFrontAndBack = polygonmode }; }
@@ -78,7 +81,7 @@ namespace OpenTKUtils
                 PointSmooth = true,
                 LineWidth = 1,
                 LineSmooth = true,
-                PrimitiveRestart = int.MinValue,
+                PrimitiveRestart = null,
             };
         }
 
@@ -155,15 +158,15 @@ namespace OpenTKUtils
 
             if (newstate.PrimitiveRestart.HasValue && PrimitiveRestart != newstate.PrimitiveRestart)
             {
-                if (newstate.PrimitiveRestart.Value == int.MinValue)      // disabled
-                    GL.Disable(EnableCap.PrimitiveRestart);
-                else
+                if (newstate.PrimitiveRestart.HasValue)         // is new state has value
                 {
-                    if (PrimitiveRestart == null || PrimitiveRestart.Value == int.MinValue)  // if last was off, turn it on
+                    if (PrimitiveRestart == null )              // if last was off, turn it on
                         GL.Enable(EnableCap.PrimitiveRestart);
 
-                    GL.PrimitiveRestartIndex(newstate.PrimitiveRestart.Value);
+                    GL.PrimitiveRestartIndex(newstate.PrimitiveRestart.Value);  // set
                 }
+                else
+                    GL.Disable(EnableCap.PrimitiveRestart);     // else disable
 
                 PrimitiveRestart = newstate.PrimitiveRestart;
             }
@@ -264,7 +267,7 @@ namespace OpenTKUtils
         public float? LineWidth { get;  set;} = null;                // lines
         public bool? LineSmooth { get; set; } = null;                // lines
 
-        public int? PrimitiveRestart { get; set; } = null;           // all, only when renderitems has ElementBuffer, int.MinValue disabled
+        public uint? PrimitiveRestart { get; set; } = null;          // all, only when renderitems has ElementBuffer, int.MinValue disabled
 
         // these affect all types so are configured to default for all
 

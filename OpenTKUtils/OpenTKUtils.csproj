@@ -85,6 +85,7 @@
     <Compile Include="GL4\Controls\Control.cs" />
     <Compile Include="GL4\Controls\ControlTabStyleCustom.cs" />
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
+    <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
     <Compile Include="GL\GLRenderControl.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />
@@ -124,7 +125,10 @@
     <Compile Include="GL4\UniformStorageBlocks\UniformsStorageBlocks.cs" />
     <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />
     <Compile Include="GL\GLClasses.cs" />
-    <Compile Include="GL\GLWinFormControl.cs" />
+    <Compile Include="GL4\BasicTypes\GL4Statics.cs" />
+    <Compile Include="GL\GLWinFormControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="GL\GLVector2Statics.cs" />
     <Compile Include="GL\GLVector3Statics.cs" />
     <Compile Include="GL\GLVector4Statics.cs" />

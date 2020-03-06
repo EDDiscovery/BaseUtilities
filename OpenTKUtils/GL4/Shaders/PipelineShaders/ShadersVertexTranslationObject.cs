@@ -22,8 +22,7 @@ namespace OpenTKUtils.GL4
     // Pipeline shader, Translation, Modelpos, transform
     // Requires:
     //      location 0 : position: vec4 vertex array of positions model coords
-    //      location 1 : vec3 model position
-    //      uniform 0 : GL MatrixCalc
+    //      uniform block 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
     //      gl_Position
@@ -44,9 +43,9 @@ out gl_PerVertex {
     };
 
 layout (location = 0) in vec4 position;
-layout (location = 1) out vec3 modelpos;
-
 layout (location = 22) uniform  mat4 transform;
+
+layout (location = 1) out vec3 modelpos;
 
 void main(void)
 {
@@ -62,6 +61,61 @@ void main(void)
         }
     }
 
+
+    // Pipeline shader, Common Model Translation, Seperate World pos, transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions model coords
+    //      location 1 : world-position: vec4 vertex array of world pos for model
+    //      uniform block 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation)
+    // Out:
+    //      gl_Position
+    //      modelpos
+
+    public class GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation : GLShaderPipelineShadersBase
+    {
+        public string Code()       // with transform, object needs to pass in uniform 22 the transform
+        {
+            return
+@"
+#version 450 core
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 0) in vec4 modelposition;
+layout (location = 1) in vec4 worldposition;
+layout (location = 22) uniform  mat4 transform;
+
+layout (location = 1) out vec3 modelpos;
+
+void main(void)
+{
+    modelpos = modelposition.xyz;
+    vec4 modelrot = transform * modelposition;
+    vec4 wp = modelrot + worldposition;
+	gl_Position = mc.ProjectionModelMatrix * wp;        // order important
+}
+";
+        }
+
+        public Matrix4 ModelTranslation { get; set; } = Matrix4.Identity;
+
+        public GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation()
+        {
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
+        }
+
+        public override void Start()
+        {
+            Matrix4 a = ModelTranslation;
+            GL.ProgramUniformMatrix4(Id, 22, false, ref a);
+            OpenTKUtils.GLStatics.Check();
+        }
+    }
 
     // Pipeline shader, Translation, Colour, Modelpos, transform
     // Requires:

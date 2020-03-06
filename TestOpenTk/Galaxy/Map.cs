@@ -29,9 +29,12 @@ namespace TestOpenTk
         private GLVolumetricUniformBlock volumetricblock;
         private GLRenderableItem galaxyrenderable;
         private GalaxyShader galaxyshader;
+
         private DynamicGridCoordVertexShader gridbitmapvertshader;
         private GLRenderableItem gridrenderable;
         private DynamicGridVertexShader gridvertshader;
+
+        private TravelPath travelpath;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -289,35 +292,21 @@ namespace TestOpenTk
             }
 
             // travel path
-            //if ( true )
-            //{
-            //    Random rnd = new Random(52);
-            //    List<Vector3> pos = new List<Vector3>();
-            //    for( int  i = 0; i < 1500; i += 500 )
-            //    {
-            //        pos.Add(new Vector3(i + rnd.Next(1000) - 500, rnd.Next(1000), i));
-            //    }
+            if (true)
+            {
+                Random rnd = new Random(52);
+                List<Vector3> pos = new List<Vector3>();
+                for (int i = 0; i <= 60000; i += 500)
+                {
+                    if (i < 30000)
+                        pos.Add(new Vector3(i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                    else
+                        pos.Add(new Vector3(60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                }
 
-            //    var vectorarray = GLTapeObjectFactory.CreateTape(pos.ToArray(), 10, 20, 0F.Radians(), ensureintegersamples: true, margin:20f).ToArray();
-
-            //    var vb = items.NewBuffer();
-            //    vb.AllocateFill(vectorarray);
-
-            //    items.Add("tapelogo", new GLTexture2D(Properties.Resources.chevron));
-
-            //    items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
-
-            //    items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord(true));
-
-            //    GLRenderControl rts = GLRenderControl.TriStrip();
-            //    rts.CullFace = false;
-            //    rts.DepthTest = false;
-
-            //    GLRenderableItem tape = GLRenderableItem.CreateVector4(items, rts, vb, vectorarray.Length, 0, new GLRenderDataTexture(items.Tex("tapelogo")));
-
-            //    rObjects.Add(items.Shader("tapeshader"), "tape1", tape);
-
-            //}
+                travelpath = new TravelPath();
+                travelpath.CreatePath(items, rObjects, pos);
+            }
 
 
             displaycontrol = new GLControlDisplay(items, glwfc);       // hook form to the window - its the master
@@ -445,6 +434,23 @@ namespace TestOpenTk
             if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 EnableToggleStarDots();
+            }
+
+            // DEBUG!
+            if (kb.HasBeenPressed(Keys.F2, OpenTKUtils.Common.KeyboardMonitor.ShiftState.Shift))
+            {
+                Random rnd = new Random(System.Environment.TickCount);
+                List<Vector3> pos = new List<Vector3>();
+                for (int i = 0; i <= 60000; i += 500)
+                {
+                    if (i < 30000)
+                        pos.Add(new Vector3(i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                    else
+                        pos.Add(new Vector3(60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                }
+
+                travelpath.CreatePath(null, null, pos);
+                glwfc.Invalidate();
             }
         }
 

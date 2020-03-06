@@ -42,15 +42,15 @@ namespace OpenTKUtils.GL4.Controls
 
             vertexes = items.NewBuffer();
 
-            vertexarray = new GLVertexArray();
-            vertexes.Bind(0, 0, vertexesperentry * sizeof(float));             // bind to 0, from 0, 2xfloats. Must bind after vertexarray is made as its bound during construction
+            vertexarray = new GLVertexArray();   
+            vertexes.Bind(vertexarray,0, 0, vertexesperentry * sizeof(float));             // bind to 0, from 0, 2xfloats. Must bind after vertexarray is made as its bound during construction
 
             vertexarray.Attribute(0, 0, vertexesperentry, OpenTK.Graphics.OpenGL4.VertexAttribType.Float); // bind 0 on attr 0, 2 components per vertex
 
             GLRenderControl rc = GLRenderControl.TriStrip();
             rc.PrimitiveRestart = 0xff;
             ri = new GLRenderableItem(rc, 0, vertexarray);     // create a renderable item
-            ri.CreateRectangleElementIndexByte(items,255 / 5);
+            ri.CreateRectangleElementIndexByte(items.NewBuffer(), 255 / 5);
             ri.DrawCount = 0;                               // nothing to draw at this point
 
             shader = new GLControlShader();

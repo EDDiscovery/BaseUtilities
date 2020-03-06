@@ -30,9 +30,8 @@ namespace OpenTKUtils.GL4
         public GLVertexArray()
         {
             Id = GL.GenVertexArray();        // get the handle
-            GL.BindVertexArray(Id);          // creates the array
         }
-        
+
         public virtual void Bind()
         {
             GL.BindVertexArray(Id);                  // Bind vertex

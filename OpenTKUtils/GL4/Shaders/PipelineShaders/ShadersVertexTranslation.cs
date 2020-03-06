@@ -20,16 +20,18 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
+
     // Pipeline shader, Translation
     // Requires:
     //      location 0 : position: vec4 vertex array of positions of model
-    //      uniform 0 : GL MatrixCalc
+    //      uniform block 0 : GL MatrixCalc
     //      uniform 4 : transform: mat4 array of transforms
     // Out:
     //      vs_color is based on instance ID mostly for debugging
     //      gl_Position
+    //      modelpos
 
-    public class GLPLVertexShaderMatrixModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
+    public class GLPLVertexShaderModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -47,16 +49,18 @@ out gl_PerVertex {
     };
 
 out vec4 vs_color;
+layout (location = 1) out vec3 modelpos;
 
 void main(void)
 {
+    modelpos = position.xyz;
     vs_color = vec4(gl_InstanceID*0.2+0.2,gl_InstanceID*0.2+0.2,0.5+gl_VertexID*0.1,1.0);       // colour may be thrown away if required..
 	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
 }
 ";
         }
 
-        public GLPLVertexShaderMatrixModelCoordWithMatrixTranslation()
+        public GLPLVertexShaderModelCoordWithMatrixTranslation()
         {
             CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
@@ -66,11 +70,12 @@ void main(void)
     // Requires:
     //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec2 texture co-ordinates
-    //      uniform 0 : GL MatrixCalc
+    //      uniform block 0 : GL MatrixCalc
     //      uniform 4 : transform: mat4 array of transforms
     // Out:
     //      vs_textureCoordinate
     //      gl_Position
+    //      modelpos
 
     public class GLPLVertexShaderTextureModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
@@ -84,6 +89,8 @@ void main(void)
 
 layout (location = 0) in vec4 position;
 layout (location = 4) in mat4 transform;
+
+layout (location = 1) out vec3 modelpos;
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -102,6 +109,7 @@ out vec2 vs_textureCoordinate;
 
 void main(void)
 {
+    modelpos = position.xyz;
 	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
     vs_textureCoordinate = texco;
     vs_out.vs_instanced = gl_InstanceID;

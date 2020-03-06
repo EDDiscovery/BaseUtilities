@@ -13,11 +13,8 @@
  * governing permissions and limitations under the License.
  */
 
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace OpenTKUtils

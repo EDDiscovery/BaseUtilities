@@ -122,9 +122,9 @@ namespace OpenTKUtils.GL4
             vb.Fill(colours,vectors.Length);
 
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], 16);
+            vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
-            vb.Bind(1, vb.Positions[1], 16);
+            vb.Bind(va, 1, vb.Positions[1], 16);
             va.Attribute(1, 1, 4, VertexAttribType.Float);
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
@@ -133,11 +133,10 @@ namespace OpenTKUtils.GL4
         public static GLRenderableItem CreateVector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, IGLRenderItemData id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
-            vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length);
-            vb.Fill(vectors);
+            vb.AllocateFill(vectors);
 
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], 16);        // bind buffer to binding point 0
+            vb.Bind(va, 0, vb.Positions[0], 16);        // bind buffer to binding point 0
             va.Attribute(0, 0, 4, VertexAttribType.Float);  // bind binding point 0 to attribute point 0 with 4 float components
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
@@ -146,13 +145,45 @@ namespace OpenTKUtils.GL4
         public static GLRenderableItem CreateVector4(GLItemsList items, GLRenderControl pt, GLBuffer vb, int drawcount, int pos = 0, IGLRenderItemData id = null, int ic = 1)
         {
             var va = items.NewArray();
-            vb.Bind(0, pos, 16);
+            vb.Bind(va, 0, pos, 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
             return new GLRenderableItem(pt, drawcount, va, id, ic);
         }
 
+        // in 0,1 set up.  Second vector can be instance divided
+        public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Vector4[] secondvector, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var vb = items.NewBuffer();
+            vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length + GLBuffer.Vec4size * secondvector.Length);
+            vb.Fill(vectors);
+            vb.Fill(secondvector);
+
+            var va = items.NewArray();
+            vb.Bind(va, 0, vb.Positions[0], 16);
+            va.Attribute(0, 0, 4, VertexAttribType.Float);
+            vb.Bind(va, 1, vb.Positions[1], 16, seconddivisor);
+            va.Attribute(1, 1, 4, VertexAttribType.Float);
+            return new GLRenderableItem(pt, vectors.Length, va, id, ic);
+        }
+
+        // in 0,1 set up. Second vector can be instance divided
+        public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, GLBuffer buf2, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var vb = items.NewBuffer();
+            vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length);
+            vb.Fill(vectors);
+
+            var va = items.NewArray();
+            vb.Bind(va, 0, vb.Positions[0], 16);
+            va.Attribute(0, 0, 4, VertexAttribType.Float);
+
+            buf2.Bind(va, 1, 0, 16, seconddivisor);        // presuming starting at 0 in buf2
+            va.Attribute(1, 1, 4, VertexAttribType.Float);
+            return new GLRenderableItem(pt, vectors.Length, va, id, ic);
+        }
+
         // in 0,1 set up
-        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Vector2[] coords, IGLRenderItemData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Vector2[] coords, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
             var vb = items.NewBuffer();
             vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length + GLBuffer.Vec2size * coords.Length);
@@ -160,16 +191,16 @@ namespace OpenTKUtils.GL4
             vb.Fill(coords);
 
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], 16);
+            vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
-            vb.Bind(1, vb.Positions[1], 8);
+            vb.Bind(va, 1, vb.Positions[1], 8, seconddivisor);
             va.Attribute(1, 1, 2, VertexAttribType.Float);
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Tuple<Vector4[], Vector2[]> vectors, IGLRenderItemData id = null, int ic = 1)
+        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Tuple<Vector4[], Vector2[]> vectors, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
-            return CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic);
+            return CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic, seconddivisor);
         }
 
         public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, GLRenderControl pt,
@@ -211,13 +242,13 @@ namespace OpenTKUtils.GL4
             vbuf1.Fill(coords);
             vbuf2.Fill(instanceposition);
 
-            vbuf1.Bind(0, vbuf1.Positions[0], 16);
+            vbuf1.Bind(va, 0, vbuf1.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
 
-            vbuf1.Bind(1, vbuf1.Positions[1], 8);
+            vbuf1.Bind(va, 1, vbuf1.Positions[1], 8);
             va.Attribute(1, 1, 2, VertexAttribType.Float);
 
-            vbuf2.Bind(2, instanceposition!=null ? vbuf2.Positions[posi] : 0, 16, divisorinstance);
+            vbuf2.Bind(va, 2, instanceposition!=null ? vbuf2.Positions[posi] : 0, 16, divisorinstance);
             va.Attribute(2, 2, 4, VertexAttribType.Float);
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
@@ -255,14 +286,14 @@ namespace OpenTKUtils.GL4
             if ( instancematrix != null )
                 vbuf2.Fill(instancematrix);
 
-            vbuf1.Bind(0, vbuf1.Positions[0], 16);
+            vbuf1.Bind(va, 0, vbuf1.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);      // bp 0 at 0 
 
-            vbuf1.Bind(1, vbuf1.Positions[1], 8);
+            vbuf1.Bind(va, 1, vbuf1.Positions[1], 8);
             va.Attribute(1, 1, 2, VertexAttribType.Float);      // bp 1 at 1
 
             va.MatrixAttribute(2, 4);                           // bp 2 at 4-7
-            vbuf2.Bind(2, instancematrix != null ? vbuf2.Positions[posi]: 0, 64, matrixdivisor);     // use a binding 
+            vbuf2.Bind(va, 2, instancematrix != null ? vbuf2.Positions[posi]: 0, 64, matrixdivisor);     // use a binding 
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
@@ -278,10 +309,10 @@ namespace OpenTKUtils.GL4
 
             var va = items.NewArray();
 
-            vb.Bind(0, vb.Positions[0], 16);
+            vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);      // bp 0 at attrib 0
 
-            vb.Bind(2, vb.Positions[1], 64, matrixdivisor);     // use a binding 
+            vb.Bind(va, 2, vb.Positions[1], 64, matrixdivisor);     // use a binding 
             va.MatrixAttribute(2, 4);                           // bp 2 at attribs 4-7
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
@@ -294,7 +325,7 @@ namespace OpenTKUtils.GL4
             vb.AllocateBytes(sizeof(uint) * 2 * vectors.Length);
             vb.FillPacked2vec(vectors, offsets, mult);
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], 8);
+            vb.Bind(va, 0, vb.Positions[0], 8);
             va.AttributeI(0, 0, 2, VertexAttribType.UnsignedInt);
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
@@ -308,7 +339,7 @@ namespace OpenTKUtils.GL4
             //float[] ouwt = vb.ReadFloats(0, floats.Length); // test read back
 
             var va = items.NewArray();
-            vb.Bind(0, vb.Positions[0], sizeof(float)*components);    
+            vb.Bind(va, 0, vb.Positions[0], sizeof(float)*components);    
             va.Attribute(0, 0, components, VertexAttribType.Float);
 
             return new GLRenderableItem(pt, floats.Length / components, va, id, ic);
@@ -324,9 +355,9 @@ namespace OpenTKUtils.GL4
 
         #region Create element indexs for this RI
 
-        public void CreateRectangleElementIndexByte(GLItemsList items, int reccount, int restartindex = 0xff)
+        public void CreateRectangleElementIndexByte(GLBuffer elementbuf, int reccount, int restartindex = 0xff)
         {
-            ElementBuffer = items.NewBuffer();
+            ElementBuffer = elementbuf;
             ElementBuffer.FillRectangularIndicesBytes(reccount, restartindex);
             DrawType = DrawElementsType.UnsignedByte;
             DrawCount = ElementBuffer.BufferSize - 1;
@@ -334,17 +365,17 @@ namespace OpenTKUtils.GL4
             //byte[] b = ReadBuffer(0, buf.BufferSize); // test read back
         }
 
-        public void CreateRectangleElementIndexUShort(GLItemsList items, int reccount, int restartindex = 0xffff)
+        public void CreateRectangleElementIndexUShort(GLBuffer elementbuf, int reccount, int restartindex = 0xffff)
         {
-            ElementBuffer = items.NewBuffer();
+            ElementBuffer = elementbuf;
             ElementBuffer.FillRectangularIndicesShort(reccount, restartindex);
             DrawType = DrawElementsType.UnsignedShort;
             DrawCount = ElementBuffer.BufferSize - 1;
         }
 
-        public void CreateElementIndexByte(GLItemsList items, byte[] indexes, int base_vertex = 0, int base_index = 0)
+        public void CreateElementIndexByte(GLBuffer elementbuf, byte[] indexes, int base_vertex = 0, int base_index = 0)
         {
-            ElementBuffer = items.NewBuffer();
+            ElementBuffer = elementbuf;
             ElementBuffer.AllocateFill(indexes);
             DrawType = DrawElementsType.UnsignedByte;
             BaseVertex = base_vertex;
@@ -352,31 +383,27 @@ namespace OpenTKUtils.GL4
             DrawCount = indexes.Length;
         }
 
-        public void CreateElementIndexByte(GLItemsList items, System.Collections.Generic.List<uint> eids, int base_vertex = 0, int base_index = 0)
+        // create an index, to the drawtype size
+        public void CreateElementIndex(GLBuffer elementbuf, System.Collections.Generic.List<uint> eids, DrawElementsType drawtype, int base_vertex = 0, int base_index = 0)
         {
-            ElementBuffer = items.NewBuffer();
-            ElementBuffer.AllocateFill(eids.Select(x => (byte)x).ToArray());
-            DrawType = DrawElementsType.UnsignedByte;
-            BaseVertex = base_vertex;
-            BaseIndex = base_index;
-            DrawCount = eids.Count;
-        }
+            ElementBuffer = elementbuf;
 
-        public void CreateElementIndexShort(GLItemsList items, System.Collections.Generic.List<uint> eids, int base_vertex = 0, int base_index = 0)
-        {
-            ElementBuffer = items.NewBuffer();
-            ElementBuffer.AllocateFill(eids.Select(x => (ushort)x).ToArray());
-            DrawType = DrawElementsType.UnsignedShort;
-            BaseVertex = base_vertex;
-            BaseIndex = base_index;
-            DrawCount = eids.Count;
-        }
+            if (drawtype == DrawElementsType.UnsignedByte)
+            {
+                ElementBuffer.AllocateFill(eids.Select(x => (byte)x).ToArray());
+            }
+            else if (drawtype == DrawElementsType.UnsignedShort)
+            {
+                ElementBuffer.AllocateFill(eids.Select(x => (ushort)x).ToArray());
+                DrawType = DrawElementsType.UnsignedShort;
+            }
+            else
+            {
+                ElementBuffer.AllocateFill(eids.ToArray());
+                DrawType = DrawElementsType.UnsignedInt;
+            }
 
-        public void CreateRestartIndexInt(GLItemsList items, System.Collections.Generic.List<uint> eids, int base_vertex = 0, int base_index = 0)
-        {
-            ElementBuffer = items.NewBuffer();
-            ElementBuffer.AllocateFill(eids.ToArray());
-            DrawType = DrawElementsType.UnsignedInt;
+            DrawType = drawtype;
             BaseVertex = base_vertex;
             BaseIndex = base_index;
             DrawCount = eids.Count;

@@ -56,69 +56,6 @@ namespace TestOpenTk
         // Demonstrate buffer feedback AND geo shader add vertex/dump vertex
 
 
-        public class GLFragmentShaderStarTexture : GLShaderPipelineShadersBase
-        {
-            const int BindingPoint = 1;
-
-            public string Fragment()
-            {
-                return
-    @"
-#version 450 core
-layout (location = 1) in vec3 modelpos;
-out vec4 color;
-
-layout (location = 10) uniform float frequency;
-layout (location = 11) uniform float unRadius;      // km
-layout (location = 12) uniform float s;
-layout (location = 13) uniform float blackdeepness;
-layout (location = 14) uniform float concentrationequator;
-layout (location = 15) uniform float unDTsurface;
-layout (location = 16) uniform float unDTspots;
-
-#include OpenTKUtils.GL4.Shaders.Functions.snoise3.glsl
-
-void main(void)
-{
-    vec3 position = normalize(modelpos);        // normalise model vectors
-
-    float theta = dot(vec3(0,1,0),position);    // dotp between cur pos and up -1 to +1, 0 at equator
-    theta = abs(theta);                         // uniform around equator.
-
-    float clip = s + (theta/concentrationequator);               // clip sets the pass criteria to do the sunspots
-    vec3 sPosition = (position + unDTspots) * unRadius;
-    float t1 = simplexnoise(sPosition * frequency) -clip;
-    float t2 = simplexnoise((sPosition + unRadius) * frequency) -clip;
-	float ss = (max(t1, 0.0) * max(t2, 0.0)) * blackdeepness;
-
-    vec3 p1 = vec3(position.x+unDTsurface,position.y,position.z);   // moving the noise across x produces a more realistic look
-    float n = (simplexnoise(p1, 4, 40.0, 0.7) + 1.0) * 0.5;      // noise of surface..
-
-    vec3 baseColor = vec3(0.9, 0.9 ,0.0);
-    baseColor = baseColor - ss - n/4;
-    color = vec4(baseColor, 1.0);
-}
-";
-            }
-
-            public float TimeDeltaSurface { get; set; } = 0;
-            public float TimeDeltaSpots { get; set; } = 0;
-
-            public GLFragmentShaderStarTexture()
-            {
-                CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, Fragment(), auxname:GetType().Name);
-            }
-
-            public override void Start()
-            {
-                GL.ProgramUniform1(Id, 15, TimeDeltaSurface);
-                GL.ProgramUniform1(Id, 16, TimeDeltaSpots);
-                OpenTKUtils.GLStatics.Check();
-                System.Diagnostics.Debug.WriteLine("Star draw");
-
-            }
-        }
-
 
 
         public class GLShaderStarCorona : GLShaderStandard
@@ -201,7 +138,10 @@ void main(void)
     vec3 starcolor = unColor * brightness;
 
     alpha = pow(alpha,1.8);             // exp roll of of alpha so it does go to 0, and therefore it does not show box
-    color = vec4(starcolor, alpha );
+    if ( alpha < 0.2 )
+        discard;
+    else
+        color = vec4(starcolor, alpha );
 }
 ";
             }
@@ -221,15 +161,6 @@ void main(void)
                 OpenTKUtils.GLStatics.Check();
             }
         }
-
-
-        // 0.001/200000/0.5 with *4 is good
-        float frequency = 0.00005f;     // higher, more but small
-        float unRadius = 200000;        // lower, more diffused
-        float scutoff = 0.5f;           // bar to pass, lower more, higher lots 0.4 lots, 0.6 few
-        float blackdeepness = 8;        // how dark is each spot
-        float concentrationequator = 4; // how spread out
-
 
         protected override void OnLoad(EventArgs e)
         {
@@ -277,21 +208,21 @@ void main(void)
 
                 rObjects.Add(items.Shader("TEX"), "sphere7",
                         GLRenderableItem.CreateVector4Vector2(items, rt,
-                            GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 20.0f),
-                            new GLRenderDataTranslationRotationTexture(items.Tex("moon"), new Vector3(30, 0, 0))
+                            GLSphereObjectFactory.CreateTexturedSphereFromTriangles(4, 10.0f),
+                            new GLRenderDataTranslationRotationTexture(items.Tex("moon"), new Vector3(-30, 0, 0))
                         ));
             }
 
             {
-                items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLFragmentShaderStarTexture()));
+                items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLPLStarSurfaceFragmentShader()));
 
                 GLRenderControl rt = GLRenderControl.Tri();
 
                 rObjects.Add(items.Shader("STAR"), "sun",
                        GLRenderableItem.CreateVector4(items,
                                rt,
-                               GLSphereObjectFactory.CreateSphereFromTriangles(3, 20.0f),
-                               new GLRenderDataTranslationRotation(new Vector3(1, 1, 1)),
+                               GLSphereObjectFactory.CreateSphereFromTriangles(3, 10.0f),
+                               new GLRenderDataTranslationRotation(new Vector3(20, 0, 0)),
                                ic: 1));
 
                 items.Add("CORONA", new GLShaderStarCorona());
@@ -301,7 +232,23 @@ void main(void)
                 rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items,
                                         rq,
                                         GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLRenderDataTranslationRotation(new Vector3(1, 1, 1), new Vector3(0, 0, 0), 40f, calclookat: true)));
+                                        new GLRenderDataTranslationRotation(new Vector3(20, 0, 0), new Vector3(0, 0, 0), 20f, calclookat: true)));
+            }
+
+            {
+                Vector4[] pos = new Vector4[3];
+                pos[0] = new Vector4(-20, 0, 10, 0);
+                pos[1] = new Vector4(0, 0, 10, 0);
+                pos[2] = new Vector4(20, 0, 10, 0);
+
+                var shape = GLSphereObjectFactory.CreateSphereFromTriangles(3, 10.0f);
+
+                GLRenderControl rt = GLRenderControl.Tri();
+                GLRenderableItem ri = GLRenderableItem.CreateVector4Vector4(items, rt, shape, pos, null, pos.Length, 1);
+
+                items.Add("STAR-M2", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(), new GLPLStarSurfaceFragmentShader()));
+
+                rObjects.Add(items.Shader("STAR-M2"), "sun2", ri);
             }
 
 
@@ -344,16 +291,17 @@ void main(void)
             if (items.Contains("STAR"))
             {
                 int vid = items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader).Id;
-
-                GL.ProgramUniform1(vid, 10, frequency);
-                GL.ProgramUniform1(vid, 11, unRadius);
-                GL.ProgramUniform1(vid, 12, scutoff);
-                GL.ProgramUniform1(vid, 13, blackdeepness);
-                GL.ProgramUniform1(vid, 14, concentrationequator);
-
                 ((GLRenderDataTranslationRotation)(rObjects["sun"].RenderData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+                var stellarsurfaceshader = (GLPLStarSurfaceFragmentShader)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+                stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
+                stellarsurfaceshader.TimeDeltaSurface = timediv100s;
+            }
 
-                var stellarsurfaceshader = (GLFragmentShaderStarTexture)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
+            if (items.Contains("STAR-M2"))
+            {
+                var vid = items.Shader("STAR-M2").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
+                ((GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation)vid).ModelTranslation = Matrix4.CreateRotationY((float)(-zeroone10s*Math.PI*2));
+                var stellarsurfaceshader = (GLPLStarSurfaceFragmentShader)items.Shader("STAR-M2").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
                 stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
                 stellarsurfaceshader.TimeDeltaSurface = timediv100s;
             }
@@ -371,8 +319,8 @@ void main(void)
 
 
             //this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
-            this.Text = "Freq " + frequency.ToString("#.#########") + " unRadius " + unRadius + " scutoff" + scutoff + " BD " + blackdeepness + " CE " + concentrationequator
-            + "    Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = //"Freq " + frequency.ToString("#.#########") + " unRadius " + unRadius + " scutoff" + scutoff + " BD " + blackdeepness + " CE " + concentrationequator
+            "    Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
 
         }
 
@@ -385,26 +333,26 @@ void main(void)
         private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )
         {
             float fact = kb.Shift ? 10 : kb.Alt ? 100 : 1;
-            if (kb.IsCurrentlyPressed(Keys.F1) != null)
-                frequency -= 0.000001f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F2) != null)
-                frequency += 0.000001f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F5) != null)
-                unRadius -= 10 * fact;
-            if (kb.IsCurrentlyPressed(Keys.F6) != null)
-                unRadius += 10 * fact;
-            if (kb.IsCurrentlyPressed(Keys.F7) != null)
-                scutoff -= 0.001f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F8) != null)
-                scutoff += 0.001f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F9) != null)
-                blackdeepness -= 0.1f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F10) != null)
-                blackdeepness += 0.1f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F11) != null)
-                concentrationequator -= 0.1f * fact;
-            if (kb.IsCurrentlyPressed(Keys.F12) != null)
-                concentrationequator += 0.1f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F1) != null)
+            //    frequency -= 0.000001f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F2) != null)
+            //    frequency += 0.000001f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F5) != null)
+            //    unRadius -= 10 * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F6) != null)
+            //    unRadius += 10 * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F7) != null)
+            //    scutoff -= 0.001f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F8) != null)
+            //    scutoff += 0.001f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F9) != null)
+            //    blackdeepness -= 0.1f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F10) != null)
+            //    blackdeepness += 0.1f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F11) != null)
+            //    concentrationequator -= 0.1f * fact;
+            //if (kb.IsCurrentlyPressed(Keys.F12) != null)
+            //    concentrationequator += 0.1f * fact;
         }
     }
 }

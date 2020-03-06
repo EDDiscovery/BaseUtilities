@@ -22,7 +22,6 @@ namespace TestOpenTk
 
             systemtimer.Interval = 25;
             systemtimer.Tick += new EventHandler(SystemTick);
-            systemtimer.Start();
         }
 
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
@@ -45,6 +44,7 @@ namespace TestOpenTk
             Closed += ShaderTest_Closed;
             map = new Map(glwfc);
             map.Start();
+            systemtimer.Start();
         }
 
         private void SystemTick(object sender, EventArgs e)
