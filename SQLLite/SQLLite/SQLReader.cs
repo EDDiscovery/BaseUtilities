@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 EDDiscovery development team
+ * Copyright © 2019-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -26,12 +26,6 @@ namespace SQLLiteExtensions
     // database
     public class SQLExtDataReader<TConn> : DbDataReader  where TConn : SQLExtConnection
     {
-        // This is the wrapped reader
-        protected DbDataReader InnerReader { get; set; }
-        protected DbCommand command;
-        protected SQLExtTransaction<TConn> transaction;
-        protected SQLExtTransactionLock<TConn> txnlock;
-
         public SQLExtDataReader(DbCommand cmd, CommandBehavior behaviour, SQLExtTransaction<TConn> txn = null, SQLExtTransactionLock<TConn> txnlock = null)
         {
             this.command = cmd;
@@ -135,7 +129,10 @@ namespace SQLLiteExtensions
                 txnlock = null;
             }
         }
+
+        protected DbDataReader InnerReader { get; set; }
+        protected DbCommand command;
+        protected SQLExtTransaction<TConn> transaction;
+        protected SQLExtTransactionLock<TConn> txnlock;
     }
-
-
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 EDDiscovery development team
+ * Copyright © 2019-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -31,17 +31,7 @@ namespace SQLLiteExtensions
 
     public abstract class SQLExtConnection : IDisposable              // USE this for connections.. 
     {
-        // note access mode is not currently used, but its kept for future use in case we can optimise the DB for a particular mode
         public enum AccessMode { Reader, Writer, ReaderWriter };           
-
-        protected DbConnection connection;      // the connection
-        protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
-        protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();  
-        public string DBFile { get; protected set; }
-
-        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging to track connections
-
-        private bool hasbeendisposed = false;
 
         protected SQLExtConnection( AccessMode mode = AccessMode.ReaderWriter )
         {
@@ -253,5 +243,13 @@ namespace SQLLiteExtensions
         {
             return connection.GetType();
         }
+
+
+        protected DbConnection connection;      // the connection
+        protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
+        protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();
+        public string DBFile { get; protected set; }
+        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging to track connections
+        private bool hasbeendisposed = false;
     }
 }

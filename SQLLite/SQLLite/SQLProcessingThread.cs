@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace SQLLiteExtensions
@@ -27,7 +29,7 @@ namespace SQLLiteExtensions
         }
     }
 
-    public class SQLProcessingThread<ConnectionType> where ConnectionType: IDisposable, new()
+    public abstract class SQLProcessingThread<ConnectionType> where ConnectionType: IDisposable
     {
         private abstract class Job
         {
@@ -104,41 +106,116 @@ namespace SQLLiteExtensions
         private Thread SqlThread;
         private ManualResetEvent StopRequestedEvent = new ManualResetEvent(false);
         private bool StopRequested = false;
+        private bool SwitchToReadOnlyRequested = false;
         private AutoResetEvent JobQueuedEvent = new AutoResetEvent(false);
         private ManualResetEvent StopCompleted = new ManualResetEvent(true);
+        private ReaderWriterLock ReadOnlyLock = new ReaderWriterLock();
+        protected bool ReadOnly { get; private set; } = false;
+        private string SqlThreadName;
+        private ConcurrentBag<Thread> ReadOnlyThreads = new ConcurrentBag<Thread>();
+        private int ThreadsAvailable = 0;
+        private int RunningThreads = 0;
 
         public long? SqlThreadId => SqlThread?.ManagedThreadId;
-        private int recursiondepth = 0;
 
-        protected ConnectionType Connection;
+        protected ThreadLocal<ConnectionType> Connection = new ThreadLocal<ConnectionType>(true);
+
+        protected abstract ConnectionType CreateConnection();
 
         private void SqlThreadProc()    // SQL process thread
         {
-            using (Connection = new ConnectionType())   // hold connection over whole period.
+            int recursiondepth = 0;
+            int threadnum = ReadOnlyThreads.Count;
+
+            if (StopRequested)
             {
-                while (!StopRequested)
+                return;
+            }
+
+            try
+            {
+                Interlocked.Increment(ref ThreadsAvailable);
+                Interlocked.Increment(ref RunningThreads);
+                StopCompleted.Reset();
+
+                using (Connection.Value = CreateConnection())   // hold connection over whole period.
                 {
-                    switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }))
+                    while (!StopRequested && !SwitchToReadOnlyRequested)
                     {
-                        case 1:
-                            while (JobQueue.TryDequeue(out Job job))
-                            {
-                                System.Diagnostics.Debug.Assert(recursiondepth++ == 0); // we must not have a call to Job.Exec() calling back. Should never happen but check
-                                //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
-                                job.Exec();
-                                recursiondepth--;
-                            }
-                            break;
+                        switch (WaitHandle.WaitAny(new WaitHandle[] { StopRequestedEvent, JobQueuedEvent }))
+                        {
+                            case 1:
+                                bool ro = ReadOnly;
+                                bool gotlock = false;
+                                try
+                                {
+                                    Interlocked.Decrement(ref ThreadsAvailable);
+
+                                    while (JobQueue.Count != 0 && !StopRequested && !SwitchToReadOnlyRequested)
+                                    {
+                                        try
+                                        {
+                                            if (ro)
+                                            {
+                                                ReadOnlyLock.AcquireReaderLock(1000);
+                                            }
+                                            else
+                                            {
+                                                ReadOnlyLock.AcquireWriterLock(1000);
+                                            }
+
+                                            gotlock = true;
+                                        }
+                                        catch (ApplicationException)
+                                        {
+                                            continue;
+                                        }
+
+                                        while (JobQueue.TryDequeue(out Job job))
+                                        {
+                                            System.Diagnostics.Debug.Assert(recursiondepth++ == 0); // we must not have a call to Job.Exec() calling back. Should never happen but check
+                                                                                                    //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
+                                            job.Exec();
+                                            recursiondepth--;
+                                        }
+                                    }
+                                }
+                                finally
+                                {
+                                    Interlocked.Increment(ref ThreadsAvailable);
+
+                                    if (gotlock)
+                                    {
+                                        if (ro)
+                                        {
+                                            ReadOnlyLock.ReleaseReaderLock();
+                                        }
+                                        else
+                                        {
+                                            ReadOnlyLock.ReleaseWriterLock();
+                                        }
+                                    }
+                                }
+                                break;
+                            case 0:
+                                return;
+                        }
                     }
                 }
             }
-
-            StopCompleted.Set();
+            finally
+            {
+                Interlocked.Decrement(ref ThreadsAvailable);
+                if (Interlocked.Decrement(ref RunningThreads) == 0)
+                {
+                    StopCompleted.Set();
+                }
+            }
         }
 
         protected T Execute<T>(Func<T> func, int skipframes = 1, int warnthreshold = 500)  // in caller thread, queue to job queue, wait for complete
         {
-            if (StopCompleted.WaitOne(0))
+            if (StopRequested && StopCompleted.WaitOne(0))
             {
                 throw new ObjectDisposedException(this.GetType().Name);
             }
@@ -156,6 +233,12 @@ namespace SQLLiteExtensions
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Queue Job " + Thread.CurrentThread.Name);
                     JobQueue.Enqueue(job);
                     JobQueuedEvent.Set();           // kick the thread to execute it.
+
+                    if (ThreadsAvailable == 0 && ReadOnly && !SwitchToReadOnlyRequested)
+                    {
+                        StartReadonlyThread();
+                    }
+
                     return job.Wait();     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Job finished " + sw.ElapsedMilliseconds + " " + Thread.CurrentThread.Name);
                 }
@@ -169,12 +252,12 @@ namespace SQLLiteExtensions
 
         public void ExecuteWithDatabase(Action<ConnectionType> action, int warnthreshold = 500)
         {
-            Execute<object>(() => { action.Invoke(Connection); return null; }, warnthreshold: warnthreshold);
+            Execute<object>(() => { action.Invoke(Connection.Value); return null; }, warnthreshold: warnthreshold);
         }
 
         public T ExecuteWithDatabase<T>(Func<ConnectionType, T> func, int warnthreshold = 500)
         {
-            return Execute(() => func.Invoke(Connection), warnthreshold: warnthreshold);
+            return Execute(() => func.Invoke(Connection.Value), warnthreshold: warnthreshold);
         }
 
         public void Start(string threadname)
@@ -183,8 +266,9 @@ namespace SQLLiteExtensions
             StopRequestedEvent.Reset();
             StopCompleted.Reset();
 
-            if (SqlThread == null)
+            if (SqlThread == null && ReadOnly == false)
             {
+                SqlThreadName = threadname;
                 SqlThread = new Thread(SqlThreadProc);
                 SqlThread.Name = threadname;
                 SqlThread.IsBackground = true;
@@ -193,16 +277,111 @@ namespace SQLLiteExtensions
             }
         }
 
+        private void StartReadonlyThread()
+        {
+            var thread = new Thread(SqlThreadProc);
+            thread.Name = $"{SqlThreadName} RO {ReadOnlyThreads.Count}";
+            thread.IsBackground = true;
+            System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name} SQL Thread {SqlThreadName} RO {ReadOnlyThreads.Count}");
+            thread.Start();
+            ReadOnlyThreads.Add(thread);
+        }
+
+        public void SetReadOnly()
+        {
+            if (!ReadOnly && !StopRequested)
+            {
+                SwitchToReadOnlyRequested = true;
+                Interlocked.MemoryBarrier();
+                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
+
+                if (SqlThread != null)
+                {
+                    System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name} SQL Thread " + SqlThreadName);
+                    StopRequestedEvent.Set();
+                    StopCompleted.WaitOne();
+                    System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stopped {typeof(ConnectionType).Name} SQL " + SqlThreadName);
+                    SqlThread = null;
+                }
+
+                ReadOnly = true;
+                SwitchToReadOnlyRequested = false;
+                StopRequestedEvent.Reset();
+                ReadOnlyLock.ReleaseWriterLock();
+                StartReadonlyThread();
+            }
+        }
+
+        public void SetReadWrite()
+        {
+            if (ReadOnly)
+            {
+                SwitchToReadOnlyRequested = true;
+                StopRequestedEvent.Set();
+                Interlocked.MemoryBarrier();
+                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
+                StopCompleted.WaitOne();
+                ReadOnly = false;
+                ReadOnlyLock.ReleaseWriterLock();
+                StopRequestedEvent.Reset();
+
+                while (ReadOnlyThreads.TryTake(out var thread));
+
+                SwitchToReadOnlyRequested = false;
+
+                SqlThread = new Thread(SqlThreadProc);
+                SqlThread.Name = SqlThreadName;
+                SqlThread.IsBackground = true;
+                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name} SQL Thread " + SqlThreadName);
+                SqlThread.Start();
+            }
+        }
+
+        public T WithReadWrite<T>(Func<T> action)
+        {
+            if (ReadOnly)
+            {
+                SetReadWrite();
+
+                try
+                {
+                    return action();
+                }
+                finally
+                {
+                    SetReadOnly();
+                }
+            }
+            else
+            {
+                return action();
+            }
+        }
+
+        public void WithReadWrite(Action action)
+        {
+            WithReadWrite<object>(() => { action(); return null; });
+        }
+
         public void Stop()
         {
-            if (SqlThread != null)
+            ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
+
+            try
             {
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name} SQL Thread " + SqlThread.Name);
-                StopRequested = true;
-                StopRequestedEvent.Set();
-                StopCompleted.WaitOne();
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stopped {typeof(ConnectionType).Name} SQL " + SqlThread.Name);
-                SqlThread = null;
+                if (SqlThread != null || ReadOnlyThreads.Count != 0)
+                {
+                    System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stop {typeof(ConnectionType).Name} SQL Thread " + SqlThreadName);
+                    StopRequested = true;
+                    StopRequestedEvent.Set();
+                    StopCompleted.WaitOne();
+                    System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Stopped {typeof(ConnectionType).Name} SQL " + SqlThreadName);
+                    SqlThread = null;
+                }
+            }
+            finally
+            {
+                ReadOnlyLock.ReleaseWriterLock();
             }
         }
     }

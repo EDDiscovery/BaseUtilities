@@ -31,10 +31,4 @@
   <ItemGroup>
     <ProjectReference Include="..\BaseUtilities\BaseUtils.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="SQLLite\Notes.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
 </Project>

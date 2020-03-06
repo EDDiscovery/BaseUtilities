@@ -79,9 +79,19 @@ namespace OpenTKUtils.Common
             this.glControl.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl_MouseUp);
             this.glControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl_OnMouseWheel);
             this.glControl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
-            this.glControl.KeyDown += new KeyEventHandler(keyboard.KeyDown);
-            this.glControl.KeyUp += new KeyEventHandler(keyboard.KeyUp);
+            this.glControl.KeyDown += GlControl_KeyDown;
+            this.glControl.KeyUp += GlControl_KeyUp;
             this.glControl.Resize += GlControl_Resize;
+        }
+
+        private void GlControl_KeyUp(object sender, KeyEventArgs e)
+        {
+            keyboard.KeyUp(e.Control, e.Shift, e.Alt, e.KeyCode);
+        }
+
+        private void GlControl_KeyDown(object sender, KeyEventArgs e)
+        {
+            keyboard.KeyDown(e.Control, e.Shift, e.Alt, e.KeyCode);
         }
 
         public void Start(Vector3 lookat, Vector3 cameradir, float zoomn)
@@ -99,21 +109,7 @@ namespace OpenTKUtils.Common
             sysinterval.Start();
         }
 
-        // Pos Direction interface
-        // don't want direct class access, via this wrapper
-        public void SetPosition(Vector3 posx) { pos.Set(posx); }
-        public void TranslatePosition(Vector3 posx) { pos.Translate(posx); }
-        public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F ) { pos.GoTo(normpos, timeslewsec, unitspersecond); }
-
-        public void SetCameraDir(Vector3 pos) { camera.Set(pos); }
-        public void RotateCameraDir(Vector3 rot) { camera.Rotate(rot); }
-        public void StartCameraPan(Vector3 pos, float timeslewsec = 0) { camera.Pan(pos, timeslewsec);     }
-        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0)          { camera.LookAt(pos.Current, normtarget, zoom, time);        }
-
         public void KillSlews() { pos.KillSlew(); camera.KillSlew(); zoom.KillSlew(); }
-
-        // Zoom
-        public void StartZoom(float z, float timetozoom = 0) { zoom.GoTo(z, timetozoom); }
 
         // misc
 

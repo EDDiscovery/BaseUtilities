@@ -33,34 +33,34 @@ namespace OpenTKUtils.Common
                 distance *= 2.0F;
 
             //Console.WriteLine("Distance " + distance + " zoom " + _zoom + " lzoom " + zoomlimited );
-            if (kbd.IsAnyPressed(Keys.Left, Keys.A))
+            if (kbd.IsCurrentlyPressed(Keys.Left, Keys.A) != null)
             {
                 cameraActionMovement.X = -distance;
             }
-            else if (kbd.IsAnyPressed(Keys.Right, Keys.D))
+            else if (kbd.IsCurrentlyPressed(Keys.Right, Keys.D) != null)
             {
                 cameraActionMovement.X = distance;
             }
 
-            if (kbd.IsAnyPressed(Keys.PageUp, Keys.R))
+            if (kbd.IsCurrentlyPressed(Keys.PageUp, Keys.R) != null)
             {
                 if (inperspectivemode)
                     cameraActionMovement.Z = distance;
             }
-            else if (kbd.IsAnyPressed(Keys.PageDown, Keys.F))
+            else if (kbd.IsCurrentlyPressed(Keys.PageDown, Keys.F) != null)
             {
                 if (inperspectivemode)
                     cameraActionMovement.Z = -distance;
             }
 
-            if (kbd.IsAnyPressed(Keys.Up, Keys.W))
+            if (kbd.IsCurrentlyPressed(Keys.Up, Keys.W) != null)
             {
                 if (inperspectivemode)
                     cameraActionMovement.Y = distance;
                 else
                     cameraActionMovement.Z = distance;
             }
-            else if (kbd.IsAnyPressed(Keys.Down, Keys.S))
+            else if (kbd.IsCurrentlyPressed(Keys.Down, Keys.S) != null)
             {
                 if (inperspectivemode)
                     cameraActionMovement.Y = -distance;
@@ -109,13 +109,13 @@ namespace OpenTKUtils.Common
 
             bool changed = false;
 
-            if (kbd.IsAnyPressed(Keys.Add, Keys.Z))
+            if (kbd.IsCurrentlyPressed(Keys.Add, Keys.Z) != null)
             {
                 zoom.Multiply(adjustment);
                 changed = true;
             }
 
-            if (kbd.IsAnyPressed(Keys.Subtract, Keys.X))
+            if (kbd.IsCurrentlyPressed(Keys.Subtract, Keys.X) != null)
             {
                 zoom.Multiply(1.0f/adjustment);
                 changed = true;
@@ -123,27 +123,28 @@ namespace OpenTKUtils.Common
 
             float newzoom = 0;
 
-            if (kbd.IsPressed(Keys.D1))
+            if (kbd.HasBeenPressed(Keys.D1))
                 newzoom = zoom.ZoomMax;
-            if (kbd.IsPressed(Keys.D2))
+            if (kbd.HasBeenPressed(Keys.D2))
                 newzoom = 100;                                                      // Factor 3 scale
-            if (kbd.IsPressed(Keys.D3))
+            if (kbd.HasBeenPressed(Keys.D3))
                 newzoom = 33;
-            if (kbd.IsPressed(Keys.D4))
+            if (kbd.HasBeenPressed(Keys.D4))
                 newzoom = 11F;
-            if (kbd.IsPressed(Keys.D5))
+            if (kbd.HasBeenPressed(Keys.D5))
                 newzoom = 3.7F;
-            if (kbd.IsPressed(Keys.D6))
+            if (kbd.HasBeenPressed(Keys.D6))
                 newzoom = 1.23F;
-            if (kbd.IsPressed(Keys.D7))
+            if (kbd.HasBeenPressed(Keys.D7))
                 newzoom = 0.4F;
-            if (kbd.IsPressed(Keys.D8))
+            if (kbd.HasBeenPressed(Keys.D8))
                 newzoom = 0.133F;
-            if (kbd.IsPressed(Keys.D9))
+            if (kbd.HasBeenPressed(Keys.D9))
                 newzoom = zoom.ZoomMin;
 
             if (newzoom != 0)
             {
+                System.Diagnostics.Debug.WriteLine("Zoom to " + newzoom);
                 zoom.GoTo(newzoom, -1);
                 changed = true;
             }
@@ -156,29 +157,29 @@ namespace OpenTKUtils.Common
             Vector3 cameraActionRotation = Vector3.Zero;
 
             var angle = (float)msticks * 0.075f;
-            if (kbd.IsPressed(Keys.NumPad4))
+            if (kbd.HasBeenPressed(Keys.NumPad4))
             {
                 cameraActionRotation.Z = -angle;
             }
-            if (kbd.IsPressed(Keys.NumPad6))
+            if (kbd.HasBeenPressed(Keys.NumPad6))
             {
                 cameraActionRotation.Z = angle;
             }
-            if (kbd.IsAnyPressed(Keys.NumPad5, Keys.NumPad2))
+            if (kbd.IsCurrentlyPressed(Keys.NumPad5, Keys.NumPad2) != null)
             {
                 cameraActionRotation.X = -angle;
             }
-            if (kbd.IsPressed(Keys.NumPad8))
+            if (kbd.HasBeenPressed(Keys.NumPad8))
             {
                 cameraActionRotation.X = angle;
             }
-            if (kbd.IsAnyPressed(Keys.NumPad7, Keys.Q))
-            {
-                cameraActionRotation.Y = angle;
-            }
-            if (kbd.IsAnyPressed(Keys.NumPad9, Keys.E))
+            if (kbd.IsCurrentlyPressed(Keys.NumPad7, Keys.Q) != null)
             {
                 cameraActionRotation.Y = -angle;
+            }
+            if (kbd.IsCurrentlyPressed(Keys.NumPad9, Keys.E) != null)
+            {
+                cameraActionRotation.Y = angle;
             }
 
             if (cameraActionRotation.LengthSquared > 0)

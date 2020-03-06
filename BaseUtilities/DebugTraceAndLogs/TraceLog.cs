@@ -30,6 +30,7 @@ namespace BaseUtils
         public static string LogFileName { get; private set; }
         public static string LogFileBaseName { get; private set; }
         public static Thread LogFileWriterThread;
+        public static bool DisableLogDeduplication { get; set; }
         private static BlockingCollection<string> LogLineQueue = new BlockingCollection<string>();
         private static AutoResetEvent LogLineQueueEvent = new AutoResetEvent(false);
 
@@ -46,13 +47,17 @@ namespace BaseUtils
                 {
                     logline.Value.Append(value);
                     string logval = logline.ToString();
-                    while (logval.Contains("\n"))
+
+                    if (logval.Contains("\n"))
                     {
-                        string[] lines = logval.Split(new[] { '\n' }, 2);
-                        TraceLog.WriteLine(lines[0]);
                         logline.Value.Clear();
-                        logline.Value.Append(lines.Length == 2 ? lines[1] : "");
-                        logval = logline.ToString();
+                        var lastnewline = logval.LastIndexOf('\n');
+                        TraceLog.WriteLine(logval.Substring(0, lastnewline));
+                        if (lastnewline < logval.Length - 1)
+                        {
+                            logval = logval.Substring(lastnewline + 1);
+                            logline.Value.Append(logval);
+                        }
                     }
                 }
             }
@@ -74,8 +79,10 @@ namespace BaseUtils
                 LogFileWriterThread.Start();
                 System.Diagnostics.Trace.AutoFlush = true;
                 // Log trace events to the above file
-                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(new TraceLogWriter()));
-                Console.SetOut(new TraceLogWriter());
+                var tlw = new TraceLogWriter();
+                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
+                //System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.ConsoleTraceListener(true));
+                Console.SetOut(tlw);
             }
         }
 
@@ -111,16 +118,23 @@ namespace BaseUtils
                                     LogLineQueueEvent.Set();
                                     return;
                                 }
-                                else if (msgrepeats.ContainsKey(msg))
+                                else if (!DisableLogDeduplication && msgrepeats.ContainsKey(msg))
                                 {
                                     msgrepeats[msg]++;
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"[{DateTime.UtcNow.ToStringZulu()}] {msg}");
+                                    var lines = msg.Split('\n');
+                                    var timestamp = DateTime.UtcNow.ToStringZulu();
+
+                                    foreach (var line in lines)
+                                    {
+                                        writer.WriteLine($"[{timestamp}] {line}");
+                                        linenum++;
+                                    }
+
                                     writer.Flush();
                                     msgrepeats[msg] = 0;
-                                    linenum++;
                                     if (linenum >= 100000)
                                     {
                                         partnum++;
@@ -146,6 +160,9 @@ namespace BaseUtils
                             }
                         }
                     }
+                }
+                catch (ThreadAbortException)
+                {
                 }
                 catch (Exception ex)
                 {
