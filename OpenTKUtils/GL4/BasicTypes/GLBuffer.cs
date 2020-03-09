@@ -107,6 +107,8 @@ namespace OpenTKUtils.GL4
             Fill(vertices);
         }
 
+        // no Vector3 on purpose, they don't work well with opengl
+
         public void Fill(Vector4[] vertices)
         {
             int datasize = vertices.Length * Vec4size;

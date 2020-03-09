@@ -452,7 +452,7 @@ namespace TestOpenTk
 
             if (true)
             {
-                Vector3[] points = new Vector3[] { new Vector3(100, 5, 40), new Vector3(0, 5, 100), new Vector3(-50, 5, 80), new Vector3(-60, 5, 40) };
+                Vector4[] points = new Vector4[] { new Vector4(100, 5, 40, 0), new Vector4(0, 5, 100, 0), new Vector4(-50, 5, 80, 0), new Vector4(-60, 5, 40, 0) };
 
                 var p = GLTapeObjectFactory.CreateTape(points.ToArray(), 4, 20, 90F.Radians(), ensureintegersamples: true, margin:0.5f);
 

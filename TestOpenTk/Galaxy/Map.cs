@@ -295,17 +295,17 @@ namespace TestOpenTk
             if (true)
             {
                 Random rnd = new Random(52);
-                List<Vector3> pos = new List<Vector3>();
+                List<ISystem> pos = new List<ISystem>();
                 for (int i = 0; i <= 60000; i += 500)
                 {
                     if (i < 30000)
-                        pos.Add(new Vector3(i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                        pos.Add(new ISystem(i.ToString(), i + rnd.Next(1000) - 500, rnd.Next(100), i));
                     else
-                        pos.Add(new Vector3(60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                        pos.Add(new ISystem(i.ToString(), 60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
                 }
 
                 travelpath = new TravelPath();
-                travelpath.CreatePath(items, rObjects, pos);
+                travelpath.CreatePath(items, rObjects, pos, 20, 2);
             }
 
 
@@ -342,6 +342,20 @@ namespace TestOpenTk
             galaxymenu = new MapMenu(this);
         }
 
+        public void Systick()
+        {
+            if (displaycontrol != null && displaycontrol.RequestRender)
+                glwfc.Invalidate();
+            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            glwfc.Invalidate();
+        }
+
+        double fpsavg = 0;
+        long lastms;
+
+        float lasteyedistance = 100000000;
+        int lastgridwidth;
+
         private void Controller3DDraw(GLMatrixCalc mc, long time)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
@@ -366,6 +380,8 @@ namespace TestOpenTk
                 galaxyshader.SetDistance(gl3dcontroller.MatrixCalc.InPerspectiveMode ? mc.EyeDistance : -1f);
             }
 
+            travelpath.Update(time);
+
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
             long t = sw.ElapsedMilliseconds;
@@ -380,17 +396,6 @@ namespace TestOpenTk
             //            this.Text = "FPS " + fpsavg.ToString("N0") + " Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
-        double fpsavg = 0;
-        long lastms;
-        float lasteyedistance = 100000000;
-        int lastgridwidth;
-
-        public void Systick()
-        {
-            if (displaycontrol != null && displaycontrol.RequestRender)
-                glwfc.Invalidate();
-            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
-        }
 
         public void EnableToggleGalaxy(bool? on = null)
         {
@@ -414,6 +419,17 @@ namespace TestOpenTk
             return items.Shader("SD").Enabled;
         }
 
+        public void EnableToggleTravelPath(bool? on = null)
+        {
+            travelpath.EnableToggle(on);
+            glwfc.Invalidate();
+        }
+
+        public bool TravelPathEnabled()
+        {
+            return travelpath.Enabled();
+        }
+
         private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)
         {
             if (kb.HasBeenPressed(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
@@ -435,21 +451,25 @@ namespace TestOpenTk
             {
                 EnableToggleStarDots();
             }
+            if (kb.HasBeenPressed(Keys.F7, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                EnableToggleTravelPath();
+            }
 
             // DEBUG!
             if (kb.HasBeenPressed(Keys.F2, OpenTKUtils.Common.KeyboardMonitor.ShiftState.Shift))
             {
                 Random rnd = new Random(System.Environment.TickCount);
-                List<Vector3> pos = new List<Vector3>();
+                List<ISystem> pos = new List<ISystem>();
                 for (int i = 0; i <= 60000; i += 500)
                 {
                     if (i < 30000)
-                        pos.Add(new Vector3(i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                        pos.Add(new ISystem(i.ToString(), i + rnd.Next(1000) - 500, rnd.Next(100), i));
                     else
-                        pos.Add(new Vector3(60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
+                        pos.Add(new ISystem(i.ToString(), 60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
                 }
 
-                travelpath.CreatePath(null, null, pos);
+                travelpath.CreatePath(null, null, pos, 20, 2);
                 glwfc.Invalidate();
             }
         }

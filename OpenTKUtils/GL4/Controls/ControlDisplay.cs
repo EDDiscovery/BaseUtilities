@@ -486,7 +486,6 @@ namespace OpenTKUtils.GL4.Controls
         const int vertexesperentry = 4;
         private GLWindowControl glwin;
         private GLBuffer vertexes;
-        private GLBuffer elements;
         private GLVertexArray vertexarray;
         private Dictionary<GLBaseControl, GLTexture2D> textures;
         private GLBindlessTextureHandleBlock texturebinds;

@@ -12,9 +12,9 @@ using OpenTKUtils.GL4.Controls;
 
 namespace TestOpenTk
 {
-    public partial class TestGalaxyDemo3 : Form
+    public partial class TestGalaxy : Form
     {
-        public TestGalaxyDemo3()
+        public TestGalaxy()
         {
             InitializeComponent();
 

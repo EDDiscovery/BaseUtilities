@@ -102,6 +102,7 @@ void main(void)
         {
             frag.SetFader(eyedist);
         }
+       
     }
 
 }

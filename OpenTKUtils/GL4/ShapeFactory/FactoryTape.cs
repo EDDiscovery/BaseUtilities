@@ -29,7 +29,7 @@ namespace OpenTKUtils.GL4
         // series of tapes with a margin between them.  Set up to provide the element index buffer indices as well
         // aligns the element indexes for each tape to mod 4 to allow trianglestrip to work properly
 
-        public static Tuple<List<Vector4>, List<uint>, DrawElementsType> CreateTape(Vector3[] points, float width, float segmentlength = 1, float rotationaroundy = 0, 
+        public static Tuple<List<Vector4>, List<uint>, DrawElementsType> CreateTape(Vector4[] points, float width, float segmentlength = 1, float rotationaroundy = 0, 
                                                         bool ensureintegersamples = false, float margin = 0, uint restartindex = 0xffffffff)
         {
             List<Vector4> vec = new List<Vector4>();
@@ -46,7 +46,7 @@ namespace OpenTKUtils.GL4
                     vno += 2;
                 }
 
-                Vector4[] vec1 = CreateTape(points[i], points[i + 1], width, segmentlength, rotationaroundy, ensureintegersamples,margin);
+                Vector4[] vec1 = CreateTape(points[i].ToVector3(), points[i + 1].ToVector3(), width, segmentlength, rotationaroundy, ensureintegersamples,margin);
                 vec.AddRange(vec1);
 
                 for (int l = 0; l < vec1.Length; l++)

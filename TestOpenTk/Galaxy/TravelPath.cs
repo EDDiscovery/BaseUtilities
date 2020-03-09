@@ -12,48 +12,92 @@ using System.Threading.Tasks;
 
 namespace TestOpenTk
 {
-    //class ISystem
-    //{
-    //    public double X, Y, Z;
-    //    public string Name;
-    //}
+    class ISystem
+    {
+        public double X, Y, Z;
+        public string Name;
+        public ISystem(string n, double x, double y, double z) { Name = n;X = x;Y = y;Z = z; }
+    }
 
     class TravelPath
     {
-        private GLRenderableItem ri;
-        private GLBuffer pointbuf;
-        
-        public void CreatePath(GLItemsList items, GLRenderProgramSortedList rObjects, List<Vector3> pos)
-        {
-            var tape = GLTapeObjectFactory.CreateTape(pos.ToArray(), 10, 20, 0F.Radians(), ensureintegersamples: true, margin: 20f);
+        private GLTexturedShaderTriangleStripWithWorldCoord tapeshader;
+        private GLShaderPipeline sunshader;
+        private GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation sunvertex;
+        private GLRenderableItem ritape;
+        private GLBuffer tapepointbuf;
+        private GLBuffer starposbuf;
 
-            if ( ri == null ) // first time..
+        public void CreatePath(GLItemsList items, GLRenderProgramSortedList rObjects, List<ISystem> pos, float sunsize, float tapesize)
+        {
+            var positionsv4 = pos.Select(x => new Vector4((float)x.X, (float)x.Y, (float)x.Z, 0)).ToArray();
+            float seglen = tapesize * 10;
+
+            var tape = GLTapeObjectFactory.CreateTape(positionsv4, tapesize, seglen, 0F.Radians(), ensureintegersamples: true, margin: sunsize*1.2f);
+
+            if ( ritape == null ) // first time..
             {
                 // create shaders
                 items.Add("tapelogo", new GLTexture2D(Properties.Resources.chevron));
                 items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
-                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord(true));
+                tapeshader = new GLTexturedShaderTriangleStripWithWorldCoord(true);
+                items.Add("tapeshader", tapeshader );
 
                 GLRenderControl rts = GLRenderControl.TriStrip(tape.Item3, cullface: false);
                 rts.DepthTest = false;
 
-                ri = GLRenderableItem.CreateVector4(items, rts, tape.Item1.ToArray(), new GLRenderDataTexture(items.Tex("tapelogo")));
-                pointbuf = items.LastBuffer();
+                ritape = GLRenderableItem.CreateVector4(items, rts, tape.Item1.ToArray(), new GLRenderDataTexture(items.Tex("tapelogo")));
+                tapepointbuf = items.LastBuffer();
 
-                ri.CreateElementIndex(items.NewBuffer(), tape.Item2, tape.Item3);
+                ritape.CreateElementIndex(items.NewBuffer(), tape.Item2, tape.Item3);
 
-                rObjects.Add(items.Shader("tapeshader"), "traveltape", ri);
+                rObjects.Add(items.Shader("tapeshader"), "traveltape", ritape);
 
-                items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLPLStarSurfaceFragmentShader()));
+                starposbuf = items.NewBuffer();
+                starposbuf.AllocateFill(positionsv4);
 
+                sunvertex = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation();
+                sunshader = new GLShaderPipeline(sunvertex, new GLPLStarSurfaceFragmentShader());
+                items.Add("STAR-PATH-SUNS", sunshader);
 
+                var shape = GLSphereObjectFactory.CreateSphereFromTriangles(3, sunsize);
 
+                GLRenderControl rt = GLRenderControl.Tri();
+                rt.DepthTest = false;
+                GLRenderableItem rs = GLRenderableItem.CreateVector4Vector4(items, rt, shape, starposbuf, 0, null, pos.Count, 1);
+
+                rObjects.Add(items.Shader("STAR-PATH-SUNS"), "star-path-suns", rs);
+
+                // tbd now names - maybe autoscale the suns
             }
             else
             {
-                pointbuf.AllocateFill(tape.Item1.ToArray());        // replace the points with a new one
-                ri.CreateElementIndex(ri.ElementBuffer, tape.Item2, tape.Item3);       // update the element buffer
+                tapepointbuf.AllocateFill(tape.Item1.ToArray());        // replace the points with a new one
+                ritape.CreateElementIndex(ritape.ElementBuffer, tape.Item2, tape.Item3);       // update the element buffer
+
+                starposbuf.AllocateFill(positionsv4);
             }
+        }
+
+        public bool Enabled()
+        {
+            return tapeshader.Enabled;
+        }
+
+        public void EnableToggle(bool? on = null)
+        {
+            bool beon = on.HasValue ? on.Value : !Enabled();
+            sunshader.Enabled = tapeshader.Enabled = beon;
+        }
+
+        public void Update(long time)
+        {
+            const int rotperiodms = 10000;
+            time = time % rotperiodms;
+            float fract = (float)time / rotperiodms;
+            float angle = (float)(2 * Math.PI * fract);
+            sunvertex.ModelTranslation = Matrix4.CreateRotationY(-angle);
+            tapeshader.TexOffset = new Vector2(-(float)(time%2000)/2000, 0);
         }
     }
 

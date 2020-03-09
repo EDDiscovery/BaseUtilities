@@ -68,28 +68,28 @@
     <Compile Include="Galaxy\MapMenu.cs" />
     <Compile Include="Galaxy\TravelPath.cs" />
     <Compile Include="Galaxy\ShaderStarDots.cs" />
-    <Compile Include="Galaxy\TestDynamicGrid.cs">
+    <Compile Include="GalaxyDemo\TestDynamicGrid.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Galaxy\TestDynamicGrid.designer.cs">
+    <Compile Include="GalaxyDemo\TestDynamicGrid.designer.cs">
       <DependentUpon>TestDynamicGrid.cs</DependentUpon>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo3.cs">
+    <Compile Include="Galaxy\TestGalaxy.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo3.designer.cs">
-      <DependentUpon>TestGalaxyDemo3.cs</DependentUpon>
+    <Compile Include="Galaxy\TestGalaxy.designer.cs">
+      <DependentUpon>TestGalaxy.cs</DependentUpon>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo2.cs">
+    <Compile Include="GalaxyDemo\TestGalaxyDemo2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo2.designer.cs">
+    <Compile Include="GalaxyDemo\TestGalaxyDemo2.designer.cs">
       <DependentUpon>TestGalaxyDemo2.cs</DependentUpon>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo1.cs">
+    <Compile Include="GalaxyDemo\TestGalaxyDemo1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Galaxy\TestGalaxyDemo1.designer.cs">
+    <Compile Include="GalaxyDemo\TestGalaxyDemo1.designer.cs">
       <DependentUpon>TestGalaxyDemo1.cs</DependentUpon>
     </Compile>
     <Compile Include="Galaxy\ShaderGalaxy.cs" />
@@ -210,16 +210,16 @@
     <EmbeddedResource Include="Controls\TestControls.resx">
       <DependentUpon>TestControls.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Galaxy\TestDynamicGrid.resx">
+    <EmbeddedResource Include="GalaxyDemo\TestDynamicGrid.resx">
       <DependentUpon>TestDynamicGrid.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Galaxy\TestGalaxyDemo3.resx">
-      <DependentUpon>TestGalaxyDemo3.cs</DependentUpon>
+    <EmbeddedResource Include="Galaxy\TestGalaxy.resx">
+      <DependentUpon>TestGalaxy.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Galaxy\TestGalaxyDemo2.resx">
+    <EmbeddedResource Include="GalaxyDemo\TestGalaxyDemo2.resx">
       <DependentUpon>TestGalaxyDemo2.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Galaxy\TestGalaxyDemo1.resx">
+    <EmbeddedResource Include="GalaxyDemo\TestGalaxyDemo1.resx">
       <DependentUpon>TestGalaxyDemo1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Geometry\ShaderTestGeoTest1.resx">

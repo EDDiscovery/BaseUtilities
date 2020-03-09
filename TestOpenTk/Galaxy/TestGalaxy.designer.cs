@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class TestGalaxyDemo3
+    partial class TestGalaxy
     {
         /// <summary>
         /// Required designer variable.

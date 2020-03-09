@@ -33,6 +33,7 @@ namespace OpenTKUtils.GL4
         public List<int> Positions = new List<int>();           // at each alignment, a position is stored
 
         public const int Vec4size = 4 * sizeof(float);
+        public const int Vec3size = Vec4size;
         public const int Vec2size = 2 * sizeof(float);
         public const int Mat4size = 4 * 4 * sizeof(float);
 

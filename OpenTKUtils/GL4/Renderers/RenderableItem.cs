@@ -161,13 +161,14 @@ namespace OpenTKUtils.GL4
             var va = items.NewArray();
             vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
+
             vb.Bind(va, 1, vb.Positions[1], 16, seconddivisor);
             va.Attribute(1, 1, 4, VertexAttribType.Float);
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
         // in 0,1 set up. Second vector can be instance divided
-        public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, GLBuffer buf2, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, GLBuffer buf2, int bufoff = 0, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
             var vb = items.NewBuffer();
             vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length);
@@ -177,12 +178,12 @@ namespace OpenTKUtils.GL4
             vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
 
-            buf2.Bind(va, 1, 0, 16, seconddivisor);        // presuming starting at 0 in buf2
+            buf2.Bind(va, 1, bufoff, 16, seconddivisor);        
             va.Attribute(1, 1, 4, VertexAttribType.Float);
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        // in 0,1 set up
+        // in 0,1 set up. Second vector can be instance divided
         public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Vector2[] coords, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
             var vb = items.NewBuffer();

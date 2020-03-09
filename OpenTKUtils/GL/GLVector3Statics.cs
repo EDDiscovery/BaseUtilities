@@ -82,5 +82,12 @@ namespace OpenTKUtils
             //System.Diagnostics.Debug.WriteLine(" -> inc " + inclination + " az " + azimuth);
             return new Vector3(inclination, azimuth, 0);
         }
+
+        public static Vector4 ToVector4(this Vector3 v, float w = 0)
+        {
+            return new Vector4(v.X, v.Y, v.Z,w);
+        }
+
+
     }
 }

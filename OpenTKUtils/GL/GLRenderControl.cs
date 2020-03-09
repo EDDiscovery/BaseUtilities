@@ -93,7 +93,8 @@ namespace OpenTKUtils
                 DepthClamp = null,
                 BlendEnable = null,
                 BlendSource = null,
-                BlendDest = null
+                BlendDest = null,
+                RasterizerDiscard = null,
             };
         }
 
@@ -107,7 +108,8 @@ namespace OpenTKUtils
             count += (newstate.BlendEnable.HasValue && BlendEnable.HasValue && BlendEnable != newstate.BlendEnable) ? 1 : 0;
             count += (newstate.BlendSource.HasValue && newstate.BlendDest.HasValue && BlendSource.HasValue && BlendDest.HasValue &&
                     (BlendSource != newstate.BlendSource || BlendDest != newstate.BlendDest)) ? 1 : 0;
-            count += (newstate.PrimitiveRestart.HasValue && PrimitiveRestart.HasValue && PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
+            count += (newstate.PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
+            count += (newstate.RasterizerDiscard != newstate.RasterizerDiscard) ? 1 : 0;
 
             // patches
             count += (newstate.PatchSize.HasValue && PatchSize.HasValue && PatchSize != newstate.PatchSize) ? 1 : 0;
@@ -156,7 +158,7 @@ namespace OpenTKUtils
                 // System.Diagnostics.Debug.WriteLine("Depth Clamp" + DepthClamp.Value);
             }
 
-            if (newstate.PrimitiveRestart.HasValue && PrimitiveRestart != newstate.PrimitiveRestart)
+            if (newstate.PrimitiveRestart != PrimitiveRestart)
             {
                 if (newstate.PrimitiveRestart.HasValue)         // is new state has value
                 {
@@ -257,9 +259,9 @@ namespace OpenTKUtils
 
         // these are only set for particular primitive types - so the default construction is don't care.
 
-        public FrontFaceDirection? FrontFace { get;  set;} = null;   // triangles
-        public bool? CullFace { get;  set;} = null;                  // triangles
-        public PolygonMode? PolygonModeFrontAndBack { get; set; } = null;        // tri/quads
+        public FrontFaceDirection? FrontFace { get;  set;} = null;   // triangles/quads
+        public bool? CullFace { get;  set;} = null;                  // triangles/quads
+        public PolygonMode? PolygonModeFrontAndBack { get; set; } = null;        // triangles/quads
         public int? PatchSize { get; set; } = null;                  // patches
         public float? PointSize { get; set; } = null;                // points
         public bool? PointSprite { get; set; } = null;               // points
@@ -267,15 +269,15 @@ namespace OpenTKUtils
         public float? LineWidth { get;  set;} = null;                // lines
         public bool? LineSmooth { get; set; } = null;                // lines
 
-        public uint? PrimitiveRestart { get; set; } = null;          // all, only when renderitems has ElementBuffer, int.MinValue disabled
-
         // these affect all types so are configured to default for all
 
+        public uint? PrimitiveRestart { get; set; } = null;          // all, its either null (disabled) or value (enabled)
         public bool? DepthTest { get; set; } = true;                
         public bool? DepthClamp { get; set; } = false;              
         public bool? BlendEnable { get;  set; } = true;             
         public BlendingFactor? BlendSource { get;  set;} = BlendingFactor.SrcAlpha;     
-        public BlendingFactor? BlendDest { get;  set;} = BlendingFactor.OneMinusSrcAlpha;       
+        public BlendingFactor? BlendDest { get;  set;} = BlendingFactor.OneMinusSrcAlpha;
+        public bool? RasterizerDiscard { get; set; } = false;       // all, on or off.
 
     }
 

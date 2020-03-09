@@ -171,5 +171,12 @@ namespace OpenTKUtils
             }
             return new Vector4(x / array.Length, y / array.Length, z / array.Length, 1);
         }
+
+        public static Vector3 ToVector3(this Vector4 v)
+        {
+            return new Vector3(v.X, v.Y, v.Z);
+        }
+
+
     }
 }

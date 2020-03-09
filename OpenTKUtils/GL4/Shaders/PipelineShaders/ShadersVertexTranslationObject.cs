@@ -65,9 +65,9 @@ void main(void)
     // Pipeline shader, Common Model Translation, Seperate World pos, transform
     // Requires:
     //      location 0 : position: vec4 vertex array of positions model coords
-    //      location 1 : world-position: vec4 vertex array of world pos for model
+    //      location 1 : world-position: vec4 vertex array of world pos for model, instanced
     //      uniform block 0 : GL MatrixCalc
-    //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation)
+    //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
     // Out:
     //      gl_Position
     //      modelpos
