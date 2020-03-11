@@ -98,11 +98,11 @@ namespace OpenTKUtils.GL4
 
             var list = renderables[prog];
 
-            foreach( var x in list)
-            {
-                int deltas = x.Item2.RenderControl.Deltas(r.RenderControl);
-                System.Diagnostics.Debug.WriteLine("Render list " + x.Item1 + " delta to " + name + " = " + deltas);
-            }
+            //foreach( var x in list)
+            //{
+            //    int deltas = x.Item2.RenderControl.Deltas(r.RenderControl);
+            //    System.Diagnostics.Debug.WriteLine("Render list " + x.Item1 + " delta to " + name + " = " + deltas);
+            //}
 
 
             renderables[prog].Add(new Tuple<string, IGLRenderableItem>(name, r));

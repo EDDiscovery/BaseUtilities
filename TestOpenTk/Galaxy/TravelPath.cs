@@ -53,6 +53,8 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("tapeshader"), "traveltape", ritape);
 
+                // now the stars
+
                 starposbuf = items.NewBuffer();
                 starposbuf.AllocateFill(positionsv4);
 

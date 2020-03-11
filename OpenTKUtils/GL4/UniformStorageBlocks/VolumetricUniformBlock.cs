@@ -20,7 +20,7 @@ namespace OpenTKUtils.GL4
 {
     public class GLVolumetricUniformBlock : GLUniformBlock
     {
-        public GLVolumetricUniformBlock() : base(1)         // binding block 1 fixed
+        public GLVolumetricUniformBlock(int bindingpoint = 1 ) : base(bindingpoint)         // binding block 1 is default
         {
         }
 

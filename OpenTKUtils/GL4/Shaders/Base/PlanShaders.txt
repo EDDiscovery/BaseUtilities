@@ -2,18 +2,16 @@
 
 0 = vec4 positions
 1 = vec4 colour | vec2 texcoord | model positions
-4 = mat4 transforms
+4-7 = mat4 transforms
 
 Textures
 
 1 = Texture Object
 
-Uniform blocks
+Uniform/Storage blocks - global across all shaders
 0 = MatrixCalc - see the MatrixCalcUniformBlock.cs
-1 = Volumentric block - see VolumentciUniformBlock
-10 = ARB Bindless texture block.
 
-Uniforms
+Uniforms - these are per shader, so this is a guide.
 
 21 = transform to look at eye position
 22 = object transform position/rotation
@@ -26,120 +24,3 @@ Uniforms
 
 
 
-
-=====================================
-Examples:
-======================================
-
-Geo-Frag: Varyings and arrays
-
-vert:
-
-layout (location = 0) in vec4 position;     
-layout (location = 1) in vec2 texco;
-layout(location = 2) in vec4 instancepos;       
-
-layout (location = 20) uniform  mat4 projectionmodel;
-layout (location = 23) uniform  mat4 commontransform;
-
-out vec2 vtc;				// every Vertex gets these varyings
-out int vs_imagebase;
-
-void main(void)
-{
-    vec4 p = commontransform * position;
-    p = p + vec4(instancepos.x,instancepos.y,instancepos.z,0);
-    vs_imagebase = int(instancepos.w);
-	gl_Position = projectionmodel  * p;       
-    vtc = texco;
-}
-
-geo:
-
-#version 450 core
-layout (triangles) in;
-layout (triangle_strip, max_vertices=3) out;
-
-in int vs_imagebase[];      // from tes/vert we get arrays of varyings..
-in vec2 vtc[];				// as well as gl_in[i] for the standard outputs from vertex/tes shaders.
-
-out vec2 ftc;           // sent per EmitVertex..
-flat out int fimg;      // sent at EmitVertex
-
-void main(void)
-{
-    int i;
-    for( i = 0 ; i < gl_in.length() ; i++)
-    {
-        gl_Position = gl_in[i].gl_Position;
-        ftc = vtc[i];
-        fimg = vs_imagebase[0];					// must set these before emitvertex.
-        EmitVertex();
-    }
-}
-
-frag:
-
-#version 450 core
-
-//flat in int vs_imagebase;
-out vec4 color;			
-in vec2 ftc;				// this is interpolated over the actual displayed pixels..
-flat in int fimg;			// this is flat, so once per go.  
-
-layout (binding=1) uniform sampler2DArray textureObject2D;
-layout (location = 25) uniform  float blend;
-
-void main(void)
-{
-    color = texture(textureObject2D, vec3(ftc,fimg));
-}
-
-======================================================
-
-Noise:
-
-float random (in vec2 st) {
-    return fract(sin(dot(st.xy,
-                         vec2(12.9898,78.233)))
-                 * 43758.5453123);
-}
-
-float noise (in vec2 st) {
-    vec2 i = floor(st);
-    vec2 f = fract(st);
-
-    // Four corners in 2D of a tile
-    float a = random(i);
-    float b = random(i + vec2(1.0, 0.0));
-    float c = random(i + vec2(0.0, 1.0));
-    float d = random(i + vec2(1.0, 1.0));
-
-    // Smooth Interpolation
-
-    // Cubic Hermine Curve.  Same as SmoothStep()
-    vec2 u = f*f*(3.0-2.0*f);
-    // u = smoothstep(0.,1.,f);
-
-    // Mix 4 coorners percentages
-    return mix(a, b, u.x) +
-            (c - a)* u.y * (1.0 - u.x) +
-            (d - b) * u.x * u.y;
-}
-
-
-float rand(vec2 n) { 
-	return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-}
-
-float noise(vec2 p){
-	vec2 ip = floor(p);
-	vec2 u = fract(p);
-	u = u*u*(3.0-2.0*u);
-	
-	float res = mix(
-		mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
-		mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),
-        u.y);
-	return res*res;
-}

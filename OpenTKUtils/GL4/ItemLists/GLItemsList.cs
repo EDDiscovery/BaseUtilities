@@ -186,6 +186,20 @@ namespace OpenTKUtils.GL4
             return b;
         }
 
+        public GLShaderPipeline NewShaderPipeline(string name, params Object[] cnst)
+        {
+            GLShaderPipeline s = (GLShaderPipeline)Activator.CreateInstance(typeof(GLShaderPipeline), cnst, null);
+            items[EnsureName(name)] = s;
+            return s;
+        }
+
+        public GLShaderStandard NewShaderStandard(string name, params Object[] cnst)
+        {
+            GLShaderStandard s = (GLShaderStandard)Activator.CreateInstance(typeof(GLShaderStandard), cnst, null);
+            items[EnsureName(name)] = s;
+            return s;
+        }
+
         // helpers
 
         private string EnsureName(string name)

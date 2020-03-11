@@ -130,9 +130,9 @@ namespace OpenTKUtils
             return (p2.X * p1.Y - p1.X * p2.Y);
         }
 
-        static float PMSquare(Vector2 p1, Vector2 p2, Vector2 p3)       // p1,p2 is the line, p3 is the test point. which side of the line is it on?
+        static float PMSquare(Vector2 l1, Vector2 l2, Vector2 p)       // p1,p2 is the line, p3 is the test point. which side of the line is it on?
         {
-            return (p3.X - p1.X) * (p2.Y - p1.Y) - (p2.X - p1.X) * (p3.Y - p1.Y);
+            return (p.X - l1.X) * (l2.Y - l1.Y) - (l2.X - l1.X) * (p.Y - l1.Y);
         }
 
         static List<List<Vector2>> SplitSelfJoiningPolygons(List<Vector2> Polygon)

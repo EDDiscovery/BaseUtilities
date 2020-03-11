@@ -15,6 +15,8 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
@@ -42,11 +44,15 @@ namespace OpenTKUtils.GL4
             lr.OpenString(codelisting);
 
             string code = "", line;
+            List<string> constcode = constvalues != null ? ConstVars(constvalues) : null;       // compute const vars, to be placed after #version
+            List<string> constvars = constcode != null ? constcode.Select((s)=>s.Substring(0,s.IndexOf("=")+1)).ToList() : null;        // without the values for pattern matching
+
             bool doneversion = false;
 
             while ((line = lr.ReadLine()) != null)
             {
                 line = line.Trim();
+
                 if (line.StartsWith("#include", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("//Include", StringComparison.InvariantCultureIgnoreCase))
                 {
                     line = line.Mid(line[0] == '#' ? 8 : 9).Trim();
@@ -60,14 +66,21 @@ namespace OpenTKUtils.GL4
                     {
                         code += line + Environment.NewLine;
 
-                        if ( constvalues != null )      // take the opportunity to introduce any constant values to the source
-                            code += ConstVars(constvalues);
+                        if (constcode != null)      // take the opportunity to introduce any constant values to the source
+                            code += string.Join(Environment.NewLine, constcode);
 
                         doneversion = true;
                     }
                 }
-                else
-                    code += line + Environment.NewLine;
+                else 
+                {
+                    if ( line.HasChars() && constcode != null && line.ContainsIn(constvars)>=0) // check to see its not a const redefinition
+                    {
+                        System.Diagnostics.Debug.WriteLine("Repeat const " + line);
+                    }
+                    else
+                        code += line + Environment.NewLine;
+                }
             }
 
             if (completeoutfile != null)
@@ -76,45 +89,48 @@ namespace OpenTKUtils.GL4
             return code;
         }
 
-        // list of pairs of (string name, value) where value can be an int, a Color (expressed as a vec4), a Vector2/3/4, a float
+        // list of pairs of (const name = value) where value can be an int, a Color (expressed as a vec4), a Vector2/3/4, a float
 
-        public static string ConstVars(params Object[] values)
+        public static List<string> ConstVars(params Object[] values)
         {
-            string s = "";
+            List<string> slist = new List<string>();
+
             for (int i = 0; i < values.Length;)
             {
                 string name = values[i] as string;
                 Object o = values[i + 1];
 
                 if (o is int)
-                    s += "const int " + name + " = " + ((int)o).ToStringInvariant() + ";" + Environment.NewLine;
+                {
+                    slist.Add("const int " + name + " = " + ((int)o).ToStringInvariant() + ";");
+                }
                 else if (o is System.Drawing.Color)
                 {
                     System.Drawing.Color c = (System.Drawing.Color)o;
-                    s += "const vec4 " + name + " = vec4(" + ((float)c.R / 255).ToStringInvariant() + "," + ((float)c.G / 255).ToStringInvariant() + "," + ((float)c.B / 255).ToStringInvariant() + "," + ((float)c.A / 255).ToStringInvariant() + ");" + Environment.NewLine;
+                    slist.Add("const vec4 " + name + " = vec4(" + ((float)c.R / 255).ToStringInvariant() + "," + ((float)c.G / 255).ToStringInvariant() + "," + ((float)c.B / 255).ToStringInvariant() + "," + ((float)c.A / 255).ToStringInvariant() + ");" );
                 }
                 else if (o is OpenTK.Vector4)
                 {
                     OpenTK.Vector4 v = (OpenTK.Vector4)o;
-                    s += "const vec4 " + name + " = vec4(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ");" + Environment.NewLine;
+                    slist.Add("const vec4 " + name + " = vec4(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ");" );
                 }
                 else if (o is OpenTK.Vector2)
                 {
                     OpenTK.Vector2 v = (OpenTK.Vector2)o;
-                    s += "const vec2 " + name + " = vec2(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + ");" + Environment.NewLine;
+                    slist.Add("const vec2 " + name + " = vec2(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + ");" );
                 }
                 else if (o is OpenTK.Vector3)
                 {
                     OpenTK.Vector3 v = (OpenTK.Vector3)o;
-                    s += "const vec3 " + name + " = vec3(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + ");" + Environment.NewLine;
+                    slist.Add("const vec3 " + name + " = vec3(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + ");" );
                 }
                 else
-                    s += "const float " + name + " = " + ((float)o).ToStringInvariant() + ";" + Environment.NewLine;
+                    slist.Add("const float " + name + " = " + ((float)o).ToStringInvariant() + ";" );
 
                 i += 2;
             }
 
-            return s;
+            return slist;
         }
 
         public string Compile(string codelisting, Object[] constvalues = null, string completeoutfile = null)                // string return gives any errors

@@ -140,7 +140,8 @@ namespace TestOpenTk
 
             if (true) // galaxy
             {
-                volumetricblock = new GLVolumetricUniformBlock();
+                const int volumenticuniformblcok = 2;
+                volumetricblock = new GLVolumetricUniformBlock(volumenticuniformblcok);
                 items.Add("VB", volumetricblock);
 
                 int sc = 1;
@@ -172,7 +173,7 @@ namespace TestOpenTk
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
                 items.Add("galtex", galtex);
-                galaxyshader = new GalaxyShader();
+                galaxyshader = new GalaxyShader(volumenticuniformblcok);
                 items.Add("Galaxy-sh", galaxyshader);
                 // bind the galaxy texture, the 3dnoise, and the gaussian 1-d texture for the shader
                 galaxyshader.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };      // shader requires these, so bind using shader

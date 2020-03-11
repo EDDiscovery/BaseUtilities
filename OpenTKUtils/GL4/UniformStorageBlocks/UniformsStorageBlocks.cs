@@ -25,39 +25,33 @@ namespace OpenTKUtils.GL4
     {
         public int BindingIndex { get; private set; }
 
-        public GLDataBlock(int bindingindex, bool std430, BufferTarget target, BufferRangeTarget tgr) : base(std430)
+        public GLDataBlock(int bindingindex, bool std430, BufferRangeTarget tgr) : base(std430)
         {
             BindingIndex = bindingindex;
-
-            GL.BindBuffer(target, Id);          // bind ID to target type
-            GL.BindBufferBase(tgr, BindingIndex, Id);       // binding point
-            GL.BindBuffer(target, 0);               // unbind
+            Bind(BindingIndex, tgr);
         }
-       
     }
 
-    // uniform blocks - std140 only
+    // uniform blocks - std140 only.  Uniform blocks are global across shaders.  IDs really need to be unique or you will have to rebind
     public class GLUniformBlock : GLDataBlock
     {
-        public GLUniformBlock(int bindingindex) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        public GLUniformBlock(int bindingindex) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
         {
-
         }
-
     }
 
-    // storage blocks - std140 and 430
+    // storage blocks - std140 and 430. Writable. Can perform Atomics.  Storage blocks are global across shaders.  IDs really need to be unique or you will have to rebind
     public class GLStorageBlock : GLDataBlock
     {
-        public GLStorageBlock(int bindingindex, bool std430 = false) : base(bindingindex, std430, BufferTarget.ShaderStorageBuffer, BufferRangeTarget.ShaderStorageBuffer)
+        public GLStorageBlock(int bindingindex, bool std430 = false) : base(bindingindex, std430,  BufferRangeTarget.ShaderStorageBuffer)
         {
         }
     }
 
-    // atomic blocks blocks
+    // atomic blocks blocks. Storage blocks are global across shaders.  IDs really need to be unique or you will have to rebind
     public class GLAtomicBlock : GLDataBlock
     {
-        public GLAtomicBlock(int bindingindex) : base(bindingindex, false, BufferTarget.AtomicCounterBuffer, BufferRangeTarget.AtomicCounterBuffer)
+        public GLAtomicBlock(int bindingindex) : base(bindingindex, false, BufferRangeTarget.AtomicCounterBuffer)
         {
         }
     }
@@ -65,11 +59,11 @@ namespace OpenTKUtils.GL4
     // bindless texture buffers - note the vec4 stride, the 8 byte numbers
     public class GLBindlessTextureHandleBlock : GLDataBlock
     {
-        public GLBindlessTextureHandleBlock(int bindingindex) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        public GLBindlessTextureHandleBlock(int bindingindex) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
         {
         }
 
-        public GLBindlessTextureHandleBlock(int bindingindex, IGLTexture[] textures) : base(bindingindex, false, BufferTarget.UniformBuffer, BufferRangeTarget.UniformBuffer)
+        public GLBindlessTextureHandleBlock(int bindingindex, IGLTexture[] textures) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
         {
             WriteHandles(textures);
         }

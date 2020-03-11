@@ -13,7 +13,9 @@
  */
 #version 450 core
             
-layout (std140, binding = 1) uniform PointBlock
+const int bufferbp = 1;			// usually replaced by compile time consts, here to make source highlighter okay
+
+layout (std140, binding = bufferbp) uniform PointBlock
 {
 	vec4 p[8];      // model matrix multipled positions
 	float slicestart;  // z start and 

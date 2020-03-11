@@ -38,6 +38,8 @@ namespace OpenTKUtils.GL4
         public Action<IGLProgramShader> FinishAction { get; set; }
 
         public IGLShader Get(ShaderType t) { return shaders[t]; }
+        public T Get<T>(ShaderType t) where T : IGLPipelineShader
+        { return (T)shaders[t]; }
 
         private int pipelineid;
         private Dictionary<ShaderType, IGLPipelineShader> shaders;
@@ -68,6 +70,14 @@ namespace OpenTKUtils.GL4
             FinishAction = fa;
         }
 
+        public GLShaderPipeline(IGLPipelineShader vertex, IGLPipelineShader tcs, IGLPipelineShader tes, IGLPipelineShader geo, IGLPipelineShader fragment, 
+                                Action<IGLProgramShader> sa = null, Action<IGLProgramShader> fa = null) : this()
+        {
+            AddVertexTCSTESGeoFragment(vertex, tcs,tes,geo, fragment);
+            StartAction = sa;
+            FinishAction = fa;
+        }
+
         public void AddVertex(IGLPipelineShader p)
         {
             Add(p, ShaderType.VertexShader);
@@ -77,6 +87,20 @@ namespace OpenTKUtils.GL4
         {
             Add(p, ShaderType.VertexShader);
             Add(f, ShaderType.FragmentShader);
+        }
+
+        public void AddVertexTCSTESGeoFragment(IGLPipelineShader p, IGLPipelineShader tcs, IGLPipelineShader tes, IGLPipelineShader g, IGLPipelineShader f)
+        {
+            if (p != null)
+                Add(p, ShaderType.VertexShader);
+            if (tcs != null)
+                Add(tcs, ShaderType.TessControlShader);
+            if (tes != null)
+                Add(tes, ShaderType.TessEvaluationShader);
+            if ( g != null )
+                Add(g, ShaderType.GeometryShader);
+            if ( f != null )
+                Add(f, ShaderType.FragmentShader);
         }
 
         public void Add(IGLPipelineShader p, ShaderType m)
@@ -114,7 +138,7 @@ namespace OpenTKUtils.GL4
             GL.DeleteProgramPipeline(pipelineid);
         }
 
-        static Dictionary<ShaderType, ProgramStageMask> convmask = new Dictionary<ShaderType, ProgramStageMask>()
+        private static Dictionary<ShaderType, ProgramStageMask> convmask = new Dictionary<ShaderType, ProgramStageMask>()
         {
             { ShaderType.FragmentShader, ProgramStageMask.FragmentShaderBit },
             { ShaderType.VertexShader, ProgramStageMask.VertexShaderBit },
@@ -124,6 +148,5 @@ namespace OpenTKUtils.GL4
             { ShaderType.ComputeShader, ProgramStageMask.ComputeShaderBit },
         };
 
-
-    }
+   }
 }

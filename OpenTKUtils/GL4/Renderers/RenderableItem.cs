@@ -119,7 +119,7 @@ namespace OpenTKUtils.GL4
             var vb = items.NewBuffer();
             vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length * 2);
             vb.Fill(vectors);
-            vb.Fill(colours,vectors.Length);
+            vb.Fill(colours, vectors.Length);
 
             var va = items.NewArray();
             vb.Bind(va, 0, vb.Positions[0], 16);
@@ -412,7 +412,15 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
-        #region Indirect draw setup
+        #region Execute without a List.. usually used if shader is not rendering to screen, but is computing
+
+        public void Execute( IGLProgramShader shader , GLRenderControl state, GLMatrixCalc c )
+        {
+            shader.Start();
+            Bind(state, shader, c);
+            Render();
+            shader.Finish();
+        }
 
         #endregion
 

@@ -24,7 +24,7 @@ namespace OpenTKUtils.GL4
     // Pipeline shader for a 2D texture bound with 2D vertexes
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
-    //      tex binding 1 : textureObject : 2D texture
+    //      tex binding X : textureObject : 2D texture
 
     public class GLPLFragmentShaderTexture : GLShaderPipelineShadersBase
     {
@@ -225,7 +225,7 @@ void main(void)
 
         public Vector2 TexOffset { get; set; } = Vector2.Zero;                   // set to animate.
 
-        public GLPLBindlessFragmentShaderTextureTriangleStrip(int arbblock = 10)
+        public GLPLBindlessFragmentShaderTextureTriangleStrip(int arbblock)
         {
             CompileLink(ShaderType.FragmentShader, Code(arbblock), auxname: GetType().Name);
         }

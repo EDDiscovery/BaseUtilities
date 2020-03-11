@@ -89,10 +89,10 @@ void main(void)
     {
         private GalaxyFragmentPipeline frag;
 
-        public GalaxyShader()
+        public GalaxyShader(int volumetricbinding = 1)
         {
             Add(new GLPLVertexShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
-            Add(new GLPLGeometricShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
+            Add(new GLPLGeometricShaderVolumetric(volumetricbinding), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
             frag = new GalaxyFragmentPipeline();
             Add(frag, OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
             frag.SetFader(1000000.0f);

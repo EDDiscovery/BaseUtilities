@@ -94,6 +94,12 @@
     </Compile>
     <Compile Include="Galaxy\ShaderGalaxy.cs" />
     <Compile Include="Galaxy\ShaderGrid.cs" />
+    <Compile Include="Geometry\ShaderTestGeoFind.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Geometry\ShaderTestGeoFind.Designer.cs">
+      <DependentUpon>ShaderTestGeoFind.cs</DependentUpon>
+    </Compile>
     <Compile Include="Geometry\ShaderTestGeoTest1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -221,6 +227,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="GalaxyDemo\TestGalaxyDemo1.resx">
       <DependentUpon>TestGalaxyDemo1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Geometry\ShaderTestGeoFind.resx">
+      <DependentUpon>ShaderTestGeoFind.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Geometry\ShaderTestGeoTest1.resx">
       <DependentUpon>ShaderTestGeoTest1.cs</DependentUpon>

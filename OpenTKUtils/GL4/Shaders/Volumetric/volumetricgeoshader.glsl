@@ -41,7 +41,9 @@ out gl_PerVertex				// pipeline shaders must repeat this.  Watch out for unused 
   float gl_ClipDistance[];
 };
 
-layout (std140, binding = 1) uniform PointBlock
+const int bufferbp = 1;			// usually replaced by compile time consts, here to make source highlighter okay
+
+layout (std140, binding = bufferbp) uniform PointBlock
 {
 	vec4 p[8];    
 	float slicestart;

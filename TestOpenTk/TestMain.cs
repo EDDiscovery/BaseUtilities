@@ -609,7 +609,7 @@ namespace TestOpenTk
                 btextures[0] = items.Add("bl1", new GLTexture2D(Properties.Resources.Logo8bpp));
                 btextures[1] = items.Add("bl2", new GLTexture2D(Properties.Resources.dotted2));
 
-                GLBindlessTextureHandleBlock bl = new GLBindlessTextureHandleBlock(10,btextures);
+                GLBindlessTextureHandleBlock bl = new GLBindlessTextureHandleBlock(11,btextures);
 
                 GLStatics.Check();
 
@@ -633,7 +633,7 @@ namespace TestOpenTk
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
                 ri.CreateRectangleElementIndexByte(items.NewBuffer(), 2);
 
-                items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord());
+                items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord(11));
 
                 rObjects.Add(items.Shader("bt1"), "bt1-1", ri);
             }
@@ -768,9 +768,9 @@ namespace TestOpenTk
 
     public class GLBindlessTextureShaderWithWorldCoord : GLShaderPipeline
     {
-        public GLBindlessTextureShaderWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        public GLBindlessTextureShaderWithWorldCoord(int arbbindingpoint, Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
+            AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip(arbbindingpoint));
         }
     }
 

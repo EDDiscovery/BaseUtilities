@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseUtils\StringObjectExtensionsLists.cs" />
     <Compile Include="BaseUtils\Timers.cs" />
     <Compile Include="Controller3D\KeyboardState.cs" />
     <Compile Include="GL1\Data3DCollection.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="GL4\Controls\ControlDisplay.cs" />
     <Compile Include="GL4\Controls\Control.cs" />
     <Compile Include="GL4\Controls\ControlTabStyleCustom.cs" />
+    <Compile Include="GL4\Shaders\Find\ShaderFindGeoTriangles.cs" />
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
     <Compile Include="GL\GLRenderControl.cs" />

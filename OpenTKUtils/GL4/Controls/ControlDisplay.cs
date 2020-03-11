@@ -56,7 +56,7 @@ namespace OpenTKUtils.GL4.Controls
             shader = new GLControlShader();
 
             textures = new Dictionary<GLBaseControl, GLTexture2D>();
-            texturebinds = new GLBindlessTextureHandleBlock(10);
+            texturebinds = new GLBindlessTextureHandleBlock(arbbufferid);
 
             glwin.MouseMove += Gc_MouseMove;
             glwin.MouseClick += Gc_MouseClick;
@@ -479,10 +479,11 @@ namespace OpenTKUtils.GL4.Controls
         {
             public GLControlShader()
             {
-                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip());
+                AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip(arbbufferid));
             }
         }
 
+        const int arbbufferid = 10;
         const int vertexesperentry = 4;
         private GLWindowControl glwin;
         private GLBuffer vertexes;

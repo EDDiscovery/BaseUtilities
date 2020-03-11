@@ -547,6 +547,20 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
+        public void Bind(int bindingindex,  BufferRangeTarget tgr)                           // Bind to a arbitary buffer target
+        {
+            GL.BindBufferBase(tgr, bindingindex, Id);       // binding point set to tgr
+        }
+
+        // tbd remove when we are sure
+        //public void Bind(int bindingindex, BufferTarget target, BufferRangeTarget tgr) // Bind to a arbitary buffer target
+        //{
+        //    //  GL.BindBuffer(target, Id);          // bind buffer ID to target type
+        //    GL.BindBufferBase(tgr, bindingindex, Id);       // binding point set.
+        //    GL.BindBuffer(target, 0);           // unbind
+        //                                                    //    GL.BindBuffer(target, 0);           // unbind
+        //}
+
         #endregion
 
         #region Implementation

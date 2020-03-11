@@ -85,9 +85,11 @@ namespace OpenTKUtils
             };
         }
 
-        static public GLRenderControl Unknown()     // unknown, used at startup, everything needs to be null so we apply all
+        static public GLRenderControl AtStart()     // unknown, used at startup, everything needs to be null so we apply all
         {
-            return new GLRenderControl(PrimitiveType.Points)
+            GL.Disable(EnableCap.PrimitiveRestart);     // disable by default, since PrimitiveRestart null means disabled, we must explicitly disable
+
+            return new GLRenderControl(PrimitiveType.Points)        
             {
                 DepthTest = null,
                 DepthClamp = null,
@@ -98,34 +100,34 @@ namespace OpenTKUtils
             };
         }
 
-        public int Deltas(GLRenderControl newstate)
-        {
-            // general
-            int count = (newstate.FrontFace.HasValue && FrontFace.HasValue && FrontFace != newstate.FrontFace) ? 1 : 0;       // keep synced with conditions below
-            count += (newstate.CullFace.HasValue && CullFace.HasValue && CullFace != newstate.CullFace) ? 1 : 0;
-            count += (newstate.DepthTest.HasValue && DepthTest.HasValue && DepthTest != newstate.DepthTest) ? 1 : 0;
-            count += (newstate.DepthClamp.HasValue && DepthClamp.HasValue && DepthClamp != newstate.DepthClamp) ? 1 : 0;
-            count += (newstate.BlendEnable.HasValue && BlendEnable.HasValue && BlendEnable != newstate.BlendEnable) ? 1 : 0;
-            count += (newstate.BlendSource.HasValue && newstate.BlendDest.HasValue && BlendSource.HasValue && BlendDest.HasValue &&
-                    (BlendSource != newstate.BlendSource || BlendDest != newstate.BlendDest)) ? 1 : 0;
-            count += (newstate.PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
-            count += (newstate.RasterizerDiscard != newstate.RasterizerDiscard) ? 1 : 0;
+        //public int Deltas(GLRenderControl newstate)
+        //{
+        //    // general
+        //    int count = (newstate.FrontFace.HasValue && FrontFace.HasValue && FrontFace != newstate.FrontFace) ? 1 : 0;       // keep synced with conditions below
+        //    count += (newstate.CullFace.HasValue && CullFace.HasValue && CullFace != newstate.CullFace) ? 1 : 0;
+        //    count += (newstate.DepthTest.HasValue && DepthTest.HasValue && DepthTest != newstate.DepthTest) ? 1 : 0;
+        //    count += (newstate.DepthClamp.HasValue && DepthClamp.HasValue && DepthClamp != newstate.DepthClamp) ? 1 : 0;
+        //    count += (newstate.BlendEnable.HasValue && BlendEnable.HasValue && BlendEnable != newstate.BlendEnable) ? 1 : 0;
+        //    count += (newstate.BlendSource.HasValue && newstate.BlendDest.HasValue && BlendSource.HasValue && BlendDest.HasValue &&
+        //            (BlendSource != newstate.BlendSource || BlendDest != newstate.BlendDest)) ? 1 : 0;
+        //    count += (newstate.PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
+        //    count += (newstate.RasterizerDiscard != newstate.RasterizerDiscard) ? 1 : 0;
 
-            // patches
-            count += (newstate.PatchSize.HasValue && PatchSize.HasValue && PatchSize != newstate.PatchSize) ? 1 : 0;
+        //    // patches
+        //    count += (newstate.PatchSize.HasValue && PatchSize.HasValue && PatchSize != newstate.PatchSize) ? 1 : 0;
 
-            // points
-            count += (newstate.PointSize.HasValue && PointSize.HasValue && PointSize != newstate.PointSize) ? 1 : 0;
-            count += (newstate.PointSprite.HasValue && PointSprite.HasValue && PointSprite != newstate.PointSprite) ? 1 : 0;
+        //    // points
+        //    count += (newstate.PointSize.HasValue && PointSize.HasValue && PointSize != newstate.PointSize) ? 1 : 0;
+        //    count += (newstate.PointSprite.HasValue && PointSprite.HasValue && PointSprite != newstate.PointSprite) ? 1 : 0;
 
-            // lines
-            count += (newstate.LineWidth.HasValue && LineWidth.HasValue && LineWidth != newstate.LineWidth) ? 1 : 0;
-            count += (newstate.LineSmooth.HasValue && LineSmooth.HasValue && LineSmooth != newstate.LineSmooth) ? 1 : 0;
+        //    // lines
+        //    count += (newstate.LineWidth.HasValue && LineWidth.HasValue && LineWidth != newstate.LineWidth) ? 1 : 0;
+        //    count += (newstate.LineSmooth.HasValue && LineSmooth.HasValue && LineSmooth != newstate.LineSmooth) ? 1 : 0;
 
-            // triangles
-            count += (newstate.PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack != newstate.PolygonModeFrontAndBack) ? 1 : 0;
-            return count;
-        }
+        //    // triangles
+        //    count += (newstate.PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack != newstate.PolygonModeFrontAndBack) ? 1 : 0;
+        //    return count;
+        //}
         
         public void ApplyState( GLRenderControl newstate )      // apply deltas to GL
         {
@@ -160,6 +162,7 @@ namespace OpenTKUtils
 
             if (newstate.PrimitiveRestart != PrimitiveRestart)
             {
+                //System.Diagnostics.Debug.WriteLine("Set PR to {0}", newstate.PrimitiveRestart);
                 if (newstate.PrimitiveRestart.HasValue)         // is new state has value
                 {
                     if (PrimitiveRestart == null )              // if last was off, turn it on
@@ -171,6 +174,13 @@ namespace OpenTKUtils
                     GL.Disable(EnableCap.PrimitiveRestart);     // else disable
 
                 PrimitiveRestart = newstate.PrimitiveRestart;
+            }
+
+            if ( newstate.RasterizerDiscard.HasValue && newstate.RasterizerDiscard != RasterizerDiscard )
+            {
+                System.Diagnostics.Debug.WriteLine("Set RD to {0}", newstate.RasterizerDiscard);
+                GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.RasterizerDiscard, newstate.RasterizerDiscard.Value);
+                RasterizerDiscard = newstate.RasterizerDiscard;
             }
 
             if (newstate.BlendEnable.HasValue && BlendEnable != newstate.BlendEnable)
@@ -269,16 +279,15 @@ namespace OpenTKUtils
         public float? LineWidth { get;  set;} = null;                // lines
         public bool? LineSmooth { get; set; } = null;                // lines
 
-        // these affect all types so are configured to default for all
+        // these affect all types so are configured to their defaults for all
 
-        public uint? PrimitiveRestart { get; set; } = null;          // all, its either null (disabled) or value (enabled)
+        public uint? PrimitiveRestart { get; set; } = null;          // its either null (disabled) or value (enabled). null does not mean don't care.
         public bool? DepthTest { get; set; } = true;                
         public bool? DepthClamp { get; set; } = false;              
         public bool? BlendEnable { get;  set; } = true;             
         public BlendingFactor? BlendSource { get;  set;} = BlendingFactor.SrcAlpha;     
         public BlendingFactor? BlendDest { get;  set;} = BlendingFactor.OneMinusSrcAlpha;
         public bool? RasterizerDiscard { get; set; } = false;       // all, on or off.
-
     }
 
 }

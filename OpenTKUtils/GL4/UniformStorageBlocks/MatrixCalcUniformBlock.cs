@@ -25,7 +25,9 @@ namespace OpenTKUtils.GL4
 
     public class GLMatrixCalcUniformBlock : GLUniformBlock 
     {
-        public GLMatrixCalcUniformBlock() : base(0)         // 0 is the fixed binding block for matrixcalc
+        const int BindingPoint = 0;// 0 is the fixed binding block for matrixcalc
+
+        public GLMatrixCalcUniformBlock() : base(BindingPoint)         
         {
         }
 
