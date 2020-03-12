@@ -109,27 +109,24 @@ namespace TestOpenTk
             pointbuffer = items.LastBuffer();  // starts with arrays of points
 
             findshader = items.NewShaderPipeline("FS",new GLPLVertexShaderWorldCoord(), null,null, new GLPLGeoShaderFindTriangles(11, 16), null, null, null);
-            GLRenderControl rs = GLRenderControl.Tri();
-            rs.RasterizerDiscard = true;
-
-            findrender = GLRenderableItem.CreateVector4(items, rs, pointbuffer, vecp4.Length);
+            findrender = GLRenderableItem.CreateVector4(items, GLRenderControl.Tri(), pointbuffer, vecp4.Length);
 
             Closed += ShaderTest_Closed;
         }
 
         void mousedown(Object sender, GLMouseEventArgs e)
         {
-            GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
-            mcub.Set(gl3dcontroller.MatrixCalc);
+         //   GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
+           // mcub.Set(gl3dcontroller.MatrixCalc);
 
             var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
 
             geo.SetScreenCoords(e.Location, glwfc.Size);
 
-            //rObjectsFind.Render(glwfc.RenderState, null);
+            System.Diagnostics.Debug.WriteLine("Run find");
+            findrender.Execute(findshader, glwfc.RenderState, null, true);
+            System.Diagnostics.Debug.WriteLine("Finish find");
 
-            findrender.Execute(findshader, glwfc.RenderState, null);
-           
             var res = geo.GetResult();
             if (res != null)
             {
@@ -154,16 +151,9 @@ namespace TestOpenTk
 
         private void ControllerDraw(OpenTKUtils.GLMatrixCalc mc, long time)
         {
-            // System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Current);
 
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.Set(gl3dcontroller.MatrixCalc);
-
-            for (int i = 0; i < vecp4.Length; i++)
-            {
-                gl3dcontroller.MatrixCalc.WorldToScreen(vecp4[i], i.ToString());
-            }
-
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
             GL.MemoryBarrier(MemoryBarrierFlags.VertexAttribArrayBarrierBit);

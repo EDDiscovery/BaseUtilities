@@ -75,7 +75,7 @@ namespace OpenTKUtils.GL4
                     {
                         if (g.Item2 != null && g.Item2.Visible )                    // may have added a null renderable item if its a compute shader.  Make sure its visible.
                         {
-                            // System.Diagnostics.Debug.WriteLine("Render " + g.Item1);
+                            //System.Diagnostics.Debug.WriteLine("Render " + g.Item1 + " shader " + d.Key.GetType().Name);
                             g.Item2.Bind(currentstate, d.Key, c);
                             g.Item2.Render();
                             // System.Diagnostics.Debug.WriteLine("....Render Over " + g.Item1);
@@ -90,6 +90,12 @@ namespace OpenTKUtils.GL4
             GL.BindProgramPipeline(0);
         }
 
+        public void RenderDiscard(GLRenderControl currentstate, GLMatrixCalc c)     // discard computation - not normally done in lists
+        {
+            GL.Enable(EnableCap.RasterizerDiscard);
+            Render(currentstate, c);
+            GL.Disable(EnableCap.RasterizerDiscard);
+        }
 
         private void AddItem(IGLProgramShader prog, string name, IGLRenderableItem r)
         {

@@ -72,19 +72,23 @@ namespace OpenTKUtils.GL4
 
         public void Bind(GLRenderControl currentstate, IGLProgramShader shader, GLMatrixCalc c)      // called by Render() to bind data to GL, vertex and InstanceData
         {
-            VertexArray?.Bind();
+            if (currentstate != null)
+                currentstate.ApplyState(RenderControl);         // go to this state first
+
+            VertexArray?.Bind();      
+
             RenderData?.Bind(this,shader,c);
+
             if (ElementBuffer != null)
                 ElementBuffer.BindElement();
+
             if (IndirectBuffer != null)
                 IndirectBuffer.BindIndirect();
-            if ( currentstate != null )
-                currentstate.ApplyState(RenderControl);         // go to this state
         }
 
         public void Render()                                               // called by Render() to draw the item.
         {
-            //System.Diagnostics.Debug.WriteLine("Render " + RenderControl + " " + DrawCount + " " + InstanceCount);
+            //System.Diagnostics.Debug.WriteLine("Draw " + RenderControl.PrimitiveType + " " + DrawCount + " " + InstanceCount);
 
             if ( ElementBuffer != null )
             {
@@ -412,14 +416,20 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
-        #region Execute without a List.. usually used if shader is not rendering to screen, but is computing
+        #region Execute without a List.. usually used if shader is not rendering to screen, but is computing, and that would normally have discard=true
 
-        public void Execute( IGLProgramShader shader , GLRenderControl state, GLMatrixCalc c )
+        public void Execute( IGLProgramShader shader , GLRenderControl state, GLMatrixCalc c, bool discard = true )
         {
+            if (discard)
+                GL.Enable(EnableCap.RasterizerDiscard);
+
             shader.Start();
             Bind(state, shader, c);
             Render();
             shader.Finish();
+
+            if (discard)
+                GL.Disable(EnableCap.RasterizerDiscard);
         }
 
         #endregion

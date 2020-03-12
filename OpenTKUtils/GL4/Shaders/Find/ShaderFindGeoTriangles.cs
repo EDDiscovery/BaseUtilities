@@ -98,13 +98,14 @@ void main(void)
         vec4 p0 = gl_in[0].gl_Position / gl_in[0].gl_Position.w;        // normalise w to produce screen pos in x/y, +/- 1
         vec4 p1 = gl_in[1].gl_Position / gl_in[1].gl_Position.w;        
         vec4 p2 = gl_in[2].gl_Position / gl_in[2].gl_Position.w;
+
 " + (forwardfacing ? 
 @"        if ( PMSquareS(p0,p1,p2) < 0 )     // if wound okay, so its forward facing (p0->p1 vector, p2 is on the right)" : "")
 + @"
         {
-            float p0x = abs(p0.x-screencoords.x);
-            float p0y = abs(p0.y-screencoords.y);
-            if ( p0x < pointdist && p0y < pointdist)            // if very small, p0/p1/p2 will collapse to a single point, detect around p0
+            // only check for approximate cursor position on first triangle of primitive (if small, all would respond)
+
+            if ( gl_PrimitiveIDIn == 0 && abs(p0.x-screencoords.x) < pointdist && abs(p0.y-screencoords.y) < pointdist )
             {
                 uint ipos = atomicAdd(count,1);
                 if ( ipos < maximumresults )

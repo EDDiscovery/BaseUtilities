@@ -96,7 +96,6 @@ namespace OpenTKUtils
                 BlendEnable = null,
                 BlendSource = null,
                 BlendDest = null,
-                RasterizerDiscard = null,
             };
         }
 
@@ -174,13 +173,6 @@ namespace OpenTKUtils
                     GL.Disable(EnableCap.PrimitiveRestart);     // else disable
 
                 PrimitiveRestart = newstate.PrimitiveRestart;
-            }
-
-            if ( newstate.RasterizerDiscard.HasValue && newstate.RasterizerDiscard != RasterizerDiscard )
-            {
-                System.Diagnostics.Debug.WriteLine("Set RD to {0}", newstate.RasterizerDiscard);
-                GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.RasterizerDiscard, newstate.RasterizerDiscard.Value);
-                RasterizerDiscard = newstate.RasterizerDiscard;
             }
 
             if (newstate.BlendEnable.HasValue && BlendEnable != newstate.BlendEnable)
@@ -287,7 +279,6 @@ namespace OpenTKUtils
         public bool? BlendEnable { get;  set; } = true;             
         public BlendingFactor? BlendSource { get;  set;} = BlendingFactor.SrcAlpha;     
         public BlendingFactor? BlendDest { get;  set;} = BlendingFactor.OneMinusSrcAlpha;
-        public bool? RasterizerDiscard { get; set; } = false;       // all, on or off.
     }
 
 }
