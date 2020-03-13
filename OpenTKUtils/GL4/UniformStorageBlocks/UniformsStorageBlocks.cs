@@ -56,7 +56,7 @@ namespace OpenTKUtils.GL4
         }
     }
 
-    // bindless texture buffers - note the vec4 stride, the 8 byte numbers
+    // bindless texture buffers
     public class GLBindlessTextureHandleBlock : GLDataBlock
     {
         public GLBindlessTextureHandleBlock(int bindingindex) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
@@ -70,13 +70,12 @@ namespace OpenTKUtils.GL4
 
         public void WriteHandles( IGLTexture[] textures)
         {
-            AllocateBytes(sizeof(long) * textures.Length * 2);
-            IntPtr p = Map(0, BufferSize);
+            AllocateStartMapWrite(sizeof(long) * textures.Length * 2);
 
             for (int i = 0; i < textures.Length; i++)
             {
-                MapWrite(ref p, textures[i].ArbId);     // possibly get then store the arb id
-                MapWrite(ref p, (long)0);       // as the int has the same stride as a vec4 (16 bytes)
+                MapWrite(textures[i].ArbId);    // ARBS are stored as 128 bit numbers, so two longs
+                MapWrite((long)0);              
             }
 
             UnMap();

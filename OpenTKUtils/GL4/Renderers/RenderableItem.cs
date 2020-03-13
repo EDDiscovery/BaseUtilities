@@ -171,7 +171,27 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        // in 0,1 set up. Second vector can be instance divided
+        // in 0,1 set up. Two seperate buffers.  Second vector can be instance divided
+        public static GLRenderableItem CreateVector4Vector4Buf2(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Vector4[] secondvector, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var v1 = items.NewBuffer();
+            v1.AllocateBytes(GLBuffer.Vec4size * vectors.Length );
+            v1.Fill(vectors);
+
+            var v2 = items.NewBuffer();
+            v2.AllocateBytes(GLBuffer.Vec4size * secondvector.Length);
+            v2.Fill(secondvector);
+
+            var va = items.NewArray();
+            v1.Bind(va, 0, v1.Positions[0], 16);
+            va.Attribute(0, 0, 4, VertexAttribType.Float);
+
+            v2.Bind(va, 1, v2.Positions[0], 16, seconddivisor);
+            va.Attribute(1, 1, 4, VertexAttribType.Float);
+            return new GLRenderableItem(pt, vectors.Length, va, id, ic);
+        }
+
+        // in 0,1 set up. With second buffer given to us. Second vector can be instance divided
         public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, GLBuffer buf2, int bufoff = 0, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
             var vb = items.NewBuffer();
@@ -367,7 +387,7 @@ namespace OpenTKUtils.GL4
             DrawType = DrawElementsType.UnsignedByte;
             DrawCount = ElementBuffer.BufferSize - 1;
 
-            //byte[] b = ReadBuffer(0, buf.BufferSize); // test read back
+            //byte[] b = elementbuf.ReadBuffer(0, elementbuf.BufferSize); // test read back
         }
 
         public void CreateRectangleElementIndexUShort(GLBuffer elementbuf, int reccount, int restartindex = 0xffff)
@@ -418,7 +438,7 @@ namespace OpenTKUtils.GL4
 
         #region Execute without a List.. usually used if shader is not rendering to screen, but is computing, and that would normally have discard=true
 
-        public void Execute( IGLProgramShader shader , GLRenderControl state, GLMatrixCalc c, bool discard = true )
+        public void Execute( IGLProgramShader shader , GLRenderControl state, GLMatrixCalc c = null, bool discard = true )
         {
             if (discard)
                 GL.Enable(EnableCap.RasterizerDiscard);

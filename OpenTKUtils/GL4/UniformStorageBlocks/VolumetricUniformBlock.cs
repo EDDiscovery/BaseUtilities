@@ -32,13 +32,13 @@ namespace OpenTKUtils.GL4
             if (NotAllocated)
                 AllocateBytes(Vec4size * 9 + 4 * sizeof(float) + 32, BufferUsageHint.DynamicCopy);   // extra for alignment, not important to get precise
 
-            IntPtr pb = Map(0, BufferSize);        // the whole schebang
+            StartMapWrite(0);        // the whole schebang
 
             float minzv = float.MaxValue, maxzv = float.MinValue;
             for (int i = 0; i < boundingbox.Length; i++)
             {
                 Vector4 m = Vector4.Transform(boundingbox[i], c.ModelMatrix);
-                MapWrite(ref pb, m);
+                MapWrite(m);
                 if (m.Z < minzv)
                 {
                     minzv = m.Z;
@@ -69,8 +69,8 @@ namespace OpenTKUtils.GL4
 
            // System.Diagnostics.Debug.WriteLine("..Z Calc {0} {1} slices {2} slicesize {3}", minzv, maxzv, slices, slicesize);
 
-            MapWrite(ref pb, minzv);
-            MapWrite(ref pb, (float)slicesize);
+            MapWrite(minzv);
+            MapWrite((float)slicesize);
             UnMap();
 
             //Vector4 t0 = new Vector4(0, 12000, 25666, 1);

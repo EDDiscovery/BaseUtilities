@@ -119,7 +119,7 @@ namespace TestOpenTk
                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
                                                              new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
             }
-            if ( false )
+            if ( true )
             {
                 GLRenderControl lines = GLRenderControl.Lines(1);
 
@@ -138,6 +138,7 @@ namespace TestOpenTk
             #endregion
 
             #region Coloured triangles
+            if (true)
             {
                 GLRenderControl rc = GLRenderControl.Tri();
                 rc.CullFace = false;
@@ -170,6 +171,7 @@ namespace TestOpenTk
 
             #region view marker
 
+            if (true)
             {
                 GLRenderControl rc = GLRenderControl.Points(10);
 
@@ -184,6 +186,7 @@ namespace TestOpenTk
 
 
             #region coloured points
+            if (true)
             {
                 GLRenderControl rc2 = GLRenderControl.Points(2);
 
@@ -230,6 +233,7 @@ namespace TestOpenTk
 
 
             #region textures
+            if (true)
             {
                 GLRenderControl rt = GLRenderControl.Tri();
 
@@ -320,6 +324,7 @@ namespace TestOpenTk
             #endregion
 
             #region 2dArrays
+            if (true)
             {
                 items.Add("TEX2DA", new GLTexturedShader2DBlendWithWorldCoord());
                 items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap3 }, 9));
@@ -345,6 +350,7 @@ namespace TestOpenTk
             #endregion
 
             #region Instancing
+            if (true)
             {
                 items.Add("IC-1", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()));
 
@@ -386,7 +392,7 @@ namespace TestOpenTk
 
 
             #region Tesselation
-
+            if (true)
             {
                 var shdrtesssine = new GLTesselationShaderSinewave(20, 0.5f, 2f);
                 items.Add("TESx1", shdrtesssine);
@@ -404,6 +410,7 @@ namespace TestOpenTk
 
 
             #region MipMaps
+            if (true)
             {
                 items.Add("mipmap1", new GLTexture2D(Properties.Resources.mipmap2, 9));
 
@@ -473,6 +480,7 @@ namespace TestOpenTk
 
             #region Screen coords
             // fixed point on screen
+            if (true)
             {
                 Vector4[] p = new Vector4[4];
 
@@ -494,6 +502,7 @@ namespace TestOpenTk
             #region Index/instance draw
 
             // multi element index draw
+            if (true)
             {
                 float CS = 2, O = -20, OY = 0;
                 float[] v = new float[]
@@ -534,6 +543,7 @@ namespace TestOpenTk
             }
 
             // multi element index draw with primitive restart, draw a triangle strip
+            if (true)
             {
                 float X = -10, Z = -10;
                 float X2 = -8, Z2 = -10;
@@ -561,7 +571,8 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("es2"), "es2", ri);
             }
 
-            // indirect multi draw with element index
+            // indirect multi draw with element index - two red squares in foreground.
+            if (true)
             {
                 float X = -10, Z = -12;
                 float X2 = -8, Z2 = -12;
@@ -584,14 +595,14 @@ namespace TestOpenTk
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
                 ri.CreateRectangleElementIndexByte(items.NewBuffer(), 2);  // put the primitive restart markers in, but we won't use them
 
-                ri.IndirectBuffer = new GLBuffer();
+                ri.IndirectBuffer = new GLBuffer(std430:true);  // disable alignment to vec4 for arrays for this buffer.
                 ri.MultiDrawCount = 2;
                 ri.IndirectBuffer.AllocateBytes(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
-                IntPtr p = ri.IndirectBuffer.Map(0, ri.IndirectBuffer.BufferSize);
-                ri.IndirectBuffer.MapWrite(ref p, 1.0f);        // dummy float to demo index offset
+                ri.IndirectBuffer.StartMapWrite(0, ri.IndirectBuffer.BufferSize);
+                ri.IndirectBuffer.MapWrite(1.0f);        // dummy float to demo index offset
                 ri.BaseIndex = 4;       // and indicate that the base command index is 4
-                ri.IndirectBuffer.MapWriteIndirectElements(ref p, 4, 1, 0, 0, 0);       // draw indexes 0-3
-                ri.IndirectBuffer.MapWriteIndirectElements(ref p, 4, 1, 5, 0, 0);       // and 5-8
+                ri.IndirectBuffer.MapWriteIndirectElements(4, 1, 0, 0, 0);       // draw indexes 0-3
+                ri.IndirectBuffer.MapWriteIndirectElements(4, 1, 5, 0, 0);       // and 5-8
                 ri.IndirectBuffer.UnMap();
                 var data = ri.IndirectBuffer.ReadInts(0,10);                            // notice both are red due to primitive ID=1
 
@@ -603,11 +614,12 @@ namespace TestOpenTk
             #endregion
 
             #region Bindless texture
-
+            if (true)
             {
-                IGLTexture[] btextures = new IGLTexture[2];
+                IGLTexture[] btextures = new IGLTexture[3];
                 btextures[0] = items.Add("bl1", new GLTexture2D(Properties.Resources.Logo8bpp));
                 btextures[1] = items.Add("bl2", new GLTexture2D(Properties.Resources.dotted2));
+                btextures[2] = items.Add("bl3", new GLTexture2D(Properties.Resources.golden));
 
                 GLBindlessTextureHandleBlock bl = new GLBindlessTextureHandleBlock(11,btextures);
 
@@ -615,6 +627,7 @@ namespace TestOpenTk
 
                 float X = -10, Z = -14;
                 float X2 = -9, Z2 = -15;
+                float X3 = -8, Z3 = -16;
                 float[] v = new float[]
                 {
                     0+X,0,1+Z,
@@ -626,12 +639,17 @@ namespace TestOpenTk
                     0+X2,0,0+Z2,
                     1+X2,0,1+Z2,
                     1+X2,0,0+Z2,
+
+                    0+X3,0,1+Z3,
+                    0+X3,0,0+Z3,
+                    1+X3,0,1+Z3,
+                    1+X3,0,0+Z3,
                 };
 
                 GLRenderControl rts = GLRenderControl.TriStrip(0xff);
 
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
-                ri.CreateRectangleElementIndexByte(items.NewBuffer(), 2);
+                ri.CreateRectangleElementIndexByte(items.NewBuffer(), 3);
 
                 items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord(11));
 
@@ -664,20 +682,27 @@ namespace TestOpenTk
             float degreesd2 = ((float)time / 10000.0f * 360.0f) % 360f;
             float degreesd4 = ((float)time / 20000.0f * 360.0f) % 360f;
             float zeroone = (degrees >= 180) ? (1.0f - (degrees - 180.0f) / 180.0f) : (degrees / 180f);
-            ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).XRotDegrees = degrees;
-            ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).ZRotDegrees = degrees;
 
-            ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).YRotDegrees = degrees;
-            ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).ZRotDegrees = degreesd2;
+            if (rObjects.Contains("woodbox"))
+            {
+                ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).XRotDegrees = degrees;
+                ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).ZRotDegrees = degrees;
 
-            ((GLRenderDataTranslationRotation)(rObjects["sphere3"].RenderData)).XRotDegrees = -degrees;
-            ((GLRenderDataTranslationRotation)(rObjects["sphere3"].RenderData)).YRotDegrees = degrees;
-            ((GLRenderDataTranslationRotation)(rObjects["sphere4"].RenderData)).YRotDegrees = degrees;
-            ((GLRenderDataTranslationRotation)(rObjects["sphere4"].RenderData)).ZRotDegrees = -degreesd2;
-            ((GLRenderDataTranslationRotation)(rObjects["sphere7"].RenderData)).YRotDegrees = degreesd4;
+                ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).YRotDegrees = degrees;
+                ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).ZRotDegrees = degreesd2;
 
-            ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("TEXOCT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
-            ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
+                ((GLRenderDataTranslationRotation)(rObjects["sphere3"].RenderData)).XRotDegrees = -degrees;
+                ((GLRenderDataTranslationRotation)(rObjects["sphere3"].RenderData)).YRotDegrees = degrees;
+                ((GLRenderDataTranslationRotation)(rObjects["sphere4"].RenderData)).YRotDegrees = degrees;
+                ((GLRenderDataTranslationRotation)(rObjects["sphere4"].RenderData)).ZRotDegrees = -degreesd2;
+                ((GLRenderDataTranslationRotation)(rObjects["sphere7"].RenderData)).YRotDegrees = degreesd4;
+            }
+
+            if (items.Contains("TEXOCT"))
+                ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("TEXOCT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
+
+            if (items.Contains("TEX2DA"))
+                ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
 
             if (items.Contains("tapeshader"))
                 ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees / 360f, 0.0f);
@@ -686,7 +711,9 @@ namespace TestOpenTk
             if (items.Contains("tapeshader3"))
                 ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader3")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
 
-            ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
+            if ( items.Contains("TESx1"))
+                ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
+
             GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.SetFull(gl3dcontroller.MatrixCalc);

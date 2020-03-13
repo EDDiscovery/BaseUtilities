@@ -90,26 +90,23 @@ namespace TestOpenTk
                                                              new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
             }
 
+            var vert = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation();
+            var frag = new GLPLFragmentShaderFixedColour(Color.Yellow);
+            var shader = new GLShaderPipeline(vert, frag);
+            items.Add("TRI", shader);
 
-            items.Add("COSOT", new GLColourShaderWithObjectTranslation());
-
-
-            vecp4 = new Vector4[] { new Vector4(0, 0, 0, 1), new Vector4(10, 0, 0, 1), new Vector4(10, 0, 10, 1) ,
+            var vecp4 = new Vector4[] { new Vector4(0, 0, 0, 1), new Vector4(10, 0, 0, 1), new Vector4(10, 0, 10, 1) ,
                                     new Vector4(-20, 0, 0, 1), new Vector4(-10, 0, 0, 1), new Vector4(-10, 0, 10, 1)
             };
 
+            var wpp4 = new Vector4[] { new Vector4(0, 0, 0, 0), new Vector4(0, 0, 12, 0) };
+
             GLRenderControl rc = GLRenderControl.Tri();
-          //  rc.CullFace = false;
-            rObjects.Add(items.Shader("COSOT"), "scopen",
-                        GLRenderableItem.CreateVector4Color4(items, rc, vecp4, 
-                                        new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange },
-                                        new GLRenderDataTranslationRotation(new Vector3(0, 0, 0))
-                        ));
 
-            pointbuffer = items.LastBuffer();  // starts with arrays of points
+            rObjects.Add(items.Shader("TRI"), "scopen", GLRenderableItem.CreateVector4Vector4Buf2(items, rc, vecp4, wpp4, ic:2, seconddivisor:1));
 
-            findshader = items.NewShaderPipeline("FS",new GLPLVertexShaderWorldCoord(), null,null, new GLPLGeoShaderFindTriangles(11, 16), null, null, null);
-            findrender = GLRenderableItem.CreateVector4(items, GLRenderControl.Tri(), pointbuffer, vecp4.Length);
+            findshader = items.NewShaderPipeline("FS", new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(), null, null, new GLPLGeoShaderFindTriangles(11, 16), null, null, null);
+            findrender = GLRenderableItem.CreateVector4Vector4Buf2(items, GLRenderControl.Tri(), vecp4, wpp4, ic:2, seconddivisor:1 );
 
             Closed += ShaderTest_Closed;
         }
@@ -139,9 +136,7 @@ namespace TestOpenTk
 
         }
 
-        Vector4[] vecp4;
         GLShaderPipeline findshader;
-        GLBuffer pointbuffer;
         GLRenderableItem findrender;
 
         private void ShaderTest_Closed(object sender, EventArgs e)

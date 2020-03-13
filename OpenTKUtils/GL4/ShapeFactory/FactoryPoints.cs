@@ -85,10 +85,12 @@ namespace OpenTKUtils.GL4
             return array;
         }
 
-        public static void RandomStars4(ref IntPtr ptr, int number, float left, float right, float front, float back, float top, float bottom, Random rnd = null, int seed = 23, float w = 1)
+        public static void RandomStars4(GLBuffer b, int number, float left, float right, float front, float back, float top, float bottom, Random rnd = null, int seed = 23, float w = 1)
         {
             if (rnd == null)
                 rnd = new Random(seed);
+
+            b.MapAlignArray(sizeof(float));
 
             for (int s = 0; s < number; s++)
             {
@@ -96,9 +98,7 @@ namespace OpenTKUtils.GL4
                                             rnd.Next(100000) * (top - bottom) / 100000.0f + bottom,
                                             rnd.Next(100000) * (back - front) / 100000.0f + front,
                                             w };
-
-                System.Runtime.InteropServices.Marshal.Copy(a, 0, ptr, 4);          // number of units, not byte length!
-                ptr += sizeof(float) * 4;
+                b.MapWriteCont(a);
             }
         }
 

@@ -21,14 +21,7 @@ namespace TestOpenTk
 
     class TravelPath
     {
-        private GLTexturedShaderTriangleStripWithWorldCoord tapeshader;
-        private GLShaderPipeline sunshader;
-        private GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation sunvertex;
-        private GLRenderableItem ritape;
-        private GLBuffer tapepointbuf;
-        private GLBuffer starposbuf;
-
-        public void CreatePath(GLItemsList items, GLRenderProgramSortedList rObjects, List<ISystem> pos, float sunsize, float tapesize)
+        public void CreatePath(GLItemsList items, GLRenderProgramSortedList rObjects, List<ISystem> pos, float sunsize, float tapesize, int bufferfindbinding)
         {
             var positionsv4 = pos.Select(x => new Vector4((float)x.X, (float)x.Y, (float)x.Z, 0)).ToArray();
             float seglen = tapesize * 10;
@@ -70,13 +63,16 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("STAR-PATH-SUNS"), "star-path-suns", rs);
 
+                findshader = items.NewShaderPipeline("STAR-PATH_FIND", sunvertex, null, null, new GLPLGeoShaderFindTriangles(bufferfindbinding, 16), null, null, null);
+
+                rifind = GLRenderableItem.CreateVector4Vector4(items, GLRenderControl.Tri(), shape, starposbuf, ic:pos.Count, seconddivisor:1);
+
                 // tbd now names - maybe autoscale the suns
             }
             else
             {
                 tapepointbuf.AllocateFill(tape.Item1.ToArray());        // replace the points with a new one
                 ritape.CreateElementIndex(ritape.ElementBuffer, tape.Item2, tape.Item3);       // update the element buffer
-
                 starposbuf.AllocateFill(positionsv4);
             }
         }
@@ -101,6 +97,35 @@ namespace TestOpenTk
             sunvertex.ModelTranslation = Matrix4.CreateRotationY(-angle);
             tapeshader.TexOffset = new Vector2(-(float)(time%2000)/2000, 0);
         }
+
+        public bool FindSystem(Point l, GLRenderControl state , Size screensize)
+        {
+            var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
+            geo.SetScreenCoords(l, screensize);
+
+            rifind.Execute(findshader, state, null, true); // execute, discard
+
+            var res = geo.GetResult();
+            if (res != null)
+            {
+                for (int i = 0; i < res.Length; i++)
+                {
+                    System.Diagnostics.Debug.WriteLine(i + " = " + res[i]);
+                }
+            }
+
+            return false;
+        }
+
+        private GLTexturedShaderTriangleStripWithWorldCoord tapeshader;
+        private GLShaderPipeline sunshader;
+        private GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation sunvertex;
+        private GLRenderableItem ritape;
+        private GLBuffer tapepointbuf;
+        private GLBuffer starposbuf;
+        private GLShaderPipeline findshader;
+        private GLRenderableItem rifind;
+
     }
 
 }

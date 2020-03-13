@@ -257,7 +257,7 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            IntPtr pb = pointblock.Map(0, pointblock.BufferSize);
+            pointblock.StartMapWrite(0, pointblock.BufferSize);
             float minzv = float.MaxValue, maxzv = float.MinValue;
             for (int i = 0; i < 8; i++)
             {
@@ -266,16 +266,16 @@ void main(void)
                     minzv = p.Z;
                 if (p.Z > maxzv)
                     maxzv = p.Z;
-                pointblock.MapWrite(ref pb, p);
+                pointblock.MapWrite(p);
             }
 
-            pointblock.MapWrite(ref pb, minzv);
-            pointblock.MapWrite(ref pb, maxzv);
-            pointblock.MapWrite(ref pb, Vector4.Transform(new Vector4(mc.EyePosition, 0), mc.ModelMatrix));
+            pointblock.MapWrite(minzv);
+            pointblock.MapWrite(maxzv);
+            pointblock.MapWrite(Vector4.Transform(new Vector4(mc.EyePosition, 0), mc.ModelMatrix));
             float slicedist = (maxzv - minzv) / (float)slices;
             float slicestart = (maxzv - minzv) / ((float)slices * 2);
-            pointblock.MapWrite(ref pb, slicestart); //slicestart
-            pointblock.MapWrite(ref pb, slicedist); //slicedist
+            pointblock.MapWrite(slicestart); //slicestart
+            pointblock.MapWrite(slicedist); //slicedist
 
             //     System.Diagnostics.Debug.WriteLine("slice start {0} dist {1}", slicestart, slicedist);
             // for (int ic = 0; ic < slices; ic++)

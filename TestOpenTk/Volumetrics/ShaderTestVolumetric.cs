@@ -198,9 +198,9 @@ namespace TestOpenTk
             modelboundingbox.MinMaxZ(out int minz, out int maxz);
 
             System.Diagnostics.Debug.WriteLine("min " + minz + " max " + maxz);
-            var p = indicatorlinebuffer.Map(0, sizeof(float) * 4 * 2);
-            indicatorlinebuffer.MapWrite(ref p, boundingbox[minz]);
-            indicatorlinebuffer.MapWrite(ref p, boundingbox[maxz]);
+            indicatorlinebuffer.StartMapWrite(0, sizeof(float) * 4 * 2);
+            indicatorlinebuffer.MapWrite(boundingbox[minz]);
+            indicatorlinebuffer.MapWrite(boundingbox[maxz]);
             indicatorlinebuffer.UnMap();
 
             float percent = 0.2f;
@@ -245,19 +245,19 @@ namespace TestOpenTk
                         //    System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
                     }
 
-                    var p1 = interceptpointbuffer.Map(0, sizeof(float) * 4 * count);
+                    interceptpointbuffer.StartMapWrite(0, sizeof(float) * 4 * count);
                     int ji = 0;
                     for (; ji < count; ji++)
-                        interceptpointbuffer.MapWrite(ref p1, intercepts[ji]);
+                        interceptpointbuffer.MapWrite(intercepts[ji]);
                     interceptpointbuffer.UnMap();
                     interceptri.DrawCount = count;
 
-                    var p2 = surfacebuffer.Map(0, sizeof(float) * 4 * (2 + count));
-                    surfacebuffer.MapWrite(ref p2, avg);
+                    surfacebuffer.StartMapWrite(0, sizeof(float) * 4 * (2 + count));
+                    surfacebuffer.MapWrite(avg);
                     for (ji = 0; ji < count; ji++)
-                        surfacebuffer.MapWrite(ref p2, intercepts[ji]);
+                        surfacebuffer.MapWrite(intercepts[ji]);
 
-                    surfacebuffer.MapWrite(ref p2, intercepts[0]);
+                    surfacebuffer.MapWrite(intercepts[0]);
                     surfacebuffer.UnMap();
 
                     surfaceri.DrawCount = count + 2;

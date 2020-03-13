@@ -181,11 +181,11 @@ namespace OpenTKUtils.GL4
 
         public GLBuffer NewBuffer(string name = null)
         {
-            GLBuffer b = new GLBuffer();
+            GLBuffer b = new GLBuffer(true);        // a standard buffer returned is not for uniforms do not suffer the std140 restrictions
             items[EnsureName(name)] = b;
             return b;
         }
-
+        
         public GLShaderPipeline NewShaderPipeline(string name, params Object[] cnst)
         {
             GLShaderPipeline s = (GLShaderPipeline)Activator.CreateInstance(typeof(GLShaderPipeline), cnst, null);

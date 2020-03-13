@@ -103,7 +103,6 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("LINEYELLOW"), GLRenderableItem.CreateVector4(items, rl, displaylines));
             }
 
-
             {
                 items.Add("solmarker", new GLTexture2D(Properties.Resources.golden));
                 items.Add("solbotmarker", new GLTexture2D(Properties.Resources.ImportSphere));
@@ -138,17 +137,24 @@ namespace TestOpenTk
                              ));
             }
 
+            // global buffer blocks used
+            const int volumenticuniformblock = 2;
+            const int findstarblock = 3;
+
             if (true) // galaxy
             {
-                const int volumenticuniformblcok = 2;
-                volumetricblock = new GLVolumetricUniformBlock(volumenticuniformblcok);
+                const int gnoisetexbinding = 3;     //tex bindings are attached per shaders so are not global
+                const int gdisttexbinding = 4;
+                const int galtexbinding = 1;
+
+                volumetricblock = new GLVolumetricUniformBlock(volumenticuniformblock);
                 items.Add("VB", volumetricblock);
 
                 int sc = 1;
                 GLTexture3D noise3d = new GLTexture3D(1024 * sc, 64 * sc, 1024 * sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
                 items.Add("Noise", noise3d);
-                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128 * sc, 16 * sc, 128 * sc);       // must be a multiple of localgroupsize in csn
-                csn.StartAction += (A) => { noise3d.BindImage(3); };
+                ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128 * sc, 16 * sc, 128 * sc, gnoisetexbinding);       // must be a multiple of localgroupsize in csn
+                csn.StartAction += (A) => { noise3d.BindImage(gnoisetexbinding); };
                 csn.Run();      // compute noise
 
                 GLTexture1D gaussiantex = new GLTexture1D(1024, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
@@ -156,8 +162,8 @@ namespace TestOpenTk
 
                 // set centre=width, higher widths means more curve, higher std dev compensate.
                 // fill the gaussiantex with data
-                ComputeShaderGaussian gsn = new ComputeShaderGaussian(gaussiantex.Width, 2.0f, 2.0f, 1.4f, 4);
-                gsn.StartAction += (A) => { gaussiantex.BindImage(4); };
+                ComputeShaderGaussian gsn = new ComputeShaderGaussian(gaussiantex.Width, 2.0f, 2.0f, 1.4f, gdisttexbinding);
+                gsn.StartAction += (A) => { gaussiantex.BindImage(gdisttexbinding); };
                 gsn.Run();      // compute noise
 
                 GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
@@ -173,10 +179,10 @@ namespace TestOpenTk
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
                 items.Add("galtex", galtex);
-                galaxyshader = new GalaxyShader(volumenticuniformblcok);
+                galaxyshader = new GalaxyShader(volumenticuniformblock, galtexbinding, gnoisetexbinding, gdisttexbinding);
                 items.Add("Galaxy-sh", galaxyshader);
                 // bind the galaxy texture, the 3dnoise, and the gaussian 1-d texture for the shader
-                galaxyshader.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };      // shader requires these, so bind using shader
+                galaxyshader.StartAction = (a) => { galtex.Bind(galtexbinding); noise3d.Bind(gnoisetexbinding); gaussiantex.Bind(gdisttexbinding); };      // shader requires these, so bind using shader
 
                 GLRenderControl rt = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
                 galaxyrenderable = GLRenderableItem.CreateNullVertex(rt);   // no vertexes, all data from bound volumetric uniform, no instances as yet
@@ -193,7 +199,7 @@ namespace TestOpenTk
                 Random rnd = new Random(23);
 
                 GLBuffer buf = new GLBuffer(16 * 350000);     // since RND is fixed, should get the same number every time.
-                IntPtr bufptr = buf.Map(0, buf.BufferSize); // get a ptr to the whole schebang
+                buf.StartMapWrite(0); // get a ptr to the whole schebang
 
                 int xcw = (right - left) / heat.Width;
                 int zch = (back - front) / heat.Height;
@@ -222,7 +228,7 @@ namespace TestOpenTk
                             dist *= 2000;
                             //System.Diagnostics.Debug.WriteLine("{0} {1} : dist {2} c {3}", x, z, dist, c);
                             //System.Diagnostics.Debug.Write(c);
-                            GLPointsFactory.RandomStars4(ref bufptr, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: 0.8f);
+                            GLPointsFactory.RandomStars4(buf, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: 0.8f);
                             points += c;
                             System.Diagnostics.Debug.Assert(points < buf.BufferSize / 16);
                         }
@@ -306,7 +312,7 @@ namespace TestOpenTk
                 }
 
                 travelpath = new TravelPath();
-                travelpath.CreatePath(items, rObjects, pos, 20, 2);
+                travelpath.CreatePath(items, rObjects, pos, 20, 2, findstarblock);
             }
 
 
@@ -340,6 +346,8 @@ namespace TestOpenTk
                 };
             }
 
+            displaycontrol.MouseDown += MouseDownOnMap;
+
             galaxymenu = new MapMenu(this);
         }
 
@@ -353,7 +361,6 @@ namespace TestOpenTk
 
         double fpsavg = 0;
         long lastms;
-
         float lasteyedistance = 100000000;
         int lastgridwidth;
 
@@ -398,6 +405,8 @@ namespace TestOpenTk
         }
 
 
+        #region Turn on/off
+
         public void EnableToggleGalaxy(bool? on = null)
         {
             galaxyshader.Enabled = (on.HasValue) ? on.Value : !galaxyshader.Enabled;
@@ -429,6 +438,18 @@ namespace TestOpenTk
         public bool TravelPathEnabled()
         {
             return travelpath.Enabled();
+        }
+
+        #endregion
+
+        #region UI
+
+        private void MouseDownOnMap(Object s, GLMouseEventArgs e)
+        {
+            if ( travelpath.FindSystem(e.Location,glwfc.RenderState,glwfc.Size))
+            {
+
+            }
         }
 
         private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)
@@ -470,10 +491,13 @@ namespace TestOpenTk
                         pos.Add(new ISystem(i.ToString(), 60000 - i + rnd.Next(1000) - 500, rnd.Next(100), i));
                 }
 
-                travelpath.CreatePath(null, null, pos, 20, 2);
+                travelpath.CreatePath(null, null, pos, 20, 2, 0);
                 glwfc.Invalidate();
             }
         }
+
+        #endregion
+
 
     }
 }

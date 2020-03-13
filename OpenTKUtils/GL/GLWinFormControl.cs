@@ -227,7 +227,7 @@ namespace OpenTKUtils.WinForm
             if ( MakeCurrentOnPaint )
                 glControl.MakeCurrent();    // only needed if running multiple GLs windows in same thread
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);  // note renderdiscard affects this..
 
             if ( RenderState == null )
             {

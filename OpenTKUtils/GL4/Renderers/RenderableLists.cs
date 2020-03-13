@@ -90,7 +90,7 @@ namespace OpenTKUtils.GL4
             GL.BindProgramPipeline(0);
         }
 
-        public void RenderDiscard(GLRenderControl currentstate, GLMatrixCalc c)     // discard computation - not normally done in lists
+        public void RenderDiscard(GLRenderControl currentstate, GLMatrixCalc c)     // discard rasterization - not normally done in lists
         {
             GL.Enable(EnableCap.RasterizerDiscard);
             Render(currentstate, c);

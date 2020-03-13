@@ -70,7 +70,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
     // Out:
     //      gl_Position
-    //      modelpos
+    //      1: modelpos
+    //      2: instance id
 
     public class GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation : GLShaderPipelineShadersBase
     {
@@ -87,10 +88,11 @@ out gl_PerVertex {
     };
 
 layout (location = 0) in vec4 modelposition;
-layout (location = 1) in vec4 worldposition;
+layout (location = 1) in vec4 worldposition;            // instanced
 layout (location = 22) uniform  mat4 transform;
 
 layout (location = 1) out vec3 modelpos;
+layout (location = 2) out int instance;
 
 void main(void)
 {
@@ -98,6 +100,7 @@ void main(void)
     vec4 modelrot = transform * modelposition;
     vec4 wp = modelrot + worldposition;
 	gl_Position = mc.ProjectionModelMatrix * wp;        // order important
+    instance = gl_InstanceID;
 }
 ";
         }
@@ -126,7 +129,7 @@ void main(void)
     // Out:
     //      gl_Position
     //      vs_color
-    //      modelpos
+    //      1: modelpos
 
     public class GLPLVertexShaderColourModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
@@ -174,8 +177,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
     //      gl_Position
-    //      vs_textureCoordinate
-    //      modelpos
+    //      0: vs_textureCoordinate
+    //      1: modelpos
 
 
     public class GLPLVertexShaderTextureModelCoordWithObjectTranslation : GLShaderPipelineShadersBase

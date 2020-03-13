@@ -247,7 +247,7 @@ namespace TestOpenTk
                 Random rnd = new Random(23);
 
                 GLBuffer buf = new GLBuffer(16 * 500000);     // since RND is fixed, should get the same number every time.
-                IntPtr bufptr = buf.Map(0, buf.BufferSize); // get a ptr to the whole schebang
+                buf.StartMapWrite(0); // get a ptr to the whole schebang
 
                 int xcw = (right - left) / heat.Width;
                 int zch = (back - front) / heat.Height;
@@ -276,7 +276,7 @@ namespace TestOpenTk
 
                             dist *= 2000;
 
-                            GLPointsFactory.RandomStars4(ref bufptr, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: i);
+                            GLPointsFactory.RandomStars4(buf, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: i);
                             points += c;
                             System.Diagnostics.Debug.Assert(points < buf.BufferSize / 16);
                         }

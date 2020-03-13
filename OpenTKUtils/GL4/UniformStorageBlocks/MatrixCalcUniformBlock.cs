@@ -38,8 +38,8 @@ namespace OpenTKUtils.GL4
             if (NotAllocated)
                 AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
-            IntPtr ptr = Map(0, BufferSize);        // the whole schebang
-            MapWrite(ref ptr, c.ProjectionModelMatrix);
+            StartMapWrite(0, BufferSize);        // the whole schebang
+            MapWrite(c.ProjectionModelMatrix);
             UnMap();                                // and complete..
         }
 
@@ -48,13 +48,13 @@ namespace OpenTKUtils.GL4
             if (NotAllocated)
                 AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
-            IntPtr ptr = Map(0, BufferSize);        // the whole schebang
-            MapWrite(ref ptr, c.ProjectionModelMatrix);
-            MapWrite(ref ptr, c.ProjectionMatrix);
-            MapWrite(ref ptr, c.ModelMatrix);
-            MapWrite(ref ptr, c.TargetPosition, 0);
-            MapWrite(ref ptr, c.EyePosition, 0);
-            MapWrite(ref ptr, c.EyeDistance);
+            StartMapWrite(0, BufferSize);        // the whole schebang
+            MapWrite(c.ProjectionModelMatrix);
+            MapWrite(c.ProjectionMatrix);
+            MapWrite(c.ModelMatrix);
+            MapWrite(c.TargetPosition, 0);
+            MapWrite(c.EyePosition, 0);
+            MapWrite(c.EyeDistance);
             UnMap();                                // and complete..
         }
 
@@ -69,14 +69,14 @@ namespace OpenTKUtils.GL4
             screenmat.Column2 = new Vector4(0, 0, 1, 0);                  // transform of z = none
             screenmat.Column3 = new Vector4(0, 0, 0, 1);                  // transform of w = none
 
-            IntPtr ptr = Map(0, BufferSize);        // the whole schebang
-            MapWrite(ref ptr, c.ProjectionModelMatrix);     //0, 64 long
-            MapWrite(ref ptr, c.ProjectionMatrix);          //64, 64 long
-            MapWrite(ref ptr, c.ModelMatrix);               //128, 64 long
-            MapWrite(ref ptr, c.TargetPosition, 0);         //192, vec4, 16 long
-            MapWrite(ref ptr, c.EyePosition, 0);            // 208, vec3, 16 long
-            MapWrite(ref ptr, c.EyeDistance);               // 224, float, 4 long
-            MapWrite(ref ptr, screenmat);                // 240, into the project model matrix slot
+            StartMapWrite(0, BufferSize);        // the whole schebang
+            MapWrite(c.ProjectionModelMatrix);     //0, 64 long
+            MapWrite(c.ProjectionMatrix);          //64, 64 long
+            MapWrite(c.ModelMatrix);               //128, 64 long
+            MapWrite(c.TargetPosition, 0);         //192, vec4, 16 long
+            MapWrite(c.EyePosition, 0);            // 208, vec3, 16 long
+            MapWrite(c.EyeDistance);               // 224, float, 4 long
+            MapWrite(screenmat);                // 240, into the project model matrix slot
             UnMap();                                // and complete..
         }
 

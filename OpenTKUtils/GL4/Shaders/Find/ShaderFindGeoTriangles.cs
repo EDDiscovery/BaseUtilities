@@ -63,6 +63,8 @@ out MP
     layout (location = 1) out vec3 modelpos;
 } MPOUT;
 
+layout (location = 2) in int instance[];
+
 float PMSquareS(vec4 l1, vec4 l2, vec4 p)
 {
     return sign((p.x - l1.x) * (l2.y - l1.y) - (l2.x - l1.x) * (p.y - l1.y));
@@ -79,7 +81,7 @@ const int maximumresults = 1;       // is overriden by compiler feed in const
 
 void main(void)
 {
-" + ((passthru) ? 
+" + ((passthru) ? // pass thru is for testing purposes only
 @"
         gl_Position = gl_in[0].gl_Position;
         MPOUT.modelpos =modelpos[0];
@@ -111,7 +113,7 @@ void main(void)
                 if ( ipos < maximumresults )
                 {
                     float avgz = (p0.z+p1.z+p2.z)/3;
-                    values[ipos] = vec4(gl_PrimitiveIDIn,gl_InvocationID,avgz,1000+ipos);
+                    values[ipos] = vec4(gl_PrimitiveIDIn,instance[0],avgz,1000+ipos);
                 }
             }
             else 
@@ -126,7 +128,7 @@ void main(void)
                     if ( ipos < maximumresults )
                     {
                         float avgz = (p0.z+p1.z+p2.z)/3;
-                        values[ipos] = vec4(gl_PrimitiveIDIn,gl_InvocationID,avgz,ipos);
+                        values[ipos] = vec4(gl_PrimitiveIDIn,instance[0],avgz,ipos);
                     }
                 }   
             }
@@ -163,14 +165,16 @@ void main(void)
         public Vector4[] GetResult()
         {
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
-            int count = Math.Min(vecoutbuffer.ReadInt(0),maximumresults);       // atomic counter keeps on going if it exceeds max results, so limit to it
+            vecoutbuffer.StartMapRead(0);
+            int count = Math.Min(vecoutbuffer.MapReadInt(),maximumresults);       // atomic counter keeps on going if it exceeds max results, so limit to it
+
+            Vector4[] d = null;
+
             if (count > 0)
-            {
-                Vector4[] d = vecoutbuffer.ReadVector4(16, count);      // align 16 for vec4
-                return d;
-            }
-            else
-                return null;
+                d = vecoutbuffer.MapReadVector4s(count);      // align 16 for vec4
+
+            vecoutbuffer.UnMap();
+            return d;
         }
 
         public override void Dispose()

@@ -20,9 +20,13 @@ out vec4 color;
 
 in vec3 vs_texcoord;
 
-layout (binding=1) uniform sampler2D tex;
-layout (binding=3) uniform sampler3D noise;     
-layout (binding=4) uniform sampler1D gaussian;  
+const int galtexbinding = 1;
+const int noisebinding = 3;
+const int gaussiandistbinding = 4;
+
+layout (binding=galtexbinding) uniform sampler2D tex;
+layout (binding=noisebinding) uniform sampler3D noise;     
+layout (binding=gaussiandistbinding) uniform sampler1D gaussian;  
 
 layout (location=10) uniform float fadeout;
 
@@ -70,9 +74,9 @@ void main(void)
 }
             ";
 
-        public GalaxyFragmentPipeline()
+        public GalaxyFragmentPipeline(int galtexbinding = 1, int noisebinding = 3, int gaussiandistbinding = 4)
         {
-            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fcode);
+            CompileLink(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader, fcode, new object[] { "galtexbinding", galtexbinding, "noisebinding", noisebinding, "gaussiandistbinding",gaussiandistbinding });
         }
 
         // use -1 to indicate no fade/alpha out
@@ -89,11 +93,11 @@ void main(void)
     {
         private GalaxyFragmentPipeline frag;
 
-        public GalaxyShader(int volumetricbinding = 1)
+        public GalaxyShader(int volumetricbinding = 1, int galtexbinding = 1, int noisebinding = 3, int gaussiandistbinding = 4)
         {
             Add(new GLPLVertexShaderVolumetric(), OpenTK.Graphics.OpenGL4.ShaderType.VertexShader);
             Add(new GLPLGeometricShaderVolumetric(volumetricbinding), OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
-            frag = new GalaxyFragmentPipeline();
+            frag = new GalaxyFragmentPipeline(galtexbinding,noisebinding, gaussiandistbinding);
             Add(frag, OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
             frag.SetFader(1000000.0f);
         }
