@@ -111,14 +111,14 @@ namespace TestWebServer
         public void PushRecord()
         {
             JToken data = eddif.jr.PushRecord();
-            httpws.SendWebSocket(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
         }
 
         public void SupercruiseClick()
         {
             eddif.indicator.Supercruise = !eddif.indicator.Supercruise;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSocket(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
 
         }
 
@@ -126,14 +126,14 @@ namespace TestWebServer
         {
             eddif.indicator.ShieldsUp = !eddif.indicator.ShieldsUp;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSocket(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
         }
 
         public void NightVision()
         {
             eddif.indicator.NightVision = !eddif.indicator.NightVision;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSocket(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
         }
 
         class EDDIconNodes : IHTTPNode
@@ -383,7 +383,7 @@ namespace TestWebServer
                     {
                         ireq.NightVision = !ireq.NightVision;
                         JToken data = ireq.PushRecord();
-                        httpws.SendWebSocket(data.ToString(Newtonsoft.Json.Formatting.None), true);
+                        httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
                         ireq.PushRecord();
                     }
 
