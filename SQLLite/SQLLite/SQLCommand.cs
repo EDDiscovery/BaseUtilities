@@ -162,7 +162,6 @@ namespace SQLLiteExtensions
         {
             if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
             {
-                System.Windows.Forms.MessageBox.Show("Missing dispose for command " + this.CommandText);
                 System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for command " + this.CommandText);       // must have been disposed
             }
         }

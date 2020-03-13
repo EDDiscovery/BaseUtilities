@@ -166,7 +166,6 @@ namespace SQLLiteExtensions
         {
             if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
             {
-                System.Windows.Forms.MessageBox.Show("Missing dispose for connection " + DBFile);
                 System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for connection" + DBFile);       // must have been disposed
             }
         }
@@ -202,7 +201,6 @@ namespace SQLLiteExtensions
 
                 System.Diagnostics.Trace.WriteLine("Exception: " + ex.Message);
                 System.Diagnostics.Trace.WriteLine("Trace: " + ex.StackTrace);
-                System.Windows.Forms.MessageBox.Show($"UpgradeDB{newVersion} error: " + ex.Message);
             }
 
             doAfterQueries?.Invoke();
