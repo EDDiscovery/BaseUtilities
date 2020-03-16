@@ -118,17 +118,20 @@ void main(void)
             }
             else 
             {
-                float p0s = PMSquareS(p0,p1,screencoords);      // perform point to line detection on all three lines
-                float p1s = PMSquareS(p1,p2,screencoords);
-                float p2s = PMSquareS(p2,p0,screencoords);
-
-                if ( p0s == p1s && p0s == p2s)      // all signs agree, its within the triangle
+                if ( p0.z > 0 && p1.z > 0 && p2.z > 0 && p0.z <1 && p1.z < 1 && p2.z < 1)       // all must be on screen
                 {
-                    uint ipos = atomicAdd(count,1);     // this keeps on going even if we exceed max results, the results are just not stored
-                    if ( ipos < maximumresults )
+                    float p0s = PMSquareS(p0,p1,screencoords);      // perform point to line detection on all three lines
+                    float p1s = PMSquareS(p1,p2,screencoords);
+                    float p2s = PMSquareS(p2,p0,screencoords);
+
+                    if ( p0s == p1s && p0s == p2s)      // all signs agree, its within the triangle
                     {
-                        float avgz = (p0.z+p1.z+p2.z)/3;
-                        values[ipos] = vec4(gl_PrimitiveIDIn,instance[0],avgz,ipos);
+                        uint ipos = atomicAdd(count,1);     // this keeps on going even if we exceed max results, the results are just not stored
+                        if ( ipos < maximumresults )
+                        {
+                            float avgz = (p0.z+p1.z+p2.z)/3;
+                            values[ipos] = vec4(gl_PrimitiveIDIn,instance[0],avgz,ipos);
+                        }
                     }
                 }   
             }
@@ -145,13 +148,12 @@ void main(void)
             CompileLink(ShaderType.GeometryShader, Code(false,forwardfacing), auxname: GetType().Name, constvalues:new object[] { "bindingoutdata", resultoutbufferbinding, "maximumresults", maximumresults});
         }
 
-        public void SetScreenCoords(Point p, Size s, int margin = 5)
+        public void SetScreenCoords(Point p, Size s, int margin = 10)
         {
             Vector4 v = new Vector4(((float)p.X) / (s.Width / 2) - 1.0f, (1.0f - (float)p.Y / (s.Height / 2)), 0, 0);
-            //System.Diagnostics.Debug.WriteLine("Set CP {0}", v);
             GL.ProgramUniform4(Id, 10, v);
             float pixd = (float)(margin / (float)(s.Width+s.Height/2/2));
-            //System.Diagnostics.Debug.WriteLine("Pixd {0}", pixd);
+            System.Diagnostics.Debug.WriteLine("Set CP {0} Pixd {1}", v , pixd);
             GL.ProgramUniform1(Id, 11, pixd);
         }
 
@@ -171,7 +173,10 @@ void main(void)
             Vector4[] d = null;
 
             if (count > 0)
+            {
                 d = vecoutbuffer.ReadVector4s(count);      // align 16 for vec4
+                Array.Sort(d, delegate (Vector4 left, Vector4 right) { return left.Z.CompareTo(right.Z); });
+            }
 
             vecoutbuffer.StopReadWrite();
             return d;

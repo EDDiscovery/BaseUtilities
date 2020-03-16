@@ -436,6 +436,17 @@ namespace OpenTKUtils.GL4.Controls
             return true;
         }
 
+        public void ApplyToControlOfName(string name,Action<GLBaseControl> act, bool recurse = false)
+        {
+            foreach( var c in ControlsZ)
+            {
+                if (recurse)
+                    c.ApplyToControlOfName(name, act, recurse);
+                if ( c.Name.WildCardMatch(name))
+                    act(c);
+            }
+        }
+
         [System.Diagnostics.Conditional("DEBUG")]
         private void CheckZOrder()
         {

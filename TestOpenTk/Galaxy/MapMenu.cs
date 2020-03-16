@@ -1,4 +1,5 @@
 ﻿using OpenTKUtils.GL4.Controls;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace TestOpenTk
@@ -11,13 +12,27 @@ namespace TestOpenTk
         {
             map = g;
 
-            GLImage menuimage = new GLImage("MainMenu", new Rectangle(10, 10, 32, 32), Properties.Resources.hamburgermenu);
+            // names of MS* are on screen items hidden during main menu presentation
+
+            GLImage menuimage = new GLImage("MSMainMenu", new Rectangle(10, 10, 32, 32), Properties.Resources.hamburgermenu);
             map.displaycontrol.Add(menuimage);
             menuimage.MouseClick = (o, e1) => { ShowMenu(); };
 
+            GLImage tpback = new GLImage("MSTPBack", new Rectangle(50, 10, 32, 32), Properties.Resources.hamburgermenu);
+            map.displaycontrol.Add(tpback);
+            tpback.MouseClick = (o, e1) => { g.TravelPathMoveBack(); };
+
+            GLImage tphome = new GLImage("MSTPHome", new Rectangle(90, 10, 32, 32), Properties.Resources.hamburgermenu);
+            map.displaycontrol.Add(tphome);
+            tphome.MouseClick = (o, e1) => { g.GoToCurrentSystem(); };
+
+            GLImage tpforward = new GLImage("MSTPForward", new Rectangle(130, 10, 32, 32), Properties.Resources.hamburgermenu);
+            map.displaycontrol.Add(tpforward);
+            tpforward.MouseClick = (o, e1) => { g.TravelPathMoveForward(); };
+
             GLBaseControl.Themer = Theme;
 
-            map.displaycontrol.GlobalFocusChanged += (i, from, to) =>
+            map.displaycontrol.GlobalFocusChanged += (i, from, to) =>       // intercept global focus changes to close menu if required
             {
                 if (to== map.displaycontrol && map.displaycontrol["FormMenu"] != null )
                 {
@@ -45,12 +60,13 @@ namespace TestOpenTk
 
         public void ShowMenu()
         {
-            map.displaycontrol["MainMenu"].Visible = false;
+            map.displaycontrol.ApplyToControlOfName("MS*", (c) => { c.Visible = false; });
+            //map.displaycontrol["MSMainMenu"].Visible = false;
 
             GLForm pform = new GLForm("FormMenu", "Configure Map", new Rectangle(10, 10, 200, 400));
             pform.BackColor = Color.FromArgb(50, Color.Red);
             pform.ForeColor = Color.Orange;
-            pform.FormClosed = (frm) => { map.displaycontrol["MainMenu"].Visible = true;};
+            pform.FormClosed = (frm) => { map.displaycontrol.ApplyToControlOfName("MS*", (c) => { c.Visible = true; }); };
 
             GLPanel p3d2d = new GLPanel("3d2d", new Rectangle(10, 10, 80, 50), Color.Transparent);
 

@@ -23,18 +23,23 @@ namespace TestOpenTk
     {
         public void CreatePath(GLItemsList items, GLRenderProgramSortedList rObjects, List<ISystem> pos, float sunsize, float tapesize, int bufferfindbinding)
         {
+            if (lastpos != -1)
+                lastpos = pos.IndexOf(lastlist[lastpos]);       // will be -1 if the system has disappeared from the list.. this keeps the lastpos in the same place
+
+            lastlist = pos;
+
             var positionsv4 = pos.Select(x => new Vector4((float)x.X, (float)x.Y, (float)x.Z, 0)).ToArray();
             float seglen = tapesize * 10;
 
-            var tape = GLTapeObjectFactory.CreateTape(positionsv4, tapesize, seglen, 0F.Radians(), ensureintegersamples: true, margin: sunsize*1.2f);
+            var tape = GLTapeObjectFactory.CreateTape(positionsv4, tapesize, seglen, 0F.Radians(), ensureintegersamples: true, margin: sunsize * 1.2f);
 
-            if ( ritape == null ) // first time..
+            if (ritape == null) // first time..
             {
                 // create shaders
                 items.Add("tapelogo", new GLTexture2D(Properties.Resources.chevron));
                 items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
                 tapeshader = new GLTexturedShaderTriangleStripWithWorldCoord(true);
-                items.Add("tapeshader", tapeshader );
+                items.Add("tapeshader", tapeshader);
 
                 GLRenderControl rts = GLRenderControl.TriStrip(tape.Item3, cullface: false);
                 rts.DepthTest = false;
@@ -65,7 +70,7 @@ namespace TestOpenTk
 
                 findshader = items.NewShaderPipeline("STAR-PATH_FIND", sunvertex, null, null, new GLPLGeoShaderFindTriangles(bufferfindbinding, 16), null, null, null);
 
-                rifind = GLRenderableItem.CreateVector4Vector4(items, GLRenderControl.Tri(), shape, starposbuf, ic:pos.Count, seconddivisor:1);
+                rifind = GLRenderableItem.CreateVector4Vector4(items, GLRenderControl.Tri(), shape, starposbuf, ic: pos.Count, seconddivisor: 1);
 
                 // tbd now names - maybe autoscale the suns
             }
@@ -95,10 +100,10 @@ namespace TestOpenTk
             float fract = (float)time / rotperiodms;
             float angle = (float)(2 * Math.PI * fract);
             sunvertex.ModelTranslation = Matrix4.CreateRotationY(-angle);
-            tapeshader.TexOffset = new Vector2(-(float)(time%2000)/2000, 0);
+            tapeshader.TexOffset = new Vector2(-(float)(time % 2000) / 2000, 0);
         }
 
-        public bool FindSystem(Point l, GLRenderControl state , Size screensize)
+        public ISystem FindSystem(Point l, GLRenderControl state, Size screensize)
         {
             var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
             geo.SetScreenCoords(l, screensize);
@@ -112,9 +117,44 @@ namespace TestOpenTk
                 {
                     System.Diagnostics.Debug.WriteLine(i + " = " + res[i]);
                 }
+                return lastlist[(int)res[0].Y];
             }
 
-            return false;
+            return null;
+        }
+
+        public ISystem NextSystem()
+        {
+            if (lastlist == null)
+                return null;
+
+            if (lastpos == -1)
+                lastpos = 0;
+            else if (lastpos < lastlist.Count - 1)
+                lastpos++;
+
+            return lastlist[lastpos];
+        }
+
+        public ISystem PrevSystem()
+        {
+            if (lastlist == null)
+                return null;
+
+            if (lastpos == -1)
+                lastpos = lastlist.Count - 1;
+            else if (lastpos > 0)
+                lastpos--;
+
+            return lastlist[lastpos];
+        }
+
+        public void SetSystem(ISystem s)
+        {
+            if (lastlist != null)
+            {
+                lastpos = lastlist.IndexOf(s); // -1 if not in list, hence no system
+            }
         }
 
         private GLTexturedShaderTriangleStripWithWorldCoord tapeshader;
@@ -125,6 +165,9 @@ namespace TestOpenTk
         private GLBuffer starposbuf;
         private GLShaderPipeline findshader;
         private GLRenderableItem rifind;
+
+        private List<ISystem> lastlist;
+        private int lastpos = -1;       // -1 no system
 
     }
 

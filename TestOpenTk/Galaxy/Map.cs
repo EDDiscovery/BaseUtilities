@@ -40,6 +40,8 @@ namespace TestOpenTk
 
         private MapMenu galaxymenu;
 
+        private ISystem currentsystem;
+
         public Map(OpenTKUtils.WinForm.GLWinFormControl glwfc)
         {
             this.glwfc = glwfc;
@@ -51,13 +53,7 @@ namespace TestOpenTk
             items.Dispose();
         }
 
-        public class GLFixedShader : GLShaderPipeline
-        {
-            public GLFixedShader(Color c, Action<IGLProgramShader> action = null) : base(action)
-            {
-                AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(c));
-            }
-        }
+        #region Initialise
 
         public void Start()
         {
@@ -78,64 +74,6 @@ namespace TestOpenTk
                 new Vector4(right,vsize,back,1),
                 new Vector4(right,-vsize,back,1),
             };
-
-            Vector4[] displaylines = new Vector4[]
-            {
-                new Vector4(left,-vsize,front,1),   new Vector4(left,+vsize,front,1),
-                new Vector4(left,+vsize,front,1),      new Vector4(right,+vsize,front,1),
-                new Vector4(right,+vsize,front,1),     new Vector4(right,-vsize,front,1),
-                new Vector4(right,-vsize,front,1),  new Vector4(left,-vsize,front,1),
-
-                new Vector4(left,-vsize,back,1),    new Vector4(left,+vsize,back,1),
-                new Vector4(left,+vsize,back,1),       new Vector4(right,+vsize,back,1),
-                new Vector4(right,+vsize,back,1),      new Vector4(right,-vsize,back,1),
-                new Vector4(right,-vsize,back,1),   new Vector4(left,-vsize,back,1),
-
-                new Vector4(left,-vsize,front,1),   new Vector4(left,-vsize,back,1),
-                new Vector4(left,+vsize,front,1),      new Vector4(left,+vsize,back,1),
-                new Vector4(right,-vsize,front,1),  new Vector4(right,-vsize,back,1),
-                new Vector4(right,+vsize,front,1),     new Vector4(right,+vsize,back,1),
-            };
-
-            {
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
-                GLRenderControl rl = GLRenderControl.Lines(1);
-                rObjects.Add(items.Shader("LINEYELLOW"), GLRenderableItem.CreateVector4(items, rl, displaylines));
-            }
-
-            {
-                items.Add("solmarker", new GLTexture2D(Properties.Resources.golden));
-                items.Add("solbotmarker", new GLTexture2D(Properties.Resources.ImportSphere));
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
-                GLRenderControl rq = GLRenderControl.Quads(cullface: false);
-                rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 1000, 0))
-                             ));
-                rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("solbotmarker"), new Vector3(0, -1000, 0))
-                             ));
-                items.Add("sag", new GLTexture2D(Properties.Resources.dotted));
-                rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, 2000, 25899))
-                             ));
-                rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, -2000, 25899))
-                             ));
-                items.Add("bp", new GLTexture2D(Properties.Resources.dotted2));
-                rObjects.Add(items.Shader("TEX"),
-                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                             GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
-                             new GLRenderDataTranslationRotationTexture(items.Tex("bp"), new Vector3(-1111f, 0, 65269))
-                             ));
-            }
 
             // global buffer blocks used
             const int volumenticuniformblock = 2;
@@ -167,14 +105,6 @@ namespace TestOpenTk
                 gsn.Run();      // compute noise
 
                 GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
-
-                //float[] gdata = gaussiantex.GetTextureImageAsFloats(OpenTK.Graphics.OpenGL4.PixelFormat.Red); // read back check
-                //for( int i = 0; i < gdata.Length; i++  )
-                //{
-                //    double v = ((float)i / gdata.Length-0.5)*2*2;
-                //    double r = ObjectExtensionsNumbersBool.GaussianDist(v, 2, 1.4);
-                // //   System.Diagnostics.Debug.WriteLine(i + ":" + gdata[i] + ": " +  r);
-                //}
 
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
@@ -313,6 +243,8 @@ namespace TestOpenTk
 
                 travelpath = new TravelPath();
                 travelpath.CreatePath(items, rObjects, pos, 20, 2, findstarblock);
+
+                currentsystem = pos[3];
             }
 
 
@@ -350,6 +282,10 @@ namespace TestOpenTk
 
             galaxymenu = new MapMenu(this);
         }
+
+        #endregion
+
+        #region Display
 
         public void Systick()
         {
@@ -404,8 +340,9 @@ namespace TestOpenTk
             //            this.Text = "FPS " + fpsavg.ToString("N0") + " Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
         }
 
+        #endregion
 
-        #region Turn on/off
+        #region Turn on/off, move, etc.
 
         public void EnableToggleGalaxy(bool? on = null)
         {
@@ -440,15 +377,40 @@ namespace TestOpenTk
             return travelpath.Enabled();
         }
 
+        public void TravelPathMoveForward()
+        {
+            var sys = travelpath.NextSystem();
+            if (sys != null)
+                gl3dcontroller.SlewToPosition(new Vector3((float)sys.X, (float)sys.Y, (float)sys.Z), -1);
+        }
+
+        public void TravelPathMoveBack()
+        {
+            var sys = travelpath.PrevSystem();
+            if (sys != null)
+                gl3dcontroller.SlewToPosition(new Vector3((float)sys.X, (float)sys.Y, (float)sys.Z), -1);
+        }
+
+        public void GoToCurrentSystem()
+        {
+            if (currentsystem != null)
+            {
+                gl3dcontroller.SlewToPosition(new Vector3((float)currentsystem.X, (float)currentsystem.Y, (float)currentsystem.Z), -1);
+                travelpath.SetSystem(currentsystem);
+            }
+        }
+
         #endregion
 
         #region UI
 
         private void MouseDownOnMap(Object s, GLMouseEventArgs e)
         {
-            if ( travelpath.FindSystem(e.Location,glwfc.RenderState,glwfc.Size))
+            var sys = travelpath.FindSystem(e.Location, glwfc.RenderState, glwfc.Size);
+            if ( sys != null )
             {
-
+                gl3dcontroller.SlewToPosition(new Vector3((float)sys.X, (float)sys.Y, (float)sys.Z), -1);
+                travelpath.SetSystem(sys);
             }
         }
 
