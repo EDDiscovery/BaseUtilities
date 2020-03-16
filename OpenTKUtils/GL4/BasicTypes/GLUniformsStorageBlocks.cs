@@ -70,15 +70,15 @@ namespace OpenTKUtils.GL4
 
         public void WriteHandles( IGLTexture[] textures)
         {
-            AllocateStartMapWrite(sizeof(long) * textures.Length * 2);
+            AllocateStartWrite(sizeof(long) * textures.Length * 2);
 
             for (int i = 0; i < textures.Length; i++)
             {
-                MapWrite(textures[i].ArbId);    // ARBS are stored as 128 bit numbers, so two longs
-                MapWrite((long)0);              
+                Write(textures[i].ArbId);    // ARBS are stored as 128 bit numbers, so two longs
+                Write((long)0);              
             }
 
-            UnMap();
+            StopReadWrite();
             OpenTKUtils.GLStatics.Check();
         }
     }

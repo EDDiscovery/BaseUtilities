@@ -199,7 +199,7 @@ namespace TestOpenTk
                 Random rnd = new Random(23);
 
                 GLBuffer buf = new GLBuffer(16 * 350000);     // since RND is fixed, should get the same number every time.
-                buf.StartMapWrite(0); // get a ptr to the whole schebang
+                buf.StartWrite(0); // get a ptr to the whole schebang
 
                 int xcw = (right - left) / heat.Width;
                 int zch = (back - front) / heat.Height;
@@ -236,7 +236,7 @@ namespace TestOpenTk
                     //System.Diagnostics.Debug.WriteLine(".");
                 }
 
-                buf.UnMap();
+                buf.StopReadWrite();
 
                 items.Add("SD", new GalaxyStarDots());
                 GLRenderControl rp = GLRenderControl.Points(1);

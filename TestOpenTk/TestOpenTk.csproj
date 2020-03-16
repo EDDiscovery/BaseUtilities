@@ -156,6 +156,12 @@
     <Compile Include="Textures\ShaderTestGalaxyTexture.designer.cs">
       <DependentUpon>ShaderTestGalaxyTexture.cs</DependentUpon>
     </Compile>
+    <Compile Include="Uniformblocks\ShaderTestUniforms.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uniformblocks\ShaderTestUniforms.Designer.cs">
+      <DependentUpon>ShaderTestUniforms.cs</DependentUpon>
+    </Compile>
     <Compile Include="Volumetrics\ShaderTestVolumetric.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -278,6 +284,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Textures\ShaderTestGalaxyTexture.resx">
       <DependentUpon>ShaderTestGalaxyTexture.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uniformblocks\ShaderTestUniforms.resx">
+      <DependentUpon>ShaderTestUniforms.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Volumetrics\ShaderTestVolumetric.resx">
       <DependentUpon>ShaderTestVolumetric.cs</DependentUpon>

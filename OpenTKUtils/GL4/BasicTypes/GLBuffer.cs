@@ -203,27 +203,27 @@ namespace OpenTKUtils.GL4
         public void FillRectangularIndicesBytes(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff
         {
             AllocateBytes(reccount * 5);
-            StartMapWrite(0, BufferSize);
+            StartWrite(0, BufferSize);
             for (int r = 0; r < reccount; r++)
             {
                 byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), (byte)restartindex };
-                MapWrite(ar);
+                Write(ar);
             }
 
-            UnMap();
+            StopReadWrite();
         }
 
         public void FillRectangularIndicesShort(int reccount, int restartindex = 0xffff)        // rectangular indicies with restart of 0xff
         {
             AllocateBytes(reccount * 5 * sizeof(short));     // lets use short because we don't have a marshall copy ushort.. ignore the overflow
-            StartMapWrite(0, BufferSize);
+            StartWrite(0, BufferSize);
             for (int r = 0; r < reccount; r++)
             {
                 short[] ar = new short[] { (short)(r * 4), (short)(r * 4 + 1), (short)(r * 4 + 2), (short)(r * 4 + 3), (short)restartindex };
-                MapWrite(ar);
+                Write(ar);
             }
 
-            UnMap();
+            StopReadWrite();
         }
 
         #endregion
@@ -233,42 +233,46 @@ namespace OpenTKUtils.GL4
         enum MapMode { None, Write, Read};
         MapMode mapmode = MapMode.None;
 
-        public void AllocateStartMapWrite(int datasize)        // update the buffer with an area of updated cache on a write.. (0=all buffer)
+        public void AllocateStartWrite(int datasize)        // update the buffer with an area of updated cache on a write.. (0=all buffer)
         {
             AllocateBytes(datasize);
-            StartMapWrite(0);
+            StartWrite(0);
         }
 
-        public void StartMapWrite(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write.. (0=all buffer)
+        public void StartWrite(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write.. (0=all buffer)
         {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
             if (datasize == 0)
-                datasize = BufferSize;
+                datasize = BufferSize - fillpos;
+
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
+
             CurrentPtr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
             CurrentPos = fillpos;
             mapmode = MapMode.Write;
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void StartMapRead(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write (0=all buffer)
+        public void StartRead(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write (0=all buffer)
         {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
             if (datasize == 0)
-                datasize = BufferSize;
+                datasize = BufferSize - fillpos;
+
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
+
             CurrentPtr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapReadBit);
             CurrentPos = fillpos;
             mapmode = MapMode.Read;
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void UnMap()
+        public void StopReadWrite()
         {
             GL.UnmapNamedBuffer(Id);
             mapmode = MapMode.None;
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void MapSkip(int p)
+        public void Skip(int p)
         {
             System.Diagnostics.Debug.Assert(mapmode != MapMode.None);
             CurrentPtr += p;
@@ -277,146 +281,182 @@ namespace OpenTKUtils.GL4
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void MapAlignArray(int size)         // align to array boundary without writing
+        public void AlignArray(int size)         // align to array boundary without writing
         {
             AlignArrayPtr(size, 0);
         }
 
         #endregion
 
-        #region GL MAP into memory so you can use a IntPtr
+        #region Write to map
 
-        public void MapWrite(Matrix4 mat)
+        public void Write(Matrix4 mat)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(Vec4size, 4);
+            var p = AlignArrayPtr(Vec4size, 4);
             float[] r = new float[] {   mat.Row0.X, mat.Row0.Y, mat.Row0.Z, mat.Row0.W ,
                                         mat.Row1.X, mat.Row1.Y, mat.Row1.Z, mat.Row1.W ,
                                         mat.Row2.X, mat.Row2.Y, mat.Row2.Z, mat.Row2.W ,
                                         mat.Row3.X, mat.Row3.Y, mat.Row3.Z, mat.Row3.W };
-            System.Runtime.InteropServices.Marshal.Copy(r, 0, pos, 4*4);          // number of units, not byte length!
+            System.Runtime.InteropServices.Marshal.Copy(r, 0, p.Item1, r.Length);          // number of units, not byte length!
         }
 
-        public void MapWrite(Vector4 v4)
+        public void Write(Vector4 v4)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(Vec4size, 1);
+            var p = AlignArrayPtr(Vec4size, 1);
             float[] a = new float[] { v4.X, v4.Y, v4.Z, v4.W };
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);   
         }
 
-        public void MapWrite(System.Drawing.Rectangle r)
+        public void Write(System.Drawing.Rectangle r)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(Vec4size, 1);
+            var p = AlignArrayPtr(Vec4size, 1);
             float[] a = new float[] { r.Left, r.Top, r.Right, r.Bottom };
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);          
         }
 
-        public void MapWrite(Vector3 mat, float vec4other)      // write vec3 as vec4.
+        public void Write(Vector3 mat, float vec4other)      // write vec3 as vec4.
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(Vec4size, 1);
+            var p = AlignArrayPtr(Vec4size, 1);
             float[] a = new float[] { mat.X, mat.Y, mat.Z, vec4other };
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 4);          // number of units, not byte length!
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);          
         }
 
-        public void MapWrite(float v)
+        public void Write(float v)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
             IntPtr pos = AlignScalarPtr(sizeof(float));
             float[] a = new float[] { v };
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
         }
 
-        public void MapWrite(float[] a)
+        public void Write(float[] a)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(sizeof(float), a.Length);
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);       // number of units, not byte length!
+            int size = sizeof(float);
+            var p = AlignArrayPtr(size, a.Length);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);       
+            else
+            {
+                var fa = new float[a.Length * 4];
+                for (int i = 0; i < a.Length; i++)      // std140 'orrible
+                    fa[i * 4] = a[i];
+                System.Runtime.InteropServices.Marshal.Copy(fa, 0, p.Item1, fa.Length);       // number of units, not byte length!
+            }
         }
 
-        public void MapWriteCont(float[] a)     // without checking for alignment.
+        public void WriteCont(float[] a)     // without checking for alignment/stride
         {
             System.Runtime.InteropServices.Marshal.Copy(a, 0, CurrentPtr, a.Length);       // number of units, not byte length!
             CurrentPtr += sizeof(float) * a.Length;
             CurrentPos += sizeof(float) * a.Length;
         }
 
-        public void MapWrite(int v)
+        public void Write(int v)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
             int[] a = new int[] { v };
             IntPtr pos = AlignScalarPtr(sizeof(int));
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
-        }
-
-        public void MapWrite(int[] a)
-        {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(sizeof(int), a.Length);
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
         }
 
-        public void MapWrite(short v)
+        public void Write(int[] a)
+        {
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
+            int size = sizeof(int);
+            var p = AlignArrayPtr(size, a.Length);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);       // number of units, not byte length!
+            else
+            {
+                var fa = new int[a.Length * 4];
+                for (int i = 0; i < a.Length; i++)      // std140 'orrible
+                    fa[i * 4] = a[i];
+                System.Runtime.InteropServices.Marshal.Copy(fa, 0, p.Item1, fa.Length);       // number of units, not byte length!
+            }
+        }
+
+        public void Write(short v)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
             short[] a = new short[] { v };
             IntPtr pos = AlignScalarPtr(sizeof(short));
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
         }
 
-        public void MapWrite(short[] a)
+        public void Write(short[] a)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(sizeof(short), a.Length);
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            int size = sizeof(short);
+            var p = AlignArrayPtr(size, a.Length);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);       // number of units, not byte length!
+            else
+            {
+                var fa = new short[a.Length * 4];
+                for (int i = 0; i < a.Length; i++)      // std140 'orrible
+                    fa[i * 4] = a[i];
+                System.Runtime.InteropServices.Marshal.Copy(fa, 0, p.Item1, fa.Length);       // number of units, not byte length!
+            }
         }
 
-        public void MapWrite(long v)
+        public void Write(long v)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
             long[] a = new long[] { v };
             IntPtr pos = AlignScalarPtr(sizeof(long));
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
-        }
-
-        public void MapWrite(long[] a)
-        {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(sizeof(long), a.Length);
             System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
         }
 
-        public void MapWrite(byte[] a)
+        public void Write(long[] a)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
-            IntPtr pos = AlignArrayPtr(sizeof(byte), a.Length);
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
+            int size = sizeof(long);
+            var p = AlignArrayPtr(size, a.Length);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);       // number of units, not byte length!
+            else
+            {
+                var fa = new long[a.Length * 4];
+                for (int i = 0; i < a.Length; i++)      // std140 'orrible
+                    fa[i * 4] = a[i];
+                System.Runtime.InteropServices.Marshal.Copy(fa, 0, p.Item1, fa.Length);       // number of units, not byte length!
+            }
         }
 
-        public void MapWrite(byte v)
+        public void Write(byte v)
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
             byte[] a = new byte[] { v };
             IntPtr pos = AlignScalarPtr(sizeof(byte));
-            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, 1);
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, pos, a.Length);
+        }
+
+        public void Write(byte[] a)     // special , not aligned, as not normal glsl type.  Used mostly for element indexes
+        {
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.Write);
+            var p = AlignArrayPtr(sizeof(byte), a.Length);
+            System.Runtime.InteropServices.Marshal.Copy(a, 0, p.Item1, a.Length);
         }
 
         // write an Indirect Array draw command to the buffer
         // if you use it, MultiDrawCountStride = 16
-        public void MapWriteIndirectArray(int vertexcount, int instancecount = 1, int firstvertex = 0, int baseinstance = 0)
+        public void WriteIndirectArray(int vertexcount, int instancecount = 1, int firstvertex = 0, int baseinstance = 0)
         {
             int[] i = new int[] { vertexcount, instancecount, firstvertex, baseinstance };       
-            MapWrite(i);
+            Write(i);
         }
 
         // write an Element draw command to the buffer
         // if you use it, MultiDrawCountStride = 20
-        public void MapWriteIndirectElements(int vertexcount, int instancecount = 1, int firstindex = 0, int basevertex = 0,int baseinstance = 0)
+        public void WriteIndirectElements(int vertexcount, int instancecount = 1, int firstindex = 0, int basevertex = 0,int baseinstance = 0)
         {
             int[] i = new int[] { vertexcount, instancecount, firstindex, basevertex, baseinstance };
-            MapWrite(i);
+            Write(i);
         }
 
 
@@ -424,25 +464,34 @@ namespace OpenTKUtils.GL4
 
         #region Reads - Map into memory and then read
 
-        public byte[] MapReadBytes(int size)   // read into a byte array. scalaralign overrides the byte align to vec4 on std140
+        public byte[] ReadBytes(int size)   // read into a byte array. not aligned 
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
             byte[] data = new byte[size];
-            IntPtr pos = AlignArrayPtr(sizeof(byte), size);
-            System.Runtime.InteropServices.Marshal.Copy(pos, data, 0, size);
+            var p = AlignArrayPtr(sizeof(byte), size);
+            System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, size);
             return data;
         }
 
-        public int[] MapReadInts(int count)                    // read into a byte array
+        public int[] ReadInts(int count)                    // read into a byte array
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
-            int[] data = new int[count];
-            IntPtr pos = AlignArrayPtr(sizeof(int), count);
-            System.Runtime.InteropServices.Marshal.Copy(pos, data, 0, count);
+            int size = sizeof(int);
+            var data = new int[count];
+            var p = AlignArrayPtr(size, count);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, data.Length);
+            else
+            {
+                var temp = new int[count * 4];
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, temp.Length);
+                for (int i = 0; i < data.Length; i++)
+                    data[i] = temp[i * 4];
+            }
             return data;
         }
 
-        public int MapReadInt()
+        public int ReadInt()
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
             int[] data = new int[1];
@@ -451,16 +500,25 @@ namespace OpenTKUtils.GL4
             return data[0];
         }
 
-        public long[] MapReadLongs(int count)                    // read into a byte array
+        public long[] ReadLongs(int count)                    // read into a byte array
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
-            long[] data = new long[count];
-            IntPtr pos = AlignArrayPtr(sizeof(long), count);
-            System.Runtime.InteropServices.Marshal.Copy(pos, data, 0, count);
+            int size = sizeof(long);
+            var data = new long[count];
+            var p = AlignArrayPtr(size, count);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, data.Length);
+            else
+            {
+                var temp = new long[count * 4];
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, temp.Length);
+                for (int i = 0; i < data.Length; i++)
+                    data[i] = temp[i * 4];
+            }
             return data;
         }
 
-        public long MapReadLong()
+        public long ReadLong()
         {
             var data = new long[1];
             IntPtr pos = AlignScalarPtr(sizeof(long));
@@ -468,16 +526,25 @@ namespace OpenTKUtils.GL4
             return data[0];
         }
 
-        public float[] MapReadFloats(int count)                    // read into a byte array
+        public float[] ReadFloats(int count)                    // read into a byte array
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
-            float[] data = new float[count];
-            IntPtr pos = AlignArrayPtr(sizeof(float), count);
-            System.Runtime.InteropServices.Marshal.Copy(pos, data, 0, count);
+            int size = sizeof(float);
+            var data = new float[count];
+            var p = AlignArrayPtr(size, count);
+            if (p.Item2 == size)
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, data.Length);
+            else
+            {
+                var temp = new float[count * 4];
+                System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, temp.Length);
+                for (int i = 0; i < data.Length; i++)
+                    data[i] = temp[i * 4];
+            }
             return data;
         }
 
-        public float MapReadFloat()
+        public float ReadFloat()
         {
             var data = new float[1];
             IntPtr pos = AlignScalarPtr(sizeof(float));
@@ -485,19 +552,19 @@ namespace OpenTKUtils.GL4
             return data[0];
         }
 
-        public Vector4[] MapReadVector4s(int count)                    // read into a byte array
+        public Vector4[] ReadVector4s(int count)                    // read into a byte array
         {
             System.Diagnostics.Debug.Assert(mapmode == MapMode.Read);
-            IntPtr pos = AlignArrayPtr(Vec4size,count);
+            var p = AlignArrayPtr(Vec4size,count);
             float[] fdata = new float[count*4];
-            System.Runtime.InteropServices.Marshal.Copy(pos, fdata, 0, count*4);
+            System.Runtime.InteropServices.Marshal.Copy(p.Item1, fdata, 0, count*4);
             Vector4[] data = new Vector4[count];
             for (int i = 0; i < count; i++)
                 data[i] = new Vector4(fdata[i * 4], fdata[i * 4+1], fdata[i * 4 + 2], fdata[i * 4 + 3]);
             return data;
         }
 
-        public Vector4 MapReadVector4()
+        public Vector4 ReadVector4()
         {
             var data = new float[4];
             IntPtr pos = AlignScalarPtr(Vec4size);
@@ -505,43 +572,47 @@ namespace OpenTKUtils.GL4
             return new Vector4(data[0], data[1], data[2], data[3]);
         }
 
+        #endregion
+
+        #region Fast Read functions
+
         public byte[] ReadBuffer(int offset, int len)
         {
-            StartMapRead(offset,len);
-            var v = MapReadBytes(len);
-            UnMap();
+            StartRead(offset,len);
+            var v = ReadBytes(len);
+            StopReadWrite();
             return v;
         }
 
         public int ReadInt(int offset)
         {
-            StartMapRead(offset);
-            int v = MapReadInt();
-            UnMap();
+            StartRead(offset);
+            int v = ReadInt();
+            StopReadWrite();
             return v;
         }
 
         public int[] ReadInts(int offset, int number)
         {
-            StartMapRead(offset);
-            var v = MapReadInts(number);
-            UnMap();
+            StartRead(offset);
+            var v = ReadInts(number);
+            StopReadWrite();
             return v;
         }
 
         public float[] ReadFloats(int offset, int number)
         {
-            StartMapRead(offset);
-            var v = MapReadFloats(number);
-            UnMap();
+            StartRead(offset);
+            var v = ReadFloats(number);
+            StopReadWrite();
             return v;
         }
 
         public Vector4[] ReadVector4(int offset, int number)
         {
-            StartMapRead(offset);
-            var v = MapReadVector4s(number);
-            UnMap();
+            StartRead(offset);
+            var v = ReadVector4s(number);
+            StopReadWrite();
             return v;
         }
 

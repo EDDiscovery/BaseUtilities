@@ -90,7 +90,7 @@ namespace OpenTKUtils.GL4
             if (rnd == null)
                 rnd = new Random(seed);
 
-            b.MapAlignArray(sizeof(float));
+            b.AlignArray(sizeof(float));
 
             for (int s = 0; s < number; s++)
             {
@@ -98,7 +98,7 @@ namespace OpenTKUtils.GL4
                                             rnd.Next(100000) * (top - bottom) / 100000.0f + bottom,
                                             rnd.Next(100000) * (back - front) / 100000.0f + front,
                                             w };
-                b.MapWriteCont(a);
+                b.WriteCont(a);
             }
         }
 

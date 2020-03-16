@@ -95,7 +95,7 @@ namespace OpenTKUtils.GL4
             return r;
         }
 
-        protected IntPtr AlignArrayPtr(int scalarsize, int count) 
+        protected Tuple<IntPtr,int> AlignArrayPtr(int scalarsize, int count)    // return pos, stride
         {
             int arrayalign = Std430 ? scalarsize : Vec4size;
 
@@ -110,7 +110,7 @@ namespace OpenTKUtils.GL4
             CurrentPtr += arrayalign * count;
             CurrentPos += arrayalign * count;
             System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
-            return r;
+            return new Tuple<IntPtr, int>(r, arrayalign);
         }
     }
 

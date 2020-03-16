@@ -198,10 +198,10 @@ namespace TestOpenTk
             modelboundingbox.MinMaxZ(out int minz, out int maxz);
 
             System.Diagnostics.Debug.WriteLine("min " + minz + " max " + maxz);
-            indicatorlinebuffer.StartMapWrite(0, sizeof(float) * 4 * 2);
-            indicatorlinebuffer.MapWrite(boundingbox[minz]);
-            indicatorlinebuffer.MapWrite(boundingbox[maxz]);
-            indicatorlinebuffer.UnMap();
+            indicatorlinebuffer.StartWrite(0, sizeof(float) * 4 * 2);
+            indicatorlinebuffer.Write(boundingbox[minz]);
+            indicatorlinebuffer.Write(boundingbox[maxz]);
+            indicatorlinebuffer.StopReadWrite();
 
             float percent = 0.2f;
             float zdist = modelboundingbox[maxz].Z - modelboundingbox[minz].Z;
@@ -245,20 +245,20 @@ namespace TestOpenTk
                         //    System.Diagnostics.Debug.WriteLine(intercepts[i].ToStringVec() + " " + angles[i].Degrees());
                     }
 
-                    interceptpointbuffer.StartMapWrite(0, sizeof(float) * 4 * count);
+                    interceptpointbuffer.StartWrite(0, sizeof(float) * 4 * count);
                     int ji = 0;
                     for (; ji < count; ji++)
-                        interceptpointbuffer.MapWrite(intercepts[ji]);
-                    interceptpointbuffer.UnMap();
+                        interceptpointbuffer.Write(intercepts[ji]);
+                    interceptpointbuffer.StopReadWrite();
                     interceptri.DrawCount = count;
 
-                    surfacebuffer.StartMapWrite(0, sizeof(float) * 4 * (2 + count));
-                    surfacebuffer.MapWrite(avg);
+                    surfacebuffer.StartWrite(0, sizeof(float) * 4 * (2 + count));
+                    surfacebuffer.Write(avg);
                     for (ji = 0; ji < count; ji++)
-                        surfacebuffer.MapWrite(intercepts[ji]);
+                        surfacebuffer.Write(intercepts[ji]);
 
-                    surfacebuffer.MapWrite(intercepts[0]);
-                    surfacebuffer.UnMap();
+                    surfacebuffer.Write(intercepts[0]);
+                    surfacebuffer.StopReadWrite();
 
                     surfaceri.DrawCount = count + 2;
 

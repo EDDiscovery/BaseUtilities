@@ -124,7 +124,7 @@
     <Compile Include="GL4\Textures\Texture2DArray.cs" />
     <Compile Include="GL4\UniformStorageBlocks\VolumetricUniformBlock.cs" />
     <Compile Include="GL4\UniformStorageBlocks\MatrixCalcUniformBlock.cs" />
-    <Compile Include="GL4\UniformStorageBlocks\UniformsStorageBlocks.cs" />
+    <Compile Include="GL4\BasicTypes\GLUniformsStorageBlocks.cs" />
     <Compile Include="GL4\BasicTypes\GLVertexArray.cs" />
     <Compile Include="GL\GLClasses.cs" />
     <Compile Include="GL4\BasicTypes\GL4Statics.cs" />

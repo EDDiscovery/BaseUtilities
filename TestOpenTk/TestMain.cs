@@ -598,12 +598,12 @@ namespace TestOpenTk
                 ri.IndirectBuffer = new GLBuffer(std430:true);  // disable alignment to vec4 for arrays for this buffer.
                 ri.MultiDrawCount = 2;
                 ri.IndirectBuffer.AllocateBytes(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
-                ri.IndirectBuffer.StartMapWrite(0, ri.IndirectBuffer.BufferSize);
-                ri.IndirectBuffer.MapWrite(1.0f);        // dummy float to demo index offset
+                ri.IndirectBuffer.StartWrite(0, ri.IndirectBuffer.BufferSize);
+                ri.IndirectBuffer.Write(1.0f);        // dummy float to demo index offset
                 ri.BaseIndex = 4;       // and indicate that the base command index is 4
-                ri.IndirectBuffer.MapWriteIndirectElements(4, 1, 0, 0, 0);       // draw indexes 0-3
-                ri.IndirectBuffer.MapWriteIndirectElements(4, 1, 5, 0, 0);       // and 5-8
-                ri.IndirectBuffer.UnMap();
+                ri.IndirectBuffer.WriteIndirectElements(4, 1, 0, 0, 0);       // draw indexes 0-3
+                ri.IndirectBuffer.WriteIndirectElements(4, 1, 5, 0, 0);       // and 5-8
+                ri.IndirectBuffer.StopReadWrite();
                 var data = ri.IndirectBuffer.ReadInts(0,10);                            // notice both are red due to primitive ID=1
 
                 items.Add("es3", new GLColourShaderWithWorldCoordXX());

@@ -71,7 +71,7 @@ float PMSquareS(vec4 l1, vec4 l2, vec4 p)
 }
 
 const int bindingoutdata = 20;
-layout (binding = bindingoutdata, std430) buffer Positions
+layout (binding = bindingoutdata, std430) buffer Positions      // StorageBlock note - buffer
 {
     uint count;
     vec4 values[];
@@ -165,15 +165,15 @@ void main(void)
         public Vector4[] GetResult()
         {
             GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
-            vecoutbuffer.StartMapRead(0);
-            int count = Math.Min(vecoutbuffer.MapReadInt(),maximumresults);       // atomic counter keeps on going if it exceeds max results, so limit to it
+            vecoutbuffer.StartRead(0);
+            int count = Math.Min(vecoutbuffer.ReadInt(),maximumresults);       // atomic counter keeps on going if it exceeds max results, so limit to it
 
             Vector4[] d = null;
 
             if (count > 0)
-                d = vecoutbuffer.MapReadVector4s(count);      // align 16 for vec4
+                d = vecoutbuffer.ReadVector4s(count);      // align 16 for vec4
 
-            vecoutbuffer.UnMap();
+            vecoutbuffer.StopReadWrite();
             return d;
         }
 
