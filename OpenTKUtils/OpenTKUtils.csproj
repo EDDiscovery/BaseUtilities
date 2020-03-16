@@ -88,6 +88,7 @@
     <Compile Include="GL4\Shaders\Find\ShaderFindGeoTriangles.cs" />
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
+    <Compile Include="GL4\Textures\BindlessTextureBlock.cs" />
     <Compile Include="GL\GLRenderControl.cs" />
     <Compile Include="GL4\Shaders\Base\ShaderCompute.cs" />
     <Compile Include="GL4\Shaders\Compute\ComputeGaussian.cs" />

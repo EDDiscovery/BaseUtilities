@@ -12,14 +12,11 @@
  * governing permissions and limitations under the License.
  */
 
-using System;
-
-using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
 {
-    // this takes a basic GLBuffer and adds on features for Uniform and storage blocks
+    // this takes a basic GLBuffer and adds on features for Uniform and storage blocks etc
 
     public abstract class GLDataBlock : GLBuffer
     {
@@ -56,31 +53,5 @@ namespace OpenTKUtils.GL4
         }
     }
 
-    // bindless texture buffers
-    public class GLBindlessTextureHandleBlock : GLDataBlock
-    {
-        public GLBindlessTextureHandleBlock(int bindingindex) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
-        {
-        }
-
-        public GLBindlessTextureHandleBlock(int bindingindex, IGLTexture[] textures) : base(bindingindex, false,  BufferRangeTarget.UniformBuffer)
-        {
-            WriteHandles(textures);
-        }
-
-        public void WriteHandles( IGLTexture[] textures)
-        {
-            AllocateStartWrite(sizeof(long) * textures.Length * 2);
-
-            for (int i = 0; i < textures.Length; i++)
-            {
-                Write(textures[i].ArbId);    // ARBS are stored as 128 bit numbers, so two longs
-                Write((long)0);              
-            }
-
-            StopReadWrite();
-            OpenTKUtils.GLStatics.Check();
-        }
-    }
 }
 
