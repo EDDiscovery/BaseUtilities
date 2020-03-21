@@ -19,6 +19,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BaseUtils
@@ -68,6 +69,13 @@ namespace BaseUtils
             });
         }
 
+        protected string RemoveApiKey(string str)
+        {
+            str = Regex.Replace(str, "apiKey=[^&]*", "", RegexOptions.IgnoreCase);
+            str = Regex.Replace(str, "password=[^&]*", "", RegexOptions.IgnoreCase);
+            return str;
+        }
+
         protected ResponseData Request(string method, string postData, string action, NameValueCollection headers, bool handleException,
                                         int timeout)
         {
@@ -103,7 +111,7 @@ namespace BaseUtils
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + action) + " Thread" + System.Threading.Thread.CurrentThread.Name);
+                    System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + RemoveApiKey(action)) + " Thread" + System.Threading.Thread.CurrentThread.Name);
                     WriteLog(method + " " + request.RequestUri, postData);
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
