@@ -74,7 +74,7 @@ namespace TestOpenTk
 
             #endregion
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
         }
 

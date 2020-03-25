@@ -180,10 +180,10 @@ void main(void)
                 return (float)ms / 20.0f;
             };
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
 
             {
-                items.Add("COS", new GLColourShaderWithWorldCoord());
+                items.Add(new GLColourShaderWithWorldCoord(), "COS");
                 GLRenderControl rl = GLRenderControl.Lines(1);
 
                 rObjects.Add(items.Shader("COS"),
@@ -201,8 +201,8 @@ void main(void)
             }
 
             {
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
-                items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+                items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
+                items.Add(new GLTexture2D(Properties.Resources.moonmap1k), "moon");
 
                 GLRenderControl rt = GLRenderControl.Tri();
 
@@ -214,7 +214,7 @@ void main(void)
             }
 
             {
-                items.Add("STAR", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLPLStarSurfaceFragmentShader()));
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithObjectTranslation(), new GLPLStarSurfaceFragmentShader()), "STAR");
 
                 GLRenderControl rt = GLRenderControl.Tri();
 
@@ -225,7 +225,7 @@ void main(void)
                                new GLRenderDataTranslationRotation(new Vector3(20, 0, 0)),
                                ic: 1));
 
-                items.Add("CORONA", new GLShaderStarCorona());
+                items.Add( new GLShaderStarCorona(), "CORONA");
 
                 GLRenderControl rq = GLRenderControl.Quads();
 
@@ -246,7 +246,7 @@ void main(void)
                 GLRenderControl rt = GLRenderControl.Tri();
                 GLRenderableItem ri = GLRenderableItem.CreateVector4Vector4(items, rt, shape, pos, null, pos.Length, 1);
 
-                items.Add("STAR-M2", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(), new GLPLStarSurfaceFragmentShader()));
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(), new GLPLStarSurfaceFragmentShader()), "STAR-M2");
 
                 rObjects.Add(items.Shader("STAR-M2"), "sun2", ri);
             }

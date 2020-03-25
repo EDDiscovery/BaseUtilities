@@ -80,7 +80,7 @@ namespace TestOpenTk
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);
 
             {
@@ -147,27 +147,27 @@ namespace TestOpenTk
                             GLRenderableItem.CreateVector4(items, rl, extralines));
             }
 
-            items.Add("LINEPURPLE", new GLFixedShader(System.Drawing.Color.Purple));
+            items.Add(new GLFixedShader(System.Drawing.Color.Purple), "LINEPURPLE");
 
             indicatorlinebuffer = new GLBuffer();           // new buffer
             indicatorlinebuffer.AllocateBytes(sizeof(float) * 4 * 2, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             rObjects.Add(items.Shader("LINEPURPLE"), GLRenderableItem.CreateVector4(items, rl1, indicatorlinebuffer, 2));
 
-            items.Add("DOTYELLOW", new GLFixedProjectionShader(System.Drawing.Color.Yellow));
+            items.Add(new GLFixedProjectionShader(System.Drawing.Color.Yellow), "DOTYELLOW");
             interceptpointbuffer = new GLBuffer();           // new buffer
             interceptpointbuffer.AllocateBytes(sizeof(float) * 4 * 12, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             GLRenderControl rp1 = GLRenderControl.Points(10);
             interceptri = GLRenderableItem.CreateVector4(items, rp1, interceptpointbuffer, 0);
             rObjects.Add(items.Shader("DOTYELLOW"), interceptri);
 
-            items.Add("SURFACEBLUE", new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue)));
+            items.Add(new GLFixedProjectionShader(System.Drawing.Color.FromArgb(60,Color.Blue)), "SURFACEBLUE");
             surfacebuffer = new GLBuffer();           // new buffer
             surfacebuffer.AllocateBytes(sizeof(float) * 4 * (6+2), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
             GLRenderControl rtf = GLRenderControl.TriFan();
             surfaceri = GLRenderableItem.CreateVector4(items, rtf, surfacebuffer, 0);
             rObjects.Add(items.Shader("SURFACEBLUE"), surfaceri);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
         }
 

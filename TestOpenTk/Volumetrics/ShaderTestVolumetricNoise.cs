@@ -87,7 +87,7 @@ namespace TestOpenTk
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, -35000), new Vector3(135f, 0, 0), 0.31622F);
 
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);
 
             float h = -1;
@@ -130,7 +130,7 @@ namespace TestOpenTk
 
                 };
 
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+                items.Add(new GLFixedShader(System.Drawing.Color.Yellow), "LINEYELLOW");
                 rObjects.Add(items.Shader("LINEYELLOW"),
                             GLRenderableItem.CreateVector4(items, rl1, lines2));
             }
@@ -150,7 +150,7 @@ namespace TestOpenTk
                 new Vector4(hsize,-vsize,zsize,1),
             };
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             dataoutbuffer = items.NewStorageBlock(5);
             dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
@@ -162,7 +162,7 @@ namespace TestOpenTk
             dataoutbuffer.AllocateBytes(sizeof(float) * 4 * 256, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);    // 32 vec4 back
 
             volumetricblock = new GLVolumetricUniformBlock();
-            items.Add("VB",volumetricblock);
+            items.Add(volumetricblock, "VB");
 
             {
                 Bitmap[] numbers = new Bitmap[70];
@@ -186,8 +186,8 @@ namespace TestOpenTk
                 }
 
                 GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
-                items.Add("Nums", array);
-                items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)));
+                items.Add(array, "Nums");
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)), "IC-2");
 
                 GLRenderControl rq = GLRenderControl.Quads(cullface: false);
                 GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
@@ -238,7 +238,7 @@ namespace TestOpenTk
             ns.StartAction = (a) => { noise3d.Bind(3); };
 
 
-            items.Add("NS", ns);
+            items.Add(ns, "NS");
             GLRenderControl rv = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Points);
             noisebox = GLRenderableItem.CreateNullVertex(rv);   // no vertexes, all data from bound volumetric uniform, no instances as yet
 
@@ -246,7 +246,7 @@ namespace TestOpenTk
 
             ComputeShaderNoise csn = new ComputeShaderNoise(noise3d.Width, noise3d.Height, noise3d.Depth,32,4,32);       // must be a multiple of localgroupsize in csn
             csn.StartAction += (A) => { noise3d.BindImage(3); };
-            items.Add("CE1", csn);
+            items.Add(csn, "CE1");
 
             GLComputeShaderList p = new GLComputeShaderList();      // demonstrate a render list holding a compute shader.
             p.Add(csn);

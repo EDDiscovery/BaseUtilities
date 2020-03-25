@@ -28,7 +28,6 @@ namespace OpenTKUtils.GL4
     {
         public int LookAtUniform { get; set; } = 21;    
         public int TransformUniform { get; set; } = 22;
-        public int TextureBind { get; set; } = 1;
 
         public Vector3 Position { get { return pos; } set { pos = value; Calc(); } }
         public float Scale { get { return scale; } set { scale = value; Calc(); } }
@@ -46,24 +45,23 @@ namespace OpenTKUtils.GL4
         float scale = 1.0f;
 
         private Matrix4 transform;
-        protected IGLTexture Texture;                      // set to bind texture.
 
         bool lookatangle = false;
 
-        public GLRenderDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, bool calclookat = false)
         {
             pos = new Vector3(0, 0, 0);
             rot = new Vector3(rx, ry, rz);
-            scale = sc;
+            this.scale = scale;
             lookatangle = calclookat;
             Calc();
         }
 
-        public GLRenderDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float sc = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, bool calclookat = false)
         {
             pos = p;
             rot = new Vector3(rx, ry, rz);
-            scale = sc;
+            this.scale = scale;
             lookatangle = calclookat;
             Calc();
         }
@@ -104,7 +102,6 @@ namespace OpenTKUtils.GL4
                 GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, LookAtUniform, false, ref tx2);
             }
 
-            Texture?.Bind(TextureBind);
             GLStatics.Check();
         }
     }
@@ -113,6 +110,8 @@ namespace OpenTKUtils.GL4
 
     public class GLRenderDataTranslationRotationTexture : GLRenderDataTranslationRotation
     {
+        public int TextureBind { get; set; } = 1;
+
         public GLRenderDataTranslationRotationTexture(IGLTexture tex, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f) : base(p, rx, ry, rx, scale)
         {
             Texture = tex;
@@ -123,6 +122,40 @@ namespace OpenTKUtils.GL4
             Texture = tex;
         }
 
+        public override void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
+        {
+            base.Bind(ri, shader, c);
+            Texture.Bind(TextureBind);
+            GLStatics.Check();
+        }
+
+        private IGLTexture Texture;                      // set to bind texture.
+    }
+
+    public class GLRenderDataTranslationRotationColour : GLRenderDataTranslationRotation
+    {
+        public int ColorBind { get; set; }
+
+        public GLRenderDataTranslationRotationColour(System.Drawing.Color c, Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, int uniformbinding = 25) : base(p, rx, ry, rx, scale)
+        {
+            col = c;
+            ColorBind = uniformbinding;
+        }
+
+        public GLRenderDataTranslationRotationColour(System.Drawing.Color c, Vector3 p, Vector3 rotp, float scale = 1.0f, int uniformbinding = 25) : base(p, rotp, scale)
+        {
+            col = c;
+            ColorBind = uniformbinding;
+        }
+
+        public override void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
+        {
+            base.Bind(ri, shader, c);
+            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id,ColorBind, new Vector4((float)col.R / 255.0f, (float)col.G / 255.0f, (float)col.B / 255.0f, (float)col.A / 255.0f));
+            GLStatics.Check();
+        }
+
+        private System.Drawing.Color col;
     }
 
     // texture only
@@ -130,7 +163,6 @@ namespace OpenTKUtils.GL4
     public class GLRenderDataTexture : IGLRenderItemData
     {
         public int TextureBind { get; set; } = 1;
-        protected IGLTexture Texture;                      
 
         public GLRenderDataTexture(IGLTexture tex, int bind = 1)
         {
@@ -142,7 +174,31 @@ namespace OpenTKUtils.GL4
         {
             Texture?.Bind(TextureBind);
         }
+
+        private IGLTexture Texture;
     }
+
+    // colour only
+
+    public class GLRenderDataColour : IGLRenderItemData
+    {
+        public int ColorBind { get; set; }
+
+        public GLRenderDataColour(System.Drawing.Color c, int uniformbinding = 25) 
+        {
+            col = c;
+            ColorBind = uniformbinding;
+        }
+
+        public virtual void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
+        {
+            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id, ColorBind, new Vector4((float)col.R / 255.0f, (float)col.G / 255.0f, (float)col.B / 255.0f, (float)col.A / 255.0f));
+            GLStatics.Check();
+        }
+
+        private System.Drawing.Color col;
+    }
+
 
 
 }

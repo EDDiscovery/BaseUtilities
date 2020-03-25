@@ -40,6 +40,7 @@ namespace TestOpenTk
         private Timer systemtimer = new Timer();
 
         GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
+        GLRenderProgramSortedList rObjectscw = new GLRenderProgramSortedList();
         GLItemsList items = new GLItemsList();
         GLStorageBlock dataoutbuffer;
 
@@ -71,19 +72,21 @@ namespace TestOpenTk
                 return (float)ms / 100.0f;
             };
 
-            items.Add("TEXOT", new GLTexturedShaderWithObjectTranslation());
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
-            items.Add("COSOT", new GLColourShaderWithObjectTranslation());
-            items.Add("TEXOCT", new GLTexturedShaderWithObjectCommonTranslation());
+            items.Add( new GLTexturedShaderWithObjectTranslation(),"TEXOT");
+            items.Add(new GLTexturedShaderWithObjectTranslation(), "TEXOTNoRot");
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
+            items.Add(new GLColourShaderWithObjectTranslation(), "COSOT");
+            items.Add(new GLFixedColourShaderWithObjectTranslation(Color.Goldenrod), "FCOSOT");
+            items.Add(new GLTexturedShaderWithObjectCommonTranslation(), "TEXOCT");
 
-            items.Add("dotted", new GLTexture2D(Properties.Resources.dotted));
-            items.Add("logo8bpp", new GLTexture2D(Properties.Resources.Logo8bpp));
-            items.Add("dotted2", new GLTexture2D(Properties.Resources.dotted2));
-            items.Add("wooden", new GLTexture2D(Properties.Resources.wooden));
-            items.Add("shoppinglist", new GLTexture2D(Properties.Resources.shoppinglist));
-            items.Add("golden", new GLTexture2D(Properties.Resources.golden));
-            items.Add("smile", new GLTexture2D(Properties.Resources.smile5300_256x256x8));
-            items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
+            items.Add( new GLTexture2D(Properties.Resources.dotted)  ,           "dotted"    );
+            items.Add(new GLTexture2D(Properties.Resources.Logo8bpp), "logo8bpp");
+            items.Add(new GLTexture2D(Properties.Resources.dotted2), "dotted2");
+            items.Add(new GLTexture2D(Properties.Resources.wooden), "wooden");
+            items.Add(new GLTexture2D(Properties.Resources.shoppinglist), "shoppinglist");
+            items.Add(new GLTexture2D(Properties.Resources.golden), "golden");
+            items.Add(new GLTexture2D(Properties.Resources.smile5300_256x256x8), "smile");
+            items.Add(new GLTexture2D(Properties.Resources.moonmap1k), "moon");    
 
             #region Sphere mapping 
 
@@ -319,6 +322,24 @@ namespace TestOpenTk
                         GLSphereObjectFactory.CreateTexturedSphereFromTriangles(3, 1.5f),
                             new GLRenderDataTranslationRotationTexture(items.Tex("golden"), new Vector3(0, 0, -12))
                             ));
+
+                var cyl = GLCylinderObjectFactory.CreateCylinderFromTriangles(3, 10, 20, 2, caps:true);
+                GLRenderControl rt2 = GLRenderControl.Tri();
+                rObjects.Add(items.Shader("TEXOTNoRot"), "cylinder1",
+                GLRenderableItem.CreateVector4Vector2(items, rt2, cyl,
+                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(10, 0, -10))
+                            ));
+
+                // for this one, demo indexes and draw with CW to show it works
+
+                var cyl2 = GLCylinderObjectFactory.CreateCylinderFromTrianglesIndexes(3, 10, 20, 2, caps: true, ccw:false);
+
+                rObjectscw.Add(items.Shader("TEXOTNoRot"), "cylinder2",
+                        GLRenderableItem.CreateVector4Vector2Indexed(items, rt2, cyl2,
+                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(20, 0, -10))
+                            ));
+
+
             }
 
             #endregion
@@ -326,8 +347,8 @@ namespace TestOpenTk
             #region 2dArrays
             if (true)
             {
-                items.Add("TEX2DA", new GLTexturedShader2DBlendWithWorldCoord());
-                items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap3 }, 9));
+                items.Add( new GLTexturedShader2DBlendWithWorldCoord(), "TEX2DA");
+                items.Add(new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap3 }, 9), "2DArray2");
 
                 GLRenderControl rq = GLRenderControl.Quads();
 
@@ -338,7 +359,7 @@ namespace TestOpenTk
                         ));
 
 
-                items.Add("2DArray2-1", new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }));
+                items.Add( new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted, Properties.Resources.dotted2 }), "2DArray2-1");
 
                 rObjects.Add(items.Shader("TEX2DA"), "2DA-1",
                     GLRenderableItem.CreateVector4Vector2(items, rq,
@@ -352,7 +373,7 @@ namespace TestOpenTk
             #region Instancing
             if (true)
             {
-                items.Add("IC-1", new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()));
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()),"IC-1");
 
                 Matrix4[] pos1 = new Matrix4[3];
                 pos1[0] = Matrix4.CreateTranslation(new Vector3(10, 0, 10));
@@ -376,7 +397,7 @@ namespace TestOpenTk
                 pos2[2] = Matrix4.CreateRotationZ(-60f.Radians());
                 pos2[2] *= Matrix4.CreateTranslation(new Vector3(20, 10, 10));
 
-                items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture()));
+                items.Add( new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture()),"IC-2");
 
                 GLRenderControl rq = GLRenderControl.Quads();
                 rq.CullFace = false;
@@ -395,7 +416,7 @@ namespace TestOpenTk
             if (true)
             {
                 var shdrtesssine = new GLTesselationShaderSinewave(20, 0.5f, 2f);
-                items.Add("TESx1", shdrtesssine);
+                items.Add(shdrtesssine, "TESx1");
 
                 GLRenderControl rp = GLRenderControl.Patches(4);
 
@@ -412,7 +433,7 @@ namespace TestOpenTk
             #region MipMaps
             if (true)
             {
-                items.Add("mipmap1", new GLTexture2D(Properties.Resources.mipmap2, 9));
+                items.Add( new GLTexture2D(Properties.Resources.mipmap2, 9), "mipmap1");
 
                 rObjects.Add(items.Shader("TEXOT"), "mipmap1",
                     GLRenderableItem.CreateVector4Vector2(items, GLRenderControl.Tri(),
@@ -429,11 +450,11 @@ namespace TestOpenTk
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(0, 5, 10), new Vector3(100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
-                items.Add("tapelogo", new GLTexture2D(Properties.Resources.Logo8bpp));
+                items.Add( new GLTexture2D(Properties.Resources.Logo8bpp), "tapelogo");
 
                 items.Tex("tapelogo").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
 
-                items.Add("tapeshader", new GLTexturedShaderTriangleStripWithWorldCoord(true));
+                items.Add(new GLTexturedShaderTriangleStripWithWorldCoord(true), "tapeshader" );
 
                 GLRenderControl rts = GLRenderControl.TriStrip();
                 rts.CullFace = false;
@@ -445,11 +466,11 @@ namespace TestOpenTk
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(-0, 5, 10), new Vector3(-100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
-                items.Add("tapelogo2", new GLTexture2D(Properties.Resources.Logo8bpp));
+                items.Add(new GLTexture2D(Properties.Resources.Logo8bpp), "tapelogo2");
 
                 items.Tex("tapelogo2").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
 
-                items.Add("tapeshader2", new GLTexturedShaderTriangleStripWithWorldCoord(true));
+                items.Add(new GLTexturedShaderTriangleStripWithWorldCoord(true), "tapeshader2");
 
                 GLRenderControl rts = GLRenderControl.TriStrip();
                 rts.CullFace = false;
@@ -463,15 +484,15 @@ namespace TestOpenTk
 
                 var p = GLTapeObjectFactory.CreateTape(points.ToArray(), 4, 20, 90F.Radians(), ensureintegersamples: true, margin:0.5f);
 
-                items.Add("tapelogo3", new GLTexture2D(Properties.Resources.chevron));
+                items.Add( new GLTexture2D(Properties.Resources.chevron), "tapelogo3");
                 items.Tex("tapelogo3").SetSamplerMode(OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat, OpenTK.Graphics.OpenGL4.TextureWrapMode.Repeat);
-                items.Add("tapeshader3", new GLTexturedShaderTriangleStripWithWorldCoord(true));
+                items.Add( new GLTexturedShaderTriangleStripWithWorldCoord(true), "tapeshader3");
 
                 GLRenderControl rts = GLRenderControl.TriStrip(p.Item3);
                 rts.CullFace = false;
 
                 GLRenderableItem ri = GLRenderableItem.CreateVector4(items, rts, p.Item1.ToArray(), new GLRenderDataTexture(items.Tex("tapelogo3")));
-                ri.CreateElementIndex(items.NewBuffer(), p.Item2, p.Item3);
+                ri.CreateElementIndex(items.NewBuffer(), p.Item2.ToArray(), p.Item3);
 
                 rObjects.Add(items.Shader("tapeshader3"), "tape3", ri);
             }
@@ -489,7 +510,7 @@ namespace TestOpenTk
                 p[2] = new Vector4(50, 10, 0, 1);       // topright
                 p[3] = new Vector4(50, 100, 0, 1);      // botright
 
-                items.Add("ds1", new GLDirect());
+                items.Add( new GLDirect(), "ds1");
 
                 GLRenderControl rts = GLRenderControl.TriStrip();
                 GLRenderDataTexture rdt = new GLRenderDataTexture(items.Tex("dotted2"));
@@ -536,9 +557,10 @@ namespace TestOpenTk
 
                 GLRenderControl rt = GLRenderControl.Tri();
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rt, v, 3);
-                ri.CreateElementIndexByte(items.NewBuffer(), vertex_indices,1);
+                ri.CreateElementIndexByte(items.NewBuffer(), vertex_indices);
+                ri.BaseVertex = 1;      // first vertex not used
 
-                items.Add("es1", new GLColourShaderWithWorldCoordXX());
+                items.Add(new GLColourShaderWithWorldCoordXX(), "es1");
                 rObjects.Add(items.Shader("es1"), "es1", ri);
             }
 
@@ -566,7 +588,7 @@ namespace TestOpenTk
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
                 ri.CreateRectangleElementIndexByte(items.NewBuffer(), 2,0xff);
 
-                items.Add("es2", new GLColourShaderWithWorldCoordXX());
+                items.Add(new GLColourShaderWithWorldCoordXX(), "es2");
 
                 rObjects.Add(items.Shader("es2"), "es2", ri);
             }
@@ -606,7 +628,7 @@ namespace TestOpenTk
                 ri.IndirectBuffer.StopReadWrite();
                 var data = ri.IndirectBuffer.ReadInts(0,10);                            // notice both are red due to primitive ID=1
 
-                items.Add("es3", new GLColourShaderWithWorldCoordXX());
+                items.Add(new GLColourShaderWithWorldCoordXX(), "es3");
 
                 rObjects.Add(items.Shader("es3"), "es3", ri);
             }
@@ -617,9 +639,9 @@ namespace TestOpenTk
             if (true)
             {
                 IGLTexture[] btextures = new IGLTexture[3];
-                btextures[0] = items.Add("bl1", new GLTexture2D(Properties.Resources.Logo8bpp));
-                btextures[1] = items.Add("bl2", new GLTexture2D(Properties.Resources.dotted2));
-                btextures[2] = items.Add("bl3", new GLTexture2D(Properties.Resources.golden));
+                btextures[0] = items.Add(new GLTexture2D(Properties.Resources.Logo8bpp), "bl1");
+                btextures[1] = items.Add(new GLTexture2D(Properties.Resources.dotted2), "bl2");
+                btextures[2] = items.Add(new GLTexture2D(Properties.Resources.golden), "bl3");
 
                 GLBindlessTextureHandleBlock bl = new GLBindlessTextureHandleBlock(11,btextures);
 
@@ -651,16 +673,110 @@ namespace TestOpenTk
                 GLRenderableItem ri = GLRenderableItem.CreateFloats(items, rts, v, 3);
                 ri.CreateRectangleElementIndexByte(items.NewBuffer(), 3);
 
-                items.Add("bt1", new GLBindlessTextureShaderWithWorldCoord(11));
+                items.Add(new GLBindlessTextureShaderWithWorldCoord(11), "bt1");
 
                 rObjects.Add(items.Shader("bt1"), "bt1-1", ri);
             }
 
 
             #endregion
+
+            #region Objects
+
+            if (true)
+            {
+                GLWaveformObjReader read = new GLWaveformObjReader();
+                string s = System.Text.Encoding.UTF8.GetString(Properties.Resources.cubeobj);
+
+                var objlist = read.ReadOBJData(s);
+
+                if (objlist.Count > 0)
+                {
+                    GLBuffer vert = new GLBuffer();
+                    vert.AllocateFill(objlist[0].Vertices.Vertices.ToArray());
+
+                    var shader = new GLUniformColourShaderWithObjectTranslation();
+
+                    GLRenderControl rts = GLRenderControl.Tri();
+
+                    foreach (var obj in objlist)
+                    {
+                        if (obj.Indices.VertexIndices.Count > 0)
+                        {
+                            obj.Indices.RefactorVertexIndiciesIntoTriangles();
+
+                            var ri = GLRenderableItem.CreateVector4(items, rts, vert, 0, 0, new GLRenderDataTranslationRotationColour(Color.FromName(obj.Material), new Vector3(20, 0, -20), scale: 2f));           // renderable item pointing to vert for vertexes
+                            ri.CreateElementIndex(items.NewBuffer(), obj.Indices.VertexIndices.ToArray(), 0);       // using the refactored indexes, create an index table and use
+
+                            rObjects.Add(shader, ri);
+                        }
+                    }
+                }
+            }
+
+            if (true)
+            {
+                GLWaveformObjReader read = new GLWaveformObjReader();
+                string s = System.Text.Encoding.UTF8.GetString(Properties.Resources.textobj1);
+
+                var objlist = read.ReadOBJData(s);
+
+                if (objlist.Count > 0)
+                {
+                    GLBuffer vert = new GLBuffer();
+                    vert.AllocateFill(objlist[0].Vertices.Vertices.ToArray(), objlist[0].Vertices.TextureVertices2.ToArray());
+
+                    var shader = new GLTexturedShaderWithObjectTranslation();
+                    items.Add(new GLTexture2D(Properties.Resources.wooden), "wood");
+
+                    GLRenderControl rts = GLRenderControl.Tri();
+                    //rts.CullFace = false;
+
+                    foreach (var obj in objlist)
+                    {
+                        obj.Indices.RefactorVertexIndiciesIntoTriangles();
+
+                        IGLTexture tex = items.Tex(obj.Material);
+
+                        var ri = GLRenderableItem.CreateVector4Vector2(items, rts, vert, vert.Positions[0], vert.Positions[1], 0, 
+                                new GLRenderDataTranslationRotationTexture(tex, new Vector3(15, 0, -20), scale: 2f));           // renderable item pointing to vert for vertexes
+                        ri.CreateElementIndex(items.NewBuffer(), obj.Indices.VertexIndices.ToArray(), 0);       // using the refactored indexes, create an index table and use
+
+                        rObjects.Add(shader, ri);
+                    }
+                }
+            }
+
+            if ( true )     // obj creator on those
+            {
+                GLWaveformObjReader read = new GLWaveformObjReader();
+                var objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.textobj1));
+
+                GLWavefrontObjCreator oc = new GLWavefrontObjCreator(items, rObjects);
+
+                oc.Create(objlist, new Vector3(10, 0, -20), new Vector3(0, 0, 0), 2.0f);
+
+                objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.cubeobj));
+
+                oc.Create(objlist, new Vector3(5, 0, -20), new Vector3(0, 0, 0), 2.0f);
+            }
+
+            if ( true )
+            {
+                GLWaveformObjReader read = new GLWaveformObjReader();
+                var objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.Koltuk));
+
+                GLWavefrontObjCreator oc = new GLWavefrontObjCreator(items, rObjects);
+                oc.DefaultColour = Color.Red;
+
+                bool v = oc.Create(objlist, new Vector3(-20, 0, -20), new Vector3(0, 0, 0), 8.0f);
+                System.Diagnostics.Debug.Assert(v == true);
+            }
+
+            #endregion
             #region Matrix Calc Uniform
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add(new GLMatrixCalcUniformBlock(),"MCUB");     // def binding of 0
 
             #endregion
 
@@ -719,6 +835,11 @@ namespace TestOpenTk
             mcub.SetFull(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
+
+            GL.FrontFace(FrontFaceDirection.Cw);
+            rObjectscw.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
 

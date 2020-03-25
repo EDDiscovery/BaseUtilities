@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using OpenTKUtils.GL4.Controls;
+using EliteDangerousCore.EDSM;
 
 namespace TestOpenTk
 {
@@ -28,23 +29,29 @@ namespace TestOpenTk
 
         private Timer systemtimer = new Timer();
 
+        private GalacticMapping galacticMapping;
+
         private Map map;
 
 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        private void ShaderTest_Closed(object sender, EventArgs e)
-        {
-            map.Dispose();
-        }
-
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
-            map = new Map(glwfc);
-            map.Start();
+
+            galacticMapping = new GalacticMapping();
+            galacticMapping.ParseData();                            // at this point, gal map data has been uploaded - get it into memory
+
+            map = new Map();
+            map.Start(glwfc, galacticMapping);
             systemtimer.Start();
+        }
+
+        private void ShaderTest_Closed(object sender, EventArgs e)
+        {
+            map.Dispose();
         }
 
         private void SystemTick(object sender, EventArgs e)

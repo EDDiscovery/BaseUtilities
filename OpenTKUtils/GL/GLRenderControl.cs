@@ -17,6 +17,8 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils
 {
+    // Wraps the openGL main state variables in a class so they get selected correctly for each render.
+
     public class GLRenderControl 
     {
         static public GLRenderControl Tri(FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
@@ -61,7 +63,7 @@ namespace OpenTKUtils
         static public GLRenderControl LineStrip(float linewidth = 1, bool smooth = true)    // vertex 0->1->2
         { return new GLRenderControl(PrimitiveType.LineStrip) { LineWidth = linewidth, LineSmooth = smooth };        }
 
-        // geoshader ones which change the primitive type, so we need the values for the output, but a different input type
+        // geoshaders which change the primitive type need the values for the output, but a different input type
         // good for any triangle type at the geoshader output
 
         static public GLRenderControl ToTri(PrimitiveType t, FrontFaceDirection frontface = FrontFaceDirection.Ccw, bool cullface = true, PolygonMode polygonmode = PolygonMode.Fill)
@@ -85,7 +87,7 @@ namespace OpenTKUtils
             };
         }
 
-        static public GLRenderControl AtStart()     // unknown, used at startup, everything needs to be null so we apply all
+        static public GLRenderControl AtGLStart()       // used at startup, everything needs to be null so we apply all
         {
             GL.Disable(EnableCap.PrimitiveRestart);     // disable by default, since PrimitiveRestart null means disabled, we must explicitly disable
 
@@ -99,51 +101,9 @@ namespace OpenTKUtils
             };
         }
 
-        //public int Deltas(GLRenderControl newstate)
-        //{
-        //    // general
-        //    int count = (newstate.FrontFace.HasValue && FrontFace.HasValue && FrontFace != newstate.FrontFace) ? 1 : 0;       // keep synced with conditions below
-        //    count += (newstate.CullFace.HasValue && CullFace.HasValue && CullFace != newstate.CullFace) ? 1 : 0;
-        //    count += (newstate.DepthTest.HasValue && DepthTest.HasValue && DepthTest != newstate.DepthTest) ? 1 : 0;
-        //    count += (newstate.DepthClamp.HasValue && DepthClamp.HasValue && DepthClamp != newstate.DepthClamp) ? 1 : 0;
-        //    count += (newstate.BlendEnable.HasValue && BlendEnable.HasValue && BlendEnable != newstate.BlendEnable) ? 1 : 0;
-        //    count += (newstate.BlendSource.HasValue && newstate.BlendDest.HasValue && BlendSource.HasValue && BlendDest.HasValue &&
-        //            (BlendSource != newstate.BlendSource || BlendDest != newstate.BlendDest)) ? 1 : 0;
-        //    count += (newstate.PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
-        //    count += (newstate.RasterizerDiscard != newstate.RasterizerDiscard) ? 1 : 0;
-
-        //    // patches
-        //    count += (newstate.PatchSize.HasValue && PatchSize.HasValue && PatchSize != newstate.PatchSize) ? 1 : 0;
-
-        //    // points
-        //    count += (newstate.PointSize.HasValue && PointSize.HasValue && PointSize != newstate.PointSize) ? 1 : 0;
-        //    count += (newstate.PointSprite.HasValue && PointSprite.HasValue && PointSprite != newstate.PointSprite) ? 1 : 0;
-
-        //    // lines
-        //    count += (newstate.LineWidth.HasValue && LineWidth.HasValue && LineWidth != newstate.LineWidth) ? 1 : 0;
-        //    count += (newstate.LineSmooth.HasValue && LineSmooth.HasValue && LineSmooth != newstate.LineSmooth) ? 1 : 0;
-
-        //    // triangles
-        //    count += (newstate.PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack != newstate.PolygonModeFrontAndBack) ? 1 : 0;
-        //    return count;
-        //}
-        
         public void ApplyState( GLRenderControl newstate )      // apply deltas to GL
         {
             // general
-
-            if ( newstate.FrontFace.HasValue && FrontFace != newstate.FrontFace )
-            {
-                FrontFace = newstate.FrontFace;
-                GL.FrontFace(FrontFace.Value);
-            }
-
-            if (newstate.CullFace.HasValue && CullFace != newstate.CullFace )
-            {
-                CullFace = newstate.CullFace;
-                GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.CullFace, CullFace.Value);
-               // System.Diagnostics.Debug.WriteLine("Cull mode " + CullFace.Value);
-            }
 
             if (newstate.DepthTest.HasValue && DepthTest != newstate.DepthTest)
             {
@@ -249,9 +209,21 @@ namespace OpenTKUtils
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonModeFrontAndBack.Value);
             }
 
+            if (newstate.CullFace.HasValue && CullFace != newstate.CullFace)
+            {
+                CullFace = newstate.CullFace;
+                GLStatics.SetEnable(OpenTK.Graphics.OpenGL.EnableCap.CullFace, CullFace.Value);
+                // System.Diagnostics.Debug.WriteLine("Cull mode " + CullFace.Value);
+            }
+
+            if (newstate.FrontFace.HasValue && FrontFace != newstate.FrontFace)
+            {
+                FrontFace = newstate.FrontFace;
+                GL.FrontFace(FrontFace.Value);
+            }
         }
 
-        
+
         private GLRenderControl(PrimitiveType p)
         {
             PrimitiveType = p;
@@ -282,4 +254,45 @@ namespace OpenTKUtils
     }
 
 }
+
+// keep, later idea
+
+//foreach( var x in list)
+//{
+//    int deltas = x.Item2.RenderControl.Deltas(r.RenderControl);
+//    System.Diagnostics.Debug.WriteLine("Render list " + x.Item1 + " delta to " + name + " = " + deltas);
+//}
+
+
+
+
+//public int Deltas(GLRenderControl newstate)
+//{
+//    // general
+//    int count = (newstate.FrontFace.HasValue && FrontFace.HasValue && FrontFace != newstate.FrontFace) ? 1 : 0;       // keep synced with conditions below
+//    count += (newstate.CullFace.HasValue && CullFace.HasValue && CullFace != newstate.CullFace) ? 1 : 0;
+//    count += (newstate.DepthTest.HasValue && DepthTest.HasValue && DepthTest != newstate.DepthTest) ? 1 : 0;
+//    count += (newstate.DepthClamp.HasValue && DepthClamp.HasValue && DepthClamp != newstate.DepthClamp) ? 1 : 0;
+//    count += (newstate.BlendEnable.HasValue && BlendEnable.HasValue && BlendEnable != newstate.BlendEnable) ? 1 : 0;
+//    count += (newstate.BlendSource.HasValue && newstate.BlendDest.HasValue && BlendSource.HasValue && BlendDest.HasValue &&
+//            (BlendSource != newstate.BlendSource || BlendDest != newstate.BlendDest)) ? 1 : 0;
+//    count += (newstate.PrimitiveRestart != newstate.PrimitiveRestart) ? 1 : 0;
+//    count += (newstate.RasterizerDiscard != newstate.RasterizerDiscard) ? 1 : 0;
+
+//    // patches
+//    count += (newstate.PatchSize.HasValue && PatchSize.HasValue && PatchSize != newstate.PatchSize) ? 1 : 0;
+
+//    // points
+//    count += (newstate.PointSize.HasValue && PointSize.HasValue && PointSize != newstate.PointSize) ? 1 : 0;
+//    count += (newstate.PointSprite.HasValue && PointSprite.HasValue && PointSprite != newstate.PointSprite) ? 1 : 0;
+
+//    // lines
+//    count += (newstate.LineWidth.HasValue && LineWidth.HasValue && LineWidth != newstate.LineWidth) ? 1 : 0;
+//    count += (newstate.LineSmooth.HasValue && LineSmooth.HasValue && LineSmooth != newstate.LineSmooth) ? 1 : 0;
+
+//    // triangles
+//    count += (newstate.PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack.HasValue && PolygonModeFrontAndBack != newstate.PolygonModeFrontAndBack) ? 1 : 0;
+//    return count;
+//}
+
 

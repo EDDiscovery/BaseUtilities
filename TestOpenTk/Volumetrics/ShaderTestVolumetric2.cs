@@ -135,7 +135,7 @@ void main(void)
             };
 
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);
 
             {
@@ -163,7 +163,7 @@ void main(void)
                 new Vector4(40,+5,+10,1),       //PT7
             };
 
-            items.Add("V2", new ShaderV2());
+            items.Add(new ShaderV2(), "V2");
 
             GLRenderControl rltot = GLRenderControl.ToTri(OpenTK.Graphics.OpenGL4.PrimitiveType.Lines);
             rObjects.Add(items.Shader("V2"), GLRenderableItem.CreateVector4(items, rltot, points, ic: 9));        // ic select number of slices
@@ -188,7 +188,7 @@ void main(void)
 
             };
 
-            items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+            items.Add(new GLFixedShader(System.Drawing.Color.Yellow), "LINEYELLOW");
             rObjects.Add(items.Shader("LINEYELLOW"),
                         GLRenderableItem.CreateVector4(items, rl1, lines2));
 
@@ -198,7 +198,7 @@ void main(void)
             atomicbuffer = items.NewAtomicBlock(6);
             atomicbuffer.AllocateBytes(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
         }
 
         GLStorageBlock dataoutbuffer;

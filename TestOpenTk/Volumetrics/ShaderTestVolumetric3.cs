@@ -131,7 +131,7 @@ void main(void)
                 return (float)ms / 100.0f;
             };
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);
 
             {
@@ -169,8 +169,8 @@ void main(void)
                 }
 
                 GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
-                items.Add("Nums", array);
-                items.Add("IC-2", new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)));
+                items.Add(array, "Nums");
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)), "IC-2");
 
                 GLRenderControl rq = GLRenderControl.Quads(cullface:false);
                 GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
@@ -202,12 +202,12 @@ void main(void)
 
                 };
 
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+                items.Add(new GLFixedShader(System.Drawing.Color.Yellow), "LINEYELLOW");
                 rObjects.Add(items.Shader("LINEYELLOW"),
                             GLRenderableItem.CreateVector4(items, rl1, lines2));
             }
 
-            items.Add("V2", new ShaderV2());
+            items.Add(new ShaderV2(), "V2");
 
             Vector4[] points = new Vector4[]
             {
@@ -225,7 +225,7 @@ void main(void)
             atomicbuffer = items.NewAtomicBlock(6);
             atomicbuffer.AllocateBytes(sizeof(float) * 32, OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
         }
 
         GLStorageBlock dataoutbuffer;

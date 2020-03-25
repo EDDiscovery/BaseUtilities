@@ -59,7 +59,7 @@ namespace TestOpenTk
             base.OnLoad(e);
             Closed += ShaderTest_Closed;
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
             boundingbox = new Vector4[]
@@ -96,7 +96,7 @@ namespace TestOpenTk
             GLRenderControl rl = GLRenderControl.Lines(1);
 
             {
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+                items.Add(new GLFixedShader(System.Drawing.Color.Yellow), "LINEYELLOW");
                 rObjects.Add(items.Shader("LINEYELLOW"),
                 GLRenderableItem.CreateVector4(items, rl, displaylines));
             }
@@ -104,7 +104,7 @@ namespace TestOpenTk
             float h = 0;
             if ( h != -1)
             {
-                items.Add("COS-1L", new GLColourShaderWithWorldCoord());
+                items.Add(new GLColourShaderWithWorldCoord(), "COS-1L");
 
                 int dist = 1000;
                 Color cr = Color.FromArgb(100, Color.White);
@@ -124,8 +124,8 @@ namespace TestOpenTk
 
 
             {
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
-                items.Add("dotted2", new GLTexture2D(Properties.Resources.dotted2));
+                items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
+                items.Add(new GLTexture2D(Properties.Resources.dotted2), "dotted2");
 
                 GLRenderControl rt = GLRenderControl.Tri();
 
@@ -137,8 +137,8 @@ namespace TestOpenTk
             }
 
             {
-                items.Add("FCS1", new GLFixedColourShaderWithWorldCoord(Color.FromArgb(150, Color.Green)));
-                items.Add("FCS2", new GLFixedColourShaderWithWorldCoord(Color.FromArgb(80, Color.Red)));
+                items.Add(new GLFixedColourShaderWithWorldCoord(Color.FromArgb(150, Color.Green)), "FCS1");
+                items.Add(new GLFixedColourShaderWithWorldCoord(Color.FromArgb(80, Color.Red)), "FCS2");
 
                 GLRenderControl rq = GLRenderControl.Quads();
 

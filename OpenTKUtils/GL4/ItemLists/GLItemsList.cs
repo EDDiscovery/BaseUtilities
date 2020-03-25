@@ -37,62 +37,12 @@ namespace OpenTKUtils.GL4
             items.Dispose();
         }
 
+        // Get existing items
+
         public bool Contains(string name )
         {
             return items.ContainsKey(name);
         }
-
-        // Add existing items
-
-        public IGLTexture Add(string name, IGLTexture disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public IGLProgramShader Add(string name, IGLProgramShader disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public IGLPipelineShader Add(string name, IGLPipelineShader disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public GLVertexArray Add(string name, GLVertexArray disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public GLUniformBlock Add(string name, GLUniformBlock disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public GLStorageBlock Add(string name, GLStorageBlock disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public GLAtomicBlock Add(string name, GLAtomicBlock disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        public GLBuffer Add(string name, GLBuffer disp)
-        {
-            items.Add(name, disp);
-            return disp;
-        }
-
-        // Get existing items
 
         public GLTextureBase Tex(string name)
         {
@@ -139,7 +89,7 @@ namespace OpenTKUtils.GL4
             return (GLBuffer)items.Last(typeof(GLBuffer), c);
         }
 
-        public T Last<T>(int c = 1) where T:class
+        public T Last<T>(int c = 1) where T : class
         {
             return (T)items.Last(typeof(T), c);
         }
@@ -147,6 +97,56 @@ namespace OpenTKUtils.GL4
         public T Get<T>(string name)
         {
             return (T)items[name];
+        }
+
+        // Add existing items. Name can be null and will get a unique name
+
+        public IGLTexture Add(IGLTexture disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public IGLProgramShader Add(IGLProgramShader disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public IGLPipelineShader Add(IGLPipelineShader disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public GLVertexArray Add(GLVertexArray disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public GLUniformBlock Add(GLUniformBlock disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public GLStorageBlock Add(GLStorageBlock disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public GLAtomicBlock Add( GLAtomicBlock disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
+        public GLBuffer Add(GLBuffer disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
         }
 
         // New items
@@ -185,7 +185,7 @@ namespace OpenTKUtils.GL4
             items[EnsureName(name)] = b;
             return b;
         }
-        
+
         public GLShaderPipeline NewShaderPipeline(string name, params Object[] cnst)
         {
             GLShaderPipeline s = (GLShaderPipeline)Activator.CreateInstance(typeof(GLShaderPipeline), cnst, null);
@@ -199,6 +199,8 @@ namespace OpenTKUtils.GL4
             items[EnsureName(name)] = s;
             return s;
         }
+
+
 
         // helpers
 

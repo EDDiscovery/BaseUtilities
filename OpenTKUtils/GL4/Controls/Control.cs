@@ -436,13 +436,14 @@ namespace OpenTKUtils.GL4.Controls
             return true;
         }
 
-        public void ApplyToControlOfName(string name,Action<GLBaseControl> act, bool recurse = false)
+        // Easy way, using naming, to address controls. wildcards ? * 
+        public void ApplyToControlOfName(string wildcardname,Action<GLBaseControl> act, bool recurse = false)
         {
             foreach( var c in ControlsZ)
             {
                 if (recurse)
-                    c.ApplyToControlOfName(name, act, recurse);
-                if ( c.Name.WildCardMatch(name))
+                    c.ApplyToControlOfName(wildcardname, act, recurse);
+                if ( c.Name.WildCardMatch(wildcardname))
                     act(c);
             }
         }

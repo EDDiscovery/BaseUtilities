@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using EliteDangerousCore.EDSM;
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTKUtils;
@@ -17,13 +18,14 @@ namespace TestOpenTk
 {
     public class Map
     {
+        public Controller3D gl3dcontroller;
+        public GLControlDisplay displaycontrol;
+        public GalacticMapping galmap;
+
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
 
         private GLRenderProgramSortedList rObjects = new GLRenderProgramSortedList();
         private GLItemsList items = new GLItemsList();
-
-        public Controller3D gl3dcontroller;
-        public GLControlDisplay displaycontrol;
 
         private Vector4[] volumetricboundingbox;
         private GLVolumetricUniformBlock volumetricblock;
@@ -35,17 +37,17 @@ namespace TestOpenTk
         private DynamicGridVertexShader gridvertshader;
 
         private TravelPath travelpath;
+        private MapMenu galaxymenu;
+        
+        private GalMapDisplay galmapdisplay;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-        private MapMenu galaxymenu;
 
         private ISystem currentsystem;
 
-        public Map(OpenTKUtils.WinForm.GLWinFormControl glwfc)
+        public Map()
         {
-            this.glwfc = glwfc;
-
         }
 
         public void Dispose()
@@ -55,11 +57,14 @@ namespace TestOpenTk
 
         #region Initialise
 
-        public void Start()
+        public void Start(OpenTKUtils.WinForm.GLWinFormControl glwfc, GalacticMapping galmap)
         {
+            this.glwfc = glwfc;
+            this.galmap = galmap;
+
             sw.Start();
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
             volumetricboundingbox = new Vector4[]
@@ -78,6 +83,7 @@ namespace TestOpenTk
             // global buffer blocks used
             const int volumenticuniformblock = 2;
             const int findstarblock = 3;
+            const int findgeomapblock = 4;
 
             if (true) // galaxy
             {
@@ -86,17 +92,17 @@ namespace TestOpenTk
                 const int galtexbinding = 1;
 
                 volumetricblock = new GLVolumetricUniformBlock(volumenticuniformblock);
-                items.Add("VB", volumetricblock);
+                items.Add(volumetricblock, "VB");
 
                 int sc = 1;
                 GLTexture3D noise3d = new GLTexture3D(1024 * sc, 64 * sc, 1024 * sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
-                items.Add("Noise", noise3d);
+                items.Add(noise3d, "Noise");
                 ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128 * sc, 16 * sc, 128 * sc, gnoisetexbinding);       // must be a multiple of localgroupsize in csn
                 csn.StartAction += (A) => { noise3d.BindImage(gnoisetexbinding); };
                 csn.Run();      // compute noise
 
                 GLTexture1D gaussiantex = new GLTexture1D(1024, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
-                items.Add("Gaussian", gaussiantex);
+                items.Add(gaussiantex, "Gaussian");
 
                 // set centre=width, higher widths means more curve, higher std dev compensate.
                 // fill the gaussiantex with data
@@ -108,9 +114,9 @@ namespace TestOpenTk
 
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
-                items.Add("galtex", galtex);
+                items.Add(galtex, "galtex");
                 galaxyshader = new GalaxyShader(volumenticuniformblock, galtexbinding, gnoisetexbinding, gdisttexbinding);
-                items.Add("Galaxy-sh", galaxyshader);
+                items.Add(galaxyshader, "Galaxy-sh");
                 // bind the galaxy texture, the 3dnoise, and the gaussian 1-d texture for the shader
                 galaxyshader.StartAction = (a) => { galtex.Bind(galtexbinding); noise3d.Bind(gnoisetexbinding); gaussiantex.Bind(gdisttexbinding); };      // shader requires these, so bind using shader
 
@@ -168,7 +174,7 @@ namespace TestOpenTk
 
                 buf.StopReadWrite();
 
-                items.Add("SD", new GalaxyStarDots());
+                items.Add(new GalaxyStarDots(), "SD");
                 GLRenderControl rp = GLRenderControl.Points(1);
                 rp.DepthTest = false;
                 rObjects.Add(items.Shader("SD"),
@@ -178,8 +184,8 @@ namespace TestOpenTk
 
             if (true)  // point sprite
             {
-                items.Add("lensflare", new GLTexture2D(Properties.Resources.StarFlare2));
-                items.Add("PS", new GLPointSpriteShader(items.Tex("lensflare"), 64, 40));
+                items.Add(new GLTexture2D(Properties.Resources.StarFlare2), "lensflare");
+                items.Add(new GLPointSpriteShader(items.Tex("lensflare"), 64, 40), "PS");
                 var p = GLPointsFactory.RandomStars4(1000, 0, 25899, 10000, 1000, -1000);
 
                 GLRenderControl rps = GLRenderControl.PointSprites(depthtest: false);
@@ -193,13 +199,13 @@ namespace TestOpenTk
             if (true)
             {
                 gridvertshader = new DynamicGridVertexShader(Color.Cyan);
-                items.Add("PLGRIDVertShader", gridvertshader);
-                items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
+                items.Add(gridvertshader, "PLGRIDVertShader");
+                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
 
-                items.Add("DYNGRID", new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")));
+                items.Add(new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")), "DYNGRID");
 
                 gridrenderable = GLRenderableItem.CreateNullVertex(rl, dc: 2);
 
@@ -212,18 +218,18 @@ namespace TestOpenTk
             {
 
                 gridbitmapvertshader = new DynamicGridCoordVertexShader();
-                items.Add("PLGRIDBitmapVertShader", gridbitmapvertshader);
-                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
+                items.Add(gridbitmapvertshader, "PLGRIDBitmapVertShader");
+                items.Add(new GLPLFragmentShaderTexture2DIndexed(0), "PLGRIDBitmapFragShader");     // binding 1
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
                 rl.DepthTest = false;
 
                 GLTexture2DArray gridtexcoords = new GLTexture2DArray();
-                items.Add("PLGridBitmapTextures", gridtexcoords);
+                items.Add(gridtexcoords, "PLGridBitmapTextures");
 
                 GLShaderPipeline sp = new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader"));
 
-                items.Add("DYNGRIDBitmap", sp);
+                items.Add(sp, "DYNGRIDBitmap");
 
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic: 9));
             }
@@ -247,10 +253,21 @@ namespace TestOpenTk
                 currentsystem = pos[3];
             }
 
+            // Gal map objects
+            if ( true )
+            {
+                galmapdisplay = new GalMapDisplay();
+                galmapdisplay.CreateObjects(items, rObjects, galmap,findgeomapblock);
+
+            }
+
+            // menu system
 
             displaycontrol = new GLControlDisplay(items, glwfc);       // hook form to the window - its the master
             displaycontrol.Focusable = true;          // we want to be able to focus and receive key presses.
             displaycontrol.SetFocus();
+
+            // 3d controller
 
             gl3dcontroller = new Controller3D();
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
@@ -324,7 +341,7 @@ namespace TestOpenTk
                 galaxyshader.SetDistance(gl3dcontroller.MatrixCalc.InPerspectiveMode ? mc.EyeDistance : -1f);
             }
 
-            travelpath.Update(time);
+            travelpath.Update(time, gl3dcontroller.MatrixCalc.EyeDistance);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -411,6 +428,15 @@ namespace TestOpenTk
             {
                 gl3dcontroller.SlewToPosition(new Vector3((float)sys.X, (float)sys.Y, (float)sys.Z), -1);
                 travelpath.SetSystem(sys);
+            }
+            else
+            {
+                var gmo = galmapdisplay.FindPOI(e.Location, glwfc.RenderState, glwfc.Size, galmap);
+
+                if ( gmo != null )
+                {
+
+                }
             }
         }
 

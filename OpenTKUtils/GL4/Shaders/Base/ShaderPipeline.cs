@@ -107,6 +107,7 @@ namespace OpenTKUtils.GL4
         {
             shaders[m] = p;
             GL.UseProgramStages(pipelineid, convmask[m], p.Id);
+            GLStatics.Check();
         }
 
         public virtual void Start()

@@ -58,10 +58,10 @@ namespace TestOpenTk
                 return (float)ms / 20.0f;
             };
 
-            IGLTexture array2d = items.Add("2DArray2", new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2,
-                                Properties.Resources.mipmap3, Properties.Resources.mipmap4 }, 9));
+            IGLTexture array2d = items.Add(new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap, Properties.Resources.mipmap2,
+                                Properties.Resources.mipmap3, Properties.Resources.mipmap4 }, 9), "2DArray2");
 
-            items.Add("ShaderPos", new GLMultipleTexturedBlended(false, 2));
+            items.Add(new GLMultipleTexturedBlended(false, 2), "ShaderPos");
             items.Shader("ShaderPos").StartAction += (s) =>
             {
                 array2d.Bind(1);
@@ -83,7 +83,7 @@ namespace TestOpenTk
             // Shader MAT
 
 
-            IGLProgramShader smat = items.Add("ShaderMat", new GLMultipleTexturedBlended(true,2));
+            IGLProgramShader smat = items.Add(new GLMultipleTexturedBlended(true,2), "ShaderMat");
             smat.StartAction += (s) =>
             {
                 array2d.Bind(1);
@@ -109,7 +109,7 @@ namespace TestOpenTk
                         pos2, ic: 3, separbuf: false
                         ));
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
         }
 
         private void ShaderTest_Closed(object sender, EventArgs e)

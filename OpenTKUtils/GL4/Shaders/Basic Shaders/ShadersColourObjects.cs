@@ -35,12 +35,41 @@ namespace OpenTKUtils.GL4
         }
     }
 
+    // Translation shader with vertex colours, fixed colour
+    // Requires:
+    //      location 0 vec4 positions of model
+    //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
+    //      uniform 22 matrix4 transform of model->world positions, supply using per object binding
+
+    public class GLFixedColourShaderWithObjectTranslation : GLShaderPipeline
+    {
+        public GLFixedColourShaderWithObjectTranslation(System.Drawing.Color c, Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderColourModelCoordWithObjectTranslation(), new GLPLFragmentShaderFixedColour(c));
+        }
+    }
+
+    // Translation shader with vertex colours, fixed colour
+    // Requires:
+    //      location 0 vec4 positions of model
+    //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
+    //      uniform 22 matrix4 transform of model->world positions, supply using per object binding
+    //      uniform 25 colour of object
+
+    public class GLUniformColourShaderWithObjectTranslation : GLShaderPipeline
+    {
+        public GLUniformColourShaderWithObjectTranslation(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
+        {
+            AddVertexFragment(new GLPLVertexShaderColourModelCoordWithObjectTranslation(), new GLPLFragmentShaderUniformColour());
+        }
+    }
+
     // Fixed position shader with vertex colours
     // Requires:
     //      location 0 vec4 positions of world positions
     //      location 1 vec4 colours of each vertex
     //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
-    
+
     public class GLColourShaderWithWorldCoord : GLShaderPipeline
     {
         public GLColourShaderWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)

@@ -21,7 +21,7 @@ namespace OpenTKUtils.GL4
 {
     // Pipeline shader, Translation, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions model coords
+    //      location 0 : position: vec4 vertex array of positions model coords, W is ignored
     //      uniform block 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
@@ -50,7 +50,7 @@ layout (location = 1) out vec3 modelpos;
 void main(void)
 {
     modelpos = position.xyz;
-	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * vec4(position.xyz,1);        // order important
 }
 ";
         }
@@ -65,7 +65,7 @@ void main(void)
     // Pipeline shader, Common Model Translation, Seperate World pos, transform
     // Requires:
     //      location 0 : position: vec4 vertex array of positions model coords
-    //      location 1 : world-position: vec4 vertex array of world pos for model, instanced
+    //      location 1 : world-position: vec4 vertex array of world pos for model, instanced. W is ignored in case its carrying other data
     //      uniform block 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
     // Out:
@@ -88,7 +88,7 @@ out gl_PerVertex {
     };
 
 layout (location = 0) in vec4 modelposition;
-layout (location = 1) in vec4 worldposition;            // instanced
+layout (location = 1) in vec4 worldposition;            // instanced, w ignored
 layout (location = 22) uniform  mat4 transform;
 
 layout (location = 1) out vec3 modelpos;
@@ -98,7 +98,7 @@ void main(void)
 {
     modelpos = modelposition.xyz;
     vec4 modelrot = transform * modelposition;
-    vec4 wp = modelrot + worldposition;
+    vec4 wp = modelrot + vec4(worldposition.xyz,0);
 	gl_Position = mc.ProjectionModelMatrix * wp;        // order important
     instance = gl_InstanceID;
 }
@@ -122,7 +122,7 @@ void main(void)
 
     // Pipeline shader, Translation, Colour, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions model coords
+    //      location 0 : position: vec4 vertex array of positions model coords. W is ignored
     //      location 1 : vec4 colour
     //      uniform 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
@@ -157,7 +157,7 @@ layout (location = 1) out vec3 modelpos;
 void main(void)
 {
     modelpos = position.xyz;
-	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * vec4(position.xyz,1);        // order important
 	vs_color = color;                                                   // pass to fragment shader
 }
 ";
@@ -171,7 +171,7 @@ void main(void)
 
     // Pipeline shader, Translation, Texture, Modelpos, transform
     // Requires:
-    //      location 0 : position: vec4 vertex array of positions model coords
+    //      location 0 : position: vec4 vertex array of positions model coords, w is ignored
     //      location 1 : vec2 texture co-ords
     //      uniform 0 : GL MatrixCalc
     //      uniform 22 : objecttransform: mat4 array of transforms
@@ -207,7 +207,7 @@ layout (location = 22) uniform  mat4 transform;
 void main(void)
 {
     modelpos = position.xyz;
-	gl_Position = mc.ProjectionModelMatrix * transform * position;        // order important
+	gl_Position = mc.ProjectionModelMatrix * transform * vec4(position.xyz,1);        // order important
     vs_textureCoordinate = texco;
 }
 ";
@@ -216,6 +216,70 @@ void main(void)
         public GLPLVertexShaderTextureModelCoordWithObjectTranslation()
         {
             CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
+        }
+    }
+
+
+    // Pipeline shader, Common Model Translation, Seperate World pos, transform
+    // Requires:
+    //      location 0 : position: vec4 vertex array of positions model coords, w is ignored
+    //      location 1 : texco-ords 
+    //      location 2 : world-position: vec4 vertex array of world pos for model, instanced, w ignored
+    //      uniform block 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
+    // Out:
+    //      gl_Position
+    //      0: texco
+    //      1: modelpos
+    //      2: instance id
+
+    public class GLPLVertexShaderTextureModelCoordWithWorldTranslationCommonModelTranslation : GLShaderPipelineShadersBase
+    {
+        public string Code()       // with transform, object needs to pass in uniform 22 the transform
+        {
+            return
+@"
+#version 450 core
+#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout (location = 0) in vec4 modelposition;
+layout (location = 1) in vec2 texco;
+layout (location = 2) in vec4 worldposition;            // instanced
+layout (location = 22) uniform  mat4 transform;
+
+layout( location = 0) out vec2 vs_textureCoordinate;
+layout (location = 1) out vec3 modelpos;
+layout (location = 2) out int instance;
+
+void main(void)
+{
+    modelpos = modelposition.xyz;
+    vec4 modelrot = transform * modelposition;
+    vec4 wp = modelrot + vec4(worldposition.xyz,0);
+	gl_Position = mc.ProjectionModelMatrix * wp;        // order important
+    instance = gl_InstanceID;
+    vs_textureCoordinate = texco;
+}
+";
+        }
+
+        public Matrix4 ModelTranslation { get; set; } = Matrix4.Identity;
+
+        public GLPLVertexShaderTextureModelCoordWithWorldTranslationCommonModelTranslation()
+        {
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
+        }
+
+        public override void Start()
+        {
+            Matrix4 a = ModelTranslation;
+            GL.ProgramUniformMatrix4(Id, 22, false, ref a);
+            OpenTKUtils.GLStatics.Check();
         }
     }
 }

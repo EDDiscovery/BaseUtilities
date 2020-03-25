@@ -17,6 +17,7 @@ Uniforms - these are per shader, so this is a guide.
 22 = object transform position/rotation
 23 = common transform - rotation
 24 = vec2 texture co-ord offset to apply.
+25 = vec4 uniform colour for fragment shader
 26 = phase
 30 = blend
 

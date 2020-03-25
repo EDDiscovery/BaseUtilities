@@ -127,9 +127,9 @@ void main(void)
             };
 
             //items.Add("lensflarewhite", new GLTexture2D(Properties.Resources.lensflare_white64));
-            items.Add("lensflare", new GLTexture2D(Properties.Resources.star_grey64));
+            items.Add(new GLTexture2D(Properties.Resources.star_grey64), "lensflare");
 
-            items.Add("COS", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COS");
 
             #region coloured lines
 
@@ -156,7 +156,7 @@ void main(void)
             //    p[i] = new Vector4(i, 6.8f, 0,1);
             //}
 
-            items.Add("PS1", new GLPointSprite());
+            items.Add(new GLPointSprite(), "PS1");
 
             GLRenderControl rp = GLRenderControl.PointSprites();     // by program
 
@@ -168,7 +168,7 @@ void main(void)
 
             #endregion
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
         }
 

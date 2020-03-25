@@ -17,6 +17,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace OpenTKUtils.GL4
@@ -27,8 +28,11 @@ namespace OpenTKUtils.GL4
     // It has a primitive type
     // it is associated with an optional VertexArray which is bound using Bind()
     // it is associated with an optional InstanceData which is instanced using Bind()
-    // it is associated with an optional ElementBuffer giving vertex indices
+    // it is associated with an optional ElementBuffer giving vertex indices for all vertex inputs
     // it is associated with an optional IndirectBuffer giving draw command groups
+
+    // Renderable items are normally put into a GLRenderProgramSortedList by shader, but can be executed directly
+    // using Execute.  This is normally only done for renders which do not produce output but compute to a buffer.
 
     public class GLRenderableItem : IGLRenderableItem
     {
@@ -51,10 +55,10 @@ namespace OpenTKUtils.GL4
 
         public DrawElementsType DrawType { get; set; }                      // E+IE: for element draws, its index type (byte/short/uint)
 
-        public int BaseIndex { get; set; }                                  // E: for element draws, first index element in this buffer to use, offset to use different groups. 
+        public int BaseIndex { get; set; }                                  // E: for element draws, first index element in the element index buffer to use, offset to use different groups. 
                                                                             // IE+IA: offset in buffer to first command entry in bytes
 
-        public int BaseVertex { get; set; }                                 // E: for element draws (but not indirect) first vertex to use (not used in indirect - this comes from the buffer)
+        public int BaseVertex { get; set; }                                 // E: for element draws (but not indirect) first vertex to use in the buffer (not used in indirect - this comes from the buffer)
 
         public int MultiDrawCount { get; set; } = 1;                        // IE+IA: number of draw command buffers 
         public int MultiDrawCountStride { get; set; } = 20;                 // IE+IA: distance between each command buffer entry (default is we use the maximum of elements+array structures)
@@ -76,14 +80,9 @@ namespace OpenTKUtils.GL4
                 currentstate.ApplyState(RenderControl);         // go to this state first
 
             VertexArray?.Bind();      
-
             RenderData?.Bind(this,shader,c);
-
-            if (ElementBuffer != null)
-                ElementBuffer.BindElement();
-
-            if (IndirectBuffer != null)
-                IndirectBuffer.BindIndirect();
+            ElementBuffer?.BindElement();
+            IndirectBuffer?.BindIndirect();
         }
 
         public void Render()                                               // called by Render() to draw the item.
@@ -98,7 +97,8 @@ namespace OpenTKUtils.GL4
                 }
                 else
                 {                                                   // E
-                    GL.DrawElementsInstancedBaseVertexBaseInstance(RenderControl.PrimitiveType, DrawCount, DrawType, (IntPtr)BaseIndex, InstanceCount, BaseVertex, BaseInstance);
+                    GL.DrawElementsInstancedBaseVertexBaseInstance(RenderControl.PrimitiveType, DrawCount, DrawType, (IntPtr)BaseIndex, 
+                                                                    InstanceCount, BaseVertex, BaseInstance);
                 }
             }
             else
@@ -114,10 +114,11 @@ namespace OpenTKUtils.GL4
             }
         }
 
-        #region These create new vertext arrays into buffers of vertexs and colours
+        #region These create a new RI with vertex arrays into buffers, lots of them 
 
         // Vector4, Color4, optional instance data and count
 
+        // in attribute 0 and 1 setup vector4 and vector4 colours
         public static GLRenderableItem CreateVector4Color4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Color4[] colours, IGLRenderItemData id = null, int ic = 1)
         {
             var vb = items.NewBuffer();
@@ -145,7 +146,7 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
-        // in 0 set up. Use a buffer setup, Must set up drawcount, or set to 0 and reset it later..
+        // in 0 set up. Use a buffer, Must set up drawcount, or set to 0 and reset it later..
         public static GLRenderableItem CreateVector4(GLItemsList items, GLRenderControl pt, GLBuffer vb, int drawcount, int pos = 0, IGLRenderItemData id = null, int ic = 1)
         {
             var va = items.NewArray();
@@ -202,9 +203,22 @@ namespace OpenTKUtils.GL4
             vb.Bind(va, 0, vb.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
 
-            buf2.Bind(va, 1, bufoff, 16, seconddivisor);        
+            buf2.Bind(va, 1, bufoff, 16, seconddivisor);
             va.Attribute(1, 1, 4, VertexAttribType.Float);
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
+        }
+
+        // in 0,1 set up. With two given buffers and positions, Second buffer can be instance divided
+        public static GLRenderableItem CreateVector4Vector4(GLItemsList items, GLRenderControl pt, GLBuffer buf1, int buf1off, int drawcount, 
+                                    GLBuffer buf2, int buf2off = 0, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var va = items.NewArray();
+            buf1.Bind(va, 0, buf1off, 16);          // binding index 0
+            va.Attribute(0, 0, 4, VertexAttribType.Float);  // attribute 0
+
+            buf2.Bind(va, 1, buf2off, 16, seconddivisor);   // binding index 1
+            va.Attribute(1, 1, 4, VertexAttribType.Float);  // attribute 1
+            return new GLRenderableItem(pt,drawcount, va, id, ic);
         }
 
         // in 0,1 set up. Second vector can be instance divided
@@ -223,9 +237,30 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
         }
 
+        // in 0,1 set up. Second vector can be instance divided
+        public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, GLBuffer vb, int pos1, int pos2, int drawcount, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var va = items.NewArray();
+            vb.Bind(va, 0, vb.Positions[0], 16);
+            va.Attribute(0, 0, 4, VertexAttribType.Float);
+            vb.Bind(va, 1, vb.Positions[1], 8, seconddivisor);
+            va.Attribute(1, 1, 2, VertexAttribType.Float);
+            return new GLRenderableItem(pt, drawcount, va, id, ic);
+        }
+
+        // using output of some shape generators
         public static GLRenderableItem CreateVector4Vector2(GLItemsList items, GLRenderControl pt, Tuple<Vector4[], Vector2[]> vectors, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
         {
             return CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic, seconddivisor);
+        }
+
+        // using output of some shape generators, with element buffer indices. Normally Vertex, UVs, element indexes
+        public static GLRenderableItem CreateVector4Vector2Indexed(GLItemsList items, GLRenderControl pt, Tuple<Vector4[], Vector2[], uint[]> vectors, IGLRenderItemData id = null, int ic = 1, int seconddivisor = 0)
+        {
+            var dt = GL4Statics.DrawElementsTypeFromMaxEID((uint)vectors.Item1.Length - 1);
+            var ri = CreateVector4Vector2(items, pt, vectors.Item1, vectors.Item2, id, ic, seconddivisor);
+            ri.CreateElementIndex(items.NewBuffer(), vectors.Item3, dt);
+            return ri;
         }
 
         public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, GLRenderControl pt,
@@ -237,7 +272,10 @@ namespace OpenTKUtils.GL4
             return CreateVector4Vector2Vector4(items, pt, pos.Item1, pos.Item2, instanceposition, id, ic, separbuf, divisorinstance);
         }
 
-        // in 0,1,4 set up.  if separbuffer = true and instanceposition is null, it makes a buffer for you to fill up externally.
+        // in 0,1,4 set up.  
+        // if separbuffer = true it makes as separate buffer for instanceposition
+        // if separbuffer = true and instanceposition is null, you fill up the separbuffer yourself outside of this (maybe auto generated).  
+        // You can get this buffer using items.LastBuffer()
         public static GLRenderableItem CreateVector4Vector2Vector4(GLItemsList items, GLRenderControl pt,
                                                                    Vector4[] vectors, Vector2[] coords, Vector4[] instanceposition,
                                                                    IGLRenderItemData id = null, int ic = 1,
@@ -245,7 +283,7 @@ namespace OpenTKUtils.GL4
         {
             var va = items.NewArray();
             var vbuf1 = items.NewBuffer();
-            GLBuffer vbuf2 = vbuf1;
+            var vbuf2 = vbuf1;
             int posi = 2;
 
             if (separbuf)
@@ -253,7 +291,7 @@ namespace OpenTKUtils.GL4
                 vbuf1.AllocateBytes(GLBuffer.Vec4size * vectors.Length + GLBuffer.Vec2size * coords.Length);
                 vbuf2 = items.NewBuffer();
 
-                if ( instanceposition != null )
+                if (instanceposition != null)
                     vbuf2.AllocateBytes(GLBuffer.Vec4size * instanceposition.Length);
 
                 posi = 0;
@@ -265,7 +303,8 @@ namespace OpenTKUtils.GL4
 
             vbuf1.Fill(vectors);
             vbuf1.Fill(coords);
-            vbuf2.Fill(instanceposition);
+            if (instanceposition != null)
+                vbuf2.Fill(instanceposition);
 
             vbuf1.Bind(va, 0, vbuf1.Positions[0], 16);
             va.Attribute(0, 0, 4, VertexAttribType.Float);
@@ -280,6 +319,10 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0,1,4-7 set up.  if separbuffer = true and instancematrix is null, it makes a buffer for you to fill up externally.
+        // if separbuffer = true it makes as separate buffer for instancematrix
+        // if separbuffer = true and instancematrix is null, you fill up the separbuffer yourself outside of this (maybe auto generated).  
+        // You can get this buffer using items.LastBuffer()
+
         public static GLRenderableItem CreateVector4Vector2Matrix4(GLItemsList items, GLRenderControl pt, 
                                                                     Vector4[] vectors, Vector2[] coords, Matrix4[] instancematrix, 
                                                                     IGLRenderItemData id = null, int ic = 1, 
@@ -349,6 +392,7 @@ namespace OpenTKUtils.GL4
             var vb = items.NewBuffer();
             vb.AllocateBytes(sizeof(uint) * 2 * vectors.Length);
             vb.FillPacked2vec(vectors, offsets, mult);
+
             var va = items.NewArray();
             vb.Bind(va, 0, vb.Positions[0], 8);
             va.AttributeI(0, 0, 2, VertexAttribType.UnsignedInt);
@@ -370,6 +414,7 @@ namespace OpenTKUtils.GL4
             return new GLRenderableItem(pt, floats.Length / components, va, id, ic);
         }
 
+        // no data into GL pipeline.  Used when a uniform buffer gives info for the vertex shader to create vertices
 
         public static GLRenderableItem CreateNullVertex(GLRenderControl pt, IGLRenderItemData id = null, int dc =1,  int ic = 1)
         {
@@ -378,7 +423,7 @@ namespace OpenTKUtils.GL4
 
         #endregion
 
-        #region Create element indexs for this RI
+        #region Create element indexs for this RI. Normally called after Create..
 
         public void CreateRectangleElementIndexByte(GLBuffer elementbuf, int reccount, int restartindex = 0xff)
         {
@@ -398,18 +443,23 @@ namespace OpenTKUtils.GL4
             DrawCount = ElementBuffer.BufferSize - 1;
         }
 
-        public void CreateElementIndexByte(GLBuffer elementbuf, byte[] indexes, int base_vertex = 0, int base_index = 0)
+        public void CreateElementIndexByte(GLBuffer elementbuf, byte[] indexes, int base_index = 0)
         {
             ElementBuffer = elementbuf;
             ElementBuffer.AllocateFill(indexes);
             DrawType = DrawElementsType.UnsignedByte;
-            BaseVertex = base_vertex;
             BaseIndex = base_index;
             DrawCount = indexes.Length;
         }
 
         // create an index, to the drawtype size
-        public void CreateElementIndex(GLBuffer elementbuf, System.Collections.Generic.List<uint> eids, DrawElementsType drawtype, int base_vertex = 0, int base_index = 0)
+        public void CreateElementIndex(GLBuffer elementbuf, uint[] eids, int base_index = 0)
+        {
+            CreateElementIndex(elementbuf, eids, GL4Statics.DrawElementsTypeFromMaxEID(eids.Max()), base_index);
+        }
+
+        // create an index, to the drawtype size
+        public void CreateElementIndex(GLBuffer elementbuf, uint[] eids, DrawElementsType drawtype, int base_index = 0)
         {
             ElementBuffer = elementbuf;
 
@@ -429,9 +479,8 @@ namespace OpenTKUtils.GL4
             }
 
             DrawType = drawtype;
-            BaseVertex = base_vertex;
             BaseIndex = base_index;
-            DrawCount = eids.Count;
+            DrawCount = eids.Length;
         }
 
         #endregion

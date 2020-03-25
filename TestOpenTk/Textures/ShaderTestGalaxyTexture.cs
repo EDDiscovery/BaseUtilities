@@ -99,7 +99,7 @@ void main(void)
             };
 
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add( new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);
 
             {
@@ -119,9 +119,9 @@ void main(void)
 
             }
 
-            items.Add("gal", new GLTexture2D(Properties.Resources.galheightmap7));
+            items.Add(new GLTexture2D(Properties.Resources.galheightmap7), "gal");
 
-            items.Add("TEX-NC", new GLGalShader());
+            items.Add(new GLGalShader(), "TEX-NC");
 
             GLRenderControl rg = GLRenderControl.Quads(cullface: false);
 
@@ -131,7 +131,7 @@ void main(void)
                         new GLRenderDataTranslationRotationTexture(items.Tex("gal"), new Vector3(0, 0, 0))
                         ));
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
         }
 

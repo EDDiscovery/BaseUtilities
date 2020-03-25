@@ -190,4 +190,64 @@
   <data name="chevron" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\chevron.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="beacon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\beacon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="blackHole" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\blackHole.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="cometaryBody" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\cometaryBody.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="deepSpaceOutpost" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\deepSpaceOutpost.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="EDSMUnknown" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\EDSMUnknown.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="historicalLocation" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\historicalLocation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="jumponiumRichSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\jumponiumRichSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="minorPOI" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\minorPOI.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="mysteryPOI" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mysteryPOI.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="nebula" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\nebula.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="planetaryNebula" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\planetaryNebula.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="planetFeatures" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\planetFeatures.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="pulsar" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\pulsar.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="restrictedSectors" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\restrictedSectors.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="starCluster" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\starCluster.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="stellarRemnant" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stellarRemnant.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="surfacePOI" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\surfacePOI.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="cubeobj" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\cubeobj.wobj;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="textobj1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\textobj1.wobj;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Koltuk" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Koltuk.wobj;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

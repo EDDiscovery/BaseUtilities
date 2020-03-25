@@ -33,7 +33,7 @@ layout (location = 0) in vec4 position;
 layout (location = 1) in vec2 texco;
 layout(location = 2) in vec4 instancepos;       
 
-layout (location = 23) uniform  mat4 commontransform;
+layout (location = 22) uniform  mat4 commontransform;
 
 out vec2 tc;
 out int imagebase;
@@ -70,26 +70,78 @@ void main(void)
     tc = texco;
 }
 ";
+        // geo is used to discard vertexes if imagebase<0
+
+        string geo =
+@"        
+#version 450 core
+layout (triangles) in;               // triangles come in
+layout (triangle_strip) out;        // norm op is not to sent them on
+layout (max_vertices=3) out;	    // 1 triangle max
+
+in gl_PerVertex
+{
+    vec4 gl_Position;
+    float gl_PointSize;
+    float gl_ClipDistance[];
+   
+} gl_in[];
+
+in vec2 tc[];
+in int imagebase[];
+
+out gl_PerVertex 
+{
+    vec4 gl_Position;
+    float gl_PointSize;
+    float gl_ClipDistance[];
+};
+
+layout (location = 0) out vec2 tcg;
+layout (location = 1) out int imagebaseg;
+
+void main(void)
+{
+    if ( imagebase[0] >= 0 )
+    {
+        for( int i = 0 ; i < 3; i++ )
+        {
+            gl_Position = gl_in[i].gl_Position;
+            tcg = tc[i];
+            imagebaseg = imagebase[i];
+            EmitVertex();
+        }
+    }
+}
+";
+
 
         string frag =
-
 @"
 #version 450 core
 
 out vec4 color;
-in vec2 tc;
-flat in int imagebase;      //default is last vertex provides this, but as position is per instance, its just the instance value
+layout (location = 0 ) in vec2 tcg;
+layout (location = 1 ) flat in int imagebaseg;      //default is last vertex provides this, but as position is per instance, its just the instance value
 
 layout (binding=1) uniform sampler2DArray textureObject2D;
 layout (location = 25) uniform  float mixamount;    // between lo and hi image, 0-1
 layout (location = 26) uniform  int loimage;        // index of low image
 layout (location = 27) uniform  int hiimage;        // inded of high image
 
+
 void main(void)
 {
-    vec4 col1 = texture(textureObject2D, vec3(tc,imagebase+loimage));
-    vec4 col2 = texture(textureObject2D, vec3(tc,imagebase+hiimage));
-    color = mix(col1,col2,mixamount);
+    if ( mixamount == 0 )
+    {
+        color = texture(textureObject2D, vec3(tcg,imagebaseg));
+    }
+    else    
+    {
+        vec4 col1 = texture(textureObject2D, vec3(tcg,imagebaseg+loimage));
+        vec4 col2 = texture(textureObject2D, vec3(tcg,imagebaseg+hiimage));
+        color = mix(col1,col2,mixamount);
+    }
 }
 ";
         public float Blend { get; set; } = 0;                   // from 0 to BlendImages-0.0001
@@ -97,9 +149,9 @@ void main(void)
 
         public GLRenderDataTranslationRotation CommonTransform { get; set; }           // only use this for rotation - position set by object data
 
-        public GLMultipleTexturedBlended(bool matrix, int blendimages)      // give the number of images to blend over..
+        public GLMultipleTexturedBlended(bool matrix, int blendimages)      // give the number of images to blend over, or 0 for not
         {
-            CompileLink(vertex: (matrix ? vertmat : vertpos),  frag: frag );
+            CompileLink(vertex: (matrix ? vertmat : vertpos), frag: frag, geo:geo );
             BlendImages = blendimages;
             CommonTransform = new GLRenderDataTranslationRotation();
         }
@@ -109,17 +161,17 @@ void main(void)
             base.Start();
 
             Matrix4 t = CommonTransform.Transform;
-            GL.ProgramUniformMatrix4(Id, 23, false, ref t);
+            GL.ProgramUniformMatrix4(Id, 22, false, ref t);
 
             int image1 = (int)Math.Floor(Blend);            // compute first and next image indexes
-            int image2 = (image1 + 1) % BlendImages;
+            int image2 = (BlendImages>0) ? ((image1 + 1) % BlendImages) : 0;
             float mix = Blend - image1;                     // and the mix between them
 
             GL.ProgramUniform1(Id, 25, mix);
             GL.ProgramUniform1(Id, 26, image1);
             GL.ProgramUniform1(Id, 27, image2);
 
-           // System.Diagnostics.Debug.WriteLine("Blend " + image1 + " to " + image2 + " Mix of" + mix);
+            // System.Diagnostics.Debug.WriteLine("Blend " + image1 + " to " + image2 + " Mix of" + mix);
 
             OpenTKUtils.GLStatics.Check();
         }

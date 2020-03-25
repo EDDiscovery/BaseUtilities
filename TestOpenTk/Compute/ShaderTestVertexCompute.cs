@@ -113,7 +113,7 @@ void main(void)
 
             // this bit is eye candy just to show its working
 
-            items.Add("COSW", new GLColourShaderWithWorldCoord());
+            items.Add(new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl = GLRenderControl.Lines(1);
 
             rObjects.Add(items.Shader("COSW"),
@@ -130,8 +130,8 @@ void main(void)
                                );
 
 
-            items.Add("moon", new GLTexture2D(Properties.Resources.moonmap1k));
-            items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+            items.Add(new GLTexture2D(Properties.Resources.moonmap1k), "moon");
+            items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
 
             GLRenderControl rt = GLRenderControl.Tri();
             rObjects.Add(items.Shader("TEX"), "sphere7",
@@ -143,7 +143,7 @@ void main(void)
 
             // Pass vertex data thru a vertex shader which stores into a block
 
-            items.Add("N1", new GLShaderPipeline(new GLVertexShaderCompute()));
+            items.Add(new GLShaderPipeline(new GLVertexShaderCompute()), "N1");
 
             vecoutbuffer = new GLStorageBlock(1);           // new storage block on binding index 1 which the vertex shader uses
             vecoutbuffer.AllocateBytes(sizeof(float) * 2048 + sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicCopy);       // set size of vec buffer
@@ -168,7 +168,7 @@ void main(void)
                 System.Diagnostics.Debug.WriteLine(ang.Degrees() + " " + pos + "-> dotp" + dotp + " " + computedang.Degrees());
             }
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
         }
 
         GLStorageBlock vecoutbuffer;

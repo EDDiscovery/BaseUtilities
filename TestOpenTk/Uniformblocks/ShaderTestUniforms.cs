@@ -142,13 +142,13 @@ void main(void)
             };
 
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
 
             if (true)
             {
                 GLRenderControl lines = GLRenderControl.Lines(1);
 
-                items.Add("COSW", new GLColourShaderWithWorldCoord());
+                items.Add(new GLColourShaderWithWorldCoord(), "COSW");
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
@@ -166,7 +166,7 @@ void main(void)
             var vert = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation2();
             var frag = new GLPLFragmentShaderColour();
             var shader = new GLShaderPipeline(vert, frag);
-            items.Add("TRI", shader);
+            items.Add(shader, "TRI");
 
             var vecp4 = new Vector4[] { new Vector4(0, 0, 0, 1), new Vector4(10, 0, 0, 1), new Vector4(10, 0, 10, 1) ,
                                     new Vector4(-20, 0, 0, 1), new Vector4(-10, 0, 0, 1), new Vector4(-10, 0, 10, 1)

@@ -99,7 +99,7 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(140.75f, 0, 0), 0.5F);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
  
@@ -122,15 +122,15 @@ namespace TestOpenTk
             };
 
             {
-                items.Add("LINEYELLOW", new GLFixedColourShaderWithWorldCoord(System.Drawing.Color.Yellow));
+                items.Add( new GLFixedColourShaderWithWorldCoord(System.Drawing.Color.Yellow), "LINEYELLOW");
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rObjects.Add(items.Shader("LINEYELLOW"), GLRenderableItem.CreateVector4(items, rl, displaylines));
             }
 
 
             {
-                items.Add("solmarker", new GLTexture2D(Properties.Resources.dotted));
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+                items.Add(new GLTexture2D(Properties.Resources.dotted),"solmarker");
+                items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
                 GLRenderControl rq = GLRenderControl.Quads(cullface: false);
                 solmarker = new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, 0, 0));
                 rObjects.Add(items.Shader("TEX"),
@@ -143,32 +143,32 @@ namespace TestOpenTk
 
 
             {
-                items.Add("PLGRIDVertShader", new DynamicGridVertexShader(Color.Cyan));
-                items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
+                items.Add(new DynamicGridVertexShader(Color.Cyan), "PLGRIDVertShader");
+                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
 
-                items.Add("DYNGRID", new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")));
+                items.Add(new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")), "DYNGRID");
                 rObjects.Add(items.Shader("DYNGRID"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
 
             }
 
 
             {
-                items.Add("PLGRIDBitmapVertShader", new DynamicGridCoordVertexShader());
-                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
+                items.Add( new DynamicGridCoordVertexShader(), "PLGRIDBitmapVertShader");
+                items.Add(new GLPLFragmentShaderTexture2DIndexed(0), "PLGRIDBitmapFragShader");     // binding 1
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
                 rl.DepthTest = false;
 
 
                 texcoords = new GLTexture2DArray();
-                items.Add("PLGridBitmapTextures", texcoords);
+                items.Add( texcoords, "PLGridBitmapTextures");
 
                 GLShaderPipeline sp = new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader"));
 
-                items.Add("DYNGRIDBitmap", sp);
+                items.Add(sp, "DYNGRIDBitmap");
 
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic:9));
             }

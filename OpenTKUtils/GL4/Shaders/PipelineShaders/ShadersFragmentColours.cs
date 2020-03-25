@@ -45,6 +45,35 @@ void main(void)
         }
     }
 
+    // Pipeline shader, uniform decides colour, use GLRenderDataTranslationRotationColour or similar to set the uniform on a per draw basis
+    // Requires:
+    //      uniform : vec4 of colour
+
+    public class GLPLFragmentShaderUniformColour : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+out vec4 color;
+
+const int bindingpoint = 25;
+layout (location=bindingpoint) uniform vec4 ucol;
+
+void main(void)
+{
+    color = ucol;
+}
+";
+        }
+
+        public GLPLFragmentShaderUniformColour(int uniform = 25)
+        {
+            CompileLink(ShaderType.FragmentShader, Code(), constvalues:new object[] { "bindingpoint", uniform }, auxname: GetType().Name);
+        }
+    }
+
     // Pipeline shader, Vertex shader colour pass to it
     // Requires:
     //      vs_color : vec4 of colour

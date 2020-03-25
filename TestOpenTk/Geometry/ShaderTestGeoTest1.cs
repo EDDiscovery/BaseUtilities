@@ -175,17 +175,17 @@ void main(void)
             countbuffer = new GLStorageBlock(2);           // new storage block on binding index 2 for count out
             countbuffer.AllocateBytes(sizeof(int), OpenTK.Graphics.OpenGL4.BufferUsageHint.DynamicRead);       // set size to a int.
 
-            items.Add("Shader", new ShaderT3());            // geo shader
+            items.Add(new ShaderT3(), "Shader");            // geo shader
             GLRenderControl ri = GLRenderControl.PointsByProgram();
             rObjects.Add(items.Shader("Shader"), "T1", new GLRenderableItem(ri, vertexes.Length, null, null, 1));
 
 
-            items.Add("ResultShader", new GLShaderPipeline(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(new Color4(0.9f, 0.0f, 0.0f, 1.0f))));
+            items.Add(new GLShaderPipeline(new GLPLVertexShaderWorldCoord(), new GLPLFragmentShaderFixedColour(new Color4(0.9f, 0.0f, 0.0f, 1.0f))), "ResultShader");
             GLRenderControl rs = GLRenderControl.Points(30);
             redraw = GLRenderableItem.CreateVector4(items, rs, vecoutbuffer, 0);
             rObjects2.Add(items.Shader("ResultShader"), redraw);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
 
             Closed += ShaderTest_Closed;
         }

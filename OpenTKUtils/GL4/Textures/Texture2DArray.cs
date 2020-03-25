@@ -60,7 +60,7 @@ namespace OpenTKUtils.GL4
             }
         }
 
-        // You can reload the bitmap, it will create a new Texture if required
+        // You can reload the bitmap, it will create a new Texture if required. Bitmaps array can be sparse will null entries if you don't want to use that level. Level 0 must be there
 
         public void LoadBitmaps(Bitmap[] bmps, int bitmapmipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
         {
@@ -74,7 +74,8 @@ namespace OpenTKUtils.GL4
 
             for (int bitmapnumber = 0; bitmapnumber < bmps.Length; bitmapnumber++)      // for all bitmaps, we load the texture into zoffset of 2darray
             {
-                LoadBitmap(Id, bmps[bitmapnumber], bitmapmipmaplevels, bitmapnumber);   // load into bitmapnumber zoffset level
+                if ( bmps[bitmapnumber] != null )       // it can be sparse
+                    LoadBitmap(Id, bmps[bitmapnumber], bitmapmipmaplevels, bitmapnumber);   // load into bitmapnumber zoffset level
             }
 
             if (bitmapmipmaplevels == 1 && genmipmaplevel > 1)     // single level mipmaps with genmipmap levels > 1 get auto gen

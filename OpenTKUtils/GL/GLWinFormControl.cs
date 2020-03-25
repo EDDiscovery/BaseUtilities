@@ -231,7 +231,7 @@ namespace OpenTKUtils.WinForm
 
             if ( RenderState == null )
             {
-                RenderState = GLRenderControl.AtStart();
+                RenderState = GLRenderControl.AtGLStart();
                 RenderState.ApplyState(GLRenderControl.Default());
             }
 

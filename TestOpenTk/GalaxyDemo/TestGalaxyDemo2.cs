@@ -119,7 +119,7 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // create a matrix uniform block 
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
             boundingbox = new Vector4[]
@@ -154,15 +154,15 @@ namespace TestOpenTk
             };
 
             {
-                items.Add("LINEYELLOW", new GLFixedShader(System.Drawing.Color.Yellow));
+                items.Add( new GLFixedShader(System.Drawing.Color.Yellow), "LINEYELLOW");
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rObjects.Add(items.Shader("LINEYELLOW"), GLRenderableItem.CreateVector4(items, rl, displaylines));
             }
 
 
             {
-                items.Add("solmarker", new GLTexture2D(Properties.Resources.golden));
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+                items.Add(new GLTexture2D(Properties.Resources.golden), "solmarker");
+                items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
                 GLRenderControl rq = GLRenderControl.Quads(cullface: false);
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, rq,
@@ -174,7 +174,7 @@ namespace TestOpenTk
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
                              new GLRenderDataTranslationRotationTexture(items.Tex("solmarker"), new Vector3(0, -1000, 0))
                              ));
-                items.Add("sag", new GLTexture2D(Properties.Resources.dotted));
+                items.Add( new GLTexture2D(Properties.Resources.dotted), "sag");
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
@@ -185,7 +185,7 @@ namespace TestOpenTk
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
                              new GLRenderDataTranslationRotationTexture(items.Tex("sag"), new Vector3(25.2f, -2000, 25899))
                              ));
-                items.Add("bp", new GLTexture2D(Properties.Resources.dotted2));
+                items.Add(new GLTexture2D(Properties.Resources.dotted2), "bp");
                 rObjects.Add(items.Shader("TEX"),
                              GLRenderableItem.CreateVector4Vector2(items, rq,
                              GLShapeObjectFactory.CreateQuad(1000.0f, 1000.0f, new Vector3(0, 0, 0)), GLShapeObjectFactory.TexQuad,
@@ -196,17 +196,17 @@ namespace TestOpenTk
             if (true) // galaxy
             {
                 volumetricblock = new GLVolumetricUniformBlock();
-                items.Add("VB", volumetricblock);
+                items.Add(volumetricblock, "VB");
 
                 int sc = 1;
                 GLTexture3D noise3d = new GLTexture3D(1024 * sc, 64 * sc, 1024 * sc, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
-                items.Add("Noise", noise3d);
+                items.Add(noise3d, "Noise");
                 ComputeShaderNoise3D csn = new ComputeShaderNoise3D(noise3d.Width, noise3d.Height, noise3d.Depth, 128 * sc, 16 * sc, 128 * sc);       // must be a multiple of localgroupsize in csn
                 csn.StartAction += (A) => { noise3d.BindImage(3); };
                 csn.Run();      // compute noise
 
                 GLTexture1D gaussiantex = new GLTexture1D(1024, OpenTK.Graphics.OpenGL4.SizedInternalFormat.R32f); // red channel only
-                items.Add("Gaussian", gaussiantex);
+                items.Add(gaussiantex, "Gaussian");
 
                 // set centre=width, higher widths means more curve, higher std dev compensate.
                 // fill the gaussiantex with data
@@ -226,9 +226,9 @@ namespace TestOpenTk
 
                 // load one upside down and horz flipped, because the volumetric co-ords are 0,0,0 bottom left, 1,1,1 top right
                 GLTexture2D galtex = new GLTexture2D(Properties.Resources.Galaxy_L180);
-                items.Add("gal", galtex);
+                items.Add(galtex, "gal");
                 GalaxyShader gs = new GalaxyShader();
-                items.Add("Galaxy", gs);
+                items.Add(gs, "Galaxy");
                 // bind the galaxy texture, the 3dnoise, and the gaussian 1-d texture for the shader
                 gs.StartAction = (a) => { galtex.Bind(1); noise3d.Bind(3); gaussiantex.Bind(4); };      // shader requires these, so bind using shader
 
@@ -285,7 +285,7 @@ namespace TestOpenTk
 
                 buf.StopReadWrite();
 
-                items.Add("SD", new GalaxyStarDots());
+                items.Add(new GalaxyStarDots(), "SD");
                 GLRenderControl rp = GLRenderControl.Points(1);
                 rp.DepthTest = false;
                 rObjects.Add(items.Shader("SD"),
@@ -295,8 +295,8 @@ namespace TestOpenTk
 
             if (true)  // point sprite
             {
-                items.Add("lensflare", new GLTexture2D(Properties.Resources.StarFlare2));
-                items.Add("PS1", new GLPointSpriteShader(items.Tex("lensflare"),64,40));
+                items.Add(new GLTexture2D(Properties.Resources.StarFlare2), "lensflare");
+                items.Add(new GLPointSpriteShader(items.Tex("lensflare"),64,40), "PS1");
                 var p = GLPointsFactory.RandomStars4(1000, 0, 25899, 10000, 1000, -1000);
 
                 GLRenderControl rps = GLRenderControl.PointSprites(depthtest:false);
@@ -307,31 +307,31 @@ namespace TestOpenTk
             }
 
             {
-                items.Add("PLGRIDVertShader", new DynamicGridVertexShader(Color.Cyan));
-                items.Add("PLGRIDFragShader", new GLPLFragmentShaderColour());
+                items.Add(new DynamicGridVertexShader(Color.Cyan), "PLGRIDVertShader");
+                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
 
-                items.Add("DYNGRID", new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")));
+                items.Add(new GLShaderPipeline(items.PLShader("PLGRIDVertShader"), items.PLShader("PLGRIDFragShader")), "DYNGRID");
                 rObjects.Add(items.Shader("DYNGRID"), "DYNGRIDRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 2));
 
             }
 
 
             {
-                items.Add("PLGRIDBitmapVertShader", new DynamicGridCoordVertexShader());
-                items.Add("PLGRIDBitmapFragShader", new GLPLFragmentShaderTexture2DIndexed(0));     // binding 1
+                items.Add(new DynamicGridCoordVertexShader(), "PLGRIDBitmapVertShader");
+                items.Add(new GLPLFragmentShaderTexture2DIndexed(0), "PLGRIDBitmapFragShader");     // binding
 
                 GLRenderControl rl = GLRenderControl.TriStrip(cullface: false);
                 rl.DepthTest = false;
 
                 gridtexcoords = new GLTexture2DArray();
-                items.Add("PLGridBitmapTextures", gridtexcoords);
+                items.Add(gridtexcoords, "PLGridBitmapTextures");
 
                 GLShaderPipeline sp = new GLShaderPipeline(items.PLShader("PLGRIDBitmapVertShader"), items.PLShader("PLGRIDBitmapFragShader"));
 
-                items.Add("DYNGRIDBitmap", sp);
+                items.Add(sp, "DYNGRIDBitmap");
 
                 rObjects.Add(items.Shader("DYNGRIDBitmap"), "DYNGRIDBitmapRENDER", GLRenderableItem.CreateNullVertex(rl, dc: 4, ic: 9));
             }

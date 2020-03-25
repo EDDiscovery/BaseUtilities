@@ -124,7 +124,7 @@ void main(void)
             };
 
             {
-                items.Add("COS", new GLColourShaderWithWorldCoord());
+                items.Add(new GLColourShaderWithWorldCoord(), "COS");
                 GLRenderControl rl = GLRenderControl.Lines(1);
 
                 rObjects.Add(items.Shader("COS"), GLRenderableItem.CreateVector4Color4(items, rl,
@@ -133,16 +133,16 @@ void main(void)
             }
 
             {
-                items.Add("TEX", new GLTexturedShaderWithObjectTranslation());
+                items.Add(new GLTexturedShaderWithObjectTranslation(), "TEX");
 
                 using (var bmp = BitMapHelpers.DrawTextIntoAutoSizedBitmap("200,100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
                 {
-                    items.Add("200,100", new GLTexture2D(bmp));
+                    items.Add(new GLTexture2D(bmp), "200,100");
                 }
 
                 using (var bmp = BitMapHelpers.DrawTextIntoAutoSizedBitmap("-200,-100", new Size(200, 100), new Font("Arial", 10.0f), Color.Yellow, Color.Blue))
                 {
-                    items.Add("-200,-100", new GLTexture2D(bmp));
+                    items.Add(new GLTexture2D(bmp), "-200,-100");
                 }
 
                 GLRenderControl rq = GLRenderControl.Quads();
@@ -161,7 +161,7 @@ void main(void)
             {
                 Vector3[] stars = GLPointsFactory.RandomStars(10000, -200, 200, -100, 100, 20, -20);
 
-                items.Add("STARS", new GLShaderPipeline(new GLShaderStars(), new GLPLFragmentShaderColour()));
+                items.Add(new GLShaderPipeline(new GLShaderStars(), new GLPLFragmentShaderColour()), "STARS");
 
                 GLRenderControl rp = GLRenderControl.PointsByProgram();
 
@@ -172,7 +172,7 @@ void main(void)
 
             GL.Enable(EnableCap.PointSmooth);
 
-            items.Add("MCUB", new GLMatrixCalcUniformBlock());     // def binding of 0
+            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // def binding of 0
 
             Closed += ShaderTest_Closed;
         }

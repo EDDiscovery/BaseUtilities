@@ -43,20 +43,26 @@ namespace OpenTKUtils.GL4
         #region Allocate first, then Fill Direct - cache is not involved, so you can't use the cache write functions 
         
         public void AllocateBytes(int bytessize, BufferUsageHint uh = BufferUsageHint.StaticDraw)  // call first to set buffer size.. allow for alignment in your size
-        {                                                                    // can call twice - get fresh buffer each time
-            BufferSize = bytessize;
-            GL.NamedBufferData(Id, BufferSize, (IntPtr)0, uh);               // set buffer size
-            CurrentPos = 0;                                                  // reset back to zero as this clears the buffer
-            Positions.Clear();
-            OpenTKUtils.GLStatics.Check();
+        {
+            if (bytessize > 0)                                               // can call twice - get fresh buffer each time
+            {
+                BufferSize = bytessize;
+                GL.NamedBufferData(Id, BufferSize, (IntPtr)0, uh);               // set buffer size
+                CurrentPos = 0;                                                  // reset back to zero as this clears the buffer
+                Positions.Clear();
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void Fill(float[] floats)
         {
-            int datasize = floats.Length * sizeof(float);
-            int posv = AlignArray(sizeof(float), datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, floats);
-            OpenTKUtils.GLStatics.Check();
+            if (floats.Length > 0)
+            {
+                int datasize = floats.Length * sizeof(float);
+                int posv = AlignArray(sizeof(float), datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, floats);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(float[] vertices)
@@ -67,10 +73,13 @@ namespace OpenTKUtils.GL4
 
         public void Fill(Vector2[] vertices)
         {
-            int datasize = vertices.Length * Vec2size;
-            int posv = AlignArray(Vec2size, datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
-            OpenTKUtils.GLStatics.Check();
+            if (vertices.Length > 0)
+            {
+                int datasize = vertices.Length * Vec2size;
+                int posv = AlignArray(Vec2size, datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(Vector2[] vertices)
@@ -83,10 +92,13 @@ namespace OpenTKUtils.GL4
 
         public void Fill(Vector4[] vertices)
         {
-            int datasize = vertices.Length * Vec4size;
-            int posv = AlignArray(Vec4size, datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
-            OpenTKUtils.GLStatics.Check();
+            if (vertices.Length > 0)
+            {
+                int datasize = vertices.Length * Vec4size;
+                int posv = AlignArray(Vec4size, datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(Vector4[] vertices)
@@ -95,12 +107,22 @@ namespace OpenTKUtils.GL4
             Fill(vertices);
         }
 
+        public void AllocateFill(Vector4[] vertices, Vector2[] tex)
+        {
+            AllocateBytes(Vec4size * vertices.Length + Vec2size * tex.Length);
+            Fill(vertices);
+            Fill(tex);
+        }
+
         public void Fill(Matrix4[] mats)
         {
-            int datasize = mats.Length * Mat4size;
-            int posv = AlignArray(Vec4size, datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, mats);
-            OpenTKUtils.GLStatics.Check();
+            if (mats.Length > 0)
+            {
+                int datasize = mats.Length * Mat4size;
+                int posv = AlignArray(Vec4size, datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, mats);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(Matrix4[] mats)
@@ -132,10 +154,13 @@ namespace OpenTKUtils.GL4
 
         public void Fill(ushort[] words)
         {
-            int datasize = words.Length * sizeof(ushort);
-            int posv = AlignArray(sizeof(ushort), datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, words);
-            OpenTKUtils.GLStatics.Check();
+            if (words.Length > 0)
+            {
+                int datasize = words.Length * sizeof(ushort);
+                int posv = AlignArray(sizeof(ushort), datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, words);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(ushort[] words)
@@ -146,10 +171,13 @@ namespace OpenTKUtils.GL4
 
         public void Fill(uint[] data)
         {
-            int datasize = data.Length * sizeof(uint);
-            int pos = AlignArray(sizeof(uint), datasize);
-            GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
-            OpenTKUtils.GLStatics.Check();
+            if (data.Length > 0)
+            {
+                int datasize = data.Length * sizeof(uint);
+                int pos = AlignArray(sizeof(uint), datasize);
+                GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(uint[] data)
@@ -160,10 +188,13 @@ namespace OpenTKUtils.GL4
 
         public void Fill(byte[] data)      
         {
-            int datasize = data.Length;
-            int pos = AlignArray(sizeof(byte), datasize);        //tbd
-            GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
-            OpenTKUtils.GLStatics.Check();
+            if (data.Length > 0)
+            {
+                int datasize = data.Length;
+                int pos = AlignArray(sizeof(byte), datasize);        //tbd
+                GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
+                OpenTKUtils.GLStatics.Check();
+            }
         }
 
         public void AllocateFill(byte[] data)

@@ -68,6 +68,12 @@ public static class ObjectExtensionsNumbersBool
         return int.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i) ? i : def;
     }
 
+    static public uint InvariantParseUInt(this string s, uint def)
+    {
+        uint i;
+        return uint.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i) ? i : def;
+    }
+
     static public int? InvariantParseIntNull(this string s)     // s can be null
     {
         int i;

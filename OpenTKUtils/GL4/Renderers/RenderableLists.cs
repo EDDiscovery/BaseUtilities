@@ -41,21 +41,24 @@ namespace OpenTKUtils.GL4
             byname = new Dictionary<string, IGLRenderableItem>();
         }
 
+        // name can be null if required, which gives it an autoname
         public void Add(IGLProgramShader prog, string name, IGLRenderableItem r)        // name is the id given to this renderable
         {
+            name = EnsureName(name, prog, r);
             AddItem(prog, name, r);
             byname.Add(name, r);
         }
 
+        // with autoname
         public void Add(IGLProgramShader prog, IGLRenderableItem r)
         {
-            string n = prog.GetType().Name + ":" + r.GetType().Name + " # " + (unnamed++).ToStringInvariant();
-            AddItem(prog, n, r);
+            AddItem(prog, EnsureName(null,prog,r), r);
         }
 
+        // a compute shader
         public void Add(GLShaderCompute cprog)
         {
-            string n = cprog.GetType().Name + " # " + (unnamed++).ToStringInvariant();
+            string n = "CS " + cprog.GetType().Name + " # " + (unnamed++).ToStringInvariant();
             AddItem(cprog, n, null);
         }
 
@@ -104,14 +107,12 @@ namespace OpenTKUtils.GL4
 
             var list = renderables[prog];
 
-            //foreach( var x in list)
-            //{
-            //    int deltas = x.Item2.RenderControl.Deltas(r.RenderControl);
-            //    System.Diagnostics.Debug.WriteLine("Render list " + x.Item1 + " delta to " + name + " = " + deltas);
-            //}
-
-
             renderables[prog].Add(new Tuple<string, IGLRenderableItem>(name, r));
+        }
+
+        private string EnsureName(string name, IGLProgramShader prog, IGLRenderableItem r)
+        {
+            return name.HasChars() ? name : (prog.GetType().Name + ":" + r.GetType().Name + " # " + (unnamed++).ToStringInvariant());
         }
     }
 
