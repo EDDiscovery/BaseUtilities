@@ -31,7 +31,7 @@ namespace BaseUtils
             centreloc.X = -10000000;
             foreach (var s in Screen.AllScreens)
             {
-                System.Diagnostics.Debug.WriteLine(s.DeviceName + " " + s.WorkingArea + " B: " + s.Bounds);
+               // System.Diagnostics.Debug.WriteLine(s.DeviceName + " " + s.WorkingArea + " B: " + s.Bounds);
             }
 
         }
