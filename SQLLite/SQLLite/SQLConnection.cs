@@ -57,6 +57,13 @@ namespace SQLLiteExtensions
                 return factory;
             }
 
+            factory = GetMonoNugetProviderFactory();
+
+            if (DbFactoryWorks(factory))
+            {
+                return factory;
+            }
+
             throw new InvalidOperationException("Unable to get a working Sqlite driver");
         }
 
@@ -98,12 +105,26 @@ namespace SQLLiteExtensions
                         return true;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Trace.WriteLine($"{factory.GetType()} does not work: {ex.Message}");
                 }
             }
 
             return false;
+        }
+
+        private static DbProviderFactory GetMonoNugetProviderFactory()
+        {
+            try
+            {
+                return new Mono.Data.Sqlite.SqliteFactory();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Unable to load Mono.Data.Sqlite: {ex.Message}");
+                return null;
+            }
         }
 
         private static DbProviderFactory GetMonoSqliteProviderFactory()
@@ -117,8 +138,9 @@ namespace SQLLiteExtensions
                 var factorytype = asm.GetType("Mono.Data.Sqlite.SqliteFactory");
                 return (DbProviderFactory)factorytype.GetConstructor(new Type[0]).Invoke(new object[0]);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Trace.WriteLine($"Unable to load Mono.Data.Sqlite: {ex.Message}");
                 return null;
             }
         }
@@ -129,8 +151,9 @@ namespace SQLLiteExtensions
             {
                 return new System.Data.SQLite.SQLiteFactory();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Trace.WriteLine($"Unable to load System.Data.Sqlite: {ex.Message}");
                 return null;
             }
         }
