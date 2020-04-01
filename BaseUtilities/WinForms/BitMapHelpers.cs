@@ -88,6 +88,7 @@ namespace BaseUtils
         // bitmap never bigger than maxsize
         // setting frmt allows you to word wrap etc into a bitmap, maximum of maxsize.  
         // no frmt means a single line across the bitmap unless there are \n in it.
+        // if alignment != near, bitmap is maxsize width
 
         public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b,
                                             float backscale = 1.0F, StringFormat frmt = null)
@@ -100,7 +101,7 @@ namespace BaseUtils
                 SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
                 //System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
 
-                int width = Math.Min((int)(sizef.Width + 1), maxsize.Width);
+                int width = (frmt!=null && frmt.Alignment != StringAlignment.Near) ? maxsize.Width : Math.Min((int)(sizef.Width + 1), maxsize.Width);   // if we have alignment, it must be maxsize width to allow alignment to work. Otherwise, its min of text/maxsize width
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
                 Bitmap img = new Bitmap(width, height);
 
