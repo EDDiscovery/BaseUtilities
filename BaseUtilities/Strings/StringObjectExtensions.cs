@@ -141,6 +141,15 @@ public static class ObjectExtensionsStrings
             return obj;
     }
 
+    // if it ends with ends, replace it with replacestring..
+    public static string ReplaceIfEndsWith(this string obj, string ends, string replacestring = "", StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+    {
+        if (ends != null && obj.EndsWith(ends, sc))
+            return obj.Substring(0, obj.Length - ends.Length) + replacestring;
+        else
+            return obj;
+    }
+
     public static string FirstAlphaNumericText(this string obj)     // skip to find first alpha text ignoring whitespace
     {
         if (obj == null)
