@@ -21,6 +21,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWebServer", "TestWebSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpGet", "HttpGet\HttpGet.csproj", "{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C657C881-F3E1-45BA-ACA5-966348010414} = {C657C881-F3E1-45BA-ACA5-966348010414}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +144,18 @@ Global
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x64.Build.0 = Release|Any CPU
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.ActiveCfg = Release|Any CPU
 		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.Build.0 = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|x64.Build.0 = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|x86.Build.0 = Debug|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|x64.ActiveCfg = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|x64.Build.0 = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|x86.ActiveCfg = Release|Any CPU
+		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
