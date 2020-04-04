@@ -246,9 +246,6 @@ namespace OpenTKUtils.GL4.Controls
             //System.Diagnostics.Debug.WriteLine("Form redraw end");
         }
 
-        #endregion
-        #region UI
-
         public void ControlRemoved(GLBaseControl other)
         {
             if (currentfocus == other)
@@ -256,6 +253,11 @@ namespace OpenTKUtils.GL4.Controls
             if (currentmouseover == other)
                 currentmouseover = null;
         }
+
+
+        #endregion
+
+        #region UI - called from wincontrol - due to windows sending events
 
         private void Gc_MouseLeave(object sender, GLMouseEventArgs e)
         {

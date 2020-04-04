@@ -39,7 +39,7 @@ namespace TestOpenTk
         private TravelPath travelpath;
         private MapMenu galaxymenu;
         
-        private GalMapDisplay galmapdisplay;
+        private GalMapObjects galmapobjects;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -256,8 +256,8 @@ namespace TestOpenTk
             // Gal map objects
             if ( true )
             {
-                galmapdisplay = new GalMapDisplay();
-                galmapdisplay.CreateObjects(items, rObjects, galmap,findgeomapblock);
+                galmapobjects = new GalMapObjects();
+                galmapobjects.CreateObjects(items, rObjects, galmap,10,20,findgeomapblock);
 
             }
 
@@ -321,7 +321,9 @@ namespace TestOpenTk
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis
+            // set up the grid shader size
+
+            if (Math.Abs(lasteyedistance - gl3dcontroller.MatrixCalc.EyeDistance) > 10)     // a little histerisis, set the vertical shader grid size
             {
                 gridrenderable.InstanceCount = gridvertshader.ComputeGridSize(gl3dcontroller.MatrixCalc.EyeDistance, out lastgridwidth);
                 lasteyedistance = gl3dcontroller.MatrixCalc.EyeDistance;
@@ -329,10 +331,13 @@ namespace TestOpenTk
 
             gridvertshader.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, gridrenderable.InstanceCount);
 
+            // set the coords fader
+
             float coordfade = lastgridwidth == 10000 ? (0.7f - (mc.EyeDistance / 20000).Clamp(0.0f, 0.7f)) : 0.7f;
             Color coordscol = Color.FromArgb(coordfade < 0.05 ? 0 : 150, Color.Cyan);
-
             gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, coordscol, Color.Transparent);
+
+            // set the galaxy volumetric block
 
             if (galaxyrenderable != null)
             {
@@ -342,6 +347,8 @@ namespace TestOpenTk
             }
 
             travelpath.Update(time, gl3dcontroller.MatrixCalc.EyeDistance);
+
+            galmapobjects.Update(time, gl3dcontroller.MatrixCalc.EyeDistance);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
@@ -431,7 +438,7 @@ namespace TestOpenTk
             }
             else
             {
-                var gmo = galmapdisplay.FindPOI(e.Location, glwfc.RenderState, glwfc.Size, galmap);
+                var gmo = galmapobjects.FindPOI(e.Location, glwfc.RenderState, glwfc.Size, galmap);
 
                 if ( gmo != null )
                 {

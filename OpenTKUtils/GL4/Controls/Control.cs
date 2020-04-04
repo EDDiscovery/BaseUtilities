@@ -170,7 +170,7 @@ namespace OpenTKUtils.GL4.Controls
 
         // default color schemes and sizes
 
-        public static Action<GLBaseControl> Themer = null;                 // set this up, will be called during construction with the class for you to theme the colours/options
+        public static Action<GLBaseControl> Themer = null;                 // set this up, will be called when the control is added for you to theme the colours/options
 
         static public Color DefaultFormBackColor = Color.White;
         static public Color DefaultFormTextColor = Color.Black;

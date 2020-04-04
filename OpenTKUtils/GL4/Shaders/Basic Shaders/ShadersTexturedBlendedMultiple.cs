@@ -25,6 +25,10 @@ namespace OpenTKUtils.GL4
 
     public class GLMultipleTexturedBlended : GLShaderStandard
     {
+        // 0 : vec4 of model positions (w not read)
+        // 1 : vec2 of texture positions
+        // 2 : vec4 of instance positions w = image to display
+
         string vertpos =
         @"
 #version 450 core
@@ -40,13 +44,17 @@ out int imagebase;
 
 void main(void)
 {
-    vec4 p = commontransform * position;
+    vec4 p = commontransform * vec4(position.xyz,1);
     p = p + vec4(instancepos.x,instancepos.y,instancepos.z,0);
     imagebase = int(instancepos.w);
 	gl_Position = mc.ProjectionModelMatrix  * p;       
     tc = texco;
 }
 ";
+
+        // 0 : vec4 of model positions (w not read)
+        // 1 : vec2 of texture positions
+        // 4-7 : mat4 of instance transforms, [3][3] = image to display
 
         string vertmat =
 @"

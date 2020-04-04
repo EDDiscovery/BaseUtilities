@@ -323,7 +323,7 @@ namespace TestOpenTk
                             new GLRenderDataTranslationRotationTexture(items.Tex("golden"), new Vector3(0, 0, -12))
                             ));
 
-                var cyl = GLCylinderObjectFactory.CreateCylinderFromTriangles(3, 10, 20, 2, caps:true);
+                var cyl = GLCylinderObjectFactory.CreateCylinderFromTriangles(3, 20, 20, 2, caps:true);
                 GLRenderControl rt2 = GLRenderControl.Tri();
                 rObjects.Add(items.Shader("TEXOTNoRot"), "cylinder1",
                 GLRenderableItem.CreateVector4Vector2(items, rt2, cyl,

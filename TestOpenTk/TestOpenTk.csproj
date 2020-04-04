@@ -73,7 +73,7 @@
     <Compile Include="Galaxy\GalMap\Jsonext.cs" />
     <Compile Include="Galaxy\Map.cs" />
     <Compile Include="Galaxy\MapMenu.cs" />
-    <Compile Include="Galaxy\GalMapDisplay.cs" />
+    <Compile Include="Galaxy\GalMapObjects.cs" />
     <Compile Include="Galaxy\TravelPath.cs" />
     <Compile Include="Galaxy\ShaderStarDots.cs" />
     <Compile Include="GalaxyDemo\TestDynamicGrid.cs">

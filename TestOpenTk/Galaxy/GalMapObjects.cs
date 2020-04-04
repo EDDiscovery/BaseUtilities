@@ -13,21 +13,22 @@ using System.Threading.Tasks;
 
 namespace TestOpenTk
 {
-    class GalMapDisplay
+    public class GalMapObjects
     {
-        public GalMapDisplay()
+        public GalMapObjects()
         {
         }
 
-        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int bufferfindbinding)
+        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int radius, int height, int bufferfindbinding)
         {
             Bitmap[] images = galmap.galacticMapTypes.Select(x => x.Image as Bitmap).ToArray();
 
             IGLTexture array2d = items.Add(new GLTexture2DArray(images, mipmaplevel:1, genmipmaplevel:3), "GalObjTex");
 
-            items.Add( new GLMultipleTexturedBlended(false, 0), "ShaderGalObj");
+            objectshader = new GLMultipleTexturedBlended(false, 0);
+            items.Add( objectshader, "ShaderGalObj");
 
-            items.Shader("ShaderGalObj").StartAction += (s) =>
+            objectshader.StartAction += (s) =>
             {
                 array2d.Bind(1);
             };
@@ -45,9 +46,10 @@ namespace TestOpenTk
 
             GLRenderControl rt = GLRenderControl.Tri();
             rt.DepthTest = false;
+            rt.CullFace = false;
 
             GLRenderableItem ri = GLRenderableItem.CreateVector4Vector2Vector4(items, rt,
-                               GLSphereObjectFactory.CreateTexturedSphereFromTriangles(2, 200.0f),
+                                GLCylinderObjectFactory.CreateCylinderFromTriangles(radius, height, 12, 2, caps:false),
                                instancepositions.ToArray(), ic: instancepositions.Count, separbuf: false
                                );
             modeltexworldbuffer = items.LastBuffer();
@@ -55,7 +57,7 @@ namespace TestOpenTk
        
             worldpos = modeltexworldbuffer.Positions[2];
 
-            rObjects.Add(items.Shader("ShaderGalObj"), ri);
+            rObjects.Add(objectshader, ri);
 
             var poivertex = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(); // expecting 0=model, 1 = world, w is ignored for world
             findshader = items.NewShaderPipeline("GEOMAP_FIND", poivertex, null, null, new GLPLGeoShaderFindTriangles(bufferfindbinding, 16), null, null, null);
@@ -103,6 +105,18 @@ namespace TestOpenTk
 
             modeltexworldbuffer.StopReadWrite();
         }
+
+        public void Update(long time, float eyedistance)
+        {
+            const int rotperiodms = 5000;
+            time = time % rotperiodms;
+            float fract = (float)time / rotperiodms;
+            float angle = (float)(2 * Math.PI * fract);
+
+            objectshader.CommonTransform.YRotDegrees = angle;
+        }
+
+        private GLMultipleTexturedBlended objectshader;
 
         private GLBuffer modeltexworldbuffer;
         private int worldpos;

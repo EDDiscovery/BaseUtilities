@@ -60,7 +60,7 @@ namespace OpenTKUtils.GL4
 
                     Vertices[j * numVertexColumns + i] = new Vector4(pos.Value.X + radius * (float)Math.Cos(angle),
                                                                      pos.Value.Y + j * heightStep,
-                                                                     pos.Value.Z + radius * (float)Math.Sin(angle), 0);
+                                                                     pos.Value.Z + radius * (float)Math.Sin(angle), 1);
 
                     UVs[j * numVertexColumns + i] = new Vector2(ccw ? (1 - i * uvStepH) : (i * uvStepH), 1 - j * uvStepV);
                 }
@@ -163,7 +163,7 @@ namespace OpenTKUtils.GL4
 
                     Vertices[j * numVertexColumns + i] = new Vector4(pos.Value.X + radius * (float)Math.Cos(angle),
                                                                      pos.Value.Y + j * heightStep,
-                                                                     pos.Value.Z + radius * (float)Math.Sin(angle), 0);
+                                                                     pos.Value.Z + radius * (float)Math.Sin(angle), 1);
 
                     UVs[j * numVertexColumns + i] = new Vector2(ccw ? (1 - i * uvStepH) : (i * uvStepH), 1 - j * uvStepV);
                 }
