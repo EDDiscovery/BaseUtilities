@@ -286,7 +286,7 @@ public static class ControlHelpersStaticFunc
     static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, 
                                                     int margin = 16, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
-        Screen scr = Screen.FromControl(p);
+        Screen scr = Screen.FromPoint(p.Location);
         Rectangle scrb = scr.Bounds;
 
         int left = p.Left;
@@ -294,15 +294,15 @@ public static class ControlHelpersStaticFunc
 
         if (halign == HorizontalAlignment.Right)
         {
-            left = Math.Max(scrb.Width-margin-width, margin);               
+            left = scr.Bounds.Left + Math.Max(scrb.Width-margin-width, margin);               
         }
         else if (halign == HorizontalAlignment.Center)
         {
-            left = scrb.Width / 2 - width / 2;
+            left = scr.Bounds.Left + scrb.Width / 2 - width / 2;
         }
         else if (halign == HorizontalAlignment.Left)
         {
-            left = margin;
+            left = scr.Bounds.Left + margin;
         }
 
         int top = p.Top;
@@ -310,33 +310,39 @@ public static class ControlHelpersStaticFunc
 
         if (vertalign == VerticalAlignment.Bottom )
         {
-            top = Math.Max(scrb.Height - margin - height, margin);
+            top = scr.Bounds.Top + Math.Max(scrb.Height - margin - height, margin);
         }
         else if (vertalign == VerticalAlignment.Middle)
         {
-            top = scrb.Height / 2 - height / 2;
+            top = scr.Bounds.Top + scrb.Height / 2 - height / 2;
         }
         else if (vertalign == VerticalAlignment.Top)
         {
-            top = margin;
+            top = scr.Bounds.Top + margin;
         }
 
-        int availableh = scrb.Height - top - margin;                        // available height from top to bottom less margin
+        int botscreen = scr.Bounds.Bottom;
+
+        int availableh = botscreen - top - margin;                        // available height from top to bottom less margin
 
         if (height > availableh)                                            // if not enough height available
         {
             if (lockY && availableh >= scrb.Height / 4)                     // if locky and available is reasonable
+            {
                 height = availableh;                                        // lock height to it, keep y
+            }
             else
             {
-                top = Math.Max(margin, scrb.Height - margin - height);      // at least margin, or at least height-margin-wantedheight
+                top = scr.Bounds.Top + Math.Max(margin, scrb.Height - margin - height);      // at least margin, or at least height-margin-wantedheight
                 height = Math.Min(scrb.Height - margin * 2, height);        // and limit to margin*2
             }
 
             width += scrollbarallowwidth;                                   // need a scroll bar
+        }
 
-            if (left + width >= scrb.Width)                                 // allow for width                            
-                left -= scrollbarallowwidth;    
+        if (left + width >= scr.Bounds.Right - margin)
+        {
+            left = scr.Bounds.Right - margin - width;
         }
 
 
