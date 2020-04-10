@@ -142,11 +142,6 @@ public static class ControlHelpersStaticFunc
 
     static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliptorectangle = false)
     {
-        return ImagePositionFromContentAlignment(c, client, image, cliptorectangle, cliptorectangle);
-    }
-
-    static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliplefttop,  bool stayinrectangle)
-    {
         int left = client.Left;
 
         if (c == ContentAlignment.BottomCenter || c == ContentAlignment.MiddleCenter || c == ContentAlignment.TopCenter)
@@ -165,22 +160,13 @@ public static class ControlHelpersStaticFunc
         else
             top += 0;
 
-        if (cliplefttop)        // ensure we start in rectangle..
+        if (cliptorectangle)        // ensure we start in rectangle..
         {
-            left = Math.Max(Math.Min(client.Right, left), client.Left);
-            top = Math.Max(Math.Min(client.Bottom, top), client.Top);
+            left = Math.Max(0, left);
+            top = Math.Max(0, top);
         }
 
-        int ih = image.Height;
-        int iw = image.Width;
-
-        if ( stayinrectangle)
-        { 
-            ih = Math.Min(client.Height, ih);
-            iw = Math.Min(client.Width, iw);
-        }
-
-        return new Rectangle(left, top, iw,ih);
+        return new Rectangle(left, top, image.Width, image.Height);
     }
 
     static public GraphicsPath RectCutCorners(int x, int y, int width, int height, int roundnessleft, int roundnessright)
@@ -294,56 +280,69 @@ public static class ControlHelpersStaticFunc
         return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
     }
 
-    static public void PositionWithinScreen(this Control p, int x, int y, int margin = 64)      // clamp to withing screen of control
-    {
-        Screen scr = Screen.FromControl(p);
-        Rectangle scrb = scr.Bounds;
-        //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
-        x = Math.Min(Math.Max(x, scrb.Left + margin), scrb.Right - p.Width - margin);
-        y = Math.Min(Math.Max(y, scrb.Top + margin), scrb.Bottom - p.Height - margin);
-        p.Location = new Point(x, y);
-    }
+    public enum VerticalAlignment { Top, Middle, Bottom };
 
-    // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false, bool centrecoords = false)
+    // the Location has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, 
+                                                    int margin = 16, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
         Screen scr = Screen.FromControl(p);
         Rectangle scrb = scr.Bounds;
 
-        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin * 2);       // ensure within screen
+        int left = p.Left;
+        int width = Math.Min(wantedwidth, scrb.Width - margin * 2);         // ensure within screen limits taking off margins
+
+        if (halign == HorizontalAlignment.Right)
+        {
+            left = Math.Max(scrb.Width-margin-width, margin);               
+        }
+        else if (halign == HorizontalAlignment.Center)
+        {
+            left = scrb.Width / 2 - width / 2;
+        }
+        else if (halign == HorizontalAlignment.Left)
+        {
+            left = margin;
+        }
 
         int top = p.Top;
-        int left = p.Left;
-        if (rightalign)
+        int height = Math.Min(wantedheight, scrb.Height - margin * 2);        // ensure within screen
+
+        if (vertalign == VerticalAlignment.Bottom )
         {
-            left = Math.Max(left - calcwidth, margin);
+            top = Math.Max(scrb.Height - margin - height, margin);
         }
-        else if (centrecoords)
+        else if (vertalign == VerticalAlignment.Middle)
         {
-            left = Math.Max(left - wantedwidth / 2, margin);
-            top = Math.Max(top - wantedheight / 2, margin);
+            top = scrb.Height / 2 - height / 2;
+        }
+        else if (vertalign == VerticalAlignment.Top)
+        {
+            top = margin;
         }
 
-        int x = Math.Min(Math.Max(left, scrb.Left + margin), scrb.Right - calcwidth - margin);
+        int availableh = scrb.Height - top - margin;                        // available height from top to bottom less margin
 
-        int availableh = scrb.Height - (lockY ? p.Top : margin) - margin;
-
-        if (wantedheight > availableh)
+        if (height > availableh)                                            // if not enough height available
         {
-            if (lockY && availableh >= scrb.Height / 4)        // if locky and available is reasonable
-                wantedheight = availableh;      // lock h to it, keep y
+            if (lockY && availableh >= scrb.Height / 4)                     // if locky and available is reasonable
+                height = availableh;                                        // lock height to it, keep y
             else
             {
-                top = Math.Max(margin, scrb.Height - margin - wantedheight);     // at least margin, or at least height-margin-wantedheight
-                wantedheight = Math.Min(scrb.Height - margin * 2, wantedheight);    // and limit to margin*2
+                top = Math.Max(margin, scrb.Height - margin - height);      // at least margin, or at least height-margin-wantedheight
+                height = Math.Min(scrb.Height - margin * 2, height);        // and limit to margin*2
             }
-        }
-        else if (top + wantedheight > scrb.Height - margin)
-            top = scrb.Height - margin - wantedheight;
 
-      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(x, top) + " size " + new Size(calcwidth, wantedheight));
-        p.Location = new Point(x, top);
-        p.Size = new Size(calcwidth, wantedheight);
+            width += scrollbarallowwidth;                                   // need a scroll bar
+
+            if (left + width >= scrb.Width)                                 // allow for width                            
+                left -= scrollbarallowwidth;    
+        }
+
+
+      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(left, top) + " size " + new Size(width,height));
+        p.Location = new Point(left, top);
+        p.Size = new Size(width, height);
     }
 
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
@@ -826,12 +825,14 @@ public static class ControlHelpersStaticFunc
             if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
             {
                 if (debugout)
-                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size + " R " + c.Right + " B" + c.Bottom);
                 s.Width = Math.Max(s.Width, c.Right);
                 s.Height = Math.Max(s.Height, c.Bottom);
             }
         }
 
+        if (debugout )
+            System.Diagnostics.Debug.WriteLine("Control Measured " + s);
         s.Width += hpad;
         s.Height += vpad;
         return s;
