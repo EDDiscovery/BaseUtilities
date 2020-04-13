@@ -28,7 +28,7 @@ namespace BaseUtils
         public WindowMovementControl(Control c)
         {
             ctrl = c;
-            centreloc.X = -10000000;
+            centreloc.X = int.MinValue;
             foreach (var s in Screen.AllScreens)
             {
                // System.Diagnostics.Debug.WriteLine(s.DeviceName + " " + s.WorkingArea + " B: " + s.Bounds);
@@ -65,7 +65,7 @@ namespace BaseUtils
 
         public void GotoCentre(Screen scr)
         {
-            if (centreloc.X == -10000000)
+            if (centreloc.X == int.MinValue)
             {
                 centreloc = new Point(scr.WorkingArea.Width / 8, scr.WorkingArea.Height / 8);
                 centresize = new Size(scr.WorkingArea.Width * 6 / 8, scr.WorkingArea.Height * 6 / 8);
@@ -76,9 +76,14 @@ namespace BaseUtils
             ctrl.Size = centresize;
         }
 
+        public void ResetCentre()
+        {
+            centreloc.X = int.MinValue;
+        }
+
         public void RecordCentre(Screen scr)
         {
-            if (centreloc.X == -10000000)
+            if (centreloc.X == int.MinValue)
             {
                 centreloc = new Point(ctrl.Left - scr.Bounds.Left, ctrl.Top - scr.Bounds.Top);
                 centresize = ctrl.Size;

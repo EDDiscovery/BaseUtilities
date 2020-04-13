@@ -274,7 +274,7 @@ public static class ControlHelpersStaticFunc
 
     static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
     {
-        Screen scr = Screen.FromControl(p);
+        Screen scr = Screen.FromPoint(p.Location);
         Rectangle scrb = scr.Bounds;
         //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
         return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
@@ -908,12 +908,18 @@ public static class ControlHelpersStaticFunc
 
     static public SizeF CurrentAutoScaleFactor(this Form f)
     {
-        return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
+        if (f.AutoScaleMode == AutoScaleMode.None)      // if in autoscale none, CurrentAutoScaleDimensions returns 0,0 but we want a 1,1 return
+            return new SizeF(1, 1);
+        else
+            return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
     }
 
     static public SizeF InvCurrentAutoScaleFactor(this Form f)
     {
-        return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
+        if (f.AutoScaleMode == AutoScaleMode.None)      // if in autoscale none, CurrentAutoScaleDimensions returns 0,0 but we want a 1,1 return
+            return new SizeF(1, 1);
+        else
+            return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
     }
 
     static public Rectangle RectangleScreenCoords(this Control c)
