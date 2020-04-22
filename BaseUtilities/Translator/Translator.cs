@@ -130,7 +130,9 @@ namespace BaseUtils
 
             using (LineReader lr = new LineReader())
             {
-                if (lr.Open(Path.Combine(langsel.Item1,langsel.Item2)))
+                string tlffile = Path.Combine(langsel.Item1, langsel.Item2);
+
+                if (lr.Open(tlffile))
                 {
                     translations = new Dictionary<string, string>();
                     originalenglish = new Dictionary<string, string>();
@@ -146,24 +148,26 @@ namespace BaseUtils
                         {
                             line = line.Mid(7).Trim();
 
-                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(langsel.Item1));
+                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlffile));
 
                             string filename = null;
 
-                            if (File.Exists(Path.Combine(di.FullName, line)))   // first we prefer files in the same folder..
-                                filename = Path.Combine(di.FullName, line);
+                            string fileinroot = Path.Combine(di.FullName, line);
+
+                            if (File.Exists(fileinroot))   // first we prefer files in the same folder..
+                                filename = fileinroot;
                             else
                             {
                                 di = di.GetDirectoryAbove(includesearchupdepth);        // then search the tree, first jump up search depth amount
 
                                 try
                                 {
-                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName , line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
+                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName, line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
 
                                     if (allFiles.Length > 0)
                                     {
                                         var selected = allFiles.Where((x) => !x.DirectoryName.Contains(includefolderreject));       // reject folders with this pattern..files
-                                        if ( selected.Count() > 0 )
+                                        if (selected.Count() > 0)
                                             filename = selected.First().FullName;
                                     }
                                 }

@@ -86,9 +86,11 @@ namespace BaseUtils
 
         // if b != Transparent, a back box is drawn.
         // bitmap never bigger than maxsize
-        // setting frmt allows you to word wrap etc into a bitmap, maximum of maxsize.  
         // no frmt means a single line across the bitmap unless there are \n in it.
-        // if alignment != near, bitmap is maxsize width
+        // maxsize normally clips the bitmap to this size
+        // setting frmt allows you to word wrap etc into a bitmap.
+        // if alignment == near, bitmap is restricted to text width/maxsize
+        // if alignment != near, bitmap is maxsize width if maxsize.Width>0 (and the text is left/centre aligned in it).  If maxsize.Width==0, its the text width. Useful for centre word wrapped text
 
         public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b,
                                             float backscale = 1.0F, StringFormat frmt = null)
@@ -101,7 +103,12 @@ namespace BaseUtils
                 SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
                 //System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
 
-                int width = (frmt!=null && frmt.Alignment != StringAlignment.Near) ? maxsize.Width : Math.Min((int)(sizef.Width + 1), maxsize.Width);   // if we have alignment, it must be maxsize width to allow alignment to work. Otherwise, its min of text/maxsize width
+                int width = Math.Min((int)(sizef.Width + 1), maxsize.Width); // first default width is the min of text width/maxsize
+                if (frmt != null && frmt.Alignment != StringAlignment.Near) // if not near
+                {
+                    width = maxsize.Width > 0 ? maxsize.Width : (int)(sizef.Width+1);   // we use maxsize width, unless it zero, in which case we use text width
+                }
+
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
                 Bitmap img = new Bitmap(width, height);
 
