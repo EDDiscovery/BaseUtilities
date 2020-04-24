@@ -140,7 +140,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public int TabOrder { get; set; } = -1;                 // set, the lowest tab order wins the form focus
 
-        public bool TopMost { get { return topMost; } set { topMost = value; if (topMost) BringToFront(); } }
+        public bool TopMost { get { return topMost; } set { topMost = value; if (topMost) BringToFront(); } } // set to force top most
 
         // control lists
 

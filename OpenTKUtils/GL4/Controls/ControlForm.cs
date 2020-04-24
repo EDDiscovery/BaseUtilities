@@ -182,7 +182,7 @@ namespace OpenTKUtils.GL4.Controls
 
             if (e.Handled == false)
             {
-//                System.Diagnostics.Debug.WriteLine("Form drag " + e.Location +" " +  e.Area);
+                System.Diagnostics.Debug.WriteLine("Form drag " + e.Location +" " +  e.Area);
                 if (captured != GLMouseEventArgs.AreaType.Client)
                 {
                     Point curscrlocation = new Point(e.ControlLocation.X + e.Location.X, e.ControlLocation.Y + e.Location.Y);

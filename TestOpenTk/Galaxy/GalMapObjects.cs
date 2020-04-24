@@ -113,7 +113,7 @@ namespace TestOpenTk
             float fract = (float)time / rotperiodms;
             float angle = (float)(2 * Math.PI * fract);
 
-            objectshader.CommonTransform.YRotDegrees = angle;
+            objectshader.CommonTransform.YRotRadians = angle;
         }
 
         private GLMultipleTexturedBlended objectshader;

@@ -464,10 +464,8 @@ namespace TestOpenTk
                 gl3dcontroller.Start(displaycontrol, new Vector3(0, 0, 10000), new Vector3(140.75f, 0, 0), 0.5F);     // HOOK the 3dcontroller to the form so it gets Form events
 
                 displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
-                {                           // this is because we are at depth 0
-                    GLMatrixCalc c = new GLMatrixCalc();
-                    ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(c);       // set the matrix unform block to the controller 3d matrix calc.
-                    displaycontrol.Render(glwfc.RenderState);
+                {                                 
+                    displaycontrol.Render(glwfc.RenderState);       // we use the same matrix calc as done in controller 3d draw
                 };
 
             }
@@ -505,9 +503,7 @@ namespace TestOpenTk
         }
 
 
-
-
-        private void Controller3dDraw(GLMatrixCalc mc, long time)
+        private void Controller3dDraw(GLMatrixCalc mc, long time)   // call back by controller to do painting
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).SetFull(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 

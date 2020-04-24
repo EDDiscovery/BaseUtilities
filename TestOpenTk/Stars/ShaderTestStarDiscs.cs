@@ -291,7 +291,7 @@ void main(void)
             if (items.Contains("STAR"))
             {
                 int vid = items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader).Id;
-                ((GLRenderDataTranslationRotation)(rObjects["sun"].RenderData)).Rotation = new Vector3(0, -zeroone100s * 360, 0);
+                ((GLRenderDataTranslationRotation)(rObjects["sun"].RenderData)).RotationDegrees = new Vector3(0, -zeroone100s * 360, 0);
                 var stellarsurfaceshader = (GLPLStarSurfaceFragmentShader)items.Shader("STAR").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader);
                 stellarsurfaceshader.TimeDeltaSpots = zeroone500s;
                 stellarsurfaceshader.TimeDeltaSurface = timediv100s;

@@ -33,43 +33,47 @@ namespace OpenTKUtils.GL4
         public float Scale { get { return scale; } set { scale = value; Calc(); } }
         public void Translate(Vector3 off) { pos += off; Calc(); }
 
-        public Vector3 Rotation { get { return rot; } set { rot = value; Calc(); } }
-        public float XRotDegrees { get { return rot.X; } set { rot.X = value; Calc(); } }
-        public float YRotDegrees { get { return rot.Y; } set { rot.Y = value; Calc(); } }
-        public float ZRotDegrees { get { return rot.Z; } set { rot.Z = value; Calc(); } }
+        public Vector3 RotationRadians { get { return rot; } set { rot = value; Calc(); } }
+        public Vector3 RotationDegrees { get { return new Vector3(rot.X.Degrees(),rot.Y.Degrees(),rot.Z.Degrees()); } set { rot = new Vector3(value.X.Radians(),value.Y.Radians(),value.Z.Radians()); Calc(); } }
+        public float XRotDegrees { get { return rot.X.Degrees(); } set { rot.X = value.Radians(); Calc(); } }
+        public float YRotDegrees { get { return rot.Y.Degrees(); } set { rot.Y = value.Radians(); Calc(); } }
+        public float ZRotDegrees { get { return rot.Z.Degrees(); } set { rot.Z = value.Radians(); Calc(); } }
+        public float XRotRadians { get { return rot.X; } set { rot.X = value; Calc(); } }
+        public float YRotRadians { get { return rot.Y; } set { rot.Y = value; Calc(); } }
+        public float ZRotRadians { get { return rot.Z; } set { rot.Z = value; Calc(); } }
 
         public Matrix4 Transform { get { return transform; } }
 
         private Vector3 pos;
-        Vector3 rot;
-        float scale = 1.0f;
+        private Vector3 rot;
+        private float scale = 1.0f;
 
         private Matrix4 transform;
 
         bool lookatangle = false;
 
-        public GLRenderDataTranslationRotation(float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(float rxradians = 0, float ryradians = 0, float rzradians = 0, float scale = 1.0f, bool calclookat = false)
         {
             pos = new Vector3(0, 0, 0);
-            rot = new Vector3(rx, ry, rz);
+            rot = new Vector3(rxradians, ryradians, rzradians);
             this.scale = scale;
             lookatangle = calclookat;
             Calc();
         }
 
-        public GLRenderDataTranslationRotation(Vector3 p, float rx = 0, float ry = 0, float rz = 0, float scale = 1.0f, bool calclookat = false)
+        public GLRenderDataTranslationRotation(Vector3 p, float rxradians = 0, float ryradians = 0, float rzradians = 0, float scale = 1.0f, bool calclookat = false)
         {
             pos = p;
-            rot = new Vector3(rx, ry, rz);
+            rot = new Vector3(rxradians, ryradians, rzradians);
             this.scale = scale;
             lookatangle = calclookat;
             Calc();
         }
 
-        public GLRenderDataTranslationRotation(Vector3 p, Vector3 rotp, float sc = 1.0f , bool calclookat = false)
+        public GLRenderDataTranslationRotation(Vector3 p, Vector3 rotpradians, float sc = 1.0f , bool calclookat = false)
         {
             pos = p;
-            rot = rotp;
+            rot = rotpradians;
             scale = sc;
             lookatangle = calclookat;
             Calc();
@@ -79,9 +83,9 @@ namespace OpenTKUtils.GL4
         {
             transform = Matrix4.Identity;
             transform *= Matrix4.CreateScale(scale);
-            transform *= Matrix4.CreateRotationX((float)(rot.X * Math.PI / 180.0f));
-            transform *= Matrix4.CreateRotationY((float)(rot.Y * Math.PI / 180.0f));
-            transform *= Matrix4.CreateRotationZ((float)(rot.Z * Math.PI / 180.0f));
+            transform *= Matrix4.CreateRotationX(rot.X);
+            transform *= Matrix4.CreateRotationY(rot.Y);
+            transform *= Matrix4.CreateRotationZ(rot.Z);
             transform *= Matrix4.CreateTranslation(pos);
 
           //  System.Diagnostics.Debug.WriteLine("Transform " + transform);

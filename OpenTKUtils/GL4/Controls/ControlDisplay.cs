@@ -19,8 +19,9 @@ using System.Drawing;
 
 namespace OpenTKUtils.GL4.Controls
 {
-    // GL display is the main control which can interact with GL to paint sub controls
-    // implementing the functions of GLWindowControl
+    // GL display is the main control which can interact with GLWindowControl
+    // It hooks events from GLWindowControl to be able to see mouse/keyboard events to the GL Window
+    // It also can render the scene
 
     public class GLControlDisplay : GLBaseControl, GLWindowControl
     {

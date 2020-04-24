@@ -442,6 +442,7 @@ namespace TestOpenTk
 
                 if ( gmo != null )
                 {
+                    gl3dcontroller.SlewToPosition(new Vector3((float)gmo.points[0].X, (float)gmo.points[0].Y, (float)gmo.points[0].Z), -1);
 
                 }
             }
