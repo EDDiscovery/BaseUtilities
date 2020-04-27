@@ -214,6 +214,64 @@ namespace BaseUtils
             return f;
         }
 
+        // from https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
+        public static Bitmap ResizeImage(this Image image, int width, int height,
+                                         System.Drawing.Drawing2D.InterpolationMode interm = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic
+                                        )
+        {
+            if (width <= 0)
+                width = image.Width;
+            if (height <= 0)
+                height = image.Height;
+
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode = interm;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+
+                using (var wrapMode = new System.Drawing.Imaging.ImageAttributes())
+                {
+                    wrapMode.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
+        }
+
+        public static Bitmap CropImage(this Bitmap image, Rectangle croparea)
+        {
+            if ((croparea.Width <= 0) || (croparea.Width > image.Width))
+            {
+                croparea.X = 0;
+                croparea.Width = image.Width;
+            }
+            else if (croparea.Left + croparea.Width > image.Width)
+            {
+                croparea.X = image.Width - croparea.Width;
+            }
+
+            if ((croparea.Height <= 0) || (croparea.Height > image.Height))
+            {
+                croparea.Y = 0;
+                croparea.Height = image.Height;
+            }
+            else if (croparea.Top + croparea.Height > image.Height)
+            {
+                croparea.Y = image.Height - croparea.Height;
+            }
+
+            return image.Clone(croparea, System.Drawing.Imaging.PixelFormat.DontCare);
+        }
+
         // not the quickest way in the world, but not supposed to do this at run time
         // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
 

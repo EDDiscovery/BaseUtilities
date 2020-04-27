@@ -68,7 +68,7 @@ namespace BaseUtils
         private Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
         private Dictionary<string, string> originalenglish = null;      // optional load
         private Dictionary<string, string> originalfile = null;         // optional load
-        private List<string> ExcludedControls = new List<string>();
+        private List<Type> ExcludedControls = new List<Type>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
 
@@ -242,7 +242,7 @@ namespace BaseUtils
             }
         }
 
-        public void AddExcludedControls(string [] s)
+        public void AddExcludedControls(Type [] s)
         {
             ExcludedControls.AddRange(s);
         }
@@ -340,14 +340,16 @@ namespace BaseUtils
                 if (debugit)
                     System.Diagnostics.Debug.WriteLine("T: " + subname + " .. " + ctrl.Name + " (" + ctrl.GetType().Name + ")");
 
-                if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType().Name))
+                if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType()))
                 {
                     if (ctrl.Text.HasChars())
                     {
                         string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
                         if (debugit)
-                            System.Diagnostics.Debug.WriteLine(" -> Check " + id);
+                            System.Diagnostics.Debug.WriteLine(" -> Check " + id + " " + ctrl.Text);
                         ctrl.Text = Translate(ctrl.Text, id);
+                        if (debugit)
+                            System.Diagnostics.Debug.WriteLine(" -> Ctrl now is " + ctrl.Text);
                     }
 
                     if (ctrl is DataGridView)
@@ -374,7 +376,7 @@ namespace BaseUtils
                 }
                 else
                 {
-                 //   logger?.WriteLine("Rejected " + subname);
+                    //logger?.WriteLine("Rejected " + subname + " of " + ctrl.GetType().Name);
                 }
             }
         }
