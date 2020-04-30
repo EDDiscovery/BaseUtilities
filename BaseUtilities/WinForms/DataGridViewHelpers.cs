@@ -298,4 +298,79 @@ public static class DataGridViewControlHelpersStaticFunc
         }
     }
 
+    // index is some key and a DGV row. Move to it, try and display it, return true if we moved.
+    // force means we must move somewhere.
+
+    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long,DataGridViewRow> index, ref Tuple<long, int> pos, bool force, int column)
+    {
+        if (pos.Item1 == -2)          // if done, ignore
+        {
+        }
+        else if (pos.Item1 < 0)        // if not set..
+        {
+            if (dgv.Rows.GetRowCount(DataGridViewElementStates.Visible) > 0)
+            {
+                int rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
+                dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
+
+                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                    dgv.FirstDisplayedScrollingRowIndex = rowno;
+
+                //System.Diagnostics.Debug.WriteLine("No Default Select " + rowno);
+                pos = new Tuple<long, int>(-2, 0);      // done
+                return true;        // moved
+            }
+
+            if (force) // last chance
+            {
+                pos = new Tuple<long, int>(-2, 0);      // done
+                return true;
+            }
+        }
+        else
+        {
+            int rowno = FindGridPosByID(index, pos.Item1, true);     // find row.. must be visible..  -1 if not found/not visible
+            //System.Diagnostics.Debug.WriteLine("Tried to find " + pos.Item1 + " " + rowno);
+
+            if (rowno >= 0)     // found..
+            {
+                //System.Diagnostics.Debug.WriteLine("Found Select " + pos.Item1 + " row " + rowno);
+                dgv.FirstDisplayedScrollingRowIndex = rowno;        //TBD - why do i need to do this?
+                dgv.CurrentCell = dgv.Rows[rowno].Cells[pos.Item2];       // its the current cell which needs to be set, moves the row marker as well            currentGridRow = (rowno!=-1) ? 
+
+                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                    dgv.FirstDisplayedScrollingRowIndex = rowno;
+
+                pos = new Tuple<long, int>(-2, 0);    // cancel next find
+                return true;
+            }
+            else if (force)       // must select
+            {
+                if (dgv.Rows.GetRowCount(DataGridViewElementStates.Visible) > 0)
+                {
+                    rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
+                    dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
+
+                    if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                        dgv.FirstDisplayedScrollingRowIndex = rowno;
+
+                    //System.Diagnostics.Debug.WriteLine("Force Default Select " + rowno);
+                }
+
+                pos = new Tuple<long, int>(-2, 0);      // done
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static int FindGridPosByID(Dictionary<long, DataGridViewRow> index, long id, bool checkvisible)
+    {
+        if (index.ContainsKey(id) && (!checkvisible || index[id].Visible))
+            return index[id].Index;
+        else
+            return -1;
+    }
+
 }
