@@ -272,6 +272,7 @@ namespace BaseUtils
             return image.Clone(croparea, System.Drawing.Imaging.PixelFormat.DontCare);
         }
 
+
         // not the quickest way in the world, but not supposed to do this at run time
         // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
 
@@ -279,6 +280,9 @@ namespace BaseUtils
         {
             Average,
             HeatMap,
+
+            Maximum,
+            Brightness,
         };
 
         public static Bitmap Function(this Bitmap bmp, int granularityx, int granularityy, int avggranulatityx = 0, int avggranulatityy = 0, BitmapFunction mode = BitmapFunction.Average, 
@@ -328,8 +332,8 @@ namespace BaseUtils
                         {
                             int v = System.Runtime.InteropServices.Marshal.ReadInt32(ptr);  // ARBG
                             red += enablered ? (uint)((v >> 16) & 0xff) : 0;
-                            blue += enableblue ? (uint)((v >> 8) & 0xff) : 0;
-                            green += enablegreen ? (uint)((v >> 0) & 0xff) : 0;
+                            green += enablegreen ? (uint)((v >> 8) & 0xff) : 0;
+                            blue += enableblue ? (uint)((v >> 0) & 0xff) : 0;
                             ptr += 4;
                             points++;
                             //System.Diagnostics.Debug.WriteLine("Avg " + ax + "," + ay);
@@ -366,5 +370,71 @@ namespace BaseUtils
                 }
             }
         }
+
+        // average,Brightness or maximum over area of bitmap
+        public static Tuple<float, float, float, float> Function(this Bitmap bmp, BitmapFunction mode, int x, int y, int width, int height )
+        {
+            System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                                        System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
+
+            IntPtr baseptr = bmpdata.Scan0;     // its a byte ptr
+            int linestride = bmp.Width * 4;
+
+            uint red = 0;
+            uint green = 0;
+            uint blue = 0;
+            uint alpha = 0;
+
+            for (int gy = y; gy < y + height; gy++)
+            {
+                IntPtr ptr = baseptr + x * 4 + gy * linestride;
+
+                for (int gx = x; gx < x + width; gx++)
+                {
+                    uint v = (uint)System.Runtime.InteropServices.Marshal.ReadInt32(ptr);  // ARBG
+                    if (mode != BitmapFunction.Maximum)
+                    {
+                        alpha += ((v >> 24) & 0xff);
+                        red += ((v >> 16) & 0xff);
+                        green += ((v >> 8) & 0xff);
+                        blue += ((v >> 0) & 0xff);
+                        ptr += 4;
+                    }
+                    else 
+                    {
+                        alpha = Math.Max(alpha, ((v >> 24) & 0xff));
+                        red += Math.Max(red, ((v >> 16) & 0xff));
+                        green += Math.Max(green, ((v >> 8) & 0xff));
+                        blue += Math.Max(blue, ((v >> 0) & 0xff));
+                    }
+                }
+            }
+
+            bmp.UnlockBits(bmpdata);
+
+            int pixels = width * height;
+            float ac = (float)alpha / pixels;
+            float rc = (float)red / pixels;
+            float gc = (float)green / pixels;
+            float bc = (float)blue / pixels;
+
+            if (mode == BitmapFunction.Average)
+            {
+                return new Tuple<float, float, float, float>(ac,rc,gc,bc);
+            }
+            else if (mode == BitmapFunction.Brightness)
+            {
+                double v = (float)rc * (float)rc + (float)gc * (float)gc + (float)bc * (float)bc;
+                v = Math.Sqrt(v);
+                return new Tuple<float, float, float, float>(ac, (float)v / 441.67296f,0,0);        // that Math.Sqrt(255^2+255^2+255^2)
+            }
+            else
+                return new Tuple<float, float, float, float>(alpha, red, green, blue);
+        }
+
+
+
+
+
     }
 }
