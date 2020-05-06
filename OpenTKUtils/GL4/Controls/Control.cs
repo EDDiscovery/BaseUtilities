@@ -90,7 +90,7 @@ namespace OpenTKUtils.GL4.Controls
         public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
         public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth * 2; } }
         public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } }
-        public Size ClientSize { get { return new Size(ClientWidth, ClientHeight); } }
+        public Size ClientSize { get { return new Size(ClientWidth, ClientHeight); } set { SetPos(window.Left, window.Top, value.Width + ClientLeftMargin + ClientRightMargin, value.Height + ClientTopMargin + ClientBottomMargin); } }
         public Point ClientLocation { get { return new Point(ClientLeftMargin, ClientTopMargin); } }
         public Rectangle ClientRectangle { get { return new Rectangle(0, 0, ClientWidth, ClientHeight); } }
 
@@ -121,6 +121,10 @@ namespace OpenTKUtils.GL4.Controls
         public GLControlDisplay FindDisplay() { return this is GLControlDisplay ? this as GLControlDisplay : parent?.FindDisplay(); }
         public GLBaseControl FindControlUnderDisplay() { return Parent is GLControlDisplay ? this : parent?.FindControlUnderDisplay(); }
         public GLForm FindForm() { return this is GLForm ? this as GLForm : parent?.FindForm(); }
+
+        // properties
+
+        public string ToolTipText { get; set; } = null;
 
         public bool AutoSize { get { return autosize; } set { if (autosize != value) { autosize = value; InvalidateLayoutParent(); } } }
 
@@ -367,6 +371,7 @@ namespace OpenTKUtils.GL4.Controls
             Themer?.Invoke(child);      // added to control, theme it
 
             OnControlAdd(this, child);
+            child.OnControlAdd(this, child);
             InvalidateLayout();        // we are invalidated and layout
         }
 
@@ -387,6 +392,7 @@ namespace OpenTKUtils.GL4.Controls
                 RemoveSubControl(cc);
             }
 
+            child.OnControlRemove(this, child);
             OnControlRemove(this,child);
             System.Diagnostics.Debug.WriteLine("Dispose {0} {1}", child.GetType().Name, child.Name);
             FindDisplay()?.ControlRemoved(child);   // display may be pointing to it
@@ -524,17 +530,19 @@ namespace OpenTKUtils.GL4.Controls
                 levelbmp = new Bitmap(width, height);
         }
 
-        protected GLBaseControl FindControlOver(Point p)       // p = form co-coords, finds including margin/padding/border area, so inside bounds
+        // p = co-coords (form if called from DisplayControl), finds including margin/padding/border area, so inside bounds
+        public GLBaseControl FindControlOver(Point relativecoords)       
         {
-            //System.Diagnostics.Debug.WriteLine("Find " + Name + " "  + p + " in " + Bounds + " " + ClientLeftMargin + " " + ClientTopMargin);
-            if (p.X < Left || p.X > Right || p.Y < Top || p.Y > Bottom)     
+            //  System.Diagnostics.Debug.WriteLine("Find " + Name + " "  + relativecoords + " in " + Bounds + " " + ClientLeftMargin + " " + ClientTopMargin);
+
+            if (relativecoords.X < Left || relativecoords.X > Right || relativecoords.Y < Top || relativecoords.Y > Bottom)     
                 return null;
 
             foreach (GLBaseControl c in childrenz)       // in Z order
             {
                 if (c.Visible)      // must be visible to be found..
                 {
-                    var r = c.FindControlOver(new Point(p.X - Left - ClientLeftMargin, p.Y - Top - ClientTopMargin));   // find, converting co-ords into child co-ords
+                    var r = c.FindControlOver(new Point(relativecoords.X - Left - ClientLeftMargin, relativecoords.Y - Top - ClientTopMargin));   // find, converting co-ords into child co-ords
                     if (r != null)
                         return r;
                 }
@@ -680,7 +688,7 @@ namespace OpenTKUtils.GL4.Controls
                 areaout = new Rectangle(parentarea.Left + dockedwidth + dockingmargin.TotalWidth, parentarea.Top, parentarea.Width - dockedwidth - dockingmargin.TotalWidth, parentarea.Height);
             }
 
-            System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2} Area in {3} Area out {4}", Name, Dock, window, parentarea, areaout);
+            //System.Diagnostics.Debug.WriteLine("{0} dock {1} win {2} Area in {3} Area out {4}", Name, Dock, window, parentarea, areaout);
 
             CheckBitmapAfterLayout();       // check bitmap, virtual as inheritors may need to override this, make sure bitmap is the same width/height as ours
                                             // needs to be done in layout as ControlDisplay::PerformRecursiveLayout sets the textures up to match.
@@ -694,7 +702,7 @@ namespace OpenTKUtils.GL4.Controls
         {
             if (levelbmp != null && ( levelbmp.Width != Width || levelbmp.Height != Height ))
             {
-                System.Diagnostics.Debug.WriteLine("Remake bitmap for " + Name);
+                //System.Diagnostics.Debug.WriteLine("Remake bitmap for " + Name);
                 levelbmp.Dispose();
                 levelbmp = new Bitmap(Width, Height);       // occurs for controls directly under form
             }
@@ -823,13 +831,13 @@ namespace OpenTKUtils.GL4.Controls
 
                 if (bcgradient != int.MinValue)
                 {
-                    System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + bounds + " " + bc + " -> " + bcgradientalt );
+                    //System.Diagnostics.Debug.WriteLine("Background " + Name +  " " + bounds + " " + bc + " -> " + bcgradientalt );
                     using (var b = new System.Drawing.Drawing2D.LinearGradientBrush(bounds, bc, bcgradientalt, bcgradient))
                         gr.FillRectangle(b, bounds);       // linear grad brushes do not respect smoothing mode, btw
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Background " + Name + " " + bounds + " " + backcolor);
+                    //System.Diagnostics.Debug.WriteLine("Background " + Name + " " + bounds + " " + backcolor);
                     using (Brush b = new SolidBrush(bc))     // always fill, so we get back to start
                         gr.FillRectangle(b, bounds);
                 }
@@ -949,12 +957,12 @@ namespace OpenTKUtils.GL4.Controls
             Moved?.Invoke(this);
         }
 
-        public virtual void OnControlAdd(GLBaseControl parent, GLBaseControl child)
+        public virtual void OnControlAdd(GLBaseControl parent, GLBaseControl child)     // fired to both the parent and child
         {
             ControlAdd?.Invoke(parent, child);
         }
 
-        public virtual void OnControlRemove(GLBaseControl parent, GLBaseControl child)
+        public virtual void OnControlRemove(GLBaseControl parent, GLBaseControl child) // fired to both the parent and child
         {
             ControlRemove?.Invoke(parent, child);
         }

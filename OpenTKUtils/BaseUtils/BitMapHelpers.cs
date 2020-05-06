@@ -293,13 +293,16 @@ namespace OpenTKUtils
             return newbmp;
         }
 
-        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt )
+        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt = null )
         {
             using (Bitmap t = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(t))
                 {
-                    return g.MeasureString(text, f, new Size(10000, 10000), fmt);
+                    if ( fmt != null )
+                        return g.MeasureString(text, f, new Size(10000, 10000), fmt);
+                    else
+                        return g.MeasureString(text, f, new Size(10000, 10000));
                 }
             }
         }

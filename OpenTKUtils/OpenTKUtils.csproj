@@ -59,6 +59,7 @@
     <Compile Include="GL4\BasicTypes\GLLayoutStandards.cs" />
     <Compile Include="GL4\BasicTypes\GLBuffer.cs" />
     <Compile Include="GL4\Controls\ControlNumberBox.cs" />
+    <Compile Include="GL4\Controls\ControlToolTip.cs" />
     <Compile Include="GL4\Controls\FormMessageBox.cs" />
     <Compile Include="GL4\Controls\FormConfigurable.cs" />
     <Compile Include="GL4\Controls\ControlBaseButton.cs" />

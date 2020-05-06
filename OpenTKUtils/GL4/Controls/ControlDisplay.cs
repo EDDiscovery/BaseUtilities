@@ -33,6 +33,8 @@ namespace OpenTKUtils.GL4.Controls
 
         public Action<GLControlDisplay, GLBaseControl, GLBaseControl> GlobalFocusChanged { get; set; } = null;     // subscribe to get any focus changes (from old to new, may be null)
 
+        public Action<GLMouseEventArgs> GlobalMouseMove { get; set; } = null;     // subscribe to get any movement changes
+
         // from Control, override the Mouse* and Key* events
 
         public new Action<Object> Paint { get; set; } = null;                   //override to get a paint event
@@ -80,7 +82,7 @@ namespace OpenTKUtils.GL4.Controls
             glwin.SetCursor(t);
         }
 
-        public override void Add(GLBaseControl other)           // we need to override, since we want controls added to the scroll panel not us
+        public override void Add(GLBaseControl other)           
         {
             System.Diagnostics.Debug.Assert(other is GLVerticalScrollPanel == false, "Child must not be a child of GLForm");
             textures[other] = new GLTexture2D();                // we make a texture per top level control to render with
@@ -266,58 +268,33 @@ namespace OpenTKUtils.GL4.Controls
             {
                 currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
                 currentmouseover.Hover = false;
-                currentmouseover.OnMouseLeave(new GLMouseEventArgs(e.Location));
+
+                var mouseleaveev = new GLMouseEventArgs(e.Location);
+
+                if (currentmouseover.Enabled)
+                    currentmouseover.OnMouseLeave(mouseleaveev);
+
                 currentmouseover = null;
             }
         }
 
         private void Gc_MouseEnter(object sender, GLMouseEventArgs e)
         {
-            if (currentmouseover != null)
-            {
-                currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
-                currentmouseover.Hover = false;
-                if (currentmouseover.Enabled)
-                    currentmouseover.OnMouseLeave(new GLMouseEventArgs(e.Location));
-                currentmouseover = null;
-            }
+            Gc_MouseLeave(sender, e);       // leave current
 
             currentmouseover = FindControlOver(e.Location);
 
             if (currentmouseover != null)
             {
                 currentmouseover.Hover = true;
+
+                AdjustLocationToControl(ref e, currentmouseover, e.Location);
+
                 if (currentmouseover.Enabled)
-                {
-                    AdjustLocation(ref e);
                     currentmouseover.OnMouseEnter(e);
-                }
             }
         }
 
-        private void AdjustLocation(ref GLMouseEventArgs e)
-        {
-            e.ControlLocation = currentmouseover.DisplayControlCoords(true);
-            e.Location = new Point(e.Location.X - e.ControlLocation.X, e.Location.Y - e.ControlLocation.Y);
-            //System.Diagnostics.Debug.WriteLine("Control " + currentmouseover.Name + " " + e.ControlLocation + " " + e.Location);
-            if (e.Location.X < 0)
-                e.Area = GLMouseEventArgs.AreaType.Left;
-            else if (e.Location.X >= currentmouseover.ClientWidth)
-            {
-                if (e.Location.Y >= currentmouseover.ClientHeight)
-                    e.Area = GLMouseEventArgs.AreaType.NWSE;
-                else
-                    e.Area = GLMouseEventArgs.AreaType.Right;
-            }
-            else if (e.Location.Y < 0)
-                e.Area = GLMouseEventArgs.AreaType.Top;
-            else if (e.Location.Y >= currentmouseover.ClientHeight)
-                e.Area = GLMouseEventArgs.AreaType.Bottom;
-            else
-                e.Area = GLMouseEventArgs.AreaType.Client;
-        }
-
-        private GLBaseControl mousedowninitialcontrol = null;       // track where mouse down occurred
 
         private void Gc_MouseDown(object sender, GLMouseEventArgs e)
         {
@@ -325,10 +302,11 @@ namespace OpenTKUtils.GL4.Controls
             {
                 currentmouseover.FindControlUnderDisplay()?.BringToFront();     // this brings to the front of the z-order the top level element holding this element and makes it visible.
 
+                AdjustLocationToControl(ref e, currentmouseover, e.Location);
+
                 if (currentmouseover.Enabled)
                 {
                     currentmouseover.MouseButtonsDown = e.Button;
-                    AdjustLocation(ref e);
                     currentmouseover.OnMouseDown(e);
                 }
 
@@ -340,52 +318,56 @@ namespace OpenTKUtils.GL4.Controls
         {
             GLBaseControl c = FindControlOver(e.Location);      // e.location are form co-ords
 
-            if (c != currentmouseover)
+            Point orgxy = e.Location;
+
+            GlobalMouseMove?.Invoke(e);         // feed global mouse move - coords are form coords
+
+            if (c != currentmouseover)      // if different, either going active or inactive
             {
                 mousedowninitialcontrol = null;
 
-                if (currentmouseover != null)
+                if (currentmouseover != null)   // for current, its a leave
                 {
+                    AdjustLocationToControl(ref e, currentmouseover, orgxy);
+
                     if (currentmouseover.MouseButtonsDown != GLMouseEventArgs.MouseButtons.None)   // click and drag, can't change control while mouse is down
                     {
                         if (currentmouseover.Enabled)
-                        {
-                            AdjustLocation(ref e);
                             currentmouseover.OnMouseMove(e);
-                        }
+
                         return;
                     }
 
                     currentmouseover.Hover = false;
 
                     if (currentmouseover.Enabled)
-                    {
                         currentmouseover.OnMouseLeave(e);
-                    }
                 }
 
                 currentmouseover = c;
 
-                if (currentmouseover != null)
+                if (currentmouseover != null)       // now, are we going over a new one?
                 {
+                    AdjustLocationToControl(ref e, currentmouseover, orgxy);    // reset location etc
+
                     currentmouseover.Hover = true;
 
                     if (currentmouseover.Enabled)
-                    {
                         currentmouseover.OnMouseEnter(e);
-                    }
                 }
             }
-            else 
+            else
             {
-                if (currentmouseover != null && currentmouseover.Enabled)
+                if (currentmouseover != null)
                 {
-                    AdjustLocation(ref e);
-                    //System.Diagnostics.Debug.WriteLine("Mouse " + currentmouseover.Name + " " + e.Location + " Non Client " + e.NonClientArea);
-                    currentmouseover.OnMouseMove(e);
+                    AdjustLocationToControl(ref e, currentmouseover, orgxy);    // reset location etc
+
+                    if (currentmouseover.Enabled)
+                        currentmouseover.OnMouseMove(e);
                 }
             }
         }
+
 
         private void Gc_MouseUp(object sender, GLMouseEventArgs e)
         {
@@ -393,11 +375,10 @@ namespace OpenTKUtils.GL4.Controls
             {
                 currentmouseover.MouseButtonsDown = GLMouseEventArgs.MouseButtons.None;
 
+                AdjustLocationToControl(ref e, currentmouseover, e.Location);    // reset location etc
+
                 if (currentmouseover.Enabled)
-                {
-                    AdjustLocation(ref e);
                     currentmouseover.OnMouseUp(e);
-                }
             }
 
             mousedowninitialcontrol = null;
@@ -405,28 +386,52 @@ namespace OpenTKUtils.GL4.Controls
 
         private void Gc_MouseClick(object sender, GLMouseEventArgs e)
         {
-            if (mousedowninitialcontrol == currentmouseover)        // clicks only occur if mouse is still over initial control
+            if (mousedowninitialcontrol == currentmouseover && currentmouseover != null )        // clicks only occur if mouse is still over initial control
             {
                 SetFocus(currentmouseover);
+                AdjustLocationToControl(ref e, currentmouseover, e.Location);    // reset location etc
 
-                if (currentmouseover != null && currentmouseover.Enabled)
-                {
-                    AdjustLocation(ref e);
+                if (currentmouseover.Enabled)
                     currentmouseover.OnMouseClick(e);
-                }
             }
         }
-
-
 
         private void Gc_MouseWheel(object sender, GLMouseEventArgs e)
         {
             if (currentmouseover != null && currentmouseover.Enabled)
             {
-                AdjustLocation(ref e);
-                currentmouseover.OnMouseWheel(e);
+                AdjustLocationToControl(ref e, currentmouseover, e.Location);    // reset location etc
+
+                if (currentmouseover.Enabled)
+                    currentmouseover.OnMouseWheel(e);
             }
         }
+
+        private void AdjustLocationToControl(ref GLMouseEventArgs e, GLBaseControl cur, Point mouseloc)
+        {
+            e.ControlLocation = cur.DisplayControlCoords(true);
+            e.Location = new Point(mouseloc.X - e.ControlLocation.X, mouseloc.Y - e.ControlLocation.Y);
+            //            System.Diagnostics.Debug.WriteLine("Control " + cur.Name + " " + e.ControlLocation + " " + e.Location);
+
+            if (e.Location.X < 0)
+                e.Area = GLMouseEventArgs.AreaType.Left;
+            else if (e.Location.X >= cur.ClientWidth)
+            {
+                if (e.Location.Y >= cur.ClientHeight)
+                    e.Area = GLMouseEventArgs.AreaType.NWSE;
+                else
+                    e.Area = GLMouseEventArgs.AreaType.Right;
+            }
+            else if (e.Location.Y < 0)
+                e.Area = GLMouseEventArgs.AreaType.Top;
+            else if (e.Location.Y >= cur.ClientHeight)
+                e.Area = GLMouseEventArgs.AreaType.Bottom;
+            else
+                e.Area = GLMouseEventArgs.AreaType.Client;
+        }
+
+
+
         private void Gc_KeyUp(object sender, GLKeyEventArgs e)
         {
             if (currentfocus != null && currentfocus.Enabled)
@@ -497,6 +502,7 @@ namespace OpenTKUtils.GL4.Controls
         private IGLProgramShader shader;
         private GLBaseControl currentmouseover = null;
         private GLBaseControl currentfocus = null;
-        
+        private GLBaseControl mousedowninitialcontrol = null;       // track where mouse down occurred
+
     }
 }

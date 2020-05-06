@@ -182,7 +182,7 @@ namespace TestOpenTk
 
                 if (testform1)
                 {
-                    GLForm pform = new GLForm("form", "GL Control demonstration", new Rectangle(10, 0, 1000, 800));
+                    GLForm pform = new GLForm("Form1", "GL Control demonstration", new Rectangle(10, 0, 1000, 800));
                     pform.BackColor = Color.FromArgb(200, Color.Red);
                     pform.SuspendLayout();
                     pform.BackColorGradient = 90;
@@ -340,6 +340,7 @@ namespace TestOpenTk
                         b1.Margin = new Margin(5);
                         b1.Padding = new OpenTKUtils.GL4.Controls.Padding(5);
                         b1.Click += (c, ev) => { ConfDialog(); };
+                        b1.ToolTipText = "Button 1 tip\r\nLine 2 of it";
                         p2.Add(b1);
 
                         GLButton b2 = new GLButton("B2", new Rectangle(5, 50, 0, 0), "Button 2");
@@ -386,7 +387,7 @@ namespace TestOpenTk
 
                 if (testform2)
                 {
-                    GLForm pform2 = new GLForm("form", "Form 2 GL Control demonstration", new Rectangle(500, 0, 1000, 800));
+                    GLForm pform2 = new GLForm("Form2", "Form 2 GL Control demonstration", new Rectangle(500, 0, 1000, 800));
                     pform2.BackColor = Color.FromArgb(200, Color.Red);
                     pform2.Font = new Font("Ms sans serif", 12);
                     pform2.SuspendLayout();
@@ -437,6 +438,11 @@ namespace TestOpenTk
 
 
                     pform2.ResumeLayout();
+                }
+
+                {
+                    GLToolTip tip = new GLToolTip("ToolTip");
+                    displaycontrol.Add(tip);
                 }
 
                 displaycontrol.ResumeLayout();
