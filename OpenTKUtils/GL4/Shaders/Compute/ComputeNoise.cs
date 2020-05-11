@@ -34,8 +34,8 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.Shaders.Functions.noise3.glsl
-#include OpenTKUtils.GL4.Shaders.Functions.random.glsl
+#include Shaders.Functions.noise3.glsl
+#include Shaders.Functions.random.glsl
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 

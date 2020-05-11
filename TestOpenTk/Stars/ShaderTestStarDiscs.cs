@@ -232,7 +232,7 @@ void main(void)
                 rObjects.Add(items.Shader("CORONA"), GLRenderableItem.CreateVector4(items,
                                         rq,
                                         GLShapeObjectFactory.CreateQuad(1f),
-                                        new GLRenderDataTranslationRotation(new Vector3(20, 0, 0), new Vector3(0, 0, 0), 20f, calclookat: true)));
+                                        new GLRenderDataTranslationRotation(new Vector3(20, 0, 0), new Vector3(0, 0, 0), 20f, calclookat:true)));
             }
 
             {

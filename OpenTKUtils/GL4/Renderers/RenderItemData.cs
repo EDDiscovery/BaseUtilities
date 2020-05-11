@@ -103,7 +103,7 @@ namespace OpenTKUtils.GL4
                 Matrix4 tx2 = Matrix4.Identity;
                 tx2 *= Matrix4.CreateRotationX((-res.X));
                 tx2 *= Matrix4.CreateRotationY(((float)Math.PI+res.Y));
-                GL.ProgramUniformMatrix4(shader.Get(ShaderType.VertexShader).Id, LookAtUniform, false, ref tx2);
+                GL.ProgramUniformMatrix4(sid, LookAtUniform, false, ref tx2);
             }
 
             GLStatics.Check();

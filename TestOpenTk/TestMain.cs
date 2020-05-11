@@ -327,7 +327,7 @@ namespace TestOpenTk
                 GLRenderControl rt2 = GLRenderControl.Tri();
                 rObjects.Add(items.Shader("TEXOTNoRot"), "cylinder1",
                 GLRenderableItem.CreateVector4Vector2(items, rt2, cyl,
-                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(10, 0, -10))
+                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(30, 0, 10))
                             ));
 
                 // for this one, demo indexes and draw with CW to show it works
@@ -336,7 +336,7 @@ namespace TestOpenTk
 
                 rObjectscw.Add(items.Shader("TEXOTNoRot"), "cylinder2",
                         GLRenderableItem.CreateVector4Vector2Indexed(items, rt2, cyl2,
-                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(20, 0, -10))
+                            new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(40, 0, 10))
                             ));
 
 
@@ -714,7 +714,7 @@ namespace TestOpenTk
                 }
             }
 
-            if (true)
+            if (true)       // waveform object
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 string s = System.Text.Encoding.UTF8.GetString(Properties.Resources.textobj1);
@@ -761,7 +761,7 @@ namespace TestOpenTk
                 oc.Create(objlist, new Vector3(5, 0, -20), new Vector3(0, 0, 0), 2.0f);
             }
 
-            if ( true )
+            if ( true ) // another waveform object
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 var objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.Koltuk));
@@ -771,6 +771,31 @@ namespace TestOpenTk
 
                 bool v = oc.Create(objlist, new Vector3(-20, 0, -20), new Vector3(0, 0, 0), 8.0f);
                 System.Diagnostics.Debug.Assert(v == true);
+            }
+
+            if (true)   // instanced sinewive
+            {
+                var shdrtesssine = new GLTesselationShaderSinewaveInstanced(20, 0.1f, 4f);
+                items.Add(shdrtesssine, "TESIx1");
+
+                Vector4[] pos = new Vector4[]       //w = image index
+                {   
+                    new Vector4(30,30,30,0),
+                    new Vector4(29,30,20,1),
+                    new Vector4(28,30,10,2),
+                };
+
+                var texarray = new GLTexture2DArray(new Bitmap[] { Properties.Resources.beacon, Properties.Resources.planetaryNebula, Properties.Resources.wooden });
+                items.Add(texarray, "Sinewavetex");
+
+                GLRenderControl rp = GLRenderControl.Patches(4);
+                var dt = GLRenderableItem.CreateVector4Vector4(items, rp,
+                                        GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f), pos,
+                                        new GLRenderDataTranslationRotationTexture(texarray, new Vector3(0, 0, 0), new Vector3(-90.0F.Radians(), 0, 0)),
+                                        ic:3, seconddivisor:1);
+
+                rObjects.Add(shdrtesssine, "O-TES2", dt);
+
             }
 
             #endregion
@@ -827,8 +852,10 @@ namespace TestOpenTk
             if (items.Contains("tapeshader3"))
                 ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader3")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
 
-            if ( items.Contains("TESx1"))
+            if (items.Contains("TESx1"))
                 ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
+            if (items.Contains("TESIx1"))
+                ((GLTesselationShaderSinewaveInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
 
             GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");

@@ -86,6 +86,7 @@
     <Compile Include="GL4\Controls\ControlDisplay.cs" />
     <Compile Include="GL4\Controls\Control.cs" />
     <Compile Include="GL4\Controls\ControlTabStyleCustom.cs" />
+    <Compile Include="GL4\Shaders\Basic Shaders\ShadersTesselationSinewaveInstanced.cs" />
     <Compile Include="GL4\Shaders\Find\ShaderFindGeoTriangles.cs" />
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
@@ -185,6 +186,7 @@
     <EmbeddedResource Include="GL4\Shaders\Functions\noise2.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\noise3.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Volumetric\volumetricgeoshader.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\rotations.glsl" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

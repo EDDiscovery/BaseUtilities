@@ -32,7 +32,7 @@ namespace OpenTKUtils.GL4
         string vertpos =
         @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in vec4 position;     
 layout (location = 1) in vec2 texco;
 layout(location = 2) in vec4 instancepos;       
@@ -59,7 +59,7 @@ void main(void)
         string vertmat =
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 layout (location = 0) in vec4 position;     // from buffer1
 layout (location = 1) in vec2 texco;
 layout(location = 4) in mat4 mat;       // from buffer2

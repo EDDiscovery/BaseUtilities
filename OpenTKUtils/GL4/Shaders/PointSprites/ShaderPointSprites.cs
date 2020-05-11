@@ -25,7 +25,7 @@ namespace OpenTKUtils.GL4
         #version 450 core
         // maxsize/scale provided programatically
 
-        #include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+        #include UniformStorageBlocks.matrixcalc.glsl
 
         layout (location = 0) in vec4 position;     // has w=1
         layout (location = 1) in vec4 color;

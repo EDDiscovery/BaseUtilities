@@ -36,7 +36,7 @@ layout (location = 14) uniform float concentrationequator;
 layout (location = 15) uniform float unDTsurface;
 layout (location = 16) uniform float unDTspots;
 
-#include OpenTKUtils.GL4.Shaders.Functions.snoise3.glsl
+#include Shaders.Functions.snoise3.glsl
 
 void main(void)
 {

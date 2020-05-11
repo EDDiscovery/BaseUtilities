@@ -57,6 +57,14 @@ namespace OpenTKUtils.GL4
                 {
                     line = line.Mid(line[0] == '#' ? 8 : 9).Trim();
                     string include = ResourceHelpers.GetResourceAsString(line);
+
+                    if ( include == null)       // if not found directly, use the namespace of this function to use as a root path, allowing us to ditch the upper level stuff
+                    {
+                        var nsofcode = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+                        line = nsofcode + "." + line;
+                        include = ResourceHelpers.GetResourceAsString(line);
+                    }
+
                     System.Diagnostics.Debug.Assert(include != null, "Cannot include " + line);
                     lr.OpenString(include);     // include it
                 }

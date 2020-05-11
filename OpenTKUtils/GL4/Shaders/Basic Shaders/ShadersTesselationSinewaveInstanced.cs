@@ -21,17 +21,23 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
     // Shader, with tesselation, and Y change in amp using sin
+    // worldposition = instanced, xyz = position, w = image selection
+    // Need to feed uniform 22 with common transform
 
-    public class GLTesselationShaderSinewave : GLShaderStandard
+    public class GLTesselationShaderSinewaveInstanced : GLShaderStandard
     {
         string vert =
         @"
 #version 450 core
-layout (location = 0) in vec4 position;
+layout (location = 0) in vec4 modelposition;
+layout (location = 1) in vec4 worldposition;
+
+out vec4 worldposinstance;
 
 void main(void)
 {
-	gl_Position =position;       
+	gl_Position = vec4(modelposition.xyz,1);       
+    worldposinstance = worldposition;
 }
 ";
 
@@ -42,6 +48,9 @@ void main(void)
 #version 450 core
 
 layout (vertices = 4) out;
+
+in vec4 worldposinstance[];         // pass thru this array. TCS is run one per vertex
+out vec4 tcs_worldposinstance[];
 
 void main(void)
 {
@@ -58,23 +67,28 @@ void main(void)
     }
 
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    tcs_worldposinstance[gl_InvocationID] = worldposinstance[gl_InvocationID];
 }
 ";
         }
 
-        string TES(float amplitude,float repeats)
+        string TES(float amplitude,float repeats)       // run once per patch
         {
             return
 
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+#include Shaders.Functions.rotations.glsl
 layout (quads) in; 
 
 layout (location = 22) uniform  mat4 transform;
 layout (location = 26) uniform  float phase;
 
+in vec4 tcs_worldposinstance[];
+
 out vec2 vs_textureCoordinate;
+flat out int imageno;
 
 void main(void)
 {
@@ -87,8 +101,14 @@ void main(void)
 
     pos.y += amp*sin((phase+gl_TessCoord.x)*3.142*2*" + repeats + @");           // .x goes 0-1, phase goes 0-1, convert to radians
 
-    gl_Position = mc.ProjectionModelMatrix * transform * pos;
+    imageno = int(tcs_worldposinstance[0].w);
 
+    mat4 trans = mat4translation(tcs_worldposinstance[0].xyz);
+    mat4 rot = mat4rotateZ(radians(22));
+
+    gl_Position = mc.ProjectionModelMatrix * transform * trans * rot * pos;
+//    pos += vec4(tcs_worldposinstance[0].xyz,0);     // shift by instance pos
+    //gl_Position = mc.ProjectionModelMatrix * transform * pos;
 }
 ";
         }
@@ -99,17 +119,19 @@ void main(void)
 #version 450 core
 in vec2 vs_textureCoordinate;
 out vec4 color;
-layout (binding=1) uniform sampler2D textureObject;
+layout (binding=1) uniform sampler2DArray textureObject2D;
+
+flat in int imageno;      
 
 void main(void)
 {
-    color = texture(textureObject, vs_textureCoordinate);       // vs_texture coords normalised 0 to 1.0f
+    color = texture(textureObject2D, vec3(vs_textureCoordinate,imageno));       // vs_texture coords normalised 0 to 1.0f
 }
 ";
 
         public float Phase { get; set; } = 0;                   // set to animate.
 
-        public GLTesselationShaderSinewave(float tesselation,float amplitude, float repeats)
+        public GLTesselationShaderSinewaveInstanced(float tesselation,float amplitude, float repeats)
         {
             CompileLink(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude,repeats), frag: frag);
         }
@@ -127,3 +149,4 @@ void main(void)
         }
     }
 }
+

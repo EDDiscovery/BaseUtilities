@@ -32,7 +32,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 
 layout (triangles) in;               // triangles come in
 layout (triangle_strip) out;        // norm op is not to sent them on

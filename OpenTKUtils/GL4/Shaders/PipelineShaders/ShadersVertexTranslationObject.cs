@@ -35,7 +35,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -80,7 +80,7 @@ void main(void)
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -139,7 +139,7 @@ void main(void)
 
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -189,7 +189,7 @@ void main(void)
 
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -240,7 +240,7 @@ void main(void)
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.UniformStorageBlocks.matrixcalc.glsl
+#include UniformStorageBlocks.matrixcalc.glsl
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;

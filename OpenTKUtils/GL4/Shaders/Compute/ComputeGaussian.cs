@@ -33,7 +33,7 @@ namespace OpenTKUtils.GL4
             return
 @"
 #version 450 core
-#include OpenTKUtils.GL4.Shaders.Functions.distribution.glsl
+#include Shaders.Functions.distribution.glsl
 
 layout (local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 

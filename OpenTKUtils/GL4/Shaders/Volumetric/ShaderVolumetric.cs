@@ -53,7 +53,7 @@ void main(void)
     {
         public GLPLGeometricShaderVolumetric(int bufferbindingpoint)
         {
-            CompileLink(ShaderType.GeometryShader, "#include OpenTKUtils.GL4.Shaders.Volumetric.volumetricgeoshader.glsl", new object[] { "bufferbp", bufferbindingpoint } );
+            CompileLink(ShaderType.GeometryShader, "#include Shaders.Volumetric.volumetricgeoshader.glsl", new object[] { "bufferbp", bufferbindingpoint } );
         }
     }
 }
