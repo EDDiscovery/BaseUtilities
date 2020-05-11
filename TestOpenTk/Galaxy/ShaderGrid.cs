@@ -210,7 +210,7 @@ void main(void)
         int lastsy = int.MinValue;
         Color lasttextcol = Color.Red;
 
-        public void ComputeUniforms(int gridwidth, GLMatrixCalc mc, Vector3 cameradir, Color textcol, Color? backcol = null)
+        public void ComputeUniforms(int gridwidth, GLMatrixCalc mc, Vector2 cameradir, Color textcol, Color? backcol = null)
         {
             float sy = mc.TargetPosition.Y.Clamp(-2000, 2000);
 

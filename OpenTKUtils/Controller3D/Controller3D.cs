@@ -29,7 +29,7 @@ namespace OpenTKUtils.Common
 
     public class Controller3D
     {
-        public float ZoomDistance { get { return Zoom.Zoom1Distance; } set { Zoom.Zoom1Distance = value; } }
+        public float ZoomDistance { get { return Pos.Zoom1Distance; } set { Pos.Zoom1Distance = value; } }
 
         private GLWindowControl glwin;
       
@@ -48,12 +48,8 @@ namespace OpenTKUtils.Common
         public int LastHandleInterval;                      // set after handlekeyboard, how long since previous one was handled in ms
 
         public GLMatrixCalc MatrixCalc { get; private set; } = new GLMatrixCalc();
-        public Zoom Zoom { get; private set; } = new Zoom();
         public Position Pos { get; private set; } = new Position();
-        public Camera Camera { get; private set; } = new Camera();
         public Fov Fov { get; private set; } = new Fov();
-
-        public CameraDirectionMovementTracker MovementTracker { get; set; } = new CameraDirectionMovementTracker();        // these track movements and zoom
 
         public void Start(GLWindowControl win, Vector3 lookat, Vector3 cameradir, float zoomn)
         {
@@ -69,13 +65,10 @@ namespace OpenTKUtils.Common
             win.KeyUp += glControl_KeyUp;
 
             Pos.Lookat = lookat;
-            Camera.Set(cameradir);
-            Zoom.Current = zoomn;
-            Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
-            MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current); // set up here so ready for action.. below uses it.
+            Pos.SetEyePositionFromLookat(new Vector2(cameradir.X,cameradir.Y), Pos.Zoom1Distance/zoomn);
 
             MatrixCalc.ScreenSize = win.Size;
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Pos.CalcCameraNormal());
             SetModelProjectionMatrixViewPort();
 
             sysinterval.Start();
@@ -87,22 +80,21 @@ namespace OpenTKUtils.Common
         public void TranslatePosition(Vector3 posx) { Pos.Translate(posx); }
         public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F) { Pos.GoTo(normpos, timeslewsec, unitspersecond); }
 
-        public void SetCameraDir(Vector3 pos) { Camera.Set(pos); }
-        public void RotateCameraDir(Vector3 rot) { Camera.Rotate(rot); }
-        public void StartCameraPan(Vector3 pos, float timeslewsec = 0) { Camera.Pan(pos, timeslewsec); }
-        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0, float unitspersecond = 1000F)
-        { Pos.GoTo(normtarget, time, unitspersecond); Camera.LookAt(MatrixCalc.EyePosition, normtarget, zoom, time); }
+        public void SetCameraDir(Vector2 pos) { Pos.CameraDirection = pos; }
+        public void RotateCameraDir(Vector2 rot) { Pos.RotateCamera(rot, 0, true); }
+        public void CameraPan(Vector2 pos, float timeslewsec = 0) { Pos.Pan(pos, timeslewsec); }
+        public void CameraLookAt(Vector3 normtarget, float zoom, float time = 0)
+        {
+            Pos.LookAtZoom(normtarget, zoom, time);
+        }
 
-        public void KillSlews() { Pos.KillSlew(); Camera.KillSlew(); Zoom.KillSlew(); }
-
-        // Zoom
-        public void StartZoom(float z, float timetozoom = 0) { Zoom.GoTo(z, timetozoom); }
+        public void KillSlews() { Pos.KillSlew(); }
 
         // perspective.. use this don't just change the matrixcalc.
         public void ChangePerspectiveMode(bool on)
         {
             MatrixCalc.InPerspectiveMode = on;
-            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
+            MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Pos.CalcCameraNormal());
             SetModelProjectionMatrixViewPort();
             glwin.Invalidate();
         }
@@ -121,11 +113,11 @@ namespace OpenTKUtils.Common
             sw.Stop();
             return time;
         }
-        
-        // Owner should call this at regular intervals.
-        // handle keyboard, indicate if activated, handle other keys if required, return movement calculated in case you need to use it
 
-        public CameraDirectionMovementTracker HandleKeyboardSlews(bool activated, Action<KeyboardMonitor> handleotherkeys = null)
+        // Owner should call this at regular intervals.
+        // handle keyboard, indicate if activated, handle other keys if required
+
+        public void HandleKeyboardSlews(bool activated, Action<KeyboardMonitor> handleotherkeys = null)
         {
             long elapsed = sysinterval.ElapsedMilliseconds;         // stopwatch provides precision timing on last paint time.
             LastHandleInterval = (int)(elapsed - lastintervalcount);
@@ -135,25 +127,11 @@ namespace OpenTKUtils.Common
             {
                 if (MatrixCalc.InPerspectiveMode)               // camera rotations are only in perspective mode
                 {
-                    var ca = Camera.Keyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
-
-                    if (ca != Camera.KeyboardAction.None)       // moving the camera around kills the pos slew (as well as its own slew)
-                    {
-                        Pos.KillSlew();
-                        if (ca == Camera.KeyboardAction.MovePosition)
-                            Pos.SetLookatPositionFromEye(Camera.Current, Zoom.EyeDistance);
-                        else
-                            Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
-                    }
+                    Pos.CameraKeyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
                 }
 
-                if (Pos.Keyboard(keyboard, MatrixCalc.InPerspectiveMode, Camera.Current, KeyboardTravelSpeed?.Invoke(LastHandleInterval, MatrixCalc.EyeDistance) ?? (0.1f*LastHandleInterval), EliteMovement))
-                    Camera.KillSlew();              // moving the pos around kills the camera slew (as well as its own slew)
-
-                if ( Zoom.Keyboard(keyboard, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f))))      // zoom slew is not affected by the above
-                {
-                    Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
-                }
+                Pos.PositionKeyboard(keyboard, MatrixCalc.InPerspectiveMode, KeyboardTravelSpeed?.Invoke(LastHandleInterval, MatrixCalc.EyeDistance) ?? (0.1f * LastHandleInterval), EliteMovement);
+                Pos.ZoomKeyboard(keyboard, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f)));      // zoom slew is not affected by the above
 
                 if (keyboard.HasBeenPressed(Keys.M, KeyboardMonitor.ShiftState.Ctrl))
                     EliteMovement = !EliteMovement;
@@ -171,24 +149,24 @@ namespace OpenTKUtils.Common
             }
 
             Pos.DoSlew(LastHandleInterval);     // changes here will be picked up by AnythingChanged
+        }
 
-            bool recalceye = Camera.DoSlew(LastHandleInterval);
+        // and with Invalidate on movement
 
-            recalceye |= Zoom.DoSlew();
+        public bool HandleKeyboardSlewsInvalidate(bool activated, Action<KeyboardMonitor> handleotherkeys = null, float minmove = 0.01f, float mincamera = 1.0f)
+        {
+            HandleKeyboardSlews(activated, handleotherkeys);
 
-            if ( recalceye )
-                Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
+            bool moved = Pos.IsMoved(minmove,mincamera);
 
-            MovementTracker.Update(Camera.Current, Pos.Lookat, Zoom.Current);       // Gross limit allows you not to repaint due to a small movement. I've set it to all the time for now, prefer the smoothness to the frame rate.
-
-            if (MovementTracker.AnythingChanged)
+            if (moved )
             {
                 //System.Diagnostics.Debug.WriteLine("Changed");
-                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Camera.Normal);
+                MatrixCalc.CalculateModelMatrix(Pos.Lookat, Pos.EyePosition, Pos.CalcCameraNormal());
                 glwin.Invalidate();
             }
 
-            return MovementTracker;
+            return moved;
         }
 
         #region Implementation
@@ -262,8 +240,7 @@ namespace OpenTKUtils.Common
                     mouseStartRotate.X = mouseStartTranslateXZ.X = e.X;
                     mouseStartRotate.Y = mouseStartTranslateXZ.Y = e.Y;
 
-                    Camera.Rotate(new Vector3((float)(dy * MouseRotateAmountPerPixel), (float)(dx * MouseRotateAmountPerPixel ), 0));
-                    Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
+                    Pos.RotateCamera(new Vector2((float)(dy * MouseRotateAmountPerPixel), (float)(dx * MouseRotateAmountPerPixel)), 0, true);
                 }
             }
             else if (e.Button == GLMouseEventArgs.MouseButtons.Right)
@@ -279,7 +256,7 @@ namespace OpenTKUtils.Common
                     mouseStartTranslateXY.Y = mouseStartTranslateXZ.Y = e.Y;
                     //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
-                    Pos.Translate(new Vector3(0, -dy * (1.0f / Zoom.Current) * MouseUpDownAmountAtZoom1PerPixel, 0));
+                    Pos.Translate(new Vector3(0, -dy * (1.0f / Pos.ZoomFactor) * MouseUpDownAmountAtZoom1PerPixel, 0));
                 }
             }
             else if (e.Button == (GLMouseEventArgs.MouseButtons.Left | GLMouseEventArgs.MouseButtons.Right))
@@ -293,13 +270,13 @@ namespace OpenTKUtils.Common
 
                     mouseStartTranslateXZ.X = mouseStartRotate.X = mouseStartTranslateXY.X = e.X;
                     mouseStartTranslateXZ.Y = mouseStartRotate.Y = mouseStartTranslateXY.Y = e.Y;
-                    Vector3 translation = new Vector3(dx * (1.0f / Zoom.Current) * MouseTranslateAmountAtZoom1PerPixel, -dy * (1.0f / Zoom.Current) * MouseTranslateAmountAtZoom1PerPixel, 0.0f);
+                    Vector3 translation = new Vector3(dx * (1.0f / Pos.ZoomFactor) * MouseTranslateAmountAtZoom1PerPixel, -dy * (1.0f / Pos.ZoomFactor) * MouseTranslateAmountAtZoom1PerPixel, 0.0f);
 
                     if (MatrixCalc.InPerspectiveMode)
                     {
                         //System.Diagnostics.Trace.WriteLine("dx" + dx.ToString() + " dy " + dy.ToString() + " Button " + e.Button.ToString());
 
-                        Matrix3 transform = Matrix3.CreateRotationZ((float)(-Camera.Current.Y * Math.PI / 180.0f));
+                        Matrix3 transform = Matrix3.CreateRotationZ((float)(-Pos.CameraDirection.Y * Math.PI / 180.0f));
                         translation = Vector3.Transform(translation, transform);
 
                         Pos.Translate(new Vector3(translation.X, 0, translation.Y));
@@ -325,8 +302,7 @@ namespace OpenTKUtils.Common
                 }
                 else
                 {
-                    Zoom.Scale(e.Delta > 0);
-                    Pos.SetEyePositionFromLookat(Camera.Current, Zoom.EyeDistance);
+                    Pos.ZoomScale(e.Delta > 0);
                 }
             }
         }

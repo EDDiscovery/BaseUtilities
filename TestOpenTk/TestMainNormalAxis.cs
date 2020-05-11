@@ -32,7 +32,7 @@ using OpenTKUtils;
 
 namespace TestOpenTk
 {
-    public partial class TestMain : Form
+    public partial class TestMainNormalAxis : Form
     {
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
         private Controller3D gl3dcontroller;
@@ -44,7 +44,7 @@ namespace TestOpenTk
         GLItemsList items = new GLItemsList();
         GLStorageBlock dataoutbuffer;
 
-        public TestMain()
+        public TestMainNormalAxis()
         {
             InitializeComponent();
 
@@ -90,6 +90,7 @@ namespace TestOpenTk
 
             #region Sphere mapping 
 
+            if ( false )
             {
                 GLRenderControl rc1 = GLRenderControl.Tri();
                 rObjects.Add(items.Shader("TEXOT"), "sphere7",
@@ -112,29 +113,30 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(10, 0, 0), 21),
-                                                        new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, -10, -100), new Vector3(-100, -10, 100), new Vector3(10, 0, 0), 21),
+                                                        new Color4[] { Color.Red, Color.Red, Color.DarkRed, Color.DarkRed })
                                    );
 
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
-                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, 0, -100), new Vector3(100, 0, -100), new Vector3(0, 0, 10), 21),
-                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green }));
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, -10, -100), new Vector3(100, -10, -100), new Vector3(0, 0, 10), 21),
+                                                        new Color4[] { Color.Red, Color.Red, Color.DarkRed, Color.DarkRed }));
             }
-            if ( true )
+            if (true)
             {
                 GLRenderControl lines = GLRenderControl.Lines(1);
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(-100, 10, 100), new Vector3(10, 0, 0), 21),
-                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                                             new Color4[] { Color.Yellow, Color.Orange, Color.Yellow, Color.Orange })
                                    );
+
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
                                    GLShapeObjectFactory.CreateLines(new Vector3(-100, 10, -100), new Vector3(100, 10, -100), new Vector3(0, 0, 10), 21),
-                                                             new Color4[] { Color.Red, Color.Red, Color.Green, Color.Green })
+                                                             new Color4[] { Color.Yellow, Color.Orange, Color.Yellow, Color.Orange })
                                    );
             }
 
@@ -148,11 +150,23 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("COSOT"), "scopen",
                             GLRenderableItem.CreateVector4Color4(items, rc,
-                                            GLCubeObjectFactory.CreateSolidCubeFromTriangles(1f, new GLCubeObjectFactory.Sides[] { GLCubeObjectFactory.Sides.Bottom, GLCubeObjectFactory.Sides.Top, GLCubeObjectFactory.Sides.Left, GLCubeObjectFactory.Sides.Right }),
+                                            GLCubeObjectFactory.CreateSolidCubeFromTriangles(5f),
                                             new Color4[] { Color4.Red, Color4.Green, Color4.Blue, Color4.White, Color4.Cyan, Color4.Orange },
-                                            new GLRenderDataTranslationRotation(new Vector3(-6, 0, 0))
+                                            new GLRenderDataTranslationRotation(new Vector3(10, 3, 20))
                             ));
 
+                rObjects.Add(items.Shader("COSOT"), "scopen2",
+                            GLRenderableItem.CreateVector4Color4(items, rc,
+                                            GLCubeObjectFactory.CreateSolidCubeFromTriangles(5f),
+                                            new Color4[] { Color4.Red, Color4.Red, Color4.Red, Color4.Red, Color4.Red, Color4.Red },
+                                            new GLRenderDataTranslationRotation(new Vector3(-10, -3, -20))
+                            ));
+            }
+
+            if ( false )
+            {
+                GLRenderControl rc = GLRenderControl.Tri();
+                rc.CullFace = false;
 
                 rObjects.Add(items.Shader("COSOT"), "scopen-op",
                             GLRenderableItem.CreateVector4Color4(items, rc,
@@ -174,7 +188,7 @@ namespace TestOpenTk
 
             #region view marker
 
-            if (true)
+            if (false)
             {
                 GLRenderControl rc = GLRenderControl.Points(10);
 
@@ -189,7 +203,7 @@ namespace TestOpenTk
 
 
             #region coloured points
-            if (true)
+            if (false)
             {
                 GLRenderControl rc2 = GLRenderControl.Points(2);
 
@@ -236,7 +250,7 @@ namespace TestOpenTk
 
 
             #region textures
-            if (true)
+            if (false)
             {
                 GLRenderControl rt = GLRenderControl.Tri();
 
@@ -345,7 +359,7 @@ namespace TestOpenTk
             #endregion
 
             #region 2dArrays
-            if (true)
+            if (false)
             {
                 items.Add( new GLTexturedShader2DBlendWithWorldCoord(), "TEX2DA");
                 items.Add(new GLTexture2DArray(new Bitmap[] { Properties.Resources.mipmap2, Properties.Resources.mipmap3 }, 9), "2DArray2");
@@ -371,7 +385,7 @@ namespace TestOpenTk
             #endregion
 
             #region Instancing
-            if (true)
+            if (false)
             {
                 items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()),"IC-1");
 
@@ -413,7 +427,7 @@ namespace TestOpenTk
 
 
             #region Tesselation
-            if (true)
+            if (false)
             {
                 var shdrtesssine = new GLTesselationShaderSinewave(20, 0.5f, 2f);
                 items.Add(shdrtesssine, "TESx1");
@@ -431,7 +445,7 @@ namespace TestOpenTk
 
 
             #region MipMaps
-            if (true)
+            if (false)
             {
                 items.Add( new GLTexture2D(Properties.Resources.mipmap2, 9), "mipmap1");
 
@@ -446,7 +460,7 @@ namespace TestOpenTk
 
             #region Tape
 
-            if (true)
+            if (false)
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(0, 5, 10), new Vector3(100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
@@ -462,7 +476,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("tapeshader"), "tape1", GLRenderableItem.CreateVector4(items, rts, p , new GLRenderDataTexture(items.Tex("tapelogo"))));
             }
 
-            if (true)
+            if (false)
             {
                 var p = GLTapeObjectFactory.CreateTape(new Vector3(-0, 5, 10), new Vector3(-100, 50, 100), 4, 20, 80F.Radians(), ensureintegersamples: true);
 
@@ -478,7 +492,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("tapeshader2"), "tape2", GLRenderableItem.CreateVector4(items, rts, p, new GLRenderDataTexture(items.Tex("tapelogo2"))));
             }
 
-            if (true)
+            if (false)
             {
                 Vector4[] points = new Vector4[] { new Vector4(100, 5, 40, 0), new Vector4(0, 5, 100, 0), new Vector4(-50, 5, 80, 0), new Vector4(-60, 5, 40, 0) };
 
@@ -501,7 +515,7 @@ namespace TestOpenTk
 
             #region Screen coords
             // fixed point on screen
-            if (true)
+            if (false)
             {
                 Vector4[] p = new Vector4[4];
 
@@ -523,7 +537,7 @@ namespace TestOpenTk
             #region Index/instance draw
 
             // multi element index draw
-            if (true)
+            if (false)
             {
                 float CS = 2, O = -20, OY = 0;
                 float[] v = new float[]
@@ -565,7 +579,7 @@ namespace TestOpenTk
             }
 
             // multi element index draw with primitive restart, draw a triangle strip
-            if (true)
+            if (false)
             {
                 float X = -10, Z = -10;
                 float X2 = -8, Z2 = -10;
@@ -594,7 +608,7 @@ namespace TestOpenTk
             }
 
             // indirect multi draw with element index - two red squares in foreground.
-            if (true)
+            if (false)
             {
                 float X = -10, Z = -12;
                 float X2 = -8, Z2 = -12;
@@ -636,7 +650,7 @@ namespace TestOpenTk
             #endregion
 
             #region Bindless texture
-            if (true)
+            if (false)
             {
                 IGLTexture[] btextures = new IGLTexture[3];
                 btextures[0] = items.Add(new GLTexture2D(Properties.Resources.Logo8bpp), "bl1");
@@ -683,7 +697,7 @@ namespace TestOpenTk
 
             #region Objects
 
-            if (true)
+            if (false)
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 string s = System.Text.Encoding.UTF8.GetString(Properties.Resources.cubeobj);
@@ -714,7 +728,7 @@ namespace TestOpenTk
                 }
             }
 
-            if (true)       // waveform object
+            if (false)       // waveform object
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 string s = System.Text.Encoding.UTF8.GetString(Properties.Resources.textobj1);
@@ -747,7 +761,7 @@ namespace TestOpenTk
                 }
             }
 
-            if ( true )     // obj creator on those
+            if ( false )     // obj creator on those
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 var objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.textobj1));
@@ -761,7 +775,7 @@ namespace TestOpenTk
                 oc.Create(objlist, new Vector3(5, 0, -20), new Vector3(0, 0, 0), 2.0f);
             }
 
-            if ( true ) // another waveform object
+            if ( false ) // another waveform object
             {
                 GLWaveformObjReader read = new GLWaveformObjReader();
                 var objlist = read.ReadOBJData(System.Text.Encoding.UTF8.GetString(Properties.Resources.Koltuk));
@@ -773,7 +787,7 @@ namespace TestOpenTk
                 System.Diagnostics.Debug.Assert(v == true);
             }
 
-            if (true)   // instanced sinewive
+            if (false)   // instanced sinewive
             {
                 var shdrtesssine = new GLTesselationShaderSinewaveInstanced(20, 0.1f, 4f);
                 items.Add(shdrtesssine, "TESIx1");
@@ -868,7 +882,7 @@ namespace TestOpenTk
             GL.FrontFace(FrontFaceDirection.Ccw);
 
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Pos.CameraDirection + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from "  + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.Pos.CameraDirection + " zoom " + gl3dcontroller.Pos.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance;
 
             //GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             //Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);
@@ -917,35 +931,22 @@ namespace TestOpenTk
             }
 
 
+            if (kb.HasBeenPressed(Keys.O, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                System.Diagnostics.Debug.WriteLine("Order to 90");
+                gl3dcontroller.CameraPan(new Vector2(90, 0), 3);
+            }
+            if (kb.HasBeenPressed(Keys.P, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                System.Diagnostics.Debug.WriteLine("Order to -180");
+                gl3dcontroller.CameraPan(new Vector2(90, 180), 3);
+            }
+
+            //System.Diagnostics.Debug.WriteLine("kb check");
+
         }
 
     }
-
-    public class GLDirect : GLShaderPipeline
-    {
-        public GLDirect(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
-        {
-            AddVertexFragment(new GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord(), new GLPLFragmentShaderTextureTriangleStrip(false));
-        }
-    }
-
-    public class GLColourShaderWithWorldCoordXX : GLShaderPipeline
-    {
-        public GLColourShaderWithWorldCoordXX(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
-        {
-            AddVertexFragment(new GLPLVertexShaderWorldCoord(), new GLPLFragmentIDShaderColour(2));
-        }
-    }
-
-    public class GLBindlessTextureShaderWithWorldCoord : GLShaderPipeline
-    {
-        public GLBindlessTextureShaderWithWorldCoord(int arbbindingpoint, Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
-        {
-            AddVertexFragment(new GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord(), new GLPLBindlessFragmentShaderTextureTriangleStrip(arbbindingpoint));
-        }
-    }
-
-
 
 }
 

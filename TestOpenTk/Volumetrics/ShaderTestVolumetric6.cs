@@ -244,7 +244,7 @@ namespace TestOpenTk
          //       System.Diagnostics.Debug.WriteLine("db " + databack[i].ToStringVec());
             }
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Pos.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Pos.ZoomFactor;
         }
 
         public class ShaderV2 : GLShaderStandard
@@ -316,9 +316,7 @@ namespace TestOpenTk
         
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
-            if (cdmt.AnythingChanged)
-                gl3dcontroller.Redraw();
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
         }
 
         private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)

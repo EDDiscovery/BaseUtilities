@@ -196,7 +196,7 @@ void main(void)
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
             gl3dcontroller.Redraw();
         }
 

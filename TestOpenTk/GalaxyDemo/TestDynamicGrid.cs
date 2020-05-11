@@ -62,14 +62,14 @@ namespace TestOpenTk
             s.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, i.InstanceCount);
 
             DynamicGridCoordVertexShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordVertexShader;
-            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, Color.Yellow);
+            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Pos.CameraDirection, Color.Yellow);
 
             solmarker.Position = gl3dcontroller.MatrixCalc.TargetPosition;
             solmarker.Scale = gl3dcontroller.MatrixCalc.EyeDistance / 20;
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Pos.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Pos.ZoomFactor;
         }
 
 
@@ -94,7 +94,7 @@ namespace TestOpenTk
                 return (float)ms * 1.0f * Math.Min(eyedist/1000,10);
             };
 
-            gl3dcontroller.Zoom.ZoomFact = 1.1f;
+            gl3dcontroller.Pos.ZoomScaling = 1.1f;
 
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(140.75f, 0, 0), 0.5F);
@@ -176,7 +176,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e)
         {
-            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
             //if (cdmt.AnythingChanged)
             //    gl3dcontroller.Redraw();
         }

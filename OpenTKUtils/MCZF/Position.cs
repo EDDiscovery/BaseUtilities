@@ -23,18 +23,15 @@ namespace OpenTKUtils.Common
 {
     public class Position       // holds lookat and eyepositions.
     {
+        #region Positions
+
         public Vector3 Lookat { get { return lookat; } set { KillSlew(); lookat = value; } }
         public Vector3 EyePosition { get { return eyeposition; } set { KillSlew(); eyeposition = value; } }
+        public float EyeDistance { get { return (lookat - EyePosition).Length; } }
 
-        public bool InSlew { get { return (targetposSlewProgress < 1.0f); } }
-
-        private Vector3 lookat = Vector3.Zero;                // point where we are viewing. 
-        private Vector3 eyeposition = new Vector3(10,10,10);  // and the eye position
-
-        private float targetposSlewProgress = 1.0f;             // 0 -> 1 slew progress
-        private float targetposSlewTime;                        // how long to take to do the slew
-        private Vector3 targetposSlewPosition;                  // where to slew to.
-        private Vector3 targetposEyePosition;                   // where to slew to.
+        public void X(float adj) { KillSlew(); lookat.X += adj; eyeposition.X += adj; }     // adjust axis
+        public void Y(float adj) { KillSlew(); lookat.Y += adj; eyeposition.Y += adj; }
+        public void Z(float adj) { KillSlew(); lookat.Z += adj; eyeposition.Z += adj; }
 
         public void Translate(Vector3 pos)
         {
@@ -42,47 +39,6 @@ namespace OpenTKUtils.Common
             lookat += pos;
             eyeposition += pos;
         }
-
-        public void X(float adj) { KillSlew(); lookat.X += adj; eyeposition.X += adj; }     // adjust axis
-        public void Y(float adj) { KillSlew(); lookat.Y += adj; eyeposition.Y += adj; }
-        public void Z(float adj) { KillSlew(); lookat.Z += adj; eyeposition.Z += adj; }
-
-        public void SetEyePositionFromLookat(Vector3 cameradir, float distance)              // from current lookat, set eyeposition, given a camera angle and a distance
-        {
-            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
-
-            // we rotate the identity matrix by the camera direction
-            // .x and .y values are set by our axis orientations..
-            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
-            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
-            // .z rotates the camera.
-
-            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationZ((float)(cameradir.Z * Math.PI / 180.0f));
-
-            Vector3 eyerel = Vector3.Transform(new Vector3(0, -distance, 0), transform);       // the 0,-E,0 sets the axis of the system..
-            eyeposition = lookat + eyerel;
-        }
-
-        public void SetLookatPositionFromEye(Vector3 cameradir, float distance)              // from current eye position, set lookat, given a camera angle and a distance
-        {
-            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
-
-            // we rotate the identity matrix by the camera direction
-            // .x and .y values are set by our axis orientations..
-            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
-            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
-            // .z rotates the camera.
-
-            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
-            transform *= Matrix3.CreateRotationZ((float)(cameradir.Z * Math.PI / 180.0f));
-
-            Vector3 eyerel = Vector3.Transform(new Vector3(0, -distance, 0), transform);       // the 0,-E,0 sets the axis of the system..
-            lookat = eyeposition - eyerel;      // note we go backwards, as the eyerel and camera is defined as the vector from eye to lookat.
-        }
-
 
         // time <0 estimate, 0 instance >0 time
         public void GoTo(Vector3 gotopos, float timeslewsec = 0, float unitspersecond = 10000F)       // may pass a Nan Position - no action. Y is normal sense
@@ -115,9 +71,194 @@ namespace OpenTKUtils.Common
             }
         }
 
+        #endregion
+
+        #region Camera
+
+        public float CameraRotation { get; private set; }
+        public Vector2 CameraDirection { get { return camerapos; } set { KillSlew(); camerapos = value; SetLookatPositionFromEye(value, EyeDistance); } }
+
+        public void RotateCamera(Vector2 azel, float zrot, bool movepos)
+        {
+            KillSlew();
+            System.Diagnostics.Debug.Assert(!float.IsNaN(azel.X) && !float.IsNaN(azel.Y));
+            Vector2 cameraDir = CameraDirection;
+
+            cameraDir.X = cameraDir.X.BoundedAngle(azel.X);
+            cameraDir.Y = cameraDir.Y.BoundedAngle(azel.Y);
+
+            if (cameraDir.X < 0 && cameraDir.X > -90)                   // Limit camera pitch
+                cameraDir.X = 0;
+            if (cameraDir.X > 180 || cameraDir.X <= -90)
+                cameraDir.X = 180;
+
+            CameraRotation = CameraRotation.BoundedAngle(zrot);
+
+            if (movepos)
+                SetLookatPositionFromEye(cameraDir, EyeDistance);
+            else
+                SetEyePositionFromLookat(cameraDir, EyeDistance);
+        }
+
+        public void Pan(Vector2 newpos, float timeslewsec = 0)       // may pass a Nan Position - no action
+        {
+            if (!float.IsNaN(newpos.X))
+            {
+                if (timeslewsec == 0)
+                {
+                    SetLookatPositionFromEye(newpos, EyeDistance);
+                }
+                else
+                {
+                    cameraDirSlewPosition = newpos;
+                    cameraDirSlewProgress = 0.0f;
+                    cameraDirSlewTime = (timeslewsec == 0) ? (1.0F) : timeslewsec;
+                }
+            }
+        }
+
+        public void LookAt(Vector3 target, float time = 0)            
+        {
+            Vector2 camera = EyePosition.AzEl(target, true);
+            Pan(camera, time);
+        }
+
+        public void LookAtZoom(Vector3 target, float zoom, float time = 0) 
+        {
+            Vector2 camera = EyePosition.AzEl(target, true);
+            Pan(camera, time);
+            GoToZoom(zoom, time);
+        }
+
+        #endregion
+
+        #region Zoom
+
+        public float ZoomFactor { get { return Zoom1Distance / EyeDistance; } }
+        public float Zoom1Distance { get; set; } = 1000F;                     // distance that Current=1 will be from the Position, in the direction of the camera.
+        public float ZoomMax = 300F;            // Default out Current
+        public float ZoomMin = 0.01F;           // Iain special ;-) - this depends on znear (the clip distance - smaller you can Current in more) and Zoomdistance.
+        public float ZoomScaling = 1.258925F;      // scaling
+
+        public void Zoom(float newzoomfactor)
+        {
+            KillSlew();
+            newzoomfactor = Math.Max(Math.Min(newzoomfactor, ZoomMax), ZoomMin);
+            System.Diagnostics.Debug.WriteLine("Zoom to {0} {1}", newzoomfactor, Zoom1Distance / newzoomfactor);
+            SetEyePositionFromLookat(CameraDirection, Zoom1Distance / newzoomfactor);
+        }
+
+        public void ZoomScale(bool direction)
+        {
+            KillSlew();
+            float newzoomfactor = ZoomFactor;
+            if (direction)
+            {
+                newzoomfactor *= (float)ZoomScaling;
+                if (newzoomfactor > ZoomMax)
+                    newzoomfactor = (float)ZoomMax;
+            }
+            else
+            {
+                newzoomfactor /= (float)ZoomScaling;
+                if (newzoomfactor < ZoomMin)
+                    newzoomfactor = (float)ZoomMin;
+            }
+
+            SetEyePositionFromLookat(CameraDirection, Zoom1Distance / newzoomfactor);
+        }
+
+        public void GoToZoom(float z, float timetozoom = 0)        // <0 means auto estimate
+        {
+            z = Math.Max(Math.Min(z, ZoomMax), ZoomMin);
+
+            if (timetozoom == 0)
+            {
+                Zoom(z);
+            }
+            else if (Math.Abs(z - ZoomFactor) > 0.001)
+            {
+                zoomSlewTarget = z;
+                zoomSlewStart = ZoomFactor;
+
+                if (timetozoom < 0)       // auto estimate on log distance between them
+                {
+                    timetozoom = (float)(Math.Abs(Math.Log10(zoomSlewTarget / ZoomFactor)) * 1.5);
+                }
+
+                zoomSlewTimeToZoom = timetozoom;
+            }
+        }
+
+        #endregion
+
+        #region Lower level functions
+
+        public Vector3 CalcCameraNormal()                // we need the normal for the perspective mode
+        {
+            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+            // we rotate the identity matrix by the camera direction
+            // .x and .y values are set by our axis orientations..
+            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+            // .z rotates the camera.
+
+            Vector2 cameraDir = CameraDirection;
+
+            transform *= Matrix3.CreateRotationX((float)(cameraDir.X * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationY((float)(cameraDir.Y * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationZ((float)(CameraRotation * Math.PI / 180.0f));
+            return Vector3.Transform(new Vector3(0f, 0.0f, normaldir), transform);       // 0,0,1 also sets the axis - this whats make .x/.y address the x/y rotations
+        }
+
+        public void SetEyePositionFromLookat(Vector2 cameradir, float distance)              // from current lookat, set eyeposition, given a camera angle and a distance
+        {
+            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+            // we rotate the identity matrix by the camera direction
+            // .x and .y values are set by our axis orientations..
+            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+            // .z rotates the camera.
+
+            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
+
+            Vector3 eyerel = Vector3.Transform(new Vector3(0, distance * distmult, 0), transform);       // the 0,-E,0 sets the axis of the system..
+            eyeposition = lookat + eyerel;
+            camerapos = cameradir;
+        }
+
+        public void SetLookatPositionFromEye(Vector2 cameradir, float distance)              // from current eye position, set lookat, given a camera angle and a distance
+        {
+            Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+            // we rotate the identity matrix by the camera direction
+            // .x and .y values are set by our axis orientations..
+            // .x translates around the x axis, x = 0 = to +Y, x = 90 on the x/z plane, x = 180 = to -Y
+            // .y translates around the y axis. y= 0 = to +Z (forward), y = 90 = to +x (look from left), y = -90 = to -x (look from right), y = 180 = look back
+            // .z rotates the camera.
+
+            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
+
+            Vector3 eyerel = Vector3.Transform(new Vector3(0, distance * distmult, 0), transform);       // the 0,-E,0 sets the axis of the system..
+            lookat = eyeposition - eyerel;      // note we go backwards, as the eyerel and camera is defined as the vector from eye to lookat.
+            camerapos = cameradir;
+        }
+
+        #endregion
+
+        #region Slew
+
+        public bool InSlew { get { return (targetposSlewProgress < 1.0f || zoomSlewTarget > 0 || cameraDirSlewProgress < 1.0f); } }
+
         public void KillSlew()
         {
             targetposSlewProgress = 1.0f;
+            zoomSlewTarget = 0;
+            cameraDirSlewProgress = 1.0f;
         }
 
         public void DoSlew(int msticks)
@@ -148,46 +289,123 @@ namespace OpenTKUtils.Common
 
                 targetposSlewProgress = (float)newprogress;
             }
+
+            if ( zoomSlewTarget > 0 )
+            {
+                int wantedsteps = (int)((zoomSlewTimeToZoom * 1000.0F) / msticks);
+                float zoommultiplier = (float)Math.Pow(10.0, Math.Log10(zoomSlewTarget / zoomSlewStart) / wantedsteps);      // I.S^n = F I = initial, F = final, S = scaling, N = no of steps
+
+                float newzoom = (float)(ZoomFactor * zoommultiplier);
+                System.Diagnostics.Debug.WriteLine("Zoom {0} -> {1} {2}", ZoomFactor, newzoom, zoommultiplier);
+                bool stop = (zoomSlewTarget > ZoomFactor) ? (newzoom >= zoomSlewTarget) : (newzoom <= zoomSlewTarget);
+
+                if (stop)
+                {
+                    newzoom = zoomSlewTarget;
+                    zoomSlewTarget = 0;
+                }
+
+                SetEyePositionFromLookat(CameraDirection, Zoom1Distance / newzoom);
+
+            }
+
+            if (cameraDirSlewProgress < 1.0f)
+            {
+                var newprogress = cameraDirSlewProgress + msticks / (cameraDirSlewTime * 1000);
+
+                if (newprogress >= 1.0f)
+                {
+                    SetLookatPositionFromEye(cameraDirSlewPosition, EyeDistance);
+                }
+                else
+                {
+                    var slewstart = Math.Sin((cameraDirSlewProgress - 0.5) * Math.PI);
+                    var slewend = Math.Sin((newprogress - 0.5) * Math.PI);
+                    Debug.Assert((1 - 0 - slewstart) != 0);
+                    var slewfact = (slewend - slewstart) / (1.0 - slewstart);
+
+                    var totvector = new Vector2((float)(cameraDirSlewPosition.X - CameraDirection.X), (float)(cameraDirSlewPosition.Y - CameraDirection.Y));
+                    camerapos += Vector2.Multiply(totvector, (float)slewfact);
+                    SetLookatPositionFromEye(camerapos, EyeDistance);
+                }
+
+                cameraDirSlewProgress = (float)newprogress;
+            }
         }
 
-        public bool Keyboard(KeyboardMonitor kbd, bool inperspectivemode, Vector3 cameraDir, float distance, bool elitemovement)
+        #endregion
+
+        #region Different tracker
+
+        private Vector3 lastlookat;
+        private Vector3 lasteyepos;
+        private float lastcamerarotation;
+
+        public void ResetDifferenceTracker()
+        {
+            lasteyepos = EyePosition;
+            lastlookat = Vector3.Zero;
+            lastcamerarotation = CameraRotation;
+        }
+
+        public bool IsMoved(float minmovement = 0.1f, float cameramove = 1.0f)
+        {
+            bool moved = Vector3.Subtract(lastlookat, Lookat).Length >= minmovement;
+            if (moved)
+                lastlookat = Lookat;
+            bool eyemoved = Vector3.Subtract(lasteyepos, EyePosition).Length >= minmovement;
+            if (eyemoved)
+                lasteyepos = EyePosition;
+            bool rotated = Math.Abs(CameraRotation - lastcamerarotation) >= cameramove;
+            if (rotated)
+                lastcamerarotation = CameraRotation;
+            return moved | eyemoved | rotated;
+        }
+
+        #endregion
+
+        #region UI
+
+        public bool PositionKeyboard(KeyboardMonitor kbd, bool inperspectivemode, float movedistance, bool elitemovement)
         {
             Vector3 positionMovement = Vector3.Zero;
 
             if (kbd.Shift)
-                distance *= 2.0F;
+                movedistance *= 2.0F;
 
             if (kbd.IsCurrentlyPressed(Keys.Left, Keys.A) != null)                // x axis
             {
-                positionMovement.X = -distance;
+                positionMovement.X = -movedistance;
             }
             else if (kbd.IsCurrentlyPressed(Keys.Right, Keys.D) != null)
             {
-                positionMovement.X = distance;
+                positionMovement.X = movedistance;
             }
 
             if (kbd.IsCurrentlyPressed(Keys.PageUp, Keys.R) != null)              // y axis
             {
-                positionMovement.Y = distance;
+                positionMovement.Y = movedistance;
             }
             else if (kbd.IsCurrentlyPressed(Keys.PageDown, Keys.F) != null)
             {
-                positionMovement.Y = -distance;
+                positionMovement.Y = -movedistance;
             }
 
             if (kbd.IsCurrentlyPressed(Keys.Up, Keys.W) != null)                  // z axis
             {
-                positionMovement.Z = distance;
+                positionMovement.Z = movedistance;
             }
             else if (kbd.IsCurrentlyPressed(Keys.Down, Keys.S) != null)
             {
-                positionMovement.Z = -distance;
+                positionMovement.Z = -movedistance;
             }
 
             if (positionMovement.LengthSquared > 0)
             {
                 if (inperspectivemode)
                 {
+                    Vector2 cameraDir = CameraDirection;
+
                     if (elitemovement)  // elite movement means only the camera rotation around the Y axis is taken into account. 
                     {
                         var cameramove = Matrix4.CreateTranslation(positionMovement);
@@ -199,7 +417,7 @@ namespace OpenTKUtils.Common
                     {
                         // we need to rotate components to get the X/Y/Z into the same meaning as the camera angles.
                         var cameramove = Matrix4.CreateTranslation(new Vector3(positionMovement.X,positionMovement.Z,-positionMovement.Y));
-                        cameramove *= Matrix4.CreateRotationZ(cameraDir.Z.Radians());   // rotate the translation by the camera look angle
+                        cameramove *= Matrix4.CreateRotationZ(CameraRotation.Radians());   // rotate the translation by the camera look angle
                         cameramove *= Matrix4.CreateRotationX(cameraDir.X.Radians());
                         cameramove *= Matrix4.CreateRotationY(cameraDir.Y.Radians());
                         Translate(cameramove.ExtractTranslation());
@@ -217,7 +435,135 @@ namespace OpenTKUtils.Common
                 return false;
         }
 
+        public bool CameraKeyboard(KeyboardMonitor kbd, float angle)
+        {
+            Vector3 cameraActionRotation = Vector3.Zero;
 
+            if (kbd.Shift)
+                angle *= 2.0F;
+
+            if (kbd.IsCurrentlyPressed(Keys.NumPad4) != null)
+            {
+                cameraActionRotation.Z = -angle;
+            }
+            if (kbd.IsCurrentlyPressed(Keys.NumPad6) != null)
+            {
+                cameraActionRotation.Z = angle;
+            }
+
+            if (kbd.IsCurrentlyPressed(Keys.NumPad5, Keys.NumPad2, Keys.Z) != null)
+            {
+                cameraActionRotation.X = -angle;
+            }
+            if (kbd.IsCurrentlyPressed(Keys.NumPad8, Keys.X) != null)
+            {
+                cameraActionRotation.X = angle;
+            }
+
+            bool movepos = false;
+
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.Ctrl, Keys.Q))
+            {
+                cameraActionRotation.Y = angle;
+            }
+            else if (kbd.IsCurrentlyPressed(Keys.NumPad7, Keys.Q) != null)
+            {
+                cameraActionRotation.Y = -angle;
+                movepos = true;
+            }
+
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.Ctrl, Keys.E))
+            {
+                cameraActionRotation.Y = -angle;
+            }
+            else if (kbd.IsCurrentlyPressed(Keys.NumPad9, Keys.E) != null)
+            {
+                cameraActionRotation.Y = angle;
+                movepos = true;
+            }
+
+            if (cameraActionRotation.LengthSquared > 0)
+            {
+                RotateCamera(new Vector2(cameraActionRotation.X, cameraActionRotation.Y), cameraActionRotation.Z, movepos);
+                return true;
+            }
+            else
+                return false;
+        }
+
+
+        public bool ZoomKeyboard(KeyboardMonitor kbd, float adjustment)
+        {
+            bool changed = false;
+
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.None, Keys.Add, Keys.M))
+            {
+                Zoom(adjustment);
+                changed = true;
+            }
+
+            if (kbd.IsCurrentlyPressed(KeyboardMonitor.ShiftState.None, Keys.Subtract, Keys.N))
+            {
+                Zoom(1.0f / adjustment);
+                changed = true;
+            }
+
+            float newzoom = 0;
+
+            if (kbd.HasBeenPressed(Keys.D1))
+                newzoom = ZoomMax;
+            if (kbd.HasBeenPressed(Keys.D2))
+                newzoom = 100;                                                      // Factor 3 scale
+            if (kbd.HasBeenPressed(Keys.D3))
+                newzoom = 33;
+            if (kbd.HasBeenPressed(Keys.D4))
+                newzoom = 11F;
+            if (kbd.HasBeenPressed(Keys.D5))
+                newzoom = 3.7F;
+            if (kbd.HasBeenPressed(Keys.D6))
+                newzoom = 1.23F;
+            if (kbd.HasBeenPressed(Keys.D7))
+                newzoom = 0.4F;
+            if (kbd.HasBeenPressed(Keys.D8))
+                newzoom = 0.133F;
+            if (kbd.HasBeenPressed(Keys.D9))
+                newzoom = ZoomMin;
+
+            if (newzoom != 0)
+            {
+                GoToZoom(newzoom, -1);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        #endregion
+
+        #region Privates
+
+        private Vector3 lookat = Vector3.Zero;                // point where we are viewing. 
+        private Vector3 eyeposition = new Vector3(10, 10, 10);  // and the eye position
+        private Vector2 camerapos = Vector2.Zero;
+
+        private float targetposSlewProgress = 1.0f;             // 0 -> 1 slew progress
+        private float targetposSlewTime;                        // how long to take to do the slew
+        private Vector3 targetposSlewPosition;                  // where to slew to.
+        private Vector3 targetposEyePosition;                   // where to slew to.
+
+        private const float normaldir = 1.0f;
+
+        const float distmult = -1f;
+
+        private float zoomSlewStart = 0;
+        private float zoomSlewTarget = 0;
+        private float zoomSlewTimeToZoom = 0;
+
+        private float cameraDirSlewProgress = 1.0f;             // 0 -> 1 slew progress
+        private float cameraDirSlewTime;                        // how long to take to do the slew
+        private Vector2 cameraDirSlewPosition;                  // where to slew to.
+
+        #endregion
     }
 }
 

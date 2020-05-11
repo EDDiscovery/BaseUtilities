@@ -122,7 +122,6 @@ void main(void)
             gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.ZoomDistance = 40F;
-            gl3dcontroller.MovementTracker.MinimumCameraDirChange = 0.01f;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
 
@@ -256,14 +255,12 @@ void main(void)
                 System.Diagnostics.Debug.WriteLine("{0} v{1} a{2:0.0} :  {3}", databack[i].X, databack[i].Z, databack[i].Y, databack[i + 1].ToStringVec());
             }
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Camera.Current + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Pos.CameraDirection + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
         }
 
         private void SystemTick(object sender, EventArgs e)
         {
-            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
-            if (cdmt.AnythingChanged)
-                gl3dcontroller.Redraw();
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
         }
 
         private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)

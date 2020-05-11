@@ -274,8 +274,8 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 120000f;
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.ZoomDistance = 5000F;
-            gl3dcontroller.Zoom.ZoomMin = 0.1f;
-            gl3dcontroller.Zoom.ZoomFact = 1.1f;
+            gl3dcontroller.Pos.ZoomMin = 0.1f;
+            gl3dcontroller.Pos.ZoomScaling = 1.1f;
             gl3dcontroller.EliteMovement = true;
             gl3dcontroller.PaintObjects = Controller3DDraw;
             gl3dcontroller.KeyboardTravelSpeed = (ms, eyedist) =>
@@ -308,7 +308,7 @@ namespace TestOpenTk
         {
             if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
-            var cdmt = gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            var cdmt = gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
             glwfc.Invalidate();
         }
 
@@ -335,7 +335,7 @@ namespace TestOpenTk
 
             float coordfade = lastgridwidth == 10000 ? (0.7f - (mc.EyeDistance / 20000).Clamp(0.0f, 0.7f)) : 0.7f;
             Color coordscol = Color.FromArgb(coordfade < 0.05 ? 0 : 150, Color.Cyan);
-            gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Camera.Current, coordscol, Color.Transparent);
+            gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Pos.CameraDirection, coordscol, Color.Transparent);
 
             // set the galaxy volumetric block
 
@@ -361,7 +361,7 @@ namespace TestOpenTk
             else
                 fpsavg = (fpsavg * 0.9) + fps * 0.1;
 
-            //            this.Text = "FPS " + fpsavg.ToString("N0") + " Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+            //            this.Text = "FPS " + fpsavg.ToString("N0") + " Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Pos.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Pos.ZoomFactor;
         }
 
         #endregion

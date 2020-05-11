@@ -515,7 +515,7 @@ namespace TestOpenTk
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Camera.Current + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Zoom.Current;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Pos.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Pos.ZoomFactor;
         }
 
         private void SystemTick(object sender, EventArgs e)
@@ -523,9 +523,7 @@ namespace TestOpenTk
             OpenTKUtils.Timers.Timer.ProcessTimers();
             if (displaycontrol != null && displaycontrol.RequestRender)
                 glwfc.Invalidate();
-            var cdmt = gl3dcontroller.HandleKeyboardSlews(true);
-            if (cdmt.AnythingChanged )
-                glwfc.Invalidate();
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true);
         }
 
     }

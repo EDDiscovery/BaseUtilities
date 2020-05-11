@@ -157,7 +157,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboardSlews(true, OtherKeys);
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, OtherKeys);
         }
 
         private void OtherKeys( OpenTKUtils.Common.KeyboardMonitor kb )

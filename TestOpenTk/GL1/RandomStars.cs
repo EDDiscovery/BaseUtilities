@@ -98,7 +98,7 @@ namespace TestOpenTk
             gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(135, 0, 0), 1F);
             gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
-                float zoomlimited = Math.Min(Math.Max(gl3dcontroller.Zoom.Current, 0.01F), 15.0F);
+                float zoomlimited = Math.Min(Math.Max(gl3dcontroller.Pos.ZoomFactor, 0.01F), 15.0F);
                 float distance1sec = gl3dcontroller.ZoomDistance * (1.0f / zoomlimited);        // move Zoomdistance in one second, scaled by zoomY
                 return distance1sec * (float)ms / 1000.0f;
             };
@@ -120,7 +120,7 @@ namespace TestOpenTk
 
         private void SystemTick(object sender, EventArgs e )
         {
-            gl3dcontroller.HandleKeyboardSlews(true, null);
+            gl3dcontroller.HandleKeyboardSlewsInvalidate(true, null);
         }
 
     }

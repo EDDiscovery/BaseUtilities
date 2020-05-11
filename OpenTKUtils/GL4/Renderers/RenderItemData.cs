@@ -98,7 +98,7 @@ namespace OpenTKUtils.GL4
 
             if (lookatangle)
             {
-                Vector3 res = pos.AzEl(c.EyePosition, false);
+                Vector2 res = pos.AzEl(c.EyePosition, false);
                 System.Diagnostics.Debug.WriteLine("Object Bind eye " + c.EyePosition + " to " + pos + " az " + res.Y.Degrees() + " inc " + res.X.Degrees());
                 Matrix4 tx2 = Matrix4.Identity;
                 tx2 *= Matrix4.CreateRotationX((-res.X));
