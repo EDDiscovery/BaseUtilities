@@ -107,7 +107,7 @@ namespace OpenTKUtils.GL4
 
             var array = vert.ToArray();
             if (pos != null)
-                array.Translate(pos.Value);
+                GLStaticsVector4.Translate(ref array, pos.Value);
 
             return array;
         }
@@ -152,7 +152,7 @@ namespace OpenTKUtils.GL4
             };
 
             if (pos != null)
-                vertices.Translate(pos.Value);
+                GLStaticsVector4.Translate(ref vertices, pos.Value);
 
             return vertices;
         }

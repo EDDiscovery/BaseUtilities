@@ -64,7 +64,7 @@ namespace OpenTKUtils
         // this means we need to rotate the normal opengl model (+y down) 180 degrees around x - therefore flip y
 
         Vector3 cameranormal = new Vector3(0, 0, 1);            // normal to the camera (camera vector is (0,1,0))
-        Matrix4 perspectiveflipaxis = Matrix4.CreateScale(new Vector3(1, -1, 1));   // flip y
+        Matrix4 perspectiveflipaxis = Matrix4.CreateScale(new Vector3(1, -1, 1));   // flip y to make y+ up
 
         // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
         // to make the ccw cull test work.

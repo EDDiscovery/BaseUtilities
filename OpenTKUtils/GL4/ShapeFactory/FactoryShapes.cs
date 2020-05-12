@@ -52,7 +52,7 @@ namespace OpenTKUtils.GL4
             box[16] = botvertices[0];            box[17] = topvertices[0];            box[18] = botvertices[1];            box[19] = topvertices[1];
             box[20] = botvertices[2];            box[21] = topvertices[2];            box[22] = botvertices[3];            box[23] = topvertices[3];
 
-            box.RotPos(rotation: rotation);
+            GLStaticsVector4.RotPos(ref box, rotation);
 
             return box;
         }
@@ -80,7 +80,7 @@ namespace OpenTKUtils.GL4
                 new Vector4(-width, 0, +height, 1.0f),          // -, +
             };
 
-            vertices1.RotPos(rotation, pos);
+            GLStaticsVector4.RotPos(ref vertices1, rotation, pos);
 
             return vertices1;
         }
@@ -106,7 +106,7 @@ namespace OpenTKUtils.GL4
                new Vector4(+width, 0, +height, 1.0f),      //TR
             };
 
-            vertices2.RotPos(rotation, pos);
+            GLStaticsVector4.RotPos(ref vertices2, rotation, pos);
 
             return vertices2;
         }

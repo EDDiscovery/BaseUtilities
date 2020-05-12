@@ -187,7 +187,7 @@ namespace OpenTKUtils.Common
 
         #endregion
 
-        #region Position functions
+        #region More Position functions not causing Slew to cancel
 
         private Vector3 cameravector = new Vector3(0, 1, 0);        // camera vector, at CameraDir(0,0)
 
@@ -215,30 +215,30 @@ namespace OpenTKUtils.Common
             SetEyePositionFromLookat(cameradir, Zoom1Distance / zoom);
         }
 
-        public void SetEyePositionFromLookat(Vector2 cameradir, float distance)              // from current lookat, set eyeposition, given a camera angle and a distance
+        public void SetEyePositionFromLookat(Vector2 cameradirp, float distance)              // from current lookat, set eyeposition, given a camera angle and a distance
         {
             Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
 
-            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));      // we rotate the camera vector around X and Y to get a vector which points from eyepos to lookat pos
-            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationX((float)(cameradirp.X * Math.PI / 180.0f));      // we rotate the camera vector around X and Y to get a vector which points from eyepos to lookat pos
+            transform *= Matrix3.CreateRotationY((float)(cameradirp.Y * Math.PI / 180.0f));
 
             Vector3 eyerel = Vector3.Transform(cameravector, transform);       // the 0,1,0 sets the axis of the camera dir
 
             eyeposition = lookat - eyerel * distance;
-            this.cameradir = cameradir;
+            cameradir = cameradirp;
         }
 
-        public void SetLookatPositionFromEye(Vector2 cameradir, float distance)              // from current eye position, set lookat, given a camera angle and a distance
+        public void SetLookatPositionFromEye(Vector2 cameradirp, float distance)              // from current eye position, set lookat, given a camera angle and a distance
         {
             Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
 
-            transform *= Matrix3.CreateRotationX((float)(cameradir.X * Math.PI / 180.0f));      // we rotate the camera vector around X and Y to get a vector which points from eyepos to lookat pos
-            transform *= Matrix3.CreateRotationY((float)(cameradir.Y * Math.PI / 180.0f));
+            transform *= Matrix3.CreateRotationX((float)(cameradirp.X * Math.PI / 180.0f));      // we rotate the camera vector around X and Y to get a vector which points from eyepos to lookat pos
+            transform *= Matrix3.CreateRotationY((float)(cameradirp.Y * Math.PI / 180.0f));
 
             Vector3 eyerel = Vector3.Transform(cameravector, transform);       // the 0,1,0 sets the axis of the camera dir
 
             lookat = eyeposition + eyerel * distance;      
-            this.cameradir = cameradir;
+            cameradir = cameradirp;
         }
 
         #endregion

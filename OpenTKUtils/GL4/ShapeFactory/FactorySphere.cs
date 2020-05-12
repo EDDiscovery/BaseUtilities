@@ -40,7 +40,7 @@ namespace OpenTKUtils.GL4
 
             var array = vertices.ToArray();
             if (pos != null)
-                array.Translate(pos.Value);
+                GLStaticsVector4.Translate(ref array, pos.Value);
 
             return array;
         }
@@ -76,7 +76,7 @@ namespace OpenTKUtils.GL4
             }
 
             if (pos != null)
-                coords.Translate(pos.Value);
+                GLStaticsVector4.Translate(ref coords, pos.Value);
 
             return new Tuple<Vector4[], Vector2[]>(coords, texcoords);
         }

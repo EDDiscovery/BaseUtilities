@@ -1,6 +1,6 @@
 ﻿namespace TestOpenTk
 {
-    partial class TestMainNormalAxis
+    partial class TestMain2
     {
         /// <summary>
         /// Required designer variable.

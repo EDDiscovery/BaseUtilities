@@ -122,11 +122,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestMainNormalAxis.cs">
+    <Compile Include="TestMain2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="TestMainNormalAxis.designer.cs">
-      <DependentUpon>TestMainNormalAxis.cs</DependentUpon>
+    <Compile Include="TestMain2.designer.cs">
+      <DependentUpon>TestMain2.cs</DependentUpon>
     </Compile>
     <Compile Include="TestMain.cs">
       <SubType>Form</SubType>
@@ -267,8 +267,8 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="TestMainNormalAxis.resx">
-      <DependentUpon>TestMainNormalAxis.cs</DependentUpon>
+    <EmbeddedResource Include="TestMain2.resx">
+      <DependentUpon>TestMain2.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TestMain.resx">
       <DependentUpon>TestMain.cs</DependentUpon>

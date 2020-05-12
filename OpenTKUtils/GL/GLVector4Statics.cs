@@ -30,7 +30,7 @@ namespace OpenTKUtils
             return Vertex;
         }
 
-        static public void Translate(this Vector4[] vertices, Vector3 pos)
+        static public void Translate(ref Vector4[] vertices, Vector3 pos)
         {
             for (int i = 0; i < vertices.Length; i++)
                 vertices[i] = vertices[i].Translate(pos);
@@ -83,18 +83,18 @@ namespace OpenTKUtils
             return array[index];
         }
 
-        public static void RotPos(this Vector4[] vertices, Vector3? rotation = null, Vector3? pos = null)
+        public static void RotPos(ref Vector4[] vertices, Vector3? rotation = null, Vector3? pos = null)
         {
             if (pos != null)
-                vertices.Translate(pos.Value);
+                Translate(ref vertices, pos.Value);
 
             if (rotation != null && rotation.Value.Length > 0)
             {
                 Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
-                transform *= Matrix4.CreateRotationX((float)(rotation.Value.X * Math.PI / 180.0f));
-                transform *= Matrix4.CreateRotationY((float)(rotation.Value.Y * Math.PI / 180.0f));
-                transform *= Matrix4.CreateRotationZ((float)(rotation.Value.Z * Math.PI / 180.0f));
-                vertices.Transform(transform);
+                transform *= Matrix4.CreateRotationX((float)(rotation.Value.X.Radians()));
+                transform *= Matrix4.CreateRotationY((float)(rotation.Value.Y.Radians()));
+                transform *= Matrix4.CreateRotationZ((float)(rotation.Value.Z.Radians()));
+                Transform(ref vertices, transform);
             }
         }
 
