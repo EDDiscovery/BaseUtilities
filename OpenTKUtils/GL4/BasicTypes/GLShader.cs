@@ -115,25 +115,37 @@ namespace OpenTKUtils.GL4
                 else if (o is System.Drawing.Color)
                 {
                     System.Drawing.Color c = (System.Drawing.Color)o;
-                    slist.Add("const vec4 " + name + " = vec4(" + ((float)c.R / 255).ToStringInvariant() + "," + ((float)c.G / 255).ToStringInvariant() + "," + ((float)c.B / 255).ToStringInvariant() + "," + ((float)c.A / 255).ToStringInvariant() + ");" );
+                    slist.Add("const vec4 " + name + " = vec4(" + ((float)c.R / 255).ToStringInvariant() + "," + ((float)c.G / 255).ToStringInvariant() + "," + ((float)c.B / 255).ToStringInvariant() + "," + ((float)c.A / 255).ToStringInvariant() + ");");
                 }
                 else if (o is OpenTK.Vector4)
                 {
                     OpenTK.Vector4 v = (OpenTK.Vector4)o;
-                    slist.Add("const vec4 " + name + " = vec4(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ");" );
+                    slist.Add("const vec4 " + name + " = vec4(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ");");
                 }
                 else if (o is OpenTK.Vector2)
                 {
                     OpenTK.Vector2 v = (OpenTK.Vector2)o;
-                    slist.Add("const vec2 " + name + " = vec2(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + ");" );
+                    slist.Add("const vec2 " + name + " = vec2(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + ");");
                 }
                 else if (o is OpenTK.Vector3)
                 {
                     OpenTK.Vector3 v = (OpenTK.Vector3)o;
-                    slist.Add("const vec3 " + name + " = vec3(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + ");" );
+                    slist.Add("const vec3 " + name + " = vec3(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + ");");
+                }
+                else if (o is float)
+                {
+                    slist.Add("const float " + name + " = " + ((float)o).ToStringInvariant() + ";");
+                }
+                else if (o is double)
+                {
+                    slist.Add("const float " + name + " = " + ((double)o).ToStringInvariant() + ";");
+                }
+                else if (o is bool)
+                {
+                    slist.Add("const bool " + name + " = " + ((bool)o == false ? "false" : "true") + ";");
                 }
                 else
-                    slist.Add("const float " + name + " = " + ((float)o).ToStringInvariant() + ";" );
+                    System.Diagnostics.Debug.Assert(false);
 
                 i += 2;
             }

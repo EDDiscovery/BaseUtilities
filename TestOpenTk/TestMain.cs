@@ -289,7 +289,7 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("TEXOT"),
                     GLRenderableItem.CreateVector4Vector2(items, rqnc,
-                            GLShapeObjectFactory.CreateQuad(1.5f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
+                            GLShapeObjectFactory.CreateQuad(1.5f, new Vector3( -90f.Radians(), 0, 0)), GLShapeObjectFactory.TexQuad,
                             new GLRenderDataTranslationRotationTexture(items.Tex("smile"), new Vector3(0, 0, -2))
                            ));
 
@@ -423,7 +423,7 @@ namespace TestOpenTk
                 rObjects.Add(items.Shader("TESx1"), "O-TES1",
                     GLRenderableItem.CreateVector4(items, rp,
                                         GLShapeObjectFactory.CreateQuad2(6.0f, 6.0f),
-                                        new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3(-90, 0, 0))
+                                        new GLRenderDataTranslationRotationTexture(items.Tex("logo8bpp"), new Vector3(12, 0, 0), new Vector3( -90f.Radians(), 0, 0))
                                         ));
             }
 
@@ -775,23 +775,24 @@ namespace TestOpenTk
 
             if (true)   // instanced sinewive
             {
-                var shdrtesssine = new GLTesselationShaderSinewaveInstanced(20, 0.1f, 4f);
+                var shdrtesssine = new GLTesselationShaderSinewaveInstanced(20, 0.4f, 1f, rotate:true, rotateelevation:false);
                 items.Add(shdrtesssine, "TESIx1");
 
                 Vector4[] pos = new Vector4[]       //w = image index
                 {   
-                    new Vector4(30,30,30,0),
-                    new Vector4(29,30,20,1),
-                    new Vector4(28,30,10,2),
+                    new Vector4(40,0,-30,0),
+                    new Vector4(39,0,-20,1),
+                    new Vector4(38,0,-10,2),
                 };
 
                 var texarray = new GLTexture2DArray(new Bitmap[] { Properties.Resources.beacon, Properties.Resources.planetaryNebula, Properties.Resources.wooden });
                 items.Add(texarray, "Sinewavetex");
 
                 GLRenderControl rp = GLRenderControl.Patches(4);
+                rp.CullFace = false;
                 var dt = GLRenderableItem.CreateVector4Vector4(items, rp,
-                                        GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f), pos,
-                                        new GLRenderDataTranslationRotationTexture(texarray, new Vector3(0, 0, 0), new Vector3(-90.0F.Radians(), 0, 0)),
+                                        GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f, new Vector3(-0f.Radians(),0,0)), pos,
+                                        new GLRenderDataTexture(texarray),
                                         ic:3, seconddivisor:1);
 
                 rObjects.Add(shdrtesssine, "O-TES2", dt);
@@ -867,8 +868,10 @@ namespace TestOpenTk
             rObjectscw.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
+            var azel = gl3dcontroller.PosCamera.Lookat.AzEl(gl3dcontroller.PosCamera.EyePosition, true);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.PosCamera.CameraDirection + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from " + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.PosCamera.CameraDirection + " azel " + azel + " zoom " + gl3dcontroller.PosCamera.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance + " FOV " + gl3dcontroller.MatrixCalc.FovDeg;
 
             //GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             //Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);

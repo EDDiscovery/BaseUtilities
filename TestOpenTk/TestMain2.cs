@@ -30,6 +30,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using OpenTKUtils;
 
+// A simpler main for testing
+
 namespace TestOpenTk
 {
     public partial class TestMain2 : Form
@@ -154,7 +156,7 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("TEXOT"),
                             GLRenderableItem.CreateVector4Vector2(items, rq,
-                            GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3(-90, 0, 0)), GLShapeObjectFactory.TexQuad,
+                            GLShapeObjectFactory.CreateQuad(1.0f, 1.0f, new Vector3( -90f.Radians(), 0, 0)), GLShapeObjectFactory.TexQuad,
                             new GLRenderDataTranslationRotationTexture(items.Tex("dotted2"), new Vector3(0,0,0))
                             ));
 
@@ -180,7 +182,7 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("TEXOT"),
                     GLRenderableItem.CreateVector4Vector2(items, rqnc,
-                            GLShapeObjectFactory.CreateQuad(1.5f, new Vector3(90, 0, 0)), GLShapeObjectFactory.TexQuad,
+                            GLShapeObjectFactory.CreateQuad(1.5f, new Vector3( 90f.Radians(), 0, 0)), GLShapeObjectFactory.TexQuad,
                             new GLRenderDataTranslationRotationTexture(items.Tex("smile"), new Vector3(8, 0, 0))
                            ));
 
@@ -252,9 +254,9 @@ namespace TestOpenTk
             rObjectscw.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            var azel = gl3dcontroller.PosCamera.EyePosition.AzEl(gl3dcontroller.PosCamera.Lookat,true);
+            var azel = gl3dcontroller.PosCamera.EyePosition.AzEl(gl3dcontroller.PosCamera.Lookat, true);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from "  + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.PosCamera.CameraDirection + " azel "  + azel + " zoom " + gl3dcontroller.PosCamera.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance + " FOV " + gl3dcontroller.MatrixCalc.FovDeg;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from " + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.PosCamera.CameraDirection + " azel " + azel + " zoom " + gl3dcontroller.PosCamera.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance + " FOV " + gl3dcontroller.MatrixCalc.FovDeg;
 
             //GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             //Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);

@@ -83,19 +83,19 @@ namespace OpenTKUtils
             return array[index];
         }
 
-        public static void RotPos(ref Vector4[] vertices, Vector3? rotation = null, Vector3? pos = null)
+        public static void RotPos(ref Vector4[] vertices, Vector3? rotationradians = null, Vector3? pos = null)        // rotations in radians
         {
-            if (pos != null)
-                Translate(ref vertices, pos.Value);
-
-            if (rotation != null && rotation.Value.Length > 0)
+            if (rotationradians != null && rotationradians.Value.Length > 0)
             {
                 Matrix4 transform = Matrix4.Identity;                   // identity nominal matrix, dir is in degrees
-                transform *= Matrix4.CreateRotationX((float)(rotation.Value.X.Radians()));
-                transform *= Matrix4.CreateRotationY((float)(rotation.Value.Y.Radians()));
-                transform *= Matrix4.CreateRotationZ((float)(rotation.Value.Z.Radians()));
+                transform *= Matrix4.CreateRotationX(rotationradians.Value.X);
+                transform *= Matrix4.CreateRotationY(rotationradians.Value.Y);
+                transform *= Matrix4.CreateRotationZ(rotationradians.Value.Z);
                 Transform(ref vertices, transform);
             }
+
+            if (pos != null)
+                Translate(ref vertices, pos.Value);
         }
 
         // give the % (<0 before, 0..1 inside, >1 after) of a point on vector from this->x1, the point being perpendicular to x2.

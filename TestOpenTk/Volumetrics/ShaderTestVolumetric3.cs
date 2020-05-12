@@ -123,7 +123,7 @@ void main(void)
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.ZoomDistance = 40F;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
-            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3( 90f.Radians(), 0, 0), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {

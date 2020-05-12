@@ -22,21 +22,55 @@ namespace OpenTKUtils.GL4
 {
     // Shader, with tesselation, and Y change in amp using sin
     // worldposition = instanced, xyz = position, w = image selection
-    // Need to feed uniform 22 with common transform
+    // optional common transform on 22
+    // optional look at me in elevation/azimuth
 
     public class GLTesselationShaderSinewaveInstanced : GLShaderStandard
     {
         string vert =
         @"
 #version 450 core
+
+#include UniformStorageBlocks.matrixcalc.glsl
+#include Shaders.Functions.trig.glsl
+#include Shaders.Functions.mat4.glsl
+
 layout (location = 0) in vec4 modelposition;
 layout (location = 1) in vec4 worldposition;
 
+layout (location = 22) uniform  mat4 transform;
+
 out vec4 worldposinstance;
+
+const bool rotateelevation = true;
+const bool rotate = true;
+const bool usetransform = false;
 
 void main(void)
 {
-	gl_Position = vec4(modelposition.xyz,1);       
+    vec4 pos = vec4(modelposition.xyz,1);       
+
+    if ( usetransform )
+    {
+        pos = transform * pos;      // use transform to adjust
+    }
+
+    if ( rotate )
+    {
+        vec2 dir = AzEl(worldposition.xyz,mc.EyePosition.xyz);      // y = azimuth
+
+        mat4 tx;
+
+        if (rotateelevation )
+            tx = mat4rotateXthenY(dir.x,PI-dir.y);              // rotate the flat image to vertical using dir.x (0 = on top, 90 = straight on, etc) then rotate by 180-dir (0 if directly facing from neg z)
+        else
+            tx = mat4rotateXthenY(PI/2,PI-dir.y);
+
+        gl_Position = pos * tx;
+    }
+    else
+        gl_Position = pos;
+    
     worldposinstance = worldposition;
 }
 ";
@@ -72,17 +106,14 @@ void main(void)
 ";
         }
 
-        string TES(float amplitude,float repeats)       // run once per patch
+        string TES()
         {
             return
-
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
-#include Shaders.Functions.rotations.glsl
 layout (quads) in; 
 
-layout (location = 22) uniform  mat4 transform;
 layout (location = 26) uniform  float phase;
 
 in vec4 tcs_worldposinstance[];
@@ -90,27 +121,26 @@ in vec4 tcs_worldposinstance[];
 out vec2 vs_textureCoordinate;
 flat out int imageno;
 
+const float amplitude = 0;
+const float repeats = 0;
+
+
 void main(void)
 {
-    float amp = " + amplitude + @";
     vs_textureCoordinate = vec2(gl_TessCoord.x,1.0-gl_TessCoord.y);         //1.0-y is due to the project model turning Y upside down so Y points upwards on screen
 
     vec4 p1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);  
     vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x); 
     vec4 pos = mix(p1, p2, gl_TessCoord.y);                                     
 
-    pos.y += amp*sin((phase+gl_TessCoord.x)*3.142*2*" + repeats + @");           // .x goes 0-1, phase goes 0-1, convert to radians
+    pos.y += amplitude*sin((phase+gl_TessCoord.x)*3.142*2*repeats);           // .x goes 0-1, phase goes 0-1, convert to radians
 
     imageno = int(tcs_worldposinstance[0].w);
 
-    mat4 trans = mat4translation(tcs_worldposinstance[0].xyz);
-    mat4 rot = mat4rotateZ(radians(22));
-
-    gl_Position = mc.ProjectionModelMatrix * transform * trans * rot * pos;
-//    pos += vec4(tcs_worldposinstance[0].xyz,0);     // shift by instance pos
-    //gl_Position = mc.ProjectionModelMatrix * transform * pos;
-}
-";
+    pos += vec4(tcs_worldposinstance[0].xyz,0);     // shift by instance pos
+    
+    gl_Position = mc.ProjectionModelMatrix * pos;
+}";
         }
 
         string frag =
@@ -131,9 +161,12 @@ void main(void)
 
         public float Phase { get; set; } = 0;                   // set to animate.
 
-        public GLTesselationShaderSinewaveInstanced(float tesselation,float amplitude, float repeats)
+        public GLTesselationShaderSinewaveInstanced(float tesselation,float amplitude, float repeats, bool rotate = false, bool rotateelevation = true, bool commontransform = false)
         {
-            CompileLink(vertex: vert, tcs: TCS(tesselation), tes: TES(amplitude,repeats), frag: frag);
+            CompileLink(vertex: vert, vertexconstvars: new object[] { "rotate", rotate, "rotateelevation", rotateelevation , "usetransform", commontransform },
+                            tcs: TCS(tesselation), 
+                            tes: TES(), tesconstvars: new object[] { "amplitude", amplitude, "repeats", repeats },
+                            frag: frag);
         }
 
         public override void Start()

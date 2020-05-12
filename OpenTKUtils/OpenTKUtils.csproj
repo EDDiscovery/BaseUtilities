@@ -182,7 +182,8 @@
     <EmbeddedResource Include="GL4\Shaders\Functions\noise2.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\noise3.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Volumetric\volumetricgeoshader.glsl" />
-    <EmbeddedResource Include="GL4\Shaders\Functions\rotations.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\mat4.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\trig.glsl" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

@@ -124,7 +124,7 @@ void main(void)
             gl3dcontroller.ZoomDistance = 80F;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.1f;
 
-            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3(90, 0, 0), 1F);
+            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3( 90f.Radians(), 0, 0), 1F);
 
 
             items.Add(new GLColourShaderWithWorldCoord(), "COSW");

@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 namespace OpenTKUtils.GL4
 {
-    // Factory created Vector4 shapes..
+    // Factory created Vector4 shapes..  Rotations are in radians
 
     static public class GLShapeObjectFactory
     {
@@ -39,7 +39,7 @@ namespace OpenTKUtils.GL4
             return vertices;
         }
 
-        public static Vector4[] CreateBox(float width, float depth, float height, Vector3 pos , Vector3 ? rotation = null)
+        public static Vector4[] CreateBox(float width, float depth, float height, Vector3 pos , Vector3 ? rotationradians = null)
         {
             Vector4[] botvertices = CreateQuad(width, depth, pos: new Vector3(pos.X, pos.Y - height / 2, pos.Z));
             Vector4[] topvertices = CreateQuad(width, depth, pos: new Vector3(pos.X, pos.Y + height / 2, pos.Z));
@@ -52,22 +52,22 @@ namespace OpenTKUtils.GL4
             box[16] = botvertices[0];            box[17] = topvertices[0];            box[18] = botvertices[1];            box[19] = topvertices[1];
             box[20] = botvertices[2];            box[21] = topvertices[2];            box[22] = botvertices[3];            box[23] = topvertices[3];
 
-            GLStaticsVector4.RotPos(ref box, rotation);
+            GLStaticsVector4.RotPos(ref box, rotationradians);
 
             return box;
         }
 
-        public static Vector4[] CreateQuad(float width, int bitmapwidth, int bitmapheight, Vector3? rotation = null, Vector3? pos = null, float scale = 1.0f)
+        public static Vector4[] CreateQuad(float width, int bitmapwidth, int bitmapheight, Vector3? rotationradians = null, Vector3? pos = null, float scale = 1.0f)
         {
-            return CreateQuad(width, width * (float)bitmapheight / (float)bitmapwidth, rotation, pos, scale);
+            return CreateQuad(width, width * (float)bitmapheight / (float)bitmapwidth, rotationradians, pos, scale);
         }
 
-        public static Vector4[] CreateQuad(float widthheight, Vector3? rotation = null, Vector3? pos = null, float scale = 1.0f)
+        public static Vector4[] CreateQuad(float widthheight, Vector3? rotationradians = null, Vector3? pos = null, float scale = 1.0f)
         {
-            return CreateQuad(widthheight, widthheight, rotation, pos, scale);
+            return CreateQuad(widthheight, widthheight, rotationradians, pos, scale);
         }
 
-        public static Vector4[] CreateQuad(float width, float height, Vector3? rotation = null, Vector3? pos = null, float scale = 1.0f)
+        public static Vector4[] CreateQuad(float width, float height, Vector3? rotationradians = null, Vector3? pos = null, float scale = 1.0f)        
         {
             width = width / 2.0f * scale;
             height = height / 2.0f * scale;
@@ -80,7 +80,7 @@ namespace OpenTKUtils.GL4
                 new Vector4(-width, 0, +height, 1.0f),          // -, +
             };
 
-            GLStaticsVector4.RotPos(ref vertices1, rotation, pos);
+            GLStaticsVector4.RotPos(ref vertices1, rotationradians, pos);
 
             return vertices1;
         }
@@ -93,7 +93,7 @@ namespace OpenTKUtils.GL4
             new Vector2(0, 0),
         };
 
-        public static Vector4[] CreateQuad2(float width, float height, Vector3? rotation = null, Vector3? pos = null, float scale = 1.0f)
+        public static Vector4[] CreateQuad2(float width, float height, Vector3? rotationradians = null, Vector3? pos = null, float scale = 1.0f)
         {
             width = width / 2.0f * scale;
             height = height / 2.0f * scale;
@@ -106,7 +106,7 @@ namespace OpenTKUtils.GL4
                new Vector4(+width, 0, +height, 1.0f),      //TR
             };
 
-            GLStaticsVector4.RotPos(ref vertices2, rotation, pos);
+            GLStaticsVector4.RotPos(ref vertices2, rotationradians, pos);
 
             return vertices2;
         }

@@ -24,10 +24,10 @@ mat4 mat4rotateX(float radians)
 {
 	float cosv = cos(radians);
 	float sinv = sin(radians);
-	mat4 v = mat4(	1.0,0,0,0,
-					0,cosv,sinv,0,
-					0,-sinv,cosv,0,
-					0,0,0,1);
+	mat4 v = mat4(	1.0,	0,		0,		0,
+					0,		cosv,	sinv,	0,
+					0,		-sinv,	cosv,	0,
+					0,		0,		0,		1);
 	return v;
 }
 
@@ -35,12 +35,26 @@ mat4 mat4rotateY(float radians)
 {
 	float cosv = cos(radians);
 	float sinv = sin(radians);
-	mat4 v = mat4(	cosv,0,-sinv,0,
-					0,1,0,0,
-					sinv,0,cosv,0,
-					0,0,0,1);
+	mat4 v = mat4(	cosv,	0,		-sinv,	0,
+					0,		1,		0,		0,
+					sinv,	0,		cosv,	0,
+					0,		0,		0,		1);
 	return v;
 }
+
+mat4 mat4rotateXthenY(float radiansx, float radiansy)		// Column major order, counterintuitive for Rob, but X CM mult by Y rows
+{
+	float cx = cos(radiansx);
+	float sx = sin(radiansx);
+	float cy = cos(radiansy);
+	float sy = sin(radiansy);
+	mat4 v = mat4(	cy,-sx*-sy,cx*-sy,0,			// X Columns 1-4 (1,0,0,0) (0,cx,-sx,0) | (0,sx,cx,0) | (0,0,0,1) with Y rows 1 (cy,0,-sy,0)
+					0, cx,sx, 0,					// X Columns 1-4 (1,0,0,0) (0,cx,-sx,0) | (0,sx,cx,0) | (0,0,0,1) with Y rows 2 (0,1,0,0)
+					sy,cy*-sx,cx*cy,0,				// X Columns 1-4 (1,0,0,0) (0,cx,-sx,0) | (0,sx,cx,0) | (0,0,0,1) with Y rows 2 (sy,0,cy,0)
+					0,0,0,1); 						// X Columns 1-4 (1,0,0,0) (0,cx,-sx,0) | (0,sx,cx,0) | (0,0,0,1) with Y rows 3 (0,0,0,1)
+	return v;
+}
+
 
 mat4 mat4rotateZ(float radians)
 {
