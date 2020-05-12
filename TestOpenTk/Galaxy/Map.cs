@@ -274,8 +274,8 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 120000f;
             gl3dcontroller.MatrixCalc.InPerspectiveMode = true;
             gl3dcontroller.ZoomDistance = 5000F;
-            gl3dcontroller.Pos.ZoomMin = 0.1f;
-            gl3dcontroller.Pos.ZoomScaling = 1.1f;
+            gl3dcontroller.PosCamera.ZoomMin = 0.1f;
+            gl3dcontroller.PosCamera.ZoomScaling = 1.1f;
             gl3dcontroller.EliteMovement = true;
             gl3dcontroller.PaintObjects = Controller3DDraw;
             gl3dcontroller.KeyboardTravelSpeed = (ms, eyedist) =>
@@ -335,7 +335,7 @@ namespace TestOpenTk
 
             float coordfade = lastgridwidth == 10000 ? (0.7f - (mc.EyeDistance / 20000).Clamp(0.0f, 0.7f)) : 0.7f;
             Color coordscol = Color.FromArgb(coordfade < 0.05 ? 0 : 150, Color.Cyan);
-            gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Pos.CameraDirection, coordscol, Color.Transparent);
+            gridbitmapvertshader.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.PosCamera.CameraDirection, coordscol, Color.Transparent);
 
             // set the galaxy volumetric block
 

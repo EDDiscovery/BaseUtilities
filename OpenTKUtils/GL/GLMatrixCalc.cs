@@ -46,6 +46,10 @@ namespace OpenTKUtils
 
         public float OrthographicDistance { get; set; } = 5000.0f;              // Orthographic, give scale
 
+        public float Fov { get; set; } = (float)(Math.PI / 2.0f);               // field of view, radians
+        public float FovDeg { get { return Fov.Degrees(); } }
+        public float FovFactor { get; set; } = 1.258925F;                       // scaling
+
         // after Calculate model matrix
         public Vector3 EyePosition { get; private set; }                       
         public Vector3 TargetPosition { get; private set; }                    
@@ -56,9 +60,18 @@ namespace OpenTKUtils
         public Matrix4 ProjectionModelMatrix { get; private set; }
         public Matrix4 GetResMat { get { return ProjectionModelMatrix; } }      // used for calculating positions on the screen from pixel positions.  Remembering Apollo
 
+        // we want the axis orientation with +z away from us, +x to right, +y upwards.
+        // this means we need to rotate the normal opengl model (+y down) 180 degrees around x - therefore flip y
+
+        Vector3 cameranormal = new Vector3(0, 0, 1);            // normal to the camera (camera vector is (0,1,0))
+        Matrix4 perspectiveflipaxis = Matrix4.CreateScale(new Vector3(1, -1, 1));   // flip y
+
+        // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
+        // to make the ccw cull test work.
+
         // Calculate the model matrix, which is the model translated to world space then to view space..
 
-        public void CalculateModelMatrix(Vector3 position, Vector3 eyeposition, Vector3 normal)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
+        public void CalculateModelMatrix(Vector3 position, Vector3 eyeposition, Vector2 cameradirection, float camerarotation)       // We compute the model matrix, not opengl, because we need it before we do a Paint for other computations
         {
             TargetPosition = position;      // record for shader use
             EyePosition = eyeposition;
@@ -66,7 +79,15 @@ namespace OpenTKUtils
 
             if (InPerspectiveMode)
             {
-                ModelMatrix = Matrix4.LookAt(EyePosition, position, normal);   // from eye, look at target, with normal giving the rotation of the look
+                Matrix3 transform = Matrix3.Identity;                   // identity nominal matrix, dir is in degrees
+
+                transform *= Matrix3.CreateRotationX((float)(cameradirection.X.Radians()));     // rotate around cameradir
+                transform *= Matrix3.CreateRotationY((float)(cameradirection.Y.Radians()));
+                transform *= Matrix3.CreateRotationZ((float)(camerarotation.Radians()));
+
+                Vector3 cameranormalrot = Vector3.Transform(cameranormal, transform);       // move cameranormal to rotate around current direction
+
+                ModelMatrix = Matrix4.LookAt(EyePosition, position, cameranormalrot);   // from eye, look at target, with normal giving the rotation of the look
             }
             else
             {
@@ -88,11 +109,11 @@ namespace OpenTKUtils
 
         // Projection matrix - projects the 3d model space to the 2D screen
 
-        public void CalculateProjectionMatrix(float fov, out float znear)
+        public void CalculateProjectionMatrix(out float znear)
         {
             if (InPerspectiveMode)
             {                                                                   // Fov, perspective, znear, zfar
-                ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(fov, (float)ScreenSize.Width / ScreenSize.Height, PerspectiveNearZDistance, PerspectiveFarZDistance);
+                ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(Fov, (float)ScreenSize.Width / ScreenSize.Height, PerspectiveNearZDistance, PerspectiveFarZDistance);
                 znear = PerspectiveNearZDistance;
             }
             else
@@ -107,16 +128,21 @@ namespace OpenTKUtils
 
             //System.Diagnostics.Debug.WriteLine("PM\r\n{0}", ProjectionMatrix);
 
-            // we want the axis orientation with +z away from us, +x to right, +y upwards.
-            // this means we need to rotate the normal opengl model (+y down) 180 degrees around x - therefore flip y
-            // we do it here since its the end of the chain - easier to keep the rest in the other method
-            // notice flipping y affects the order of vertex for winding.. the vertex models need to have a opposite winding order
-            // to make the ccw cull test work.
-
-            Matrix4 flipy = Matrix4.CreateScale(new Vector3(1, -1, 1));
-            ProjectionMatrix = flipy * ProjectionMatrix;
+            ProjectionMatrix = ProjectionMatrix * perspectiveflipaxis;
 
             ProjectionModelMatrix = Matrix4.Mult(ModelMatrix, ProjectionMatrix);
+        }
+
+        public bool FovScale(bool direction)        // direction true is scale up FOV - need to tell it its changed
+        {
+            float curfov = Fov;
+
+            if (direction)
+                Fov = (float)Math.Min(Fov * FovFactor, Math.PI * 0.8);
+            else
+                Fov /= (float)FovFactor;
+
+            return curfov != Fov;
         }
 
         public Vector4 WorldToScreen(Vector4 pos, string debug = null)           // return.W = 1 if inside screen co-ord

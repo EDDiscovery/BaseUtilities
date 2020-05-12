@@ -60,12 +60,12 @@ namespace OpenTKUtils
 
             float radius = delta.Length;
 
-            if (radius < 0.00001)
+            if (radius < 0.0000001)
                 return new Vector2(180, 0);     // point forward, level
 
             float inclination = (float)Math.Acos(delta.Y / radius);
 
-            float azimuth = (float)(delta.X==0 ? Math.PI/2 : Math.Atan(delta.Z / delta.X));
+            float azimuth = (float)(delta.X==0 ? (delta.Z>=0 ? Math.PI/2 : -Math.PI/2) : Math.Atan(delta.Z / delta.X));
 
             System.Diagnostics.Debug.Assert(!float.IsNaN(inclination) && !float.IsNaN(azimuth));
 

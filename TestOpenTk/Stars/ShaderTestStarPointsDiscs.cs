@@ -207,7 +207,7 @@ void main(void)
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.Set(gl3dcontroller.MatrixCalc);
 
-            System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.Pos.Lookat);
+            System.Diagnostics.Debug.WriteLine("Draw eye " + gl3dcontroller.MatrixCalc.EyePosition + " to " + gl3dcontroller.PosCamera.Lookat);
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
         }
 

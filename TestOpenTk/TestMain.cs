@@ -868,7 +868,7 @@ namespace TestOpenTk
             GL.FrontFace(FrontFaceDirection.Ccw);
 
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.Pos.CameraDirection + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " dir " + gl3dcontroller.PosCamera.CameraDirection + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance;
 
             //GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             //Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);

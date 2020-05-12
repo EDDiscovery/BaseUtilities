@@ -75,7 +75,7 @@ namespace TestOpenTk
             System.Diagnostics.Debug.WriteLine("Dist {0} grid {1} suc {2} cf {3} a {4} coord {5} {6}", dist, lastgridwidth, suc, cf, a , coordfade, coordscol);
 
             DynamicGridCoordVertexShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordVertexShader;
-            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.Pos.CameraDirection, coordscol, Color.Transparent);
+            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.PosCamera.CameraDirection, coordscol, Color.Transparent);
 
             galaxy.InstanceCount = volumetricblock.Set(gl3dcontroller.MatrixCalc, boundingbox, 50.0f);        // set up the volumentric uniform
 
@@ -86,7 +86,7 @@ namespace TestOpenTk
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
 
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.Pos.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.Pos.ZoomFactor;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " eye@ " + gl3dcontroller.MatrixCalc.EyePosition + " dir " + gl3dcontroller.PosCamera.CameraDirection + " Dist " + gl3dcontroller.MatrixCalc.EyeDistance + " Zoom " + gl3dcontroller.PosCamera.ZoomFactor;
         }
 
         public class GLFixedShader : GLShaderPipeline
@@ -106,8 +106,8 @@ namespace TestOpenTk
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 1f;
             gl3dcontroller.MatrixCalc.PerspectiveFarZDistance = 100000f;
             gl3dcontroller.ZoomDistance = 5000F;
-            gl3dcontroller.Pos.ZoomMin = 0.1f;
-            gl3dcontroller.Pos.ZoomScaling = 1.1f;
+            gl3dcontroller.PosCamera.ZoomMin = 0.1f;
+            gl3dcontroller.PosCamera.ZoomScaling = 1.1f;
             gl3dcontroller.EliteMovement = true;
             gl3dcontroller.PaintObjects = ControllerDraw;
 

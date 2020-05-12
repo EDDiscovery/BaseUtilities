@@ -881,8 +881,9 @@ namespace TestOpenTk
             rObjectscw.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
+            var azel = gl3dcontroller.PosCamera.EyePosition.AzEl(gl3dcontroller.PosCamera.Lookat,true);
 
-            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from "  + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.Pos.CameraDirection + " zoom " + gl3dcontroller.Pos.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance;
+            this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from "  + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.PosCamera.CameraDirection + " azel "  + azel + " zoom " + gl3dcontroller.PosCamera.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance + " FOV " + gl3dcontroller.MatrixCalc.FovDeg;
 
             //GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
             //Vector4[] databack = dataoutbuffer.ReadVector4(0, 4);

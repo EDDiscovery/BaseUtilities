@@ -481,7 +481,7 @@ public static class ObjectExtensionsNumbersBool
         return ((angle + 360 + 180) % 360) - 180;
     }
 
-    public static float BoundedAngle(this float angle, float add)
+    public static float AddBoundedAngle(this float angle, float add)
     {
         return ((angle + add + 360 + 180) % 360) - 180;
     }
