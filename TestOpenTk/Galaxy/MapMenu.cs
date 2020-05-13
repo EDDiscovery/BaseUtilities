@@ -7,6 +7,7 @@ namespace TestOpenTk
     public class MapMenu
     {
         Map map;
+        GLLabel status;
 
         public MapMenu(Map g )
         {
@@ -29,6 +30,12 @@ namespace TestOpenTk
             GLImage tpforward = new GLImage("MSTPForward", new Rectangle(130, 10, 32, 32), Properties.Resources.hamburgermenu);
             map.displaycontrol.Add(tpforward);
             tpforward.MouseClick = (o, e1) => { g.TravelPathMoveForward(); };
+
+            status = new GLLabel("Status", new Rectangle(10, 500, 400, 24), "x");
+            status.Dock = DockingType.BottomLeft;
+            status.ForeColor = Color.Orange;
+            status.BackColor = Color.FromArgb(50, 50, 50, 50);
+            map.displaycontrol.Add(status);
 
             GLBaseControl.Themer = Theme;
 
@@ -101,6 +108,12 @@ namespace TestOpenTk
 
             map.displaycontrol.Add(pform);
             //displaycontrol.Focusable = false;
+        }
+
+        public void UpdateCoords(OpenTKUtils.GLMatrixCalc c)
+        {
+            status.Text = c.TargetPosition.X.ToStringInvariant("N1") + " ," + c.TargetPosition.Y.ToStringInvariant("N1") + " ," 
+                         + c.TargetPosition.Z.ToStringInvariant("N1") + " Dist " + c.EyeDistance.ToStringInvariant("N1");
         }
     }
 }

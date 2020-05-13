@@ -24,6 +24,7 @@ namespace OpenTKUtils.GL4
     // worldposition = instanced, xyz = position, w = image selection
     // optional common transform on 22
     // optional look at me in elevation/azimuth
+    // texture 2darray on binding 1
 
     public class GLTesselationShaderSinewaveInstanced : GLShaderStandard
     {
@@ -34,6 +35,7 @@ namespace OpenTKUtils.GL4
 #include UniformStorageBlocks.matrixcalc.glsl
 #include Shaders.Functions.trig.glsl
 #include Shaders.Functions.mat4.glsl
+#include Shaders.Functions.vec4.glsl
 
 layout (location = 0) in vec4 modelposition;
 layout (location = 1) in vec4 worldposition;
@@ -45,10 +47,16 @@ out vec4 worldposinstance;
 const bool rotateelevation = true;
 const bool rotate = true;
 const bool usetransform = false;
+const float autoscale = 0;
+const float autoscalemax = 0;
+const float autoscalemin = 0;
 
 void main(void)
 {
     vec4 pos = vec4(modelposition.xyz,1);       
+
+    if ( autoscale>0)
+        pos = Scale(pos,clamp(mc.EyeDistance/autoscale,autoscalemin,autoscalemax));
 
     if ( usetransform )
     {
@@ -66,10 +74,11 @@ void main(void)
         else
             tx = mat4rotateXthenY(PI/2,PI-dir.y);
 
-        gl_Position = pos * tx;
+        pos = pos * tx;
     }
-    else
-        gl_Position = pos;
+
+
+    gl_Position = pos;
     
     worldposinstance = worldposition;
 }
@@ -112,6 +121,7 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+#include Shaders.Functions.trig.glsl
 layout (quads) in; 
 
 layout (location = 26) uniform  float phase;
@@ -133,7 +143,7 @@ void main(void)
     vec4 p2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x); 
     vec4 pos = mix(p1, p2, gl_TessCoord.y);                                     
 
-    pos.y += amplitude*sin((phase+gl_TessCoord.x)*3.142*2*repeats);           // .x goes 0-1, phase goes 0-1, convert to radians
+    pos.y += amplitude*sin((phase+gl_TessCoord.x)*PI*2*repeats);           // .x goes 0-1, phase goes 0-1, convert to radians
 
     imageno = int(tcs_worldposinstance[0].w);
 
@@ -155,15 +165,20 @@ flat in int imageno;
 
 void main(void)
 {
-    color = texture(textureObject2D, vec3(vs_textureCoordinate,imageno));       // vs_texture coords normalised 0 to 1.0f
+    vec4 c = texture(textureObject2D, vec3(vs_textureCoordinate,imageno));       // vs_texture coords normalised 0 to 1.0f
+    if ( c.w < 0.01)
+        discard;
+    else
+        color = c;
 }
 ";
 
-        public float Phase { get; set; } = 0;                   // set to animate.
+        public float Phase { get; set; } = 0;                   // set to animate.  Phase is 0-1
 
-        public GLTesselationShaderSinewaveInstanced(float tesselation,float amplitude, float repeats, bool rotate = false, bool rotateelevation = true, bool commontransform = false)
+        public GLTesselationShaderSinewaveInstanced(float tesselation,float amplitude, float repeats, bool rotate = false, bool rotateelevation = true, bool commontransform = false,
+                                                    float autoscale=0, float autoscalemin = 0.1f, float autoscalemax= 3f)
         {
-            CompileLink(vertex: vert, vertexconstvars: new object[] { "rotate", rotate, "rotateelevation", rotateelevation , "usetransform", commontransform },
+            CompileLink(vertex: vert, vertexconstvars: new object[] { "rotate", rotate, "rotateelevation", rotateelevation, "usetransform", commontransform, "autoscale", autoscale, "autoscalemin", autoscalemin, "autoscalemax", autoscalemax },
                             tcs: TCS(tesselation), 
                             tes: TES(), tesconstvars: new object[] { "amplitude", amplitude, "repeats", repeats },
                             frag: frag);

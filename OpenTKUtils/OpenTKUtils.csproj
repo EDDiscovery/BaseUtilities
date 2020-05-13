@@ -184,6 +184,7 @@
     <EmbeddedResource Include="GL4\Shaders\Volumetric\volumetricgeoshader.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\mat4.glsl" />
     <EmbeddedResource Include="GL4\Shaders\Functions\trig.glsl" />
+    <EmbeddedResource Include="GL4\Shaders\Functions\vec4.glsl" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

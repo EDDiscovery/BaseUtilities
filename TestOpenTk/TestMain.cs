@@ -789,7 +789,6 @@ namespace TestOpenTk
                 items.Add(texarray, "Sinewavetex");
 
                 GLRenderControl rp = GLRenderControl.Patches(4);
-                rp.CullFace = false;
                 var dt = GLRenderableItem.CreateVector4Vector4(items, rp,
                                         GLShapeObjectFactory.CreateQuad2(10.0f, 10.0f, new Vector3(-0f.Radians(),0,0)), pos,
                                         new GLRenderDataTexture(texarray),

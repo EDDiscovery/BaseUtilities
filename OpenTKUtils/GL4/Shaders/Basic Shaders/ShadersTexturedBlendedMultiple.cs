@@ -27,7 +27,7 @@ namespace OpenTKUtils.GL4
     {
         // 0 : vec4 of model positions (w not read)
         // 1 : vec2 of texture positions
-        // 2 : vec4 of instance positions w = image to display
+        // 2 : vec4 of instance positions w = image to display, -1 disable
 
         string vertpos =
         @"

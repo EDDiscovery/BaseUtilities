@@ -190,7 +190,6 @@ namespace TestOpenTk
 
             #endregion
 
-
             #region Matrix Calc Uniform
 
             items.Add(new GLMatrixCalcUniformBlock(),"MCUB");     // def binding of 0

@@ -291,6 +291,7 @@ namespace TestOpenTk
                 displaycontrol.Paint += (o) =>        // subscribing after start means we paint over the scene, letting transparency work
                 {
                     // MCUB set up by Controller3DDraw which did the work first
+                    galaxymenu.UpdateCoords(gl3dcontroller.MatrixCalc);
                     displaycontrol.Render(glwfc.RenderState);
                 };
             }
