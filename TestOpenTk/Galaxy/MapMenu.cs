@@ -6,30 +6,39 @@ namespace TestOpenTk
 {
     public class MapMenu
     {
-        Map map;
-        GLLabel status;
+        private Map map;
+        private GLLabel status;
+        private const int iconsize = 32;
 
-        public MapMenu(Map g )
+        public MapMenu(Map g)
         {
             map = g;
 
             // names of MS* are on screen items hidden during main menu presentation
 
-            GLImage menuimage = new GLImage("MSMainMenu", new Rectangle(10, 10, 32, 32), Properties.Resources.hamburgermenu);
+            GLImage menuimage = new GLImage("MSMainMenu", new Rectangle(10, 10, iconsize, iconsize), Properties.Resources.hamburgermenu);
+            menuimage.ToolTipText = "Open configuration menu";
             map.displaycontrol.Add(menuimage);
             menuimage.MouseClick = (o, e1) => { ShowMenu(); };
 
-            GLImage tpback = new GLImage("MSTPBack", new Rectangle(50, 10, 32, 32), Properties.Resources.hamburgermenu);
+            GLImage tpback = new GLImage("MSTPBack", new Rectangle(50, 10, iconsize, iconsize), Properties.Resources.GoBackward);
+            tpback.ToolTipText = "Go back one system";
             map.displaycontrol.Add(tpback);
             tpback.MouseClick = (o, e1) => { g.TravelPathMoveBack(); };
 
-            GLImage tphome = new GLImage("MSTPHome", new Rectangle(90, 10, 32, 32), Properties.Resources.hamburgermenu);
+            GLImage tphome = new GLImage("MSTPHome", new Rectangle(90, 10, iconsize, iconsize), Properties.Resources.GoToHomeSystem);
+            tphome.ToolTipText = "Go to current home system";
             map.displaycontrol.Add(tphome);
             tphome.MouseClick = (o, e1) => { g.GoToCurrentSystem(); };
 
-            GLImage tpforward = new GLImage("MSTPForward", new Rectangle(130, 10, 32, 32), Properties.Resources.hamburgermenu);
+            GLImage tpforward = new GLImage("MSTPForward", new Rectangle(130, 10, iconsize, iconsize), Properties.Resources.GoForward);
+            tpforward.ToolTipText = "Go forward one system";
             map.displaycontrol.Add(tpforward);
             tpforward.MouseClick = (o, e1) => { g.TravelPathMoveForward(); };
+
+            GLToolTip maintooltip = new GLToolTip("MTT",Color.FromArgb(180,50,50,50));
+            maintooltip.ForeColor = Color.Orange;
+            map.displaycontrol.Add(maintooltip);
 
             status = new GLLabel("Status", new Rectangle(10, 500, 400, 24), "x");
             status.Dock = DockingType.BottomLeft;
@@ -70,41 +79,75 @@ namespace TestOpenTk
             map.displaycontrol.ApplyToControlOfName("MS*", (c) => { c.Visible = false; });
             //map.displaycontrol["MSMainMenu"].Visible = false;
 
-            GLForm pform = new GLForm("FormMenu", "Configure Map", new Rectangle(10, 10, 200, 400));
+            int leftmargin = 4;
+            int vpos = 10;
+            int ypad = 10;
+
+            GLForm pform = new GLForm("FormMenu", "Configure Map", new Rectangle(10, 10, 600, 400));
             pform.BackColor = Color.FromArgb(50, Color.Red);
             pform.ForeColor = Color.Orange;
             pform.FormClosed = (frm) => { map.displaycontrol.ApplyToControlOfName("MS*", (c) => { c.Visible = true; }); };
 
-            GLPanel p3d2d = new GLPanel("3d2d", new Rectangle(10, 10, 80, 50), Color.Transparent);
+            GLPanel p3d2d = new GLPanel("3d2d", new Rectangle(leftmargin, vpos, 80, iconsize), Color.Transparent);
 
-            GLCheckBox but3d = new GLCheckBox("3d", new Rectangle(0, 0, 32, 32), Properties.Resources._3d, null);
+            GLCheckBox but3d = new GLCheckBox("3d", new Rectangle(0, 0, iconsize, iconsize), Properties.Resources._3d, null);
             but3d.Checked = map.gl3dcontroller.MatrixCalc.InPerspectiveMode;
+            but3d.ToolTipText = "3D View";
             but3d.GroupRadioButton = true;
             but3d.MouseClick += (e1, e2) => { map.gl3dcontroller.ChangePerspectiveMode(true); };
             p3d2d.Add(but3d);
 
-            GLCheckBox but2d = new GLCheckBox("2d", new Rectangle(40, 0, 32, 32), Properties.Resources._2d, null);
+            GLCheckBox but2d = new GLCheckBox("2d", new Rectangle(40, 0, iconsize, iconsize), Properties.Resources._2d, null);
             but2d.Checked = !map.gl3dcontroller.MatrixCalc.InPerspectiveMode;
+            but2d.ToolTipText = "2D View";
             but2d.GroupRadioButton = true;
             but2d.MouseClick += (e1,e2) => { map.gl3dcontroller.ChangePerspectiveMode(false); };
             p3d2d.Add(but2d);
 
             pform.Add(p3d2d);
 
-            GLCheckBox butelite = new GLCheckBox("Elite", new Rectangle(100, 10, 32, 32), Properties.Resources._2d, null);
-            butelite.Checked = !map.gl3dcontroller.EliteMovement;
+            GLCheckBox butelite = new GLCheckBox("Elite", new Rectangle(100, vpos, iconsize, iconsize), Properties.Resources.EliteMovement, null);
+            butelite.ToolTipText = "Select elite movement (on Y plain)";
+            butelite.Checked = map.gl3dcontroller.EliteMovement;
             butelite.CheckChanged += (e1) => { map.gl3dcontroller.EliteMovement = butelite.Checked; };
             pform.Add(butelite);
 
-            GLCheckBox butgal = new GLCheckBox("Galaxy", new Rectangle(10, 50, 32, 32), Properties.Resources._2d, null);
+            vpos += p3d2d.Height+ypad;
+
+            GLCheckBox butgal = new GLCheckBox("Galaxy", new Rectangle(leftmargin, vpos, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            butgal.ToolTipText = "Show galaxy image";
             butgal.Checked = map.GalaxyEnabled();
             butgal.CheckChanged += (e1) => { map.EnableToggleGalaxy(butgal.Checked); };
             pform.Add(butgal);
 
-            GLCheckBox butsd = new GLCheckBox("Galaxy", new Rectangle(50, 50, 32, 32), Properties.Resources._2d, null);
+            GLCheckBox butsd = new GLCheckBox("StarDots", new Rectangle(50, vpos, iconsize, iconsize), Properties.Resources.StarDots, null);
+            butsd.ToolTipText = "Show star field";
             butsd.Checked = map.StarDotsEnabled();
             butsd.CheckChanged += (e1) => { map.EnableToggleStarDots(butsd.Checked); };
             pform.Add(butsd);
+
+            vpos += butgal.Height+ypad;
+
+            GLGroupBox galgb = new GLGroupBox("GalGB", "Galaxy Objects", new Rectangle(leftmargin, vpos, pform.ClientWidth-leftmargin*2, 50));
+            galgb.Height = (iconsize + 4) * 2 + galgb.GroupBoxHeight + GLGroupBox.GBMargins*2 + GLGroupBox.GBPadding*2 + 8;
+            galgb.BackColor = Color.FromArgb(60, Color.Red);
+            galgb.ForeColor = Color.Orange;
+            pform.Add(galgb);
+            GLFlowLayoutPanel galfp = new GLFlowLayoutPanel("GALFP", DockingType.Fill, 0);
+            galfp.FlowPadding = new Padding(2, 2, 2, 2);
+            galfp.BackColor = Color.FromArgb(60, Color.Red);
+            galgb.Add(galfp);
+            
+            for( int i = map.galmap.RenderableMapTypes.Length-1;i>=0;i--)
+            {
+                var gt = map.galmap.RenderableMapTypes[i];
+                GLCheckBox butg = new GLCheckBox("GMSEL", new Rectangle(0,0, iconsize, iconsize), gt.Image, null);
+                butg.ToolTipText = "Enable/Disable " + gt.Description;
+                butg.Checked = gt.Enabled;
+                butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjects();  };
+                galfp.Add(butg);
+//                px += 40;
+            }
 
             map.displaycontrol.Add(pform);
             //displaycontrol.Focusable = false;
@@ -112,8 +155,9 @@ namespace TestOpenTk
 
         public void UpdateCoords(OpenTKUtils.GLMatrixCalc c)
         {
-            status.Text = c.TargetPosition.X.ToStringInvariant("N1") + " ," + c.TargetPosition.Y.ToStringInvariant("N1") + " ," 
-                         + c.TargetPosition.Z.ToStringInvariant("N1") + " Dist " + c.EyeDistance.ToStringInvariant("N1");
+            status.Text = c.TargetPosition.X.ToStringInvariant("N1") + " ," + c.TargetPosition.Y.ToStringInvariant("N1") + " ,"
+                         + c.TargetPosition.Z.ToStringInvariant("N1") + " Dist " + c.EyeDistance.ToStringInvariant("N1") + " Eye " +
+                         c.EyePosition.X.ToStringInvariant("N1") + " ," + c.EyePosition.Y.ToStringInvariant("N1") + " ," + c.EyePosition.Z.ToStringInvariant("N1");
         }
     }
 }

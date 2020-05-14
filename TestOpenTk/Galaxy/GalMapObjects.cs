@@ -21,12 +21,15 @@ namespace TestOpenTk
 
         public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int radius, int height, int bufferfindbinding)
         {
-            Bitmap[] images = galmap.galacticMapTypes.Select(x => x.Image as Bitmap).ToArray();
-
+            Bitmap[] images = galmap.RenderableMapTypes.Select(x => x.Image as Bitmap).ToArray();
             IGLTexture array2d = items.Add(new GLTexture2DArray(images, mipmaplevel:1, genmipmaplevel:3), "GalObjTex");
 
-            objectshader = new GLTesselationShaderSinewaveInstanced(10,0.2f,1f, rotate: true, rotateelevation: false,
-                                                                    autoscale:1000,autoscalemin:0.1f,autoscalemax:2);
+            var vert = new GLPLVertexScaleLookat(true, false, false, 1000, 0.1f, 2f);
+            var tcs = new GLPLTesselationControl(10f);
+            tes = new GLPLTesselationEvaluateSinewave(0.2f,1f);
+            var frag = new GLPLFragmentShaderTexture2DDiscard();
+
+            var objectshader = new GLShaderPipeline(vert, tcs, tes, null, frag);
             items.Add( objectshader, "ShaderGalObj");
 
             objectshader.StartAction += (s) =>
@@ -35,77 +38,70 @@ namespace TestOpenTk
                 GLStatics.Check();
             };
 
-            List<Vector4> instancepositions = new List<Vector4>();
 
-            foreach (var o in galmap.galacticMapObjects)
-            {
-                var ty = galmap.galacticMapTypes.Find(y => o.type == y.Typeid);
-                if (ty.Image != null)
-                {
-                    instancepositions.Add(new Vector4(o.points[0].X, o.points[0].Y, o.points[0].Z, ty.Enabled ? ty.Index : -1));
-                }
-            }
+            renderablegalmapobjects = galmap.RenderableMapObjects;       // Only images and enables
+
+            List<Vector4> instancepositions = new List<Vector4>();
+            foreach (var o in renderablegalmapobjects)
+                instancepositions.Add(new Vector4(o.points[0].X, o.points[0].Y, o.points[0].Z, o.galMapType.Enabled ? o.galMapType.Index : -1));
 
             GLRenderControl rt = GLRenderControl.Patches(4);
             rt.DepthTest = false;
 
-            GLRenderableItem ri = GLRenderableItem.CreateVector4Vector4(items, rt,
+            ridisplay = GLRenderableItem.CreateVector4Vector4(items, rt,
                                 GLShapeObjectFactory.CreateQuad2(50.0f, 50.0f), instancepositions.ToArray(),
-                                ic: instancepositions.Count, seconddivisor: 1);
+                                ic: renderablegalmapobjects.Length, seconddivisor: 1);
 
-            //modeltexworldbuffer = items.LastBuffer();
-            //int modelpos = modeltexworldbuffer.Positions[0];
-       
-            //worldpos = modeltexworldbuffer.Positions[1];
+            rObjects.Add(objectshader, ridisplay);
 
-            rObjects.Add(objectshader, ri);
+            modelworldbuffer = items.LastBuffer();
+            int modelpos = modelworldbuffer.Positions[0];
+            worldpos = modelworldbuffer.Positions[1];
 
-            //var poivertex = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation(); // expecting 0=model, 1 = world, w is ignored for world
-            //findshader = items.NewShaderPipeline("GEOMAP_FIND", poivertex, null, null, new GLPLGeoShaderFindTriangles(bufferfindbinding, 16), null, null, null);
+            var geofind = new GLPLGeoShaderFindTriangles(bufferfindbinding, 16);        // pass thru normal vert/tcs/tes then to geoshader for results
+            findshader = items.NewShaderPipeline("GEOMAP_FIND", vert, tcs, tes, new GLPLGeoShaderFindTriangles(bufferfindbinding, 16), null, null, null);
 
-            //rifind = GLRenderableItem.CreateVector4Vector4(items, GLRenderControl.Tri(), modeltexworldbuffer, modelpos, ri.DrawCount, 
-            //                                                                modeltexworldbuffer, worldpos, null, ic: instancepositions.Count, seconddivisor: 1);
+            rifind = GLRenderableItem.CreateVector4Vector4(items, GLRenderControl.Patches(4), modelworldbuffer, modelpos, ridisplay.DrawCount, 
+                                                                            modelworldbuffer, worldpos, null, ic: renderablegalmapobjects.Length, seconddivisor: 1);
 
             GLStatics.Check();
-            // UpdateEnables(galmap);
         }
 
         public GalacticMapObject FindPOI(Point l, GLRenderControl state, Size screensize, GalacticMapping galmap)
         {
-            //var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
-            //geo.SetScreenCoords(l, screensize);
+            var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
+            geo.SetScreenCoords(l, screensize);
 
-            //rifind.Execute(findshader, state, null, true); // execute, discard
+            GLStatics.Check();
+            rifind.Execute(findshader, state, null, true); // execute, discard
 
-            //var res = geo.GetResult();
-            //if (res != null)
-            //{
-            //    for (int i = 0; i < res.Length; i++)
-            //    {
-            //        System.Diagnostics.Debug.WriteLine(i + " = " + res[i]);
-            //    }
+            var res = geo.GetResult();
+            if (res != null)
+            {
+                for (int i = 0; i < res.Length; i++)
+                {
+                    System.Diagnostics.Debug.WriteLine(i + " = " + res[i]);
+                }
 
-            //    int instance = (int)res[0].Y;
-            //    return galmap.galacticMapObjects[instance];
-            //}
+                int instance = (int)res[0].Y;
+                return renderablegalmapobjects[instance];
+            }
 
             return null;
         }
 
-        private void UpdateEnables(GalacticMapping galmap)           // update the enable state of each item
+        public void UpdateEnables(GalacticMapping galmap)           // rewrite 
         {
-            //modeltexworldbuffer.StartWrite(worldpos);
+            modelworldbuffer.StartWrite(worldpos);
 
-            //foreach (var o in galmap.galacticMapObjects)
-            //{
-            //    var ty = galmap.galacticMapTypes.Find(y => o.type == y.Typeid);
-            //    if (ty.Image != null)
-            //    {
-            //        modeltexworldbuffer.Write(new Vector4(o.points[0].X, o.points[0].Y, o.points[0].Z, ty.Enabled ? ty.Index : -1));
-            //    }
-            //}
+            renderablegalmapobjects = galmap.RenderableMapObjects; // update
 
-            //modeltexworldbuffer.StopReadWrite();
+            foreach (var o in renderablegalmapobjects)
+                modelworldbuffer.Write(new Vector4(o.points[0].X, o.points[0].Y, o.points[0].Z, o.galMapType.Enabled ? o.galMapType.Index : -1));
+
+            modelworldbuffer.StopReadWrite();
+
+            ridisplay.InstanceCount = rifind.InstanceCount = renderablegalmapobjects.Length;
         }
 
         public void Update(long time, float eyedistance)
@@ -113,17 +109,19 @@ namespace TestOpenTk
             const int rotperiodms = 5000;
             time = time % rotperiodms;
             float fract = (float)time / rotperiodms;
-            System.Diagnostics.Debug.WriteLine("Time " + time + "Phase " + fract);
-            objectshader.Phase = fract;
+     //       System.Diagnostics.Debug.WriteLine("Time " + time + "Phase " + fract);
+            tes.Phase = fract;
         }
 
-        private GLTesselationShaderSinewaveInstanced objectshader;
+        private GLPLTesselationEvaluateSinewave tes;
+        private GLBuffer modelworldbuffer;
+        private int worldpos;
+        private GLRenderableItem ridisplay;
 
-      //  private GLBuffer modeltexworldbuffer;
-      //  private int worldpos;
+        private GLShaderPipeline findshader;
+        private GLRenderableItem rifind;
 
-     //   private GLShaderPipeline findshader;
-     //   private GLRenderableItem rifind;
+        GalacticMapObject[] renderablegalmapobjects;        // ones which render..
 
 
     }

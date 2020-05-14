@@ -70,7 +70,7 @@ namespace OpenTKUtils.GL4.Controls
 
         public override void PerformRecursiveLayout()
         {
-            //System.Diagnostics.Debug.WriteLine("Flow Laying out " + Name);
+            //System.Diagnostics.Debug.WriteLine("Flow Laying out " + Name + " In client size " + ClientSize);
 
             Flow(ClientSize, (c, p) => 
             {
@@ -94,6 +94,7 @@ namespace OpenTKUtils.GL4.Controls
 
                 Point pos = new Point(flowpos.X + FlowPadding.Left, flowpos.Y + flowPadding.Top);
 
+                //System.Diagnostics.Debug.WriteLine("Control " + c.Name + " to " + pos);
                 action(c, pos);
 
                 flowpos.X += c.Width + flowPadding.TotalWidth;

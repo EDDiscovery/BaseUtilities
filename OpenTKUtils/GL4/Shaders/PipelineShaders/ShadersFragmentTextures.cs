@@ -50,6 +50,45 @@ void main(void)
         }
     }
 
+    // Pipeline shader for a 2D array texture
+    // Requires:
+    //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
+    //      flat in imageno to select
+    // inputs
+
+    public class GLPLFragmentShaderTexture2DDiscard : GLShaderPipelineShadersBase
+    {
+        public string Code(int binding)
+        {
+            return
+@"
+#version 450 core
+
+layout( location = 0 ) in vec2 vs_textureCoordinate;
+layout( location = 1 ) flat in int imageno;      
+
+out vec4 color;
+
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
+
+void main(void)
+{
+    vec4 c = texture(textureObject2D, vec3(vs_textureCoordinate,imageno));       // vs_texture coords normalised 0 to 1.0f
+    if ( c.w < 0.01)
+        discard;
+    else
+        color = c;
+}
+";
+        }
+
+        public GLPLFragmentShaderTexture2DDiscard(int binding = 1)
+        {
+            CompileLink(ShaderType.FragmentShader, Code(binding), auxname: GetType().Name);
+        }
+    }
+
+
     // Pipeline shader for a 2D Array texture bound using instance to pick between them. Use with GLVertexShaderTextureMatrixTransform
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord

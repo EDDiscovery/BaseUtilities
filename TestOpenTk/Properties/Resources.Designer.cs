@@ -173,6 +173,26 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap EliteMovement {
+            get {
+                object obj = ResourceManager.GetObject("EliteMovement", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] galacticmapping {
+            get {
+                object obj = ResourceManager.GetObject("galacticmapping", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Galaxy_L {
             get {
                 object obj = ResourceManager.GetObject("Galaxy_L", resourceCulture);
@@ -203,9 +223,39 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap GoBackward {
+            get {
+                object obj = ResourceManager.GetObject("GoBackward", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap GoForward {
+            get {
+                object obj = ResourceManager.GetObject("GoForward", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap golden {
             get {
                 object obj = ResourceManager.GetObject("golden", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap GoToHomeSystem {
+            get {
+                object obj = ResourceManager.GetObject("GoToHomeSystem", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -373,6 +423,16 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Perspective {
+            get {
+                object obj = ResourceManager.GetObject("Perspective", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap planetaryNebula {
             get {
                 object obj = ResourceManager.GetObject("planetaryNebula", resourceCulture);
@@ -423,6 +483,16 @@ namespace TestOpenTk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ShowGalaxy {
+            get {
+                object obj = ResourceManager.GetObject("ShowGalaxy", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap smile5300_256x256x8 {
             get {
                 object obj = ResourceManager.GetObject("smile5300_256x256x8", resourceCulture);
@@ -446,6 +516,16 @@ namespace TestOpenTk.Properties {
         internal static System.Drawing.Bitmap starCluster {
             get {
                 object obj = ResourceManager.GetObject("starCluster", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap StarDots {
+            get {
+                object obj = ResourceManager.GetObject("StarDots", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -487,6 +567,16 @@ namespace TestOpenTk.Properties {
             get {
                 object obj = ResourceManager.GetObject("textobj1", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap TravelPath {
+            get {
+                object obj = ResourceManager.GetObject("TravelPath", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

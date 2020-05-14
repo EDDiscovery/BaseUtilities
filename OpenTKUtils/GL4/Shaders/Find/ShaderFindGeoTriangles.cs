@@ -24,10 +24,12 @@ namespace OpenTKUtils.GL4
     // using a RenderableItem
     // call SetScreenCoords before render executes 
     // call GetResult after Executing the shader/RI combo
+    // Inputs gl_in positions
+    // Inputs (=2) instance[] instance number. 
 
     public class GLPLGeoShaderFindTriangles : GLShaderPipelineShadersBase
     {
-        public string Code(bool passthru, bool forwardfacing)
+        public string Code(bool passthru)
         {
             return
 @"
@@ -78,6 +80,7 @@ layout (binding = bindingoutdata, std430) buffer Positions      // StorageBlock 
 };
 
 const int maximumresults = 1;       // is overriden by compiler feed in const
+const bool forwardsfacing = true;   // compiler overriden
 
 void main(void)
 {
@@ -101,9 +104,7 @@ void main(void)
         vec4 p1 = gl_in[1].gl_Position / gl_in[1].gl_Position.w;        
         vec4 p2 = gl_in[2].gl_Position / gl_in[2].gl_Position.w;
 
-" + (forwardfacing ? 
-@"        if ( PMSquareS(p0,p1,p2) < 0 )     // if wound okay, so its forward facing (p0->p1 vector, p2 is on the right)" : "")
-+ @"
+        if ( !forwardsfacing || PMSquareS(p0,p1,p2) < 0 )     // if wound okay, so its forward facing (p0->p1 vector, p2 is on the right)
         {
             // only check for approximate cursor position on first triangle of primitive (if small, all would respond)
 
@@ -145,7 +146,8 @@ void main(void)
             maximumresults = maximumresultsp;
             vecoutbuffer = new GLStorageBlock(resultoutbufferbinding);      // buffer is disposed by overriden dispose below.
             vecoutbuffer.AllocateBytes(16 + sizeof(float) * 4 * maximumresults );
-            CompileLink(ShaderType.GeometryShader, Code(false,forwardfacing), auxname: GetType().Name, constvalues:new object[] { "bindingoutdata", resultoutbufferbinding, "maximumresults", maximumresults});
+            CompileLink(ShaderType.GeometryShader, Code(false), auxname: GetType().Name,
+                                constvalues:new object[] { "bindingoutdata", resultoutbufferbinding, "maximumresults", maximumresults, "forwardfacing", forwardfacing});
         }
 
         public void SetScreenCoords(Point p, Size s, int margin = 10)

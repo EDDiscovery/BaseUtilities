@@ -42,7 +42,7 @@ namespace TestOpenTk
             Closed += ShaderTest_Closed;
 
             galacticMapping = new GalacticMapping();
-            galacticMapping.ParseData();                            // at this point, gal map data has been uploaded - get it into memory
+            galacticMapping.ParseJson(System.Text.Encoding.UTF8.GetString(Properties.Resources.galacticmapping));                            // at this point, gal map data has been uploaded - get it into memory
 
             map = new Map();
             map.Start(glwfc, galacticMapping);

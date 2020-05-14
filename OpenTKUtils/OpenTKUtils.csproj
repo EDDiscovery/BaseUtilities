@@ -88,6 +88,9 @@
     <Compile Include="GL4\Controls\ControlTabStyleCustom.cs" />
     <Compile Include="GL4\Shaders\Basic Shaders\ShadersTesselationSinewaveInstanced.cs" />
     <Compile Include="GL4\Shaders\Find\ShaderFindGeoTriangles.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersTesselationEvaluateSinewave.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersTesselationControl.cs" />
+    <Compile Include="GL4\Shaders\PipelineShaders\ShadersVertexScaleLookAt.cs" />
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCylinder.cs" />

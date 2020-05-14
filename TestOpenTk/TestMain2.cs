@@ -241,7 +241,7 @@ namespace TestOpenTk
             if (items.Contains("TESx1"))
                 ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
             if (items.Contains("TESIx1"))
-                ((GLTesselationShaderSinewaveInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
+                ((GLTesselationShaderSinewaveAutoscaleLookatInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
 
             GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");

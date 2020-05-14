@@ -250,4 +250,31 @@
   <data name="Koltuk" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Koltuk.wobj;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="EliteMovement" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\EliteMovement.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="galacticmapping" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\galacticmapping.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="GoBackward" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GoBackward.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="GoForward" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GoForward.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="GoToHomeSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GoToHomeSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Perspective" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Perspective.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ShowGalaxy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ShowGalaxy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="StarDots" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\StarDots.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="TravelPath" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\DrawLines.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

@@ -18,15 +18,17 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace EliteDangerousCore.EDSM
 {
     public class GalacticMapping
     {
-        private string GalacticMappingFile { get { return Path.Combine(@"c:\users\rk\appdata\local\eddiscovery", "galacticmapping.json"); } }
-
         public List<GalacticMapObject> galacticMapObjects = null;
         public List<GalMapType> galacticMapTypes = null;
+
+        public GalacticMapObject[] RenderableMapObjects { get { return galacticMapObjects.Where(x => x.galMapType.Image != null && x.galMapType.Enabled).ToArray(); } }
+        public GalMapType[] RenderableMapTypes { get { return galacticMapTypes.Where(x => x.Image != null).ToArray(); } }
 
         public bool Loaded { get { return galacticMapObjects != null; } }
 
@@ -42,20 +44,28 @@ namespace EliteDangerousCore.EDSM
             }
         }
 
-        public bool GalMapFilePresent()
+        public bool ParseFile(string file)
         {
-            return File.Exists(GalacticMappingFile);
+            try
+            {
+                string json = File.ReadAllText(file);
+                return ParseJson(json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine("GalacticMapping.parsedata exception:" + ex.Message);
+            }
+
+            return false;
         }
 
-        public bool ParseData()
+        public bool ParseJson(string json)
         {
             var gmobjects = new List<GalacticMapObject>();
 
             try
             {
-                string json = File.ReadAllText(GalacticMappingFile);
-
-                if (json != null)
+                if (json.HasChars())
                 {
                     JArray galobjects = (JArray)JArray.Parse(json);
                     foreach (JObject jo in galobjects)

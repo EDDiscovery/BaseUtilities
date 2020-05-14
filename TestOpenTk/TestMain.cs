@@ -775,7 +775,7 @@ namespace TestOpenTk
 
             if (true)   // instanced sinewive
             {
-                var shdrtesssine = new GLTesselationShaderSinewaveInstanced(20, 0.4f, 1f, rotate:true, rotateelevation:false);
+                var shdrtesssine = new GLTesselationShaderSinewaveAutoscaleLookatInstanced(20, 0.4f, 1f, rotate:true, rotateelevation:false);
                 items.Add(shdrtesssine, "TESIx1");
 
                 Vector4[] pos = new Vector4[]       //w = image index
@@ -855,7 +855,7 @@ namespace TestOpenTk
             if (items.Contains("TESx1"))
                 ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
             if (items.Contains("TESIx1"))
-                ((GLTesselationShaderSinewaveInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
+                ((GLTesselationShaderSinewaveAutoscaleLookatInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
 
             GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");

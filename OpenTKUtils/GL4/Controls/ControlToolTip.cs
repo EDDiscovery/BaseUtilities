@@ -19,7 +19,6 @@ namespace OpenTKUtils.GL4.Controls
     public class GLToolTip : GLForeDisplayBase
     {
         public int AutomaticDelay { get; set; } = 500;
-        public int AutoPopDelay { get; set; } = 5000;
         public StringFormat StringFormat = null;
         public Point AutoPlacementOffset = new Point(10, 0);
 
@@ -31,7 +30,7 @@ namespace OpenTKUtils.GL4.Controls
             timer.Tick += TimeOut;
         }
 
-        public GLToolTip() : this("TB?", null)
+        public GLToolTip() : this("TT?", null)
         {
         }
 
@@ -52,7 +51,7 @@ namespace OpenTKUtils.GL4.Controls
             base.OnControlAdd(parent, child);
 
             var p = parent as GLControlDisplay;     // if attached to control display, its an automatic tool tip
-            if (p != null)
+            if (p != null && AutomaticDelay>0)      // only if auto delay is on
             {
                 p.GlobalMouseMove += MouseMoved;
             }
@@ -61,7 +60,7 @@ namespace OpenTKUtils.GL4.Controls
         public override void OnControlRemove(GLBaseControl parent, GLBaseControl child)
         {
             var p = parent as GLControlDisplay;     // if attached to control display, its an automatic tool tip
-            if (p != null)
+            if (p != null)                          // unsubscribe, and we can do this even if we did not subsribe in the first place
             {
                 p.GlobalMouseMove -= MouseMoved;
             }

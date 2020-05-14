@@ -425,6 +425,11 @@ namespace TestOpenTk
             }
         }
 
+        public void UpdateGalObjects()
+        {
+            galmapobjects.UpdateEnables(galmap);
+        }
+
         #endregion
 
         #region UI

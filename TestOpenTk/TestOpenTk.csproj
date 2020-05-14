@@ -358,6 +358,7 @@
     <None Include="Resources\dotted2.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\galacticmapping.json" />
     <None Include="Resources\golden.bmp" />
   </ItemGroup>
   <ItemGroup>
@@ -487,6 +488,30 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\jumponiumRichSystem.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GoForward.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GoBackward.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GoToHomeSystem.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Perspective.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowGalaxy.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\StarDots.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DrawLines.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\EliteMovement.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
