@@ -173,7 +173,8 @@ public static class DataGridViewControlHelpersStaticFunc
         while (!grid.Rows[rown].Displayed && drows >= 0)
         {
             //System.Diagnostics.Debug.WriteLine("Set row to " + Math.Max(0, rowclosest - drows / 2));
-            grid.FirstDisplayedScrollingRowIndex = Math.Max(0, rown - drows / 2);
+
+            grid.SafeFirstDisplayedScrollingRowIndex( Math.Max(0, rown - drows / 2) );
             grid.Update();      //FORCE the update so we get an idea if its displayed
             drows--;
         }
@@ -272,6 +273,19 @@ public static class DataGridViewControlHelpersStaticFunc
         return visible;
     }
 
+    public static void SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv, int rowno)
+    {
+        try
+        {
+            dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine("DGV exception FDR " + e);       // v.rare.
+        }
+
+    }
+
     public static void HandleClickOnDataGrid( this DataGridView dgv, MouseEventArgs e, out int leftclickrow, out int rightclickrow )
     {
         rightclickrow = -1;
@@ -298,6 +312,7 @@ public static class DataGridViewControlHelpersStaticFunc
         }
     }
 
+
     // index is some key and a DGV row. Move to it, try and display it, return true if we moved.
     // force means we must move somewhere.
 
@@ -314,7 +329,7 @@ public static class DataGridViewControlHelpersStaticFunc
                 dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
 
                 if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
-                    dgv.FirstDisplayedScrollingRowIndex = rowno;
+                    dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                 //System.Diagnostics.Debug.WriteLine("No Default Select " + rowno);
                 pos = new Tuple<long, int>(-2, 0);      // done
@@ -335,11 +350,11 @@ public static class DataGridViewControlHelpersStaticFunc
             if (rowno >= 0)     // found..
             {
                 //System.Diagnostics.Debug.WriteLine("Found Select " + pos.Item1 + " row " + rowno);
-                dgv.FirstDisplayedScrollingRowIndex = rowno;        //TBD - why do i need to do this?
+                dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
                 dgv.CurrentCell = dgv.Rows[rowno].Cells[pos.Item2];       // its the current cell which needs to be set, moves the row marker as well            currentGridRow = (rowno!=-1) ? 
 
                 if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
-                    dgv.FirstDisplayedScrollingRowIndex = rowno;
+                    dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                 pos = new Tuple<long, int>(-2, 0);    // cancel next find
                 return true;
@@ -352,7 +367,7 @@ public static class DataGridViewControlHelpersStaticFunc
                     dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
 
                     if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
-                        dgv.FirstDisplayedScrollingRowIndex = rowno;
+                        dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                     //System.Diagnostics.Debug.WriteLine("Force Default Select " + rowno);
                 }
