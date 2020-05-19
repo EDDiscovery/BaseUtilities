@@ -13,6 +13,7 @@
  */
 
  using System;
+using System.Drawing;
 
 namespace OpenTKUtils.GL4
 {
@@ -84,6 +85,11 @@ namespace OpenTKUtils.GL4
             return (GLBuffer)items[name];
         }
 
+        public Bitmap Bitmap(string name)
+        {
+            return (Bitmap)items[name];
+        }
+
         public GLBuffer LastBuffer(int c = 1)
         {
             return (GLBuffer)items.Last(typeof(GLBuffer), c);
@@ -149,6 +155,12 @@ namespace OpenTKUtils.GL4
             return disp;
         }
 
+        public Bitmap Add(Bitmap disp, string name = null)
+        {
+            items.Add(EnsureName(name), disp);
+            return disp;
+        }
+
         // New items
 
         public GLVertexArray NewArray(string name = null)
@@ -200,6 +212,24 @@ namespace OpenTKUtils.GL4
             return s;
         }
 
+        // remove
+
+        public void Dispose(Object obj)     // dispose of this now, and remove from list
+        {
+            string keytodelete = null;
+            foreach (var kvp in items.Keys)
+            {
+                if (items[kvp] == obj)
+                {
+                    (obj as IDisposable).Dispose();
+                    keytodelete = kvp;
+                    break;
+                }
+            }
+
+            if (keytodelete != null)
+                items.Remove(keytodelete);
+        }
 
 
         // helpers

@@ -33,15 +33,15 @@ namespace OpenTKUtils.Common
 
         private GLWindowControl glwin;
       
-        public float ProjectionZNear { get; private set; }
+        public float ProjectionZNear { get; private set; }                      // out, near Z clip
 
         public Func<int, float, float> KeyboardTravelSpeed;                     // optional set to scale travel key commands given this time interval and camera distance
         public Func<int, float> KeyboardRotateSpeed;                            // optional set to scale camera key rotation commands given this time interval
         public Func<int, float> KeyboardZoomSpeed;                              // optional set to scale zoom speed commands given this time interval
+
         public float MouseRotateAmountPerPixel { get; set; } = 0.25f;           // mouse speeds, degrees/pixel
         public float MouseUpDownAmountAtZoom1PerPixel { get; set; } = 0.5f;     // per pixel movement at zoom 1 (zoom scaled)
         public float MouseTranslateAmountAtZoom1PerPixel { get; set; } = 2.0f;  // per pixel movement at zoom 1
-        public bool EliteMovement { get; set; } = true;
 
         public Action<GLMatrixCalc, long> PaintObjects;       // madatory if you actually want to see anything
 
@@ -50,7 +50,7 @@ namespace OpenTKUtils.Common
         public GLMatrixCalc MatrixCalc { get; private set; } = new GLMatrixCalc();
         public PositionCamera PosCamera { get; private set; } = new PositionCamera();
 
-        public void Start(GLWindowControl win, Vector3 lookat, Vector3 cameradir, float zoomn)
+        public void Start(GLWindowControl win, Vector3 lookat, Vector3 cameradirdegrees, float zoomn)
         {
             glwin = win;
 
@@ -63,7 +63,7 @@ namespace OpenTKUtils.Common
             win.KeyDown += glControl_KeyDown;
             win.KeyUp += glControl_KeyUp;
 
-            PosCamera.SetPositionZoom(lookat, new Vector2(cameradir.X, cameradir.Y), zoomn, cameradir.Z);
+            PosCamera.SetPositionZoom(lookat, new Vector2(cameradirdegrees.X, cameradirdegrees.Y), zoomn, cameradirdegrees.Z);
 
             MatrixCalc.ScreenSize = win.Size;
             MatrixCalc.CalculateModelMatrix(PosCamera.Lookat, PosCamera.EyePosition, PosCamera.CameraDirection, PosCamera.CameraRotation);
@@ -74,6 +74,7 @@ namespace OpenTKUtils.Common
 
         // Pos Direction interface
 
+        public bool EliteMovement { get { return PosCamera.EliteMovement; } set { PosCamera.EliteMovement = value; } }
         public void TranslatePosition(Vector3 posx) { PosCamera.Translate(posx); }
         public void SlewToPosition(Vector3 normpos, float timeslewsec = 0, float unitspersecond = 10000F) { PosCamera.GoTo(normpos, timeslewsec, unitspersecond); }
 
@@ -111,7 +112,7 @@ namespace OpenTKUtils.Common
         }
 
         // Owner should call this at regular intervals.
-        // handle keyboard, indicate if activated, handle other keys if required
+        // handle keyboard, handle other keys if required
 
         public void HandleKeyboardSlews(bool activated, Action<KeyboardMonitor> handleotherkeys = null)
         {
@@ -126,11 +127,8 @@ namespace OpenTKUtils.Common
                     PosCamera.CameraKeyboard(keyboard, KeyboardRotateSpeed?.Invoke(LastHandleInterval) ?? (0.02f * LastHandleInterval));
                 }
 
-                PosCamera.PositionKeyboard(keyboard, MatrixCalc.InPerspectiveMode, KeyboardTravelSpeed?.Invoke(LastHandleInterval, MatrixCalc.EyeDistance) ?? (0.1f * LastHandleInterval), EliteMovement);
+                PosCamera.PositionKeyboard(keyboard, MatrixCalc.InPerspectiveMode, KeyboardTravelSpeed?.Invoke(LastHandleInterval, MatrixCalc.EyeDistance) ?? (0.1f * LastHandleInterval));
                 PosCamera.ZoomKeyboard(keyboard, KeyboardZoomSpeed?.Invoke(LastHandleInterval) ?? (1.0f + ((float)LastHandleInterval * 0.002f)));      // zoom slew is not affected by the above
-
-                if (keyboard.HasBeenPressed(Keys.M, KeyboardMonitor.ShiftState.Ctrl))
-                    EliteMovement = !EliteMovement;
 
                 if (keyboard.HasBeenPressed(Keys.P, KeyboardMonitor.ShiftState.Ctrl))
                     ChangePerspectiveMode(!MatrixCalc.InPerspectiveMode);
@@ -167,7 +165,7 @@ namespace OpenTKUtils.Common
 
         #region Implementation
 
-        private void GlControl_Resize(object sender)           // there was a gate in the original around OnShown.. not sure why.
+        private void GlControl_Resize(object sender)          
         {
             MatrixCalc.ScreenSize = glwin.Size;
             SetModelProjectionMatrixViewPort();

@@ -35,7 +35,7 @@ namespace OpenTKUtils.GL4
 
         public SizedInternalFormat InternalFormat { get; protected set; }       // internal format of stored data in texture unit
 
-        public Bitmap[] BitMaps { get; protected set; }         // textures can own the bitmaps for disposal purposes
+        public Bitmap[] BitMaps { get; protected set; }         // textures can own the bitmaps for disposal purposes.  Entries may be null if no bitmap at that entry
         public bool OwnBitmaps { get; set; } = false;
 
         // normal sampler bind - for sampler2D access etc.
@@ -92,7 +92,10 @@ namespace OpenTKUtils.GL4
                 if (OwnBitmaps && BitMaps != null)
                 {
                     foreach (var b in BitMaps)
-                        b.Dispose();
+                    {
+                        if ( b != null)     // we may have empty spaces in the bitmap list
+                            b.Dispose();
+                    }
 
                     BitMaps = null;
                 }

@@ -76,11 +76,38 @@ mat4 mat4translation(vec3 translate)
 	return v;
 }
 
+mat4 mat4translation(mat4 tx, vec3 translate)
+{
+	mat4 v = mat4(	tx[0][0],tx[1][0],tx[2][0],0,
+					tx[0][1],tx[1][1],tx[2][1],0,
+					tx[0][2],tx[1][2],tx[2][2],0,
+					translate.x,translate.y,translate.z,1);
+	return v;
+}
+
+mat4 mat4translationscale(mat4 tx, vec3 translate, vec3 scale)
+{
+	mat4 v = mat4(	tx[0][0]*scale.x,tx[1][0],tx[2][0],0,
+					tx[0][1],tx[1][1]*scale.y,tx[2][1],0,
+					tx[0][2],tx[1][2],tx[2][2]*scale.z,0,
+					translate.x,translate.y,translate.z,1);
+	return v;
+}
+
 mat4 mat4scale(float scale)
 {
 	mat4 v = mat4(	scale,0,0,0,
 					0,scale,0,0,
 					0,0,scale,0,
+					0,0,0,1);
+	return v;
+}
+
+mat4 mat4scale(vec3 scale)
+{
+	mat4 v = mat4(	scale.x,0,0,0,
+					0,scale.y,0,0,
+					0,0,scale.z,0,
 					0,0,0,1);
 	return v;
 }

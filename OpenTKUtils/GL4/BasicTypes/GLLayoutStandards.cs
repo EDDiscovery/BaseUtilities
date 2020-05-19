@@ -27,14 +27,16 @@ namespace OpenTKUtils.GL4
         public int CurrentPos { get; protected set; } = 0;
         public IntPtr CurrentPtr { get; protected set; } = IntPtr.Zero;
 
-        public int BufferSize { get; protected set; } = 0;      // 0 means not complete and allocated, otherwise allocated to this size.
+        public int Length { get; protected set; } = 0;      // 0 means not allocated, otherwise allocated to this size.
 
-        public bool IsAllocated { get { return BufferSize > 0; } }
-        public bool NotAllocated { get { return BufferSize == 0; } }
+        public bool IsAllocated { get { return Length > 0; } }
+        public bool NotAllocated { get { return Length == 0; } }
 
         public bool Std430 { get; set; } = false;               // you can change your mind, in case of debugging etc.
 
         public List<int> Positions = new List<int>();           // at each alignment during Fill, a position is stored.  Not for map alignments
+
+        public void AddPosition(int pos) { Positions.Add(pos);  }   // special to add positions in outside of normal Align
 
         public const int Vec4size = 4 * sizeof(float);
         public const int Vec3size = Vec4size;
@@ -49,11 +51,11 @@ namespace OpenTKUtils.GL4
         public GLLayoutStandards(bool std430 = false)
         {
             CurrentPos = 0;
-            BufferSize = 0;
+            Length = 0;
             Std430 = std430;
         }
 
-        protected int AlignScalar(int scalarsize, int datasize)           // align a scalar
+        protected int AlignScalar(int scalarsize, int datasize)           // align a scalar of scalarsize, move on by datasize
         {
             if ( scalarsize > 1 )
                 CurrentPos = (CurrentPos + scalarsize - 1) & (~(scalarsize - 1));
@@ -61,13 +63,13 @@ namespace OpenTKUtils.GL4
             int pos = CurrentPos;
             CurrentPos += datasize;
             Positions.Add(pos);
-            System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
+            System.Diagnostics.Debug.Assert(CurrentPos <= Length);
             return pos;
         }
 
-        protected int AlignArray(int scalarsize, int datasize)
+        protected int AlignArray(int elementsize, int datasize)              // align a vector of element size, move on by datasize
         {
-            int arrayalign = Std430 ? scalarsize : Vec4size;
+            int arrayalign = Std430 ? elementsize : Vec4size;
 
             if (arrayalign > 1)
                 CurrentPos = (CurrentPos + arrayalign - 1) & (~(arrayalign - 1));
@@ -75,11 +77,11 @@ namespace OpenTKUtils.GL4
             int pos = CurrentPos;
             CurrentPos += datasize;
             Positions.Add(pos);
-            System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
+            System.Diagnostics.Debug.Assert(CurrentPos <= Length);
             return pos;
         }
 
-        protected IntPtr AlignScalarPtr(int scalarsize)
+        protected IntPtr AlignScalarPtr(int scalarsize)                     // align to scalar size, move the ptr on to align to scalar size
         {
             if (scalarsize > 1)
             {
@@ -91,13 +93,13 @@ namespace OpenTKUtils.GL4
             IntPtr r = CurrentPtr;
             CurrentPtr += scalarsize;
             CurrentPos += scalarsize;
-            System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
+            System.Diagnostics.Debug.Assert(CurrentPos <= Length);
             return r;
         }
 
-        protected Tuple<IntPtr,int> AlignArrayPtr(int scalarsize, int count)    // return pos, stride
+        protected Tuple<IntPtr,int> AlignArrayPtr(int elementsize, int count)    // align to elementsize, move data on by count elements
         {
-            int arrayalign = Std430 ? scalarsize : Vec4size;
+            int arrayalign = Std430 ? elementsize : Vec4size;
 
             if (arrayalign > 1)
             {
@@ -109,7 +111,7 @@ namespace OpenTKUtils.GL4
             IntPtr r = CurrentPtr;
             CurrentPtr += arrayalign * count;
             CurrentPos += arrayalign * count;
-            System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
+            System.Diagnostics.Debug.Assert(CurrentPos <= Length);
             return new Tuple<IntPtr, int>(r, arrayalign);
         }
     }

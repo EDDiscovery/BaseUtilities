@@ -149,6 +149,22 @@ namespace OpenTKUtils
                 GL.BlendFunc(BlendSource.Value, BlendDest.Value);
             }
 
+            if ( ClipDistanceEnable != newstate.ClipDistanceEnable )        // if changed
+            {
+                if ( newstate.ClipDistanceEnable>ClipDistanceEnable)
+                {
+                    for (int i = ClipDistanceEnable; i < newstate.ClipDistanceEnable; i++)
+                        GL.Enable(EnableCap.ClipDistance0 + i);
+                }
+                else if ( newstate.ClipDistanceEnable < ClipDistanceEnable )
+                {
+                    for (int i = ClipDistanceEnable - 1; i >= newstate.ClipDistanceEnable; i--)
+                        GL.Disable(EnableCap.ClipDistance0 + i);
+                }
+
+                ClipDistanceEnable = newstate.ClipDistanceEnable;
+            }
+
             // patches
 
             if (newstate.PatchSize.HasValue && PatchSize != newstate.PatchSize )
@@ -243,9 +259,13 @@ namespace OpenTKUtils
         public float? LineWidth { get;  set;} = null;                // lines
         public bool? LineSmooth { get; set; } = null;                // lines
 
-        // these affect all types so are configured to their defaults for all
+        // these affect all types so are configured to their defaults for normal drawing
 
         public uint? PrimitiveRestart { get; set; } = null;          // its either null (disabled) or value (enabled). null does not mean don't care.
+        public int ClipDistanceEnable { get; set; } = 0;           // set for number of clip/cull distances to enable. 0 means none. Null means not configured
+
+        // for the following, null is used for not configured (applicable at start up)
+
         public bool? DepthTest { get; set; } = true;                
         public bool? DepthClamp { get; set; } = false;              
         public bool? BlendEnable { get;  set; } = true;             

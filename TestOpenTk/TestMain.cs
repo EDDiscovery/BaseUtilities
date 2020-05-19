@@ -620,7 +620,7 @@ namespace TestOpenTk
                 ri.IndirectBuffer = new GLBuffer(std430:true);  // disable alignment to vec4 for arrays for this buffer.
                 ri.MultiDrawCount = 2;
                 ri.IndirectBuffer.AllocateBytes(ri.MultiDrawCountStride * ri.MultiDrawCount + 4);
-                ri.IndirectBuffer.StartWrite(0, ri.IndirectBuffer.BufferSize);
+                ri.IndirectBuffer.StartWrite(0, ri.IndirectBuffer.Length);
                 ri.IndirectBuffer.Write(1.0f);        // dummy float to demo index offset
                 ri.BaseIndex = 4;       // and indicate that the base command index is 4
                 ri.IndirectBuffer.WriteIndirectElements(4, 1, 0, 0, 0);       // draw indexes 0-3
@@ -799,6 +799,39 @@ namespace TestOpenTk
             }
 
             #endregion
+
+
+            #region Instancing with matrix and lookat
+            if (true)
+            {
+                var texarray = new GLTexture2DArray(new Bitmap[] { Properties.Resources.dotted2, Properties.Resources.planetaryNebula, Properties.Resources.wooden });
+                items.Add(texarray);
+
+                var shader = new GLShaderPipeline(new GLPLVertexShaderQuadTextureWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
+                items.Add(shader);
+
+                shader.StartAction += (s) => { texarray.Bind(1); };
+
+                Matrix4[] pos = new Matrix4[3];
+                pos[0] = Matrix4.CreateTranslation(new Vector3(-20, 0, -10));
+
+                pos[1] = Matrix4.CreateTranslation(new Vector3(-20, 5, -10));
+                pos[1][0, 3] = 1;   // image no
+                pos[1][1, 3] = 1;   // lookat control
+
+                pos[2] = Matrix4.CreateRotationX(-45f.Radians());
+                pos[2] *= Matrix4.CreateTranslation(new Vector3(-20, 10, -10));
+                pos[2][0, 3] = 2;
+                pos[2][1, 3] = 2;   // lookat control
+                GLRenderControl rp = GLRenderControl.Quads();
+
+                rObjects.Add(shader, "1-atex2",
+                                        GLRenderableItem.CreateMatrix4(items, rp, pos, 4, ic: 3, matrixdivisor: 1));
+
+            }
+
+            #endregion
+
             #region Matrix Calc Uniform
 
             items.Add(new GLMatrixCalcUniformBlock(),"MCUB");     // def binding of 0

@@ -35,6 +35,7 @@ namespace OpenTKUtils.GL4
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
 layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2D textureObject;
+
 out vec4 color;
 
 void main(void)
@@ -53,7 +54,7 @@ void main(void)
     // Pipeline shader for a 2D array texture
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
-    //      flat in imageno to select
+    //      location 1 : flat in imageno to select
     // inputs
 
     public class GLPLFragmentShaderTexture2DDiscard : GLShaderPipelineShadersBase
@@ -66,10 +67,9 @@ void main(void)
 
 layout( location = 0 ) in vec2 vs_textureCoordinate;
 layout( location = 1 ) flat in int imageno;      
+layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
 
 out vec4 color;
-
-layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
 
 void main(void)
 {
@@ -92,8 +92,8 @@ void main(void)
     // Pipeline shader for a 2D Array texture bound using instance to pick between them. Use with GLVertexShaderTextureMatrixTransform
     // Requires:
     //      location 0 : vs_texturecoordinate : vec2 of texture co-ord
+    //      location 2 : vs_in.vs_instance - instance id/texture offset
     //      tex binding 1 : textureObject : 2D texture
-    //      vs_in.vs_instance - instance id
 
     public class GLPLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
     {
@@ -104,16 +104,18 @@ void main(void)
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
 layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
-out vec4 color;
 
-in VS_IN
+layout (location = 2) in VS_IN
 {
     flat int vs_instanced;      // not sure why structuring is needed..
 } vs;
 
+out vec4 color;
+
 void main(void)
 {
     color = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced+ " + offset.ToStringInvariant() + @"));
+//color = vec4(1,1,0,1);
 }
 ";
         }
@@ -137,10 +139,11 @@ void main(void)
             return
 @"
 #version 450 core
-in vec2 vs_textureCoordinate;
+layout (location=0) in vec2 vs_textureCoordinate;
 layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject;
-out vec4 color;
 layout (location = 30) uniform float blend;
+
+out vec4 color;
 
 void main(void)
 {
@@ -182,6 +185,7 @@ void main(void)
 layout (location=0) in vec2 vs_textureCoordinate;
 layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2D textureObject;
 layout (location = 24) uniform  vec2 offset;
+
 out vec4 color;
 
 void main(void)
@@ -245,13 +249,12 @@ void main(void)
 #extension GL_ARB_bindless_texture : require
 
 layout (location=0) in vec2 vs_textureCoordinate;
-
 layout (binding = " + arbblock.ToStringInvariant() + @", std140) uniform TEXTURE_BLOCK
 {
     sampler2D tex[256];
 };
-
 layout (location = 24) uniform  vec2 offset;
+
 out vec4 color;
 
 void main(void)

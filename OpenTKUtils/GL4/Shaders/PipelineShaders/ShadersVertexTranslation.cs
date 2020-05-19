@@ -21,15 +21,15 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
 
-    // Pipeline shader, Translation
+    // Pipeline shader, Matrix Translation
     // Requires:
     //      location 0 : position: vec4 vertex array of positions of model
+    //      location 4 : transform: mat4 array of transforms.. 
     //      uniform block 0 : GL MatrixCalc
-    //      uniform 4 : transform: mat4 array of transforms
     // Out:
-    //      vs_color is based on instance ID mostly for debugging
     //      gl_Position
-    //      modelpos
+    //      location 0 : vs_color is based on instance ID mostly for debugging
+    //      location 1 : modelpos
 
     public class GLPLVertexShaderModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
@@ -48,7 +48,7 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-out vec4 vs_color;
+layout (location = 0) out vec4 vs_color;
 layout (location = 1) out vec3 modelpos;
 
 void main(void)
@@ -66,16 +66,107 @@ void main(void)
         }
     }
 
+
+    // Pipeline shader, Matrix Translation, Tex out, image selection out, Quads in, no vertex input, no tex input, Lookat control
+    // Requires:
+    //      no vertex input, its auto gen to y=0, x=+/-1, z = +/-1
+    //      uniform block 0 : GL MatrixCalc
+    //      uniform 4 : transform: mat4 array of transforms, one per instance 
+    //              [col=3,row=0] is the image index, 
+    //              [col=3,row=1] 0 rotate as per matrix, 1 means look at in azimuth, 2 look at in elevation and azimuth, -1 means cull primitive
+    // Out:
+    //      location 0 : vs_textureCoordinate
+    //      location 2 : image index to use
+    //      gL_Position
+
+    public class GLPLVertexShaderQuadTextureWithMatrixTranslation : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+    #version 450 core
+    #include UniformStorageBlocks.matrixcalc.glsl
+    #include Shaders.Functions.trig.glsl
+    #include Shaders.Functions.mat4.glsl
+
+    layout (location = 4) in mat4 transform;
+
+    out gl_PerVertex {
+            vec4 gl_Position;
+            float gl_PointSize;
+            float gl_ClipDistance[];
+            float gl_CullDistance[];
+        };
+
+    layout( location = 0) out vec2 vs_textureCoordinate;
+    layout (location = 2) out VS_OUT
+    {
+        flat int vs_index;      // not sure why structuring is needed..
+    } vs;
+
+    vec4 vertex[] = { vec4(-1,0,1,1), vec4(-1,0,-1,1), vec4(1,0,-1,1), vec4(1,0,1,1)};
+    vec2 tex[] = { vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,0)};
+
+    void main(void)
+    {
+        mat4 tx = transform;
+        vs.vs_index = int(tx[0][3]);
+        tx[0][3] = 0;
+
+        float ctrl = tx[1][3];
+
+        if ( ctrl >= 1 )    // very confused over this, this is row/column order, but the info says its col/row order
+        {
+            vec3 worldposition = vec3(tx[3][0],tx[3][1],tx[3][2]);      // extract world position
+            vec3 scale = vec3(tx[0][0],tx[1][1],tx[2][2]);              // extrace scale only
+
+            vec2 dir = AzEl(worldposition,mc.EyePosition.xyz);      // y = azimuth
+
+            if ( ctrl == 2 )
+            {
+                tx = mat4rotateXthenY(dir.x,PI-dir.y);              // rotate the flat image to vertical using dir.x (0 = on top, 90 = straight on, etc) then rotate by 180-dir (0 if directly facing from neg z)
+            }
+            else
+            {
+                tx = mat4rotateXthenY(PI/2,PI-dir.y);               // rotate 90 up and by azimuth
+            }
+
+            tx = mat4translationscale(tx,worldposition,scale);      // apply stored world pos and scaling
+
+            gl_Position = mc.ProjectionModelMatrix * tx * vertex[gl_VertexID];        // order important
+        }
+        else if ( ctrl < 0 )
+        {
+            gl_CullDistance[0] = -1;        // all vertex culled
+        }
+        else
+            gl_Position = mc.ProjectionModelMatrix * tx * vertex[gl_VertexID];        // order important
+
+        vs_textureCoordinate = tex[gl_VertexID];
+    }
+    ";
+        }
+
+        public GLPLVertexShaderQuadTextureWithMatrixTranslation()
+        {
+            CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
+        }
+    }
+
+
+          
     // Pipeline shader, Translation, Texture
     // Requires:
     //      location 0 : position: vec4 vertex array of positions model coords
     //      location 1 : vec2 texture co-ordinates
+    //      location 4 : transform: mat4 array of transforms
     //      uniform block 0 : GL MatrixCalc
-    //      uniform 4 : transform: mat4 array of transforms
     // Out:
-    //      vs_textureCoordinate
+    //      location 0 : vs_textureCoordinate
+    //      location 1 : modelpos
+    //      location 2 : instance count
     //      gl_Position
-    //      modelpos
 
     public class GLPLVertexShaderTextureModelCoordWithMatrixTranslation : GLShaderPipelineShadersBase
     {
@@ -88,9 +179,8 @@ void main(void)
 #include UniformStorageBlocks.matrixcalc.glsl
 
 layout (location = 0) in vec4 position;
+layout (location = 1) in vec2 texco;
 layout (location = 4) in mat4 transform;
-
-layout (location = 1) out vec3 modelpos;
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -98,14 +188,13 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-layout(location = 1) in vec2 texco;
-
-out VS_OUT
+layout(location = 0) out vec2 vs_textureCoordinate;
+layout (location = 1) out vec3 modelpos;
+layout (location = 2) out VS_OUT
 {
     flat int vs_instanced;
 } vs_out;
 
-out vec2 vs_textureCoordinate;
 
 void main(void)
 {
@@ -131,8 +220,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 array of transforms
     //      uniform 23 : commontransform: mat4 array of transforms
     // Out:
+    //      location 0 : vs_textureCoordinate
     //      gl_Position
-    //      vs_textureCoordinate
 
     public class GLPLVertexShaderColorModelCoordWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
@@ -145,18 +234,20 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
 layout (location = 0) in vec4 position;
+layout(location = 1) in vec4 color;
+
+layout (location = 22) uniform  mat4 objecttransform;
+layout (location = 23) uniform  mat4 commontransform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
-layout(location = 1) in vec4 color;
-out vec4 vs_color;
-
-layout (location = 22) uniform  mat4 objecttransform;
-layout (location = 23) uniform  mat4 commontransform;
+layout (location= 0) out vec4 vs_color;
 
 void main(void)
 {
@@ -189,8 +280,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 array of transforms
     //      uniform 23 : commontransform: mat4 array of transforms
     // Out:
+    //      location 0: vs_textureCoordinate
     //      gl_Position
-    //      vs_textureCoordinate
 
     public class GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation : GLShaderPipelineShadersBase
     {
@@ -203,18 +294,19 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
 layout (location = 0) in vec4 position;
+layout(location = 1) in vec2 texco;
+layout (location = 22) uniform  mat4 objecttransform;
+layout (location = 23) uniform  mat4 commontransform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
-layout(location = 1) in vec2 texco;
-out vec2 vs_textureCoordinate;
-
-layout (location = 22) uniform  mat4 objecttransform;
-layout (location = 23) uniform  mat4 commontransform;
+layout(location = 0) out vec2 vs_textureCoordinate;
 
 void main(void)
 {

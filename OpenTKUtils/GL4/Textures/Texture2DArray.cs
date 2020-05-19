@@ -39,6 +39,11 @@ namespace OpenTKUtils.GL4
         {
             if (Id == -1 || Width != width || Height != height || Depth != depth)
             {
+                if (Id != -1)
+                {
+                    Dispose();
+                }
+
                 InternalFormat = internalformat;
                 Width = width;
                 Height = height;
@@ -60,7 +65,8 @@ namespace OpenTKUtils.GL4
             }
         }
 
-        // You can reload the bitmap, it will create a new Texture if required. Bitmaps array can be sparse will null entries if you don't want to use that level. Level 0 must be there
+        // You can reload the bitmap, it will create a new Texture if required. 
+        // Bitmaps array can be sparse will null entries if you don't want to use that level. Level 0 must be there
 
         public void LoadBitmaps(Bitmap[] bmps, int bitmapmipmaplevels = 1, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int genmipmaplevel = 1, bool ownbitmaps = false)
         {

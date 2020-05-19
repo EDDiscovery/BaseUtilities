@@ -26,7 +26,7 @@ namespace OpenTKUtils.GL4
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
     //      gl_Position
-    //      modelpos
+    //      location 1: modelpos
 
     public class GLPLVertexShaderModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
@@ -36,14 +36,16 @@ namespace OpenTKUtils.GL4
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
+layout (location = 0) in vec4 position;
+
+layout (location = 22) uniform  mat4 transform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
-
-layout (location = 0) in vec4 position;
-layout (location = 22) uniform  mat4 transform;
 
 layout (location = 1) out vec3 modelpos;
 
@@ -70,8 +72,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
     // Out:
     //      gl_Position
-    //      1: modelpos
-    //      2: instance id
+    //      location 1 modelpos
+    //      location 2 instance id
 
     public class GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation : GLShaderPipelineShadersBase
     {
@@ -81,15 +83,16 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
+layout (location = 0) in vec4 modelposition;
+layout (location = 1) in vec4 worldposition;            // instanced, w ignored
+layout (location = 22) uniform  mat4 transform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
-
-layout (location = 0) in vec4 modelposition;
-layout (location = 1) in vec4 worldposition;            // instanced, w ignored
-layout (location = 22) uniform  mat4 transform;
 
 layout (location = 1) out vec3 modelpos;
 layout (location = 2) out int instance;
@@ -128,8 +131,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
     //      gl_Position
-    //      vs_color
-    //      1: modelpos
+    //      location 0 : vs_color
+    //      location 1 : modelpos
 
     public class GLPLVertexShaderColourModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
     {
@@ -140,18 +143,19 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
+layout (location = 0) in vec4 position;
+layout (location = 1) in vec4 color;
+layout (location = 22) uniform  mat4 transform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
-layout (location = 0) in vec4 position;
-layout (location = 1) in vec4 color;
 
-layout (location = 22) uniform  mat4 transform;
-
-out vec4 vs_color;
+layout (location = 0) out vec4 vs_color;
 layout (location = 1) out vec3 modelpos;
 
 void main(void)
@@ -177,8 +181,8 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 array of transforms
     // Out:
     //      gl_Position
-    //      0: vs_textureCoordinate
-    //      1: modelpos
+    //      location 0: vs_textureCoordinate
+    //      location 1: modelpos
 
 
     public class GLPLVertexShaderTextureModelCoordWithObjectTranslation : GLShaderPipelineShadersBase
@@ -190,19 +194,19 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
+layout (location = 0) in vec4 position;
+layout(location = 1) in vec2 texco;
+layout (location = 22) uniform  mat4 transform;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
 
-layout (location = 0) in vec4 position;
-layout(location = 1) in vec2 texco;
-
 layout(location = 0) out vec2 vs_textureCoordinate;
 layout(location = 1) out vec3 modelpos;
-
-layout (location = 22) uniform  mat4 transform;
 
 void main(void)
 {
@@ -229,9 +233,9 @@ void main(void)
     //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
     // Out:
     //      gl_Position
-    //      0: texco
-    //      1: modelpos
-    //      2: instance id
+    //      location 0 : texco
+    //      location 1 : modelpos
+    //      location 2 : instance id
 
     public class GLPLVertexShaderTextureModelCoordWithWorldTranslationCommonModelTranslation : GLShaderPipelineShadersBase
     {
@@ -241,16 +245,17 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
-out gl_PerVertex {
-        vec4 gl_Position;
-        float gl_PointSize;
-        float gl_ClipDistance[];
-    };
 
 layout (location = 0) in vec4 modelposition;
 layout (location = 1) in vec2 texco;
 layout (location = 2) in vec4 worldposition;            // instanced
 layout (location = 22) uniform  mat4 transform;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
 
 layout( location = 0) out vec2 vs_textureCoordinate;
 layout (location = 1) out vec3 modelpos;

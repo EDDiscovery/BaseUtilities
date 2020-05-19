@@ -21,12 +21,14 @@ using OpenTK.Graphics.OpenGL4;
 namespace OpenTKUtils.GL4
 {
     // Autoscale to size on model if required
-    // 0 = model
-    // 1 = worldposition, passed thru
-    // U22 = common transform, if selected
-    // output gl_position
-    // output (1) worldposinstance
-    // output (2) instance
+    //      location 0 : position: vec4 vertex array of positions model coords, w is ignored
+    //      location 1 : worldpositions
+    //      uniform block 0 : GL MatrixCalc
+    //      uniform 22 : objecttransform: mat4 transform of model before world applied (for rotation/scaling)
+    // Out:
+    //      gl_Position
+    //      location 1 : wordpos copied
+    //      location 2 : instance id
 
     public class GLPLVertexScaleLookat : GLShaderPipelineShadersBase
     {

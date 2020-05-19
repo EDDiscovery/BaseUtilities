@@ -25,18 +25,26 @@ namespace OpenTKUtils.GL4
     {
         public GLTexture3D(int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
         {
-            CreateTexture(width, height, depth, internalformat, mipmaplevels);
+            CreateOrUpdateTexture(width, height, depth, internalformat, mipmaplevels);
         }
 
-        public void CreateTexture(int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
+        public void CreateOrUpdateTexture(int width, int height, int depth, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevels = 1)
         {
-            InternalFormat = internalformat;
-            Width = width; Height = height; Depth = depth;
+            if (Id == -1 || Width != width || Height != height || Depth != depth)    // if not there, or changed, we can't just replace it, size is fixed. Delete it
+            {
+                if (Id != -1)
+                {
+                    Dispose();
+                }
 
-            GL.CreateTextures(TextureTarget.Texture3D, 1, out int id);
-            Id = id;
+                InternalFormat = internalformat;
+                Width = width; Height = height; Depth = depth;
 
-            GL.TextureStorage3D(Id, mipmaplevels, InternalFormat, Width, Height, Depth);
+                GL.CreateTextures(TextureTarget.Texture3D, 1, out int id);
+                Id = id;
+
+                GL.TextureStorage3D(Id, mipmaplevels, InternalFormat, Width, Height, Depth);
+            }
         }
 
         // Write to a Z plane the X/Y info.

@@ -73,7 +73,7 @@ namespace TestOpenTk
             gl3dcontroller.PaintObjects = ControllerDraw;
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.ZoomDistance = 20F;
-            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(90,0,0), 1F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(135,0,0), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {

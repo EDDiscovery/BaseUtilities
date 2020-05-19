@@ -38,7 +38,7 @@ namespace OpenTKUtils.GL4
             if (NotAllocated)
                 AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
-            StartWrite(0, BufferSize);        // the whole schebang
+            StartWrite(0, Length);        // the whole schebang
             Write(c.ProjectionModelMatrix);
             StopReadWrite();                                // and complete..
         }
@@ -48,7 +48,7 @@ namespace OpenTKUtils.GL4
             if (NotAllocated)
                 AllocateBytes(maxmcubsize, BufferUsageHint.DynamicCopy);
 
-            StartWrite(0, BufferSize);        // the whole schebang
+            StartWrite(0, Length);        // the whole schebang
             Write(c.ProjectionModelMatrix);
             Write(c.ProjectionMatrix);
             Write(c.ModelMatrix);
@@ -69,7 +69,7 @@ namespace OpenTKUtils.GL4
             screenmat.Column2 = new Vector4(0, 0, 1, 0);                  // transform of z = none
             screenmat.Column3 = new Vector4(0, 0, 0, 1);                  // transform of w = none
 
-            StartWrite(0, BufferSize);        // the whole schebang
+            StartWrite(0, Length);        // the whole schebang
             Write(c.ProjectionModelMatrix);     //0, 64 long
             Write(c.ProjectionMatrix);          //64, 64 long
             Write(c.ModelMatrix);               //128, 64 long

@@ -154,7 +154,7 @@ namespace OpenTKUtils.GL4.Controls
             if (ControlsZ.Count > 0)            // may end up with nothing to draw, in which case, don't update anything
             {
                 vertexes.AllocateBytes(ControlsZ.Count * sizeof(float) * vertexesperentry * 4);
-                vertexes.StartWrite(0, vertexes.BufferSize);
+                vertexes.StartWrite(0, vertexes.Length);
 
                 float z = 0.0001f;      // we place it in clip space at a z near 0
                 int visible = 0;

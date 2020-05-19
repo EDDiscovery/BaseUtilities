@@ -94,6 +94,7 @@
     <Compile Include="GL4\Shaders\PointSprites\ShaderPointSprites.cs" />
     <Compile Include="GL4\Shaders\Stars\ShaderStarSurface.cs" />
     <Compile Include="GL4\ShapeFactory\FactoryCylinder.cs" />
+    <Compile Include="GL4\TextRendering\TextRenderer.cs" />
     <Compile Include="GL4\WavefrontObj\GLWavefrontObjRenderCreator.cs" />
     <Compile Include="Models\WaveFrontObj\GLWavefrontObj.cs" />
     <Compile Include="Models\WaveFrontObj\GLWavefrontObjReader.cs" />

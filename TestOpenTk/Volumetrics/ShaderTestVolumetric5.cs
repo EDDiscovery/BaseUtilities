@@ -92,7 +92,7 @@ namespace TestOpenTk
             };
 
             //gl3dcontroller.MatrixCalc.InPerspectiveMode = false;
-            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(180f, 0, 0), 0.01F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(135f, 0, 0), 0.01F);
 
             items.Add( new GLColourShaderWithWorldCoord(), "COSW");
             GLRenderControl rl1 = GLRenderControl.Lines(1);

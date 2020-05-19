@@ -29,22 +29,30 @@ namespace OpenTKUtils.GL4
 
         public GLTexture1D( int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
         {
-            CreateTexture(width, internalformat, mipmaplevel);
+            CreateOrUpdateTexture(width, internalformat, mipmaplevel);
         }
 
-        public void CreateTexture(int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
+        public void CreateOrUpdateTexture(int width, SizedInternalFormat internalformat = SizedInternalFormat.Rgba32f, int mipmaplevel = 1)
         {
-            InternalFormat = internalformat;
-            Width = width; 
+            if (Id == -1 || Width != width)    // if not there, or changed, we can't just replace it, size is fixed. Delete it
+            {
+                if (Id != -1)
+                {
+                    Dispose();
+                }
 
-            GL.CreateTextures(TextureTarget.Texture1D, 1, out int id);
-            Id = id;
+                InternalFormat = internalformat;
+                Width = width;
 
-            GL.TextureStorage1D(
-                Id,
-                mipmaplevel,    // levels of mipmapping.  If we supplied one, we use that, else we use genmipmaplevel
-                InternalFormat,                       // format of texture - 4 floats is the normal, and is given in the constructor
-                Width);
+                GL.CreateTextures(TextureTarget.Texture1D, 1, out int id);
+                Id = id;
+
+                GL.TextureStorage1D(
+                    Id,
+                    mipmaplevel,    // levels of mipmapping.  If we supplied one, we use that, else we use genmipmaplevel
+                    InternalFormat,                       // format of texture - 4 floats is the normal, and is given in the constructor
+                    Width);
+            }
         }
 
         public void Store(int xoffset, int width, PixelFormat px, PixelType ty, IntPtr ptr)

@@ -94,6 +94,9 @@ void main(void)
     //      location 0 vec4 positions in world space
     //      location 1 vec4 color components
     //      uniform 0 standard Matrix uniform block GLMatrixCalcUniformBlock
+    // Out:
+    //      location 0: vs_color
+    //      gl_Position
 
     public class GLPLVertexShaderColourWorldCoord : GLShaderPipelineShadersBase
     {
@@ -103,7 +106,10 @@ void main(void)
 @"
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
+
 layout (location = 0) in vec4 position;
+layout(location = 1) in vec4 color;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -111,8 +117,7 @@ out gl_PerVertex {
     };
 
 
-layout(location = 1) in vec4 color;
-out vec4 vs_color;
+layout(location = 0) out vec4 vs_color;
 
 void main(void)
 {
@@ -135,8 +140,8 @@ void main(void)
     //      uniform 0 : GL MatrixCalc
     // Out:
     //      gl_Position
-    //      vs_textureCoordinate
-    //      modelpos
+    //      location 0 : vs_textureCoordinate
+    //      location 1 : modelpos
 
     public class GLPLVertexShaderTextureWorldCoord : GLShaderPipelineShadersBase
     {
@@ -148,14 +153,14 @@ void main(void)
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
 
+layout (location = 0) in vec4 position;
+layout(location = 1) in vec2 texco;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
-
-layout (location = 0) in vec4 position;
-layout(location = 1) in vec2 texco;
 
 layout(location = 0) out vec2 vs_textureCoordinate;
 layout(location = 1) out vec3 modelpos;
@@ -182,8 +187,8 @@ void main(void)
     //      uniform 0 : GL MatrixCalc
     // Out:
     //      gl_Position
-    //      vs_textureCoordinate per triangle strip rules
-    //      modelpos
+    //      location 0 : vs_textureCoordinate per triangle strip rules
+    //      location 1 : modelpos
 
     public class GLPLVertexShaderTextureWorldCoordWithTriangleStripCoord : GLShaderPipelineShadersBase
     {
@@ -195,13 +200,13 @@ void main(void)
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
 
+layout (location = 0) in vec4 position;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
-
-layout (location = 0) in vec4 position;
 
 layout(location = 0) out vec2 vs_textureCoordinate;
 layout(location = 1) out vec3 modelpos;
@@ -230,7 +235,7 @@ void main(void)
     //      uniform 0 : GL MatrixCalc with ScreenMatrix set up
     // Out:
     //      gl_Position
-    //      vs_textureCoordinate per triangle strip rules
+    //      location 0 : vs_textureCoordinate per triangle strip rules
     //      z=0 placing it in foreground
 
     public class GLPLVertexShaderTextureScreenCoordWithTriangleStripCoord : GLShaderPipelineShadersBase
@@ -243,13 +248,13 @@ void main(void)
 #version 450 core
 #include UniformStorageBlocks.matrixcalc.glsl
 
+layout (location = 0) in vec4 position;
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
         float gl_ClipDistance[];
     };
-
-layout (location = 0) in vec4 position;
 
 layout(location = 0) out vec2 vs_textureCoordinate;
 

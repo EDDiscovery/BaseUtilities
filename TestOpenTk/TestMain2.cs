@@ -98,14 +98,14 @@ namespace TestOpenTk
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
-                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, -10, -100), new Vector3(-100, -10, 100), new Vector3(10, 0, 0), 21),
+                                                        GLShapeObjectFactory.CreateLines(new Vector3(-100, -0, -100), new Vector3(-100, -0, 100), new Vector3(10, 0, 0), 21),
                                                         new Color4[] { Color.Red, Color.Red, Color.DarkRed, Color.DarkRed })
                                    );
 
 
                 rObjects.Add(items.Shader("COSW"),
                              GLRenderableItem.CreateVector4Color4(items, lines,
-                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, -10, -100), new Vector3(100, -10, -100), new Vector3(0, 0, 10), 21),
+                                   GLShapeObjectFactory.CreateLines(new Vector3(-100, -0, -100), new Vector3(100, -0, -100), new Vector3(0, 0, 10), 21),
                                                         new Color4[] { Color.Red, Color.Red, Color.DarkRed, Color.DarkRed }));
             }
             if (true)
@@ -190,6 +190,31 @@ namespace TestOpenTk
 
             #endregion
 
+            #region Text Renderer
+
+            {
+                using (StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap) { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    Size bitmapsize = new Size(64, 20);
+                    float width = 2.5f;
+                    Vector3 bannersize = new Vector3(width, 0, 0);
+                    Font f = new Font("MS sans serif", 12f);
+                    ti = new GLTextRenderer(bitmapsize, 10, true);
+                    ti.AutoResize = true;
+                    ti.Add("T1","Fred", f, Color.White, Color.Red, new Vector3(10, 5, 0), bannersize, new Vector3(-90F.Radians(), 0, 0),fmt);
+                    ti.Add("T2","Jim", f, Color.White, Color.Red, new Vector3(20, 5, 0), bannersize, new Vector3(0, 0, 0), fmt, rotatetoviewer: true);
+                    ti.Add("T3","George", f, Color.White, Color.Red, new Vector3(30, 5, 0), bannersize, new Vector3(0, 0, 0), fmt, rotatetoviewer: true, rotateelevation:true);
+                    rObjects.Add(ti.Shader, ti.RenderableItem);
+
+                    ti.Remove("T2");
+                    ti.Resize(200);
+                }
+            }
+
+
+            #endregion
+
+
             #region Matrix Calc Uniform
 
             items.Add(new GLMatrixCalcUniformBlock(),"MCUB");     // def binding of 0
@@ -201,6 +226,8 @@ namespace TestOpenTk
 
         }
 
+        GLTextRenderer ti;
+
         private void ShaderTest_Closed(object sender, EventArgs e)
         {
             items.Dispose();
@@ -210,49 +237,11 @@ namespace TestOpenTk
         {
             //System.Diagnostics.Debug.WriteLine("Draw");
 
-            float degrees = ((float)time / 5000.0f * 360.0f) % 360f;
-            float degreesd2 = ((float)time / 10000.0f * 360.0f) % 360f;
-            float degreesd4 = ((float)time / 20000.0f * 360.0f) % 360f;
-            float zeroone = (degrees >= 180) ? (1.0f - (degrees - 180.0f) / 180.0f) : (degrees / 180f);
-
-            if (rObjects.Contains("woodbox"))
-            {
-                ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).XRotDegrees = degrees;
-                ((GLRenderDataTranslationRotation)(rObjects["woodbox"].RenderData)).ZRotDegrees = degrees;
-
-                ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).YRotDegrees = degrees;
-                ((GLRenderDataTranslationRotation)(rObjects["EDDCube"].RenderData)).ZRotDegrees = degreesd2;
-
-            }
-
-            if (items.Contains("TEXOCT"))
-                ((GLPLVertexShaderTextureModelCoordsWithObjectCommonTranslation)items.Shader("TEXOCT").Get(OpenTK.Graphics.OpenGL4.ShaderType.VertexShader)).Transform.YRotDegrees = degrees;
-
-            if (items.Contains("TEX2DA"))
-                ((GLPLFragmentShaderTexture2DBlend)items.Shader("TEX2DA").Get(OpenTK.Graphics.OpenGL4.ShaderType.FragmentShader)).Blend = zeroone;
-
-            if (items.Contains("tapeshader"))
-                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader")).TexOffset = new Vector2(degrees / 360f, 0.0f);
-            if (items.Contains("tapeshader2"))
-                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader2")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
-            if (items.Contains("tapeshader3"))
-                ((GLTexturedShaderTriangleStripWithWorldCoord)items.Shader("tapeshader3")).TexOffset = new Vector2(-degrees / 360f, 0.0f);
-
-            if (items.Contains("TESx1"))
-                ((GLTesselationShaderSinewave)items.Shader("TESx1")).Phase = degrees / 360.0f;
-            if (items.Contains("TESIx1"))
-                ((GLTesselationShaderSinewaveAutoscaleLookatInstanced)items.Shader("TESIx1")).Phase = degrees / 360.0f;
-
-            GLStatics.Check();
             GLMatrixCalcUniformBlock mcub = (GLMatrixCalcUniformBlock)items.UB("MCUB");
             mcub.SetFull(gl3dcontroller.MatrixCalc);
 
             rObjects.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
-
-            GL.FrontFace(FrontFaceDirection.Cw);
-            rObjectscw.Render(glwfc.RenderState, gl3dcontroller.MatrixCalc);
-            GL.FrontFace(FrontFaceDirection.Ccw);
-
+            
             var azel = gl3dcontroller.PosCamera.EyePosition.AzEl(gl3dcontroller.PosCamera.Lookat, true);
 
             this.Text = "Looking at " + gl3dcontroller.MatrixCalc.TargetPosition + " from " + gl3dcontroller.MatrixCalc.EyePosition + " cdir " + gl3dcontroller.PosCamera.CameraDirection + " azel " + azel + " zoom " + gl3dcontroller.PosCamera.ZoomFactor + " dist " + gl3dcontroller.MatrixCalc.EyeDistance + " FOV " + gl3dcontroller.MatrixCalc.FovDeg;

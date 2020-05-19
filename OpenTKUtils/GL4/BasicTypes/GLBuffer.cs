@@ -40,15 +40,31 @@ namespace OpenTKUtils.GL4
             AllocateBytes(allocatesize, bh);
         }
 
-        #region Allocate first, then Fill Direct - cache is not involved, so you can't use the cache write functions 
-        
+        #region Allocate first
+
         public void AllocateBytes(int bytessize, BufferUsageHint uh = BufferUsageHint.StaticDraw)  // call first to set buffer size.. allow for alignment in your size
         {
             if (bytessize > 0)                                               // can call twice - get fresh buffer each time
             {
-                BufferSize = bytessize;
-                GL.NamedBufferData(Id, BufferSize, (IntPtr)0, uh);               // set buffer size
+                Length = bytessize;
+                GL.NamedBufferData(Id, Length, (IntPtr)0, uh);               // set buffer size
                 CurrentPos = 0;                                                  // reset back to zero as this clears the buffer
+                Positions.Clear();
+                OpenTKUtils.GLStatics.Check();
+            }
+        }
+
+        public void Resize(int newlength, BufferUsageHint uh = BufferUsageHint.StaticDraw)      // newlength can be zero, meaning discard and go back to start
+        {
+            if (Length != newlength)
+            {
+                GL.CreateBuffers(1, out int newid);
+                if (newlength > 0)
+                    GL.NamedBufferData(newid, newlength, (IntPtr)0, uh);               // set buffer size
+                if (newlength > 0 && Length > 0)
+                    GL.CopyNamedBufferSubData(Id, newid, (IntPtr)0, (IntPtr)0, Length);
+                Id = newid;
+                Length = newlength;
                 Positions.Clear();
                 OpenTKUtils.GLStatics.Check();
             }
@@ -217,24 +233,25 @@ namespace OpenTKUtils.GL4
             Fill(packeddata);
         }
 
-        public void ZeroBuffer()    // after allocated
+        public void ZeroBuffer()    // after allocated, zeros from currentpos onwards.
         {
-            System.Diagnostics.Debug.Assert(BufferSize != 0);
-            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, BufferSize, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
+            System.Diagnostics.Debug.Assert(Length != 0);
+            int left = Length - CurrentPos;
+            int pos = AlignScalar(1,left);
+            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)pos, left, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
             OpenTKUtils.GLStatics.Check();
         }
 
         public void ZeroBuffer(int size)
         {
             AllocateBytes(size);
-            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)0, BufferSize, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
-            OpenTKUtils.GLStatics.Check();
+            ZeroBuffer();
         }
 
         public void FillRectangularIndicesBytes(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff
         {
             AllocateBytes(reccount * 5);
-            StartWrite(0, BufferSize);
+            StartWrite(0, Length);
             for (int r = 0; r < reccount; r++)
             {
                 byte[] ar = new byte[] { (byte)(r * 4), (byte)(r * 4 + 1), (byte)(r * 4 + 2), (byte)(r * 4 + 3), (byte)restartindex };
@@ -247,7 +264,7 @@ namespace OpenTKUtils.GL4
         public void FillRectangularIndicesShort(int reccount, int restartindex = 0xffff)        // rectangular indicies with restart of 0xff
         {
             AllocateBytes(reccount * 5 * sizeof(short));     // lets use short because we don't have a marshall copy ushort.. ignore the overflow
-            StartWrite(0, BufferSize);
+            StartWrite(0, Length);
             for (int r = 0; r < reccount; r++)
             {
                 short[] ar = new short[] { (short)(r * 4), (short)(r * 4 + 1), (short)(r * 4 + 2), (short)(r * 4 + 3), (short)restartindex };
@@ -273,9 +290,9 @@ namespace OpenTKUtils.GL4
         public void StartWrite(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write.. (0=all buffer)
         {
             if (datasize == 0)
-                datasize = BufferSize - fillpos;
+                datasize = Length - fillpos;
 
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= Length); // catch double maps
 
             CurrentPtr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapWriteBit | BufferAccessMask.MapInvalidateRangeBit);
             CurrentPos = fillpos;
@@ -286,9 +303,9 @@ namespace OpenTKUtils.GL4
         public void StartRead(int fillpos, int datasize = 0)        // update the buffer with an area of updated cache on a write (0=all buffer)
         {
             if (datasize == 0)
-                datasize = BufferSize - fillpos;
+                datasize = Length - fillpos;
 
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= BufferSize); // catch double maps
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && fillpos + datasize <= Length); // catch double maps
 
             CurrentPtr = GL.MapNamedBufferRange(Id, (IntPtr)fillpos, datasize, BufferAccessMask.MapReadBit);
             CurrentPos = fillpos;
@@ -308,7 +325,7 @@ namespace OpenTKUtils.GL4
             System.Diagnostics.Debug.Assert(mapmode != MapMode.None);
             CurrentPtr += p;
             CurrentPos += p;
-            System.Diagnostics.Debug.Assert(CurrentPos <= BufferSize);
+            System.Diagnostics.Debug.Assert(CurrentPos <= Length);
             OpenTKUtils.GLStatics.Check();
         }
 
@@ -603,6 +620,15 @@ namespace OpenTKUtils.GL4
             return new Vector4(data[0], data[1], data[2], data[3]);
         }
 
+        public Matrix4 ReadMatrix4()
+        {
+            var data = new float[16];
+            var p  = AlignArrayPtr(Vec4size,4);
+            System.Runtime.InteropServices.Marshal.Copy(p.Item1, data, 0, 16);
+            return new Matrix4(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+                                data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]);
+        }
+
         #endregion
 
         #region Fast Read functions
@@ -663,14 +689,14 @@ namespace OpenTKUtils.GL4
 
         public void BindElement()
         {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && BufferSize > 0);     // catch unmap missing or nothing in buffer
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && Length > 0);     // catch unmap missing or nothing in buffer
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Id);
             OpenTKUtils.GLStatics.Check();
         }
 
         public void BindIndirect()
         {
-            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && BufferSize > 0);     // catch unmap missing or nothing in buffer
+            System.Diagnostics.Debug.Assert(mapmode == MapMode.None && Length > 0);     // catch unmap missing or nothing in buffer
             GL.BindBuffer(BufferTarget.DrawIndirectBuffer, Id);
             OpenTKUtils.GLStatics.Check();
         }

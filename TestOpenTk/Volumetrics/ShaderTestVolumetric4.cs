@@ -124,7 +124,7 @@ void main(void)
             gl3dcontroller.ZoomDistance = 80F;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.1f;
 
-            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3( 90f.Radians(), 0, 0), 1F);
+            gl3dcontroller.Start(glwfc, new Vector3(0, 0, 0), new Vector3( 135, 0, 0), 1F);
 
 
             items.Add(new GLColourShaderWithWorldCoord(), "COSW");
@@ -256,7 +256,7 @@ void main(void)
         {
             ((GLMatrixCalcUniformBlock)items.UB("MCUB")).Set(gl3dcontroller.MatrixCalc);        // set the matrix unform block to the controller 3d matrix calc.
 
-            pointblock.StartWrite(0, pointblock.BufferSize);
+            pointblock.StartWrite(0, pointblock.Length);
             float minzv = float.MaxValue, maxzv = float.MinValue;
             for (int i = 0; i < 8; i++)
             {

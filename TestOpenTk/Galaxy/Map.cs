@@ -166,7 +166,7 @@ namespace TestOpenTk
                             //System.Diagnostics.Debug.Write(c);
                             GLPointsFactory.RandomStars4(buf, c, gx, gx + xcw, gz, gz + zch, (int)dist, (int)-dist, rnd, w: 0.8f);
                             points += c;
-                            System.Diagnostics.Debug.Assert(points < buf.BufferSize / 16);
+                            System.Diagnostics.Debug.Assert(points < buf.Length / 16);
                         }
                     }
                     //System.Diagnostics.Debug.WriteLine(".");

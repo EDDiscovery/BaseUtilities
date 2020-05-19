@@ -367,11 +367,11 @@ namespace OpenTKUtils.GL4
         }
 
         // in 0,4-7 set up
-        public static GLRenderableItem CreateVector4Matrix4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Matrix4[] matrix, IGLRenderItemData id = null, int ic = 1, int matrixdivisor=1)
+        public static GLRenderableItem CreateVector4Matrix4(GLItemsList items, GLRenderControl pt, Vector4[] vectors, Matrix4[] matrix, IGLRenderItemData id = null, int ic = 1, int matrixdivisor = 1)
         {
             var vb = items.NewBuffer();
 
-            vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length + GLBuffer.Mat4size * matrix.Length);    
+            vb.AllocateBytes(GLBuffer.Vec4size * vectors.Length + GLBuffer.Mat4size * matrix.Length);
             vb.Fill(vectors);
             vb.Fill(matrix);
 
@@ -384,6 +384,41 @@ namespace OpenTKUtils.GL4
             va.MatrixAttribute(2, 4);                           // bp 2 at attribs 4-7
 
             return new GLRenderableItem(pt, vectors.Length, va, id, ic);
+        }
+
+        // in 4-7 set up
+        public static GLRenderableItem CreateMatrix4(GLItemsList items, GLRenderControl pt, Matrix4[] matrix, int drawcount, IGLRenderItemData id = null, int ic = 1, int matrixdivisor = 1)
+        {
+            var vb = items.NewBuffer();
+
+            vb.AllocateBytes(GLBuffer.Mat4size * matrix.Length);
+            vb.Fill(matrix);
+
+            var va = items.NewArray();
+
+            vb.Bind(va, 2, vb.Positions[0], 64, matrixdivisor);     // use a binding 
+            va.MatrixAttribute(2, 4);                           // bp 2 at attribs 4-7
+
+            return new GLRenderableItem(pt, drawcount, va, id, ic);
+        }
+
+        // in 4-7 set up
+        public static GLRenderableItem CreateMatrix4(GLItemsList items, GLRenderControl pt, GLBuffer vb, int drawcount, IGLRenderItemData id = null, int ic = 1, int matrixdivisor = 1)
+        {
+            var ri = new GLRenderableItem(pt, drawcount, null, id, ic);
+            ri.CreateMatrix4(items, vb, matrixdivisor);
+            return ri;
+        }
+
+        // in 4-7 set up - create over the top of an existing RI
+        public void CreateMatrix4(GLItemsList items, GLBuffer vb, int matrixdivisor = 1)
+        {
+            VertexArray?.Dispose();
+            var va = items.NewArray();
+            VertexArray = va;
+
+            vb.Bind(va, 2, vb.Positions[0], 64, matrixdivisor);     // use a binding 
+            va.MatrixAttribute(2, 4);                           // bp 2 at attribs 4-7
         }
 
         // in 0 set up
@@ -430,7 +465,7 @@ namespace OpenTKUtils.GL4
             ElementBuffer = elementbuf;
             ElementBuffer.FillRectangularIndicesBytes(reccount, restartindex);
             DrawType = DrawElementsType.UnsignedByte;
-            DrawCount = ElementBuffer.BufferSize - 1;
+            DrawCount = ElementBuffer.Length - 1;
 
             //byte[] b = elementbuf.ReadBuffer(0, elementbuf.BufferSize); // test read back
         }
@@ -440,7 +475,7 @@ namespace OpenTKUtils.GL4
             ElementBuffer = elementbuf;
             ElementBuffer.FillRectangularIndicesShort(reccount, restartindex);
             DrawType = DrawElementsType.UnsignedShort;
-            DrawCount = ElementBuffer.BufferSize - 1;
+            DrawCount = ElementBuffer.Length - 1;
         }
 
         public void CreateElementIndexByte(GLBuffer elementbuf, byte[] indexes, int base_index = 0)
