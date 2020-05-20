@@ -98,10 +98,10 @@ namespace OpenTKUtils.GL4
 
         public void Fill(Vector2[] vertices)
         {
+            int datasize = vertices.Length * Vec2size;
+            int posv = AlignArray(Vec2size, datasize);
             if (vertices.Length > 0)
             {
-                int datasize = vertices.Length * Vec2size;
-                int posv = AlignArray(Vec2size, datasize);
                 GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
                 OpenTKUtils.GLStatics.Check();
             }
@@ -117,10 +117,11 @@ namespace OpenTKUtils.GL4
 
         public void Fill(Vector4[] vertices)
         {
+            int datasize = vertices.Length * Vec4size;
+            int posv = AlignArray(Vec4size, datasize);
+
             if (vertices.Length > 0)
             {
-                int datasize = vertices.Length * Vec4size;
-                int posv = AlignArray(Vec4size, datasize);
                 GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, vertices);
                 OpenTKUtils.GLStatics.Check();
             }
@@ -141,10 +142,10 @@ namespace OpenTKUtils.GL4
 
         public void Fill(Matrix4[] mats)
         {
+            int datasize = mats.Length * Mat4size;
+            int posv = AlignArray(Vec4size, datasize);
             if (mats.Length > 0)
             {
-                int datasize = mats.Length * Mat4size;
-                int posv = AlignArray(Vec4size, datasize);
                 GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, mats);
                 OpenTKUtils.GLStatics.Check();
             }
@@ -179,10 +180,10 @@ namespace OpenTKUtils.GL4
 
         public void Fill(ushort[] words)
         {
+            int datasize = words.Length * sizeof(ushort);
+            int posv = AlignArray(sizeof(ushort), datasize);
             if (words.Length > 0)
             {
-                int datasize = words.Length * sizeof(ushort);
-                int posv = AlignArray(sizeof(ushort), datasize);
                 GL.NamedBufferSubData(Id, (IntPtr)posv, datasize, words);
                 OpenTKUtils.GLStatics.Check();
             }
@@ -196,10 +197,10 @@ namespace OpenTKUtils.GL4
 
         public void Fill(uint[] data)
         {
+            int datasize = data.Length * sizeof(uint);
+            int pos = AlignArray(sizeof(uint), datasize);
             if (data.Length > 0)
             {
-                int datasize = data.Length * sizeof(uint);
-                int pos = AlignArray(sizeof(uint), datasize);
                 GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
                 OpenTKUtils.GLStatics.Check();
             }
@@ -213,10 +214,10 @@ namespace OpenTKUtils.GL4
 
         public void Fill(byte[] data)      
         {
+            int datasize = data.Length;
+            int pos = AlignArray(sizeof(byte), datasize);        //tbd
             if (data.Length > 0)
             {
-                int datasize = data.Length;
-                int pos = AlignArray(sizeof(byte), datasize);        //tbd
                 GL.NamedBufferSubData(Id, (IntPtr)pos, datasize, data);
                 OpenTKUtils.GLStatics.Check();
             }

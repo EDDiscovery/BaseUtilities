@@ -74,9 +74,12 @@ void main(void)
     //      uniform 4 : transform: mat4 array of transforms, one per instance 
     //              [col=3,row=0] is the image index, 
     //              [col=3,row=1] 0 rotate as per matrix, 1 means look at in azimuth, 2 look at in elevation and azimuth, -1 means cull primitive
+    //              [col=3,row=2] Fade distance, 0 = none.  formula is alpha = clamp((EyeDistance-fade end)/Fade distance,0,1).  Fades as you get closer
+    //              [col=3,row=3] Fast End, 0 = none.  f
     // Out:
     //      location 0 : vs_textureCoordinate
     //      location 2 : image index to use
+    //      location 3 : alpha blend to use
     //      gL_Position
 
     public class GLPLVertexShaderQuadTextureWithMatrixTranslation : GLShaderPipelineShadersBase
@@ -102,9 +105,10 @@ void main(void)
     layout( location = 0) out vec2 vs_textureCoordinate;
     layout (location = 2) out VS_OUT
     {
-        flat int vs_index;      // not sure why structuring is needed..
+        flat int vs_index;     
     } vs;
-
+    layout (location = 3) out float alpha;
+    
     vec4 vertex[] = { vec4(-1,0,1,1), vec4(-1,0,-1,1), vec4(1,0,-1,1), vec4(1,0,1,1)};      // flat on z plane is the default
     vec2 tex[] = { vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,0)};
 
@@ -112,13 +116,21 @@ void main(void)
     {
         mat4 tx = transform;
         vs.vs_index = int(tx[0][3]);
-        tx[0][3] = 0;
+
+        vec3 worldposition = vec3(tx[3][0],tx[3][1],tx[3][2]);      // extract world position
+
+        if ( tx[2][3]>0)
+        {
+            float dist = length(mc.EyePosition.xyz-worldposition);
+            alpha = clamp((dist-tx[3][3])/tx[2][3],0,1);
+        }
+        else
+            alpha = 1;
 
         float ctrl = tx[1][3];
 
         if ( ctrl >= 1 )    // very confused over this, this is row/column order, but the info says its col/row order
         {
-            vec3 worldposition = vec3(tx[3][0],tx[3][1],tx[3][2]);      // extract world position
             vec3 scale = vec3(tx[0][0],tx[1][1],tx[2][2]);              // extrace scale only
 
             vec2 dir = AzEl(worldposition,mc.EyePosition.xyz);      // y = azimuth
@@ -143,6 +155,8 @@ void main(void)
         }
         else    
         {
+            tx[0][3] = tx[1][3] = tx[2][3] = 0;
+            tx[3][3] = 1;
             gl_CullDistance[0] = +1;        // not culled
             gl_Position = mc.ProjectionModelMatrix * tx * vertex[gl_VertexID];        // order important
         }

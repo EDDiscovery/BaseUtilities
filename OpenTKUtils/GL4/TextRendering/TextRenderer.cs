@@ -59,7 +59,7 @@ namespace OpenTKUtils.GL4
             Max = max;
             Deleted = 0;
 
-            Shader = new GLShaderPipeline(new GLPLVertexShaderQuadTextureWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0));
+            Shader = new GLShaderPipeline(new GLPLVertexShaderQuadTextureWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0,alphablend:true));
             items.Add(Shader);
             Shader.StartAction += (s) => { if (TextureDirty) CreateTexture(); textures.Bind(1); };
 
@@ -85,7 +85,8 @@ namespace OpenTKUtils.GL4
                                     Vector3 size,       // Note if Y and Z are zero, then Z is set to same ratio to width as bitmap
                                     Vector3 rotationradians,
                                     StringFormat fmt = null, float backscale = 1.0f,
-                                    bool rotatetoviewer = false, bool rotateelevation = false   // if set, rotationradians not used
+                                    bool rotatetoviewer = false, bool rotateelevation = false,   // if set, rotationradians not used
+                                    float alphascale = 0 , float alphaend = 0
                                 ) 
         {
             if (size.Z == 0 && size.Y == 0)
@@ -117,6 +118,8 @@ namespace OpenTKUtils.GL4
             mat = Matrix4.Mult(mat, Matrix4.CreateTranslation(worldpos));
             mat[0, 3] = pos;     // store pos of image in stack
             mat[1, 3] = rotatetoviewer ? (rotateelevation ? 2 : 1) : 0;  // and rotation selection
+            mat[2, 3] = alphascale;
+            mat[3, 3] = alphaend;
 
             System.Diagnostics.Debug.WriteLine("Pos {0} Matrix {1}", pos, mat);
             matrixbuffer.StartWrite(GLLayoutStandards.Mat4size * pos);

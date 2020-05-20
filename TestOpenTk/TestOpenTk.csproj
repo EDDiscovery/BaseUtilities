@@ -359,6 +359,7 @@
     <None Include="Resources\dotted2.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\EliteGalacticRegions.json" />
     <None Include="Resources\galacticmapping.json" />
     <None Include="Resources\golden.bmp" />
   </ItemGroup>

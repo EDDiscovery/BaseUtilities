@@ -123,7 +123,7 @@ void main(void)
             gl3dcontroller.MatrixCalc.PerspectiveNearZDistance = 0.1f;
             gl3dcontroller.ZoomDistance = 40F;
             gl3dcontroller.MouseRotateAmountPerPixel = 0.05f;
-            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3( 90f.Radians(), 0, 0), 1F);
+            gl3dcontroller.Start(glwfc,new Vector3(0, 0, 0), new Vector3(135f, 0, 0), 1F);
 
             gl3dcontroller.KeyboardTravelSpeed = (ms,eyedist) =>
             {
@@ -169,10 +169,10 @@ void main(void)
 
                 GLTexture2DArray array = new GLTexture2DArray(numbers, ownbitmaps: true);
                 items.Add(array, "Nums");
-                items.Add(new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0)), "IC-2");
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderTextureModelCoordWithMatrixTranslation(), new GLPLFragmentShaderTexture2DIndexed(0,4)), "IC-2");
 
                 GLRenderControl rq = GLRenderControl.Quads(cullface:false);
-                GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"));
+                GLRenderDataTexture rt = new GLRenderDataTexture(items.Tex("Nums"),4);
 
                 rObjects.Add(items.Shader("IC-2"), "1-b",
                                         GLRenderableItem.CreateVector4Vector2Matrix4(items, rq,

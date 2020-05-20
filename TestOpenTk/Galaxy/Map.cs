@@ -21,6 +21,7 @@ namespace TestOpenTk
         public Controller3D gl3dcontroller;
         public GLControlDisplay displaycontrol;
         public GalacticMapping galmap;
+        public GalacticMapping eliteregions;
 
         private OpenTKUtils.WinForm.GLWinFormControl glwfc;
 
@@ -58,10 +59,11 @@ namespace TestOpenTk
 
         #region Initialise
 
-        public void Start(OpenTKUtils.WinForm.GLWinFormControl glwfc, GalacticMapping galmap)
+        public void Start(OpenTKUtils.WinForm.GLWinFormControl glwfc, GalacticMapping galmap, GalacticMapping eliteregions)
         {
             this.glwfc = glwfc;
             this.galmap = galmap;
+            this.eliteregions = eliteregions;
 
             sw.Start();
 
@@ -266,10 +268,8 @@ namespace TestOpenTk
             if (true)
             {
                 edsmgalmapregions = new GalMapRegions();
-                edsmgalmapregions.CreateObjects(items, rObjects, galmap);
-
+                edsmgalmapregions.CreateObjects(items, rObjects, eliteregions);
             }
-
 
             // menu system
 

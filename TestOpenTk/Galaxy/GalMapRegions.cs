@@ -21,15 +21,15 @@ namespace TestOpenTk
                                                     Color.DarkCyan , Color.DarkGray , Color.ForestGreen , Color.LightSkyBlue ,
                                                     Color.Lime , Color.Maroon, Color.Olive, Color.SteelBlue};
 
-        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap)
+        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, float sizeofname = 5000)
         {
             List<Vector4> vertexcolourregions = new List<Vector4>();
             List<Vector4> vertexregionsoutlines = new List<Vector4>();
             List<ushort> vertexregionoutlineindex = new List<ushort>();
 
-            textrenderer = new GLTextRenderer(new Size(256,20),200,depthtest:false);
+            textrenderer = new GLTextRenderer(new Size(250,22),200,depthtest:false);
             StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap) { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-            Font fnt = new Font("MS Sans Serif", 8.25F);
+            Font fnt = new Font("MS Sans Serif", 12F);
 
             int cindex = 0;
 
@@ -51,49 +51,54 @@ namespace TestOpenTk
 
                     List<List<Vector2>> polys = PolygonTriangulator.Triangulate(polygonxz, false);  // cut into convex polygons first - because we want the biggest possible area for naming purposes
 
-                    Vector2 size, avg;
-                    Vector2 bestpos = PolygonTriangulator.Centre(polygonxz, out size, out avg);  // default geographic centre (min x/z + max x/z/2) used in case poly triangulate fails (unlikely)
-                    Vector2 bestsize = new Vector2(250, 250 / 5);
+                    Vector2 avgcentroid = new Vector2(0, 0);
+                    int pointsaveraged = 0;
 
                     if (polys.Count > 0)                                                      // just in case..
                     {
                         Vector2 centre = PolygonTriangulator.Centroids(polys);                       // weighted mean of the centroids
 
-                        float mindist = float.MaxValue;
-
                         foreach (List<Vector2> points in polys)                         // now for every poly
                         {
+                            List<List<Vector2>> polytri;
                             if (points.Count == 3)                                    // already a triangle..
-                            {
-                                vertexcolourregions.Add(points[0].ToVector4XZ(w: cindex));
-                                vertexcolourregions.Add(points[2].ToVector4XZ(w: cindex));
-                                vertexcolourregions.Add(points[1].ToVector4XZ(w: cindex));
-                            }
+                                polytri = new List<List<Vector2>>() { new List<Vector2>() { points[0], points[1], points[2] } };
                             else
+                                polytri = PolygonTriangulator.Triangulate(points, true);    // cut into triangles not polygons
+
+                            foreach (List<Vector2> pt in polytri)
                             {
-                                List<List<Vector2>> polytri = PolygonTriangulator.Triangulate(points, true);    // cut into triangles not polygons
+                                vertexcolourregions.Add(pt[0].ToVector4XZ(w: cindex));
+                                vertexcolourregions.Add(pt[2].ToVector4XZ(w: cindex));
+                                vertexcolourregions.Add(pt[1].ToVector4XZ(w: cindex));
 
-                                foreach (List<Vector2> pt in polytri)
-                                {
-                                    vertexcolourregions.Add(pt[0].ToVector4XZ(w: cindex));
-                                    vertexcolourregions.Add(pt[2].ToVector4XZ(w: cindex));
-                                    vertexcolourregions.Add(pt[1].ToVector4XZ(w: cindex));
-                                }
+                                var cx = (pt[0].X + pt[1].X + pt[2].X) / 3;
+                                var cy = (pt[0].Y + pt[1].Y + pt[2].Y) / 3;
+                                avgcentroid = new Vector2(avgcentroid.X + cx, avgcentroid.Y + cy);
+                                pointsaveraged++;
+
+                                //foreach (var pd in pt) // debug
+                                //{
+                                //    vertexregionoutlineindex.Add((ushort)(vertexregionsoutlines.Count));
+                                //    vertexregionsoutlines.Add(new Vector4((float)pd.X, 0, (float)pd.Y, 1));
+                                //}
+                                //vertexregionoutlineindex.Add(0xffff);       // primitive restart to break polygon
                             }
-
-                            PolygonTriangulator.FitInsideConvexPoly(points, centre, new Vector2(3000, 3000 / 5), new Vector2(200, 200),
-                                                                    ref mindist, ref bestpos, ref bestsize, bestsize.X / 2);
                         }
 
                         cindex = (cindex+1) % array.Length;
                     }
 
-                    textrenderer.Add(null, gmo.name, fnt, Color.White, Color.Transparent, new Vector3(bestpos.X, 0, bestpos.Y), new Vector3(bestsize.X,0,0),new Vector3(0,0,0), fmt);
+                    Vector3 bestpos = new Vector3(avgcentroid.X / pointsaveraged + (float)gmo.textadjustx, 0, avgcentroid.Y / pointsaveraged + (float)gmo.textadjusty);
+
+                    textrenderer.Add(null, gmo.name, fnt, Color.White, Color.Transparent, bestpos, new Vector3(sizeofname,0,0),new Vector3(0,0,0), fmt, alphascale:10000, alphaend:1000);
                 }
             }
 
             fmt.Dispose();
             fnt.Dispose();
+
+            
             // regions
 
             var vertregion = new GLPLVertexShaderFixedColourPalletWorldCoords(array.ToVector4(0.1f));

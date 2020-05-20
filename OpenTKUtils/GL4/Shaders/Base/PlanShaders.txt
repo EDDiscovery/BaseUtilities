@@ -2,7 +2,13 @@
 
 0 = vec4 positions
 1 = vec4 colour | vec2 texcoord | model positions
-4-7 = mat4 transforms
+2 = instance positions
+
+Vertex Out's
+0 vstexcoord/vs_color
+1 modelpos
+2 instance/image index
+3 alpha correction
 
 Textures
 

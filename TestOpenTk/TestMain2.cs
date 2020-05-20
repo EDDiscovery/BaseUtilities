@@ -201,7 +201,7 @@ namespace TestOpenTk
                     Font f = new Font("MS sans serif", 12f);
                     ti = new GLTextRenderer(bitmapsize, 10, true);
                     ti.AutoResize = true;
-                    ti.Add("T1","Fred", f, Color.White, Color.Red, new Vector3(10, 5, 0), bannersize, new Vector3(-90F.Radians(), 0, 0),fmt);
+                    ti.Add("T1","Fred", f, Color.White, Color.Red, new Vector3(10, 5, 0), bannersize, new Vector3(-90F.Radians(), 0, 0),fmt, alphascale:10, alphaend:5);
                     ti.Add("T2","Jim", f, Color.White, Color.Red, new Vector3(20, 5, 0), bannersize, new Vector3(0, 0, 0), fmt, rotatetoviewer: true);
                     ti.Add("T3","George", f, Color.White, Color.Red, new Vector3(30, 5, 0), bannersize, new Vector3(0, 0, 0), fmt, rotatetoviewer: true, rotateelevation:true);
                     rObjects.Add(ti.Shader, ti.RenderableItem);

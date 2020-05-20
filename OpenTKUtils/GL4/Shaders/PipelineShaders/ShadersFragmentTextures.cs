@@ -97,32 +97,41 @@ void main(void)
 
     public class GLPLFragmentShaderTexture2DIndexed : GLShaderPipelineShadersBase
     {
-        public string Code(int offset, int binding)
+        public string Code()
         {
             return
 @"
 #version 450 core
 layout (location=0) in vec2 vs_textureCoordinate;
-layout (binding=" + binding.ToStringInvariant() + @") uniform sampler2DArray textureObject2D;
+
+const int texbinding = 1;
+layout (binding=texbinding) uniform sampler2DArray textureObject2D;
 
 layout (location = 2) in VS_IN
 {
     flat int vs_instanced;      // not sure why structuring is needed..
 } vs;
 
+layout (location = 3) in float alpha;
+
 out vec4 color;
+
+const bool enablealphablend = false;
+const int imageoffset = 0;
 
 void main(void)
 {
-    color = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced+ " + offset.ToStringInvariant() + @"));
-//color = vec4(1,1,0,1);
+    vec4 cx = texture(textureObject2D, vec3(vs_textureCoordinate,vs.vs_instanced+imageoffset));
+    if ( enablealphablend )
+        cx.w *= alpha;
+    color = cx;
 }
 ";
         }
 
-        public GLPLFragmentShaderTexture2DIndexed(int offset, int binding = 1)
+        public GLPLFragmentShaderTexture2DIndexed(int offset, int binding = 1, bool alphablend = false)
         {
-            CompileLink(ShaderType.FragmentShader, Code(offset,binding), auxname: GetType().Name);
+            CompileLink(ShaderType.FragmentShader, Code(), new object[] { "enablealphablend", alphablend, "texbinding",binding, "imageoffset",offset }, auxname: GetType().Name);
         }
     }
 
