@@ -164,7 +164,7 @@ void main(void)
             }
 
             var vert = new GLPLVertexShaderModelCoordWithWorldTranslationCommonModelTranslation2();
-            var frag = new GLPLFragmentShaderColour();
+            var frag = new GLPLFragmentShaderVSColour();
             var shader = new GLShaderPipeline(vert, frag);
             items.Add(shader, "TRI");
 

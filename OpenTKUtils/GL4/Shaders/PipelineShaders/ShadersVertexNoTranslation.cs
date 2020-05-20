@@ -14,6 +14,7 @@
  */
 
 using System;
+using System.Linq;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
@@ -108,7 +109,7 @@ void main(void)
 #include UniformStorageBlocks.matrixcalc.glsl
 
 layout (location = 0) in vec4 position;
-layout(location = 1) in vec4 color;
+layout (location = 1) in vec4 color;
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -272,5 +273,55 @@ void main(void)
             CompileLink(ShaderType.VertexShader, Code(), auxname: GetType().Name);
         }
     }
+
+    // Pipeline shader, Texture, real screen coords  (0-glcontrol.Width,0-glcontrol.height, 0,0 at top left)
+    // Requires:
+    //      location 0 : position: vec4 vertex array of world positions, w = colour image index
+    //      uniform 0 : GL MatrixCalc with ScreenMatrix set up
+    // Out:
+    //      location 0: vs_color
+    //      gl_Position
+
+    public class GLPLVertexShaderFixedColourPalletWorldCoords : GLShaderPipelineShadersBase
+    {
+        public string Code()
+        {
+            return
+@"
+#version 450 core
+#include UniformStorageBlocks.matrixcalc.glsl
+
+layout (location = 0) in vec4 position;
+
+out gl_PerVertex {
+        vec4 gl_Position;
+        float gl_PointSize;
+        float gl_ClipDistance[];
+    };
+
+layout(location = 0) out vec4 vs_color;
+
+const vec4[] palette = { };
+
+void main(void)
+{
+    vec4 pos = vec4(position.xyz,1);
+    int colourindex = int(position.w);
+	gl_Position = mc.ProjectionModelMatrix * pos;        // order important
+    vs_color = palette[colourindex];
+}
+";
+        }
+
+        public GLPLVertexShaderFixedColourPalletWorldCoords(Vector4[] varray)
+        {
+            CompileLink(ShaderType.VertexShader, Code(), constvalues: new object[] { "palette", varray }, auxname: GetType().Name);
+        }
+
+        public GLPLVertexShaderFixedColourPalletWorldCoords(System.Drawing.Color[] cpal) : this( cpal.ToVector4() )
+        { 
+        }
+    }
+
 
 }

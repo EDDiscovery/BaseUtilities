@@ -84,6 +84,11 @@ namespace OpenTKUtils
             return (float)Math.Atan2(end.Y - start.Y, end.X - start.X);
         }
 
+        public static Vector4 ToVector4XZ(this Vector2 vxz, float y = 0, float w = 1)
+        {
+            return new Vector4(vxz.X, y, vxz.Y, w);
+        }
+
 
     }
 }

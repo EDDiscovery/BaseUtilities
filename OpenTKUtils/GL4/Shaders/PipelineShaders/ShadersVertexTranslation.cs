@@ -105,7 +105,7 @@ void main(void)
         flat int vs_index;      // not sure why structuring is needed..
     } vs;
 
-    vec4 vertex[] = { vec4(-1,0,1,1), vec4(-1,0,-1,1), vec4(1,0,-1,1), vec4(1,0,1,1)};
+    vec4 vertex[] = { vec4(-1,0,1,1), vec4(-1,0,-1,1), vec4(1,0,-1,1), vec4(1,0,1,1)};      // flat on z plane is the default
     vec2 tex[] = { vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,0)};
 
     void main(void)
@@ -134,14 +134,18 @@ void main(void)
 
             tx = mat4translationscale(tx,worldposition,scale);      // apply stored world pos and scaling
 
+            gl_CullDistance[0] = +1;        // not culled
             gl_Position = mc.ProjectionModelMatrix * tx * vertex[gl_VertexID];        // order important
         }
         else if ( ctrl < 0 )
         {
             gl_CullDistance[0] = -1;        // all vertex culled
         }
-        else
+        else    
+        {
+            gl_CullDistance[0] = +1;        // not culled
             gl_Position = mc.ProjectionModelMatrix * tx * vertex[gl_VertexID];        // order important
+        }
 
         vs_textureCoordinate = tex[gl_VertexID];
     }

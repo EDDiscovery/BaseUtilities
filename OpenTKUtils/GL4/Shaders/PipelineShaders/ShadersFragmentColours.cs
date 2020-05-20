@@ -78,7 +78,7 @@ void main(void)
     // Requires:
     //      vs_color : vec4 of colour
 
-    public class GLPLFragmentShaderColour : GLShaderPipelineShadersBase
+    public class GLPLFragmentShaderVSColour : GLShaderPipelineShadersBase
     {
         public string Code()
         {
@@ -95,7 +95,7 @@ void main(void)
 ";
         }
 
-        public GLPLFragmentShaderColour()
+        public GLPLFragmentShaderVSColour()
         {
             CompileLink(ShaderType.FragmentShader, Code(), auxname: GetType().Name);
         }

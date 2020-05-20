@@ -23,6 +23,10 @@ using System.Linq;
 
 namespace OpenTKUtils.GL4
 {
+    // Class can hold varying number of text bitmaps, each can be rotated/sized/lookat individually.
+    // You can delete by tag name, and compress/resize the list when required if deletions get too big
+    // the number stored can autogrow
+
     public class GLTextRenderer : IDisposable
     {
         public GLRenderableItem RenderableItem { get; private set; }
@@ -43,14 +47,13 @@ namespace OpenTKUtils.GL4
         {
             public Bitmap bitmap;
             public Object tag;
-            public string tagstring;
         }
 
         private List<EntryInfo> entries = new List<EntryInfo>();
 
         private GLItemsList items = new GLItemsList();      // we have our own item list, which is disposed when we dispose
 
-        public GLTextRenderer(Size bitmapp, int max, bool cullface)
+        public GLTextRenderer(Size bitmapp, int max, bool cullface = true, bool depthtest = true)
         {
             bitmapsize = bitmapp;
             Max = max;
@@ -71,7 +74,8 @@ namespace OpenTKUtils.GL4
 
             var rc = GLRenderControl.Quads();
             rc.CullFace = cullface;
-            rc.ClipDistanceEnable = 1;
+            rc.DepthTest = depthtest;
+            rc.ClipDistanceEnable = 1;  // we are going to cull primitives which are deleted
             RenderableItem = GLRenderableItem.CreateMatrix4(items, rc, matrixbuffer, 4);
         }
 
@@ -100,7 +104,7 @@ namespace OpenTKUtils.GL4
             }
 
             Bitmap bmp = BitMapHelpers.DrawTextIntoFixedSizeBitmapC(text, bitmapsize, f, fore, back, backscale, false, fmt);
-            entries.Add(new EntryInfo() { bitmap = bmp, tag = tag, tagstring = tag is string ? (string)tag : null });
+            entries.Add(new EntryInfo() { bitmap = bmp, tag = tag });
 
             Matrix4 mat = Matrix4.Identity;
             mat = Matrix4.Mult(mat, Matrix4.CreateScale(size));
@@ -126,7 +130,7 @@ namespace OpenTKUtils.GL4
 
         public bool Remove(Object tag)
         {
-            int indexof = Array.IndexOf(entries.Select(x => tag is string ? x.tagstring : x.tag).ToArray(), tag);
+            int indexof = Array.IndexOf(entries.Select(x => tag is string ? (string)x.tag : x.tag).ToArray(), tag);
             return RemoveAt(indexof);
         }
 
@@ -168,7 +172,7 @@ namespace OpenTKUtils.GL4
 
                     if ( e.bitmap != null )
                     {
-                        newentries.Add(new EntryInfo() { bitmap = e.bitmap, tag = e.tag, tagstring = e.tagstring });
+                        newentries.Add(new EntryInfo() { bitmap = e.bitmap, tag = e.tag });
                         newbuffer.Write(m);
                     }
                 }

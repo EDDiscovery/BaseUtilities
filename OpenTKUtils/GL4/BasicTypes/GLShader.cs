@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTKUtils.GL4
@@ -143,6 +144,11 @@ namespace OpenTKUtils.GL4
                 else if (o is bool)
                 {
                     slist.Add("const bool " + name + " = " + ((bool)o == false ? "false" : "true") + ";");
+                }
+                else if (o is OpenTK.Vector4[])
+                {
+                    Vector4[] p = o as Vector4[];
+                    slist.Add("const vec4[] " + name + " = " + p.ToDefinition() + ";");
                 }
                 else
                     System.Diagnostics.Debug.Assert(false);

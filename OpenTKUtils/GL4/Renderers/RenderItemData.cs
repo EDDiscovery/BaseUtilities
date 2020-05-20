@@ -155,7 +155,7 @@ namespace OpenTKUtils.GL4
         public override void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
         {
             base.Bind(ri, shader, c);
-            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id,ColorBind, new Vector4((float)col.R / 255.0f, (float)col.G / 255.0f, (float)col.B / 255.0f, (float)col.A / 255.0f));
+            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id,ColorBind, col.ToVector4());
             GLStatics.Check();
         }
 
@@ -196,7 +196,7 @@ namespace OpenTKUtils.GL4
 
         public virtual void Bind(IGLRenderableItem ri, IGLProgramShader shader, GLMatrixCalc c)
         {
-            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id, ColorBind, new Vector4((float)col.R / 255.0f, (float)col.G / 255.0f, (float)col.B / 255.0f, (float)col.A / 255.0f));
+            GL.ProgramUniform4(shader.Get(ShaderType.FragmentShader).Id, ColorBind, col.ToVector4());
             GLStatics.Check();
         }
 

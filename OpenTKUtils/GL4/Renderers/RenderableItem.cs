@@ -487,6 +487,15 @@ namespace OpenTKUtils.GL4
             DrawCount = indexes.Length;
         }
 
+        public void CreateElementIndexUShort(GLBuffer elementbuf, ushort[] indexes, int base_index = 0)
+        {
+            ElementBuffer = elementbuf;
+            ElementBuffer.AllocateFill(indexes);
+            DrawType = DrawElementsType.UnsignedShort;
+            BaseIndex = base_index;
+            DrawCount = indexes.Length;
+        }
+
         // create an index, to the drawtype size
         public void CreateElementIndex(GLBuffer elementbuf, uint[] eids, int base_index = 0)
         {

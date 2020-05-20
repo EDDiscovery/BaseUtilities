@@ -161,7 +161,7 @@ void main(void)
             {
                 Vector3[] stars = GLPointsFactory.RandomStars(10000, -200, 200, -100, 100, 20, -20);
 
-                items.Add(new GLShaderPipeline(new GLShaderStars(), new GLPLFragmentShaderColour()), "STARS");
+                items.Add(new GLShaderPipeline(new GLShaderStars(), new GLPLFragmentShaderVSColour()), "STARS");
 
                 GLRenderControl rp = GLRenderControl.PointsByProgram();
 

@@ -19,25 +19,23 @@ namespace TestOpenTk
         {
         }
 
-        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int radius, int height, int bufferfindbinding)
+        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int bufferfindbinding)
         {
             Bitmap[] images = galmap.RenderableMapTypes.Select(x => x.Image as Bitmap).ToArray();
-            IGLTexture array2d = items.Add(new GLTexture2DArray(images, mipmaplevel:1, genmipmaplevel:3), "GalObjTex");
+            IGLTexture texarray = items.Add(new GLTexture2DArray(images, mipmaplevel:1, genmipmaplevel:3), "GalObjTex");
 
             var vert = new GLPLVertexScaleLookat(true, false, false, 1000, 0.1f, 2f);
             var tcs = new GLPLTesselationControl(10f);
             tes = new GLPLTesselationEvaluateSinewave(0.2f,1f);
-            var frag = new GLPLFragmentShaderTexture2DDiscard();
+            var frag = new GLPLFragmentShaderTexture2DDiscard(1);
 
-            var objectshader = new GLShaderPipeline(vert, tcs, tes, null, frag);
+            objectshader = new GLShaderPipeline(vert, tcs, tes, null, frag);
             items.Add( objectshader, "ShaderGalObj");
 
             objectshader.StartAction += (s) =>
             {
-                array2d.Bind(1);
-                GLStatics.Check();
+                texarray.Bind(1);
             };
-
 
             renderablegalmapobjects = galmap.RenderableMapObjects;       // Only images and enables
 
@@ -52,7 +50,9 @@ namespace TestOpenTk
                                 GLShapeObjectFactory.CreateQuad2(50.0f, 50.0f), instancepositions.ToArray(),
                                 ic: renderablegalmapobjects.Length, seconddivisor: 1);
 
-            rObjects.Add(objectshader, ridisplay);
+            rObjects.Add(objectshader, "GalObj", ridisplay);
+
+            // find
 
             modelworldbuffer = items.LastBuffer();
             int modelpos = modelworldbuffer.Positions[0];
@@ -69,6 +69,9 @@ namespace TestOpenTk
 
         public GalacticMapObject FindPOI(Point l, GLRenderControl state, Size screensize, GalacticMapping galmap)
         {
+            if (!objectshader.Enabled)
+                return null;
+
             var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
             geo.SetScreenCoords(l, screensize);
 
@@ -113,7 +116,19 @@ namespace TestOpenTk
             tes.Phase = fract;
         }
 
+        public bool Enabled()
+        {
+            return objectshader.Enabled;
+        }
+
+        public void EnableToggle(bool? on = null)
+        {
+            bool beon = on.HasValue ? on.Value : !Enabled();
+            objectshader.Enabled = beon;
+        }
+
         private GLPLTesselationEvaluateSinewave tes;
+        private GLShaderPipeline objectshader;
         private GLBuffer modelworldbuffer;
         private int worldpos;
         private GLRenderableItem ridisplay;

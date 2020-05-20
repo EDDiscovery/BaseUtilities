@@ -12,8 +12,7 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-
-
+ 
 using System;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
@@ -24,7 +23,7 @@ namespace OpenTKUtils.GL4
     // you can use Allocate then Fill direct
     // or you can use the GL Mapping function which maps the buffer into memory
 
-    [System.Diagnostics.DebuggerDisplay("Id {Id}")]
+    [System.Diagnostics.DebuggerDisplay("Id {Id} Length {Length}")]
     public class GLBuffer : GLLayoutStandards, IDisposable
     {
         public int Id { get; private set; } = -1;
@@ -54,6 +53,7 @@ namespace OpenTKUtils.GL4
             }
         }
 
+        // note this results in a new GL Buffer, so any VertexArrays will need remaking
         public void Resize(int newlength, BufferUsageHint uh = BufferUsageHint.StaticDraw)      // newlength can be zero, meaning discard and go back to start
         {
             if (Length != newlength)
@@ -62,12 +62,21 @@ namespace OpenTKUtils.GL4
                 if (newlength > 0)
                     GL.NamedBufferData(newid, newlength, (IntPtr)0, uh);               // set buffer size
                 if (newlength > 0 && Length > 0)
-                    GL.CopyNamedBufferSubData(Id, newid, (IntPtr)0, (IntPtr)0, Length);
+                    GL.CopyNamedBufferSubData(Id, newid, (IntPtr)0, (IntPtr)0, Math.Min(Length, newlength));
                 Id = newid;
                 Length = newlength;
                 Positions.Clear();
                 OpenTKUtils.GLStatics.Check();
             }
+        }
+
+        // Other buffer must be Allocated to the size otherpos+length
+        public void CopyTo(GLBuffer other, int pos, int otherpos, int length, BufferUsageHint uh = BufferUsageHint.StaticDraw)      // newlength can be zero, meaning discard and go back to start
+        {
+            int ourend = pos + length;
+            int otherend = otherpos + length;
+            System.Diagnostics.Debug.Assert(Length >= ourend && other.Length >= otherend);
+            GL.CopyNamedBufferSubData(Id, other.Id, (IntPtr)pos, (IntPtr)otherpos, length);
         }
 
         public void Fill(float[] floats)
@@ -233,19 +242,17 @@ namespace OpenTKUtils.GL4
             Fill(packeddata);
         }
 
-        public void ZeroBuffer()    // after allocated, zeros from currentpos onwards.
+        public void ZeroArea(int pos, int length)
         {
-            System.Diagnostics.Debug.Assert(Length != 0);
-            int left = Length - CurrentPos;
-            int pos = AlignScalar(1,left);
-            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)pos, left, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
+            System.Diagnostics.Debug.Assert(Length != 0 && pos >= 0 && length <= Length && pos+length <= Length);
+            GL.ClearNamedBufferSubData(Id, PixelInternalFormat.R32ui, (IntPtr)pos, length, PixelFormat.RedInteger, PixelType.UnsignedInt, (IntPtr)0);
             OpenTKUtils.GLStatics.Check();
         }
 
-        public void ZeroBuffer(int size)
+        public void ZeroBuffer()    // zero whole of buffer, clear positions
         {
-            AllocateBytes(size);
-            ZeroBuffer();
+            ZeroArea(0, Length);
+            Positions.Clear();
         }
 
         public void FillRectangularIndicesBytes(int reccount, int restartindex = 0xff)        // rectangular indicies with restart of 0xff

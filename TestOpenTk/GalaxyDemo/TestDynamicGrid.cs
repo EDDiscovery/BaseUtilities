@@ -62,7 +62,7 @@ namespace TestOpenTk
             s.SetUniforms(gl3dcontroller.MatrixCalc.TargetPosition, lastgridwidth, i.InstanceCount);
 
             DynamicGridCoordVertexShader bs = items.PLShader("PLGRIDBitmapVertShader") as DynamicGridCoordVertexShader;
-            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.PosCamera.CameraDirection, Color.Yellow);
+            bs.ComputeUniforms(lastgridwidth, gl3dcontroller.MatrixCalc, gl3dcontroller.PosCamera.CameraDirection, Color.Yellow, Color.Transparent);
 
             solmarker.Position = gl3dcontroller.MatrixCalc.TargetPosition;
             solmarker.Scale = gl3dcontroller.MatrixCalc.EyeDistance / 20;
@@ -144,7 +144,7 @@ namespace TestOpenTk
 
             {
                 items.Add(new DynamicGridVertexShader(Color.Cyan), "PLGRIDVertShader");
-                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
+                items.Add(new GLPLFragmentShaderVSColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;

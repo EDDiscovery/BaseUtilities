@@ -151,7 +151,7 @@ namespace OpenTKUtils
 
             if ( ClipDistanceEnable != newstate.ClipDistanceEnable )        // if changed
             {
-                if ( newstate.ClipDistanceEnable>ClipDistanceEnable)
+                if ( newstate.ClipDistanceEnable > ClipDistanceEnable)
                 {
                     for (int i = ClipDistanceEnable; i < newstate.ClipDistanceEnable; i++)
                         GL.Enable(EnableCap.ClipDistance0 + i);

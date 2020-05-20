@@ -67,6 +67,7 @@
     <Compile Include="Controls\TestControls.designer.cs">
       <DependentUpon>TestControls.cs</DependentUpon>
     </Compile>
+    <Compile Include="Galaxy\GalMapRegions.cs" />
     <Compile Include="Galaxy\GalMap\GalacticMapObject.cs" />
     <Compile Include="Galaxy\GalMap\GalacticMapping.cs" />
     <Compile Include="Galaxy\GalMap\GalMapType.cs" />

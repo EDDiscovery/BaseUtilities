@@ -94,7 +94,7 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-out vec4 vs_color;
+layout(location=0) out vec4 vs_color;
 
 void main(void)
 {
@@ -167,12 +167,13 @@ out gl_PerVertex {
         float gl_ClipDistance[];
     };
 
-out VS_OUT
+layout(location = 0) out vec2 vs_textureCoordinate;
+
+layout (location = 2) out VS_OUT
 {
     flat int vs_instanced;      // not sure why structuring is needed..
 } vs;
 
-out vec2 vs_textureCoordinate;
 
 void main(void)
 {
@@ -254,6 +255,7 @@ void main(void)
                     string label = bsx.ToStringInvariant() + "," + sy.ToStringInvariant("0") + "," + bsz.ToStringInvariant();
                     BitMapHelpers.DrawTextIntoFixedSizeBitmap(ref texcoords.BitMaps[i], label, gridfnt, textcol, backcol);
                     texcoords.LoadBitmap(texcoords.BitMaps[i], i);
+                    System.Diagnostics.Debug.WriteLine("At {0} Draw {1} {2}", i, bsx, bsz);
                 }
 
                 lastsx = sx;

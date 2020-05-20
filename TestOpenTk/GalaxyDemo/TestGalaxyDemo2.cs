@@ -308,7 +308,7 @@ namespace TestOpenTk
 
             {
                 items.Add(new DynamicGridVertexShader(Color.Cyan), "PLGRIDVertShader");
-                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
+                items.Add(new GLPLFragmentShaderVSColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;

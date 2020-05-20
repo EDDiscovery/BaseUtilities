@@ -146,11 +146,9 @@ namespace TestOpenTk
                 butg.Checked = gt.Enabled;
                 butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjects();  };
                 galfp.Add(butg);
-//                px += 40;
             }
 
             map.displaycontrol.Add(pform);
-            //displaycontrol.Focusable = false;
         }
 
         public void UpdateCoords(OpenTKUtils.GLMatrixCalc c)

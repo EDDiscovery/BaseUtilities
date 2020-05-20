@@ -38,8 +38,9 @@ namespace TestOpenTk
 
         private TravelPath travelpath;
         private MapMenu galaxymenu;
-        
+
         private GalMapObjects galmapobjects;
+        private GalMapRegions edsmgalmapregions;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -200,7 +201,7 @@ namespace TestOpenTk
             {
                 gridvertshader = new DynamicGridVertexShader(Color.Cyan);
                 items.Add(gridvertshader, "PLGRIDVertShader");
-                items.Add(new GLPLFragmentShaderColour(), "PLGRIDFragShader");
+                items.Add(new GLPLFragmentShaderVSColour(), "PLGRIDFragShader");
 
                 GLRenderControl rl = GLRenderControl.Lines(1);
                 rl.DepthTest = false;
@@ -253,13 +254,22 @@ namespace TestOpenTk
                 currentsystem = pos[3];
             }
 
-            // Gal map objects
-            if ( true )
+            // Gal map regions
+            if (true)
             {
                 galmapobjects = new GalMapObjects();
-                galmapobjects.CreateObjects(items, rObjects, galmap,10,20,findgeomapblock);
+                galmapobjects.CreateObjects(items, rObjects, galmap, findgeomapblock);
 
             }
+
+            // Gal map objects
+            if (true)
+            {
+                edsmgalmapregions = new GalMapRegions();
+                edsmgalmapregions.CreateObjects(items, rObjects, galmap);
+
+            }
+
 
             // menu system
 
@@ -425,9 +435,26 @@ namespace TestOpenTk
             }
         }
 
+        public bool GalObjectsEnabled()
+        {
+            return galmapobjects.Enabled();
+        }
+
+        public void EnableToggleGalMapObjects(bool? on = null)
+        {
+            galmapobjects.EnableToggle(on);
+            glwfc.Invalidate();
+        }
+
         public void UpdateGalObjects()
         {
             galmapobjects.UpdateEnables(galmap);
+        }
+
+        public void ToggleEDSMRegionShader()
+        {
+            edsmgalmapregions.Toggle();
+            glwfc.Invalidate();
         }
 
         #endregion
@@ -456,20 +483,13 @@ namespace TestOpenTk
 
         private void OtherKeys(OpenTKUtils.Common.KeyboardMonitor kb)
         {
-            if (kb.HasBeenPressed(Keys.F1, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            if (kb.HasBeenPressed(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                int times = 1000;
-                System.Diagnostics.Debug.WriteLine("Start test");
-                long tickcount = gl3dcontroller.Redraw(times);
-                System.Diagnostics.Debug.WriteLine("Redraw {0} ms per {1}", tickcount, (float)tickcount / (float)times);
+                gl3dcontroller.ChangePerspectiveMode(!gl3dcontroller.MatrixCalc.InPerspectiveMode);
             }
             if (kb.HasBeenPressed(Keys.F5, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 EnableToggleGalaxy();
-            }
-            if (kb.HasBeenPressed(Keys.F4, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
-            {
-                gl3dcontroller.ChangePerspectiveMode(!gl3dcontroller.MatrixCalc.InPerspectiveMode);
             }
             if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
@@ -478,6 +498,14 @@ namespace TestOpenTk
             if (kb.HasBeenPressed(Keys.F7, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
                 EnableToggleTravelPath();
+            }
+            if (kb.HasBeenPressed(Keys.F8, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                EnableToggleGalMapObjects();
+            }
+            if (kb.HasBeenPressed(Keys.F9, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
+            {
+                ToggleEDSMRegionShader();
             }
 
             // DEBUG!

@@ -16,19 +16,13 @@
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-using OpenTKUtils.GL4;
+using OpenTKUtils;
 using OpenTKUtils.Common;
+using OpenTKUtils.GL4;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenTKUtils;
 
 namespace TestOpenTk
 {
@@ -373,7 +367,7 @@ namespace TestOpenTk
             #region Instancing
             if (true)
             {
-                items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderColour()),"IC-1");
+                items.Add(new GLShaderPipeline(new GLPLVertexShaderModelCoordWithMatrixTranslation(), new GLPLFragmentShaderVSColour()),"IC-1");
 
                 Matrix4[] pos1 = new Matrix4[3];
                 pos1[0] = Matrix4.CreateTranslation(new Vector3(10, 0, 10));

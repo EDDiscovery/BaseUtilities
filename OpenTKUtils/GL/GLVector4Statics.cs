@@ -17,6 +17,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenTKUtils
 {
@@ -77,10 +78,14 @@ namespace OpenTKUtils
                 return String.Format("{0,10:0.00},{1,10:0.00},{2,10:0.00}", vertices.X, vertices.Y, vertices.Z);
         }
 
-        static public Color4 ColorFrom(this Color4[] array, int index)      // helper for color arrays
+        static public Vector4[] ToVector4(this System.Drawing.Color[] array, float alphaoverride = -1)
         {
-            index = index % array.Length;
-            return array[index];
+            return array.Select(x => new Vector4((float)x.R / 255.0f, (float)x.G / 255.0f, (float)x.B / 255.0f, alphaoverride>=0 ? alphaoverride : ((float)x.A / 255.0f))).ToArray();
+        }
+
+        static public Vector4 ToVector4(this System.Drawing.Color color)
+        {
+            return new Vector4((float)color.R / 255.0f, (float)color.G / 255.0f, (float)color.B / 255.0f, (float)color.A / 255.0f);
         }
 
         public static void RotPos(ref Vector4[] vertices, Vector3? rotationradians = null, Vector3? pos = null)        // rotations in radians
@@ -177,6 +182,13 @@ namespace OpenTKUtils
             return new Vector3(v.X, v.Y, v.Z);
         }
 
+        public static string ToDefinition(this Vector4[] va, string def = "vec4")
+        {
+            string t = "";
+            foreach (var v in va)
+                t = t.AppendPrePad(def + "(" + v.X.ToStringInvariant() + "," + v.Y.ToStringInvariant() + "," + v.Z.ToStringInvariant() + "," + v.W.ToStringInvariant() + ")", ",");
 
+            return "{" + t + "}";
+        }
     }
 }

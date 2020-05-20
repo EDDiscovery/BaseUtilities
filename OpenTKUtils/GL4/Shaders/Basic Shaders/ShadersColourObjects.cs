@@ -31,7 +31,7 @@ namespace OpenTKUtils.GL4
     {
         public GLColourShaderWithObjectTranslation(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLPLVertexShaderColourModelCoordWithObjectTranslation(), new GLPLFragmentShaderColour());
+            AddVertexFragment(new GLPLVertexShaderColourModelCoordWithObjectTranslation(), new GLPLFragmentShaderVSColour());
         }
     }
 
@@ -74,7 +74,7 @@ namespace OpenTKUtils.GL4
     {
         public GLColourShaderWithWorldCoord(Action<IGLProgramShader> start = null, Action<IGLProgramShader> finish = null) : base(start, finish)
         {
-            AddVertexFragment(new GLPLVertexShaderColourWorldCoord(), new GLPLFragmentShaderColour());
+            AddVertexFragment(new GLPLVertexShaderColourWorldCoord(), new GLPLFragmentShaderVSColour());
         }
     }
 
