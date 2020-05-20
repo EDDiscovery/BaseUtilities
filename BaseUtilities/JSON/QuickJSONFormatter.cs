@@ -61,43 +61,54 @@ namespace BaseUtils
         public QuickJSONFormatter V(string name, string data)
         {
             Prefix();
-            json += "\"" + name + "\":\"" + data + "\"";
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += "\"" + data + "\"";
             return this;
         }
-
 
         public QuickJSONFormatter V(string name, double v)
         {
             Prefix();
-            json += "\"" + name + "\":" + v.ToString("0.######");
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += v.ToString("0.######");
             return this;
         }
 
         public QuickJSONFormatter V(string name, int v)
         {
             Prefix();
-            json += "\"" + name + "\":" + v.ToStringInvariant();
+            if ( name != null )
+                json += "\"" + name + "\":";
+            json += v.ToStringInvariant();
             return this;
         }
 
         public QuickJSONFormatter V(string name, long v)
         {
             Prefix();
-            json += "\"" + name + "\":" + v.ToStringInvariant();
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += v.ToStringInvariant();
             return this;
         }
 
         public QuickJSONFormatter V(string name, bool v)
         {
             Prefix();
-            json += "\"" + name + "\":" + (v ? "true" : "false");
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += (v ? "true" : "false");
             return this;
         }
 
         public QuickJSONFormatter V(string name, DateTime v)
         {
             Prefix();
-            json += "\"" + name + "\":\"" + v.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"";
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += "\"" + v.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"";
             return this;
         }
 
@@ -105,7 +116,9 @@ namespace BaseUtils
         {
             Prefix();
             DateTime dt = DateTime.UtcNow;
-            json += "\"" + name + "\":\"" + dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'") + "\"";
+            if (name != null)
+                json += "\"" + name + "\":";
+            json += "\"" + dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'") + "\"";
             return this;
         }
 
@@ -145,11 +158,15 @@ namespace BaseUtils
             return this;
         }
 
-        public QuickJSONFormatter Array(string name)        // call, add elements, call close
+        public QuickJSONFormatter Array(string name)        // call, add elements, call close. name can be null, unnamed array. Call elements with name=null
         {
             Prefix();
 
-            json += "\"" + name + "\": [";
+            if ( name != null)
+                json += "\"" + name + "\": [";
+            else
+                json += "[";
+
             stack.Add(new StackEntry(StackType.Array, precomma));
             precomma = false;
             return this;
@@ -190,6 +207,12 @@ namespace BaseUtils
                 stack.RemoveAt(stack.Count - 1);
             }
 
+            return this;
+        }
+
+        public QuickJSONFormatter LF()
+        {
+            json += Environment.NewLine;
             return this;
         }
 

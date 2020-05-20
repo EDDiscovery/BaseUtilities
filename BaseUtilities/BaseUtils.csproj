@@ -68,6 +68,7 @@
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="HTTP\HTTPStaticExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
+    <Compile Include="SVG\svg.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
