@@ -88,8 +88,8 @@ namespace OpenTKUtils.GL4.Controls
         public int ClientRightMargin { get { return Margin.Right + Padding.Right + BorderWidth; } }
         public int ClientTopMargin { get { return Margin.Top + Padding.Top + BorderWidth; } }
         public int ClientBottomMargin { get { return Margin.Bottom + Padding.Bottom + BorderWidth; } }
-        public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth * 2; } }
-        public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } }
+        public int ClientWidth { get { return Width - Margin.TotalWidth - Padding.TotalWidth - BorderWidth * 2; } set { SetPos(window.Left, window.Top, value + ClientLeftMargin + ClientRightMargin, window.Height); } }
+        public int ClientHeight { get { return Height - Margin.TotalHeight - Padding.TotalHeight - BorderWidth * 2; } set { SetPos(window.Left, window.Top, window.Width, value + ClientTopMargin + ClientBottomMargin); } }
         public Size ClientSize { get { return new Size(ClientWidth, ClientHeight); } set { SetPos(window.Left, window.Top, value.Width + ClientLeftMargin + ClientRightMargin, value.Height + ClientTopMargin + ClientBottomMargin); } }
         public Point ClientLocation { get { return new Point(ClientLeftMargin, ClientTopMargin); } }
         public Rectangle ClientRectangle { get { return new Rectangle(0, 0, ClientWidth, ClientHeight); } }

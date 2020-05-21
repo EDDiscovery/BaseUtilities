@@ -37,9 +37,12 @@ namespace OpenTKUtils.GL4.Controls
     {
         public Action<GLBaseControl> CheckChanged { get; set; } = null;     // not fired by programatically changing CheckState
 
-        public CheckState CheckState { get { return checkstate; } set { SetCheckState(value); } }
-        public bool Checked { get { return checkstate == CheckState.Checked; } set { SetCheckState(value ? CheckState.Checked : CheckState.Unchecked); } }
+        public CheckState CheckState { get { return checkstate; } set { SetCheckState(value, true); } }
+        public CheckState CheckStateNoChangeEvent { get { return checkstate; } set { SetCheckState(value, false); } }
+        public bool Checked { get { return checkstate == CheckState.Checked; } set { SetCheckState(value ? CheckState.Checked : CheckState.Unchecked, true); } }
+        public bool CheckedNoChangeEvent { get { return checkstate == CheckState.Checked; } set { SetCheckState(value ? CheckState.Checked : CheckState.Unchecked, false); } }
         public bool AutoCheck { get; set; } = false;            // if true, autocheck on click
+        public bool UserCanOnlyCheck { get; set; } = false;            // if true, user can only turn it on
 
         public CheckBoxAppearance Appearance { get { return appearance; } set { appearance = value; Invalidate(); } }
 
@@ -319,13 +322,13 @@ namespace OpenTKUtils.GL4.Controls
         public override void OnMouseClick(GLMouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if ( e.Button == GLMouseEventArgs.MouseButtons.Left && AutoCheck )
+            if ( e.Button == GLMouseEventArgs.MouseButtons.Left && AutoCheck && ( !UserCanOnlyCheck || checkstate != CheckState.Checked))
             {
-                SetCheckState(checkstate == CheckState.Unchecked ? CheckState.Checked : CheckState.Unchecked);
+                SetCheckState(checkstate == CheckState.Unchecked ? CheckState.Checked : CheckState.Unchecked, true);
             }
         }
 
-        private void SetCheckState(CheckState value)
+        private void SetCheckState(CheckState value, bool firechange)
         {
             if (checkstate != value)
             {
@@ -338,13 +341,16 @@ namespace OpenTKUtils.GL4.Controls
                         if (c != this && c.GroupRadioButton == true && c.checkstate != CheckState.Unchecked)    // if not us, in a group, and not unchecked
                         {
                             c.checkstate = CheckState.Unchecked;        // set directly
-                            c.OnCheckChanged();                         // fire change
+                            if ( firechange)
+                                c.OnCheckChanged();                         // fire change
                             c.Invalidate();
                         }
                     }
                 }
 
-                OnCheckChanged();   // fire change on us
+                if ( firechange )
+                    OnCheckChanged();   // fire change on us
+
                 Invalidate();
             }
         }

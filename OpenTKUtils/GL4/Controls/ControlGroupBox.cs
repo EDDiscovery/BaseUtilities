@@ -33,11 +33,10 @@ namespace OpenTKUtils.GL4.Controls
         public GLGroupBox(string name, string title, Rectangle location) : base(name, location)
         {
             PaddingNI = new Padding(GBPadding);
-            MarginNI = new Margin(GBMargins);
+            MarginNI = new Margin(GBMargins, GroupBoxHeight, GBMargins, GBMargins);
             BorderWidthNI = GBBorderWidth;
             BorderColorNI = DefaultBorderColor;
             text = title;
-
         }
 
         public GLGroupBox(string name, string title, DockingType type, float dockpercent) : this(name, title, DefaultWindowRectangle)
@@ -58,10 +57,10 @@ namespace OpenTKUtils.GL4.Controls
 
         public int GroupBoxHeight { get { return (Font?.ScalePixels(20) ?? 20) + GBMargins * 2; } }
 
-        public override void PerformRecursiveLayout()
+        public override void OnFontChanged()
         {
-            MarginNI = new Margin(Margin.Left, GroupBoxHeight + GBMargins*2, Margin.Right, Margin.Bottom);
-            base.PerformRecursiveLayout();
+            base.OnFontChanged();
+            MarginNI = new Margin(GBMargins, GroupBoxHeight, GBMargins, GBMargins);
         }
 
         protected override void DrawBorder(Rectangle bounds, Graphics gr, Color bc, float bw)      // normal override, you can overdraw border if required.

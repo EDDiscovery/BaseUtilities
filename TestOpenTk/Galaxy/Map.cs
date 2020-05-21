@@ -43,6 +43,7 @@ namespace TestOpenTk
         private GalMapObjects galmapobjects;
         private GalMapRegions edsmgalmapregions;
         private GalMapRegions elitemapregions;
+        private GalaxyStarDots stardots;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -178,10 +179,12 @@ namespace TestOpenTk
 
                 buf.StopReadWrite();
 
-                items.Add(new GalaxyStarDots(), "SD");
+                stardots = new GalaxyStarDots();
+
+                items.Add(stardots);
                 GLRenderControl rp = GLRenderControl.Points(1);
                 rp.DepthTest = false;
-                rObjects.Add(items.Shader("SD"),
+                rObjects.Add(stardots,
                                 GLRenderableItem.CreateVector4(items, rp, buf, points));
                 System.Diagnostics.Debug.WriteLine("Stars " + points);
             }
@@ -398,38 +401,9 @@ namespace TestOpenTk
 
         #region Turn on/off, move, etc.
 
-        public void EnableToggleGalaxy(bool? on = null)
-        {
-            galaxyshader.Enable = (on.HasValue) ? on.Value : !galaxyshader.Enable;
-            glwfc.Invalidate();
-        }
-
-        public bool GalaxyEnabled()
-        {
-            return galaxyshader.Enable;
-        }
-
-        public void EnableToggleStarDots(bool? on = null)
-        {
-            items.Shader("SD").Enable = items.Shader("PS").Enable = (on.HasValue) ? on.Value : !StarDotsEnabled();
-            glwfc.Invalidate();
-        }
-
-        public bool StarDotsEnabled()
-        {
-            return items.Shader("SD").Enable;
-        }
-
-        public void EnableToggleTravelPath(bool? on = null)
-        {
-            travelpath.EnableToggle(on);
-            glwfc.Invalidate();
-        }
-
-        public bool TravelPathEnabled()
-        {
-            return travelpath.Enabled();
-        }
+        public bool EnableGalaxy { get { return galaxyshader.Enable; } set { galaxyshader.Enable = value; glwfc.Invalidate(); } }
+        public bool EnableStarDots { get { return stardots.Enable; } set { stardots.Enable = value; glwfc.Invalidate(); } }
+        public bool EnableTravelPath { get { return travelpath.Enable; } set { travelpath.Enable = value; glwfc.Invalidate(); } }
 
         public void TravelPathMoveForward()
         {
@@ -463,7 +437,13 @@ namespace TestOpenTk
         }
 
         public bool EDSMRegionsEnable { get { return edsmgalmapregions.Enable; } set { edsmgalmapregions.Enable = value; glwfc.Invalidate(); } }
+        public bool EDSMRegionsOutlineEnable { get { return edsmgalmapregions.Outlines; } set { edsmgalmapregions.Outlines = value; glwfc.Invalidate(); } }
+        public bool EDSMRegionsShadingEnable { get { return edsmgalmapregions.Regions; } set { edsmgalmapregions.Regions = value; glwfc.Invalidate(); } }
+        public bool EDSMRegionsTextEnable { get { return edsmgalmapregions.Text; } set { edsmgalmapregions.Text = value; glwfc.Invalidate(); } }
         public bool EliteRegionsEnable { get { return elitemapregions.Enable; } set { elitemapregions.Enable = value; glwfc.Invalidate(); } }
+        public bool EliteRegionsOutlineEnable { get { return elitemapregions.Outlines; } set { elitemapregions.Outlines = value; glwfc.Invalidate(); } }
+        public bool EliteRegionsShadingEnable { get { return elitemapregions.Regions; } set { elitemapregions.Regions = value; glwfc.Invalidate(); } }
+        public bool EliteRegionsTextEnable { get { return elitemapregions.Text; } set { elitemapregions.Text = value; glwfc.Invalidate(); } }
 
         #endregion
 
@@ -497,15 +477,15 @@ namespace TestOpenTk
             }
             if (kb.HasBeenPressed(Keys.F5, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                EnableToggleGalaxy();
+                EnableGalaxy = !EnableGalaxy;
             }
             if (kb.HasBeenPressed(Keys.F6, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                EnableToggleStarDots();
+                EnableStarDots = !EnableStarDots;
             }
             if (kb.HasBeenPressed(Keys.F7, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                EnableToggleTravelPath();
+                EnableTravelPath = !EnableTravelPath;
             }
             if (kb.HasBeenPressed(Keys.F8, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {

@@ -473,7 +473,8 @@ namespace OpenTKUtils.GL4.Controls
 
         private void Gc_Resize(object sender)
         {
-            Resize?.Invoke(sender);
+            SetLocationSizeNI(size: glwin.Size);        // calls onresize, so subscribers can see resize as well
+            InvalidateLayout(); // and we need to invalidate layout
         }
 
         private void Gc_Paint(object sender)

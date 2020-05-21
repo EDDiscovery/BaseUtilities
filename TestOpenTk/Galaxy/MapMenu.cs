@@ -84,7 +84,7 @@ namespace TestOpenTk
             int ypad = 10;
 
             GLForm pform = new GLForm("FormMenu", "Configure Map", new Rectangle(10, 10, 600, 400));
-            pform.BackColor = Color.FromArgb(50, Color.Red);
+            pform.BackColor = Color.FromArgb(180, 60,60,60);
             pform.ForeColor = Color.Orange;
             pform.FormClosed = (frm) => { map.displaycontrol.ApplyToControlOfName("MS*", (c) => { c.Visible = true; }); };
 
@@ -116,37 +116,138 @@ namespace TestOpenTk
 
             GLCheckBox butgal = new GLCheckBox("Galaxy", new Rectangle(leftmargin, vpos, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
             butgal.ToolTipText = "Show galaxy image";
-            butgal.Checked = map.GalaxyEnabled();
-            butgal.CheckChanged += (e1) => { map.EnableToggleGalaxy(butgal.Checked); };
+            butgal.Checked = map.EnableGalaxy;
+            butgal.CheckChanged += (e1) => { map.EnableGalaxy = butgal.Checked; };
             pform.Add(butgal);
 
             GLCheckBox butsd = new GLCheckBox("StarDots", new Rectangle(50, vpos, iconsize, iconsize), Properties.Resources.StarDots, null);
             butsd.ToolTipText = "Show star field";
-            butsd.Checked = map.StarDotsEnabled();
-            butsd.CheckChanged += (e1) => { map.EnableToggleStarDots(butsd.Checked); };
+            butsd.Checked = map.EnableStarDots;
+            butsd.CheckChanged += (e1) => { map.EnableStarDots = butsd.Checked; };
             pform.Add(butsd);
 
-            vpos += butgal.Height+ypad;
+            GLCheckBox buttp = new GLCheckBox("TravelPath", new Rectangle(100, vpos, iconsize, iconsize), Properties.Resources.StarDots, null);
+            buttp.ToolTipText = "Show travel path";
+            buttp.Checked = map.EnableTravelPath;
+            buttp.CheckChanged += (e1) => { map.EnableTravelPath = buttp.Checked; };
+            pform.Add(buttp);
 
-            GLGroupBox galgb = new GLGroupBox("GalGB", "Galaxy Objects", new Rectangle(leftmargin, vpos, pform.ClientWidth-leftmargin*2, 50));
-            galgb.Height = (iconsize + 4) * 2 + galgb.GroupBoxHeight + GLGroupBox.GBMargins*2 + GLGroupBox.GBPadding*2 + 8;
-            galgb.BackColor = Color.FromArgb(60, Color.Red);
+            vpos += butgal.Height + ypad;
+
+            GLGroupBox galgb = new GLGroupBox("GalGB", "Galaxy Objects", new Rectangle(leftmargin, vpos, pform.ClientWidth - leftmargin * 2, 50));
+            galgb.ClientHeight = (iconsize + 4) * 2;
+            galgb.BackColor = pform.BackColor;
             galgb.ForeColor = Color.Orange;
             pform.Add(galgb);
             GLFlowLayoutPanel galfp = new GLFlowLayoutPanel("GALFP", DockingType.Fill, 0);
             galfp.FlowPadding = new Padding(2, 2, 2, 2);
-            galfp.BackColor = Color.FromArgb(60, Color.Red);
+            galfp.BackColor = pform.BackColor;
             galgb.Add(galfp);
-            
-            for( int i = map.galmap.RenderableMapTypes.Length-1;i>=0;i--)
+
+            for ( int i = map.galmap.RenderableMapTypes.Length-1;i>=0;i--)
             {
                 var gt = map.galmap.RenderableMapTypes[i];
-                GLCheckBox butg = new GLCheckBox("GMSEL", new Rectangle(0,0, iconsize, iconsize), gt.Image, null);
+                GLCheckBox butg = new GLCheckBox("GMSEL", new Rectangle(0, 0, iconsize, iconsize), gt.Image, null);
                 butg.ToolTipText = "Enable/Disable " + gt.Description;
                 butg.Checked = gt.Enabled;
-                butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjectsStates();  };
+                butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjectsStates(); };
                 galfp.Add(butg);
             }
+
+            GLCheckBox butgonoff = new GLCheckBox("GMONOFF", new Rectangle(0, 0, iconsize, iconsize), Properties.Resources.dotted, null);
+            butgonoff.ToolTipText = "Enable/Disable Display";
+            butgonoff.Checked = map.GalObjectEnable;
+            butgonoff.CheckChanged += (e1) => { map.GalObjectEnable = !map.GalObjectEnable; };
+            galfp.Add(butgonoff);
+
+            vpos += galgb.Height + ypad;
+
+            GLGroupBox edsmregionsgb = new GLGroupBox("EDSMR", "EDSM Regions", new Rectangle(leftmargin, vpos, pform.ClientWidth - leftmargin * 2, 50));
+            edsmregionsgb.ClientHeight = iconsize + 8;
+            edsmregionsgb.BackColor = pform.BackColor;
+            edsmregionsgb.ForeColor = Color.Orange;
+            pform.Add(edsmregionsgb);
+            vpos += edsmregionsgb.Height + ypad;
+
+            GLGroupBox eliteregionsgb = new GLGroupBox("ELITER", "Elite Regions", new Rectangle(leftmargin, vpos, pform.ClientWidth - leftmargin * 2, 50));
+            eliteregionsgb.ClientHeight = iconsize + 8;
+            eliteregionsgb.BackColor = pform.BackColor;
+            eliteregionsgb.ForeColor = Color.Orange;
+            pform.Add(eliteregionsgb);
+            vpos += eliteregionsgb.Height + ypad;
+
+            GLCheckBox butedre = new GLCheckBox("EDSMRE", new Rectangle(leftmargin, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            GLCheckBox butelre = new GLCheckBox("ELITERE", new Rectangle(leftmargin, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+
+            butedre.ToolTipText = "Enable EDSM Regions";
+            butedre.Checked = map.EDSMRegionsEnable;
+            butedre.UserCanOnlyCheck = true;
+            edsmregionsgb.Add(butedre);
+
+            butelre.ToolTipText = "Enable Elite Regions";
+            butelre.Checked = map.EliteRegionsEnable;
+            butelre.UserCanOnlyCheck = true;
+            eliteregionsgb.Add(butelre);
+
+            GLCheckBox buted2 = new GLCheckBox("EDSMR2", new Rectangle(50, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            buted2.Checked = map.EDSMRegionsOutlineEnable;
+            buted2.Enabled = map.EDSMRegionsEnable;
+            buted2.ToolTipText = "Enable Region Outlines";
+            buted2.CheckChanged += (e1) => { map.EDSMRegionsOutlineEnable = !map.EDSMRegionsOutlineEnable; };
+            edsmregionsgb.Add(buted2);
+            GLCheckBox buted3 = new GLCheckBox("EDSMR3", new Rectangle(100, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            buted3.Checked = map.EDSMRegionsShadingEnable;
+            buted3.Enabled = map.EDSMRegionsEnable;
+            buted3.ToolTipText = "Enable Region Shading";
+            buted3.CheckChanged += (e1) => { map.EDSMRegionsShadingEnable = !map.EDSMRegionsShadingEnable; };
+            edsmregionsgb.Add(buted3);
+            GLCheckBox buted4 = new GLCheckBox("EDSMR4", new Rectangle(150, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            buted4.Checked = map.EDSMRegionsTextEnable;
+            buted4.Enabled = map.EDSMRegionsEnable;
+            buted4.ToolTipText = "Enable Region Naming";
+            buted4.CheckChanged += (e1) => { map.EDSMRegionsTextEnable = !map.EDSMRegionsTextEnable; };
+            edsmregionsgb.Add(buted4);
+
+
+            GLCheckBox butel2 = new GLCheckBox("EDSMR2", new Rectangle(50, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            butel2.Checked = map.EliteRegionsOutlineEnable;
+            butel2.Enabled = map.EliteRegionsEnable;
+            butel2.ToolTipText = "Enable Region Outlines";
+            butel2.CheckChanged += (e1) => { map.EliteRegionsOutlineEnable = !map.EliteRegionsOutlineEnable; };
+            eliteregionsgb.Add(butel2);
+            GLCheckBox butel3 = new GLCheckBox("EDSMR3", new Rectangle(100, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            butel3.Checked = map.EliteRegionsShadingEnable;
+            butel3.Enabled = map.EliteRegionsEnable;
+            butel3.ToolTipText = "Enable Region Shading";
+            butel3.CheckChanged += (e1) => { map.EliteRegionsShadingEnable = !map.EliteRegionsShadingEnable; };
+            eliteregionsgb.Add(butel3);
+            GLCheckBox butel4 = new GLCheckBox("EDSMR4", new Rectangle(150, 0, iconsize, iconsize), Properties.Resources.ShowGalaxy, null);
+            butel4.Checked = map.EliteRegionsTextEnable;
+            butel4.Enabled = map.EliteRegionsEnable;
+            butel4.ToolTipText = "Enable Region Naming";
+            butel4.CheckChanged += (e1) => { map.EliteRegionsTextEnable = !map.EliteRegionsTextEnable; };
+            eliteregionsgb.Add(butel4);
+
+
+            butedre.CheckChanged += (e) => 
+            {
+                if (e.Name == "EDSMRE")
+                {
+                    butelre.CheckedNoChangeEvent = !butedre.Checked;
+                }
+                else
+                {
+                    butedre.CheckedNoChangeEvent = !butelre.Checked;
+                }
+
+                map.EDSMRegionsEnable = butedre.Checked;
+                map.EliteRegionsEnable = butelre.Checked;
+
+                buted2.Enabled = buted3.Enabled = buted4.Enabled = butedre.Checked;
+                butel2.Enabled = butel3.Enabled = butel4.Enabled = butelre.Checked;
+            };
+
+            butelre.CheckChanged += butedre.CheckChanged;
 
             map.displaycontrol.Add(pform);
         }
