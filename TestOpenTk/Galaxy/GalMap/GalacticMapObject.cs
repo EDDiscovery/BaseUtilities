@@ -32,7 +32,6 @@ namespace EliteDangerousCore.EDSM
         public List<Vector3> points;
         public string description;
         public string descriptionhtml;
-        public double textadjustx,textadjusty;
 
         public GalMapType galMapType;
 
@@ -51,8 +50,6 @@ namespace EliteDangerousCore.EDSM
             colour = jo["color"].Str("Orange");
             description = jo["descriptionMardown"].Str("No description");
             descriptionhtml = jo["descriptionHtml"].Str("");
-            textadjustx = jo["TextAdjustX"].Double(0);
-            textadjusty = jo["TextAdjustY"].Double(0);
 
             points = new List<Vector3>();
 

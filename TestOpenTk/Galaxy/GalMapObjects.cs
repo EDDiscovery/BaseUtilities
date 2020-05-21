@@ -19,6 +19,8 @@ namespace TestOpenTk
         {
         }
 
+        public bool Enable { get { return objectshader.Enable; } set { objectshader.Enable = value; } }
+
         public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, int bufferfindbinding)
         {
             Bitmap[] images = galmap.RenderableMapTypes.Select(x => x.Image as Bitmap).ToArray();
@@ -69,7 +71,7 @@ namespace TestOpenTk
 
         public GalacticMapObject FindPOI(Point l, GLRenderControl state, Size screensize, GalacticMapping galmap)
         {
-            if (!objectshader.Enabled)
+            if (!objectshader.Enable)
                 return null;
 
             var geo = findshader.Get<GLPLGeoShaderFindTriangles>(OpenTK.Graphics.OpenGL4.ShaderType.GeometryShader);
@@ -116,16 +118,6 @@ namespace TestOpenTk
             tes.Phase = fract;
         }
 
-        public bool Enabled()
-        {
-            return objectshader.Enabled;
-        }
-
-        public void EnableToggle(bool? on = null)
-        {
-            bool beon = on.HasValue ? on.Value : !Enabled();
-            objectshader.Enabled = beon;
-        }
 
         private GLPLTesselationEvaluateSinewave tes;
         private GLShaderPipeline objectshader;

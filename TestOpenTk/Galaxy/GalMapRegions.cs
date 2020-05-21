@@ -2,6 +2,7 @@
 using OpenTK;
 using OpenTKUtils;
 using OpenTKUtils.GL4;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -13,21 +14,28 @@ namespace TestOpenTk
         {
         }
 
-        static Color[] array = new Color[] { Color.Red, Color.Green, Color.Blue,
-                                                    Color.Brown, Color.Crimson, Color.Coral,
-                                                    Color.Aqua, Color.Yellow, Color.Violet,
-                                                    Color.Sienna, Color.Silver, Color.Salmon,
-                                                    Color.Pink , Color.AntiqueWhite , Color.Beige ,
-                                                    Color.DarkCyan , Color.DarkGray , Color.ForestGreen , Color.LightSkyBlue ,
-                                                    Color.Lime , Color.Maroon, Color.Olive, Color.SteelBlue};
+        public void Toggle() { renderstate = (renderstate + 1) % 8; Set(); }
+        public int SelectionMask { get { return renderstate; } set { renderstate = value; Set(); } }
+        public bool Enable { get { return enable; } set { enable = value;  if (value) Set(); else regionshader.Enable = outlineshader.Enable = textrenderer.Shader.Enable = false; } }
+        public bool Regions { get { return (renderstate & 1) != 0; } set { renderstate = (renderstate & 0x6) | (value ? 1 : 0); Set(); } }
+        public bool Outlines { get { return (renderstate & 2) != 0; } set { renderstate = (renderstate & 0x5) | (value ? 2 : 0); Set(); } }
+        public bool Text { get { return (renderstate & 4) != 0; } set { renderstate = (renderstate & 0x3) | (value ? 4 : 0); Set(); } }
 
-        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, float sizeofname = 5000)
+        public class ManualCorrections
+        {
+            public ManualCorrections(string n, float x = 0, float y = 0) { name = n; this.x = x; this.y = y; }
+            public string name;
+            public float x, y;
+        }
+
+        public void CreateObjects(GLItemsList items, GLRenderProgramSortedList rObjects, GalacticMapping galmap, float sizeofname = 5000, ManualCorrections[] corr = null)
         {
             List<Vector4> vertexcolourregions = new List<Vector4>();
             List<Vector4> vertexregionsoutlines = new List<Vector4>();
             List<ushort> vertexregionoutlineindex = new List<ushort>();
 
-            textrenderer = new GLTextRenderer(new Size(250,22),200,depthtest:false);
+            Size bitmapsize = new Size(250, 22);
+            textrenderer = new GLTextRenderer(bitmapsize,200,depthtest:false);
             StringFormat fmt = new StringFormat(StringFormatFlags.NoWrap) { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
             Font fnt = new Font("MS Sans Serif", 12F);
 
@@ -56,8 +64,6 @@ namespace TestOpenTk
 
                     if (polys.Count > 0)                                                      // just in case..
                     {
-                        Vector2 centre = PolygonTriangulator.Centroids(polys);                       // weighted mean of the centroids
-
                         foreach (List<Vector2> points in polys)                         // now for every poly
                         {
                             List<List<Vector2>> polytri;
@@ -87,11 +93,23 @@ namespace TestOpenTk
                         }
 
                         cindex = (cindex+1) % array.Length;
+
+                        Vector2 centeroid = PolygonTriangulator.WeightedCentroids(polys);
+
+                        if (corr != null)   // allows the centeroid to be nerfed slightly
+                        {
+                            var entry = Array.Find(corr, x => gmo.name.Contains(x.name, StringComparison.InvariantCultureIgnoreCase));
+                            if (entry != null)
+                                centeroid = new Vector2(centeroid.X + entry.x, centeroid.Y + entry.y);
+                        }
+
+                        var final = PolygonTriangulator.FitInsideConvexPoly(polys, centeroid, new Vector2(sizeofname, sizeofname * (float)bitmapsize.Height / (float)bitmapsize.Width));
+
+                        Vector3 bestpos = new Vector3(final.Item1.X, 0, final.Item1.Y);
+                        Vector3 bestsize = new Vector3(final.Item2.X, 1, final.Item2.Y);
+                        
+                        textrenderer.Add(null, gmo.name, fnt, Color.White, Color.Transparent, bestpos, bestsize,new Vector3(0,0,0), fmt, alphascale:5000, alphaend:500);
                     }
-
-                    Vector3 bestpos = new Vector3(avgcentroid.X / pointsaveraged + (float)gmo.textadjustx, 0, avgcentroid.Y / pointsaveraged + (float)gmo.textadjusty);
-
-                    textrenderer.Add(null, gmo.name, fnt, Color.White, Color.Transparent, bestpos, new Vector3(sizeofname,0,0),new Vector3(0,0,0), fmt, alphascale:10000, alphaend:1000);
                 }
             }
 
@@ -109,7 +127,7 @@ namespace TestOpenTk
             GLRenderControl rt = GLRenderControl.Tri();
             rt.DepthTest = false;
             var ridisplay = GLRenderableItem.CreateVector4(items, rt, vertexcolourregions.ToArray());
-            rObjects.Add(regionshader, "RegionFill", ridisplay);
+            rObjects.Add(regionshader, ridisplay);
 
             // outlines
 
@@ -123,41 +141,34 @@ namespace TestOpenTk
             var rioutline = GLRenderableItem.CreateVector4(items, ro, vertexregionsoutlines.ToArray());
             rioutline.CreateElementIndexUShort(items.NewBuffer(), vertexregionoutlineindex.ToArray());
 
-            rObjects.Add(outlineshader, "RegionOutline", rioutline);
+            rObjects.Add(outlineshader, rioutline);
 
             // text renderer
 
-            rObjects.Add(textrenderer.Shader, "RegionText", textrenderer.RenderableItem);
+            rObjects.Add(textrenderer.Shader, textrenderer.RenderableItem);
             renderstate = 7;
         }
-
-        public void Toggle()
-        {
-            renderstate = (renderstate + 1) % 8;
-            Set();
-        }
-
-        public void SetState(bool regions, bool outline, bool text)
-        {
-            renderstate = (regions ? 1 : 0) + (outline ? 2 : 0) + (text ? 4 : 0);
-            Set();
-        }
-
-        public bool Regions { get { return (renderstate & 1) != 0; } set { renderstate = (renderstate & 0x6) | (value ? 1 : 0); Set(); } }
-        public bool Outlines { get { return (renderstate & 2) != 0; } set { renderstate = (renderstate & 0x5) | (value ? 2 : 0); Set(); } }
-        public bool Text { get { return (renderstate & 4) != 0; } set { renderstate = (renderstate & 0x3) | (value ? 4 : 0); Set(); } }
 
         private GLShaderPipeline regionshader;
         private GLShaderPipeline outlineshader;
         private GLTextRenderer textrenderer;
         private int renderstate = 0;
+        private bool enable = true;
 
         private void Set()
         {
-            regionshader.Enabled = (renderstate & 1) != 0;
-            outlineshader.Enabled = (renderstate & 2) != 0;
-            textrenderer.Shader.Enabled = (renderstate & 4) != 0;
+            regionshader.Enable = Regions;
+            outlineshader.Enable = Outlines;
+            textrenderer.Shader.Enable = Text;
         }
+
+        private static Color[] array = new Color[] { Color.Red, Color.Green, Color.Blue,
+                                                    Color.Brown, Color.Crimson, Color.Coral,
+                                                    Color.Aqua, Color.Yellow, Color.Violet,
+                                                    Color.Sienna, Color.Silver, Color.Salmon,
+                                                    Color.Pink , Color.AntiqueWhite , Color.Beige ,
+                                                    Color.DarkCyan , Color.DarkGray , Color.ForestGreen , Color.LightSkyBlue ,
+                                                    Color.Lime , Color.Maroon, Color.Olive, Color.SteelBlue};
 
     }
 

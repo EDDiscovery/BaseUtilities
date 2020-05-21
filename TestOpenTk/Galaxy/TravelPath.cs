@@ -84,13 +84,13 @@ namespace TestOpenTk
 
         public bool Enabled()
         {
-            return tapeshader.Enabled;
+            return tapeshader.Enable;
         }
 
         public void EnableToggle(bool? on = null)
         {
             bool beon = on.HasValue ? on.Value : !Enabled();
-            sunshader.Enabled = tapeshader.Enabled = beon;
+            sunshader.Enable = tapeshader.Enable = beon;
         }
 
         public void Update(long time, float eyedistance)

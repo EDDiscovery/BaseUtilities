@@ -144,7 +144,7 @@ namespace TestOpenTk
                 GLCheckBox butg = new GLCheckBox("GMSEL", new Rectangle(0,0, iconsize, iconsize), gt.Image, null);
                 butg.ToolTipText = "Enable/Disable " + gt.Description;
                 butg.Checked = gt.Enabled;
-                butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjects();  };
+                butg.CheckChanged += (e1) => { gt.Enabled = butg.Checked; map.UpdateGalObjectsStates();  };
                 galfp.Add(butg);
             }
 

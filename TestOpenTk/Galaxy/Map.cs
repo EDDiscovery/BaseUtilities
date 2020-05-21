@@ -42,6 +42,7 @@ namespace TestOpenTk
 
         private GalMapObjects galmapobjects;
         private GalMapRegions edsmgalmapregions;
+        private GalMapRegions elitemapregions;
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -67,7 +68,7 @@ namespace TestOpenTk
 
             sw.Start();
 
-            items.Add( new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
+            items.Add(new GLMatrixCalcUniformBlock(), "MCUB");     // create a matrix uniform block 
 
             int front = -20000, back = front + 90000, left = -45000, right = left + 90000, vsize = 2000;
             volumetricboundingbox = new Vector4[]
@@ -256,7 +257,7 @@ namespace TestOpenTk
                 currentsystem = pos[3];
             }
 
-            // Gal map regions
+            // Gal map objects
             if (true)
             {
                 galmapobjects = new GalMapObjects();
@@ -264,12 +265,30 @@ namespace TestOpenTk
 
             }
 
-            // Gal map objects
+            // Gal map regions
             if (true)
             {
+                var corr = new GalMapRegions.ManualCorrections[] {          // nerf the centeroid position slightly
+                    new GalMapRegions.ManualCorrections("The Galactic Aphelion", y: -2000 ),
+                    new GalMapRegions.ManualCorrections("The Abyss", y: +3000 ),
+                    new GalMapRegions.ManualCorrections("Eurus", y: -3000 ),
+                    new GalMapRegions.ManualCorrections("The Perseus Transit", x: -3000, y: -3000 ),
+                    new GalMapRegions.ManualCorrections("Zephyrus", x: 0, y: 2000 ),
+                };
+
                 edsmgalmapregions = new GalMapRegions();
-                edsmgalmapregions.CreateObjects(items, rObjects, eliteregions);
+                edsmgalmapregions.CreateObjects(items, rObjects, galmap, 8000, corr:corr);
             }
+
+            // Elite regions
+            if (true)
+            {
+                elitemapregions = new GalMapRegions();
+                elitemapregions.CreateObjects(items, rObjects, eliteregions, 8000);
+            }
+
+            //EDSMRegionsEnable = false;
+            EliteRegionsEnable = false;
 
             // menu system
 
@@ -381,24 +400,24 @@ namespace TestOpenTk
 
         public void EnableToggleGalaxy(bool? on = null)
         {
-            galaxyshader.Enabled = (on.HasValue) ? on.Value : !galaxyshader.Enabled;
+            galaxyshader.Enable = (on.HasValue) ? on.Value : !galaxyshader.Enable;
             glwfc.Invalidate();
         }
 
         public bool GalaxyEnabled()
         {
-            return galaxyshader.Enabled;
+            return galaxyshader.Enable;
         }
 
         public void EnableToggleStarDots(bool? on = null)
         {
-            items.Shader("SD").Enabled = items.Shader("PS").Enabled = (on.HasValue) ? on.Value : !StarDotsEnabled();
+            items.Shader("SD").Enable = items.Shader("PS").Enable = (on.HasValue) ? on.Value : !StarDotsEnabled();
             glwfc.Invalidate();
         }
 
         public bool StarDotsEnabled()
         {
-            return items.Shader("SD").Enabled;
+            return items.Shader("SD").Enable;
         }
 
         public void EnableToggleTravelPath(bool? on = null)
@@ -435,27 +454,16 @@ namespace TestOpenTk
             }
         }
 
-        public bool GalObjectsEnabled()
-        {
-            return galmapobjects.Enabled();
-        }
+        public bool GalObjectEnable { get { return galmapobjects.Enable; } set { galmapobjects.Enable = value; glwfc.Invalidate(); } }
 
-        public void EnableToggleGalMapObjects(bool? on = null)
-        {
-            galmapobjects.EnableToggle(on);
-            glwfc.Invalidate();
-        }
-
-        public void UpdateGalObjects()
+        public void UpdateGalObjectsStates()
         {
             galmapobjects.UpdateEnables(galmap);
-        }
-
-        public void ToggleEDSMRegionShader()
-        {
-            edsmgalmapregions.Toggle();
             glwfc.Invalidate();
         }
+
+        public bool EDSMRegionsEnable { get { return edsmgalmapregions.Enable; } set { edsmgalmapregions.Enable = value; glwfc.Invalidate(); } }
+        public bool EliteRegionsEnable { get { return elitemapregions.Enable; } set { elitemapregions.Enable = value; glwfc.Invalidate(); } }
 
         #endregion
 
@@ -501,11 +509,20 @@ namespace TestOpenTk
             }
             if (kb.HasBeenPressed(Keys.F8, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                EnableToggleGalMapObjects();
+                GalObjectEnable = !GalObjectEnable;
             }
             if (kb.HasBeenPressed(Keys.F9, OpenTKUtils.Common.KeyboardMonitor.ShiftState.None))
             {
-                ToggleEDSMRegionShader();
+                if (EDSMRegionsEnable)
+                    edsmgalmapregions.Toggle();
+                else
+                    elitemapregions.Toggle();
+            }
+            if (kb.HasBeenPressed(Keys.F9, OpenTKUtils.Common.KeyboardMonitor.ShiftState.Alt))
+            {
+                bool edsm = EDSMRegionsEnable;
+                EDSMRegionsEnable = !edsm;
+                EliteRegionsEnable = edsm;
             }
 
             // DEBUG!

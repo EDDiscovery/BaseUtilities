@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -61,15 +62,16 @@ namespace OpenTKUtils
 
             return true;
         }
-                                                                                            // Polygon is wound clockwise and convex
-        public static bool InsidePolygon(List<Vector2> polygon, Vector2 centre, float width, float height)                     
+
+        public static bool InsidePolygons(List<List<Vector2>> polygonlist, Vector2 point)             // Polygon is wound clockwise and must be convex
         {
-            width /= 2;
-            height /= 2;
-            return InsidePolygon(polygon, new Vector2(centre.X - width, centre.Y - height)) &&
-                    InsidePolygon(polygon, new Vector2(centre.X - width, centre.Y + height)) &&
-                    InsidePolygon(polygon, new Vector2(centre.X + width, centre.Y + height)) &&
-                    InsidePolygon(polygon, new Vector2(centre.X + width, centre.Y - height));
+            foreach (var polygon in polygonlist)
+            {
+                if (InsidePolygon(polygon, point))
+                    return true;
+            }
+
+            return false;
         }
 
         public static Vector2 Centroid(List<Vector2> polygon , out float area )              // Polygon is convex
@@ -93,7 +95,7 @@ namespace OpenTKUtils
             return new Vector2(x, y);
         }
 
-        static public Vector2 Centroids(List<List<Vector2>> polys)                          // Weighted average of convex polygons
+        static public Vector2 WeightedCentroids(List<List<Vector2>> polys)                  // Weighted average of convex polygons
         {                                                                                   // finds mean centre.
             Vector2 mean = new Vector2(0, 0);
             float totalweight = 0;
@@ -302,6 +304,97 @@ namespace OpenTKUtils
         }
 
         static private int FlipOffset(int i) { return ((i & 1) == 0) ? ((i + 1) / 2) : (-(i + 1) / 2); }    // used to search
+
+          // Polygon may be concave and wound either way
+        static public Vector2 Centre(List<Vector2> Polygon, out Vector2 size, out Vector2 avg)     // work out some stats.
+        {
+            float minx = float.MaxValue, maxx = float.MinValue;
+            float miny = float.MaxValue, maxy = float.MinValue;
+
+            avg = new Vector2(0, 0);
+            foreach (Vector2 v in Polygon)
+            {
+                if (v.X < minx)
+                    minx = v.X;
+                if (v.X > maxx)
+                    maxx = v.X;
+                if (v.Y < miny)
+                    miny = v.Y;
+                if (v.Y > maxy)
+                    maxy = v.Y;
+
+                avg.X += v.X;
+                avg.Y += v.Y;
+            }
+
+            avg.X /= Polygon.Count;
+            avg.Y /= Polygon.Count;
+
+            size = new Vector2(maxx - minx, maxy - miny);
+            return new Vector2((maxx + minx) / 2, (maxy + miny) / 2);
+        }
+
+        // given a list of polygons, and a centre pos/size, try and fit it inside the polygons..
+
+        static public Tuple<Vector2,Vector2> FitInsideConvexPoly(List<List<Vector2>> polys, Vector2 pos, Vector2 size)
+        {
+            //System.Diagnostics.Debug.WriteLine("Fit {0} {1}", pos, size);
+
+            for (int go = 0; go < 1000; go++)
+            {
+                bool lefttop = InsidePolygons(polys, new Vector2(pos.X - size.X/2, pos.Y + size.Y/2));
+                bool righttop = InsidePolygons(polys, new Vector2(pos.X + size.X/2, pos.Y + size.Y/2));
+                bool leftbot = InsidePolygons(polys, new Vector2(pos.X - size.X/2, pos.Y - size.Y/2));
+                bool rightbot = InsidePolygons(polys, new Vector2(pos.X + size.X/2, pos.Y - size.Y/2));
+
+                float xadjust = 0, yadjust = 0;
+
+                if ( !leftbot && !lefttop && !rightbot && !righttop ) //all out, too big
+                {
+                    size = new Vector2(size.X * 0.8f, size.Y * 0.8f);
+                }
+                else if (!lefttop)
+                {
+                    if (leftbot)    // lefttop is out, is leftbot in?
+                        yadjust = -1;   // adjust down
+                    else
+                        xadjust = 1;    // both are out, adjust x
+                }
+                else if (!righttop)
+                {
+                    if (rightbot)   // right top is out, is right bot in
+                        yadjust = -1;   // adjust down
+                    else
+                        xadjust = -1;   // both are out, adjust -x
+                }
+                else if (!leftbot)
+                {
+                    if (lefttop)        // is left top in
+                        yadjust = 1;    // adjust up
+                    else
+                        xadjust = 1;
+                }
+                else if (!rightbot)
+                {
+                    if (righttop)       // is right top in?
+                        yadjust = 1;    // adjust up
+                    else
+                        xadjust = -1;
+                }
+                else
+                    break;
+
+
+                pos = new Vector2(pos.X + size.X * xadjust * 0.2f, pos.Y + size.Y * yadjust * 0.2f);
+
+                //System.Diagnostics.Debug.WriteLine("..Fit {0} {1} : {2} {3} {4} {5} {6} {7}", pos, size, lefttop, righttop, leftbot, rightbot, xadjust, yadjust);
+
+                if (go % 10 == 9)   // if we keep on bouncing around, reduce size
+                    size = new Vector2(size.X * 0.8f, size.Y * 0.8f);
+            }
+
+            return new Tuple<Vector2,Vector2>(pos,size);
+        }
 
     }
 }

@@ -69,7 +69,7 @@ namespace OpenTKUtils.GL4
         {
             foreach (var d in renderables)
             {
-                if (d.Key.Enabled && d.Value.Find((x)=>x.Item2.Visible)!=null)      // shader must be enabled and at least 1 item visible
+                if (d.Key.Enable && d.Value.Find((x)=>x.Item2.Visible)!=null)      // shader must be enabled and at least 1 item visible
                 {
                     // System.Diagnostics.Debug.WriteLine("Shader " + d.Key.GetType().Name);
                     d.Key.Start();                                                  // start the program - if compute shader, this executes the code

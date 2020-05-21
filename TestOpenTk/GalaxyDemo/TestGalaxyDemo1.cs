@@ -449,7 +449,7 @@ namespace TestOpenTk
                 IGLProgramShader ps = items.Shader("Galaxy");
                 if (ps != null)
                 {
-                    ps.Enabled = !ps.Enabled;
+                    ps.Enable = !ps.Enable;
                     glwfc.Invalidate();
                 }
             }
@@ -458,7 +458,7 @@ namespace TestOpenTk
                 IGLProgramShader ps = items.Shader("SD");
                 if (ps != null)
                 {
-                    ps.Enabled = !ps.Enabled;
+                    ps.Enable = !ps.Enable;
                     glwfc.Invalidate();
                 }
             }

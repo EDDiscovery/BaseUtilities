@@ -36,7 +36,7 @@ namespace OpenTKUtils.GL4
 
     public interface IGLProgramShader : IGLShader           // Shaders suitable for the rendering queue inherit from this
     {
-        bool Enabled { get; set; }
+        bool Enable { get; set; }
         IGLShader Get(OpenTK.Graphics.OpenGL4.ShaderType t);    // get a subcomponent.  if the shader does not have subcomponents, its should return itself.
         Action<IGLProgramShader> StartAction { get; set; }      // allow start and finish actions to be added to the shader..
         Action<IGLProgramShader> FinishAction { get; set; }

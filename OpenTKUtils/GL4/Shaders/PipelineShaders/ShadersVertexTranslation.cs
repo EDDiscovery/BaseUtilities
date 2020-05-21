@@ -109,7 +109,7 @@ void main(void)
     } vs;
     layout (location = 3) out float alpha;
     
-    vec4 vertex[] = { vec4(-1,0,1,1), vec4(-1,0,-1,1), vec4(1,0,-1,1), vec4(1,0,1,1)};      // flat on z plane is the default
+    vec4 vertex[] = { vec4(-0.5,0,0.5,1), vec4(-0.5,0,-0.5,1), vec4(0.5,0,-0.5,1), vec4(0.5,0,0.5,1)};      // flat on z plane is the default
     vec2 tex[] = { vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,0)};
 
     void main(void)
