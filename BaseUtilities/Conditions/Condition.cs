@@ -27,21 +27,22 @@ namespace BaseUtils
         public List<ConditionEntry> fields;             // its condition fields
         public ConditionEntry.LogicalCondition innercondition;         // condition between fields
         public ConditionEntry.LogicalCondition outercondition;         // condition between this set of Condition and the next set of Condition
-        public string action;                           // action associated with a pass
-        public string actiondata;                       // any data 
+        public string action;                           // action associated with a pass (definition is up to user)
+        public Variables actionvars;                    // any variables associated with the action
 
         #region Init
 
         public Condition()
         {
-            eventname = action = actiondata = "";
+            eventname = action;
+            actionvars = new Variables();
         }
 
-        public Condition(string e, string a, string ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition i = ConditionEntry.LogicalCondition.Or , ConditionEntry.LogicalCondition o = ConditionEntry.LogicalCondition.Or)
+        public Condition(string e, string a, Variables ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition i = ConditionEntry.LogicalCondition.Or , ConditionEntry.LogicalCondition o = ConditionEntry.LogicalCondition.Or)
         {
             eventname = e;
             action = a;
-            actiondata = ad;
+            actionvars = new Variables(ad);
             innercondition = i;
             outercondition = o;
             fields = f;
@@ -59,7 +60,7 @@ namespace BaseUtils
             innercondition = other.innercondition;
             outercondition = other.outercondition;
             action = other.action;
-            actiondata = other.actiondata;
+            actionvars = new Variables(other.actionvars);
         }
 
         public bool Create(string e, string a, string d, string i, string o)   // i,o can have spaces inserted into enum
@@ -68,7 +69,7 @@ namespace BaseUtils
             {
                 eventname = e;
                 action = a;
-                actiondata = d;
+                actionvars = new Variables(a, Variables.FromMode.MultiEntryComma);
                 innercondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), i.Replace(" ", ""), true);       // must work, exception otherwise
                 outercondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), o.Replace(" ", ""), true);       // must work, exception otherwise
                 return true;
@@ -172,7 +173,19 @@ namespace BaseUtils
             string ret = "";
 
             if (includeaction)
-                ret += eventname.QuoteString(comma: true) + ", " + action.QuoteString(comma: true) + ", " + actiondata.QuoteString(comma:true) + ", ";
+            {
+                ret += eventname.QuoteString(comma: true) + ", " + action.QuoteString(comma: true) + ", ";
+                if (actionvars.Count == 0)
+                    ret += "\"\", ";
+                else
+                {
+                    string v = actionvars.ToString();
+                    if (v.Contains("\""))
+                        ret += "\"" + v.Replace("\"", "\\\"") + "\", ";     // verified 22/5/2020
+                    else
+                        ret += v + ", ";
+                }
+            }
 
             for (int i = 0; fields != null && i < fields.Count; i++)
             {
@@ -204,16 +217,21 @@ namespace BaseUtils
         {                                                                                           // demlimchars is normally space, but can be ") " if its inside a multi.
             fields = new List<ConditionEntry>();
             innercondition = outercondition = ConditionEntry.LogicalCondition.Or;
-            eventname = ""; action = ""; actiondata = "";
+            eventname = ""; action = "";
+            actionvars = new Variables();
 
             if (includeevent)                                                                   
             {
+                string actionvarsstr;
                 if ((eventname = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
                     (action = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
-                    (actiondata = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(','))
+                    (actionvarsstr = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(','))
                 {
                     return "Incorrect format of EVENT data associated with condition";
                 }
+
+                if ( actionvarsstr.HasChars())
+                    actionvars = new Variables(actionvarsstr, Variables.FromMode.MultiEntryComma); 
             }
 
             ConditionEntry.LogicalCondition? ic = null;
