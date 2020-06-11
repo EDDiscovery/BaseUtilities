@@ -200,6 +200,11 @@ namespace BaseUtils.Icons
             Icons[name] = Get(originalname);
         }
 
+        public void Add(string name, Image i)
+        {
+            Icons[name] = i;
+        }
+
         public Image Get(string name)
         {
             if (Icons == null)      // seen designer barfing over this
