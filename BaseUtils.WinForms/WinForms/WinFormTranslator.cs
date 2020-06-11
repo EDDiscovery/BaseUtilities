@@ -37,7 +37,7 @@ public static class WinFormTranslatorExtensions
             if (debugit)
                 System.Diagnostics.Debug.WriteLine("T: " + subname + " .. " + ctrl.Name + " (" + ctrl.GetType().Name + ")");
 
-            if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !translator.IsExcludedControl(ctrl.GetType().Name))
+            if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !translator.IsExcludedControl(ctrl.GetType()))
             {
                 if (ctrl.Text.HasChars())
                 {

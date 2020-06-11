@@ -97,7 +97,7 @@ namespace BaseUtils
         public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
         public string GetOriginalFile (string fullid) => originalfile[fullid];         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
-        public bool IsExcludedControl(string name) => ExcludedControls.Contains(name);
+        public bool IsExcludedControl(Type type) => ExcludedControls.Contains(type);
         // You can call this multiple times if required for debugging purposes
 
         public void LoadTranslation(string language, CultureInfo uicurrent, 
