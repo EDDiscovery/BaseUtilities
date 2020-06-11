@@ -38,7 +38,7 @@ namespace BaseUtils
 
         // bf default is DefaultLookup in the .net code for GetProperties()
         static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
-                                    bool fields = false, int linelen = 80, string comment = null)       // give a list of properties for a given name
+                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null )       // give a list of properties for a given name
         {
             if (jtype != null)
             {
@@ -46,11 +46,14 @@ namespace BaseUtils
 
                 foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties(bf))
                 {
-                    if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
+                    if (excludedeclaretype == null || pi.DeclaringType != excludedeclaretype)
                     {
-                        PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType , linelen , comment);
-                        ret.Add(pni);
-                    //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
+                        if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
+                        {
+                            PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType, linelen, comment);
+                            ret.Add(pni);
+                            //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
+                        }
                     }
                 }
 
@@ -58,9 +61,12 @@ namespace BaseUtils
                 {
                     foreach (FieldInfo fi in jtype.GetFields())
                     {
-                        PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen , comment);
-                        ret.Add(pni);
-                    //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
+                        if (excludedeclaretype == null || fi.DeclaringType != excludedeclaretype)
+                        {
+                            PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen, comment);
+                            ret.Add(pni);
+                            //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
+                        }
                     }
                 }
 

@@ -88,7 +88,7 @@ namespace AudioExtensions
 
                 if (waitfor)
                 {
-                    int max = 100;
+                    int max = 500;
                     while (max-- > 0 && engine.AudioState != AudioState.Stopped)
                         System.Threading.Thread.Sleep(10);
                     if (max <= 0)

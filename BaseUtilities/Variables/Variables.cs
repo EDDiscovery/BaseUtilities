@@ -210,7 +210,8 @@ namespace BaseUtils
 
         // Print vars, if altops is passed in, you can output using alternate operators
 
-        public string ToString(Dictionary<string, string> altops = null, string pad = "", string separ = ",", string prefix = "", bool bracket = false, bool comma = true, bool space = true)
+        public string ToString(Dictionary<string, string> altops = null, string pad = "", string separ = ",", string prefix = "", 
+                                bool bracket = false, bool comma = true, bool space = true)
         {
             string s = "";
             foreach (KeyValuePair<string, string> v in values)
@@ -344,45 +345,6 @@ namespace BaseUtils
             foreach (JObject jo in jf)
             {
                 values[(string)jo["var"]] = (string)jo["value"];
-            }
-        }
-
-        #endregion
-
-        #region Pack support
-
-        static public string flagRunAtRefresh = "RunAtRefresh;";            // ACTION DATA Flags, stored with action program name in events to configure it
-
-        public string ToActionDataString(string flag)           // helpers to encode action data..
-        {
-            if (flag.Length > 0 && values.Count > 0)
-                return flag + "," + ToString();
-            else if (values.Count > 0)
-                return ToString();
-            else
-                return flag;
-        }
-
-        public void FromActionDataString(string ad, out string flag)        // helpers to encode action data..
-        {
-            if (ad.IndexOf('=') == -1)      // no equals, no variables, all flags
-            {
-                flag = ad;
-            }
-            else
-            {
-                int comma = ad.IndexOf(',');
-
-                if (comma == -1)      // no comma, no flags, all vars
-                {
-                    flag = "";
-                    FromString(ad, Variables.FromMode.MultiEntryComma);
-                }
-                else
-                {
-                    flag = ad.Substring(0, comma);
-                    FromString(ad.Substring(comma + 1), Variables.FromMode.MultiEntryComma);
-                }
             }
         }
 

@@ -1,4 +1,20 @@
-﻿using System;
+﻿/*
+ * Copyright © 2020 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -67,7 +83,7 @@ namespace BaseUtils
         protected Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
         protected Dictionary<string, string> originalenglish = null;      // optional load
         protected Dictionary<string, string> originalfile = null;         // optional load
-        protected List<string> ExcludedControls = new List<string>();
+        protected List<Type> ExcludedControls = new List<Type>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
 
@@ -129,7 +145,9 @@ namespace BaseUtils
 
             using (LineReader lr = new LineReader())
             {
-                if (lr.Open(Path.Combine(langsel.Item1,langsel.Item2)))
+                string tlffile = Path.Combine(langsel.Item1, langsel.Item2);
+
+                if (lr.Open(tlffile))
                 {
                     translations = new Dictionary<string, string>();
                     originalenglish = new Dictionary<string, string>();
@@ -145,24 +163,26 @@ namespace BaseUtils
                         {
                             line = line.Mid(7).Trim();
 
-                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(langsel.Item1));
+                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlffile));
 
                             string filename = null;
 
-                            if (File.Exists(Path.Combine(di.FullName, line)))   // first we prefer files in the same folder..
-                                filename = Path.Combine(di.FullName, line);
+                            string fileinroot = Path.Combine(di.FullName, line);
+
+                            if (File.Exists(fileinroot))   // first we prefer files in the same folder..
+                                filename = fileinroot;
                             else
                             {
                                 di = di.GetDirectoryAbove(includesearchupdepth);        // then search the tree, first jump up search depth amount
 
                                 try
                                 {
-                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName , line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
+                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName, line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
 
                                     if (allFiles.Length > 0)
                                     {
                                         var selected = allFiles.Where((x) => !x.DirectoryName.Contains(includefolderreject));       // reject folders with this pattern..files
-                                        if ( selected.Count() > 0 )
+                                        if (selected.Count() > 0)
                                             filename = selected.First().FullName;
                                     }
                                 }
@@ -237,7 +257,7 @@ namespace BaseUtils
             }
         }
 
-        public void AddExcludedControls(string [] s)
+        public void AddExcludedControls(Type [] s)
         {
             ExcludedControls.AddRange(s);
         }

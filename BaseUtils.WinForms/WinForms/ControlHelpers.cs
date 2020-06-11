@@ -142,11 +142,6 @@ public static class ControlHelpersStaticFunc
 
     static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliptorectangle = false)
     {
-        return ImagePositionFromContentAlignment(c, client, image, cliptorectangle, cliptorectangle);
-    }
-
-    static public Rectangle ImagePositionFromContentAlignment(this ContentAlignment c, Rectangle client, Size image, bool cliplefttop,  bool stayinrectangle)
-    {
         int left = client.Left;
 
         if (c == ContentAlignment.BottomCenter || c == ContentAlignment.MiddleCenter || c == ContentAlignment.TopCenter)
@@ -165,22 +160,13 @@ public static class ControlHelpersStaticFunc
         else
             top += 0;
 
-        if (cliplefttop)        // ensure we start in rectangle..
+        if (cliptorectangle)        // ensure we start in rectangle..
         {
-            left = Math.Max(Math.Min(client.Right, left), client.Left);
-            top = Math.Max(Math.Min(client.Bottom, top), client.Top);
+            left = Math.Max(0, left);
+            top = Math.Max(0, top);
         }
 
-        int ih = image.Height;
-        int iw = image.Width;
-
-        if ( stayinrectangle)
-        { 
-            ih = Math.Min(client.Height, ih);
-            iw = Math.Min(client.Width, iw);
-        }
-
-        return new Rectangle(left, top, iw,ih);
+        return new Rectangle(left, top, image.Width, image.Height);
     }
 
     static public GraphicsPath RectCutCorners(int x, int y, int width, int height, int roundnessleft, int roundnessright)
@@ -288,62 +274,81 @@ public static class ControlHelpersStaticFunc
 
     static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
     {
-        Screen scr = Screen.FromControl(p);
+        Screen scr = Screen.FromPoint(p.Location);
         Rectangle scrb = scr.Bounds;
         //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
         return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
     }
 
-    static public void PositionWithinScreen(this Control p, int x, int y, int margin = 64)      // clamp to withing screen of control
-    {
-        Screen scr = Screen.FromControl(p);
-        Rectangle scrb = scr.Bounds;
-        //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
-        x = Math.Min(Math.Max(x, scrb.Left + margin), scrb.Right - p.Width - margin);
-        y = Math.Min(Math.Max(y, scrb.Top + margin), scrb.Bottom - p.Height - margin);
-        p.Location = new Point(x, y);
-    }
+    public enum VerticalAlignment { Top, Middle, Bottom };
 
-    // the Location/Size has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, int margin = 16, bool rightalign = false, bool centrecoords = false)
+    // the Location has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, 
+                                                    int margin = 16, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
-        Screen scr = Screen.FromControl(p);
+        Screen scr = Screen.FromPoint(p.Location);
         Rectangle scrb = scr.Bounds;
 
-        int calcwidth = Math.Min(wantedwidth, scrb.Width - margin * 2);       // ensure within screen
+        int left = p.Left;
+        int width = Math.Min(wantedwidth, scrb.Width - margin * 2);         // ensure within screen limits taking off margins
+
+        if (halign == HorizontalAlignment.Right)
+        {
+            left = scr.Bounds.Left + Math.Max(scrb.Width-margin-width, margin);               
+        }
+        else if (halign == HorizontalAlignment.Center)
+        {
+            left = scr.Bounds.Left + scrb.Width / 2 - width / 2;
+        }
+        else if (halign == HorizontalAlignment.Left)
+        {
+            left = scr.Bounds.Left + margin;
+        }
 
         int top = p.Top;
-        int left = p.Left;
-        if (rightalign)
+        int height = Math.Min(wantedheight, scrb.Height - margin * 2);        // ensure within screen
+
+        if (vertalign == VerticalAlignment.Bottom )
         {
-            left = Math.Max(left - calcwidth, margin);
+            top = scr.Bounds.Top + Math.Max(scrb.Height - margin - height, margin);
         }
-        else if (centrecoords)
+        else if (vertalign == VerticalAlignment.Middle)
         {
-            left = Math.Max(left - wantedwidth / 2, margin);
-            top = Math.Max(top - wantedheight / 2, margin);
+            top = scr.Bounds.Top + scrb.Height / 2 - height / 2;
+        }
+        else if (vertalign == VerticalAlignment.Top)
+        {
+            top = scr.Bounds.Top + margin;
         }
 
-        int x = Math.Min(Math.Max(left, scrb.Left + margin), scrb.Right - calcwidth - margin);
+        int botscreen = scr.Bounds.Bottom;
 
-        int availableh = scrb.Height - (lockY ? p.Top : margin) - margin;
+        int availableh = botscreen - top - margin;                        // available height from top to bottom less margin
 
-        if (wantedheight > availableh)
+        if (height > availableh)                                            // if not enough height available
         {
-            if (lockY && availableh >= scrb.Height / 4)        // if locky and available is reasonable
-                wantedheight = availableh;      // lock h to it, keep y
+            if (lockY && availableh >= scrb.Height / 4)                     // if locky and available is reasonable
+            {
+                height = availableh;                                        // lock height to it, keep y
+            }
             else
             {
-                top = Math.Max(margin, scrb.Height - margin - wantedheight);     // at least margin, or at least height-margin-wantedheight
-                wantedheight = Math.Min(scrb.Height - margin * 2, wantedheight);    // and limit to margin*2
+                top = scr.Bounds.Top + Math.Max(margin, scrb.Height - margin - height);      // at least margin, or at least height-margin-wantedheight
+                height = Math.Min(scrb.Height - margin * 2, height);        // and limit to margin*2
             }
-        }
-        else if (top + wantedheight > scrb.Height - margin)
-            top = scrb.Height - margin - wantedheight;
 
-      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(x, top) + " size " + new Size(calcwidth, wantedheight));
-        p.Location = new Point(x, top);
-        p.Size = new Size(calcwidth, wantedheight);
+            width += scrollbarallowwidth;                                   // need a scroll bar
+        }
+
+        if (left + width >= scr.Bounds.Right - margin)
+        {
+            left = scr.Bounds.Right - margin - width;
+        }
+
+
+      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(left, top) + " size " + new Size(width,height));
+        p.Location = new Point(left, top);
+        p.Size = new Size(width, height);
     }
 
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
@@ -523,250 +528,7 @@ public static class ControlHelpersStaticFunc
 
     #endregion
 
-    #region Data Grid Views
-
-    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext= null)
-    {
-        string s1 = e.CellValue1?.ToString();
-        string s2 = e.CellValue2?.ToString();
-
-        if (removetext != null)
-        {
-            if ( s1 != null )
-                s1 = s1.Replace(removetext, "");
-            if ( s2 != null )
-                s2 = s2.Replace(removetext, "");
-        }
-
-        double v1=0, v2=0;
-
-        bool v1hasval = s1 != null && Double.TryParse(s1, out v1);
-        bool v2hasval = s2 != null && Double.TryParse(s2, out v2);
-
-        if (!v1hasval)
-        {
-            e.SortResult = 1;
-        }
-        else if (!v2hasval)
-        {
-            e.SortResult = -1;
-        }
-        else
-        {
-            e.SortResult = v1.CompareTo(v2);
-        }
-
-        e.Handled = true;
-    }
-
-    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e, bool userowtagtodistinguish = false)
-    {
-        string s1 = e.CellValue1?.ToString();
-        string s2 = e.CellValue2?.ToString();
-
-        DateTime v1 = DateTime.MinValue, v2 = DateTime.MinValue;
-
-        bool v1hasval = s1!=null && DateTime.TryParse(e.CellValue1?.ToString(), out v1);
-        bool v2hasval = s2!=null && DateTime.TryParse(e.CellValue2?.ToString(), out v2);
-
-        if (!v1hasval)
-        {
-            e.SortResult = 1;
-        }
-        else if (!v2hasval)
-        {
-            e.SortResult = -1;
-        }
-        else
-        {
-            e.SortResult = v1.CompareTo(v2);
-        }
-
-        if ( e.SortResult == 0 && userowtagtodistinguish)
-        {
-            var left = e.Column.DataGridView.Rows[e.RowIndex1].Tag;
-            var right = e.Column.DataGridView.Rows[e.RowIndex2].Tag;
-            if (left != null && right != null)
-            {
-                long lleft = (long)left;
-                long lright = (long)right;
-
-                e.SortResult = lleft.CompareTo(lright);
-            }
-        }
-
-        e.Handled = true;
-    }
-
-    static public void SortDataGridViewColumnTagsAsStringsLists(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
-    {
-        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
-        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
-
-        var lleft = left.Tag as List<string>;
-        var lright = right.Tag as List<string>;
-
-        if (lleft != null)
-        {
-            if (lright != null)
-            {
-                string sleft = string.Join(";", left.Tag as List<string>);
-                string sright = string.Join(";", right.Tag as List<string>);
-                e.SortResult = sleft.CompareTo(sright);
-            }
-            else
-                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
-        }
-        else
-            e.SortResult = lright != null ? -1 : 0;
-
-        e.Handled = true;
-    }
-
-    static public void SortDataGridViewColumnTagsAsStrings(this DataGridViewSortCompareEventArgs e, DataGridView dataGridView)
-    {
-        DataGridViewCell left = dataGridView.Rows[e.RowIndex1].Cells[4];
-        DataGridViewCell right = dataGridView.Rows[e.RowIndex2].Cells[4];
-
-        var sleft = left.Tag as string;
-        var sright = right.Tag as string;
-
-        if (sleft != null)
-        {
-            if (sright != null)
-            {
-                e.SortResult = sleft.CompareTo(sright);
-            }
-            else
-                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
-        }
-        else
-            e.SortResult = sright != null ? -1 : 0;
-
-        e.Handled = true;
-    }
-
-    // Find text in coloun
-
-    static public int FindRowWithValue(this DataGridView grid, int coln, string text, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
-    {
-        foreach (DataGridViewRow row in grid.Rows)
-        {
-            if (row.Cells[coln].Value.ToString().Equals(text,sc))
-            {
-                return row.Index;
-            }
-        }
-
-        return -1;
-    }
-
-    // try and force this row to centre or top
-    static public void DisplayRow(this DataGridView grid, int rown, bool centre)
-    {
-        int drows = centre ? grid.DisplayedRowCount(false) : 0;
-
-        while (!grid.Rows[rown].Displayed && drows >= 0)
-        {
-            //System.Diagnostics.Debug.WriteLine("Set row to " + Math.Max(0, rowclosest - drows / 2));
-            grid.FirstDisplayedScrollingRowIndex = Math.Max(0, rown - drows / 2);
-            grid.Update();      //FORCE the update so we get an idea if its displayed
-            drows--;
-        }
-    }
-
-    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
-    {
-        vw.SuspendLayout();
-        vw.Enabled = false;
-
-        bool[] visible = new bool[vw.RowCount];
-        bool visibleChanged = false;
-
-        foreach (DataGridViewRow row in vw.Rows.OfType<DataGridViewRow>())
-        {
-            bool found = false;
-
-            if (searchstr.Length < 1)
-                found = true;
-            else
-            {
-                foreach (DataGridViewCell cell in row.Cells)
-                {
-                    if (cell.Value != null)
-                    {
-                        if (cell.Value.ToString().IndexOf(searchstr, 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (checktags)
-                    {
-                        List<string> slist = cell.Tag as List<string>;
-                        if (slist != null)
-                        {
-                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        string str = cell.Tag as string;
-                        if (str != null)
-                        {
-                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            visible[row.Index] = found;
-            visibleChanged |= found != row.Visible;
-        }
-
-        if (visibleChanged)
-        {
-            var selectedrow = vw.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
-            DataGridViewRow[] rows = vw.Rows.OfType<DataGridViewRow>().ToArray();
-            vw.Rows.Clear();
-
-            for (int i = 0; i < rows.Length; i++)
-            {
-                rows[i].Visible = visible[i];
-            }
-
-            vw.Rows.Clear();
-            vw.Rows.AddRange(rows.ToArray());
-
-            vw.Rows[selectedrow].Selected = true;
-        }
-
-        vw.Enabled = true;
-        vw.ResumeLayout();
-    }
-
-    public static bool IsNullOrEmpty( this DataGridViewCell cell)
-    {
-        return cell.Value == null || cell.Value.ToString().Length == 0;
-    }
-
-    public static int GetNumberOfVisibleRowsAbove( this DataGridViewRowCollection table, int rowindex )
-    {
-        int visible = 0;
-        for( int i = 0; i < rowindex; i++ )
-        {
-            if (table[i].Visible)
-                visible++;
-        }
-        return visible;
-    }
+    #region Misc
 
     public static string GetToolStripState( this ContextMenuStrip cms )     // semi colon list of checked items
     {
@@ -826,12 +588,14 @@ public static class ControlHelpersStaticFunc
             if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
             {
                 if (debugout)
-                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size);
+                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size + " R " + c.Right + " B" + c.Bottom);
                 s.Width = Math.Max(s.Width, c.Right);
                 s.Height = Math.Max(s.Height, c.Bottom);
             }
         }
 
+        if (debugout )
+            System.Diagnostics.Debug.WriteLine("Control Measured " + s);
         s.Width += hpad;
         s.Height += vpad;
         return s;
@@ -901,12 +665,18 @@ public static class ControlHelpersStaticFunc
 
     static public SizeF CurrentAutoScaleFactor(this Form f)
     {
-        return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
+        if (f.AutoScaleMode == AutoScaleMode.None)      // if in autoscale none, CurrentAutoScaleDimensions returns 0,0 but we want a 1,1 return
+            return new SizeF(1, 1);
+        else
+            return new SizeF(f.CurrentAutoScaleDimensions.Width / 6, f.CurrentAutoScaleDimensions.Height / 13);
     }
 
     static public SizeF InvCurrentAutoScaleFactor(this Form f)
     {
-        return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
+        if (f.AutoScaleMode == AutoScaleMode.None)      // if in autoscale none, CurrentAutoScaleDimensions returns 0,0 but we want a 1,1 return
+            return new SizeF(1, 1);
+        else
+            return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
     }
 
     static public Rectangle RectangleScreenCoords(this Control c)

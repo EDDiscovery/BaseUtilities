@@ -994,6 +994,17 @@ namespace BaseUtils.Win32Constants
         /// </summary>
         /// <seealso href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd938874(v=vs.85).aspx"/>
         public const int DWMSENDICONICLIVEPREVIEWBITMAP = 0x0326;
+
+        /// <summary>
+        /// The WM_SIZING message is sent to a window that the user is resizing.By processing this message, an application can monitor the size and position of the drag rectangle and, if needed, change its size or position.
+        /// </summary>
+        public const int SIZING = 0x214;
+
+        /// <summary>
+        /// The WM_MOVING message is sent to a window that the user is moving. By processing this message, an application can monitor the position of the drag rectangle and, if needed, change its position.
+        /// </summary>
+        public const int MOVING = 0x0216;
+
     }
 
     #endregion

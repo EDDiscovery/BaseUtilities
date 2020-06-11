@@ -35,12 +35,12 @@ namespace BaseUtils
             logger = lg;
         }
 
-        public JArray GetAllReleases()
+        public JArray GetAllReleases(int reqmax)
         {
 
             try
             {
-                HttpWebRequest request = WebRequest.Create(httpserveraddress + "releases") as HttpWebRequest;
+                HttpWebRequest request = WebRequest.Create(httpserveraddress + "releases?per_page=" + reqmax.ToString()) as HttpWebRequest;
                 request.UserAgent = BrowserInfo.UserAgent;
                 using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
                 {

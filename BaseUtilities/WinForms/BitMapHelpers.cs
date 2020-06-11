@@ -86,8 +86,12 @@ namespace BaseUtils
 
         // if b != Transparent, a back box is drawn.
         // bitmap never bigger than maxsize
-        // setting frmt allows you to word wrap etc into a bitmap, maximum of maxsize.  
         // no frmt means a single line across the bitmap unless there are \n in it.
+        // maxsize normally clips the bitmap to this size
+        // setting frmt allows you to word wrap etc into a bitmap.
+        // if alignment == near, bitmap is restricted to text width/maxsize
+        // if alignment != near, bitmap is maxsize width if maxsize.Width>0 (and the text is left/centre aligned in it).  If maxsize.Width==0, its the text width. Useful for centre word wrapped text
+        // accepts maxsize having an element <1, if so, returns a 1 pixel image in that direction
 
         public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b,
                                             float backscale = 1.0F, StringFormat frmt = null)
@@ -100,9 +104,15 @@ namespace BaseUtils
                 SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
                 //System.Diagnostics.Debug.WriteLine("Bit map auto size " + sizef);
 
-                int width = Math.Min((int)(sizef.Width + 1), maxsize.Width);
+                int width = Math.Min((int)(sizef.Width + 1), maxsize.Width); // first default width is the min of text width/maxsize
+                if (frmt != null && frmt.Alignment != StringAlignment.Near) // if not near
+                {
+                    width = maxsize.Width > 0 ? maxsize.Width : (int)(sizef.Width+1);   // we use maxsize width, unless it zero, in which case we use text width
+                }
+
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
-                Bitmap img = new Bitmap(width, height);
+
+                Bitmap img = new Bitmap(Math.Max(1, width), Math.Max(1, height)); // ensure we have a bitmap #2842
 
                 using (Graphics dgr = Graphics.FromImage(img))
                 {
@@ -133,11 +143,12 @@ namespace BaseUtils
         // draw into fixed sized bitmap. 
         // centretext overrided frmt and just centres it
         // frmt provides full options and draws text into bitmap
+        // accepts maxsize having an element <1, if so, returns a 1 pixel image in that direction
 
         public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b,
                                                     float backscale = 1.0F, bool centertext = false, StringFormat frmt = null)
         {
-            Bitmap img = new Bitmap(size.Width, size.Height);
+            Bitmap img = new Bitmap(Math.Max(1, size.Width), Math.Max(1, size.Height)); // ensure we have a bitmap #2842
             Color? back = null;
             if (!b.IsFullyTransparent() && text.Length>0)       // transparent means no paint, or text length = 0 means no background paint, for this version
                 back = b;
@@ -206,6 +217,65 @@ namespace BaseUtils
             return f;
         }
 
+        // from https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
+        public static Bitmap ResizeImage(this Image image, int width, int height,
+                                         System.Drawing.Drawing2D.InterpolationMode interm = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic
+                                        )
+        {
+            if (width <= 0)
+                width = image.Width;
+            if (height <= 0)
+                height = image.Height;
+
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode = interm;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+
+                using (var wrapMode = new System.Drawing.Imaging.ImageAttributes())
+                {
+                    wrapMode.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
+        }
+
+        public static Bitmap CropImage(this Bitmap image, Rectangle croparea)
+        {
+            if ((croparea.Width <= 0) || (croparea.Width > image.Width))
+            {
+                croparea.X = 0;
+                croparea.Width = image.Width;
+            }
+            else if (croparea.Left + croparea.Width > image.Width)
+            {
+                croparea.X = image.Width - croparea.Width;
+            }
+
+            if ((croparea.Height <= 0) || (croparea.Height > image.Height))
+            {
+                croparea.Y = 0;
+                croparea.Height = image.Height;
+            }
+            else if (croparea.Top + croparea.Height > image.Height)
+            {
+                croparea.Y = image.Height - croparea.Height;
+            }
+
+            return image.Clone(croparea, System.Drawing.Imaging.PixelFormat.DontCare);
+        }
+
+
         // not the quickest way in the world, but not supposed to do this at run time
         // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
 
@@ -213,6 +283,9 @@ namespace BaseUtils
         {
             Average,
             HeatMap,
+
+            Maximum,
+            Brightness,
         };
 
         public static Bitmap Function(this Bitmap bmp, int granularityx, int granularityy, int avggranulatityx = 0, int avggranulatityy = 0, BitmapFunction mode = BitmapFunction.Average, 
@@ -262,8 +335,8 @@ namespace BaseUtils
                         {
                             int v = System.Runtime.InteropServices.Marshal.ReadInt32(ptr);  // ARBG
                             red += enablered ? (uint)((v >> 16) & 0xff) : 0;
-                            blue += enableblue ? (uint)((v >> 8) & 0xff) : 0;
-                            green += enablegreen ? (uint)((v >> 0) & 0xff) : 0;
+                            green += enablegreen ? (uint)((v >> 8) & 0xff) : 0;
+                            blue += enableblue ? (uint)((v >> 0) & 0xff) : 0;
                             ptr += 4;
                             points++;
                             //System.Diagnostics.Debug.WriteLine("Avg " + ax + "," + ay);
@@ -300,5 +373,71 @@ namespace BaseUtils
                 }
             }
         }
+
+        // average,Brightness or maximum over area of bitmap
+        public static Tuple<float, float, float, float> Function(this Bitmap bmp, BitmapFunction mode, int x, int y, int width, int height )
+        {
+            System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                                        System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
+
+            IntPtr baseptr = bmpdata.Scan0;     // its a byte ptr
+            int linestride = bmp.Width * 4;
+
+            uint red = 0;
+            uint green = 0;
+            uint blue = 0;
+            uint alpha = 0;
+
+            for (int gy = y; gy < y + height; gy++)
+            {
+                IntPtr ptr = baseptr + x * 4 + gy * linestride;
+
+                for (int gx = x; gx < x + width; gx++)
+                {
+                    uint v = (uint)System.Runtime.InteropServices.Marshal.ReadInt32(ptr);  // ARBG
+                    if (mode != BitmapFunction.Maximum)
+                    {
+                        alpha += ((v >> 24) & 0xff);
+                        red += ((v >> 16) & 0xff);
+                        green += ((v >> 8) & 0xff);
+                        blue += ((v >> 0) & 0xff);
+                        ptr += 4;
+                    }
+                    else 
+                    {
+                        alpha = Math.Max(alpha, ((v >> 24) & 0xff));
+                        red += Math.Max(red, ((v >> 16) & 0xff));
+                        green += Math.Max(green, ((v >> 8) & 0xff));
+                        blue += Math.Max(blue, ((v >> 0) & 0xff));
+                    }
+                }
+            }
+
+            bmp.UnlockBits(bmpdata);
+
+            int pixels = width * height;
+            float ac = (float)alpha / pixels;
+            float rc = (float)red / pixels;
+            float gc = (float)green / pixels;
+            float bc = (float)blue / pixels;
+
+            if (mode == BitmapFunction.Average)
+            {
+                return new Tuple<float, float, float, float>(ac,rc,gc,bc);
+            }
+            else if (mode == BitmapFunction.Brightness)
+            {
+                double v = (float)rc * (float)rc + (float)gc * (float)gc + (float)bc * (float)bc;
+                v = Math.Sqrt(v);
+                return new Tuple<float, float, float, float>(ac, (float)v / 441.67296f,0,0);        // that Math.Sqrt(255^2+255^2+255^2)
+            }
+            else
+                return new Tuple<float, float, float, float>(alpha, red, green, blue);
+        }
+
+
+
+
+
     }
 }
