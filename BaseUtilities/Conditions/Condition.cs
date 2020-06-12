@@ -180,8 +180,8 @@ namespace BaseUtils
                 else
                 {
                     string v = actionvars.ToString();
-                    if (v.Contains("\""))
-                        ret += "\"" + v.Replace("\"", "\\\"") + "\", ";     // verified 22/5/2020
+                    if (v.Contains("\"") || v.Contains(","))
+                        ret += "\"" + v.Replace("\"", "\\\"") + "\", ";     // verified 12/06/2020
                     else
                         ret += v + ", ";
                 }
