@@ -27,11 +27,24 @@ namespace BaseUtils.Icons
 {
     public class IconSet : IIcons
     {
-        public Dictionary<string, Image> Icons { get; private set; } = new Dictionary<string, Image>();
+        private Dictionary<string, Object> Icons { get; set; } = new Dictionary<string, Object>();
+
+        public bool Contains(string name)       // contains this icon
+        {
+            return Icons.ContainsKey(name);
+        }
+
+        public string[] Names() { return Icons.Keys.ToArray(); }        // all of the names available
 
         public IconSet() { }
 
-        public void LoadIconsFromAssembly(Assembly asm)
+        private class LazyLoadFromAssembly
+        {
+            public Assembly asm;
+            public string resname;
+        }
+
+        public void LoadIconsFromAssembly(Assembly asm, bool lazyload = true)
         {
             string[] resnames = asm.GetManifestResourceNames();
             string basename = asm.GetName().Name + ".";
@@ -41,26 +54,17 @@ namespace BaseUtils.Icons
                 if (resname.StartsWith(basename) && new[] { ".png", ".jpg" }.Any(e => resname.EndsWith(e, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     string name = resname.Substring(basename.Length, resname.Length - basename.Length - 4);
-                    Image img = Image.FromStream(asm.GetManifestResourceStream(resname));
-                    name = SetImageTransparency(img, name);
-                    img.Tag = name;
-                    Icons[name] = img;
+
+                    if (lazyload)
+                        Icons[name] = new LazyLoadFromAssembly() { resname = resname, asm = asm };      // we lazy load by just noting asm and resname
+                    else
+                    {
+                        Image img = Image.FromStream(asm.GetManifestResourceStream(resname));
+                        SetImageTransparency(img, name);
+                        Icons[name] = img;
+                    }
                 }
             }
-        }
-
-        private static string SetImageTransparency(Image image, string name)
-        {
-            int transparentcolour;
-
-            if (image is Bitmap && name.Length >= 9 && name[name.Length - 7] == '_' && name[name.Length - 8] == '_' && int.TryParse(name.Substring(name.Length - 6), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out transparentcolour))
-            {
-                var bmp = (Bitmap)image;
-                name = name.Substring(0, name.Length - 8);
-                bmp.MakeTransparent(Color.FromArgb(transparentcolour));
-            }
-
-            return name;
         }
 
         private void LoadIconsFromDirectory(string path, string extension)
@@ -73,8 +77,7 @@ namespace BaseUtils.Icons
                 try
                 {
                     img = Image.FromFile(file);
-                    name = SetImageTransparency(img, name);
-                    img.Tag = name;
+                    SetImageTransparency(img, name);
                 }
                 catch
                 {
@@ -122,8 +125,7 @@ namespace BaseUtils.Icons
                                     var memstrm = new MemoryStream(); // Image will own this
                                     zipstrm.CopyTo(memstrm);
                                     img = Image.FromStream(memstrm);
-                                    name = SetImageTransparency(img, name);
-                                    img.Tag = name;
+                                    SetImageTransparency(img, name);
                                 }
                             }
                             catch
@@ -212,12 +214,35 @@ namespace BaseUtils.Icons
 
             //System.Diagnostics.Debug.WriteLine("ICON " + name);
 
-            if (Icons.ContainsKey(name))            // written this way so you can debug step it.
-                return Icons[name];
-            else
+            if (!Icons.ContainsKey(name))            // if not found, must return someting, so default
+                name = "Default";
+
+            Object o = Icons[name];
+
+            if (o is LazyLoadFromAssembly)          // if not loaded, pick it up.
             {
-                Image i = Icons["Default"];         // will assert if you don't give it
-                return i;
+                var ll = o as LazyLoadFromAssembly;
+                //System.Diagnostics.Debug.WriteLine("Lazy load " + ll.resname);
+
+                Image img = Image.FromStream(ll.asm.GetManifestResourceStream(ll.resname));
+                SetImageTransparency(img, name);
+                Icons[name] = img;      // now its an Image, so next time, it will load directly
+                return img;
+
+            }
+            else
+                return o as Image;
+
+        }
+
+        private static void SetImageTransparency(Image image, string name)
+        {
+            int transparentcolour;
+
+            if (image is Bitmap && name.Length >= 9 && name[name.Length - 7] == '_' && name[name.Length - 8] == '_' && int.TryParse(name.Substring(name.Length - 6), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out transparentcolour))
+            {
+                var bmp = (Bitmap)image;
+                bmp.MakeTransparent(Color.FromArgb(transparentcolour));
             }
         }
 
