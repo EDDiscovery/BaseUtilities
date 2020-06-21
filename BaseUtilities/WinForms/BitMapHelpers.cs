@@ -91,6 +91,7 @@ namespace BaseUtils
         // setting frmt allows you to word wrap etc into a bitmap.
         // if alignment == near, bitmap is restricted to text width/maxsize
         // if alignment != near, bitmap is maxsize width if maxsize.Width>0 (and the text is left/centre aligned in it).  If maxsize.Width==0, its the text width. Useful for centre word wrapped text
+        // accepts maxsize having an element <1, if so, returns a 1 pixel image in that direction
 
         public static Bitmap DrawTextIntoAutoSizedBitmap(string text, Size maxsize, Font dp, Color c, Color b,
                                             float backscale = 1.0F, StringFormat frmt = null)
@@ -110,7 +111,8 @@ namespace BaseUtils
                 }
 
                 int height = Math.Min((int)(sizef.Height + 1), maxsize.Height);
-                Bitmap img = new Bitmap(width, height);
+
+                Bitmap img = new Bitmap(Math.Max(1, width), Math.Max(1, height)); // ensure we have a bitmap #2842
 
                 using (Graphics dgr = Graphics.FromImage(img))
                 {
@@ -141,11 +143,12 @@ namespace BaseUtils
         // draw into fixed sized bitmap. 
         // centretext overrided frmt and just centres it
         // frmt provides full options and draws text into bitmap
+        // accepts maxsize having an element <1, if so, returns a 1 pixel image in that direction
 
         public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b,
                                                     float backscale = 1.0F, bool centertext = false, StringFormat frmt = null)
         {
-            Bitmap img = new Bitmap(size.Width, size.Height);
+            Bitmap img = new Bitmap(Math.Max(1, size.Width), Math.Max(1, size.Height)); // ensure we have a bitmap #2842
             Color? back = null;
             if (!b.IsFullyTransparent() && text.Length>0)       // transparent means no paint, or text length = 0 means no background paint, for this version
                 back = b;

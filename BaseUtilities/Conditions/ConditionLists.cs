@@ -96,8 +96,8 @@ namespace BaseUtils
                     j1["OCond"] = f.outercondition.ToString();
                 if (f.action.Length > 0)
                     j1["Actions"] = f.action;
-                if (f.actiondata.Length > 0)
-                    j1["ActionData"] = f.actiondata;
+                if (f.actionvars.Count > 0)
+                    j1["ActionData"] = f.actionvars.ToString();
 
                 JArray jfields = new JArray();
 
@@ -176,7 +176,7 @@ namespace BaseUtils
                         outercondition = ftouter,
                         fields = fieldlist,
                         action = act,
-                        actiondata = actd
+                        actionvars = new Variables(actd, Variables.FromMode.MultiEntryComma)
                     });
                 }
 
@@ -276,13 +276,13 @@ namespace BaseUtils
 
         #region Helpers
 
-        // is condition flag in actiondata set
+        // is condition variable flag in actiondata set
 
-        public bool IsConditionFlagSet(string flagstart)
+        public bool IsActionVarDefined(string flagvar)
         {
             foreach (Condition l in conditionlist)
             {
-                if (l.actiondata.StartsWith(flagstart))
+                if ( l.actionvars.Exists(flagvar))
                     return true;
             }
 
@@ -292,15 +292,15 @@ namespace BaseUtils
         // Event name.. give me conditions which match that name or ALL
         // flagstart, if not null ,compare with start of action data and include only if matches
 
-        public List<Condition> GetConditionListByEventName(string eventname, string flagstart = null)
+        public List<Condition> GetConditionListByEventName(string eventname, string flagvar = null)
         {
             List<Condition> fel;
 
-            if (flagstart != null)
+            if (flagvar != null)
                 fel = (from fil in conditionlist
                        where
                      (fil.eventname.Equals("All") || fil.eventname.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
-                     fil.actiondata.StartsWith(flagstart)
+                     fil.actionvars.Exists(flagvar)
                        select fil).ToList();
 
             else
