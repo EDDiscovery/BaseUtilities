@@ -67,6 +67,7 @@
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="Numbers\Matrices.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
