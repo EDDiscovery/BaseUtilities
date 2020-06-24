@@ -70,6 +70,7 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
+    <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
