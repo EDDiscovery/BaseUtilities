@@ -67,6 +67,7 @@
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
     <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
+    <Compile Include="WinForms\HotSpotMap.cs" />
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="WinForms\FontLoader.cs" />
