@@ -70,6 +70,7 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
+    <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
@@ -143,6 +144,7 @@
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
+    <Compile Include="WinForms\HotSpotMap.cs" />
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="WinForms\FontLoader.cs" />
