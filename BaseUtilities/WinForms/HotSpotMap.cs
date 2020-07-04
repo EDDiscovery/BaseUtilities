@@ -27,8 +27,16 @@ namespace BaseUtils
 {
     public class HotSpotMap
     {
+        private string hotSpotName = "";
+        private Point hotSpotLocation;
+
         private readonly Dictionary<string, double[]> _hotSpots = new Dictionary<string, double[]>();
 
+        /// <summary>
+        /// Create a map of hotspots regions
+        /// </summary>
+        /// <param name="plotHotSpot"></param>
+        /// <param name="HotSpotRadius"></param>
         public void CalculateHotSpotRegions(List<object[]> plotHotSpot, double HotSpotRadius = 10)
         {
             _hotSpots.Clear();
@@ -46,13 +54,18 @@ namespace BaseUtils
                 });
             }
         }
-
-        private string hotSpotName = "";
-        private Point hotSpotLocation;
-
+                
+        /// <summary>
+        /// Define a delegate and an event
+        /// </summary>
         public delegate void OnMouseHower();
         public event OnMouseHower OnHotSpot;
 
+        /// <summary>
+        /// Check if the mouse pointer is inside an hotspot region.
+        /// If so, fire the event!
+        /// </summary>
+        /// <param name="mousePosition"></param>
         public void CheckForMouseInHotSpot(Point mousePosition)
         {
             hotSpotName = "";
@@ -67,17 +80,25 @@ namespace BaseUtils
                         hotSpotName = item.Key;
                         hotSpotLocation = new Point((int)item.Value[1], (int)item.Value[2]);
                         //Debug.WriteLine(hotSpotName);
-                        { OnHotSpot(); }
+                        { OnHotSpot(); } // fire the event!
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Get the name related to the hovered hotspot
+        /// </summary>
+        /// <returns>hotSpotName</returns>
         public string GetHotSpotName()
         {
             return hotSpotName;
         }
 
+        /// <summary>
+        /// Get the location of the center of the hovered hotspot
+        /// </summary>
+        /// <returns>hotSpotLocation</returns>
         public Point GetHotSpotLocation()
         {
             return hotSpotLocation;
