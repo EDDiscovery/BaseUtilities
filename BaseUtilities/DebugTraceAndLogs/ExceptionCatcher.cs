@@ -58,6 +58,13 @@ namespace BaseUtils
             try
             {
                 TraceLog.WriteLine($"\n==== UNHANDLED UI EXCEPTION ====\n{e.Exception.ToString()}\n==== cut ====");
+
+                // Ignore COM exceptions in Web Browser component
+                if (e.Exception is System.Runtime.InteropServices.COMException && e.Exception.StackTrace.Contains("System.Windows.Forms.UnsafeNativeMethods.IWebBrowser2.Navigate2"))
+                {
+                    return;
+                }
+
                 ExceptionForm.ShowException(e.Exception, "There was an unhandled UI exception.", urlfeedback);
             }
             catch
