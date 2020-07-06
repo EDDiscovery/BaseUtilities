@@ -30,7 +30,7 @@ namespace BaseUtils
         private string hotSpotName = "";
         private Point hotSpotLocation;
 
-        private readonly Dictionary<string, double[]> _hotSpots = new Dictionary<string, double[]>();
+        private readonly Dictionary<string, double[]> hotSpotZones = new Dictionary<string, double[]>();
 
         /// <summary>
         /// Create a map of hotspots regions
@@ -39,11 +39,11 @@ namespace BaseUtils
         /// <param name="HotSpotRadius"></param>
         public void CalculateHotSpotRegions(List<object[]> plotHotSpot, double HotSpotRadius = 10)
         {
-            _hotSpots.Clear();
+            hotSpotZones.Clear();
 
             foreach (var hotSpot in plotHotSpot)
             {
-                _hotSpots.Add(hotSpot[0].ToString(), new double[]
+                hotSpotZones.Add(hotSpot[0].ToString(), new double[]
                 {
                     (double)hotSpot[1],
                     (double)hotSpot[2],
@@ -70,9 +70,9 @@ namespace BaseUtils
         {
             hotSpotName = "";
 
-            if (_hotSpots != null)
+            if (hotSpotZones != null)
             {
-                foreach (KeyValuePair<string, double[]> item in _hotSpots)
+                foreach (KeyValuePair<string, double[]> item in hotSpotZones)
                 {
                     if (mousePosition.X > item.Value[2] && mousePosition.X < item.Value[3] &&
                         mousePosition.Y > item.Value[4] && mousePosition.Y < item.Value[5])
