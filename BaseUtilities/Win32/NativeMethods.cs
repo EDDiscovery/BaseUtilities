@@ -9,6 +9,44 @@ namespace BaseUtils.Win32
 {
     public class NativeMethods
     {
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public class STARTUPINFO_I
+        {
+            public int cb = 0;
+            public IntPtr lpReserved = IntPtr.Zero;
+            public IntPtr lpDesktop = IntPtr.Zero;
+            public IntPtr lpTitle = IntPtr.Zero;
+            public int dwX = 0;
+            public int dwY = 0;
+            public int dwXSize = 0;
+            public int dwYSize = 0;
+            public int dwXCountChars = 0;
+            public int dwYCountChars = 0;
+            public int dwFillAttribute = 0;
+            public int dwFlags = 0;
+            public short wShowWindow = 0;
+            public short cbReserved2 = 0;
+            public IntPtr lpReserved2 = IntPtr.Zero;
+            public IntPtr hStdInput = IntPtr.Zero;
+            public IntPtr hStdOutput = IntPtr.Zero;
+            public IntPtr hStdError = IntPtr.Zero;
+        }
+
+        public const int STARTF_USESHOWWINDOW = 0x00000001,
+                    SW_HIDE = 0,
+                    SW_NORMAL = 1,
+                    SW_SHOWMINIMIZED = 2,
+                    SW_SHOWMAXIMIZED = 3,
+                    SW_MAXIMIZE = 3,
+                    SW_SHOWNOACTIVATE = 4,
+                    SW_SHOW = 5,
+                    SW_MINIMIZE = 6,
+                    SW_SHOWMINNOACTIVE = 7,
+                    SW_SHOWNA = 8,
+                    SW_RESTORE = 9,
+                    SW_MAX = 10;
+
+
         public delegate int HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [StructLayout(LayoutKind.Sequential)]
@@ -519,6 +557,10 @@ namespace BaseUtils.Win32
 
         [DllImport("kernel32.dll")]
         public static extern bool FreeLibrary(IntPtr hModule);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern void GetStartupInfo([In, Out] NativeMethods.STARTUPINFO_I startupinfo_i);
+
     }
 
     public class SafeNativeMethods
@@ -528,6 +570,7 @@ namespace BaseUtils.Win32
         [DllImport("kernel32.dll", ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         public static extern int GetTickCount();
     }
+
 
 
 }
