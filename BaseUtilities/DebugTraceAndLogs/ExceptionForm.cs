@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright © 2016 - 2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -52,14 +52,14 @@ namespace BaseUtils
 
         private static string DoubleNewLine { get; } = Environment.NewLine + Environment.NewLine;
 
-        private string _Description;
-        private Exception _Exception;
-        private bool _IsFatal;
-        private string _ReportURL;
+        private string description;
+        private Exception exception;
+        private bool isFatal;
+        private string reportURL;
 
-        private Image _icon = null;
-        private bool _IsExpanded = true;
-        private int _lastExpandedHeight = -1;
+        private Image icon = null;
+        private bool isExpanded = true;
+        private int lastExpandedHeight = -1;
 
         private readonly int CollapsedHeight = -1;
         private readonly int MinimumHeightExpanded = -1;
@@ -68,10 +68,10 @@ namespace BaseUtils
         {
             InitializeComponent();
 
-            _Description = desc;
-            _Exception = ex;
-            _IsFatal = isFatal;
-            _ReportURL = reportUrl;
+            description = desc;
+            exception = ex;
+            this.isFatal = isFatal;
+            reportURL = reportUrl;
 
             // Get some information from the designer.
             CollapsedHeight = Height - pnlDetails.Height - (pnlDetails.Top - pnlHeader.Bottom);
@@ -93,19 +93,19 @@ namespace BaseUtils
         {
             SuspendLayout();
 
-            _IsExpanded = !_IsExpanded;
-            btnDetails.Text = (_IsExpanded ? "▲" : "▼") + "  &Details";
-            pnlDetails.Visible = _IsExpanded;
+            isExpanded = !isExpanded;
+            btnDetails.Text = (isExpanded ? "▲" : "▼") + "  &Details";
+            pnlDetails.Visible = isExpanded;
 
-            if (_IsExpanded)
+            if (isExpanded)
             {
                 MinimumSize = new Size(MinimumSize.Width, MinimumHeightExpanded);
                 MaximumSize = Size.Empty;
-                Height = _lastExpandedHeight;
+                Height = lastExpandedHeight;
             }
             else
             {
-                _lastExpandedHeight = Height;
+                lastExpandedHeight = Height;
                 MaximumSize = new Size(int.MaxValue, CollapsedHeight);
                 MinimumSize = new Size(MinimumSize.Width, CollapsedHeight);
             }
@@ -118,10 +118,10 @@ namespace BaseUtils
         {
             base.OnFormClosed(e);
 
-            _icon?.Dispose();
-            _Description = null;
-            _Exception = null;
-            _icon = null;
+            icon?.Dispose();
+            description = null;
+            exception = null;
+            icon = null;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -129,10 +129,10 @@ namespace BaseUtils
             base.OnLoad(e);
 
             ToggleDetails();
-            _icon = SystemIcons.Error.ToBitmap();
-            pnlIcon.BackgroundImage = _icon;
+            icon = SystemIcons.Error.ToBitmap();
+            pnlIcon.BackgroundImage = icon;
 
-            if (_IsFatal)
+            if (isFatal)
             {
                 // Remove btnContinue
                 pnlHeader.Controls.Remove(btnContinue);
@@ -144,19 +144,19 @@ namespace BaseUtils
             }
 
             string appShortName = Assembly.GetEntryAssembly().GetName().Name;
-            Text = BrowserInfo.UserAgent + (_IsFatal ? " Fatal" : string.Empty) + " Error";
+            Text = BrowserInfo.UserAgent + (isFatal ? " Fatal" : string.Empty) + " Error";
 
             lblHeader.Text =
-                  _Description + DoubleNewLine
-                + (!string.IsNullOrEmpty(_ReportURL) ? $"Click the \"{NoAmp(btnReport)}\" button to copy diagnostic information to your clipboard, and provide this info to help us make {appShortName} better. Otherwise, click " : "Click ")
-                + (_IsFatal ? $"{NoAmp(btnExit)} to close the program." : $"{NoAmp(btnContinue)} to try and ignore the error, or {NoAmp(btnExit)} to close the program.");
+                  description + DoubleNewLine
+                + (!string.IsNullOrEmpty(reportURL) ? $"Click the \"{NoAmp(btnReport)}\" button to copy diagnostic information to your clipboard, and provide this info to help us make {appShortName} better. Otherwise, click " : "Click ")
+                + (isFatal ? $"{NoAmp(btnExit)} to close the program." : $"{NoAmp(btnContinue)} to try and ignore the error, or {NoAmp(btnExit)} to close the program.");
             textboxDetails.Text =
-                  _Description + DoubleNewLine
+                  description + DoubleNewLine
                 + "==== BEGIN ====" + Environment.NewLine
-                + _Exception.ToString() + Environment.NewLine
+                + exception.ToString() + Environment.NewLine
                 + "===== END =====";
 
-            if (!string.IsNullOrWhiteSpace(_ReportURL))
+            if (!string.IsNullOrWhiteSpace(reportURL))
             {
                 // Tag the report button with markdown-formatted information about this exception.
                 btnReport.Tag =
@@ -165,10 +165,10 @@ namespace BaseUtils
                     + "### Additional Information" + Environment.NewLine
                     + "<!-- Please attach (drag and drop) any relevant trace logs, screenshots, and/or journal files here to provide information about the problem. -->" + DoubleNewLine
                     + "### Exception Details:" + Environment.NewLine
-                    + ">" + BrowserInfo.UserAgent + " " + _Description + Environment.NewLine
+                    + ">" + BrowserInfo.UserAgent + " " + description + Environment.NewLine
                     + ">```" + Environment.NewLine
                     + ">==== BEGIN ====" + Environment.NewLine
-                    + ">" + _Exception.ToString().Replace(Environment.NewLine, Environment.NewLine + ">") + Environment.NewLine
+                    + ">" + exception.ToString().Replace(Environment.NewLine, Environment.NewLine + ">") + Environment.NewLine
                     + ">===== END =====" + Environment.NewLine
                     + ">```";
             }
@@ -211,7 +211,7 @@ namespace BaseUtils
 
             try
             {
-                Process.Start(_ReportURL);
+                Process.Start(reportURL);
                 if (clipSet)
                     MessageBox.Show(this, "Diagnostic information has been copied to your clipboard. Please include this in your issue submission.", string.Empty, MessageBoxButtons.OK);
             }
