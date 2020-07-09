@@ -22,17 +22,17 @@ namespace BaseUtils
 {
     public class HotSpotMap
     {
-        Action<Object, Point> OnHotSpot;        // call back when a hotspot is detected by Check, may be null
+        public Action<Object, PointF> OnHotSpot = null;        // call back when a hotspot is detected by Check, may be null
 
         /// Create a map of hotspots regions
 
-        public void CalculateHotSpotRegions(List<Tuple<Object,Point>> plotHotSpot, int HotSpotRadius = 10)
+        public void CalculateHotSpotRegions(List<Tuple<Object,PointF>> plotHotSpot, int HotSpotRadius = 10)
         {
             hotSpotZones.Clear();
 
             foreach (var hotSpot in plotHotSpot)
             {
-                hotSpotZones.Add(hotSpot, new int[]
+                hotSpotZones.Add(hotSpot, new float[]
                 {
                 hotSpot.Item2.X,
                 hotSpot.Item2.Y,
@@ -47,7 +47,7 @@ namespace BaseUtils
         /// Check if the mouse pointer is inside an hotspot region.
         /// If so, fire the event!.  Return point found, or null
         /// 
-        public Tuple<Object,Point> CheckForMouseInHotSpot(Point mousePosition)
+        public Tuple<Object,PointF> CheckForMouseInHotSpot(Point mousePosition)
         {
             if (hotSpotZones != null)
             {
@@ -56,7 +56,7 @@ namespace BaseUtils
                     if (mousePosition.X > item.Value[2] && mousePosition.X < item.Value[3] &&
                         mousePosition.Y > item.Value[4] && mousePosition.Y < item.Value[5])
                     {
-                        OnHotSpot?.Invoke(item.Key, new Point(item.Value[0], item.Value[1]));
+                        OnHotSpot?.Invoke(item.Key, new PointF(item.Value[0], item.Value[1]));
                         return item.Key;
                     }
                 }
@@ -65,6 +65,6 @@ namespace BaseUtils
             return null;
         }
 
-        private readonly Dictionary<Tuple<Object, Point>, int[]> hotSpotZones = new Dictionary<Tuple<Object, Point>, int[]>();
+        private readonly Dictionary<Tuple<Object, PointF>, float[]> hotSpotZones = new Dictionary<Tuple<Object, PointF>, float[]>();
     }
 }
