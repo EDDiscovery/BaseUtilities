@@ -127,6 +127,7 @@
     <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
     <Compile Include="Misc\SHA.cs" />
     <Compile Include="WinForms\BitMapHelpers.cs" />
+    <Compile Include="WinForms\HotSpotMap.cs" />
     <Compile Include="WinForms\ColorObjectExtensions.cs" />
     <Compile Include="Numbers\DistanceParser.cs" />
     <Compile Include="Numbers\LineStore.cs" />
