@@ -12,12 +12,8 @@
  * governing permissions and limitations under the License.
  */
 
-
-using System;
-
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
-using OpenTKUtils.Common;
 
 namespace OpenTKUtils.GL4
 {
