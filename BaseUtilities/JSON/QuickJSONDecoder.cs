@@ -1,9 +1,22 @@
-﻿using System;
+﻿/*
+ * Copyright © 2020 robby & EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils.JSON
 {
@@ -11,7 +24,7 @@ namespace BaseUtils.JSON
     {
     }
 
-    public class JObject : IJType, IEnumerable<KeyValuePair<string,Object>>
+    public class JObject : IJType, IEnumerable<KeyValuePair<string, Object>>
     {
         public JObject()
         {
@@ -20,10 +33,11 @@ namespace BaseUtils.JSON
 
         public Dictionary<string, Object> Objects { get; set; }
 
-        public Object this[string key ] { get { return Objects[key]; } set { Objects[key] = value; } }
-
+        public Object this[string key] { get { return Objects[key]; } set { QuickJsonDecoder.Verify(value); Objects[key] = value; } }
         public bool ContainsKey(string n) { return Objects.ContainsKey(n); }
         public int Count() { return Objects.Count; }
+        public bool Remove(string key) { return Objects.Remove(key); }
+        public void Clear() { Objects.Clear(); }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
@@ -40,7 +54,7 @@ namespace BaseUtils.JSON
             return Objects.ContainsKey(name) && Objects[name] is string ? Objects[name] as string : null;
         }
 
-        public string String(string name, string defvalue )
+        public string String(string name, string defvalue)
         {
             return Objects.ContainsKey(name) && Objects[name] is string ? Objects[name] as string : defvalue;
         }
@@ -118,6 +132,12 @@ namespace BaseUtils.JSON
         }
 
         public string ToString(bool verbose = false, string pad = "  ") { return QuickJsonDecoder.ToString(this, verbose, pad); }
+
+        public static JObject Parse(string s)
+        {
+            Object o = QuickJsonDecoder.Parse(s);
+            return o as JObject;    // null if not!
+        }
     }
 
     public class JArray : IJType, IEnumerable<Object>
@@ -128,6 +148,12 @@ namespace BaseUtils.JSON
         }
 
         public List<Object> Elements { get; set; }
+
+        public int Count() { return Elements.Count; }
+        public void Add(Object o) { QuickJsonDecoder.Verify(o);  Elements.Add(o); }
+        public void AddRange(IEnumerable<Object> o) { Elements.AddRange(o); }
+        public void RemoveAt(int index) { Elements.RemoveAt(index); }
+        public void Clear() { Elements.Clear(); }
 
         public List<string> String() { return Elements.ConvertAll<string>((o) => { return o as string; }); }
         public List<int> Int() { return Elements.ConvertAll<int>((o) => { return (int)o; }); }
@@ -145,6 +171,12 @@ namespace BaseUtils.JSON
         }
 
         public string ToString(bool verbose = false, string pad = "  ") { return QuickJsonDecoder.ToString(this, verbose, pad); }
+
+        public static JArray Parse(string s)
+        {
+            Object o = QuickJsonDecoder.Parse(s);
+            return o as JArray;    // null if not!
+        }
     }
 
     public class JNull : IJType
@@ -165,10 +197,23 @@ namespace BaseUtils.JSON
             LineParser = new StringParser(s);
         }
 
+        public static object Parse(string s)        // null if failed.
+        {
+            QuickJsonDecoder qjd = new QuickJsonDecoder(s);
+            return qjd.Decode();
+        }
+
+        public static object ParseCheckEOL(string s)        // null if failed - must not be extra text
+        {
+            QuickJsonDecoder qjd = new QuickJsonDecoder(s);
+            Object res = qjd.Decode();
+            return qjd.LineParser.IsEOL ? res : null;
+        }
+
         // null if its unhappy
         // decoder does not worry about extra text after the object.  Check LineParser if you are
 
-        public Object Decode()      
+        public Object Decode()
         {
             var res = Decode(null);
             if (res == null)
@@ -202,7 +247,7 @@ namespace BaseUtils.JSON
                 else if (curobj is JObject)     // if in a jobject
                 {
                     if (o is char && (char)o == '}')    // if end marker, jump back
-                        return curobj;  
+                        return curobj;
                     else if (o is string && LineParser.IsCharMoveOn(':'))  // ensure we have a string :
                     {
                         string name = o as string;
@@ -237,24 +282,24 @@ namespace BaseUtils.JSON
                 }
                 else
                 {
-                    if ( curobj == null)        // if we are at top, we have our top level value, so return it
+                    if (curobj == null)        // if we are at top, we have our top level value, so return it
                         return o;               // definition says a JSON can just be a value, so return it
                 }
 
-                if ( commamoveon )              // if jarray or jobject, end of this value, comma will delimit them
+                if (commamoveon)              // if jarray or jobject, end of this value, comma will delimit them
                     LineParser.IsCharMoveOn(',');        // if comma, skip it. if Not, next will be a }
             }
         }
 
-// return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
-// null if unhappy
+        // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
+        // null if unhappy
 
         private Object DecodeValue()
         {
             //System.Diagnostics.Debug.WriteLine("Decode at " + p.LineLeft);
             char next = LineParser.PeekChar();
 
-            if (next == '{' )
+            if (next == '{')
             {
                 LineParser.GetChar(true);
                 return new JObject();
@@ -294,8 +339,13 @@ namespace BaseUtils.JSON
                     return new JNull();
             }
 
-            System.Diagnostics.Debug.WriteLine("JSON error " + LineParser.LineLeft);
+            System.Diagnostics.Debug.WriteLine("JSON Value error " + LineParser.LineLeft);
             return null;
+        }
+
+        public static void Verify(Object o)     // verify O is a valid JSON type to be in the tree
+        {
+            System.Diagnostics.Debug.Assert(o is string || o is double || o is long || o is Boolean || o is IJType);
         }
 
         public static string ToString(Object o, bool verbose = false, string pad = "  ")
@@ -303,7 +353,7 @@ namespace BaseUtils.JSON
             return verbose ? ToString(o, "", "\r\n", pad) : ToString(o, "", "", "");
         }
 
-        public static string ToString( Object o, string prepad, string postpad, string pad )
+        public static string ToString(Object o, string prepad, string postpad, string pad)
         {
             if (o is string)
                 return prepad + "\"" + ((string)o).EscapeControlCharsFull() + "\"" + postpad;
@@ -312,7 +362,7 @@ namespace BaseUtils.JSON
             else if (o is long)
                 return prepad + ((long)o).ToStringInvariant() + postpad;
             else if (o is Boolean)
-                return prepad + ((bool)o).ToString() + postpad;
+                return prepad + ((bool)o).ToString().ToLower() + postpad;
             else if (o is JNull)
                 return prepad + "null" + postpad;
             else if (o is JArray)
@@ -323,7 +373,7 @@ namespace BaseUtils.JSON
                 for (int i = 0; i < ja.Elements.Count; i++)
                 {
                     bool notlast = i < ja.Elements.Count - 1;
-                    s += ToString(ja.Elements[i], prepad1, postpad , pad);
+                    s += ToString(ja.Elements[i], prepad1, postpad, pad);
                     if (notlast)
                     {
                         s = s.Substring(0, s.Length - postpad.Length) + "," + postpad;
@@ -338,7 +388,7 @@ namespace BaseUtils.JSON
                 string prepad1 = prepad + pad;
                 int i = 0;
                 JObject jo = ((JObject)o);
-                foreach (var e in jo.Objects )
+                foreach (var e in jo.Objects)
                 {
                     bool notlast = i++ < jo.Objects.Count - 1;
                     if (e.Value is JObject || e.Value is JArray)
@@ -352,7 +402,7 @@ namespace BaseUtils.JSON
                     }
                     else
                     {
-                        s += prepad1 + "\"" + e.Key + "\":" + ToString(e.Value, "", "" , pad) + (notlast ? "," : "") + postpad;
+                        s += prepad1 + "\"" + e.Key + "\":" + ToString(e.Value, "", "", pad) + (notlast ? "," : "") + postpad;
                     }
                 }
                 s += prepad + "}" + postpad;

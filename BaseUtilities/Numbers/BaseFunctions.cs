@@ -31,11 +31,11 @@ namespace BaseUtils
                 return new StringParser.ConvertError(name + "() supports numbers only");
             else
             {
-                var methodlist = mathclass.GetMember(name);
+                MemberInfo[] memberlist = mathclass.GetMember(name);
 
                 if (evres is long)
                 {
-                    var longmethod = Array.Find(methodlist, (z) => ((MethodInfo)z).ReturnType == typeof(long));     // find the long version
+                    var longmethod = Array.Find(memberlist, (z) => ((MethodInfo)z).ReturnType == typeof(long) && ((MethodInfo)z).GetParameters().Count() == 1);     // find the long version
 
                     if (longmethod != null)
                         return ((MethodInfo)longmethod).Invoke(null, new Object[] { evres });
@@ -43,7 +43,7 @@ namespace BaseUtils
                         evres = (double)(long)evres;        // else convert result to double for next try
                 }
 
-                var doublemethod = Array.Find(methodlist, (z) => ((MethodInfo)z).ReturnType == typeof(double));     // find the double version..
+                var doublemethod = Array.Find(memberlist, (z) => ((MethodInfo)z).ReturnType == typeof(double) && ((MethodInfo)z).GetParameters().Count() == 1);     // find the double version..
 
                 if (doublemethod != null)
                     return ((MethodInfo)doublemethod).Invoke(null, new Object[] { evres });
