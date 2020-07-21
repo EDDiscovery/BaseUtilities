@@ -26,6 +26,8 @@ namespace BaseUtils
     {
         #region Public interfaces
 
+        public static string UserAgent { get; set; } = Assembly.GetEntryAssembly().GetName().Name + " v" + Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+
         public static DialogResult ShowException(Exception ex, string desc, string reportIssueURL, bool isFatal = false, Form parent = null)
         {
             ExceptionForm f = new ExceptionForm(ex, desc, reportIssueURL, isFatal)
@@ -144,7 +146,7 @@ namespace BaseUtils
             }
 
             string appShortName = Assembly.GetEntryAssembly().GetName().Name;
-            Text = BrowserInfo.UserAgent + (isFatal ? " Fatal" : string.Empty) + " Error";
+            Text = UserAgent + (isFatal ? " Fatal" : string.Empty) + " Error";
 
             lblHeader.Text =
                   description + DoubleNewLine
@@ -165,7 +167,7 @@ namespace BaseUtils
                     + "### Additional Information" + Environment.NewLine
                     + "<!-- Please attach (drag and drop) any relevant trace logs, screenshots, and/or journal files here to provide information about the problem. -->" + DoubleNewLine
                     + "### Exception Details:" + Environment.NewLine
-                    + ">" + BrowserInfo.UserAgent + " " + description + Environment.NewLine
+                    + ">" + UserAgent + " " + description + Environment.NewLine
                     + ">```" + Environment.NewLine
                     + ">==== BEGIN ====" + Environment.NewLine
                     + ">" + exception.ToString().Replace(Environment.NewLine, Environment.NewLine + ">") + Environment.NewLine

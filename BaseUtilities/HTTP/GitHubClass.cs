@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright © 2016-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,6 +13,7 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -21,11 +22,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 
-
 namespace BaseUtils
 {
     public class GitHubClass : HttpCom
     {
+        public static string UserAgent { get; set; } = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+
         public delegate void LogLine(string text);
         LogLine logger = null;
 
@@ -41,7 +43,7 @@ namespace BaseUtils
             try
             {
                 HttpWebRequest request = WebRequest.Create(httpserveraddress + "releases?per_page=" + reqmax.ToString()) as HttpWebRequest;
-                request.UserAgent = BrowserInfo.UserAgent;
+                request.UserAgent = UserAgent;
                 using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
                 {
                     StreamReader reader = new StreamReader(response.GetResponseStream());
@@ -65,7 +67,7 @@ namespace BaseUtils
             try
             {
                 HttpWebRequest request = WebRequest.Create(httpserveraddress + "releases/latest") as HttpWebRequest;
-                request.UserAgent = BrowserInfo.UserAgent;
+                request.UserAgent = UserAgent;
                 using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
                 {
                     StreamReader reader = new StreamReader(response.GetResponseStream());
@@ -96,7 +98,7 @@ namespace BaseUtils
             try
             {
                 HttpWebRequest request = WebRequest.Create(httpserveraddress + "contents/" + gitdir) as HttpWebRequest;
-                request.UserAgent = BrowserInfo.UserAgent;
+                request.UserAgent = UserAgent;
                 using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
                 {
                     StreamReader reader = new StreamReader(response.GetResponseStream());

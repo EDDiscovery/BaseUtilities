@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,12 +13,8 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
@@ -32,7 +28,6 @@ namespace BaseUtils
         }
 
         public string Name { get { return jo["name"].Str(); } }
-
        
         public string DownloadURL { get { return jo["download_url"].Str(); } }
         public int Size { get { return jo["size"].Int(); } }
