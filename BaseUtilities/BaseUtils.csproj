@@ -70,7 +70,7 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
-    <Compile Include="JSON\QuickJSONDecoder.cs" />
+    <Compile Include="JSON\QuickJSON.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
@@ -139,7 +139,7 @@
     <Compile Include="Strings\FieldBuilder.cs" />
     <Compile Include="Files\FileHelpers.cs" />
     <Compile Include="Files\LogToFile.cs" />
-    <Compile Include="JSON\JSONObjectExtensions.cs" />
+    <Compile Include="JSON\NewtonJSONObjectExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CHash\TypeHelpers.cs" />
     <Compile Include="Strings\StringObjectExtensions.cs" />

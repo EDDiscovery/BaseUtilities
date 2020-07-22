@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+ * Copyright © 2016 - 2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public static class ObjectExtensionsStringsEscape
 {
@@ -46,34 +47,66 @@ public static class ObjectExtensionsStringsEscape
         return s.Replace(@"\\", "\\");              // \\ -> \
     }
 
-    public static string ReplaceEscapeControlCharsFull(this string obj)     // JSON compatible
+    public static string ReplaceEscapeControlCharsFull(this string s)     // JSON compatible
     {
-        string s = obj.Replace(@"\\", "\\");        // \\ -> \
-        s = s.Replace(@"\r", "\r");
-        s = s.Replace("\\\"", "\"");                // \" -> "
-        s = s.Replace(@"\t", "\t");
-        s = s.Replace(@"\b", "\b");
-        s = s.Replace(@"\f", "\f");
-        s = s.Replace(@"\n", "\n");
-
-        for( int i = 0; i < s.Length-6; i++ )
+        if (s.Contains('\\'))
         {
-            if ( s[i] == '\\' && s[i+1] == 'u' )
+            StringBuilder b = new StringBuilder(s.Length);
+
+            for (int i = 0; i < s.Length; i++)
             {
-                int? v1 = s[i + 2].ToHex();
-                int? v2 = s[i + 3].ToHex();
-                int? v3 = s[i + 4].ToHex();
-                int? v4 = s[i + 5].ToHex();
-                if ( v1 != null && v2 != null && v3 != null && v4 != null )
+                if (s[i] == '\\' && i < s.Length-1)
                 {
-                    char c = (char)((v1<<12) | (v2 << 8) | (v3 << 4) | (v4 << 0));
-                    s = s.Substring(0, i) + c + s.Substring(i + 6);
+                    switch (s[++i])
+                    {
+                        case '\\':
+                            b.Append('\\');
+                            break;
+                        case '/':
+                            b.Append('/');
+                            break;
+                        case '"':
+                            b.Append('"');
+                            break;
+                        case 'b':
+                            b.Append('\b');
+                            break;
+                        case 'f':
+                            b.Append('\f');
+                            break;
+                        case 'n':
+                            b.Append('\n');
+                            break;
+                        case 'r':
+                            b.Append('\r');
+                            break;
+                        case 't':
+                            b.Append('\t');
+                            break;
+                        case 'u':
+                            if ( i < s.Length -4 )
+                            {
+                                int? v1 = s[++i].ToHex();
+                                int? v2 = s[++i].ToHex();
+                                int? v3 = s[++i].ToHex();
+                                int? v4 = s[++i].ToHex();
+                                if (v1 != null && v2 != null && v3 != null && v4 != null)
+                                {
+                                    char c = (char)((v1 << 12) | (v2 << 8) | (v3 << 4) | (v4 << 0));
+                                    b.Append(c);
+                                }
+                            }
+                            break;
+                    }
                 }
+                else
+                    b.Append(s[i]);
             }
+
+            return b.ToString();
         }
-
-        return s;
+        else
+            return s;
     }
-
 }
 
