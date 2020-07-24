@@ -28,11 +28,15 @@ namespace BaseUtils.JSON
     {
         public static implicit operator JToken(string v)
         {
-            return new JString() { Value = v };
+            return new JString() { StrValue = v };
         }
         public static implicit operator JToken(long v)
         {
             return new JLong() { Value = v };
+        }
+        public static implicit operator JToken(ulong v)
+        {
+            return new JULong() { Value = v };
         }
         public static implicit operator JToken(double v)
         {
@@ -60,16 +64,16 @@ namespace BaseUtils.JSON
         public virtual IEnumerator GetSubClassEnumerator() { throw new NotImplementedException(); }
 
         bool IsString { get { return this is JString; } }
-        bool IsNumber { get { return this is JLong; } }
-        bool IsBool { get { return this is JBoolean; } }
+        bool IsInt { get { return this is JLong || this is JULong || this is JBigInteger; } }
         bool IsDouble { get { return this is JDouble; } }
+        bool IsBool { get { return this is JBoolean; } }
         bool IsArray { get { return this is JArray; } }
         bool IsObject { get { return this is JObject; } }
         bool IsNull { get { return this is JNull; } }
 
         public string Str(string def = "")
         {
-            return this is JString ? ((JString)this).Value : def;
+            return this is JString ? ((JString)this).StrValue : def;
         }
 
         public int Int(int def = 0)
@@ -80,6 +84,28 @@ namespace BaseUtils.JSON
         public long Long(long def = 0)
         {
             return this is JLong ? ((JLong)this).Value : def;
+        }
+
+        public ulong ULong(ulong def = 0)
+        {
+            if (this is JULong)
+                return ((JULong)this).Value;
+            else if (this is JLong && ((JLong)this).Value >= 0)
+                return (ulong)((JLong)this).Value;
+            else
+                return def;
+        }
+
+        public System.Numerics.BigInteger BigInteger(System.Numerics.BigInteger def)
+        {
+            if (this is JULong)
+                return ((JULong)this).Value;
+            else if (this is JLong )
+                return (ulong)((JLong)this).Value;
+            else if ( this is JBigInteger )
+                return ((JBigInteger)this).Value;
+            else
+                return def;
         }
 
         public bool Bool(bool def = false)
@@ -94,7 +120,7 @@ namespace BaseUtils.JSON
 
         public DateTime? DateTime(System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (this is JString && System.DateTime.TryParse(((JString)this).Value, ci, ds, out DateTime ret))
+            if (this is JString && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
                 return ret;
             else
                 return null;
@@ -102,7 +128,7 @@ namespace BaseUtils.JSON
 
         public DateTime DateTime(DateTime defvalue, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (this is JString && System.DateTime.TryParse(((JString)this).Value, ci, ds, out DateTime ret))
+            if (this is JString && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
                 return ret;
             else
                 return defvalue;
@@ -121,11 +147,15 @@ namespace BaseUtils.JSON
         public static string ToString(Object o, string prepad, string postpad, string pad)
         {
             if (o is JString)
-                return prepad + "\"" + ((JString)o).Value.EscapeControlCharsFull() + "\"" + postpad;
+                return prepad + "\"" + ((JString)o).StrValue.EscapeControlCharsFull() + "\"" + postpad;
             else if (o is JDouble)
                 return prepad + ((JDouble)o).Value.ToStringInvariant() + postpad;
             else if (o is JLong)
                 return prepad + ((JLong)o).Value.ToStringInvariant() + postpad;
+            else if (o is JULong)
+                return prepad + ((JULong)o).Value.ToStringInvariant() + postpad;
+            else if (o is JBigInteger)
+                return prepad + ((JBigInteger)o).Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + postpad;
             else if (o is JBoolean)
                 return prepad + ((JBoolean)o).Value.ToString().ToLower() + postpad;
             else if (o is JNull)
@@ -158,7 +188,7 @@ namespace BaseUtils.JSON
                     bool notlast = i++ < jo.Objects.Count - 1;
                     if (e.Value is JObject || e.Value is JArray)
                     {
-                        s += prepad1 + "\"" + e.Key + "\":" + postpad;
+                        s += prepad1 + "\"" + e.Key.EscapeControlCharsFull() + "\":" + postpad;
                         s += ToString(e.Value, prepad1, postpad, pad);
                         if (notlast)
                         {
@@ -167,7 +197,7 @@ namespace BaseUtils.JSON
                     }
                     else
                     {
-                        s += prepad1 + "\"" + e.Key + "\":" + ToString(e.Value, "", "", pad) + (notlast ? "," : "") + postpad;
+                        s += prepad1 + "\"" + e.Key.EscapeControlCharsFull() + "\":" + ToString(e.Value, "", "", pad) + (notlast ? "," : "") + postpad;
                     }
                 }
                 s += prepad + "}" + postpad;
@@ -179,30 +209,44 @@ namespace BaseUtils.JSON
 
         public static JToken Parse(string s)        // null if failed.
         {
-            StringParser parser = new StringParser(s);
-            return Decode(null, parser);
+            StringParser2 parser = new StringParser2(s);
+            return Decode(null, parser, out string unused);
         }
 
-        public static JToken ParseCheckEOL(string s)        // null if failed - must not be extra text
+        public static JToken Parse(string s, bool checkeol)        // null if failed - must not be extra text
         {
-            StringParser parser = new StringParser(s);
-            JToken res = Decode(null, parser);
+            StringParser2 parser = new StringParser2(s);
+            JToken res = Decode(null, parser, out string unused);
             return parser.IsEOL ? res : null;
         }
 
-        // null if its unhappy
-        // decoder does not worry about extra text after the object.  Check LineParser if you are
-
-        static private JToken Decode(JToken curobj, StringParser parser)
+        public static JToken Parse(string s, out string error, bool checkeol = false)
         {
+            StringParser2 parser = new StringParser2(s);
+            JToken res = Decode(null, parser, out error);
+            return parser.IsEOL || !checkeol ? res : null;
+        }
+
+        // null if its unhappy and error is set
+        // decoder does not worry about extra text after the object.
+
+        static private JToken Decode(JToken curobj, StringParser2 parser, out string error)
+        {
+            error = null;
+
             while (true)
             {
                 if (parser.IsEOL)
                     return curobj;
 
+                int decodestartpos = parser.Position;
+
                 JToken o = DecodeValue(parser);       // grab new value
                 if (o == null)
+                {
+                    error = GenError(parser, decodestartpos);
                     return null;
+                }
 
                 bool commamoveon = false;
 
@@ -222,11 +266,14 @@ namespace BaseUtils.JSON
                         return curobj;
                     else if (o is JString && parser.IsCharMoveOn(':'))  // ensure we have a string :
                     {
-                        string name = ((JString)o).Value;
-
+                        string name = ((JString)o).StrValue;
+                        decodestartpos = parser.Position;
                         o = DecodeValue(parser);      // get value, into o , so below works
                         if (o == null)
+                        {
+                            error = GenError(parser, decodestartpos);
                             return null;
+                        }
 
                         (curobj as JObject).Objects[name] = o;  // assign to dictionary
 
@@ -238,17 +285,23 @@ namespace BaseUtils.JSON
 
                 if (o is JArray)                // object is a JArray, so we need to jump in and decode it
                 {
-                    JToken finish = Decode(o, parser);  // decode, should return a JArray
+                    JToken finish = Decode(o, parser, out error);  // decode, should return a JArray
+
                     if (finish == null)
+                    {
                         return null;
+                    }
                     if (curobj == null)         // if we are at top, we have our top level value, so return it
                         return finish;
                 }
                 else if (o is JObject)
                 {
-                    JToken finish = Decode(o, parser);  // decode, should return a JObject
+                    JToken finish = Decode(o, parser, out error);  // decode, should return a JObject
                     if (finish == null)
+                    {
                         return null;
+                    }
+
                     if (curobj == null)         // if we are at top, we have our top level value, so return it
                         return finish;
                 }
@@ -263,47 +316,59 @@ namespace BaseUtils.JSON
             }
         }
 
+        static private string GenError(StringParser2 parser, int start)
+        {
+            int enderrorpos = parser.Position;
+            string s = "JSON Error at " + start + " " + parser.Line.Substring(0, start) + " <ERROR>"
+                            + parser.Line.Substring(start, enderrorpos - start) + "</ERROR>" +
+                            parser.Line.Substring(enderrorpos);
+            System.Diagnostics.Debug.WriteLine(s);
+            return s;
+        }
+
         // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
         // null if unhappy
 
-        static private JToken DecodeValue(StringParser parser)
+        static private JToken DecodeValue(StringParser2 parser)
         {
             //System.Diagnostics.Debug.WriteLine("Decode at " + p.LineLeft);
             char next = parser.PeekChar();
 
             if (next == '{')
             {
-                parser.GetChar(true);
+                parser.SkipCharAndSkipSpace();
                 return new JObject();
             }
             else if (next == '}')
             {
-                parser.GetChar(true);
+                parser.SkipCharAndSkipSpace();
                 return new JEndObject();
             }
             else if (next == '[')
             {
-                parser.GetChar(true);
+                parser.SkipCharAndSkipSpace();
                 return new JArray();
             }
             else if (next == ']')
             {
-                parser.GetChar(true);
+                parser.SkipCharAndSkipSpace();
                 return new JEndArray();
             }
             else if (next == '"')  // string
             {
-                return new JString() { Value = parser.NextQuotedWord().ReplaceEscapeControlCharsFull() };
+                return new JString() { SBValue = parser.NextQuotedWord(true) };
             }
             else if (char.IsDigit(next) || next == '-')  // number.. json spec says must start with a digit as its integer fraction exponent
             {
-                Object o = parser.NextLongOrDouble();
+                Object o = parser.NextLongULongBigIntegerOrDouble();
                 if (o is long)
                     return new JLong() { Value = (long)o };
+                else if (o is ulong)
+                    return new JULong() { Value = (ulong)o };
                 else if (o is double)
                     return new JDouble() { Value = (double)o };
-                else
-                    System.Diagnostics.Debug.WriteLine("Failed number " + parser.LineLeft);
+                else if (o is System.Numerics.BigInteger)
+                    return new JBigInteger() { Value = (System.Numerics.BigInteger)o };
             }
             else
             {
@@ -315,7 +380,6 @@ namespace BaseUtils.JSON
                     return new JNull();
             }
 
-            System.Diagnostics.Debug.WriteLine("JSON Value error " + parser.LineLeft);
             return null;
         }
 
@@ -330,11 +394,20 @@ namespace BaseUtils.JSON
     }
     public class JString : JToken
     {
-        public string Value { get; set; }
+        public string StrValue { get { return SBValue.ToString(); } set { SBValue = new System.Text.StringBuilder(value); } }
+        public System.Text.StringBuilder SBValue { get; set; }
     }
     public class JLong : JToken
     {
         public long Value { get; set; }
+    }
+    public class JULong : JToken
+    {
+        public ulong Value { get; set; }
+    }
+    public class JBigInteger : JToken
+    {
+        public System.Numerics.BigInteger Value { get; set; }
     }
     public class JDouble : JToken
     {
@@ -368,6 +441,12 @@ namespace BaseUtils.JSON
             return res as JObject;
         }
 
+        public new static JObject Parse(string s, out string error, bool checkeol = false)
+        {
+            var res = JToken.Parse(s, out error, checkeol);
+            return res as JObject;
+        }
+
         public new IEnumerator<KeyValuePair<string, JToken>> GetEnumerator()  {  return Objects.GetEnumerator(); }
         public override IEnumerator<JToken> GetSubClassTokenEnumerator() { return Objects.Values.GetEnumerator(); }
         public override IEnumerator GetSubClassEnumerator() { return Objects.GetEnumerator(); }
@@ -391,7 +470,7 @@ namespace BaseUtils.JSON
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
         public T Find<T>(System.Predicate<JToken> predicate) { Object r = Elements.Find(predicate); return (T)r; }       // find an entry matching the predicate
 
-        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).Value : null; }); }
+//        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).Value : null; }); }
         public List<int> Int() { return Elements.ConvertAll<int>((o) => { return (int)((JLong)o).Value; }); }
         public List<long> Long() { return Elements.ConvertAll<long>((o) => { return ((JLong)o).Value; }); }
         public List<double> Double() { return Elements.ConvertAll<double>((o) => { return ((JDouble)o).Value; }); }
@@ -405,6 +484,11 @@ namespace BaseUtils.JSON
             return res as JArray;
         }
 
+        public new static JArray Parse(string s, out string error, bool checkeol = false)
+        {
+            var res = JToken.Parse(s, out error, checkeol);
+            return res as JArray;
+        }
     }
 
 }

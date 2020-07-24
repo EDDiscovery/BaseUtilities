@@ -13,12 +13,11 @@
 * 
 * EDDiscovery is not affiliated with Frontier Developments plc.
 */
-using BaseUtils;
 using BaseUtils.JSON;
 using NFluent;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace EDDiscoveryTests
@@ -26,15 +25,24 @@ namespace EDDiscoveryTests
     [TestFixture(TestOf = typeof(JToken))]
     public class JSONTests
     {
+        void Dump(string s)
+        {
+            foreach(var c in s)
+            {
+                System.Diagnostics.Debug.WriteLine((int)c + ":" + ((int)c > 32 ? c : '?'));
+            }
+        }
         [Test]
         public void JSONBasic()
         {
-            string json = "{ \"timestamp\":\"2020-06-29T09:53:54Z\", \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
+            //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
+            string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\" \"ulong\":18446744073709551615 \"bigint\":298182772762562557788377626262773  }";
 
             JToken decoded = JToken.Parse(json);
             Check.That(decoded).IsNotNull();
-            string outstr = decoded.ToString( true);
+            string outstr = decoded.ToString(true);
             System.Diagnostics.Debug.WriteLine("" + outstr);
+            Dump(outstr);
 
             JToken decoded2 = JToken.Parse(outstr);
 
@@ -46,7 +54,7 @@ namespace EDDiscoveryTests
             JObject jo = decoded as JObject;
             Check.That(jo).IsNotNull();
 
-            string j = jo["timestamp"].Str();
+            string j = jo["timest\"am\tp"].Str();
             Check.That(j).Equals("2020-06-29T09:53:54Z");
 
         }
@@ -86,7 +94,7 @@ namespace EDDiscoveryTests
             Check.That(jo.ToString()).IsEqualTo(expectedjson);
 
             int count = 0;
-            foreach (KeyValuePair<string,JToken> p in jo)
+            foreach (KeyValuePair<string, JToken> p in jo)
             {
                 count++;
             }
@@ -125,7 +133,7 @@ namespace EDDiscoveryTests
 
             Check.That(ja.ToString()).IsEqualTo(expectedjson);
 
-            string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
+            string s = ja.Find<JString>(x => x is JString && ((JString)x).StrValue.Equals("one"))?.StrValue;
 
             Check.That(s).IsNotNull().Equals("one");
 
@@ -413,6 +421,58 @@ namespace EDDiscoveryTests
                 return true;
             else
                 return false;
+        }
+
+        [Test]
+        public void JSONSpeed()
+        {
+            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
+
+            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
+            st.Start();
+
+            foreach (var f in files)
+            {
+              // System.Diagnostics.Debug.WriteLine("Check " + f);
+                string[] lines = File.ReadAllLines(f);
+                foreach (var l in lines)
+                {
+                    JObject t = JObject.Parse(l, out string error, true);
+                    Check.That(t["event"]).IsNotNull();
+                    Check.That(t).IsNotNull();
+                }
+
+            }
+
+            long time = st.ElapsedMilliseconds;
+            System.Diagnostics.Debug.WriteLine("Read journals took " + time);
+
+        }
+
+        [Test]
+        public void JSONNewtonSoftSpeed()
+        {
+            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
+
+            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
+            st.Start();
+
+            foreach (var f in files)
+            {
+               // System.Diagnostics.Debug.WriteLine("Check " + f);
+                string[] lines = File.ReadAllLines(f);
+                foreach (var l in lines)
+                {
+                    Newtonsoft.Json.Linq.JToken t = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t["event"]).IsNotNull();
+                    Check.That(t).IsNotNull();
+                }
+
+            }
+
+            long time = st.ElapsedMilliseconds;
+            System.Diagnostics.Debug.WriteLine("Read journals took " + time);
+
         }
     }
 }

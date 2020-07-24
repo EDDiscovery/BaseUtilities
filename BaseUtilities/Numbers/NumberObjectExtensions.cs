@@ -189,6 +189,19 @@ public static class ObjectExtensionsNumbersBool
 
     #endregion
 
+    #region ULong
+
+    static public ulong? InvariantParseULongNull(this string s)
+    {
+        ulong i;
+        if (s != null && ulong.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i))
+            return i;
+        else
+            return null;
+    }
+
+    #endregion
+
     #region Bool
 
     static public bool? InvariantParseBoolNull(this string s)

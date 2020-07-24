@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2018 EDDiscovery development team
+ * Copyright © 2018-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -17,8 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
@@ -38,6 +36,7 @@ namespace BaseUtils
         }
 
         public int Position { get { return pos; } }
+        public string Line { get { return line; } }
         public string LineLeft { get { return line.Substring(pos); } }
         public bool IsEOL { get { return pos == line.Length; } }
         public int Left { get { return Math.Max(line.Length - pos,0); } }
@@ -501,21 +500,6 @@ namespace BaseUtils
             return s?.InvariantParseDoubleNull();
         }
 
-        public double? NextDoubleInclusiveTest()        // using a positive test. Not changing original negative test for compatibility
-        {
-            string s = NextWord((c) => { return char.IsDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'; });
-            return s?.InvariantParseDoubleNull();
-        }
-
-        public object NextLongOrDouble()        // using a positive test, give back a long or a double.
-        {
-            string s = NextWord((c) => { return char.IsDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'; });
-            if (s.IndexOfAny(new char[] { '.', 'e', 'E', '+' })>=0)
-                return s?.InvariantParseDoubleNull();
-            else
-                return s?.InvariantParseLongNull();
-        }
-
         public double NextDouble(double def, string terminators = " ")
         {
             string s = NextWord(terminators);
@@ -566,6 +550,36 @@ namespace BaseUtils
             long? res = NextLong(terminators);
             return IsCharMoveOnOrEOL(separ) ? res : null;
         }
+
+        public object NextLongULongBigIntegerOrDouble()        // using a positive test, give back a long, ulong, bitint or a double.
+        {
+            string s = NextWord((c) => { return char.IsDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'; });
+            if (s != null)
+            {
+                if (s.IndexOfAny(new char[] { '.', 'e', 'E', '+' }) >= 0)
+                    return s.InvariantParseDoubleNull();
+                else
+                {
+                    long? l = s.InvariantParseLongNull();
+                    if (l != null)
+                        return l;
+                    else
+                    {
+                        if (System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture,
+                                                                out System.Numerics.BigInteger b))
+                        {
+                            if (b >= 0 && b <= ulong.MaxValue)      // if within ulong range..
+                                return (ulong)b;
+                            else
+                                return b;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
 
         public DateTime? NextDateTime(CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, string terminators = " ")
         {
