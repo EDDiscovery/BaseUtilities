@@ -423,23 +423,38 @@ namespace EDDiscoveryTests
                 return false;
         }
 
+        struct FileLines
+        {
+            public string[] filelines;
+        }
+
         [Test]
         public void JSONSpeed()
         {
             string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
 
-            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
-            st.Start();
+            List<FileLines> filelines = new List<FileLines>();
 
             foreach (var f in files)
             {
-              // System.Diagnostics.Debug.WriteLine("Check " + f);
+                // System.Diagnostics.Debug.WriteLine("Check " + f);
                 string[] lines = File.ReadAllLines(f);
-                foreach (var l in lines)
+                filelines.Add(new FileLines { filelines = lines });
+            }
+
+            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
+            st.Start();
+
+            foreach ( var fl in filelines)
+            { 
+                foreach (var l in fl.filelines)
                 {
                     JObject t = JObject.Parse(l, out string error, true);
-                    Check.That(t["event"]).IsNotNull();
                     Check.That(t).IsNotNull();
+                    JObject t2 = JObject.Parse(l, out string error2, true);
+                    Check.That(t2).IsNotNull();
+                    JObject t3 = JObject.Parse(l, out string error3, true);
+                    Check.That(t3).IsNotNull();
                 }
 
             }
@@ -454,18 +469,29 @@ namespace EDDiscoveryTests
         {
             string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
 
-            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
-            st.Start();
+            List<FileLines> filelines = new List<FileLines>();
 
             foreach (var f in files)
             {
-               // System.Diagnostics.Debug.WriteLine("Check " + f);
+                // System.Diagnostics.Debug.WriteLine("Check " + f);
                 string[] lines = File.ReadAllLines(f);
-                foreach (var l in lines)
+                filelines.Add(new FileLines { filelines = lines });
+            }
+
+            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
+            st.Start();
+
+            foreach (var f in filelines)
+            {
+               // System.Diagnostics.Debug.WriteLine("Check " + f);
+                foreach (var l in f.filelines)
                 {
                     Newtonsoft.Json.Linq.JToken t = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t["event"]).IsNotNull();
                     Check.That(t).IsNotNull();
+                    Newtonsoft.Json.Linq.JToken t2 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t2).IsNotNull();
+                    Newtonsoft.Json.Linq.JToken t3 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t3).IsNotNull();
                 }
 
             }

@@ -316,18 +316,11 @@ namespace BaseUtils.JSON
             }
         }
 
-        static private string GenError(StringParser2 parser, int start)
-        {
-            int enderrorpos = parser.Position;
-            string s = "JSON Error at " + start + " " + parser.Line.Substring(0, start) + " <ERROR>"
-                            + parser.Line.Substring(start, enderrorpos - start) + "</ERROR>" +
-                            parser.Line.Substring(enderrorpos);
-            System.Diagnostics.Debug.WriteLine(s);
-            return s;
-        }
-
         // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
         // null if unhappy
+
+        static JEndObject jendobject = new JEndObject();
+        static JEndArray jendarray = new JEndArray();
 
         static private JToken DecodeValue(StringParser2 parser)
         {
@@ -342,7 +335,7 @@ namespace BaseUtils.JSON
             else if (next == '}')
             {
                 parser.SkipCharAndSkipSpace();
-                return new JEndObject();
+                return jendobject;
             }
             else if (next == '[')
             {
@@ -352,11 +345,13 @@ namespace BaseUtils.JSON
             else if (next == ']')
             {
                 parser.SkipCharAndSkipSpace();
-                return new JEndArray();
+                return jendarray;
             }
             else if (next == '"')  // string
             {
-                return new JString() { SBValue = parser.NextQuotedWord(true) };
+                string value = parser.NextQuotedWord(true).ToString();
+                if ( value != null )
+                    return new JString() { StrValue = value };
             }
             else if (char.IsDigit(next) || next == '-')  // number.. json spec says must start with a digit as its integer fraction exponent
             {
@@ -372,17 +367,26 @@ namespace BaseUtils.JSON
             }
             else
             {
-                if (parser.IsStringMoveOn("true"))
+                if (next == 't' && parser.IsStringMoveOn("true"))
                     return new JBoolean() { Value = true };
-                else if (parser.IsStringMoveOn("false"))
+                else if (next == 'f' && parser.IsStringMoveOn("false"))
                     return new JBoolean() { Value = false };
-                else if (parser.IsStringMoveOn("null"))
+                else if (next == 'n' && parser.IsStringMoveOn("null"))
                     return new JNull();
             }
 
             return null;
         }
 
+        static private string GenError(StringParser2 parser, int start)
+        {
+            int enderrorpos = parser.Position;
+            string s = "JSON Error at " + start + " " + parser.Line.Substring(0, start) + " <ERROR>"
+                            + parser.Line.Substring(start, enderrorpos - start) + "</ERROR>" +
+                            parser.Line.Substring(enderrorpos);
+            System.Diagnostics.Debug.WriteLine(s);
+            return s;
+        }
     }
 
     public class JNull : JToken
@@ -394,8 +398,9 @@ namespace BaseUtils.JSON
     }
     public class JString : JToken
     {
-        public string StrValue { get { return SBValue.ToString(); } set { SBValue = new System.Text.StringBuilder(value); } }
-        public System.Text.StringBuilder SBValue { get; set; }
+        //public string StrValue { get { return SBValue.ToString(); } set { SBValue = new System.Text.StringBuilder(value); } }
+        //public System.Text.StringBuilder SBValue { get; set; }
+        public string StrValue;
     }
     public class JLong : JToken
     {
@@ -424,7 +429,7 @@ namespace BaseUtils.JSON
     {
         public JObject()
         {
-            Objects = new Dictionary<string, JToken>();
+            Objects = new Dictionary<string, JToken>(16);   // giving a small initial cap seems to help
         }
 
         public Dictionary<string, JToken> Objects { get; set; }
@@ -456,7 +461,7 @@ namespace BaseUtils.JSON
     {
         public JArray()
         {
-            Elements = new List<JToken>();
+            Elements = new List<JToken>(16);
         }
 
         public List<JToken> Elements { get; set; }
@@ -470,7 +475,7 @@ namespace BaseUtils.JSON
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
         public T Find<T>(System.Predicate<JToken> predicate) { Object r = Elements.Find(predicate); return (T)r; }       // find an entry matching the predicate
 
-//        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).Value : null; }); }
+        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).StrValue : null; }); }
         public List<int> Int() { return Elements.ConvertAll<int>((o) => { return (int)((JLong)o).Value; }); }
         public List<long> Long() { return Elements.ConvertAll<long>((o) => { return ((JLong)o).Value; }); }
         public List<double> Double() { return Elements.ConvertAll<double>((o) => { return ((JDouble)o).Value; }); }
