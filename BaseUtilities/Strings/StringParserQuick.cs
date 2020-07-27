@@ -64,12 +64,18 @@ namespace BaseUtils
             return (pos < line.Length) ? line[pos] : ' ';
         }
 
-        public char GetChar(bool skipspace = false)       // minvalue if at EOL.. Default no skip for backwards compat
+
+        public char GetChar()       // minvalue if at EOL.. Default no skip for backwards compat
+        {
+            return (pos < line.Length) ? line[pos++] : ' ';
+        }
+
+        public char GetChar(bool skipspace)       // minvalue if at EOL.. Default no skip for backwards compat
         {
             if (pos < line.Length)
             {
                 char ch = line[pos++];
-                if ( skipspace )
+                if (skipspace)
                     SkipSpace();
                 return ch;
             }
@@ -104,6 +110,11 @@ namespace BaseUtils
                 return false;
         }
 
+        public void BackUp()
+        {
+            pos--;
+        }
+
 
         #endregion
 
@@ -111,7 +122,7 @@ namespace BaseUtils
 
         // Your on a " or ' quoted string, extract it
 
-        public StringBuilder NextQuotedWord(bool replaceescape = false)
+        public StringBuilder NextQuotedWordSB(bool replaceescape = false)
         {
             if (pos >= line.Length)     // null if there is nothing..
                 return null;
@@ -189,11 +200,90 @@ namespace BaseUtils
             }
         }
 
+        private static char[] buffer = new char[16384];
+
+        public string NextQuotedWordString(char quote, bool replaceescape = false)
+        {
+            if (pos >= line.Length)     // null if there is nothing..
+                return null;
+            else
+            {
+                int bpos = 0;
+
+                StringBuilder b = new StringBuilder(line.Length - pos);
+
+                while (line[pos] != quote)
+                {
+                    if (line[pos] == '\\' && pos < line.Length - 1) // 2 chars min
+                    {
+                        pos++;
+                        char esc = line[pos++];     // grab escape and move on
+
+                        if (esc == quote)
+                        {
+                            buffer[bpos++] = esc;      // place in the character
+                        }
+                        else if (replaceescape)
+                        {
+                            switch (esc)
+                            {
+                                case '\\':
+                                    buffer[bpos++] = '\\';
+                                    break;
+                                case '/':
+                                    buffer[bpos++] = '/';
+                                    break;
+                                case 'b':
+                                    buffer[bpos++] = '\b';
+                                    break;
+                                case 'f':
+                                    buffer[bpos++] = '\f';
+                                    break;
+                                case 'n':
+                                    buffer[bpos++] = '\n';
+                                    break;
+                                case 'r':
+                                    buffer[bpos++] = '\r';
+                                    break;
+                                case 't':
+                                    buffer[bpos++] = '\t';
+                                    break;
+                                case 'u':
+                                    if (pos < line.Length - 4)
+                                    {
+                                        int? v1 = line[pos++].ToHex();
+                                        int? v2 = line[pos++].ToHex();
+                                        int? v3 = line[pos++].ToHex();
+                                        int? v4 = line[pos++].ToHex();
+                                        if (v1 != null && v2 != null && v3 != null && v4 != null)
+                                        {
+                                            char c = (char)((v1 << 12) | (v2 << 8) | (v3 << 4) | (v4 << 0));
+                                            buffer[bpos++] = c;
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                        buffer[bpos++] = line[pos++];
+
+                    if (pos == line.Length)  // no end quote, wrong
+                        return null;
+                }
+
+                pos++; //skip end quote
+                while (pos < line.Length && char.IsWhiteSpace(line[pos]))
+                    pos++;
+
+                return new string(buffer,0,bpos);
+            }
+        }
+
+
         #endregion
 
         #region Numbers and Bools
-
-        static char[] decchars = new char[] { '.', 'e', 'E', '+', '-' };
 
         public object NextLongULongBigIntegerOrDouble()      // value or null
         {
@@ -223,6 +313,7 @@ namespace BaseUtils
         }
 
         public enum ObjectType { Failed, Double, Ulong, BigInt };
+        static char[] decchars = new char[] { '.', 'e', 'E', '+', '-' };
 
         public ObjectType NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign)        
         {
