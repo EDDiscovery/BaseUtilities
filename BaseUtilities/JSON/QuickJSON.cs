@@ -213,185 +213,262 @@ namespace BaseUtils.JSON
         public static JToken Parse(string s)        // null if failed.
         {
             StringParser2 parser = new StringParser2(s);
-            return Decode(null, parser, out string unused);
+            return Decode(parser, out string unused);
         }
 
         public static JToken Parse(string s, bool checkeol)        // null if failed - must not be extra text
         {
             StringParser2 parser = new StringParser2(s);
-            JToken res = Decode(null, parser, out string unused);
+            JToken res = Decode(parser, out string unused);
             return parser.IsEOL ? res : null;
         }
 
         public static JToken Parse(string s, out string error, bool checkeol = false)
         {
             StringParser2 parser = new StringParser2(s);
-            JToken res = Decode(null, parser, out error);
+            JToken res = Decode(parser, out error);
             return parser.IsEOL || !checkeol ? res : null;
         }
 
         // null if its unhappy and error is set
         // decoder does not worry about extra text after the object.
 
-        static private JToken Decode(JToken curobj, StringParser2 parser, out string error)
+        
+        static private JToken Decode(StringParser2 parser, out string error)
         {
             error = null;
+
+            JToken[] stack = new JToken[256];
+            int sptr = 0;
+            bool comma = false;
+            JArray curarray = null;
+            JObject curobject = null;
 
             while (true)
             {
                 if (parser.IsEOL)
-                    return curobj;
+                    return null;
 
                 int decodestartpos = parser.Position;
 
-                JToken o = DecodeValue(parser);       // grab new value
+                JToken o = curobject != null ? DecodeValueStringEndObject(parser) : DecodeValue(parser,true);       // grab new value
+
                 if (o == null)
                 {
                     error = GenError(parser, decodestartpos);
                     return null;
                 }
 
-                bool commamoveon = false;
-
-                if (curobj != null)
-                {
-                    if (curobj.ttype == TType.Array)           // if in a jarray
+                if ( curarray != null )
+                { 
+                    if (o.ttype == TType.EndArray)          // if end marker, jump back
                     {
-                        if (o.ttype == TType.EndArray)    // if end marker, jump back
-                            return curobj;
-                        else
+                        if (comma == true)
                         {
-                            (curobj as JArray).Elements.Add(o);
-                            commamoveon = true;
-                        }
-                    }
-                    else if (curobj.ttype == TType.Object)     // if in a jobject
-                    {
-                        if (o.ttype == TType.EndObject)    // if end marker, jump back
-                            return curobj;
-                        else if (o.ttype == TType.String && parser.IsCharMoveOn(':'))  // ensure we have a string :
-                        {
-                            string name = ((JString)o).StrValue;
-                            decodestartpos = parser.Position;
-                            o = DecodeValue(parser);      // get value, into o , so below works
-                            if (o == null)
-                            {
-                                error = GenError(parser, decodestartpos);
-                                return null;
-                            }
-
-                            (curobj as JObject).Objects[name] = o;  // assign to dictionary
-
-                            commamoveon = true;
-                        }
-                        else
+                            error = GenError(parser, decodestartpos);
                             return null;
+                        }
+                        else
+                        {
+                            JToken prevtoken = stack[--sptr];
+                            if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
+                            {
+                                return stack[sptr + 1];
+                            }
+                            else
+                            {
+                                curobject = prevtoken as JObject;
+                                curarray = prevtoken as JArray;
+                            }
+                        }
+                    }
+                    else if ((comma == false && curarray.Elements.Count > 0) )
+                    {
+                        error = GenError(parser, decodestartpos);
+                        return null;
+                    }
+                    else
+                    {
+                        curarray.Elements.Add(o);
+                    }
+                }
+                else if ( curobject != null )
+                { 
+                    if (o.ttype == TType.EndObject)    // if end marker, jump back
+                    {
+                        if (comma == true)
+                        {
+                            error = GenError(parser, decodestartpos);
+                            return null;
+                        }
+                        else
+                        {
+                            JToken prevtoken = stack[--sptr];
+                            if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
+                            {
+                                return stack[sptr + 1];
+                            }
+                            else
+                            {
+                                curobject = prevtoken as JObject;
+                                curarray = prevtoken as JArray;
+                            }
+                        }
+
+                    }
+                    else if ( (comma == false && curobject.Objects.Count > 0) || !parser.IsCharMoveOn(':'))
+                    {
+                        error = GenError(parser, decodestartpos);
+                        return null;
+                    }
+                    else 
+                    {
+                        string name = ((JString)o).StrValue;
+                        decodestartpos = parser.Position;
+                        o = DecodeValue(parser,false);      // get value, into o , so below works
+                        if (o == null || o.ttype == TType.EndObject || o.ttype == TType.EndArray)
+                        {
+                            error = GenError(parser, decodestartpos);
+                            return null;
+                        }
+
+                        curobject.Objects[name] = o;  // assign to dictionary
                     }
                 }
 
-                if (o.ttype == TType.Array)                // object is a JArray, so we need to jump in and decode it
+                if (o.ttype == TType.Array)
                 {
-                    JToken finish = Decode(o, parser, out error);  // decode, should return a JArray
-
-                    if (finish == null)         // error
+                    if (sptr == stack.Length - 1)
+                    {
+                        error = "Recursion too deep";
                         return null;
+                    }
 
-                    if (curobj == null)         // if we are at top, we have our top level value, so return it
-                        return finish;
+                    stack[++sptr] = o;          // push this one onto stack
+                    curarray = o as JArray;                 // this is now the current object
+                    curobject = null;
+                    comma = false;
                 }
-                else if (o.ttype == TType.Object)
+                else if ( o.ttype == TType.Object)                // object is a JArray, so we need to jump in and decode it
                 {
-                    JToken finish = Decode(o, parser, out error);  // decode, should return a JObject
-
-                    if (finish == null)         // error
+                    if (sptr == stack.Length - 1)
+                    {
+                        error = "Recursion too deep";
                         return null;
+                    }
 
-                    if (curobj == null)         // if we are at top, we have our top level value, so return it
-                        return finish;
+                    stack[++sptr] = o;          // push this one onto stack
+                    curobject = o as JObject;                 // this is now the current object
+                    curarray = null;
+                    comma = false;
                 }
-                else
+                else if (curarray == null && curobject == null)
                 {
-                    if (curobj == null)        // if we are at top, we have our top level value, so return it
-                        return o;               // definition says a JSON can just be a value, so return it
+                    return o;               // definition says a JSON can just be a value, so return it
                 }
-
-                if (commamoveon)              // if jarray or jobject, end of this value, comma will delimit them
-                    parser.IsCharMoveOn(',');        // if comma, skip it. if Not, next will be a }
+                else 
+                {
+                    comma = parser.IsCharMoveOn(',');
+                }
             }
         }
-
-        // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
-        // null if unhappy
 
         static JEndObject jendobject = new JEndObject();
         static JEndArray jendarray = new JEndArray();
 
-        static private JToken DecodeValue(StringParser2 parser)
+        // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
+        // null if unhappy
+
+        static private JToken DecodeValueStringEndObject(StringParser2 parser)
         {
-            //System.Diagnostics.Debug.WriteLine("Decode at " + p.LineLeft);
             char next = parser.PeekChar();
+            switch (next)
+            {
+                case '"':
+                    string value = parser.NextQuotedWord(true).ToString();
+                    return value != null ? new JString(value) : null;
 
-            if (next == '{')
-            {
-                parser.SkipCharAndSkipSpace();
-                return new JObject();
-            }
-            else if (next == '}')
-            {
-                parser.SkipCharAndSkipSpace();
-                return jendobject;
-            }
-            else if (next == '[')
-            {
-                parser.SkipCharAndSkipSpace();
-                return new JArray();
-            }
-            else if (next == ']')
-            {
-                parser.SkipCharAndSkipSpace();
-                return jendarray;
-            }
-            else if (next == '"')  // string
-            {
-                string value = parser.NextQuotedWord(true).ToString();
-                if (value != null)
-                    return new JString(value);
-            }
-            else if (char.IsDigit(next) || next == '-')  // number.. json spec says must start with a digit as its integer fraction exponent
-            {
-                var ty = parser.NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+                case '}':
+                    parser.SkipCharAndSkipSpace();
+                    return jendobject;
 
-                if (ty == StringParser2.ObjectType.Ulong)
-                {
-                    if (sign == -1)
-                        return new JLong(-(long)ulv);
-                    else if ( ulv <= long.MaxValue )
-                        return new JLong((long)ulv);
+                default:
+                    return null;
+            }
+        }
+
+        static private JToken DecodeValue(StringParser2 parser, bool allowendarray)
+        {
+                //System.Diagnostics.Debug.WriteLine("Decode at " + p.LineLeft);
+            char next = parser.PeekChar();
+            switch( next)
+            {
+                case '{':
+                    parser.SkipCharAndSkipSpace();
+                    return new JObject();
+
+                case '[':
+                    parser.SkipCharAndSkipSpace();
+                    return new JArray();
+
+                case '"':
+                    string value = parser.NextQuotedWord(true).ToString();
+                    return value != null ? new JString(value) : null;
+
+                case ']':
+                    if (allowendarray)
+                    {
+                        parser.SkipCharAndSkipSpace();
+                        return jendarray;
+                    }
                     else
-                        return new JULong(ulv);
-                }
-                else if (ty == StringParser2.ObjectType.Double)
-                {
-                    if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
-                        return new JDouble(dv);
-                }
-                else if ( ty == StringParser2.ObjectType.BigInt )
-                {
-                    if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
-                        return new JBigInteger(bv);
-                }
-            }
-            else
-            {
-                if (next == 't' && parser.IsStringMoveOn("true"))
-                    return new JBoolean(true);
-                else if (next == 'f' && parser.IsStringMoveOn("false"))
-                    return new JBoolean(false);
-                else if (next == 'n' && parser.IsStringMoveOn("null"))
-                    return new JNull();
-            }
+                        return null;
 
-            return null;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '+':
+                case '-':
+                    var ty = parser.NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+
+                    if (ty == StringParser2.ObjectType.Ulong)
+                    {
+                        if (sign == -1)
+                            return new JLong(-(long)ulv);
+                        else if (ulv <= long.MaxValue)
+                            return new JLong((long)ulv);
+                        else
+                            return new JULong(ulv);
+                    }
+                    else if (ty == StringParser2.ObjectType.Double)
+                    {
+                        if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
+                            return new JDouble(dv);
+                    }
+                    else if (ty == StringParser2.ObjectType.BigInt)
+                    {
+                        if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
+                            return new JBigInteger(bv);
+                    }
+                    return null;
+
+                case 't':
+                    return parser.IsStringMoveOn("true") ? new JBoolean(true) : null;
+                case 'f':
+                    return parser.IsStringMoveOn("false") ? new JBoolean(false) : null;
+                case 'n':
+                    return parser.IsStringMoveOn("null") ? new JNull() : null;
+
+                default:
+                    return null;
+            }
         }
 
         static private string GenError(StringParser2 parser, int start)
