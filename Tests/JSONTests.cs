@@ -455,6 +455,12 @@ namespace EDDiscoveryTests
                     Check.That(t2).IsNotNull();
                     JObject t3 = JObject.Parse(l, out string error3, true);
                     Check.That(t3).IsNotNull();
+                    JObject t4 = JObject.Parse(l, out string error4, true);
+                    Check.That(t4).IsNotNull();
+                    JObject t5 = JObject.Parse(l, out string error5, true);
+                    Check.That(t5).IsNotNull();
+                    JObject t6 = JObject.Parse(l, out string error6, true);
+                    Check.That(t6).IsNotNull();
                 }
 
             }
@@ -492,6 +498,12 @@ namespace EDDiscoveryTests
                     Check.That(t2).IsNotNull();
                     Newtonsoft.Json.Linq.JToken t3 = Newtonsoft.Json.Linq.JToken.Parse(l);
                     Check.That(t3).IsNotNull();
+                    Newtonsoft.Json.Linq.JToken t4 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t4).IsNotNull();
+                    Newtonsoft.Json.Linq.JToken t5 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t5).IsNotNull();
+                    Newtonsoft.Json.Linq.JToken t6 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    Check.That(t6).IsNotNull();
                 }
 
             }

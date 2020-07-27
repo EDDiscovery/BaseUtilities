@@ -128,11 +128,11 @@ namespace BaseUtils
                         pos++;
                         char esc = line[pos++];     // grab escape and move on
 
-                        if ( esc == quote)
+                        if (esc == quote)
                         {
                             b.Append(esc);      // place in the character
                         }
-                        else if ( replaceescape)
+                        else if (replaceescape)
                         {
                             switch (esc)
                             {
@@ -176,12 +176,15 @@ namespace BaseUtils
                     }
                     else
                         b.Append(line[pos++]);
+                        
+                    if (pos == line.Length)  // no end quote, wrong
+                        return null;
                 }
 
                 pos++; //skip end quote
                 while (pos < line.Length && char.IsWhiteSpace(line[pos]))
                     pos++;
-
+                        
                 return b;
             }
         }
@@ -192,15 +195,44 @@ namespace BaseUtils
 
         static char[] decchars = new char[] { '.', 'e', 'E', '+', '-' };
 
-        public object NextLongULongBigIntegerOrDouble()        // give back a long, ulong, bitint or a double, or null
+        public object NextLongULongBigIntegerOrDouble()      // value or null
         {
+            var ty = NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+
+            if (ty == StringParser2.ObjectType.Ulong)
+            {
+                if (sign == -1)
+                    return -(long)ulv;
+                else if (ulv <= long.MaxValue)
+                    return (long)ulv;
+                else
+                    return ulv;
+            }
+            else if (ty == StringParser2.ObjectType.Double)
+            {
+                if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
+                    return dv;
+            }
+            else if (ty == StringParser2.ObjectType.BigInt)
+            {
+                if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
+                    return bv;
+            }
+
+            return null;
+        }
+
+        public enum ObjectType { Failed, Double, Ulong, BigInt };
+
+        public ObjectType NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign)        
+        {
+            part = null; ulv = 0; sign = 1;
             if (pos >= line.Length)     // null if there is nothing..
-                return null;
+                return ObjectType.Failed;
             else
             {
                 int start = pos;
 
-                int sign = 1;
                 if (line[pos] == '+')
                 {
                     pos++;
@@ -211,15 +243,14 @@ namespace BaseUtils
                     sign = -1;
                 }
 
-                ulong acc = 0;
                 bool bigint = false;
 
                 while (pos < line.Length && line[pos] >= '0' && line[pos] <= '9')
                 {
-                    if (acc > ulong.MaxValue / 10)  // if going to overflow, bit int. continue and ignore acc
+                    if (ulv > ulong.MaxValue / 10)  // if going to overflow, bit int. continue and ignore acc
                         bigint = true;
 
-                    acc = (acc * 10) + (ulong)(line[pos++] - '0');
+                    ulv = (ulv * 10) + (ulong)(line[pos++] - '0');
                 }
 
                 if (pos < line.Length && line[pos] == '.' || line[pos] == 'E' || line[pos] == 'e')
@@ -227,42 +258,31 @@ namespace BaseUtils
                     while (pos < line.Length && ((line[pos] >= '0' && line[pos] <= '9') || decchars.Contains(line[pos])))
                         pos++;
 
-                    string s = new string(line, start, pos - start);
+                    part = new string(line, start, pos - start);
 
                     while (pos < line.Length && char.IsWhiteSpace(line[pos]))
                         pos++;
 
-                    return s.InvariantParseDoubleNull();
+                    return ObjectType.Double;
                 }
-                else if ( bigint == true )
+                else if (bigint == true)
                 {
-                    string s = new string(line, start, pos - start);
+                    part = new string(line, start, pos - start);
 
                     while (pos < line.Length && char.IsWhiteSpace(line[pos]))
                         pos++;
 
-                    string s1 = new string(line, start, pos - start);
-
-                    if (System.Numerics.BigInteger.TryParse(s1, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bi))
-                        return bi;
-                    else
-                        return null;
+                    return ObjectType.BigInt;
                 }
                 else
                 {
                     while (pos < line.Length && char.IsWhiteSpace(line[pos]))
                         pos++;
 
-                    if (sign == -1)
-                        return -((long)acc);
-                    else if (acc <= long.MaxValue)
-                        return (long)acc;
-                    else
-                        return (ulong)acc;
+                    return ObjectType.Ulong;
                 }
             }
         }
-
 
         #endregion
 

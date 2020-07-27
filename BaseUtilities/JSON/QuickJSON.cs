@@ -26,25 +26,28 @@ namespace BaseUtils.JSON
 
     public abstract class JToken : IEnumerable<JToken>, IEnumerable
     {
+        public enum TType { Null, Boolean ,String, Double, Long, Ulong, BigInt, EndObject, EndArray, Object, Array }
+        public TType ttype;
+
         public static implicit operator JToken(string v)
         {
-            return new JString() { StrValue = v };
+            return new JString(v);
         }
         public static implicit operator JToken(long v)
         {
-            return new JLong() { Value = v };
+            return new JLong(v);
         }
         public static implicit operator JToken(ulong v)
         {
-            return new JULong() { Value = v };
+            return new JULong(v);
         }
         public static implicit operator JToken(double v)
         {
-            return new JDouble() { Value = v };
+            return new JDouble(v);
         }
         public static implicit operator JToken(bool v)
         {
-            return new JBoolean() { Value = v };
+            return new JBoolean(v);
         }
 
         public virtual JToken this[object key] { get { return null; } set { throw new NotImplementedException(); } }
@@ -63,34 +66,34 @@ namespace BaseUtils.JSON
 
         public virtual IEnumerator GetSubClassEnumerator() { throw new NotImplementedException(); }
 
-        bool IsString { get { return this is JString; } }
-        bool IsInt { get { return this is JLong || this is JULong || this is JBigInteger; } }
-        bool IsDouble { get { return this is JDouble; } }
-        bool IsBool { get { return this is JBoolean; } }
-        bool IsArray { get { return this is JArray; } }
-        bool IsObject { get { return this is JObject; } }
-        bool IsNull { get { return this is JNull; } }
+        bool IsString { get { return ttype == TType.String; } }
+        bool IsInt { get { return ttype == TType.Long || ttype == TType.Ulong || ttype == TType.BigInt; } }
+        bool IsDouble { get { return ttype == TType.Double || ttype == TType.Long; } }
+        bool IsBool { get { return ttype == TType.Boolean; } }
+        bool IsArray { get { return ttype == TType.Array; } }
+        bool IsObject { get { return ttype == TType.Object; } }
+        bool IsNull { get { return ttype == TType.Null; } }
 
         public string Str(string def = "")
         {
-            return this is JString ? ((JString)this).StrValue : def;
+            return ttype == TType.String ? ((JString)this).StrValue : def;
         }
 
         public int Int(int def = 0)
         {
-            return this is JLong ? (int)((JLong)this).Value : def;
+            return ttype == TType.Long ? (int)((JLong)this).Value : def;
         }
 
         public long Long(long def = 0)
         {
-            return this is JLong ? ((JLong)this).Value : def;
+            return ttype == TType.Long ? ((JLong)this).Value : def;
         }
 
         public ulong ULong(ulong def = 0)
         {
-            if (this is JULong)
+            if (ttype == TType.Ulong)
                 return ((JULong)this).Value;
-            else if (this is JLong && ((JLong)this).Value >= 0)
+            else if (ttype == TType.Long && ((JLong)this).Value >= 0)
                 return (ulong)((JLong)this).Value;
             else
                 return def;
@@ -98,11 +101,11 @@ namespace BaseUtils.JSON
 
         public System.Numerics.BigInteger BigInteger(System.Numerics.BigInteger def)
         {
-            if (this is JULong)
+            if (ttype == TType.Ulong)
                 return ((JULong)this).Value;
-            else if (this is JLong )
+            else if (ttype == TType.Long )
                 return (ulong)((JLong)this).Value;
-            else if ( this is JBigInteger )
+            else if ( ttype == TType.BigInt )
                 return ((JBigInteger)this).Value;
             else
                 return def;
@@ -110,17 +113,17 @@ namespace BaseUtils.JSON
 
         public bool Bool(bool def = false)
         {
-            return this is JBoolean ? ((JBoolean)this).Value : def;
+            return ttype == TType.Boolean ? ((JBoolean)this).Value : def;
         }
 
         public double Double(double def = 0)
         {
-            return this is JDouble ? ((JDouble)this).Value : def;
+            return ttype == TType.Double ? ((JDouble)this).Value : (ttype == TType.Long ? (double)((JLong)this).Value : def);
         }
 
         public DateTime? DateTime(System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (this is JString && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
+            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
                 return ret;
             else
                 return null;
@@ -128,7 +131,7 @@ namespace BaseUtils.JSON
 
         public DateTime DateTime(DateTime defvalue, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (this is JString && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
+            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
                 return ret;
             else
                 return defvalue;
@@ -250,57 +253,58 @@ namespace BaseUtils.JSON
 
                 bool commamoveon = false;
 
-                if (curobj is JArray)           // if in a jarray
+                if (curobj != null)
                 {
-                    if (o is JEndArray)    // if end marker, jump back
-                        return curobj;
-                    else
+                    if (curobj.ttype == TType.Array)           // if in a jarray
                     {
-                        (curobj as JArray).Elements.Add(o);
-                        commamoveon = true;
-                    }
-                }
-                else if (curobj is JObject)     // if in a jobject
-                {
-                    if (o is JEndObject)    // if end marker, jump back
-                        return curobj;
-                    else if (o is JString && parser.IsCharMoveOn(':'))  // ensure we have a string :
-                    {
-                        string name = ((JString)o).StrValue;
-                        decodestartpos = parser.Position;
-                        o = DecodeValue(parser);      // get value, into o , so below works
-                        if (o == null)
+                        if (o.ttype == TType.EndArray)    // if end marker, jump back
+                            return curobj;
+                        else
                         {
-                            error = GenError(parser, decodestartpos);
-                            return null;
+                            (curobj as JArray).Elements.Add(o);
+                            commamoveon = true;
                         }
-
-                        (curobj as JObject).Objects[name] = o;  // assign to dictionary
-
-                        commamoveon = true;
                     }
-                    else
-                        return null;
+                    else if (curobj.ttype == TType.Object)     // if in a jobject
+                    {
+                        if (o.ttype == TType.EndObject)    // if end marker, jump back
+                            return curobj;
+                        else if (o.ttype == TType.String && parser.IsCharMoveOn(':'))  // ensure we have a string :
+                        {
+                            string name = ((JString)o).StrValue;
+                            decodestartpos = parser.Position;
+                            o = DecodeValue(parser);      // get value, into o , so below works
+                            if (o == null)
+                            {
+                                error = GenError(parser, decodestartpos);
+                                return null;
+                            }
+
+                            (curobj as JObject).Objects[name] = o;  // assign to dictionary
+
+                            commamoveon = true;
+                        }
+                        else
+                            return null;
+                    }
                 }
 
-                if (o is JArray)                // object is a JArray, so we need to jump in and decode it
+                if (o.ttype == TType.Array)                // object is a JArray, so we need to jump in and decode it
                 {
                     JToken finish = Decode(o, parser, out error);  // decode, should return a JArray
 
-                    if (finish == null)
-                    {
+                    if (finish == null)         // error
                         return null;
-                    }
+
                     if (curobj == null)         // if we are at top, we have our top level value, so return it
                         return finish;
                 }
-                else if (o is JObject)
+                else if (o.ttype == TType.Object)
                 {
                     JToken finish = Decode(o, parser, out error);  // decode, should return a JObject
-                    if (finish == null)
-                    {
+
+                    if (finish == null)         // error
                         return null;
-                    }
 
                     if (curobj == null)         // if we are at top, we have our top level value, so return it
                         return finish;
@@ -350,27 +354,39 @@ namespace BaseUtils.JSON
             else if (next == '"')  // string
             {
                 string value = parser.NextQuotedWord(true).ToString();
-                if ( value != null )
-                    return new JString() { StrValue = value };
+                if (value != null)
+                    return new JString(value);
             }
             else if (char.IsDigit(next) || next == '-')  // number.. json spec says must start with a digit as its integer fraction exponent
             {
-                Object o = parser.NextLongULongBigIntegerOrDouble();
-                if (o is long)
-                    return new JLong() { Value = (long)o };
-                else if (o is ulong)
-                    return new JULong() { Value = (ulong)o };
-                else if (o is double)
-                    return new JDouble() { Value = (double)o };
-                else if (o is System.Numerics.BigInteger)
-                    return new JBigInteger() { Value = (System.Numerics.BigInteger)o };
+                var ty = parser.NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+
+                if (ty == StringParser2.ObjectType.Ulong)
+                {
+                    if (sign == -1)
+                        return new JLong(-(long)ulv);
+                    else if ( ulv <= long.MaxValue )
+                        return new JLong((long)ulv);
+                    else
+                        return new JULong(ulv);
+                }
+                else if (ty == StringParser2.ObjectType.Double)
+                {
+                    if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
+                        return new JDouble(dv);
+                }
+                else if ( ty == StringParser2.ObjectType.BigInt )
+                {
+                    if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
+                        return new JBigInteger(bv);
+                }
             }
             else
             {
                 if (next == 't' && parser.IsStringMoveOn("true"))
-                    return new JBoolean() { Value = true };
+                    return new JBoolean(true);
                 else if (next == 'f' && parser.IsStringMoveOn("false"))
-                    return new JBoolean() { Value = false };
+                    return new JBoolean(false);
                 else if (next == 'n' && parser.IsStringMoveOn("null"))
                     return new JNull();
             }
@@ -391,50 +407,59 @@ namespace BaseUtils.JSON
 
     public class JNull : JToken
     {
+        public JNull() { ttype = TType.Null; }
     }
     public class JBoolean : JToken
     {
+        public JBoolean(bool v) { ttype = TType.Boolean; Value = v; }
         public bool Value { get; set; }
     }
     public class JString : JToken
     {
-        //public string StrValue { get { return SBValue.ToString(); } set { SBValue = new System.Text.StringBuilder(value); } }
-        //public System.Text.StringBuilder SBValue { get; set; }
+        public JString(string s) { ttype = TType.String; StrValue = s; }
         public string StrValue;
     }
     public class JLong : JToken
     {
+        public JLong(long v) { ttype = TType.Long; Value = v; }
         public long Value { get; set; }
     }
     public class JULong : JToken
     {
+        public JULong(ulong v) { ttype = TType.Ulong; Value = v; }
         public ulong Value { get; set; }
     }
     public class JBigInteger : JToken
     {
+        public JBigInteger(System.Numerics.BigInteger v) { ttype = TType.BigInt; Value = v; }
         public System.Numerics.BigInteger Value { get; set; }
     }
     public class JDouble : JToken
     {
+        public JDouble(double d) { ttype = TType.Double; Value = d; }
         public double Value { get; set; }
     }
     public class JEndObject : JToken    // internal, only used during decode
     {
+        public JEndObject() { ttype = TType.EndObject; }
     }
     public class JEndArray : JToken     // internal, only used during decode
     {
+        public JEndArray() { ttype = TType.EndArray; }
     }
 
     public class JObject : JToken, IEnumerable<KeyValuePair<string, JToken>>
     {
         public JObject()
         {
+            ttype = TType.Object;
             Objects = new Dictionary<string, JToken>(16);   // giving a small initial cap seems to help
         }
 
         public Dictionary<string, JToken> Objects { get; set; }
 
         public override JToken this[object key] { get { System.Diagnostics.Debug.Assert(key is string); return Objects[(string)key]; } set { System.Diagnostics.Debug.Assert(key is string); Objects[(string)key] = value; } }
+        public JToken this[string key] { get { return Objects[key]; } set { Objects[key] = value; } }
         public bool ContainsKey(string n) { return Objects.ContainsKey(n); }
         public int Count() { return Objects.Count; }
         public bool Remove(string key) { return Objects.Remove(key); }
@@ -461,6 +486,7 @@ namespace BaseUtils.JSON
     {
         public JArray()
         {
+            ttype = TType.Array;
             Elements = new List<JToken>(16);
         }
 
