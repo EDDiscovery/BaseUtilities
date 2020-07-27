@@ -287,7 +287,7 @@ namespace BaseUtils
 
         public object NextLongULongBigIntegerOrDouble()      // value or null
         {
-            var ty = NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+            var ty = NextULong(out string part, out ulong ulv, out int sign);
 
             if (ty == StringParser2.ObjectType.Ulong)
             {
@@ -315,7 +315,7 @@ namespace BaseUtils
         public enum ObjectType { Failed, Double, Ulong, BigInt };
         static char[] decchars = new char[] { '.', 'e', 'E', '+', '-' };
 
-        public ObjectType NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign)        
+        public ObjectType NextULong(out string part, out ulong ulv, out int sign)        // part for double/bigint, else ulv and sign
         {
             part = null; ulv = 0; sign = 1;
             if (pos >= line.Length)     // null if there is nothing..

@@ -272,62 +272,152 @@ namespace BaseUtils.JSON
 
             while (true)
             {
-                while( true )
+                if (curobject != null)
                 {
-                    int decodestartpos = parser.Position;
-
-                    char next = parser.GetChar();
-
-                    if (next == '}')
+                    while (true)
                     {
-                        parser.SkipSpace();
+                        int decodestartpos = parser.Position;
 
-                        if (comma == true)
-                        {
-                            error = GenError(parser, decodestartpos);
-                            return null;
-                        }
-                        else
-                        {
-                            JToken prevtoken = stack[--sptr];
-                            if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
-                            {
-                                return stack[sptr + 1];
-                            }
-                            else
-                            {
-                                comma = parser.IsCharMoveOn(',');
-                                curobject = prevtoken as JObject;
-                                if (curobject == null)
-                                {
-                                    curarray = prevtoken as JArray;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    else if (next == '"')
-                    {
-                        string name = parser.NextQuotedWordString(next,true);
+                        char next = parser.GetChar();
 
-                        if ( name == null || (comma == false && curobject.Objects.Count > 0) || !parser.IsCharMoveOn(':'))
+                        if (next == '}')
                         {
-                            error = GenError(parser, decodestartpos);
-                            return null;
-                        }
-                        else
-                        {
-                            decodestartpos = parser.Position;
+                            parser.SkipSpace();
 
-                            JToken o = DecodeValue(parser, false);      // get value, into o , so below works
-
-                            if (o == null )
+                            if (comma == true)
                             {
                                 error = GenError(parser, decodestartpos);
                                 return null;
                             }
+                            else
+                            {
+                                JToken prevtoken = stack[--sptr];
+                                if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
+                                {
+                                    return stack[sptr + 1];
+                                }
+                                else
+                                {
+                                    comma = parser.IsCharMoveOn(',');
+                                    curobject = prevtoken as JObject;
+                                    if (curobject == null)
+                                    {
+                                        curarray = prevtoken as JArray;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (next == '"')
+                        {
+                            string name = parser.NextQuotedWordString(next, true);
 
-                            curobject.Objects[name] = o;  // assign to dictionary
+                            if (name == null || (comma == false && curobject.Objects.Count > 0) || !parser.IsCharMoveOn(':'))
+                            {
+                                error = GenError(parser, decodestartpos);
+                                return null;
+                            }
+                            else
+                            {
+                                decodestartpos = parser.Position;
+
+                                JToken o = DecodeValue(parser, false);      // get value, into o , so below works
+
+                                if (o == null)
+                                {
+                                    error = GenError(parser, decodestartpos);
+                                    return null;
+                                }
+
+                                curobject.Objects[name] = o;  // assign to dictionary
+
+                                if (o.ttype == TType.Array)
+                                {
+                                    if (sptr == stack.Length - 1)
+                                    {
+                                        error = "Recursion too deep";
+                                        return null;
+                                    }
+
+                                    stack[++sptr] = o;          // push this one onto stack
+                                    curarray = o as JArray;                 // this is now the current object
+                                    curobject = null;
+                                    comma = false;
+                                    break;
+                                }
+                                else if (o.ttype == TType.Object)
+                                {
+                                    if (sptr == stack.Length - 1)
+                                    {
+                                        error = "Recursion too deep";
+                                        return null;
+                                    }
+
+                                    stack[++sptr] = o;          // push this one onto stack
+                                    curobject = o as JObject;                 // this is now the current object
+                                    comma = false;
+                                }
+                                else
+                                {
+                                    comma = parser.IsCharMoveOn(',');
+                                }
+                            }
+                        }
+                        else
+                        {
+                            error = GenError(parser, decodestartpos);
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    while (true)
+                    {
+                        int decodestartpos = parser.Position;
+
+                        JToken o = DecodeValue(parser, true);       // grab new value
+
+                        if (o == null)
+                        {
+                            error = GenError(parser, decodestartpos);
+                            return null;
+                        }
+                        else if (o.ttype == TType.EndArray)          // if end marker, jump back
+                        {
+                            if (comma == true)
+                            {
+                                error = GenError(parser, decodestartpos);
+                                return null;
+                            }
+                            else
+                            {
+                                JToken prevtoken = stack[--sptr];
+                                if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
+                                {
+                                    return stack[sptr + 1];
+                                }
+                                else
+                                {
+                                    comma = parser.IsCharMoveOn(',');
+                                    curobject = prevtoken as JObject;
+                                    if (curobject == null)
+                                    {
+                                        curarray = prevtoken as JArray;
+                                    }
+                                    else
+                                        break;
+                                }
+                            }
+                        }
+                        else if ((comma == false && curarray.Elements.Count > 0))
+                        {
+                            error = GenError(parser, decodestartpos);
+                            return null;
+                        }
+                        else
+                        {
+                            curarray.Elements.Add(o);
 
                             if (o.ttype == TType.Array)
                             {
@@ -337,11 +427,9 @@ namespace BaseUtils.JSON
                                     return null;
                                 }
 
-                                stack[++sptr] = o;          // push this one onto stack
-                                curarray = o as JArray;                 // this is now the current object
-                                curobject = null;
+                                stack[++sptr] = o;              // push this one onto stack
+                                curarray = o as JArray;         // this is now the current array
                                 comma = false;
-                                break;
                             }
                             else if (o.ttype == TType.Object)
                             {
@@ -351,99 +439,16 @@ namespace BaseUtils.JSON
                                     return null;
                                 }
 
-                                stack[++sptr] = o;          // push this one onto stack
-                                curobject = o as JObject;                 // this is now the current object
+                                stack[++sptr] = o;              // push this one onto stack
+                                curobject = o as JObject;       // this is now the current object
+                                curarray = null;
                                 comma = false;
+                                break;
                             }
                             else
                             {
                                 comma = parser.IsCharMoveOn(',');
                             }
-                        }
-                    }
-                    else
-                    {
-                        error = GenError(parser, decodestartpos);
-                        return null;
-                    }
-                }
-
-                while ( true )
-                {
-                    int decodestartpos = parser.Position;
-
-                    JToken o = DecodeValue(parser, true);       // grab new value
-
-                    if (o == null)
-                    {
-                        error = GenError(parser, decodestartpos);
-                        return null;
-                    }
-                    else if (o.ttype == TType.EndArray)          // if end marker, jump back
-                    {
-                        if (comma == true)
-                        {
-                            error = GenError(parser, decodestartpos);
-                            return null;
-                        }
-                        else
-                        {
-                            JToken prevtoken = stack[--sptr];
-                            if (prevtoken == null)      // if popped stack is null, we are back to beginning, return this
-                            {
-                                return stack[sptr + 1];
-                            }
-                            else
-                            {
-                                comma = parser.IsCharMoveOn(',');
-                                curobject = prevtoken as JObject;
-                                if (curobject == null)
-                                {
-                                    curarray = prevtoken as JArray;
-                                }
-                                else
-                                    break;
-                            }
-                        }
-                    }
-                    else if ((comma == false && curarray.Elements.Count > 0))
-                    {
-                        error = GenError(parser, decodestartpos);
-                        return null;
-                    }
-                    else
-                    {
-                        curarray.Elements.Add(o);
-
-                        if (o.ttype == TType.Array)
-                        {
-                            if (sptr == stack.Length - 1)
-                            {
-                                error = "Recursion too deep";
-                                return null;
-                            }
-
-                            stack[++sptr] = o;              // push this one onto stack
-                            curarray = o as JArray;         // this is now the current array
-                            comma = false;
-                        }
-                        else if (o.ttype == TType.Object)     
-                        {
-                            if (sptr == stack.Length - 1)
-                            {
-                                error = "Recursion too deep";
-                                return null;
-                            }
-
-                            stack[++sptr] = o;              // push this one onto stack
-                            curobject = o as JObject;       // this is now the current object
-                            curarray = null;
-                            comma = false;
-                            break;
-                        }
-                        else
-                        {
-                            comma = parser.IsCharMoveOn(',');
                         }
                     }
                 }
@@ -454,7 +459,6 @@ namespace BaseUtils.JSON
 
         // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
         // null if unhappy
-
 
         static private JToken DecodeValue(StringParser2 parser, bool inarray)
         {
@@ -496,7 +500,7 @@ namespace BaseUtils.JSON
                 case '+':
                 case '-':
                     parser.BackUp();
-                    var ty = parser.NextLongULongBigIntegerOrDouble(out string part, out ulong ulv, out int sign);
+                    var ty = parser.NextULong(out string part, out ulong ulv, out int sign);
 
                     if (ty == StringParser2.ObjectType.Ulong)
                     {
