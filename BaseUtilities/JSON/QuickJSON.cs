@@ -76,7 +76,7 @@ namespace BaseUtils.JSON
 
         public string Str(string def = "")
         {
-            return ttype == TType.String ? ((JString)this).StrValue : def;
+            return ttype == TType.String ? ((JString)this).Value : def;
         }
 
         public int Int(int def = 0)
@@ -123,7 +123,7 @@ namespace BaseUtils.JSON
 
         public DateTime? DateTime(System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
+            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).Value, ci, ds, out DateTime ret))
                 return ret;
             else
                 return null;
@@ -131,7 +131,7 @@ namespace BaseUtils.JSON
 
         public DateTime DateTime(DateTime defvalue, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
-            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).StrValue, ci, ds, out DateTime ret))
+            if (ttype == TType.String && System.DateTime.TryParse(((JString)this).Value, ci, ds, out DateTime ret))
                 return ret;
             else
                 return defvalue;
@@ -150,7 +150,7 @@ namespace BaseUtils.JSON
         public static string ToString(Object o, string prepad, string postpad, string pad)
         {
             if (o is JString)
-                return prepad + "\"" + ((JString)o).StrValue.EscapeControlCharsFull() + "\"" + postpad;
+                return prepad + "\"" + ((JString)o).Value.EscapeControlCharsFull() + "\"" + postpad;
             else if (o is JDouble)
                 return prepad + ((JDouble)o).Value.ToStringInvariant() + postpad;
             else if (o is JLong)
@@ -487,7 +487,7 @@ namespace BaseUtils.JSON
                     else
                         return null;
 
-                case '0':
+                case '0':       // all positive. JSON does not allow a + at the start (integer fraction exponent)
                 case '1':
                 case '2':
                 case '3':
@@ -496,33 +496,11 @@ namespace BaseUtils.JSON
                 case '6':
                 case '7':
                 case '8':
-                case '9':
-                case '+':
-                case '-':
+                case '9':   
                     parser.BackUp();
-                    var ty = parser.NextULong(out string part, out ulong ulv, out int sign);
-
-                    if (ty == StringParser2.ObjectType.Ulong)
-                    {
-                        if (sign == -1)
-                            return new JLong(-(long)ulv);
-                        else if (ulv <= long.MaxValue)
-                            return new JLong((long)ulv);
-                        else
-                            return new JULong(ulv);
-                    }
-                    else if (ty == StringParser2.ObjectType.Double)
-                    {
-                        if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
-                            return new JDouble(dv);
-                    }
-                    else if (ty == StringParser2.ObjectType.BigInt)
-                    {
-                        if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
-                            return new JBigInteger(bv);
-                    }
-                    return null;
-
+                    return parser.NextJValue(false);
+                case '-':
+                    return parser.NextJValue(true);
                 case 't':
                     return parser.IsStringMoveOn("rue") ? new JBoolean(true) : null;
                 case 'f':
@@ -557,8 +535,8 @@ namespace BaseUtils.JSON
     }
     public class JString : JToken
     {
-        public JString(string s) { ttype = TType.String; StrValue = s; }
-        public string StrValue;
+        public JString(string s) { ttype = TType.String; Value = s; }
+        public string Value { get; set; }
     }
     public class JLong : JToken
     {
@@ -642,7 +620,7 @@ namespace BaseUtils.JSON
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
         public T Find<T>(System.Predicate<JToken> predicate) { Object r = Elements.Find(predicate); return (T)r; }       // find an entry matching the predicate
 
-        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).StrValue : null; }); }
+        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).Value : null; }); }
         public List<int> Int() { return Elements.ConvertAll<int>((o) => { return (int)((JLong)o).Value; }); }
         public List<long> Long() { return Elements.ConvertAll<long>((o) => { return ((JLong)o).Value; }); }
         public List<double> Double() { return Elements.ConvertAll<double>((o) => { return ((JDouble)o).Value; }); }
