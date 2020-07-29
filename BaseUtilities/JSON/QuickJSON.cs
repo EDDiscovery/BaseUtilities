@@ -68,6 +68,8 @@ namespace BaseUtils.JSON
 
         bool IsString { get { return ttype == TType.String; } }
         bool IsInt { get { return ttype == TType.Long || ttype == TType.Ulong || ttype == TType.BigInt; } }
+        bool IsBigInt { get { return ttype == TType.BigInt; } }
+        bool IsULong { get { return ttype == TType.Ulong; } }
         bool IsDouble { get { return ttype == TType.Double || ttype == TType.Long; } }
         bool IsBool { get { return ttype == TType.Boolean; } }
         bool IsArray { get { return ttype == TType.Array; } }
