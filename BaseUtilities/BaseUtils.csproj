@@ -34,6 +34,9 @@
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NFluent, Version=2.4.0.0, Culture=neutral, PublicKeyToken=18828b37b84b1437, processorArchitecture=MSIL">
+      <HintPath>..\packages\NFluent.2.7.0\lib\net45\NFluent.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -42,6 +45,7 @@
     <Reference Include="System.IO.Compression.ZipFile, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\System.IO.Compression.ZipFile.4.3.0\lib\net46\System.IO.Compression.ZipFile.dll</HintPath>
     </Reference>
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -74,6 +78,7 @@
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
+    <Compile Include="Strings\StringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
