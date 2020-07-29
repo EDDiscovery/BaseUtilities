@@ -27,7 +27,7 @@ namespace BaseUtils.JSON
     public abstract class JToken : IEnumerable<JToken>, IEnumerable
     {
         public enum TType { Null, Boolean ,String, Double, Long, Ulong, BigInt, EndObject, EndArray, Object, Array }
-        public TType ttype;
+        public TType ttype;     // using a ttype faster than using X is ..
 
         public static implicit operator JToken(string v)
         {
@@ -149,23 +149,23 @@ namespace BaseUtils.JSON
             return verbose ? ToString(this, "", "\r\n", pad) : ToString(this, "", "", "");
         }
 
-        public static string ToString(Object o, string prepad, string postpad, string pad)
+        public static string ToString(JToken o, string prepad, string postpad, string pad)
         {
-            if (o is JString)
+            if (o.ttype == TType.String)
                 return prepad + "\"" + ((JString)o).Value.EscapeControlCharsFull() + "\"" + postpad;
-            else if (o is JDouble)
+            else if (o.ttype == TType.Double)
                 return prepad + ((JDouble)o).Value.ToStringInvariant() + postpad;
-            else if (o is JLong)
+            else if (o.ttype == TType.Long)
                 return prepad + ((JLong)o).Value.ToStringInvariant() + postpad;
-            else if (o is JULong)
+            else if (o.ttype == TType.Ulong)
                 return prepad + ((JULong)o).Value.ToStringInvariant() + postpad;
-            else if (o is JBigInteger)
+            else if (o.ttype == TType.BigInt)
                 return prepad + ((JBigInteger)o).Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + postpad;
-            else if (o is JBoolean)
+            else if (o.ttype == TType.Boolean)
                 return prepad + ((JBoolean)o).Value.ToString().ToLower() + postpad;
-            else if (o is JNull)
+            else if (o.ttype == TType.Null)
                 return prepad + "null" + postpad;
-            else if (o is JArray)
+            else if (o.ttype == TType.Array)
             {
                 string s = prepad + "[" + postpad;
                 string prepad1 = prepad + pad;
@@ -182,7 +182,7 @@ namespace BaseUtils.JSON
                 s += prepad + "]" + postpad;
                 return s;
             }
-            else if (o is JObject)
+            else if (o.ttype == TType.Object)
             {
                 string s = prepad + "{" + postpad;
                 string prepad1 = prepad + pad;
@@ -234,7 +234,6 @@ namespace BaseUtils.JSON
 
         // null if its unhappy and error is set
         // decoder does not worry about extra text after the object.
-
         
         static private JToken Decode(StringParser2 parser, out string error)
         {
@@ -246,6 +245,7 @@ namespace BaseUtils.JSON
             JArray curarray = null;
             JObject curobject = null;
 
+            // first decode the first value/object/array
             {
                 int decodestartpos = parser.Position;
 
@@ -274,7 +274,7 @@ namespace BaseUtils.JSON
 
             while (true)
             {
-                if (curobject != null)
+                if (curobject != null)      // if object..
                 {
                     while (true)
                     {
@@ -282,7 +282,7 @@ namespace BaseUtils.JSON
 
                         char next = parser.GetChar();
 
-                        if (next == '}')
+                        if (next == '}')    // end object
                         {
                             parser.SkipSpace();
 
@@ -310,8 +310,8 @@ namespace BaseUtils.JSON
                                 }
                             }
                         }
-                        else if (next == '"')
-                        {
+                        else if (next == '"')   // property name
+                        {   
                             string name = parser.NextQuotedWordString(next, true);
 
                             if (name == null || (comma == false && curobject.Objects.Count > 0) || !parser.IsCharMoveOn(':'))
@@ -323,7 +323,7 @@ namespace BaseUtils.JSON
                             {
                                 decodestartpos = parser.Position;
 
-                                JToken o = DecodeValue(parser, false);      // get value, into o , so below works
+                                JToken o = DecodeValue(parser, false);      // get value
 
                                 if (o == null)
                                 {
@@ -333,7 +333,7 @@ namespace BaseUtils.JSON
 
                                 curobject.Objects[name] = o;  // assign to dictionary
 
-                                if (o.ttype == TType.Array)
+                                if (o.ttype == TType.Array) // if array, we need to change to this as controlling object on top of stack
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
@@ -347,7 +347,7 @@ namespace BaseUtils.JSON
                                     comma = false;
                                     break;
                                 }
-                                else if (o.ttype == TType.Object)
+                                else if (o.ttype == TType.Object)   // if object, this is the controlling object
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
@@ -412,7 +412,7 @@ namespace BaseUtils.JSON
                                 }
                             }
                         }
-                        else if ((comma == false && curarray.Elements.Count > 0))
+                        else if ((comma == false && curarray.Elements.Count > 0))   // missing comma
                         {
                             error = GenError(parser, decodestartpos);
                             return null;
@@ -421,9 +421,9 @@ namespace BaseUtils.JSON
                         {
                             curarray.Elements.Add(o);
 
-                            if (o.ttype == TType.Array)
+                            if (o.ttype == TType.Array) // if array, we need to change to this as controlling object on top of stack
                             {
-                                if (sptr == stack.Length - 1)
+                                if (sptr == stack.Length - 1) 
                                 {
                                     error = "Recursion too deep";
                                     return null;
@@ -433,7 +433,7 @@ namespace BaseUtils.JSON
                                 curarray = o as JArray;         // this is now the current array
                                 comma = false;
                             }
-                            else if (o.ttype == TType.Object)
+                            else if (o.ttype == TType.Object) // if object, this is the controlling object
                             {
                                 if (sptr == stack.Length - 1)
                                 {
@@ -459,7 +459,7 @@ namespace BaseUtils.JSON
 
         static JEndArray jendarray = new JEndArray();
 
-        // return JObject, JArray, char indicating end array/object, string, number, true, false, JNull
+        // return JObject, JArray, char indicating end array if inarray is set, string, long, ulong, bigint, true, false, JNull
         // null if unhappy
 
         static private JToken DecodeValue(StringParser2 parser, bool inarray)
@@ -622,7 +622,7 @@ namespace BaseUtils.JSON
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
         public T Find<T>(System.Predicate<JToken> predicate) { Object r = Elements.Find(predicate); return (T)r; }       // find an entry matching the predicate
 
-        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o is JString ? ((JString)o).Value : null; }); }
+        public List<string> String() { return Elements.ConvertAll<string>((o) => { return o.ttype == TType.String ? ((JString)o).Value : null; }); }
         public List<int> Int() { return Elements.ConvertAll<int>((o) => { return (int)((JLong)o).Value; }); }
         public List<long> Long() { return Elements.ConvertAll<long>((o) => { return ((JLong)o).Value; }); }
         public List<double> Double() { return Elements.ConvertAll<double>((o) => { return ((JDouble)o).Value; }); }
