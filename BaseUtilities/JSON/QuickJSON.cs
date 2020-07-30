@@ -139,6 +139,16 @@ namespace BaseUtils.JSON
                 return defvalue;
         }
 
+        public JArray Array()       // null if not
+        {
+            return this as JArray;
+        }
+
+        public JObject Object()     // null if not
+        {
+            return this as JObject;
+        }
+
         public override string ToString()
         {
             return ToString(false);
@@ -614,6 +624,7 @@ namespace BaseUtils.JSON
         public List<JToken> Elements { get; set; }
 
         public override JToken this[object key] { get { System.Diagnostics.Debug.Assert(key is int); return Elements[(int)key]; } set { System.Diagnostics.Debug.Assert(key is int); Elements[(int)key] = value; } }
+        public JToken this[int element] { get { return Elements[element]; } set { Elements[element] = value; } }
         public int Count() { return Elements.Count; }
         public void Add(JToken o) { Elements.Add(o); }
         public void AddRange(IEnumerable<JToken> o) { Elements.AddRange(o); }
