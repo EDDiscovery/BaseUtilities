@@ -13,7 +13,7 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
+using BaseUtils.JSON;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -325,29 +325,6 @@ namespace BaseUtils
             return newvars;
         }
 
-        public JArray ToJSONObject()
-        {
-            JArray jf = new JArray();
-
-            foreach (KeyValuePair<string, string> v in values)
-            {
-                JObject j1 = new JObject();
-                j1["var"] = v.Key;
-                j1["value"] = v.Value;
-                jf.Add(j1);
-            }
-
-            return jf;
-        }
-
-        public void FromJSONObject(JArray jf)
-        {
-            foreach (JObject jo in jf)
-            {
-                values[(string)jo["var"]] = (string)jo["value"];
-            }
-        }
-
         #endregion
 
         #region Object values to this class
@@ -526,42 +503,28 @@ namespace BaseUtils
 
         #endregion
 
-        #region JSON to variables
+        #region JSON to variables   
 
+        // verified 31/7/2020 with baseutils.JSON, recoded to properly work!
         public void AddJSONVariables(JToken t, string name, string dateformat = "MM/dd/yyyy HH:mm:ss")     // give root name to start..
         {
             //System.Diagnostics.Debug.WriteLine(t.GetType().Name+ " " + name );
 
             if (t is JArray)
             {
-                values[name + "_Count"] = t.Children().Count().ToString();
+                values[name + "_Count"] = t.Count().ToString();
                 int childindex = 1;
                 foreach (var subitem in t)
                     AddJSONVariables(subitem, name + "_" + childindex++ );
             }
-            else if (t is JProperty)
-            {
-                JProperty p = t as JProperty;
-                string subname = name + "_" + p.Name;
-                foreach (var subitem in t)
-                    AddJSONVariables(subitem, subname);
-            }
             else if (t is JObject)
             {
-                foreach (var subitem in t)
-                    AddJSONVariables(subitem, name);
+                foreach (var kvp in (JObject)t)
+                    AddJSONVariables(kvp.Value, name + "_" + kvp.Key );
             }
-            else if (t is JValue)
+            else 
             {
-                JValue v = t as JValue;
-                if (v.Type == JTokenType.Date)
-                    values[name] = ((DateTime)v.Value).ToString(dateformat);
-                else
-                    values[name] = v.Value.ToString();
-            }
-            else
-            {
-                System.Diagnostics.Debug.Assert(true,"Not handled JSON class!");
+                values[name] = t.ToStringLiteral();
             }
         }
 

@@ -123,7 +123,11 @@ namespace BaseUtils
 
         // Your on a " or ' quoted string, extract it
 
-        private static char[] buffer = new char[16384];
+        private static char[] buffer = new char[16384];     // generous static buffer
+        public void SetMaxStringLength(int n)
+        {
+            buffer = new char[n];
+        }
 
         public string NextQuotedWordString(char quote, bool replaceescape = false)
         {
@@ -131,7 +135,7 @@ namespace BaseUtils
 
             while (true)
             {
-                if (pos == line.Length)  // if reached end of line, error
+                if (pos == line.Length || bpos== buffer.Length)  // if reached end of line, or out of buffer, error
                 {
                     return null;
                 }

@@ -26,12 +26,15 @@ namespace BaseUtils.JSON
 
     public abstract class JToken : IEnumerable<JToken>, IEnumerable
     {
-        public enum TType { Null, Boolean ,String, Double, Long, Ulong, BigInt, EndObject, EndArray, Object, Array }
+        public enum TType { Null, Boolean, String, Double, Long, Ulong, BigInt, Object, Array, EndObject, EndArray, NotPresent }
         public TType ttype;     // using a ttype faster than using X is ..
 
-        public static implicit operator JToken(string v)
+        public static implicit operator JToken(string v)        // autoconvert types to JToken types
         {
-            return new JString(v);
+            if (v == null)
+                return new JNull();
+            else
+                return new JString(v);
         }
         public static implicit operator JToken(long v)
         {
@@ -49,8 +52,14 @@ namespace BaseUtils.JSON
         {
             return new JBoolean(v);
         }
+        public static implicit operator JToken(DateTime v)
+        {
+            return new JString(v.ToStringZulu());
+        }
 
-        public virtual JToken this[object key] { get { return null; } set { throw new NotImplementedException(); } }
+        // if called on a non indexed object, return JNotPresent().  
+        // On an Array/Object, will return JNotPresent if not present, or indexer is not right type
+        public virtual JToken this[object key] { get { return new JNotPresent(); } set { throw new NotImplementedException(); } }
 
         public IEnumerator<JToken> GetEnumerator()
         {
@@ -66,6 +75,10 @@ namespace BaseUtils.JSON
 
         public virtual IEnumerator GetSubClassEnumerator() { throw new NotImplementedException(); }
 
+        public virtual int Count { get { return 0; } }        // number of children
+        public virtual void Clear() { throw new NotImplementedException(); }
+
+        bool IsNotPresent { get { return ttype == TType.NotPresent; } }
         bool IsString { get { return ttype == TType.String; } }
         bool IsInt { get { return ttype == TType.Long || ttype == TType.Ulong || ttype == TType.BigInt; } }
         bool IsBigInt { get { return ttype == TType.BigInt; } }
@@ -79,6 +92,14 @@ namespace BaseUtils.JSON
         public string Str(string def = "")
         {
             return ttype == TType.String ? ((JString)this).Value : def;
+        }
+
+        public static explicit operator string(JToken t)        // Direct conversion - use Str() safer. Will assert if not string
+        {
+            if (t.ttype == TType.Null)
+                return null;
+            else
+                return ((JString)t).Value;
         }
 
         public int Int(int def = 0)
@@ -149,20 +170,30 @@ namespace BaseUtils.JSON
             return this as JObject;
         }
 
-        public override string ToString()
+        public override string ToString()   // back to JSON form
         {
-            return ToString(false);
+            return ToString(this, "", "", "", false);
+        }
+
+        public string ToStringLiteral()     // data as is, without quoting/escaping strings. Used for data extraction
+        {
+            return ToString(false, "", "", "",true);
         }
 
         public string ToString(bool verbose = false, string pad = "  ")
         {
-            return verbose ? ToString(this, "", "\r\n", pad) : ToString(this, "", "", "");
+            return verbose ? ToString(this, "", "\r\n", pad,false) : ToString(this, "", "", "",false);
         }
 
-        public static string ToString(JToken o, string prepad, string postpad, string pad)
+        public static string ToString(JToken o, string prepad, string postpad, string pad, bool stringliterals)
         {
             if (o.ttype == TType.String)
-                return prepad + "\"" + ((JString)o).Value.EscapeControlCharsFull() + "\"" + postpad;
+            {
+                if ( stringliterals )       // used if your extracting the value of the data as a string, and not turning it back to json.
+                    return prepad + ((JString)o).Value + postpad;
+                else
+                    return prepad + "\"" + ((JString)o).Value.EscapeControlCharsFull() + "\"" + postpad;
+            }
             else if (o.ttype == TType.Double)
                 return prepad + ((JDouble)o).Value.ToStringInvariant() + postpad;
             else if (o.ttype == TType.Long)
@@ -180,10 +211,10 @@ namespace BaseUtils.JSON
                 string s = prepad + "[" + postpad;
                 string prepad1 = prepad + pad;
                 JArray ja = o as JArray;
-                for (int i = 0; i < ja.Elements.Count; i++)
+                for (int i = 0; i < ja.Count; i++)
                 {
-                    bool notlast = i < ja.Elements.Count - 1;
-                    s += ToString(ja.Elements[i], prepad1, postpad, pad);
+                    bool notlast = i < ja.Count - 1;
+                    s += ToString(ja[i], prepad1, postpad, pad, stringliterals);
                     if (notlast)
                     {
                         s = s.Substring(0, s.Length - postpad.Length) + "," + postpad;
@@ -198,13 +229,13 @@ namespace BaseUtils.JSON
                 string prepad1 = prepad + pad;
                 int i = 0;
                 JObject jo = ((JObject)o);
-                foreach (var e in jo.Objects)
+                foreach (var e in jo)
                 {
-                    bool notlast = i++ < jo.Objects.Count - 1;
+                    bool notlast = i++ < jo.Count - 1;
                     if (e.Value is JObject || e.Value is JArray)
                     {
                         s += prepad1 + "\"" + e.Key.EscapeControlCharsFull() + "\":" + postpad;
-                        s += ToString(e.Value, prepad1, postpad, pad);
+                        s += ToString(e.Value, prepad1, postpad, pad, stringliterals);
                         if (notlast)
                         {
                             s = s.Substring(0, s.Length - postpad.Length) + "," + postpad;
@@ -212,7 +243,7 @@ namespace BaseUtils.JSON
                     }
                     else
                     {
-                        s += prepad1 + "\"" + e.Key.EscapeControlCharsFull() + "\":" + ToString(e.Value, "", "", pad) + (notlast ? "," : "") + postpad;
+                        s += prepad1 + "\"" + e.Key.EscapeControlCharsFull() + "\":" + ToString(e.Value, "", "", pad, stringliterals) + (notlast ? "," : "") + postpad;
                     }
                 }
                 s += prepad + "}" + postpad;
@@ -221,6 +252,9 @@ namespace BaseUtils.JSON
             else
                 return null;
         }
+
+        // null if its unhappy and error is set
+        // decoder does not worry about extra text after the object.
 
         public static JToken Parse(string s)        // null if failed.
         {
@@ -241,10 +275,7 @@ namespace BaseUtils.JSON
             JToken res = Decode(parser, out error);
             return parser.IsEOL || !checkeol ? res : null;
         }
-
-        // null if its unhappy and error is set
-        // decoder does not worry about extra text after the object.
-        
+       
         static private JToken Decode(StringParser2 parser, out string error)
         {
             error = null;
@@ -268,17 +299,17 @@ namespace BaseUtils.JSON
                 }
                 else if (o.ttype == TType.Array)
                 {
-                    stack[++sptr] = o;          // push this one onto stack
-                    curarray = o as JArray;                 // this is now the current object
+                    stack[++sptr] = o;                      // push this one onto stack
+                    curarray = o as JArray;                 // this is now the current array
                 }
                 else if (o.ttype == TType.Object)
                 {
-                    stack[++sptr] = o;          // push this one onto stack
-                    curobject = o as JObject;                 // this is now the current object
+                    stack[++sptr] = o;                      // push this one onto stack
+                    curobject = o as JObject;               // this is now the current object
                 }
                 else
                 {
-                    return o;       // value only
+                    return o;                               // value only
                 }
             }
 
@@ -324,7 +355,7 @@ namespace BaseUtils.JSON
                         {   
                             string name = parser.NextQuotedWordString(next, true);
 
-                            if (name == null || (comma == false && curobject.Objects.Count > 0) || !parser.IsCharMoveOn(':'))
+                            if (name == null || (comma == false && curobject.Count > 0) || !parser.IsCharMoveOn(':'))
                             {
                                 error = GenError(parser, decodestartpos);
                                 return null;
@@ -341,7 +372,7 @@ namespace BaseUtils.JSON
                                     return null;
                                 }
 
-                                curobject.Objects[name] = o;  // assign to dictionary
+                                curobject[name] = o;  // assign to dictionary
 
                                 if (o.ttype == TType.Array) // if array, we need to change to this as controlling object on top of stack
                                 {
@@ -422,14 +453,14 @@ namespace BaseUtils.JSON
                                 }
                             }
                         }
-                        else if ((comma == false && curarray.Elements.Count > 0))   // missing comma
+                        else if ((comma == false && curarray.Count > 0))   // missing comma
                         {
                             error = GenError(parser, decodestartpos);
                             return null;
                         }
                         else
                         {
-                            curarray.Elements.Add(o);
+                            curarray.Add(o);
 
                             if (o.ttype == TType.Array) // if array, we need to change to this as controlling object on top of stack
                             {
@@ -469,7 +500,7 @@ namespace BaseUtils.JSON
 
         static JEndArray jendarray = new JEndArray();
 
-        // return JObject, JArray, char indicating end array if inarray is set, string, long, ulong, bigint, true, false, JNull
+        // return JObject, JArray, jendarray indicating end array if inarray is set, string, long, ulong, bigint, true, false, JNull
         // null if unhappy
 
         static private JToken DecodeValue(StringParser2 parser, bool inarray)
@@ -536,6 +567,8 @@ namespace BaseUtils.JSON
         }
     }
 
+    // these are the basic value types
+
     public class JNull : JToken
     {
         public JNull() { ttype = TType.Null; }
@@ -578,6 +611,12 @@ namespace BaseUtils.JSON
     {
         public JEndArray() { ttype = TType.EndArray; }
     }
+    public class JNotPresent : JToken     // returned if lookup on ["string"] is not present.  Str() etc lookups then return default
+    {
+        public JNotPresent() { ttype = TType.NotPresent; }
+    }
+
+    // Object class, holds key/value pairs
 
     public class JObject : JToken, IEnumerable<KeyValuePair<string, JToken>>
     {
@@ -587,14 +626,26 @@ namespace BaseUtils.JSON
             Objects = new Dictionary<string, JToken>(16);   // giving a small initial cap seems to help
         }
 
-        public Dictionary<string, JToken> Objects { get; set; }
+        private Dictionary<string, JToken> Objects { get; set; }
 
-        public override JToken this[object key] { get { System.Diagnostics.Debug.Assert(key is string); return Objects[(string)key]; } set { System.Diagnostics.Debug.Assert(key is string); Objects[(string)key] = value; } }
-        public JToken this[string key] { get { return Objects[key]; } set { Objects[key] = value; } }
+        // Returns value or JNotPresent if not present or not string indexor.  jo["fred"].Str() works if fred is not present.  
+        public override JToken this[object key]
+            { get { if (key is string && Objects.TryGetValue((string)key, out JToken v)) return v; else return new JNotPresent(); }
+              set { System.Diagnostics.Debug.Assert(key is string && value != null); Objects[(string)key] = value; } }
+
+        // Returns value or JNotPresent if not present
+        public JToken this[string key] {
+            get { if (Objects.TryGetValue(key, out JToken v)) return v; else return new JNotPresent(); }
+            set { System.Diagnostics.Debug.Assert(value != null);  Objects[key] = value; } }
+
         public bool ContainsKey(string n) { return Objects.ContainsKey(n); }
-        public int Count() { return Objects.Count; }
+        public bool TryGetValue(string n, out JToken value) { return Objects.TryGetValue(n, out value); }
+
+        public override int Count { get { return Objects.Count; } }
+
+        public void Add(string key, JToken value) { this[key] = value; }
         public bool Remove(string key) { return Objects.Remove(key); }
-        public void Clear() { Objects.Clear(); }
+        public override void Clear() { Objects.Clear(); }
 
         public new static JObject Parse(string s)        // null if failed.
         {
@@ -613,6 +664,8 @@ namespace BaseUtils.JSON
         public override IEnumerator GetSubClassEnumerator() { return Objects.GetEnumerator(); }
     }
 
+    // Array type
+
     public class JArray : JToken
     {
         public JArray()
@@ -621,15 +674,26 @@ namespace BaseUtils.JSON
             Elements = new List<JToken>(16);
         }
 
-        public List<JToken> Elements { get; set; }
+        private List<JToken> Elements { get; set; }
 
-        public override JToken this[object key] { get { System.Diagnostics.Debug.Assert(key is int); return Elements[(int)key]; } set { System.Diagnostics.Debug.Assert(key is int); Elements[(int)key] = value; } }
+        // if out of range, or indexer not int, JNotPresent
+        public override JToken this[object key] {
+            get { if (key is int && (int)key >= 0 && (int)key < Elements.Count) return Elements[(int)key]; else return new JNotPresent(); }
+            set { System.Diagnostics.Debug.Assert(key is int && value != null); Elements[(int)key] = value; } }
+
+        // must be in range.
         public JToken this[int element] { get { return Elements[element]; } set { Elements[element] = value; } }
-        public int Count() { return Elements.Count; }
+
+        // try and get a value.
+        public bool TryGetValue(int n, out JToken value) { if (n >= 0 && n < Elements.Count) { value = Elements[n]; return true; } else { value = null; return false; } }
+
+        public override int Count { get { return Elements.Count; } }
+
         public void Add(JToken o) { Elements.Add(o); }
         public void AddRange(IEnumerable<JToken> o) { Elements.AddRange(o); }
         public void RemoveAt(int index) { Elements.RemoveAt(index); }
-        public void Clear() { Elements.Clear(); }
+        public override void Clear() { Elements.Clear(); }
+
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
         public T Find<T>(System.Predicate<JToken> predicate) { Object r = Elements.Find(predicate); return (T)r; }       // find an entry matching the predicate
 

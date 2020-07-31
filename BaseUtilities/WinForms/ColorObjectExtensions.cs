@@ -13,12 +13,9 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
+
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 public static class ObjectExtensionsColours
 {
