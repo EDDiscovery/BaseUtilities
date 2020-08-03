@@ -68,7 +68,7 @@ namespace EDDiscoveryTests
             j1["One"] = "one";
             j1["Two"] = "two";
             JArray ja = new JArray();
-            ja.Elements = new List<JToken> { "one", "two", 10.23 };
+            ja.AddRange(new List<JToken> { "one", "two", 10.23 });
             j1["Array"] = ja;
 
             System.Diagnostics.Debug.WriteLine("" + j1.ToString().QuoteString());
@@ -135,9 +135,9 @@ namespace EDDiscoveryTests
 
             Check.That(ja.ToString()).IsEqualTo(expectedjson);
 
-            string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
+       //     string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
 
-            Check.That(s).IsNotNull().Equals("one");
+        //    Check.That(s).IsNotNull().Equals("one");
 
             JObject o = ja.Find<JObject>(x => x is JObject);
             Check.That(o).IsNotNull();
@@ -288,10 +288,7 @@ namespace EDDiscoveryTests
 
         }
 
-        [Test]
-        public void JSONGithub()
-        {
-            string json = @"
+        string jsongithub = @"
         {
           ""url"": ""https://api.github.com/repos/EDDiscovery/EDDiscovery/releases/25769192"",
           ""assets_url"": ""https://api.github.com/repos/EDDiscovery/EDDiscovery/releases/25769192/assets"",
@@ -401,7 +398,10 @@ namespace EDDiscoveryTests
           ""body"": ""This is a major overhaul of the Scan panel, addition of Material Trader panels, and general overhaul of lots of the program.\r\n\r\n*** \r\nMajor features\r\n\r\n* Scan panel gets more visuals and a new menu system to select output. Many more options added including distance, star class, planet class, highlighting planets in hab zone. Layout has been optimised.  Since the menu system was reworked all previous selections of display type will need to be reset - use the drop down menu to select them.  The default is everything on.\r\n* UI won't stall when looking up data from EDSM - previous it would stop until EDSM responded. Now just the panel which is asking will stop updating. Rest of the system carries on.\r\n* Material Trader panel added - plan you material trades in advance to see the best outcome before you commit to flying to a trader.\r\n* Surveyor Panel gets many more options for display - show all planets/stars etc and gets more information\r\n* Travel grid, Ships/Loadout, Material Commodities, Engineering, Synthesis get word wrap option to word wrap columns instead of truncating them. Double click on the row now works better expanding/contracting the text.\r\n* Ships/Loadout gets a All modules selection to list all your modules across all ships - useful for engineering\r\n* Synthesis, Engineering and Shopping list panels\r\n\r\nOther Improvements\r\n\r\n* All materials are now classified by Material Group Type\r\n* Improved loading speed when multiple tabbed panels are present - does not sit and use processing time now like it could do\r\n* EDSM Data pick up includes surface gravity\r\n* Journal Missions entry gets faction effects printed\r\n* Can force sell a ship if for some reason your journal has lost the sell ship event\r\n* Various Forms get a close X icon\r\n* Fuel/Reservoir updates are much better, Ships/loadouts auto change with them, and they don't bombard the system with micro changes\r\n* Star Distance panel - fix issue when setting the Max value which could cause it not to look up any stars again\r\n* Workaround for GDI error when saving bitmap\r\n* Bounty Event report correct ship name\r\n* New Y resizer on top of EDD form so you can resize there\r\n* Removed old surface scanner engineering recipes\r\n* Excel output of scan data now works out the value correctly dependent on if you mapped the body\r\n* Can force EDD to use TLS2 \r\n* Asteroid Prospected prints out mats in normal info, Mining refined gets total and type as per MaterialCollected\r\n\r\n***\r\n\r\n|  | EDDiscovery <version>.exe |\r\n|---------|------------------------------------------------------------------|\r\n| SHA-256 | 01D84BF967FE5CDFF2DDC782F0D68FCB4B80F3881EE1F883941454DF9FBB8823 | \r\n\r\n|  |  EDDiscovery.Portable.zip |\r\n|---------|------------------------------------------------------------------|\r\n| SHA-256 | 1D365A30B51280B4676410694C3D1E9F21DF525403E53B735245FD6C7B584DCA |\r\n\r\n![image](https://user-images.githubusercontent.com/6573992/80213091-8d931400-8630-11ea-9f3c-f56d43f7edd8.png)\r\n\r\n\r\n\r\n\r\n""
         }";
 
-            JToken decode = JToken.Parse(json);
+        [Test]
+        public void JSONGithub()
+        {
+            JToken decode = JToken.Parse(jsongithub);
             Check.That(decode).IsNotNull();
             string json2 = decode.ToString(true);
             JToken decode2 = JToken.Parse(json2);
@@ -412,7 +412,7 @@ namespace EDDiscoveryTests
             var asset = decode["assets"];
             var e1 = asset.FirstOrDefault(func);
             Check.That(e1).IsNotNull();
-            Check.That(e1["size"] is JLong).IsTrue();
+            Check.That(e1["size"].IsInt).IsTrue();
             Check.That(e1["size"].Int() == 11140542).IsTrue();
             Check.That(e1["state"].Str() == "uploaded").IsTrue();
         }
@@ -514,5 +514,186 @@ namespace EDDiscoveryTests
             System.Diagnostics.Debug.WriteLine("Read journals took " + time);
 
         }
+
+        [Test]
+        public void JSONDeepClone()
+        {
+            JToken decode = JToken.Parse(jsongithub);
+            Check.That(decode).IsNotNull();
+            JToken copy = decode.Clone();
+            Check.That(copy).IsNotNull();
+            string json1 = decode.ToString(true);
+            string json2 = copy.ToString(true);
+            Check.That(json1).Equals(json2);
+            System.Diagnostics.Debug.WriteLine(json2);
+
+        }
+
+        [Test]
+        public void JSONDeepEquals()
+        {
+            JToken decode = JToken.Parse(jsongithub);
+            Check.That(decode).IsNotNull();
+            JToken copy = decode.Clone();
+            Check.That(copy).IsNotNull();
+            string json1 = decode.ToString(true);
+            string json2 = copy.ToString(true);
+            Check.That(json1).Equals(json2);
+            System.Diagnostics.Debug.WriteLine(json2);
+
+            Check.That(decode.DeepEquals(copy)).IsTrue();
+
+        }
+
+        public class Unlocked
+        {
+            public string Name;
+            public string Name_Localised;
+        }
+
+        public class Commodities
+        {
+            public string Name;
+            public string Name_Localised;
+            public string FriendlyName;
+            public int Count;
+        }
+
+        public class Materials
+        {
+            public string Name;
+            public string Name_Localised;
+            public string FriendlyName;
+            public string Category;
+            public int Count;
+        }
+
+        public class SimpleTest
+        {
+            public string one;
+            public string two;
+            public int three;
+            public bool four;
+        }
+
+        [Test]
+        public void JSONToObject()
+        {
+            string jmd = @"
+{
+  ""timestamp"": ""2018 - 04 - 24T21: 25:46Z"",
+  ""event"": ""TechnologyBroker"",
+  ""BrokerType"": ""guardian"",
+  ""MarketID"": 3223529472,
+  ""ItemsUnlocked"": [
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size2"",
+      ""Name_Localised"": ""Guardian Power Plant""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size3"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size4"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size5"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size6"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size7"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    },
+    {
+      ""Name"": ""Int_GuardianPowerplant_Size8"",
+      ""Name_Localised"": ""$Int_GuardianPowerplant_Size2_Name;""
+    }
+  ],
+  ""Commodities"": [
+    {
+      ""Name"": ""powergridassembly"",
+      ""Name_Localised"": ""Energy Grid Assembly"",
+      ""Count"": 10
+    }
+  ],
+  ""Materials"": [
+    {
+      ""Name"": ""guardian_moduleblueprint"",
+      ""Name_Localised"": ""Guardian Module Blueprint Segment"",
+      ""Count"": 4,
+      ""Category"": ""Encoded""
+    },
+    {
+      ""Name"": ""guardian_powerconduit"",
+      ""Name_Localised"": ""Guardian Power Conduit"",
+      ""Count"": 36,
+      ""Category"": ""Manufactured""
+    },
+    {
+      ""Name"": ""ancienttechnologicaldata"",
+      ""Name_Localised"": ""Pattern Epsilon Obelisk Data"",
+      ""Count"": 42,
+      ""Category"": ""Encoded""
+    },
+    {
+      ""Name"": ""heatresistantceramics"",
+      ""Name_Localised"": ""Heat Resistant Ceramics"",
+      ""Count"": 30,
+      ""Category"": ""Manufactured""
+    }
+  ]
+}";
+
+
+            {
+                string json = "[ \"one\",\"two\",\"three\" ] ";
+                JToken decode = JToken.Parse(json);
+
+                var decoded = decode.ToObject(typeof(string[]));
+                if (decoded is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
+
+                var decoded2 = decode.ToObject(typeof(string));
+                Check.That(decoded2).IsInstanceOfType(typeof(JTokenExtensions.ToObjectError));
+                if (decoded2 is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded2).ErrorString);
+            }
+
+            {
+                string json = "{ \"one\":\"one\", \"two\":\"two\" , \"three\":30, \"four\":true }";
+                JToken decode = JToken.Parse(json);
+
+                var decoded = decode.ToObject(typeof(SimpleTest));
+                if (decoded is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
+            }
+
+            {
+                JToken decode = JToken.Parse(jmd);
+                Check.That(decode).IsNotNull();
+                string json1 = decode.ToString(true);
+                System.Diagnostics.Debug.WriteLine(json1);
+
+                var ItemsUnlocked1 = decode["WrongNameItemsUnlocked"].ToObject(typeof(Unlocked[]));
+                Check.That(ItemsUnlocked1).IsNull();
+                var ItemsUnlocked = decode["ItemsUnlocked"].ToObject(typeof(Unlocked[]));
+                Check.That(ItemsUnlocked).IsNotNull();
+                var CommodityList = decode["Commodities"].ToObject<Commodities[]>();
+                Check.That(CommodityList).IsNotNull();
+                var MaterialList = decode["Materials"].ToObject<Materials[]>();
+                Check.That(MaterialList).IsNotNull();
+                Check.That(MaterialList.Length).IsEqualTo(4);
+
+
+            }
+
+        }
+
     }
 }

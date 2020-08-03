@@ -222,18 +222,18 @@ namespace BaseUtils
                         string part = new string(line, start, pos - start);    // get double string
 
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
-                            return new JBigInteger(sign ? -bv : bv);
+                            return new JToken(JToken.TType.BigInt, sign ? -bv : bv);
                         else
                             return null;
                     }
                     else if (pos == start)      // no chars read
                         return null;
                     else if (ulv <= long.MaxValue)
-                        return new JLong(sign ? -(long)ulv : (long)ulv);
+                        return new JToken(JToken.TType.Long, sign ? -(long)ulv : (long)ulv);
                     else if (sign)
                         return null;
                     else
-                        return new JULong(ulv);
+                        return new JToken(JToken.TType.ULong,ulv);
                 }
                 else if (line[pos] < '0' || line[pos] > '9')        // if at end of integer..
                 {
@@ -248,7 +248,7 @@ namespace BaseUtils
                             pos++;
 
                         if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
-                            return new JDouble(sign ? -dv : dv);
+                            return new JToken(JToken.TType.Double,sign ? -dv : dv);
                         else
                             return null;
                     }
@@ -257,7 +257,7 @@ namespace BaseUtils
                         string part = new string(line, start, pos - start);    // get double string
 
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
-                            return new JBigInteger(sign ? -bv : bv);
+                            return new JToken(JToken.TType.BigInt,sign ? -bv : bv);
                         else
                             return null;
                     }
@@ -270,11 +270,11 @@ namespace BaseUtils
                             pos++;
 
                         if (ulv <= long.MaxValue)
-                            return new JLong(sign ? -(long)ulv : (long)ulv);
+                            return new JToken(JToken.TType.Long, sign ? -(long)ulv : (long)ulv);
                         else if (sign)
                             return null;
                         else
-                            return new JULong(ulv);
+                            return new JToken(JToken.TType.ULong, ulv);
                     }
                 }
                 else
