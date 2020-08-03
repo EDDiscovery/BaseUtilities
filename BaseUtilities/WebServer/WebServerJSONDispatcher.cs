@@ -14,7 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using Newtonsoft.Json.Linq;
+using BaseUtils.JSON;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -66,8 +66,9 @@ namespace BaseUtils.WebServer
 
             try
             {
+                // verified 31/7/2020 with baseutils.JSON. Note safe if requestID not not present or jk returns a non object
                 JToken jk = JToken.Parse(s);
-                string req = jk[RequestID].StrNull();
+                string req = jk != null ? jk[RequestID].Str(null) : null;
 
                 if (req != null)
                 {
@@ -75,7 +76,7 @@ namespace BaseUtils.WebServer
 
                     if (res != null)
                     {
-                        string ret = res.ToString(Newtonsoft.Json.Formatting.None);
+                        string ret = res.ToString(true);
                         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(ret);         // to UTF8
                         ws.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true, CancellationToken.None).Wait();
                     }

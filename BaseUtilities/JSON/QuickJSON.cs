@@ -66,7 +66,7 @@ namespace BaseUtils.JSON
             if (v == null)
                 return new JToken(TType.Null);
             else
-                return new JToken(TType.String,v);
+                return new JToken(TType.String, v);
         }
         public static implicit operator JToken(long v)
         {
@@ -120,7 +120,7 @@ namespace BaseUtils.JSON
         #endregion
 
         #region Operators and functions
-        
+
         public bool DeepEquals(JToken other)
         {
             switch (TokenType)
@@ -133,7 +133,7 @@ namespace BaseUtils.JSON
                             JArray ot = (JArray)other;
                             if (ot.Count == us.Count)
                             {
-                                for( int i = 0; i < us.Count; i++ )
+                                for (int i = 0; i < us.Count; i++)
                                 {
                                     if (!us[i].DeepEquals(other[i]))
                                         return false;
@@ -155,7 +155,7 @@ namespace BaseUtils.JSON
                             JObject ot = (JObject)other;
                             if (ot.Count == us.Count)
                             {
-                                foreach( var kvp in us)
+                                foreach (var kvp in us)
                                 {
                                     if (!ot.ContainsKey(kvp.Key) || !kvp.Value.DeepEquals(ot[kvp.Key]))       // order unimportant to kvp
                                         return false;
@@ -237,12 +237,12 @@ namespace BaseUtils.JSON
 
         public uint UInt(uint def = 0)
         {
-            return TokenType == TType.Long && (long)Value>=0 ? (uint)(long)Value : def;
+            return TokenType == TType.Long && (long)Value >= 0 ? (uint)(long)Value : def;
         }
 
         public uint? UIntNull()
         {
-            return TokenType == TType.Long && (long)Value>=0 ? (uint)(long)Value : default(uint?);
+            return TokenType == TType.Long && (long)Value >= 0 ? (uint)(long)Value : default(uint?);
         }
 
         public long Long(long def = 0)
@@ -269,7 +269,7 @@ namespace BaseUtils.JSON
         {
             if (TokenType == TType.ULong)
                 return (ulong)Value;
-            else if (TokenType == TType.Long && (long)Value>=0)
+            else if (TokenType == TType.Long && (long)Value >= 0)
                 return (ulong)(long)Value;
             else if (TokenType == TType.BigInt)
                 return (System.Numerics.BigInteger)Value;
@@ -689,7 +689,7 @@ namespace BaseUtils.JSON
 
                 case '"':
                     string value = parser.NextQuotedWordString(next, true);
-                    return value != null ? new JToken(TType.String,value) : null;
+                    return value != null ? new JToken(TType.String, value) : null;
 
                 case ']':
                     if (inarray)

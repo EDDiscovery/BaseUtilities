@@ -551,7 +551,7 @@ namespace BaseUtils
 
             try
             {
-                Newtonsoft.Json.Linq.JToken tk = Newtonsoft.Json.Linq.JToken.Parse(json);
+                JSON.JToken tk = JSON.JToken.Parse(json);
                 if (tk != null)
                 {
                     vars.AddJSONVariables(tk, varprefix);
