@@ -20,11 +20,19 @@ namespace BaseUtils.JSON
 {
     public static class JTokenExtensions
     {
+        static public string StrExp(this JToken jToken, string def = "")
+        {
+            if (jToken == null)
+                return def;
+            else
+                return jToken.Str();
+        }
+
         public static T ToObject<T>(this JToken tk)                 // returns null if not decoded
         {
             Type tt = typeof(T);
             Object ret = tk.ToObject(tt);
-            if (ret.GetType() != tt)        // null if not returned T
+            if (ret != null && ret.GetType() != tt)        // null if not returned T
                 return default(T);
             else
                 return (T)ret;
@@ -34,7 +42,7 @@ namespace BaseUtils.JSON
         {
             Type tt = typeof(T);
             Object ret = tk.ToObject(tt);
-            if (ret.GetType() != tt)        // null if not returned T
+            if (ret != null && ret.GetType() != tt)        // null if not returned T
                 return default(T);
             else
                 return (T)ret;
@@ -46,7 +54,9 @@ namespace BaseUtils.JSON
 
         public static Object ToObject(this JToken tk, Type tt)       // will return an instance of tt or ToObjectError, or null for not JNotPresent
         {
-            if (tk.IsString)
+            if (tk == null)
+                return null;
+            else if (tk.IsString)
             {
                 if (tt == typeof(string))
                 {
@@ -105,11 +115,31 @@ namespace BaseUtils.JSON
             }
             else if (tk.IsArray)
             {
-                if (tt.IsArray)
+                JArray jarray = (JArray)tk;
+
+                if (typeof(System.Collections.IList).IsAssignableFrom(tt))
+                {
+                    dynamic instance = Activator.CreateInstance(tt);        // create the List
+                    var types = tt.GetGenericArguments();
+
+                    for (int i = 0; i < tk.Count; i++)
+                    {
+                        Object ret = ToObject(tk[i], types[0]);      // get the underlying element
+
+                        if (ret.GetType() == typeof(ToObjectError))
+                            return ret;
+                        else
+                        {
+                            dynamic d = Convert.ChangeType(ret, types[0]);       // convert to element type, which should work since we checked compatibility
+                            instance.Add(d);
+                        }
+                    }
+
+                    return instance;
+                }
+                else if (tt.IsArray)
                 {
                     dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
-
-                    JArray jarray = (JArray)tk;
 
                     for (int i = 0; i < tk.Count; i++)
                     {
@@ -131,7 +161,28 @@ namespace BaseUtils.JSON
             }
             else if (tk.TokenType == JToken.TType.Object)                   // objects are best efforts.. fills in as many fields as possible
             {
-                if (tt.IsClass)
+                if ( typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
+                {
+                    dynamic instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
+                    var types = tt.GetGenericArguments();
+
+                    foreach (var kvp in (JObject)tk)
+                    {
+                        Object ret = ToObject(kvp.Value, types[1]);        // get the value as the dictionary type
+
+                        if (ret.GetType() == typeof(ToObjectError))
+                            return ret;
+                        else
+                        {
+                            dynamic d = Convert.ChangeType(ret, types[1]);       // convert to element type, which should work since we checked compatibility
+                            instance[kvp.Key] = d;
+
+                        }
+                    }
+
+                    return instance;
+                }
+                else if (tt.IsClass)
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
@@ -164,8 +215,6 @@ namespace BaseUtils.JSON
                 else
                     return new ToObjectError("Not class");
             }
-            else if (tk.IsNotPresent)       // if its purposely not present, return null
-                return null;
             else
                 return new ToObjectError("Unknown type of JToken");
         }

@@ -413,6 +413,7 @@ namespace EDDiscoveryTests
             var e1 = asset.FirstOrDefault(func);
             Check.That(e1).IsNotNull();
             Check.That(e1["size"].IsInt).IsTrue();
+            Check.That(e1["size1"]?.IsInt ?? true).IsTrue();
             Check.That(e1["size"].Int() == 11140542).IsTrue();
             Check.That(e1["state"].Str() == "uploaded").IsTrue();
         }
@@ -579,6 +580,7 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONToObject()
         {
+#if false
             string jmd = @"
 {
   ""timestamp"": ""2018 - 04 - 24T21: 25:46Z"",
@@ -690,6 +692,37 @@ namespace EDDiscoveryTests
                 Check.That(MaterialList).IsNotNull();
                 Check.That(MaterialList.Length).IsEqualTo(4);
 
+
+            }
+#endif
+            {
+                string listp2 = @"{ ""Materials"":[ ""iron"" , ""nickel"" ]}";
+                JToken evt3 = JObject.Parse(listp2);
+                var liste = evt3["Materials"].ToObjectProtected<List<string>>();  // name in fd logs is lower case
+                Check.That(liste).IsNotNull();
+                Check.That(liste.Count).IsEqualTo(2);
+
+                string dicp2 = @"{ ""Materials"":{ ""iron"":22.1, ""nickel"":16.7, ""sulphur"":15.6, ""carbon"":13.2, ""chromium"":9.9, ""phosphorus"":8.4 }}";
+                JToken evt2 = JObject.Parse(dicp2);
+                var Materials2 = evt2["Materials"].ToObjectProtected<Dictionary<string, double>>();  // name in fd logs is lower case
+                Check.That(Materials2).IsNotNull();
+                Check.That(Materials2.Count).IsEqualTo(6);
+
+
+                string dicpair = @"{ ""Materials"":[ { ""Name"":""iron"", ""Percent"":19.741276 }, { ""Name"":""sulphur"", ""Percent"":17.713514 }, { ""Name"":""nickel"", ""Percent"":14.931473 }, { ""Name"":""carbon"", ""Percent"":14.895230 }, { ""Name"":""phosphorus"", ""Percent"":9.536182 } ] }";
+                JToken evt = JObject.Parse(dicpair);
+                JToken mats = evt["Materials"];
+
+                if (mats != null)
+                {
+                    var Materials = new Dictionary<string, double>();
+                    foreach (JObject jo in mats)                                        // name in fd logs is lower case
+                    {
+                        string name = jo["Name"].Str();
+
+                        Materials[name.ToLowerInvariant()] = jo["Percent"].Double();
+                    }
+                }
 
             }
 

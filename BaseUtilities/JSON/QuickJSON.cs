@@ -26,13 +26,13 @@ namespace BaseUtils.JSON
 
     public class JToken : IEnumerable<JToken>, IEnumerable
     {
-        public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray, NotPresent }
+        public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray }
         public TType TokenType { get; set; }                    // type of token
         public Object Value { get; set; }                       // value of token, if it has one
 
-        public bool IsNotPresent { get { return TokenType == TType.NotPresent; } }
         public bool IsString { get { return TokenType == TType.String; } }
         public bool IsInt { get { return TokenType == TType.Long || TokenType == TType.ULong || TokenType == TType.BigInt; } }
+        public bool IsLong { get { return TokenType == TType.Long; } }
         public bool IsBigInt { get { return TokenType == TType.BigInt; } }
         public bool IsULong { get { return TokenType == TType.ULong; } }
         public bool IsDouble { get { return TokenType == TType.Double || TokenType == TType.Long; } }
@@ -45,7 +45,7 @@ namespace BaseUtils.JSON
 
         public JToken()
         {
-            TokenType = TType.NotPresent;
+            TokenType = TType.Null;
         }
 
         public JToken(JToken other)
@@ -58,8 +58,6 @@ namespace BaseUtils.JSON
         {
             TokenType = t; Value = v;
         }
-
-        static public JToken JNotPresent() { return new JToken(TType.NotPresent); }
 
         public static implicit operator JToken(string v)        // autoconvert types to JToken types
         {
@@ -87,6 +85,14 @@ namespace BaseUtils.JSON
         public static implicit operator JToken(DateTime v)
         {
             return new JToken(TType.String, v.ToStringZulu());
+        }
+
+        public static explicit operator string(JToken t)        // Direct conversion - use Str() safer. Will assert if not string
+        {
+            if (t.TokenType == TType.Null)
+                return null;
+            else
+                return (string)t.Value;
         }
 
         public JToken Clone()   // make a copy of the token
@@ -176,7 +182,7 @@ namespace BaseUtils.JSON
 
         // if called on a non indexed object, return JNotPresent().  
         // On an Array/Object, will return JNotPresent if not present, or indexer is not right type
-        public virtual JToken this[object key] { get { return JNotPresent(); } set { throw new NotImplementedException(); } }
+        public virtual JToken this[object key] { get { return null; } set { throw new NotImplementedException(); } }
 
         public virtual JToken Contains(string[] ids) { throw new NotImplementedException(); } // lookup one of these keys in a JObject
 
@@ -196,140 +202,6 @@ namespace BaseUtils.JSON
 
         public virtual int Count { get { return 0; } }        // number of children
         public virtual void Clear() { throw new NotImplementedException(); }    // clear all children
-
-        #endregion
-
-        #region Data Get
-
-        public virtual string MultiStr(string[] ids, string def = "")       // multiple lookup in Object of names
-        {
-            JToken t = Contains(ids);
-            return t != null && t.TokenType == TType.String ? (string)Value : def;
-        }
-
-        public string Str(string def = "")
-        {
-            return TokenType == TType.String ? (string)Value : def;
-        }
-
-        public string StrNull()
-        {
-            return TokenType == TType.String ? (string)Value : null;
-        }
-
-        public static explicit operator string(JToken t)        // Direct conversion - use Str() safer. Will assert if not string
-        {
-            if (t.TokenType == TType.Null)
-                return null;
-            else
-                return (string)t.Value;
-        }
-
-        public int Int(int def = 0)
-        {
-            return TokenType == TType.Long ? (int)(long)Value : def;
-        }
-
-        public int? IntNull()
-        {
-            return TokenType == TType.Long ? (int)(long)Value : default(int?);
-        }
-
-        public uint UInt(uint def = 0)
-        {
-            return TokenType == TType.Long && (long)Value >= 0 ? (uint)(long)Value : def;
-        }
-
-        public uint? UIntNull()
-        {
-            return TokenType == TType.Long && (long)Value >= 0 ? (uint)(long)Value : default(uint?);
-        }
-
-        public long Long(long def = 0)
-        {
-            return TokenType == TType.Long ? (long)Value : def;
-        }
-
-        public long? LongNull()
-        {
-            return TokenType == TType.Long ? (long)Value : default(long?);
-        }
-
-        public ulong ULong(ulong def = 0)
-        {
-            if (TokenType == TType.ULong)
-                return (ulong)Value;
-            else if (TokenType == TType.Long && (long)Value >= 0)
-                return (ulong)(long)Value;
-            else
-                return def;
-        }
-
-        public System.Numerics.BigInteger BigInteger(System.Numerics.BigInteger def)
-        {
-            if (TokenType == TType.ULong)
-                return (ulong)Value;
-            else if (TokenType == TType.Long && (long)Value >= 0)
-                return (ulong)(long)Value;
-            else if (TokenType == TType.BigInt)
-                return (System.Numerics.BigInteger)Value;
-            else
-                return def;
-        }
-
-        public bool Bool(bool def = false)
-        {
-            return TokenType == TType.Boolean ? (bool)Value : def;
-        }
-
-        public bool? BoolNull()
-        {
-            return TokenType == TType.Boolean ? (bool)Value : default(bool?);
-        }
-
-        public double Double(double def = 0)
-        {
-            return TokenType == TType.Double ? (double)Value : (TokenType == TType.Long ? (double)(long)Value : def);
-        }
-
-        public double? DoubleNull()
-        {
-            return TokenType == TType.Double ? (double)Value : (TokenType == TType.Long ? (double)(long)Value : default(double?));
-        }
-
-        public DateTime? DateTime(System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
-        {
-            if (TokenType == TType.String && System.DateTime.TryParse((string)Value, ci, ds, out DateTime ret))
-                return ret;
-            else
-                return null;
-        }
-
-        public DateTime DateTime(DateTime defvalue, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
-        {
-            if (TokenType == TType.String && System.DateTime.TryParse((string)Value, ci, ds, out DateTime ret))
-                return ret;
-            else
-                return defvalue;
-        }
-
-        public DateTime DateTimeUTC()
-        {
-            if (TokenType == TType.String && System.DateTime.TryParse((string)Value, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ret))
-                return ret;
-            else
-                return new DateTime(2000, 1, 1);
-        }
-
-        public JArray Array()       // null if not
-        {
-            return this as JArray;
-        }
-
-        public JObject Object()     // null if not
-        {
-            return this as JObject;
-        }
 
         #endregion
 
@@ -752,17 +624,17 @@ namespace BaseUtils.JSON
 
         private Dictionary<string, JToken> Objects { get; set; }
 
-        // Returns value or JNotPresent if not present or not string indexor.  jo["fred"].Str() works if fred is not present.  
+        // Returns value or null if not present or not string indexor.  jo["fred"].Str() works if fred is not present as Str() is an extension class
         public override JToken this[object key]
         {
-            get { if (key is string && Objects.TryGetValue((string)key, out JToken v)) return v; else return JNotPresent(); }
+            get { if (key is string && Objects.TryGetValue((string)key, out JToken v)) return v; else return null; }
             set { System.Diagnostics.Debug.Assert(key is string && value != null); Objects[(string)key] = value; }
         }
 
-        // Returns value or JNotPresent if not present
+        // Returns value or null if not present
         public JToken this[string key]
         {
-            get { if (Objects.TryGetValue(key, out JToken v)) return v; else return JNotPresent(); }
+            get { if (Objects.TryGetValue(key, out JToken v)) return v; else return null; }
             set { System.Diagnostics.Debug.Assert(value != null); Objects[key] = value; }
         }
 
@@ -814,10 +686,10 @@ namespace BaseUtils.JSON
 
         private List<JToken> Elements { get; set; }
 
-        // if out of range, or indexer not int, JNotPresent
+        // if out of range, or indexer not int,  null
         public override JToken this[object key]
         {
-            get { if (key is int && (int)key >= 0 && (int)key < Elements.Count) return Elements[(int)key]; else return JNotPresent(); }
+            get { if (key is int && (int)key >= 0 && (int)key < Elements.Count) return Elements[(int)key]; else return null; }
             set { System.Diagnostics.Debug.Assert(key is int && value != null); Elements[(int)key] = value; }
         }
 
