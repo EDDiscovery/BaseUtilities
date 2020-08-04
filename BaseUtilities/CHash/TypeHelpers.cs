@@ -138,7 +138,7 @@ namespace BaseUtils
         {
             if (mi.MemberType == System.Reflection.MemberTypes.Field)
                 ((System.Reflection.FieldInfo)mi).SetValue(instance, value);
-            else if (mi.MemberType == System.Reflection.MemberTypes.Field)
+            else if (mi.MemberType == System.Reflection.MemberTypes.Property)
                 ((System.Reflection.PropertyInfo)mi).SetValue(instance, value);
             else
                 throw new NotSupportedException();

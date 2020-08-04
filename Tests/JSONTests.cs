@@ -494,49 +494,6 @@ namespace EDDiscoveryTests
         }
 
         [Test]
-        public void JSONNewtonSoftSpeed()
-        {
-            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
-
-            List<FileLines> filelines = new List<FileLines>();
-
-            foreach (var f in files)
-            {
-                // System.Diagnostics.Debug.WriteLine("Check " + f);
-                string[] lines = File.ReadAllLines(f);
-                filelines.Add(new FileLines { filelines = lines });
-            }
-
-            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
-            st.Start();
-
-            foreach (var f in filelines)
-            {
-               // System.Diagnostics.Debug.WriteLine("Check " + f);
-                foreach (var l in f.filelines)
-                {
-                    Newtonsoft.Json.Linq.JToken t = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t2 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t2).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t3 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t3).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t4 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t4).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t5 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t5).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t6 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t6).IsNotNull();
-                }
-
-            }
-
-            long time = st.ElapsedMilliseconds;
-            System.Diagnostics.Debug.WriteLine("Read journals took " + time);
-
-        }
-
-        [Test]
         public void JSONDeepClone()
         {
             JToken decode = JToken.Parse(jsongithub);
@@ -597,10 +554,20 @@ namespace EDDiscoveryTests
             public bool four;
         }
 
+        public class Material
+        {
+            public string Name { get; set; }        //FDNAME
+            public string FriendlyName { get; set; }        //friendly
+            public int Count { get; set; }
+
+            public void Normalise()
+            {
+            }
+        }
+
         [Test]
         public void JSONToObject()
         {
-#if false
             string jmd = @"
 {
   ""timestamp"": ""2018 - 04 - 24T21: 25:46Z"",
@@ -714,7 +681,6 @@ namespace EDDiscoveryTests
 
 
             }
-#endif
             {
                 string listp2 = @"{ ""Materials"":[ ""iron"" , ""nickel"" ]}";
                 JToken evt3 = JObject.Parse(listp2);
@@ -747,6 +713,10 @@ namespace EDDiscoveryTests
                         Materials[name.ToLowerInvariant()] = jo["Percent"].Double();
                     }
                 }
+
+                string matlist = @"{ ""Raw"":[ { ""Name"":""iron"", ""Count"":10 }, { ""Name"":""sulphur"", ""Count"":17 } ] }";
+                JToken matlistj = JToken.Parse(matlist);
+                var Raw = matlistj["Raw"]?.ToObjectProtected<Material[]>();
 
             }
 

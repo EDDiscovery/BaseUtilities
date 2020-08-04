@@ -109,7 +109,26 @@ namespace BaseUtils.JSON
             {
                 JArray jarray = (JArray)tk;
 
-                if (typeof(System.Collections.IList).IsAssignableFrom(tt))
+                if (tt.IsArray)
+                {
+                    dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
+
+                    for (int i = 0; i < tk.Count; i++)
+                    {
+                        Object ret = ToObject(tk[i], tt.GetElementType());      // get the underlying element, must match array element type
+
+                        if (ret.GetType() == typeof(ToObjectError))
+                            return ret;
+                        else
+                        {
+                            dynamic d = Convert.ChangeType(ret, tt.GetElementType());       // convert to element type, which should work since we checked compatibility
+                            instance[i] = d;
+                        }
+                    }
+
+                    return instance;
+                }
+                else if (typeof(System.Collections.IList).IsAssignableFrom(tt))
                 {
                     dynamic instance = Activator.CreateInstance(tt);        // create the List
                     var types = tt.GetGenericArguments();
@@ -124,25 +143,6 @@ namespace BaseUtils.JSON
                         {
                             dynamic d = Convert.ChangeType(ret, types[0]);       // convert to element type, which should work since we checked compatibility
                             instance.Add(d);
-                        }
-                    }
-
-                    return instance;
-                }
-                else if (tt.IsArray)
-                {
-                    dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
-
-                    for (int i = 0; i < tk.Count; i++)
-                    {
-                        Object ret = ToObject(tk[i], tt.GetElementType());      // get the underlying element, must match array element type
-
-                        if (ret.GetType() == typeof(ToObjectError))
-                            return ret;
-                        else
-                        {
-                            dynamic d = Convert.ChangeType(ret, tt.GetElementType());       // convert to element type, which should work since we checked compatibility
-                            instance[i] = d;
                         }
                     }
 
