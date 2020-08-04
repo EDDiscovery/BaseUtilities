@@ -121,15 +121,9 @@ namespace BaseUtils
 
         #region WORDs bare
 
-        // Your on a " or ' quoted string, extract it
+        // Your on a " or ' quoted string, extract it.. You supply the buffer to read into, it returns no of chars read into it, -1 if error
 
-        private static char[] buffer = new char[16384];     // generous static buffer
-        public void SetMaxStringLength(int n)
-        {
-            buffer = new char[n];
-        }
-
-        public string NextQuotedWordString(char quote, bool replaceescape = false)
+        public int NextQuotedWordString(char quote, char[] buffer, bool replaceescape = false)
         {
             int bpos = 0;
 
@@ -137,7 +131,7 @@ namespace BaseUtils
             {
                 if (pos == line.Length || bpos== buffer.Length)  // if reached end of line, or out of buffer, error
                 {
-                    return null;
+                    return -1;
                 }
                 else if (line[pos] == quote)        // if reached quote, end of string
                 {
@@ -146,7 +140,7 @@ namespace BaseUtils
                     while (pos < line.Length && char.IsWhiteSpace(line[pos]))   // skip spaces
                         pos++;
 
-                    return new string(buffer, 0, bpos);
+                    return bpos;
                 }
                 else if (line[pos] == '\\' && pos < line.Length - 1) // 2 chars min
                 {

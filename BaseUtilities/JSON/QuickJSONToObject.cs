@@ -20,15 +20,7 @@ namespace BaseUtils.JSON
 {
     public static class JTokenExtensions
     {
-        static public string StrExp(this JToken jToken, string def = "")
-        {
-            if (jToken == null)
-                return def;
-            else
-                return jToken.Str();
-        }
-
-        public static T ToObject<T>(this JToken tk)                 // returns null if not decoded
+        public static T ToObject<T>(this JToken tk)         // returns null if not decoded
         {
             Type tt = typeof(T);
             Object ret = tk.ToObject(tt);
@@ -38,7 +30,7 @@ namespace BaseUtils.JSON
                 return (T)ret;
         }
 
-        public static T ToObjectProtected<T>(this JToken tk)        // backwards compatible.. maybe need to try/catch wrap? Not sure yet
+        public static T ToObjectProtected<T>(this JToken tk)  // backwards compatible naming, same func as above.
         {
             Type tt = typeof(T);
             Object ret = tk.ToObject(tt);
@@ -124,7 +116,7 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], types[0]);      // get the underlying element
+                        Object ret = ToObject(tk[i], types[0]);      // get the underlying element, must match types[0] which is list type
 
                         if (ret.GetType() == typeof(ToObjectError))
                             return ret;
@@ -143,7 +135,7 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], tt.GetElementType());      // get the underlying element
+                        Object ret = ToObject(tk[i], tt.GetElementType());      // get the underlying element, must match array element type
 
                         if (ret.GetType() == typeof(ToObjectError))
                             return ret;
@@ -168,7 +160,7 @@ namespace BaseUtils.JSON
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        Object ret = ToObject(kvp.Value, types[1]);        // get the value as the dictionary type
+                        Object ret = ToObject(kvp.Value, types[1]);        // get the value as the dictionary type - it must match type or it get OE
 
                         if (ret.GetType() == typeof(ToObjectError))
                             return ret;
@@ -176,7 +168,6 @@ namespace BaseUtils.JSON
                         {
                             dynamic d = Convert.ChangeType(ret, types[1]);       // convert to element type, which should work since we checked compatibility
                             instance[kvp.Key] = d;
-
                         }
                     }
 
@@ -200,12 +191,12 @@ namespace BaseUtils.JSON
 
                             if (otype != null)                          // and its a field or property
                             {
-                                Object ret = ToObject(kvp.Value, otype);    // get the value
+                                Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype
 
                                 if (ret.GetType() == typeof(ToObjectError))
                                     return ret;
                                 else
-                                    mi.SetValue(instance, ret);         // and set. 
+                                    mi.SetValue(instance, ret);         // and set. will always work since ret is checked before
                             }
                         }
                     }

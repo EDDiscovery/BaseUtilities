@@ -56,8 +56,28 @@ namespace EDDiscoveryTests
             JObject jo = decoded as JObject;
             Check.That(jo).IsNotNull();
 
-           // string j = jo["timest\"am\tp"].Str();
-          //  Check.That(j).Equals("2020-06-29T09:53:54Z");
+            // string j = jo["timest\"am\tp"].Str();
+            //  Check.That(j).Equals("2020-06-29T09:53:54Z");
+
+            JArray ja = new JArray(20.2, 30.3, 40.4);
+            Check.That(ja).IsNotNull();
+            Check.That(ja.Count).Equals(3);
+
+            JArray jb = new JArray("hello","jim","sheila");
+            Check.That(jb).IsNotNull();
+            Check.That(jb.Count).Equals(3);
+
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            dict["fred"] = "one";
+            dict["jim"] = "two";
+            JObject jod = new JObject(dict);
+
+            Dictionary<string, float> dict2 = new Dictionary<string, float>();
+            dict2["fred"] = 20.0f;
+            dict2["jim"] = 30f;
+            JObject jod2 = new JObject(dict2);
+
+
 
         }
 
@@ -707,6 +727,10 @@ namespace EDDiscoveryTests
                 var Materials2 = evt2["Materials"].ToObjectProtected<Dictionary<string, double>>();  // name in fd logs is lower case
                 Check.That(Materials2).IsNotNull();
                 Check.That(Materials2.Count).IsEqualTo(6);
+
+                var Materials3fail = evt2["Materials"].ToObjectProtected<Dictionary<string, string>>();  // name in fd logs is lower case
+                Check.That(Materials3fail).IsNull();
+
 
 
                 string dicpair = @"{ ""Materials"":[ { ""Name"":""iron"", ""Percent"":19.741276 }, { ""Name"":""sulphur"", ""Percent"":17.713514 }, { ""Name"":""nickel"", ""Percent"":14.931473 }, { ""Name"":""carbon"", ""Percent"":14.895230 }, { ""Name"":""phosphorus"", ""Percent"":9.536182 } ] }";

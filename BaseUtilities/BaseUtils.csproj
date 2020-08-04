@@ -68,6 +68,8 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
+    <Compile Include="JSON\QuickJSONObject.cs" />
+    <Compile Include="JSON\QuickJSONArray.cs" />
     <Compile Include="JSON\QuickJSONGets.cs" />
     <Compile Include="JSON\QuickJSONToObject.cs" />
     <Compile Include="JSON\QuickJSON.cs" />

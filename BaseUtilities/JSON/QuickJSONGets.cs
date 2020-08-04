@@ -148,6 +148,46 @@ namespace BaseUtils.JSON
             return tk as JObject;
         }
 
+        public static JObject RenameObjectFields(this JToken jo, string pat, string replace, bool startswith = false)
+        {
+            JObject o = jo.Object();
+
+            if (o != null)
+            {
+                JObject ret = new JObject();
+
+                foreach (var kvp in o)
+                {
+                    string name = kvp.Key;
+                    if (startswith)
+                    {
+                        if (name.StartsWith(pat))
+                            name = replace + name.Substring(pat.Length);
+                    }
+                    else
+                    {
+                        name = name.Replace(pat, replace);
+                    }
+
+                    ret[name] = kvp.Value;
+                }
+
+                return ret;
+            }
+            else
+                return null;
+        }
+
+        public static JObject RenameObjectFieldsUnderscores(this JToken jo)
+        {
+            return jo.RenameObjectFields("_", "");
+        }
+
+        public static JObject RemoveObjectFieldsKeyPrefix(this JToken jo,string prefix)
+        {
+            return jo.RenameObjectFields(prefix,"",true);
+        }
+
     }
 }
 
