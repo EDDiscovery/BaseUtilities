@@ -96,6 +96,18 @@ namespace BaseUtils.JSON
                 return def;
         }
 
+        public static ulong? ULongNull(this JToken tk)
+        {
+            if (tk == null)
+                return null;
+            else if (tk.TokenType == JToken.TType.ULong)
+                return (ulong)tk.Value;
+            else if (tk.IsLong && (long)tk.Value >= 0)
+                return (ulong)(long)tk.Value;
+            else
+                return null;
+        }
+
         public static System.Numerics.BigInteger BigInteger(this JToken tk, System.Numerics.BigInteger def)
         {
             if (tk == null)

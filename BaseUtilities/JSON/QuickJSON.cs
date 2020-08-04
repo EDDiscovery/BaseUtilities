@@ -94,15 +94,15 @@ namespace BaseUtils.JSON
         {
             if (o is string)
                 return (string)o;
-            else if (o is double)
+            else if (o is double || o is double?)
                 return (double)o;
-            else if (o is float)
+            else if (o is float || o is float?)
                 return (float)o;
-            else if (o is long || o is int || o is uint)
+            else if (o is long || o is int || o is uint || o is long? || o is int? || o is uint?)
                 return (long)o;
-            else if (o is ulong)
+            else if (o is ulong || o is ulong?)
                 return (ulong)o;
-            else if (o is bool)
+            else if (o is bool || o is bool?)
                 return (bool)o;
             else if (o == null)
                 return new JToken(TType.Null);

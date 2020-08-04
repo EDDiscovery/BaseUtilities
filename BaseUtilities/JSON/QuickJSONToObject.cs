@@ -63,17 +63,33 @@ namespace BaseUtils.JSON
                 {
                     return tk.Int();
                 }
+                else if (tt == typeof(int?))
+                {
+                    return tk.IntNull();
+                }
                 else if (tt == typeof(uint))
                 {
                     return tk.UInt();
+                }
+                else if (tt == typeof(uint?))
+                {
+                    return tk.UIntNull();
                 }
                 else if (tt == typeof(long))
                 {
                     return tk.Long();
                 }
+                else if (tt == typeof(long?))
+                {
+                    return tk.LongNull();
+                }
                 else if (tt == typeof(ulong))
                 {
                     return tk.ULong();
+                }
+                else if (tt == typeof(ulong?))
+                {
+                    return tk.ULongNull();
                 }
                 else
                     return new ToObjectError("Not int");
@@ -84,6 +100,10 @@ namespace BaseUtils.JSON
                 {
                     return (bool)tk.Value;
                 }
+                else if (tt == typeof(bool?))
+                {
+                    return (bool?)tk.Value;
+                }
                 else
                     return new ToObjectError("Not bool");
             }
@@ -92,6 +112,18 @@ namespace BaseUtils.JSON
                 if (tt == typeof(double))
                 {
                     return (double)tk.Value;
+                }
+                else if (tt == typeof(double?))
+                {
+                    return (double?)tk.Value;
+                }
+                else if (tt == typeof(float))
+                {
+                    return (float)(double)tk.Value;
+                }
+                else if (tt == typeof(float?))
+                {
+                    return (float?)tk.Value;
                 }
                 else
                     return new ToObjectError("Not double");
