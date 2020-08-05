@@ -22,120 +22,33 @@ namespace BaseUtils.JSON
     {
         public static T ToObject<T>(this JToken tk)         // returns null if not decoded
         {
-            Type tt = typeof(T);
-            Object ret = tk.ToObject(tt);
-            if (ret != null && ret.GetType() != tt)        // null if not returned T
-                return default(T);
-            else
-                return (T)ret;
+            return ToObjectProtected<T>(tk);
         }
 
-        public static T ToObjectProtected<T>(this JToken tk)  // backwards compatible naming, same func as above.
+        public static T ToObjectProtected<T>(this JToken tk)  // backwards compatible naming
         {
             Type tt = typeof(T);
             Object ret = tk.ToObject(tt);
-            if (ret != null && ret.GetType() != tt)        // null if not returned T
+            if (ret is ToObjectError)
+            {
+                System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString);
                 return default(T);
+            }
+            else if (ret != null)      // or null
+                return (T)ret;          // must by definition have returned tt.
             else
-                return (T)ret;
+                return default(T);
         }
 
         public class ToObjectError { public string ErrorString; public ToObjectError(string s) { ErrorString = s; } };
 
         // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.
 
-        public static Object ToObject(this JToken tk, Type tt)       // will return an instance of tt or ToObjectError, or null for not JNotPresent
+        public static Object ToObject(this JToken tk, Type tt)       // will return an instance of tt or ToObjectError, or null for token is null
         {
             if (tk == null)
+            {
                 return null;
-            else if (tk.IsString)
-            {
-                if (tt == typeof(string))
-                {
-                    return (string)tk.Value;
-                }
-                else
-                    return new ToObjectError("Not string");
-            }
-            else if (tk.IsInt)
-            {
-                if (tt == typeof(int))
-                {
-                    return tk.Int();
-                }
-                else if (tt == typeof(int?))
-                {
-                    return tk.IntNull();
-                }
-                else if (tt == typeof(uint))
-                {
-                    return tk.UInt();
-                }
-                else if (tt == typeof(uint?))
-                {
-                    return tk.UIntNull();
-                }
-                else if (tt == typeof(long))
-                {
-                    return tk.Long();
-                }
-                else if (tt == typeof(long?))
-                {
-                    return tk.LongNull();
-                }
-                else if (tt == typeof(ulong))
-                {
-                    return tk.ULong();
-                }
-                else if (tt == typeof(ulong?))
-                {
-                    return tk.ULongNull();
-                }
-                else
-                    return new ToObjectError("Not int");
-            }
-            else if (tk.IsBool)
-            {
-                if (tt == typeof(bool))
-                {
-                    return (bool)tk.Value;
-                }
-                else if (tt == typeof(bool?))
-                {
-                    return (bool?)tk.Value;
-                }
-                else
-                    return new ToObjectError("Not bool");
-            }
-            else if (tk.IsDouble)
-            {
-                if (tt == typeof(double))
-                {
-                    return (double)tk.Value;
-                }
-                else if (tt == typeof(double?))
-                {
-                    return (double?)tk.Value;
-                }
-                else if (tt == typeof(float))
-                {
-                    return (float)(double)tk.Value;
-                }
-                else if (tt == typeof(float?))
-                {
-                    return (float?)tk.Value;
-                }
-                else
-                    return new ToObjectError("Not double");
-            }
-            else if (tk.IsNull)
-            {
-                if (tt == typeof(string))
-                {
-                    return null;
-                }
-                else
-                    return new ToObjectError("JNull must be assigned to string");
             }
             else if (tk.IsArray)
             {
@@ -185,7 +98,7 @@ namespace BaseUtils.JSON
             }
             else if (tk.TokenType == JToken.TType.Object)                   // objects are best efforts.. fills in as many fields as possible
             {
-                if ( typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
+                if (typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
                 {
                     dynamic instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
                     var types = tt.GetGenericArguments();
@@ -223,9 +136,9 @@ namespace BaseUtils.JSON
 
                             if (otype != null)                          // and its a field or property
                             {
-                                Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype
+                                Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype.. ret may be zero for ? types
 
-                                if (ret.GetType() == typeof(ToObjectError))
+                                if (ret != null && ret.GetType() == typeof(ToObjectError))
                                     return ret;
                                 else
                                     mi.SetValue(instance, ret);         // and set. will always work since ret is checked before
@@ -239,7 +152,116 @@ namespace BaseUtils.JSON
                     return new ToObjectError("Not class");
             }
             else
-                return new ToObjectError("Unknown type of JToken");
+            {
+                if (tt == typeof(int))
+                {
+                    var ret = (int?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(int?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (int?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(long))
+                {
+                    var ret = (long?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(long?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (long?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(uint))
+                {
+                    var ret = (uint?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(uint?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (uint?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(ulong))
+                {
+                    var ret = (ulong?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(ulong?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (ulong?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(double))
+                {
+                    var ret = (double?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(double?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (double?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(float))
+                {
+                    var ret = (float?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(float?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (float?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(bool))
+                {
+                    var ret = (bool?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(bool?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var ret = (bool?)tk;
+                    if (ret.HasValue)
+                        return ret.Value;
+                }
+                else if (tt == typeof(string))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    var str = (string)tk;
+                    if (str != null)
+                        return str;
+                }
+
+                return new ToObjectError("Bad Conversion " + tk.TokenType);
+            }
         }
     }
 }

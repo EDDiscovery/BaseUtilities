@@ -27,10 +27,10 @@ namespace BaseUtils.JSON
             return tk == null || tk.IsNull;
         }
 
-        public static string MultiStr(this JToken tk, string[] ids, string def = "")       // multiple lookup in Object of names
+        public static string MultiStr(this JObject tk, string[] ids, string def = "")       // multiple lookup in Object of names
         {
             JToken t = tk?.Contains(ids);
-            return t != null && t.IsString ? (string)tk.Value : def;
+            return t != null && t.IsString ? (string)t.Value : def;
         }
 
         public static string Str(this JToken tk, string def = "")
@@ -41,16 +41,6 @@ namespace BaseUtils.JSON
         public static string StrNull(this JToken tk)
         {
             return tk != null && tk.IsString ? (string)tk.Value : null;
-        }
-
-        public static int Int(this JToken tk, int def = 0)
-        {
-            return tk != null && tk.IsLong ? (int)(long)tk.Value : def;
-        }
-
-        public static int? IntNull(this JToken tk)
-        {
-            return tk != null && tk.IsLong ? (int)(long)tk.Value : default(int?);
         }
 
         public static T Enum<T>(this JToken tk, T def)
@@ -64,48 +54,101 @@ namespace BaseUtils.JSON
                 return def;
         }
 
+
+        public static int Int(this JToken tk, int def = 0)
+        {
+            if (tk != null)
+            {
+                int? v = (int?)tk;
+                return v ?? def;
+            }
+            else
+                return def;
+        }
+
+        public static int? IntNull(this JToken tk)
+        {
+            return tk != null ? (int?)tk : null;
+        }
+
         public static uint UInt(this JToken tk, uint def = 0)
         {
-            return tk != null && tk.IsLong && (long)tk.Value >= 0 ? (uint)(long)tk.Value : def;
+            if (tk != null)
+            {
+                uint? v = (uint?)tk;
+                return v ?? def;
+            }
+            else
+                return def;
         }
 
         public static uint? UIntNull(this JToken tk)
         {
-            return tk != null && tk.IsLong && (long)tk.Value >= 0 ? (uint)(long)tk.Value : default(uint?);
+            return tk != null ? (uint?)tk : null;
         }
 
         public static long Long(this JToken tk, long def = 0)
         {
-            return tk != null && tk.IsLong ? (long)tk.Value : def;
+            if (tk != null)
+            {
+                long? v = (long?)tk;
+                return v ?? def;
+            }
+            else
+                return def;
         }
 
         public static long? LongNull(this JToken tk)
         {
-            return tk != null && tk.IsLong ? (long)tk.Value : default(long?);
+            return tk != null ? (long?)tk : null;
         }
 
         public static ulong ULong(this JToken tk, ulong def = 0)
         {
-            if (tk == null)
-                return def;
-            else if (tk.TokenType == JToken.TType.ULong)
-                return (ulong)tk.Value;
-            else if (tk.IsLong && (long)tk.Value >= 0)
-                return (ulong)(long)tk.Value;
+            if (tk != null)
+            {
+                ulong? v = (ulong?)tk;
+                return v ?? def;
+            }
             else
                 return def;
         }
 
         public static ulong? ULongNull(this JToken tk)
         {
-            if (tk == null)
-                return null;
-            else if (tk.TokenType == JToken.TType.ULong)
-                return (ulong)tk.Value;
-            else if (tk.IsLong && (long)tk.Value >= 0)
-                return (ulong)(long)tk.Value;
+            return tk != null ? (ulong?)tk : null;
+        }
+
+        public static double Double(this JToken tk, double def = 0)
+        {
+            if (tk != null)
+            {
+                double? v = (double?)tk;
+                return v ?? def;
+            }
             else
-                return null;
+                return def;
+        }
+
+        public static double? DoubleNull(this JToken tk)
+        {
+            return tk != null ? (double?)tk : null;
+        }
+
+        public static float Float(this JToken tk, float def = 0)
+        {
+            if (tk != null)
+            {
+                float? v = (float?)tk;
+                return v ?? def;
+            }
+            else
+                return def;
+        }
+
+        public static float? FloatNull(this JToken tk)
+        {
+            return tk != null ? (float?)tk : null;
         }
 
         public static System.Numerics.BigInteger BigInteger(this JToken tk, System.Numerics.BigInteger def)
@@ -132,26 +175,6 @@ namespace BaseUtils.JSON
             return tk != null && tk.TokenType == JToken.TType.Boolean ? (bool)tk.Value : default(bool?);
         }
 
-        public static double Double(this JToken tk, double def = 0)
-        {
-            return tk != null && tk.TokenType == JToken.TType.Double ? (double)tk.Value : (tk.IsLong ? (double)(long)tk.Value : def);
-        }
-
-        public static double? DoubleNull(this JToken tk)
-        {
-            return tk != null && tk.TokenType == JToken.TType.Double ? (double)tk.Value : (tk.IsLong ? (double)(long)tk.Value : default(double?));
-        }
-
-        public static float Float(this JToken tk, float def = 0)
-        {
-            return tk != null && tk.TokenType == JToken.TType.Double ? (float)(double)tk.Value : (tk.IsLong ? (float)(long)tk.Value : def);
-        }
-
-        public static float? FloatNull(this JToken tk)
-        {
-            return tk != null && tk.TokenType == JToken.TType.Double ? (float)(double)tk.Value : (tk.IsLong ? (float)(long)tk.Value : default(float?));
-        }
-
         public static DateTime? DateTime(this JToken tk, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
         {
             if (tk != null && tk.IsString && System.DateTime.TryParse((string)tk.Value, ci, ds, out DateTime ret))
@@ -173,7 +196,7 @@ namespace BaseUtils.JSON
             if (tk != null && tk.IsString && System.DateTime.TryParse((string)tk.Value, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ret))
                 return ret;
             else
-                return new DateTime(2000, 1, 1);
+                return System.DateTime.MinValue;
         }
 
         public static JArray Array(this JToken tk)       // null if not
@@ -225,6 +248,7 @@ namespace BaseUtils.JSON
         {
             return jo.RenameObjectFields(prefix, "", true);
         }
+
 
     }
 }

@@ -539,11 +539,13 @@ namespace EDDiscoveryTests
 
         public class Materials
         {
+            public int Count;
             public string Name;
             public string Name_Localised;
             public string FriendlyName;
             public string Category;
-            public int Count;
+            public System.Drawing.Bitmap fred;
+            public int? qint;
         }
 
         public class SimpleTest
@@ -649,7 +651,7 @@ namespace EDDiscoveryTests
   ]
 }";
             {
-                string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":300290,""Progress"":""Invited""},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
+                string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":2929,""Progress"":""Invited"",""Rank"":null},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
                 JToken englistj = JToken.Parse(englist);
 
                 var pinfo = englistj["Engineers"]?.ToObjectProtected<ProgressInformation[]>();
@@ -740,8 +742,52 @@ namespace EDDiscoveryTests
 
 
             }
+        }
+
+        [Test]
+        public void JSONFromObject()
+        {
+            var mats = new Materials[2];
+            mats[0] = new Materials();
+            mats[0].Name = "0";
+            mats[0].Name_Localised = "L0";
+            mats[0].fred = new System.Drawing.Bitmap(20,20);
+            mats[1] = new Materials();
+            mats[1].Name = "1";
+            mats[1].Name_Localised = "L1";
+            mats[1].qint = 20;
+
+            JToken t = JToken.FromObject(mats,true, new System.Type[] { typeof(System.Drawing.Bitmap) });
+            Check.That(t).IsNotNull();
+            string json = t.ToString(true);
+            System.Diagnostics.Debug.WriteLine("JSON " + json);
+
+            string expected =
+@"[
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""qint"":null
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""L1"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""qint"":20
+  }
+]
+";
+
+            Check.That(json).Equals(expected);
+
 
         }
+
 
     }
 }

@@ -23,8 +23,8 @@ namespace BaseUtils.JSON
     // small light JSON decoder and encoder.
 
     // JToken is the base class, can parse, encode.  JArray/JObject for json structures
-
-    public class JToken : IEnumerable<JToken>, IEnumerable
+    [System.Diagnostics.DebuggerDisplay("{TokenType} {ToString()}")]
+    public partial class JToken : IEnumerable<JToken>, IEnumerable
     {
         public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray }
         public TType TokenType { get; set; }                    // type of token
@@ -66,6 +66,14 @@ namespace BaseUtils.JSON
             else
                 return new JToken(TType.String, v);
         }
+        public static implicit operator JToken(int v)
+        {
+            return new JToken(TType.Long, (long)v);
+        }
+        public static implicit operator JToken(uint v)
+        {
+            return new JToken(TType.Long, (long)v);
+        }
         public static implicit operator JToken(long v)
         {
             return new JToken(TType.Long, v);
@@ -90,7 +98,7 @@ namespace BaseUtils.JSON
         {
             return new JToken(TType.String, v.ToStringZulu());
         }
-        public static JToken CreateToken(Object o)
+        public static JToken CreateToken(Object o, bool except=true)
         {
             if (o is string)
                 return (string)o;
@@ -98,24 +106,179 @@ namespace BaseUtils.JSON
                 return (double)o;
             else if (o is float || o is float?)
                 return (float)o;
-            else if (o is long || o is int || o is uint || o is long? || o is int? || o is uint?)
+            else if (o is long || o is long?)
                 return (long)o;
             else if (o is ulong || o is ulong?)
                 return (ulong)o;
+            else if (o is int || o is int?)
+                return (int)o;
+            else if (o is uint || o is uint?)
+                return (uint)o;
             else if (o is bool || o is bool?)
                 return (bool)o;
             else if (o == null)
-                return new JToken(TType.Null);
-            else
+                return Null();
+            else if (except)
                 throw new NotImplementedException();
+            else
+                return null;
         }
 
-        public static explicit operator string(JToken t)        // Direct conversion - use Str() safer. Will assert if not string
+        static Type[] types = new Type[] { typeof(string), typeof(double),typeof(double?),typeof(float),typeof(float?),typeof(long),typeof(long?)
+               ,typeof(ulong),typeof(ulong?),typeof(int),typeof(int?),typeof(uint),typeof(uint?),typeof(bool),typeof(bool?) };
+        public static bool IsSerializable(Type o)
         {
-            if (t.TokenType == TType.Null)
+            return Array.IndexOf(types, o) >= 0;
+        }
+
+        public static JToken Null()
+        {
+            return new JToken(TType.Null);
+        }
+
+        public static explicit operator string(JToken t)
+        {
+            if (t.TokenType == TType.Null || t.TokenType != TType.String)
                 return null;
             else
                 return (string)t.Value;
+        }
+        public static explicit operator int? (JToken t)     // doubles get trunced.. as per previous system
+        {
+            if (t.TokenType == TType.Long)
+                return (int)(long)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (int)(double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator int(JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (int)(long)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (int)(double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator uint? (JToken t)
+        {
+            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+                return (uint)(long)t.Value;
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+                return (uint)(double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator uint(JToken t)
+        {
+            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+                return (uint)(long)t.Value;
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+                return (uint)(double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator long? (JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (long)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (long)(double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator long(JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (long)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (long)(double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator ulong? (JToken t)
+        {
+            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+                return (ulong)(long)t.Value;
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+                return (ulong)(double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator ulong(JToken t)
+        {
+            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+                return (ulong)(long)t.Value;
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+                return (ulong)(double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator double?(JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (double)(long)t.Value;
+            else if (t.TokenType == TType.ULong)
+                return (double)(ulong)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator double(JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (double)(long)t.Value;
+            else if (t.TokenType == TType.ULong)
+                return (double)(ulong)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator float? (JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (float)(long)t.Value;
+            else if (t.TokenType == TType.ULong)
+                return (float)(ulong)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (float)(double)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator float(JToken t)
+        {
+            if (t.TokenType == TType.Long)
+                return (float)(long)t.Value;
+            else if (t.TokenType == TType.ULong)
+                return (float)(ulong)t.Value;
+            else if (t.TokenType == TType.Double)
+                return (float)(double)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator bool?(JToken t)
+        {
+            if (t.TokenType == TType.Boolean)
+                return (bool)t.Value;
+            else
+                return null;
+        }
+        public static explicit operator bool(JToken t)
+        {
+            if (t.TokenType == TType.Boolean)
+                return (bool)t.Value;
+            else
+                throw new NotSupportedException();
+        }
+        public static explicit operator DateTime(JToken t)
+        {
+            if (t.IsString && System.DateTime.TryParse((string)t.Value, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ret))
+                return ret;
+            else
+                return DateTime.MinValue;
         }
 
         public JToken Clone()   // make a copy of the token
@@ -587,7 +750,7 @@ namespace BaseUtils.JSON
 
                 case '"':
                     int textlen = parser.NextQuotedWordString(next, textbuffer, true);
-                    return textlen >= 0 ? new JToken(TType.String, new string(textbuffer,0,textlen)) : null;
+                    return textlen >= 0 ? new JToken(TType.String, new string(textbuffer, 0, textlen)) : null;
 
                 case ']':
                     if (inarray)
