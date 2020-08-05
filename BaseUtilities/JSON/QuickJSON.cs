@@ -98,7 +98,7 @@ namespace BaseUtils.JSON
         {
             return new JToken(TType.String, v.ToStringZulu());
         }
-        public static JToken CreateToken(Object o, bool except=true)
+        public static JToken CreateToken(Object o, bool except = true)
         {
             if (o is string)
                 return (string)o;
@@ -215,7 +215,7 @@ namespace BaseUtils.JSON
             else
                 throw new NotSupportedException();
         }
-        public static explicit operator double?(JToken t)
+        public static explicit operator double? (JToken t)
         {
             if (t.TokenType == TType.Long)
                 return (double)(long)t.Value;
@@ -259,10 +259,12 @@ namespace BaseUtils.JSON
             else
                 throw new NotSupportedException();
         }
-        public static explicit operator bool?(JToken t)
+        public static explicit operator bool? (JToken t)
         {
             if (t.TokenType == TType.Boolean)
                 return (bool)t.Value;
+            else if (t.TokenType == TType.Long)       // accept LONG 1/0 as boolean .. Frontier has instances of this
+                return (long)t.Value != 0;
             else
                 return null;
         }
@@ -270,6 +272,8 @@ namespace BaseUtils.JSON
         {
             if (t.TokenType == TType.Boolean)
                 return (bool)t.Value;
+            else if (t.TokenType == TType.Long)       // accept LONG 1/0 as boolean .. Frontier has instances of this
+                return (long)t.Value != 0;
             else
                 throw new NotSupportedException();
         }

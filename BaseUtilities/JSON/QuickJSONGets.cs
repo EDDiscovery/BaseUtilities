@@ -33,14 +33,14 @@ namespace BaseUtils.JSON
             return t != null && t.IsString ? (string)t.Value : def;
         }
 
-        public static string Str(this JToken tk, string def = "")
+        public static string Str(this JToken tk, string def = "")       // if not string, or null, return def.
         {
-            return tk != null && tk.IsString ? (string)tk.Value : def;
+            return tk != null ? ((string)tk ?? def) : def;
         }
 
         public static string StrNull(this JToken tk)
         {
-            return tk != null && tk.IsString ? (string)tk.Value : null;
+            return tk != null ? (string)tk : null;
         }
 
         public static T Enum<T>(this JToken tk, T def)
@@ -58,10 +58,7 @@ namespace BaseUtils.JSON
         public static int Int(this JToken tk, int def = 0)
         {
             if (tk != null)
-            {
-                int? v = (int?)tk;
-                return v ?? def;
-            }
+                return (int?)tk ?? def;
             else
                 return def;
         }
@@ -74,10 +71,7 @@ namespace BaseUtils.JSON
         public static uint UInt(this JToken tk, uint def = 0)
         {
             if (tk != null)
-            {
-                uint? v = (uint?)tk;
-                return v ?? def;
-            }
+                return (uint?)tk ?? def;
             else
                 return def;
         }
@@ -90,10 +84,7 @@ namespace BaseUtils.JSON
         public static long Long(this JToken tk, long def = 0)
         {
             if (tk != null)
-            {
-                long? v = (long?)tk;
-                return v ?? def;
-            }
+                return (long?)tk ?? def;
             else
                 return def;
         }
@@ -106,10 +97,7 @@ namespace BaseUtils.JSON
         public static ulong ULong(this JToken tk, ulong def = 0)
         {
             if (tk != null)
-            {
-                ulong? v = (ulong?)tk;
-                return v ?? def;
-            }
+                return (ulong?)tk ?? def;
             else
                 return def;
         }
@@ -122,10 +110,7 @@ namespace BaseUtils.JSON
         public static double Double(this JToken tk, double def = 0)
         {
             if (tk != null)
-            {
-                double? v = (double?)tk;
-                return v ?? def;
-            }
+                return (double?)tk ?? def;
             else
                 return def;
         }
@@ -138,10 +123,7 @@ namespace BaseUtils.JSON
         public static float Float(this JToken tk, float def = 0)
         {
             if (tk != null)
-            {
-                float? v = (float?)tk;
-                return v ?? def;
-            }
+                return (float?)tk ?? def;
             else
                 return def;
         }
@@ -167,12 +149,15 @@ namespace BaseUtils.JSON
 
         public static bool Bool(this JToken tk, bool def = false)
         {
-            return tk != null && tk.TokenType == JToken.TType.Boolean ? (bool)tk.Value : def;
+            if ( tk != null )
+                return (bool?)tk ?? def;
+            else
+                return def;
         }
 
         public static bool? BoolNull(this JToken tk)
         {
-            return tk != null && tk.TokenType == JToken.TType.Boolean ? (bool)tk.Value : default(bool?);
+            return tk != null ? (bool?)tk : null;
         }
 
         public static DateTime? DateTime(this JToken tk, System.Globalization.CultureInfo ci, System.Globalization.DateTimeStyles ds = System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal)
