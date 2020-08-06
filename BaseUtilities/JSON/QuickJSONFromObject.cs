@@ -16,11 +16,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BaseUtils.JSON
 {
-    public sealed class JsonIgnoreAttribute : Attribute
+    public sealed class JsonIgnoreAttribute : Attribute // applicable to FromObject and ToObject, don't serialise this
+    {                                                           
+    }
+
+    public sealed class JsonNameAttribute : Attribute // applicable to FromObject and ToObject, use this name as the JSON name
     {
+        public string Name { get; set; }
+        public JsonNameAttribute(string name) { Name = name; }
     }
 
     public partial class JToken
@@ -89,12 +96,11 @@ namespace BaseUtils.JSON
             {
                 JObject outobj = new JObject();
 
-                var members = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
                                             System.Reflection.BindingFlags.Public );
 
-                foreach (var mi in members)
+                foreach (var mi in allmembers)
                 {
-
                     Type innertype = null;
 
                     if (mi.MemberType == System.Reflection.MemberTypes.Property)
@@ -110,11 +116,20 @@ namespace BaseUtils.JSON
                     if (ignored != null && Array.IndexOf(ignored, innertype) >= 0)
                         continue;
 
-                    var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute),false);
+                    var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false);
                     if (ca.Length > 0)                                              // ignore any ones with JsonIgnore on it.
                         continue;
 
-                    System.Diagnostics.Debug.WriteLine("From Name " + mi.Name + " " + mi.MemberType);
+                    string attrname = mi.Name;
+
+                    var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
+                    if (rename.Length == 1)                                         // any ones with a rename, use that name     
+                    {
+                        dynamic attr = rename[0];                                   // dynamic since compiler does not know rename type
+                        attrname = attr.Name;
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("Member " + mi.Name + " " + mi.MemberType + " attrname " + attrname);
 
                     Object innervalue = null;
                     if (mi.MemberType == System.Reflection.MemberTypes.Property)
@@ -132,11 +147,11 @@ namespace BaseUtils.JSON
                                 return null;
                         }
                         else
-                            outobj[mi.Name] = token;
+                            outobj[attrname] = token;
                     }
                     else
                     {
-                        outobj[mi.Name] = JToken.Null();        // its null so its a JNull
+                        outobj[attrname] = JToken.Null();        // its null so its a JNull
                     }
                 }
 

@@ -472,17 +472,17 @@ namespace EDDiscoveryTests
             { 
                 foreach (var l in fl.filelines)
                 {
-                    JObject t = JObject.Parse(l, out string error, true);
+                    JObject t = JObject.Parse(l, out string error, JToken.ParseOptions.CheckEOL);
                     Check.That(t).IsNotNull();
-                    JObject t2 = JObject.Parse(l, out string error2, true);
+                    JObject t2 = JObject.Parse(l, out string error2, JToken.ParseOptions.CheckEOL);
                     Check.That(t2).IsNotNull();
-                    JObject t3 = JObject.Parse(l, out string error3, true);
+                    JObject t3 = JObject.Parse(l, out string error3, JToken.ParseOptions.CheckEOL);
                     Check.That(t3).IsNotNull();
-                    JObject t4 = JObject.Parse(l, out string error4, true);
+                    JObject t4 = JObject.Parse(l, out string error4, JToken.ParseOptions.CheckEOL);
                     Check.That(t4).IsNotNull();
-                    JObject t5 = JObject.Parse(l, out string error5, true);
+                    JObject t5 = JObject.Parse(l, out string error5, JToken.ParseOptions.CheckEOL);
                     Check.That(t5).IsNotNull();
-                    JObject t6 = JObject.Parse(l, out string error6, true);
+                    JObject t6 = JObject.Parse(l, out string error6, JToken.ParseOptions.CheckEOL);
                     Check.That(t6).IsNotNull();
                 }
 
@@ -545,6 +545,8 @@ namespace EDDiscoveryTests
             public string FriendlyName;
             public string Category;
             public System.Drawing.Bitmap fred;
+
+            [BaseUtils.JSON.JsonName("QValue")]
             public int? qint;
 
             [BaseUtils.JSON.JsonIgnore]
@@ -801,7 +803,7 @@ namespace EDDiscoveryTests
     ""Name_Localised"":""L0"",
     ""FriendlyName"":null,
     ""Category"":null,
-    ""qint"":null,
+    ""QValue"":null,
     ""PropGetSet"":1
   },
   {
@@ -810,7 +812,7 @@ namespace EDDiscoveryTests
     ""Name_Localised"":""L1"",
     ""FriendlyName"":null,
     ""Category"":null,
-    ""qint"":20
+    ""QValue"":20
   }
 ]
 ";
@@ -821,7 +823,7 @@ namespace EDDiscoveryTests
                 string s = t.ToString();
                 System.Diagnostics.Debug.WriteLine("JSON is " + s);
 
-                string expout = @"[{""PropGetSet"":1,""Count"":0,""Name"":""0"",""Name_Localised"":""L0"",""FriendlyName"":null,""Category"":null,""qint"":null},{""PropGetSet"":0,""Count"":0,""Name"":""1"",""Name_Localised"":""L1"",""FriendlyName"":null,""Category"":null,""qint"":20}]";
+                string expout = @"[{""PropGetSet"":1,""Count"":0,""Name"":""0"",""Name_Localised"":""L0"",""FriendlyName"":null,""Category"":null,""QValue"":null},{""PropGetSet"":0,""Count"":0,""Name"":""1"",""Name_Localised"":""L1"",""FriendlyName"":null,""Category"":null,""QValue"":20}]";
                 System.Diagnostics.Debug.WriteLine("exp is " + expout);
 
                 Check.That(s).Equals(expout);

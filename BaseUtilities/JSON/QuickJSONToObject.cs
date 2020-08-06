@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace BaseUtils.JSON
 {
@@ -122,16 +123,29 @@ namespace BaseUtils.JSON
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
-                    var members = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                    var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
                                                 System.Reflection.BindingFlags.Public);
+                    var fieldpropertymembers = allmembers.Where(x => x.MemberType == System.Reflection.MemberTypes.Property || x.MemberType == System.Reflection.MemberTypes.Field).ToArray();
+
+                    string[] memberjsonname = fieldpropertymembers.Select(mi => 
+                        {                                                           // go thru each and look for ones with the rename attr
+                            var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
+                            if (rename.Length == 1)
+                            {
+                                dynamic attr = rename[0];               // if so, dynamically pick up the name
+                                return (string)attr.Name;
+                            }
+                            else
+                                return mi.Name;
+                        }).ToArray();
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        var pos = System.Array.FindIndex(members, x => x.Name == kvp.Key);
+                        var pos = System.Array.FindIndex(memberjsonname, x => x == kvp.Key);
 
                         if (pos >= 0)                                   // if we found a class member
                         {
-                            var mi = members[pos];
+                            var mi = fieldpropertymembers[pos];
 
                             var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false);
                             if (ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
@@ -153,6 +167,10 @@ namespace BaseUtils.JSON
                                     }
                                 }
                             }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("No such member " + kvp.Key);
                         }
                     }
 
