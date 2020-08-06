@@ -19,6 +19,10 @@ using System.Collections.Generic;
 
 namespace BaseUtils.JSON
 {
+    public sealed class JsonIgnoreAttribute : Attribute
+    {
+    }
+
     public partial class JToken
     {
         // null if can't convert
@@ -86,23 +90,31 @@ namespace BaseUtils.JSON
                 JObject outobj = new JObject();
 
                 var members = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                                            System.Reflection.BindingFlags.Public );
 
                 foreach (var mi in members)
                 {
-                    //System.Diagnostics.Debug.WriteLine("Name " + mi.Name + " " + mi.MemberType);
 
                     Type innertype = null;
 
                     if (mi.MemberType == System.Reflection.MemberTypes.Property)
                         innertype = ((System.Reflection.PropertyInfo)mi).PropertyType;
                     else if (mi.MemberType == System.Reflection.MemberTypes.Field)
-                        innertype = ((System.Reflection.FieldInfo)mi).FieldType;
+                    {
+                        var fi = (System.Reflection.FieldInfo)mi;
+                        innertype = fi.FieldType;
+                    }
                     else
                         continue;
 
                     if (ignored != null && Array.IndexOf(ignored, innertype) >= 0)
                         continue;
+
+                    var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute),false);
+                    if (ca.Length > 0)                                              // ignore any ones with JsonIgnore on it.
+                        continue;
+
+                    System.Diagnostics.Debug.WriteLine("From Name " + mi.Name + " " + mi.MemberType);
 
                     Object innervalue = null;
                     if (mi.MemberType == System.Reflection.MemberTypes.Property)

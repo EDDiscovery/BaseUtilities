@@ -123,7 +123,7 @@ namespace BaseUtils.JSON
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
                     var members = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                                                System.Reflection.BindingFlags.Public);
 
                     foreach (var kvp in (JObject)tk)
                     {
@@ -132,16 +132,26 @@ namespace BaseUtils.JSON
                         if (pos >= 0)                                   // if we found a class member
                         {
                             var mi = members[pos];
-                            Type otype = mi.FieldPropertyType();
 
-                            if (otype != null)                          // and its a field or property
+                            var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false);
+                            if (ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
                             {
-                                Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype.. ret may be zero for ? types
+                                Type otype = mi.FieldPropertyType();
 
-                                if (ret != null && ret.GetType() == typeof(ToObjectError))
-                                    return ret;
-                                else
-                                    mi.SetValue(instance, ret);         // and set. will always work since ret is checked before
+                                if (otype != null)                          // and its a field or property
+                                {
+                                    Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype.. ret may be zero for ? types
+
+                                    if (ret != null && ret.GetType() == typeof(ToObjectError))
+                                        return ret;
+                                    else
+                                    {
+                                        if (!mi.SetValue(instance, ret))         // and set. Set will fail if the property is get only
+                                        {
+                                            return new ToObjectError("Cannot set value on property " + mi.Name);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

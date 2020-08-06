@@ -41,7 +41,7 @@ namespace BaseUtils.JSON
 
         private Dictionary<string, JToken> Objects { get; set; }
 
-        // Returns value or null if not present or not string indexor.  jo["fred"].Str() works if fred is not present as Str() is an extension class
+        // Returns value or null if not present or not string indexor.  jo["fred"].Str() works if fred is not present as Str() is an extension class and can accept null
         public override JToken this[object key]
         {
             get { if (key is string && Objects.TryGetValue((string)key, out JToken v)) return v; else return null; }
