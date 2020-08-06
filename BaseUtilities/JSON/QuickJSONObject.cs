@@ -80,9 +80,9 @@ namespace BaseUtils.JSON
             return res as JObject;
         }
 
-        public new static JObject Parse(string s, out string error, bool checkeol = false)
+        public new static JObject Parse(string s, out string error, ParseOptions flags)
         {
-            var res = JToken.Parse(s, out error, checkeol);
+            var res = JToken.Parse(s, out error, flags);
             return res as JObject;
         }
 

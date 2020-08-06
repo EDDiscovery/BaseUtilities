@@ -81,9 +81,9 @@ namespace BaseUtils.JSON
             return res as JArray;
         }
 
-        public new static JArray Parse(string s, out string error, bool checkeol = false)
+        public new static JArray Parse(string s, out string error, ParseOptions flags)
         {
-            var res = JToken.Parse(s, out error, checkeol);
+            var res = JToken.Parse(s, out error, flags);
             return res as JArray;
         }
     }

@@ -25,27 +25,35 @@ namespace BaseUtils.JSON
         // null if its unhappy and error is set
         // decoder does not worry about extra text after the object.
 
+        [Flags]
+        public enum ParseOptions
+        {
+            None = 0,
+            AllowTrailingCommas = 1,
+            CheckEOL = 2,
+        }
+
         public static JToken Parse(string s)        // null if failed.
         {
             StringParser2 parser = new StringParser2(s);
-            return Decode(parser, out string unused);
+            return Decode(parser, out string unused, ParseOptions.None);
         }
 
-        public static JToken Parse(string s, bool checkeol)        // null if failed - must not be extra text
+        public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed - must not be extra text
         {
             StringParser2 parser = new StringParser2(s);
-            JToken res = Decode(parser, out string unused);
-            return parser.IsEOL ? res : null;
+            var res = Decode(parser, out string unused, flags);
+            return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL) ? null : res;
         }
 
-        public static JToken Parse(string s, out string error, bool checkeol = false)
+        public static JToken Parse(string s, out string error, ParseOptions flags = ParseOptions.None)
         {
             StringParser2 parser = new StringParser2(s);
-            JToken res = Decode(parser, out error);
-            return parser.IsEOL || !checkeol ? res : null;
+            JToken res = Decode(parser, out error, flags);
+            return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL) ? null : res;
         }
 
-        static private JToken Decode(StringParser2 parser, out string error)
+        static private JToken Decode(StringParser2 parser, out string error, ParseOptions flags)
         {
             error = null;
 
@@ -98,7 +106,7 @@ namespace BaseUtils.JSON
                         {
                             parser.SkipSpace();
 
-                            if (comma == true)
+                            if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
                                 error = GenError(parser, decodestartpos);
                                 return null;
@@ -200,7 +208,7 @@ namespace BaseUtils.JSON
                         }
                         else if (o.TokenType == TType.EndArray)          // if end marker, jump back
                         {
-                            if (comma == true)
+                            if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
                                 error = GenError(parser, decodestartpos);
                                 return null;
