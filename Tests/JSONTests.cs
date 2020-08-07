@@ -27,7 +27,7 @@ namespace EDDiscoveryTests
     {
         void Dump(string s)
         {
-            foreach(var c in s)
+            foreach (var c in s)
             {
                 System.Diagnostics.Debug.WriteLine((int)c + ":" + ((int)c > 32 ? c : '?'));
             }
@@ -36,9 +36,9 @@ namespace EDDiscoveryTests
         public void JSONBasic()
         {
             //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
-           string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
+            string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
 
-         //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
+            //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
 
             JToken decoded = JToken.Parse(json);
             Check.That(decoded).IsNotNull();
@@ -63,7 +63,7 @@ namespace EDDiscoveryTests
             Check.That(ja).IsNotNull();
             Check.That(ja.Count).Equals(3);
 
-            JArray jb = new JArray("hello","jim","sheila");
+            JArray jb = new JArray("hello", "jim", "sheila");
             Check.That(jb).IsNotNull();
             Check.That(jb.Count).Equals(3);
 
@@ -155,9 +155,9 @@ namespace EDDiscoveryTests
 
             Check.That(ja.ToString()).IsEqualTo(expectedjson);
 
-       //     string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
+            //     string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
 
-        //    Check.That(s).IsNotNull().Equals("one");
+            //    Check.That(s).IsNotNull().Equals("one");
 
             JObject o = ja.Find<JObject>(x => x is JObject);
             Check.That(o).IsNotNull();
@@ -468,8 +468,8 @@ namespace EDDiscoveryTests
             System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
             st.Start();
 
-            foreach ( var fl in filelines)
-            { 
+            foreach (var fl in filelines)
+            {
                 foreach (var l in fl.filelines)
                 {
                     JObject t = JObject.Parse(l, out string error, JToken.ParseOptions.CheckEOL);
@@ -769,29 +769,6 @@ namespace EDDiscoveryTests
                 Check.That(t).IsNotNull();
                 string json = t.ToString(true);
                 System.Diagnostics.Debug.WriteLine("JSON " + json);
-
-                string expected =
-@"[
-  {
-    ""Count"":0,
-    ""Name"":""0"",
-    ""Name_Localised"":""L0"",
-    ""FriendlyName"":null,
-    ""Category"":null,
-    ""qint"":null
-  },
-  {
-    ""Count"":0,
-    ""Name"":""1"",
-    ""Name_Localised"":""L1"",
-    ""FriendlyName"":null,
-    ""Category"":null,
-    ""qint"":20
-  }
-]
-";
-
-                //Check.That(json).Equals(expected);
             }
 
             {
@@ -830,6 +807,86 @@ namespace EDDiscoveryTests
             }
         }
 
+        [Test]
+        public void JSONtextReader()
+        {
+                string propertyv =
+@"    [
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":null,
+    ""PropGetSet"":1
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""This is a long string to try and make the thing break"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":20
+  }
+]
+";
+            {
+                using (StringReader sr = new StringReader(propertyv))         // read directly from file..
+                {
+                    JSONTokenReader jsr = new JSONTokenReader(sr, 32);
 
+                    foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                    {
+                        var jv = t as JSONTokenReader.JProperty;
+                        if (jv != null)
+                            System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+
+                }
+
+            }
+
+            {
+
+                using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
+                {
+                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
+
+                    foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                    {
+                        var jv = t as JSONTokenReader.JProperty;
+                        if (jv != null)
+                            System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+
+                }
+            }
+
+            string filename = @"c:\code\edsm\edsmsystems.10000.json";
+            if ( File.Exists(filename))
+            {
+                using (FileStream originalFileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+                {
+                    using (StreamReader sr = new StreamReader(originalFileStream))
+                    {
+                        JSONTokenReader jsr = new JSONTokenReader(sr, 19);
+
+                        foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                        {
+                            var jv = t as JSONTokenReader.JProperty;
+                            if (jv != null)
+                                System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                            else
+                                System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

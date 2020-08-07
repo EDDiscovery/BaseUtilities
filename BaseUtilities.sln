@@ -19,17 +19,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLLite", "SQLLite\SQLLite.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWebServer", "TestWebServer\TestWebServer.csproj", "{8C66841F-3B8B-4C2C-B881-EFA4BC424DBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpGet", "HttpGet\HttpGet.csproj", "{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C657C881-F3E1-45BA-ACA5-966348010414} = {C657C881-F3E1-45BA-ACA5-966348010414}
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -135,18 +130,6 @@ Global
 		{8C66841F-3B8B-4C2C-B881-EFA4BC424DBD}.Release|x64.Build.0 = Release|Any CPU
 		{8C66841F-3B8B-4C2C-B881-EFA4BC424DBD}.Release|x86.ActiveCfg = Release|Any CPU
 		{8C66841F-3B8B-4C2C-B881-EFA4BC424DBD}.Release|x86.Build.0 = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|x64.Build.0 = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Debug|x86.Build.0 = Debug|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x64.ActiveCfg = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x64.Build.0 = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.ActiveCfg = Release|Any CPU
-		{C51BF771-EEE6-4398-AB16-25420985F0E7}.Release|x86.Build.0 = Release|Any CPU
 		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -165,5 +148,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9CD4AAE2-A8F8-4B1C-8EB4-A81877FB0BCD}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

@@ -41,6 +41,8 @@ namespace BaseUtils.JSON
         public bool IsArray { get { return TokenType == TType.Array; } }
         public bool IsObject { get { return TokenType == TType.Object; } }
         public bool IsNull { get { return TokenType == TType.Null; } }
+        public bool IsEndObject { get { return TokenType == TType.EndObject; } }    // only seen for TextReader
+        public bool IsEndArray { get { return TokenType == TType.EndArray; } }      // only seen for TextReader
 
         #region Construction
 
@@ -126,7 +128,7 @@ namespace BaseUtils.JSON
         }
 
         static Type[] types = new Type[] { typeof(string), typeof(double),typeof(double?),typeof(float),typeof(float?),typeof(long),typeof(long?)
-               ,typeof(ulong),typeof(ulong?),typeof(int),typeof(int?),typeof(uint),typeof(uint?),typeof(bool),typeof(bool?) };
+               ,typeof(ulong),typeof(ulong?),typeof(int),typeof(int?),typeof(uint),typeof(uint?),typeof(bool),typeof(bool?), typeof(DateTime), typeof(DateTime?) };
         public static bool IsSerializable(Type o)
         {
             return Array.IndexOf(types, o) >= 0;

@@ -95,7 +95,7 @@ namespace BaseUtils.JSON
                     return instance;
                 }
                 else
-                    return new ToObjectError("Not array");
+                    return new ToObjectError("JSONToObject: Not array");
             }
             else if (tk.TokenType == JToken.TType.Object)                   // objects are best efforts.. fills in as many fields as possible
             {
@@ -127,17 +127,17 @@ namespace BaseUtils.JSON
                                                 System.Reflection.BindingFlags.Public);
                     var fieldpropertymembers = allmembers.Where(x => x.MemberType == System.Reflection.MemberTypes.Property || x.MemberType == System.Reflection.MemberTypes.Field).ToArray();
 
-                    string[] memberjsonname = fieldpropertymembers.Select(mi => 
-                        {                                                           // go thru each and look for ones with the rename attr
-                            var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
-                            if (rename.Length == 1)
-                            {
-                                dynamic attr = rename[0];               // if so, dynamically pick up the name
-                                return (string)attr.Name;
-                            }
-                            else
-                                return mi.Name;
-                        }).ToArray();
+                    string[] memberjsonname = fieldpropertymembers.Select(mi =>
+                    {                                                           // go thru each and look for ones with the rename attr
+                        var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
+                        if (rename.Length == 1)
+                        {
+                            dynamic attr = rename[0];               // if so, dynamically pick up the name
+                            return (string)attr.Name;
+                        }
+                        else
+                            return mi.Name;
+                    }).ToArray();
 
                     foreach (var kvp in (JObject)tk)
                     {
@@ -170,14 +170,14 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine("No such member " + kvp.Key);
+                            System.Diagnostics.Debug.WriteLine("JSONToObject: No such member " + kvp.Key);
                         }
                     }
 
                     return instance;
                 }
                 else
-                    return new ToObjectError("Not class");
+                    return new ToObjectError("JSONToObject: Not class");
             }
             else
             {
@@ -287,8 +287,22 @@ namespace BaseUtils.JSON
                     if (str != null)
                         return str;
                 }
+                else if (tt == typeof(DateTime))
+                {
+                    DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
+                    if (dt != null)
+                        return dt;
+                }
+                else if (tt == typeof(DateTime?))
+                {
+                    if (tk.IsNull)
+                        return null;
+                    DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
+                    if (dt != null)
+                        return dt;
+                }
 
-                return new ToObjectError("Bad Conversion " + tk.TokenType);
+                return new ToObjectError("JSONToObject: Bad Conversion " + tk.TokenType);
             }
         }
     }

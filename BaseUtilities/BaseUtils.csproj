@@ -75,11 +75,14 @@
     <Compile Include="JSON\QuickJSONFromObject.cs" />
     <Compile Include="JSON\QuickJSONToObject.cs" />
     <Compile Include="JSON\QuickJSONParse.cs" />
+    <Compile Include="JSON\QuickJSONTokenReader.cs" />
     <Compile Include="JSON\QuickJSONToString.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
-    <Compile Include="Strings\StringParserQuick.cs" />
+    <Compile Include="StringParsers\IStringParserQuick.cs" />
+    <Compile Include="StringParsers\StringParserQuickTextReader.cs" />
+    <Compile Include="StringParsers\StringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
@@ -148,7 +151,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CHash\TypeHelpers.cs" />
     <Compile Include="Strings\StringObjectExtensions.cs" />
-    <Compile Include="Strings\StringParser.cs" />
+    <Compile Include="StringParsers\StringParser.cs" />
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
