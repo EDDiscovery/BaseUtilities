@@ -15,8 +15,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace BaseUtils.JSON
 {
@@ -156,9 +154,10 @@ namespace BaseUtils.JSON
                                     return null;
                                 }
 
-                                curobject[name] = o;  // assign to dictionary
+                                o.Name = name;                          // object gets the name, indicating its a property
+                                curobject[name] = o;                    // assign to dictionary
 
-                                if (o.TokenType == TType.Array) // if array, we need to change to this as controlling object on top of stack
+                                if (o.TokenType == TType.Array)         // if array, we need to change to this as controlling object on top of stack
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
@@ -166,8 +165,8 @@ namespace BaseUtils.JSON
                                         return null;
                                     }
 
-                                    stack[++sptr] = o;          // push this one onto stack
-                                    curarray = o as JArray;                 // this is now the current object
+                                    stack[++sptr] = o;                  // push this one onto stack
+                                    curarray = o as JArray;             // this is now the current object
                                     curobject = null;
                                     comma = false;
                                     break;
@@ -180,8 +179,8 @@ namespace BaseUtils.JSON
                                         return null;
                                     }
 
-                                    stack[++sptr] = o;          // push this one onto stack
-                                    curobject = o as JObject;                 // this is now the current object
+                                    stack[++sptr] = o;                  // push this one onto stack
+                                    curobject = o as JObject;           // this is now the current object
                                     comma = false;
                                 }
                                 else

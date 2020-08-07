@@ -26,12 +26,6 @@ namespace BaseUtils.JSON
 
         private IStringParserQuick parser;
 
-        public class JProperty : JToken
-        {
-            public JProperty(string name, JToken t ) { Name = name; Value = t.Value; TokenType = t.TokenType; }
-            public string Name { get; set; }
-        }
-
         public JSONTokenReader(string s)
         {
             using (StringReader sr = new StringReader(s))         // read directly from file..
@@ -147,12 +141,9 @@ namespace BaseUtils.JSON
                                     yield break;
                                 }
 
-                                yield return new JProperty(name,o);
+                                o.Name = name;
 
-                                if ( name.Contains("browser_download"))
-                                {
-
-                                }
+                                yield return o;
 
                                 if (o.TokenType == JToken.TType.Array) // if array, we need to change to this as controlling object on top of stack
                                 {
@@ -341,8 +332,65 @@ namespace BaseUtils.JSON
             System.Diagnostics.Debug.WriteLine(s);
             return s;
         }
-
     }
+
+    public static class JSONTextReaderStatics
+    {
+        public static bool Load(this IEnumerator<JToken> enumerator)            // load the current position of the enumerator with object/array
+        {
+            JToken t = enumerator.Current;
+
+            if (t.IsObject)
+            {
+                JObject jo = t as JObject;
+
+                while (enumerator.MoveNext())
+                {
+                    JToken i = enumerator.Current;
+
+                    if (i.IsEndObject)
+                        return true;
+                    else if (i.IsArray || i.IsObject)
+                    {
+                        if (!Load(enumerator))
+                            return false;
+                    }
+
+                    if (i.IsProperty)
+                    {
+                        jo.Add(i.Name, i);
+                    }
+                }
+
+                return false;
+            }
+            else if (t.IsArray)
+            {
+                JArray ja = t as JArray;
+
+                while (enumerator.MoveNext())
+                {
+                    JToken i = enumerator.Current;
+
+                    if (i.IsEndArray)
+                        return true;
+                    else if (i.IsArray || i.IsObject)
+                    {
+                        if (!Load(enumerator))
+                            return false;
+                    }
+                    else
+                    {
+                        ja.Add(i);
+                    }
+                }
+
+                return false;
+            }
+            return false;
+        }
+    }
+
 }
 
 

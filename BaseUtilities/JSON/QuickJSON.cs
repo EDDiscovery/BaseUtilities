@@ -28,21 +28,24 @@ namespace BaseUtils.JSON
     public partial class JToken : IEnumerable<JToken>, IEnumerable
     {
         public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray }
+
         public TType TokenType { get; set; }                    // type of token
         public Object Value { get; set; }                       // value of token, if it has one
+        public string Name { get; set; }                        // only set if its a property of an object
 
         public bool IsString { get { return TokenType == TType.String; } }
         public bool IsInt { get { return TokenType == TType.Long || TokenType == TType.ULong || TokenType == TType.BigInt; } }
         public bool IsLong { get { return TokenType == TType.Long; } }
         public bool IsBigInt { get { return TokenType == TType.BigInt; } }
         public bool IsULong { get { return TokenType == TType.ULong; } }
-        public bool IsDouble { get { return TokenType == TType.Double || TokenType == TType.Long; } }
+        public bool IsDouble { get { return TokenType == TType.Double; } }
         public bool IsBool { get { return TokenType == TType.Boolean; } }
         public bool IsArray { get { return TokenType == TType.Array; } }
         public bool IsObject { get { return TokenType == TType.Object; } }
         public bool IsNull { get { return TokenType == TType.Null; } }
-        public bool IsEndObject { get { return TokenType == TType.EndObject; } }    // only seen for TextReader
-        public bool IsEndArray { get { return TokenType == TType.EndArray; } }      // only seen for TextReader
+        public bool IsProperty { get { return Name != null; } }                     // indicates that the object is an object property
+        public bool IsEndObject { get { return TokenType == TType.EndObject; } }    // only seen for TokenReader
+        public bool IsEndArray { get { return TokenType == TType.EndArray; } }      // only seen for TokenReader
 
         #region Construction
 

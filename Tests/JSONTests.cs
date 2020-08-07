@@ -838,9 +838,8 @@ namespace EDDiscoveryTests
 
                     foreach (var t in jsr.Parse(JToken.ParseOptions.None))
                     {
-                        var jv = t as JSONTokenReader.JProperty;
-                        if (jv != null)
-                            System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
                         else
                             System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
                     }
@@ -857,15 +856,76 @@ namespace EDDiscoveryTests
 
                     foreach (var t in jsr.Parse(JToken.ParseOptions.None))
                     {
-                        var jv = t as JSONTokenReader.JProperty;
-                        if (jv != null)
-                            System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
                         else
                             System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
                     }
 
                 }
             }
+            {
+                using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
+                {
+                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
+
+                    var enumerator = jsr.Parse(JToken.ParseOptions.None).GetEnumerator();
+
+                    while (enumerator.MoveNext())
+                    {
+                        var t = enumerator.Current;
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+                }
+            }
+
+            {
+                string propertyq =
+@"    [
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""ArrayValue"":[1,2,3],
+    ""Category"":null,
+    ""QValue"":null,
+    ""PropGetSet"":1
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""This is a long string to try and make the thing break"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":20
+  }
+]
+";
+
+                using (StringReader sr = new StringReader(propertyq))         // read directly from file..
+                {
+                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
+
+                    var enumerator = jsr.Parse(JToken.ParseOptions.None).GetEnumerator();
+
+                    while (enumerator.MoveNext())
+                    {
+                        var t = enumerator.Current;
+                        if (t.IsObject)
+                        {
+                            JObject to = t as JObject;
+                            bool res = enumerator.Load();
+                            Check.That(res).IsTrue();
+                            Check.That(to["Category"]).IsNotNull();
+                        }
+                    }
+                }
+            }
+
 
             string filename = @"c:\code\edsm\edsmsystems.10000.json";
             if ( File.Exists(filename))
@@ -878,9 +938,8 @@ namespace EDDiscoveryTests
 
                         foreach (var t in jsr.Parse(JToken.ParseOptions.None))
                         {
-                            var jv = t as JSONTokenReader.JProperty;
-                            if (jv != null)
-                                System.Diagnostics.Debug.WriteLine("Property " + jv.Name + " " + t.TokenType + " `" + t.Value + "`");
+                            if (t.IsProperty)
+                                System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
                             else
                                 System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
                         }
