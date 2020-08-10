@@ -74,9 +74,9 @@ namespace BaseUtils.JSON
         public bool Remove(string key) { return Objects.Remove(key); }
         public override void Clear() { Objects.Clear(); }
 
-        public new static JObject Parse(string s)        // null if failed.
+        public new static JObject Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed.
         {
-            var res = JToken.Parse(s);
+            var res = JToken.Parse(s,flags);
             return res as JObject;
         }
 

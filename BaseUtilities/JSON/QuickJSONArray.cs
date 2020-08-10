@@ -75,9 +75,9 @@ namespace BaseUtils.JSON
         public override IEnumerator<JToken> GetSubClassTokenEnumerator() { return Elements.GetEnumerator(); }
         public override IEnumerator GetSubClassEnumerator() { return Elements.GetEnumerator(); }
 
-        public new static JArray Parse(string s)        // null if failed.
+        public new static JArray Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed.
         {
-            var res = JToken.Parse(s);
+            var res = JToken.Parse(s,flags);
             return res as JArray;
         }
 

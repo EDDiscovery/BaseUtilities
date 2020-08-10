@@ -834,9 +834,7 @@ namespace EDDiscoveryTests
             {
                 using (StringReader sr = new StringReader(propertyv))         // read directly from file..
                 {
-                    JSONTokenReader jsr = new JSONTokenReader(sr, 32);
-
-                    foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                    foreach (var t in JToken.ParseToken(sr, JToken.ParseOptions.None))
                     {
                         if (t.IsProperty)
                             System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
@@ -852,9 +850,7 @@ namespace EDDiscoveryTests
 
                 using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
                 {
-                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
-
-                    foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                    foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None))
                     {
                         if (t.IsProperty)
                             System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
@@ -867,9 +863,7 @@ namespace EDDiscoveryTests
             {
                 using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
                 {
-                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
-
-                    var enumerator = jsr.Parse(JToken.ParseOptions.None).GetEnumerator();
+                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None).GetEnumerator();
 
                     while (enumerator.MoveNext())
                     {
@@ -908,9 +902,7 @@ namespace EDDiscoveryTests
 
                 using (StringReader sr = new StringReader(propertyq))         // read directly from file..
                 {
-                    JSONTokenReader jsr = new JSONTokenReader(sr, 16);
-
-                    var enumerator = jsr.Parse(JToken.ParseOptions.None).GetEnumerator();
+                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None,128).GetEnumerator();
 
                     while (enumerator.MoveNext())
                     {
@@ -934,9 +926,7 @@ namespace EDDiscoveryTests
                 {
                     using (StreamReader sr = new StreamReader(originalFileStream))
                     {
-                        JSONTokenReader jsr = new JSONTokenReader(sr, 19);
-
-                        foreach (var t in jsr.Parse(JToken.ParseOptions.None))
+                        foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None,2999))
                         {
                             if (t.IsProperty)
                                 System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");

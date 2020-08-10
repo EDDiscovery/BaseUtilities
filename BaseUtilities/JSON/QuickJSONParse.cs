@@ -31,36 +31,30 @@ namespace BaseUtils.JSON
             CheckEOL = 2,
         }
 
-        public static JToken Parse(string s)        // null if failed.
-        {
-            StringParserQuick parser = new StringParserQuick(s);
-            return Decode(parser, out string unused, ParseOptions.None, s.Length);
-        }
-
         public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed - must not be extra text
         {
             StringParserQuick parser = new StringParserQuick(s);
-            var res = Decode(parser, out string unused, flags,s.Length);
+            var res = Parse(parser, out string unused, flags,s.Length);
             return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
         }
 
         public static JToken Parse(string s, out string error, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            JToken res = Decode(parser, out error, flags, s.Length);
+            JToken res = Parse(parser, out error, flags, s.Length);
             return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
         }
 
         public static JToken Parse(System.IO.TextReader trx, out string error, ParseOptions flags = ParseOptions.None, int chunksize = 16384, int textmaxsize=16384)
         {
             StringParserQuickTextReader parser = new StringParserQuickTextReader(trx, chunksize);
-            JToken res = Decode(parser, out error, flags, textmaxsize);
+            JToken res = Parse(parser, out error, flags, textmaxsize);
             return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
         }
 
-        // normally, use Parse above. Used only if you want to feed in another type of parser than a string one
+        // normally, use Parse above. Used only if you want to feed in another type of parser..
 
-        public static JToken Decode(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
+        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
         {
             error = null;
 
@@ -78,7 +72,7 @@ namespace BaseUtils.JSON
 
                 if (o == null)
                 {
-                    error = GenError(parser);
+                    error = GenError(parser,"No Obj/Array");
                     return null;
                 }
                 else if (o.TokenType == TType.Array)
@@ -111,7 +105,7 @@ namespace BaseUtils.JSON
 
                             if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                error = GenError(parser);
+                                error = GenError(parser, "Comma");
                                 return null;
                             }
                             else
@@ -139,7 +133,7 @@ namespace BaseUtils.JSON
 
                             if (textlen < 1 || (comma == false && curobject.Count > 0) || !parser.IsCharMoveOn(':'))
                             {
-                                error = GenError(parser);
+                                error = GenError(parser, "Object missing property name");
                                 return null;
                             }
                             else
@@ -150,7 +144,7 @@ namespace BaseUtils.JSON
 
                                 if (o == null)
                                 {
-                                    error = GenError(parser);
+                                    error = GenError(parser, "Object bad value");
                                     return null;
                                 }
 
@@ -161,7 +155,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        error = "Recursion too deep";
+                                        error = GenError(parser, "Stack overflow");
                                         return null;
                                     }
 
@@ -175,7 +169,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        error = "Recursion too deep";
+                                        error = GenError(parser, "Stack overflow");
                                         return null;
                                     }
 
@@ -191,7 +185,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            error = GenError(parser);
+                            error = GenError(parser,"Bad format in object");
                             return null;
                         }
                     }
@@ -204,14 +198,14 @@ namespace BaseUtils.JSON
 
                         if (o == null)
                         {
-                            error = GenError(parser);
+                            error = GenError(parser, "Bad array value");
                             return null;
                         }
                         else if (o.TokenType == TType.EndArray)          // if end marker, jump back
                         {
                             if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                error = GenError(parser);
+                                error = GenError(parser,"Comma");
                                 return null;
                             }
                             else
@@ -236,7 +230,7 @@ namespace BaseUtils.JSON
                         }
                         else if ((comma == false && curarray.Count > 0))   // missing comma
                         {
-                            error = GenError(parser);
+                            error = GenError(parser,"Comma");
                             return null;
                         }
                         else
@@ -247,7 +241,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    error = "Recursion too deep";
+                                    error = GenError(parser, "Stack overflow");
                                     return null;
                                 }
 
@@ -259,7 +253,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    error = "Recursion too deep";
+                                    error = GenError(parser, "Stack overflow");
                                     return null;
                                 }
 
@@ -338,9 +332,9 @@ namespace BaseUtils.JSON
             }
         }
 
-        static private string GenError(IStringParserQuick parser)
+        static private string GenError(IStringParserQuick parser, string error)
         {
-            string s = "JSON Error at " + parser.Position + " " + parser.Line.Substring(0, parser.Position) + " <ERROR> "
+            string s = "JSON " + error + " at " + parser.Position + " " + parser.Line.Substring(0, parser.Position) + " <ERROR> "
                             + parser.Line.Substring(parser.Position);
             System.Diagnostics.Debug.WriteLine(s);
             return s;
