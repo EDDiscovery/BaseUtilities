@@ -301,6 +301,22 @@ namespace BaseUtils.JSON
                     if (dt != null)
                         return dt;
                 }
+                else if ( tt.IsEnum)
+                {
+                    if (!tk.IsString)
+                        return null;
+
+                    try
+                    {
+                        Object p = Enum.Parse(tt, tk.Str(), true);
+                        return Convert.ChangeType(p, tt);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Debug.WriteLine("Unable to convert to enum " + tk.Str());
+                        return null;
+                    }
+                }
 
                 return new ToObjectError("JSONToObject: Bad Conversion " + tk.TokenType);
             }

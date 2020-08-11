@@ -583,6 +583,11 @@ namespace EDDiscoveryTests
             public int? RankProgress { get; set; }  // newish 3.x only when unlocked
         }
 
+        public enum TestEnum { one,two, three};
+        public class FromObjectTest
+        {
+            public TestEnum t1;
+        }
 
         [Test]
         public void JSONToObject()
@@ -805,6 +810,17 @@ namespace EDDiscoveryTests
 
                 Check.That(s).Equals(expout);
             }
+
+            {
+                FromObjectTest s = new FromObjectTest();
+                s.t1 = TestEnum.three;
+
+                JToken t = JToken.FromObject(s);
+
+                FromObjectTest r = t.ToObject<FromObjectTest>();
+                Check.That(r.t1 == TestEnum.three);
+            }
+
         }
 
         [Test]
@@ -936,6 +952,8 @@ namespace EDDiscoveryTests
                     }
                 }
             }
+
         }
+
     }
 }
