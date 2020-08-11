@@ -22,7 +22,7 @@ namespace BaseUtils.JSON
     {
         // done as extension classes as it allows null to be in tk
 
-        public static bool IsNullEmpty(this JToken tk)
+        public static bool IsNull(this JToken tk)
         {
             return tk == null || tk.IsNull;
         }

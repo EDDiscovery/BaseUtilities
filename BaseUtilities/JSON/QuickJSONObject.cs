@@ -17,6 +17,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BaseUtils.JSON
 {
@@ -33,9 +34,17 @@ namespace BaseUtils.JSON
 
         public JObject(IDictionary dict) : this()           // convert from a dictionary. Key must be string
         {
-            foreach( DictionaryEntry x in dict)
+            foreach (DictionaryEntry x in dict)
             {
                 this.Add((string)x.Key, JToken.CreateToken(x.Value));
+            }
+        }
+
+        public JObject(JObject other) : this()              // create with deep copy from another object
+        {
+            foreach( var kvp in other.Objects)
+            {
+                Objects[kvp.Key] = kvp.Value.Clone();
             }
         }
 
@@ -57,6 +66,8 @@ namespace BaseUtils.JSON
 
         public bool ContainsKey(string n) { return Objects.ContainsKey(n); }
         public bool TryGetValue(string n, out JToken value) { return Objects.TryGetValue(n, out value); }
+
+        public string[] PropertyNames() { return Objects.Keys.ToArray(); }
 
         public override JToken Contains(string[] ids)     // see if Object contains one of these keys
         {

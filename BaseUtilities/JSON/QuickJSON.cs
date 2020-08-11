@@ -33,6 +33,7 @@ namespace BaseUtils.JSON
         public Object Value { get; set; }                       // value of token, if it has one
         public string Name { get; set; }                        // only set if its a property of an object
 
+        public bool HasValue { get { return Value != null;  } } // true for bools/string/double/long/ulong/bigint
         public bool IsString { get { return TokenType == TType.String; } }
         public bool IsInt { get { return TokenType == TType.Long || TokenType == TType.ULong || TokenType == TType.BigInt; } }
         public bool IsLong { get { return TokenType == TType.Long; } }
@@ -58,6 +59,7 @@ namespace BaseUtils.JSON
         {
             TokenType = other.TokenType;
             Value = other.Value;
+            Name = other.Name;
         }
 
         public JToken(TType t, Object v = null)
@@ -106,7 +108,9 @@ namespace BaseUtils.JSON
         }
         public static JToken CreateToken(Object o, bool except = true)
         {
-            if (o is string)
+            if (o == null)
+                return Null();
+            else if (o is string)
                 return (string)o;
             else if (o is double || o is double?)
                 return (double)o;
@@ -122,19 +126,31 @@ namespace BaseUtils.JSON
                 return (uint)o;
             else if (o is bool || o is bool?)
                 return (bool)o;
-            else if (o == null)
-                return Null();
+            else if (o is JArray)
+            {
+                var ja = o as JArray;
+                return ja.Clone();
+            }
+            else if (o is JObject)
+            {
+                var jo = o as JObject;
+                return jo.Clone();
+            }
+            else if (o is Enum)
+            {
+                return o.ToString();
+            }
+            else if (o is DateTime)
+            {
+                return ((DateTime)o).ToStringZulu();
+            }
             else if (except)
                 throw new NotImplementedException();
             else
+            {
+                System.Diagnostics.Debug.WriteLine("Failed to serialise type " + o.GetType().Name);
                 return null;
-        }
-
-        static Type[] types = new Type[] { typeof(string), typeof(double),typeof(double?),typeof(float),typeof(float?),typeof(long),typeof(long?)
-               ,typeof(ulong),typeof(ulong?),typeof(int),typeof(int?),typeof(uint),typeof(uint?),typeof(bool),typeof(bool?), typeof(DateTime), typeof(DateTime?) };
-        public static bool IsSerializable(Type o)
-        {
-            return Array.IndexOf(types, o) >= 0;
+            }
         }
 
         public static JToken Null()
