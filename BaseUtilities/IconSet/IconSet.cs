@@ -210,14 +210,15 @@ namespace BaseUtils.Icons
         public Image Get(string name)
         {
             if (Icons == null)      // seen designer barfing over this
-                return null;
+                return new Bitmap(1, 1);
 
             //System.Diagnostics.Debug.WriteLine("ICON " + name);
 
-            if (!Icons.ContainsKey(name))            // if not found, must return someting, so default
-                name = "Default";
-
-            Object o = Icons[name];
+            if (!Icons.TryGetValue(name, out object o))            // if not found, must return someting, so default
+            {
+                if (!Icons.TryGetValue("Default", out o))            // if not found, must return someting, so default
+                    return new Bitmap(1, 1);
+            }
 
             if (o is LazyLoadFromAssembly)          // if not loaded, pick it up.
             {
@@ -248,7 +249,7 @@ namespace BaseUtils.Icons
 
         // Singleton support if required
 
-        static public IconSet Instance { get { System.Diagnostics.Debug.Assert(instance != null); return instance; } }
+        static public IconSet Instance { get { return instance; } }
         static private IconSet instance;
 
         public static void CreateSingleton()
@@ -256,9 +257,9 @@ namespace BaseUtils.Icons
             instance = new IconSet();
         }
 
-        public static Image GetIcon(string name)        // static access.
+        public static Image GetIcon(string name)        // static access. does not barf if no instance, instead returns small bitmap
         {
-            return Instance.Get(name);
+            return Instance?.Get(name) ?? new Bitmap(1,1);
         }
     }
 }
