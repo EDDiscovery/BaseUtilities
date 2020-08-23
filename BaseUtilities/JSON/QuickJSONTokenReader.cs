@@ -63,7 +63,7 @@ namespace BaseUtils.JSON
 
                 if (o == null)
                 {
-                    throw new TokenException(GenError(parser, "No Obj/Array"));
+                    throw new TokenException(GenError(parser, "No Obj/Array", ParseOptions.NoThrow));
                 }
                 else if (o.TokenType == JToken.TType.Array)
                 {
@@ -98,7 +98,7 @@ namespace BaseUtils.JSON
 
                             if (comma == true && (flags & JToken.ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                throw new TokenException(GenError(parser, "Comma"));
+                                throw new TokenException(GenError(parser, "Comma", ParseOptions.NoThrow));
                             }
                             else
                             {
@@ -127,7 +127,7 @@ namespace BaseUtils.JSON
 
                             if (textlen < 1 || (comma == false && curobject.Count > 0) || !parser.IsCharMoveOn(':'))
                             {
-                                throw new TokenException(GenError(parser, "Object missing property name"));
+                                throw new TokenException(GenError(parser, "Object missing property name", ParseOptions.NoThrow));
                             }
                             else
                             {
@@ -137,7 +137,7 @@ namespace BaseUtils.JSON
 
                                 if (o == null)
                                 {
-                                    throw new TokenException(GenError(parser, "Object bad value"));
+                                    throw new TokenException(GenError(parser, "Object bad value", ParseOptions.NoThrow));
                                 }
 
                                 o.Name = name;
@@ -148,7 +148,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        throw new TokenException(GenError(parser, "Stack overflow"));
+                                        throw new TokenException(GenError(parser, "Stack overflow", ParseOptions.NoThrow));
                                     }
 
                                     stack[++sptr] = o;          // push this one onto stack
@@ -161,7 +161,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        throw new TokenException(GenError(parser, "Stack overflow"));
+                                        throw new TokenException(GenError(parser, "Stack overflow", ParseOptions.NoThrow));
                                     }
 
                                     stack[++sptr] = o;          // push this one onto stack
@@ -176,7 +176,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            throw new TokenException(GenError(parser, "Bad format in object"));
+                            throw new TokenException(GenError(parser, "Bad format in object", ParseOptions.NoThrow));
                         }
                     }
                 }
@@ -188,13 +188,13 @@ namespace BaseUtils.JSON
 
                         if (o == null)
                         {
-                            throw new TokenException(GenError(parser, "Bad array value"));
+                            throw new TokenException(GenError(parser, "Bad array value", ParseOptions.NoThrow));
                         }
                         else if (o.TokenType == JToken.TType.EndArray)          // if end marker, jump back
                         {
                             if (comma == true && (flags & JToken.ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                throw new TokenException(GenError(parser, "Comma"));
+                                throw new TokenException(GenError(parser, "Comma", ParseOptions.NoThrow));
                             }
                             else
                             {
@@ -220,7 +220,7 @@ namespace BaseUtils.JSON
                         }
                         else if ((comma == false && curarray.Count > 0))   // missing comma
                         {
-                            throw new TokenException(GenError(parser, "Comma"));
+                            throw new TokenException(GenError(parser, "Comma", ParseOptions.NoThrow));
                         }
                         else
                         {
@@ -230,7 +230,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    throw new TokenException(GenError(parser, "Stack overflow"));
+                                    throw new TokenException(GenError(parser, "Stack overflow", ParseOptions.NoThrow));
                                 }
 
                                 stack[++sptr] = o;              // push this one onto stack
@@ -241,7 +241,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    throw new TokenException(GenError(parser, "Stack overflow"));
+                                    throw new TokenException(GenError(parser, "Stack overflow", ParseOptions.NoThrow));
                                 }
 
                                 stack[++sptr] = o;              // push this one onto stack
