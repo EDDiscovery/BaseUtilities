@@ -18,10 +18,16 @@ using System;
 
 namespace BaseUtils.JSON
 {
-    public partial class JToken 
+    public partial class JToken
     {
         // null if its unhappy and error is set
         // decoder does not worry about extra text after the object.
+
+        public class JsonException : System.Exception
+        {
+            public string Error { get; set; }
+            public JsonException(string s) { Error = s; }
+        }
 
         [Flags]
         public enum ParseOptions
@@ -29,32 +35,51 @@ namespace BaseUtils.JSON
             None = 0,
             AllowTrailingCommas = 1,
             CheckEOL = 2,
+            ThrowOnError = 4,
         }
 
-        public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed - must not be extra text
+        // parsers null or throw if failed, dependent on flags.  Default is null
+
+        public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            var res = Parse(parser, out string unused, flags,s.Length);
-            return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
+            return Parse(parser, out string unused, flags, s.Length);
+        }
+
+        public static JToken ParseThrow(string s, ParseOptions flags = ParseOptions.None)
+        {
+            StringParserQuick parser = new StringParserQuick(s);
+            return Parse(parser, out string unused, flags | ParseOptions.ThrowOnError, s.Length);
         }
 
         public static JToken Parse(string s, out string error, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            JToken res = Parse(parser, out error, flags, s.Length);
-            return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
+            return Parse(parser, out error, flags, s.Length);
         }
 
-        public static JToken Parse(System.IO.TextReader trx, out string error, ParseOptions flags = ParseOptions.None, int chunksize = 16384, int textmaxsize=16384)
+        public static JToken Parse(System.IO.TextReader trx, out string error, ParseOptions flags = ParseOptions.None, int chunksize = 16384, int textmaxsize = 16384)
         {
             StringParserQuickTextReader parser = new StringParserQuickTextReader(trx, chunksize);
-            JToken res = Parse(parser, out error, flags, textmaxsize);
-            return ((flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL()) ? null : res;
+            return Parse(parser, out error, flags, textmaxsize);
         }
 
         // normally, use Parse above. Used only if you want to feed in another type of parser..
 
         public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
+        {
+            JToken res = IntParse(parser, out error, flags, textbufsize);
+
+            if (res != null && (flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL())
+            {
+                return ParseError(parser, "Extra Chars after JSON", flags, out error);
+            }
+            else
+                return res;
+        }
+
+        // internal parse, does not check EOL
+        private static JToken IntParse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
         {
             error = null;
 
@@ -72,8 +97,7 @@ namespace BaseUtils.JSON
 
                 if (o == null)
                 {
-                    error = GenError(parser,"No Obj/Array");
-                    return null;
+                    return ParseError(parser, "No Obj/Array", flags, out error);
                 }
                 else if (o.TokenType == TType.Array)
                 {
@@ -105,8 +129,7 @@ namespace BaseUtils.JSON
 
                             if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                error = GenError(parser, "Comma");
-                                return null;
+                                return ParseError(parser, "Comma", flags, out error);
                             }
                             else
                             {
@@ -131,10 +154,13 @@ namespace BaseUtils.JSON
                         {
                             int textlen = parser.NextQuotedString(next, textbuffer, true);
 
-                            if (textlen < 1 || (comma == false && curobject.Count > 0) || !parser.IsCharMoveOn(':'))
+                            if (textlen < 1 || (comma == false && curobject.Count > 0) )
                             {
-                                error = GenError(parser, "Object missing property name");
-                                return null;
+                                return ParseError(parser, "Object missing property name", flags, out error);
+                            }
+                            else if ( !parser.IsCharMoveOn(':'))
+                            {
+                                return ParseError(parser, "Object missing : after property name", flags, out error);
                             }
                             else
                             {
@@ -144,8 +170,7 @@ namespace BaseUtils.JSON
 
                                 if (o == null)
                                 {
-                                    error = GenError(parser, "Object bad value");
-                                    return null;
+                                    return ParseError(parser, "Object bad value", flags, out error);
                                 }
 
                                 o.Name = name;                          // object gets the name, indicating its a property
@@ -155,8 +180,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        error = GenError(parser, "Stack overflow");
-                                        return null;
+                                        return ParseError(parser, "Stack overflow", flags, out error);
                                     }
 
                                     stack[++sptr] = o;                  // push this one onto stack
@@ -169,8 +193,7 @@ namespace BaseUtils.JSON
                                 {
                                     if (sptr == stack.Length - 1)
                                     {
-                                        error = GenError(parser, "Stack overflow");
-                                        return null;
+                                        return ParseError(parser, "Stack overflow", flags, out error);
                                     }
 
                                     stack[++sptr] = o;                  // push this one onto stack
@@ -185,8 +208,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            error = GenError(parser,"Bad format in object");
-                            return null;
+                            return ParseError(parser, "Bad format in object", flags, out error);
                         }
                     }
                 }
@@ -198,15 +220,13 @@ namespace BaseUtils.JSON
 
                         if (o == null)
                         {
-                            error = GenError(parser, "Bad array value");
-                            return null;
+                            return ParseError(parser, "Bad array value", flags, out error);
                         }
                         else if (o.TokenType == TType.EndArray)          // if end marker, jump back
                         {
                             if (comma == true && (flags & ParseOptions.AllowTrailingCommas) == 0)
                             {
-                                error = GenError(parser,"Comma");
-                                return null;
+                                return ParseError(parser, "Comma", flags, out error);
                             }
                             else
                             {
@@ -230,8 +250,7 @@ namespace BaseUtils.JSON
                         }
                         else if ((comma == false && curarray.Count > 0))   // missing comma
                         {
-                            error = GenError(parser,"Comma");
-                            return null;
+                            return ParseError(parser, "Comma", flags, out error);
                         }
                         else
                         {
@@ -241,8 +260,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    error = GenError(parser, "Stack overflow");
-                                    return null;
+                                    return ParseError(parser, "Stack overflow", flags, out error);
                                 }
 
                                 stack[++sptr] = o;              // push this one onto stack
@@ -253,8 +271,7 @@ namespace BaseUtils.JSON
                             {
                                 if (sptr == stack.Length - 1)
                                 {
-                                    error = GenError(parser, "Stack overflow");
-                                    return null;
+                                    return ParseError(parser, "Stack overflow", flags, out error);
                                 }
 
                                 stack[++sptr] = o;              // push this one onto stack
@@ -332,12 +349,22 @@ namespace BaseUtils.JSON
             }
         }
 
-        static private string GenError(IStringParserQuick parser, string error)
+        static private string GenErrorString(IStringParserQuick parser, string text)
         {
-            string s = "JSON " + error + " at " + parser.Position + " " + parser.Line.Substring(0, parser.Position) + " <ERROR> "
+            string error = "JSON " + text + " at " + parser.Position + " " + parser.Line.Substring(0, parser.Position) + " <ERROR> "
                             + parser.Line.Substring(parser.Position);
-            System.Diagnostics.Debug.WriteLine(s);
-            return s;
+            System.Diagnostics.Debug.WriteLine(error);
+            return error;
+        }
+
+        static private JToken ParseError(IStringParserQuick parser, string text, ParseOptions flags, out string error)
+        {
+            error = GenErrorString(parser, text);
+            if ( (flags & ParseOptions.ThrowOnError)!=0)
+            {
+                throw new JsonException(error);
+            }
+            return null;
         }
     }
 }
