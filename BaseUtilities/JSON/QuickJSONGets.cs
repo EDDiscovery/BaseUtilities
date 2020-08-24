@@ -184,13 +184,16 @@ namespace BaseUtils.JSON
                 return System.DateTime.MinValue;
         }
 
-        public static T Enumeration<T>(this JToken tk, T def)
+        public static T Enumeration<T>(this JToken tk, T def, Func<string, string> preprocess = null)
         {
             if (tk != null && tk.IsString)
             {
                 try
                 {
-                    return (T)System.Enum.Parse(typeof(T), (string)tk.Value, true);
+                    string v = (string)tk.Value;
+                    if (preprocess != null)
+                        v = preprocess(v);
+                    return (T)System.Enum.Parse(typeof(T), v, true);
                 }
                 catch
                 {
