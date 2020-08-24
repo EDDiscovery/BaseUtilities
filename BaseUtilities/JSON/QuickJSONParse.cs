@@ -29,7 +29,7 @@ namespace BaseUtils.JSON
             None = 0,
             AllowTrailingCommas = 1,
             CheckEOL = 2,
-            NoThrow = 4,
+            Throw = 4,
         }
 
         public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed - must not be extra text
@@ -339,13 +339,13 @@ namespace BaseUtils.JSON
                             + parser.Line.Substring(parser.Position);
             System.Diagnostics.Debug.WriteLine(s);
 
-            if (options.HasFlag(ParseOptions.NoThrow))
+            if (options.HasFlag(ParseOptions.Throw))
             {
-                return s;
+                throw new JsonException(parser.Line, parser.Position, s);
             }
             else
             {
-                throw new JsonException(parser.Line, parser.Position, s);
+                return s;
             }
         }
     }
