@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright © 2016-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,15 +13,18 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Windows.Forms;
 
 namespace BaseUtils
 {
     public class CSVWriteGrid : BaseUtils.CSVWrite
     {
         public Func<int, Object[]> GetPreHeader;// optional, return pre header items, return empty array for blank line, return null to stop pre-header
+
+        // One shot interface - get header (new/old way) then line. Only one of these is possible
 
         public Func<int, Object[]> GetLineHeader;// optional, return all header items by line, return empty array for blank line, return null to stop header
         // or use the older
@@ -34,10 +37,20 @@ namespace BaseUtils
 
         public Func<int, Object[]> GetLine;// mandatory, empty array for no items on line, null to stop
 
+        // Multi Header/Line data interface - allow for multiple more header/tables. the count of GetLineSets controls how many sets. 
+        public List<Func<int, int, Object[]>> GetLinePreHeaderSets; // Return empty array, null (stop) or data
+        public List<Func<int, int, Object[]>> GetLineSets;
+        public List<Func<int, int, Object[]>> GetLinePostHeaderSets; 
+
+        // after above, post header
+
         public Func<int, Object[]> GetPostHeader;// optional, return post header items, return empty array for blank line, return null to stop pre-header
 
         public CSVWriteGrid()
         {
+            GetLinePreHeaderSets = new List<Func<int, int, object[]>>();
+            GetLinePostHeaderSets = new List<Func<int, int, object[]>>();
+            GetLineSets = new List<Func<int, int, object[]>>();
         }
 
         public bool WriteCSV(string filename)
@@ -51,11 +64,7 @@ namespace BaseUtils
                         Object[] objs;
                         for (int l = 0; (objs = GetPreHeader(l)) != null; l++)
                         {
-                            for (int i = 0; i < objs.Length; i++)
-                            {
-                                writer.Write(Format(objs[i], (i != objs.Length - 1)));
-                            }
-                            writer.WriteLine();
+                            ExportObjectList(writer, objs);
                         }
                     }
 
@@ -87,26 +96,58 @@ namespace BaseUtils
                             writer.WriteLine();
                     }
 
-                    LineStatus ls = LineStatus.OK;
-
-                    for( int r = 0; GetLineStatus == null || (ls = GetLineStatus(r)) != LineStatus.EOF; r++ )
+                    if (GetLine != null)
                     {
-                        if (ls != LineStatus.Skip)
-                        {
-                            if (VerifyLine == null || VerifyLine(r))
-                            {
-                                Object[] objs = GetLine(r);
+                        LineStatus ls = LineStatus.OK;
 
-                                if (objs == null)
-                                    break;
-                                else if (objs.Length > 0)
+                        for (int r = 0; GetLineStatus == null || (ls = GetLineStatus(r)) != LineStatus.EOF; r++)
+                        {
+                            if (ls != LineStatus.Skip)
+                            {
+                                if (VerifyLine == null || VerifyLine(r))
                                 {
-                                    for (int i = 0; i < objs.Length; i++)
+                                    Object[] objs = GetLine(r);
+
+                                    if (objs == null)
+                                        break;
+                                    else if (objs.Length > 0)
                                     {
-                                        writer.Write(Format(objs[i], (i != objs.Length - 1)));
+                                        for (int i = 0; i < objs.Length; i++)
+                                        {
+                                            writer.Write(Format(objs[i], (i != objs.Length - 1)));
+                                        }
                                     }
+                                    writer.WriteLine();
                                 }
-                                writer.WriteLine();
+                            }
+                        }
+                    }
+
+                    if (GetLineSets.Count > 0)
+                    {
+                        for (int s = 0; s < GetLineSets.Count; s++)
+                        {
+                            Object[] objs;
+
+                            if (s < GetLinePreHeaderSets.Count)    // may not have header
+                            {
+                                for (int l = 0; (objs = GetLinePreHeaderSets[s](s, l)) != null; l++)
+                                {
+                                    ExportObjectList(writer, objs);
+                                }
+                            }
+
+                            for (int l = 0; (objs = GetLineSets[s](s, l)) != null; l++)
+                            {
+                                ExportObjectList(writer, objs);
+                            }
+
+                            if (s < GetLinePostHeaderSets.Count)    // may not have header
+                            {
+                                for (int l = 0; (objs = GetLinePostHeaderSets[s](s, l)) != null; l++)
+                                {
+                                    ExportObjectList(writer, objs);
+                                }
                             }
                         }
                     }
@@ -116,11 +157,7 @@ namespace BaseUtils
                         Object[] objs;
                         for (int l = 0; (objs = GetPostHeader(l)) != null; l++)
                         {
-                            for (int i = 0; i < objs.Length; i++)
-                            {
-                                writer.Write(Format(objs[i], (i != objs.Length - 1)));
-                            }
-                            writer.WriteLine();
+                            ExportObjectList(writer, objs);
                         }
                     }
                 }
@@ -133,6 +170,14 @@ namespace BaseUtils
                 return false;
             }
         }
- 
+
+        void ExportObjectList(StreamWriter writer, Object[] objs)
+        {
+            for (int i = 0; i < objs.Length; i++)
+            {
+                writer.Write(Format(objs[i], (i != objs.Length - 1)));
+            }
+            writer.WriteLine();
+        }
     }
 }
