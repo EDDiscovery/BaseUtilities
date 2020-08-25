@@ -48,7 +48,7 @@ namespace BaseUtils
                 {
                     StreamReader reader = new StreamReader(response.GetResponseStream());
                     string content1 = reader.ReadToEnd();
-                    JArray ja = JArray.Parse(content1);
+                    JArray ja = JArray.ParseThrowCommaEOL(content1);
                     return ja;
                 }
             }

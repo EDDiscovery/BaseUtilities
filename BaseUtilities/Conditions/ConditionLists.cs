@@ -125,7 +125,7 @@ namespace BaseUtils
 
             try
             {
-                JObject jo = (JObject)JObject.Parse(s);
+                JObject jo = (JObject)JObject.ParseThrowCommaEOL(s);
                 return FromJSON(jo);
             }
             catch (Exception ex)

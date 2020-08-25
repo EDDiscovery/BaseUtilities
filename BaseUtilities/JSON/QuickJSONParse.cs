@@ -52,6 +52,12 @@ namespace BaseUtils.JSON
             return Parse(parser, out string unused, flags | ParseOptions.ThrowOnError, s.Length);
         }
 
+        public static JToken ParseThrowCommaEOL(string s)
+        {
+            StringParserQuick parser = new StringParserQuick(s);
+            return Parse(parser, out string unused, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError, s.Length);
+        }
+
         public static JToken Parse(string s, out string error, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);

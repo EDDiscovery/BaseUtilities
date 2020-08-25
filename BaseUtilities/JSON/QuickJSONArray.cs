@@ -81,6 +81,12 @@ namespace BaseUtils.JSON
             return res as JArray;
         }
 
+        public new static JArray ParseThrowCommaEOL(string s)        // throws if fails, allows trailing commas and checks EOL
+        {
+            var res = JToken.Parse(s, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError);
+            return res as JArray;
+        }
+
         public new static JArray Parse(string s, out string error, ParseOptions flags)
         {
             var res = JToken.Parse(s, out error, flags);
