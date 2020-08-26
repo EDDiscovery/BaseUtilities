@@ -32,15 +32,15 @@ namespace BaseUtils
 
         public enum LineStatus { EOF, Skip, OK};
         public Func<int, LineStatus> GetLineStatus; // optional, or either EOF, Skip or OK for a line
-
         public Func<int,bool> VerifyLine;   // Second optional call, to screen out line again.
-
         public Func<int, Object[]> GetLine;// mandatory, empty array for no items on line, null to stop
 
-        // Multi Header/Line data interface - allow for multiple more header/tables. the count of GetLineSets controls how many sets. 
-        public List<Func<int, int, Object[]>> GetLinePreHeaderSets; // Return empty array, null (stop) or data
-        public List<Func<int, int, Object[]>> GetLineSets;
-        public List<Func<int, int, Object[]>> GetLinePostHeaderSets; 
+        // Multi Header/Line data interface - allow for multiple more header/tables. the count of GetSetsData controls how many sets. 
+
+        public List<Func<int, int, Object[]>> GetSetsHeader; // Return empty array, null (stop) or data
+        public List<Func<int, int, Object[]>> GetSetsData;
+        public List<Func<int, int, Object[]>> GetSetsFooter;
+        public Func<int, int, Object[]> GetSetsPad;     // padding between sets, only used if >1 set
 
         // after above, post header
 
@@ -48,9 +48,9 @@ namespace BaseUtils
 
         public CSVWriteGrid()
         {
-            GetLinePreHeaderSets = new List<Func<int, int, object[]>>();
-            GetLinePostHeaderSets = new List<Func<int, int, object[]>>();
-            GetLineSets = new List<Func<int, int, object[]>>();
+            GetSetsHeader = new List<Func<int, int, object[]>>();
+            GetSetsFooter = new List<Func<int, int, object[]>>();
+            GetSetsData = new List<Func<int, int, object[]>>();
         }
 
         public bool WriteCSV(string filename)
@@ -123,28 +123,36 @@ namespace BaseUtils
                         }
                     }
 
-                    if (GetLineSets.Count > 0)
+                    if (GetSetsData.Count > 0)
                     {
-                        for (int s = 0; s < GetLineSets.Count; s++)
+                        for (int s = 0; s < GetSetsData.Count; s++)
                         {
                             Object[] objs;
 
-                            if (s < GetLinePreHeaderSets.Count)    // may not have header
+                            if (s < GetSetsHeader.Count)    // may not have header
                             {
-                                for (int l = 0; (objs = GetLinePreHeaderSets[s](s, l)) != null; l++)
+                                for (int l = 0; (objs = GetSetsHeader[s](s, l)) != null; l++)
                                 {
                                     ExportObjectList(writer, objs);
                                 }
                             }
 
-                            for (int l = 0; (objs = GetLineSets[s](s, l)) != null; l++)
+                            for (int l = 0; (objs = GetSetsData[s](s, l)) != null; l++)
                             {
                                 ExportObjectList(writer, objs);
                             }
 
-                            if (s < GetLinePostHeaderSets.Count)    // may not have header
+                            if (s < GetSetsFooter.Count)    // may not have footer
                             {
-                                for (int l = 0; (objs = GetLinePostHeaderSets[s](s, l)) != null; l++)
+                                for (int l = 0; (objs = GetSetsFooter[s](s, l)) != null; l++)
+                                {
+                                    ExportObjectList(writer, objs);
+                                }
+                            }
+
+                            if ( GetSetsPad != null && s < GetSetsData.Count - 1)   // pad between sets if present
+                            {
+                                for (int l = 0; (objs = GetSetsPad(s, l)) != null; l++)
                                 {
                                     ExportObjectList(writer, objs);
                                 }

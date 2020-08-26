@@ -181,7 +181,7 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Double)
                 return (int)(double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator uint? (JToken t)
         {
@@ -199,7 +199,7 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Double && (double)t.Value >= 0)
                 return (uint)(double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator long? (JToken t)
         {
@@ -217,11 +217,13 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Double)
                 return (long)(double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator ulong? (JToken t)
         {
-            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+            if (t.TokenType == TType.ULong)
+                return (ulong)t.Value;
+            else if (t.TokenType == TType.Long && (long)t.Value >= 0)
                 return (ulong)(long)t.Value;
             else if (t.TokenType == TType.Double && (double)t.Value >= 0)
                 return (ulong)(double)t.Value;
@@ -230,12 +232,14 @@ namespace BaseUtils.JSON
         }
         public static explicit operator ulong(JToken t)
         {
-            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+            if (t.TokenType == TType.ULong)
+                return (ulong)t.Value;
+            else if (t.TokenType == TType.Long && (long)t.Value >= 0)
                 return (ulong)(long)t.Value;
             else if (t.TokenType == TType.Double && (double)t.Value >= 0)
                 return (ulong)(double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator double? (JToken t)
         {
@@ -257,7 +261,7 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Double)
                 return (double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator float? (JToken t)
         {
@@ -279,7 +283,7 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Double)
                 return (float)(double)t.Value;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator bool? (JToken t)
         {
@@ -297,7 +301,7 @@ namespace BaseUtils.JSON
             else if (t.TokenType == TType.Long)       // accept LONG 1/0 as boolean
                 return (long)t.Value != 0;
             else
-                throw new NotSupportedException();
+                throw new InvalidOperationException();
         }
         public static explicit operator DateTime(JToken t)
         {
