@@ -23,16 +23,16 @@ namespace BaseUtils.JSON
     {
         public static T ToObject<T>(this JToken tk)         // returns null if not decoded
         {
-            return ToObjectProtected<T>(tk);
+            return ToObjectProtected<T>(tk,false);
         }
 
-        public static T ToObjectProtected<T>(this JToken tk)  // backwards compatible naming
+        public static T ToObjectProtected<T>(this JToken tk, bool ignoretypeerrors = false)  // backwards compatible naming
         {
             Type tt = typeof(T);
-            Object ret = tk.ToObject(tt);
+            Object ret = tk.ToObject(tt,ignoretypeerrors);
             if (ret is ToObjectError)
             {
-                System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString);
+                System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
                 return default(T);
             }
             else if (ret != null)      // or null
@@ -41,11 +41,17 @@ namespace BaseUtils.JSON
                 return default(T);
         }
 
-        public class ToObjectError { public string ErrorString; public ToObjectError(string s) { ErrorString = s; } };
+        public class ToObjectError
+        {
+            public string ErrorString;
+            public string PropertyName;
+            public ToObjectError(string s) { ErrorString = s; PropertyName = ""; }
+        };
 
-        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.
+        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.  
+        // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
 
-        public static Object ToObject(this JToken tk, Type tt)       // will return an instance of tt or ToObjectError, or null for token is null
+        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors = false)       // will return an instance of tt or ToObjectError, or null for token is null
         {
             if (tk == null)
             {
@@ -61,10 +67,13 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], tt.GetElementType());      // get the underlying element, must match array element type
+                        Object ret = ToObject(tk[i], tt.GetElementType(), ignoretypeerrors);      // get the underlying element, must match array element type
 
-                        if (ret.GetType() == typeof(ToObjectError))
+                        if (ret != null && ret.GetType() == typeof(ToObjectError))      // arrays must be full, any errors means an error
+                        {
+                            ((ToObjectError)ret).PropertyName = tt.Name + "." + i.ToString() + "." + ((ToObjectError)ret).PropertyName;
                             return ret;
+                        }
                         else
                         {
                             dynamic d = Convert.ChangeType(ret, tt.GetElementType());       // convert to element type, which should work since we checked compatibility
@@ -81,10 +90,13 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], types[0]);      // get the underlying element, must match types[0] which is list type
+                        Object ret = ToObject(tk[i], types[0], ignoretypeerrors);      // get the underlying element, must match types[0] which is list type
 
-                        if (ret.GetType() == typeof(ToObjectError))
+                        if (ret != null && ret.GetType() == typeof(ToObjectError))  // lists must be full, any errors are errors
+                        {
+                            ((ToObjectError)ret).PropertyName = tt.Name + "." + i.ToString() + "." + ((ToObjectError)ret).PropertyName;
                             return ret;
+                        }
                         else
                         {
                             dynamic d = Convert.ChangeType(ret, types[0]);       // convert to element type, which should work since we checked compatibility
@@ -106,10 +118,21 @@ namespace BaseUtils.JSON
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        Object ret = ToObject(kvp.Value, types[1]);        // get the value as the dictionary type - it must match type or it get OE
+                        Object ret = ToObject(kvp.Value, types[1],ignoretypeerrors);        // get the value as the dictionary type - it must match type or it get OE
 
-                        if (ret.GetType() == typeof(ToObjectError))
-                            return ret;
+                        if (ret != null && ret.GetType() == typeof(ToObjectError))
+                        {
+                            ((ToObjectError)ret).PropertyName = tt.Name + "." + kvp.Key + "." + ((ToObjectError)ret).PropertyName;
+
+                            if (ignoretypeerrors)
+                            {
+                                System.Diagnostics.Debug.WriteLine("Ignoring Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
+                            }
+                            else
+                            {
+                                return ret;
+                            }
+                        }
                         else
                         {
                             dynamic d = Convert.ChangeType(ret, types[1]);       // convert to element type, which should work since we checked compatibility
@@ -154,10 +177,21 @@ namespace BaseUtils.JSON
 
                                 if (otype != null)                          // and its a field or property
                                 {
-                                    Object ret = ToObject(kvp.Value, otype);    // get the value - must match otype.. ret may be zero for ? types
+                                    Object ret = ToObject(kvp.Value, otype, ignoretypeerrors);    // get the value - must match otype.. ret may be zero for ? types
 
                                     if (ret != null && ret.GetType() == typeof(ToObjectError))
-                                        return ret;
+                                    {
+                                        ((ToObjectError)ret).PropertyName = tt.Name + "." + kvp.Key + "." + ((ToObjectError)ret).PropertyName;
+
+                                        if (ignoretypeerrors)
+                                        {
+                                            System.Diagnostics.Debug.WriteLine("Ignoring Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
+                                        }
+                                        else
+                                        {
+                                            return ret;
+                                        }
+                                    }
                                     else
                                     {
                                         if (!mi.SetValue(instance, ret))         // and set. Set will fail if the property is get only
@@ -170,7 +204,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine("JSONToObject: No such member " + kvp.Key);
+                            System.Diagnostics.Debug.WriteLine("JSONToObject: No such member " + kvp.Key + " in " + tt.Name);
                         }
                     }
 
@@ -318,7 +352,7 @@ namespace BaseUtils.JSON
                     }
                 }
 
-                return new ToObjectError("JSONToObject: Bad Conversion " + tk.TokenType);
+                return new ToObjectError("JSONToObject: Bad Conversion " + tk.TokenType + " to " + tt.Name);
             }
         }
     }
