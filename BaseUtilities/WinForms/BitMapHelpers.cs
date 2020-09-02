@@ -207,6 +207,16 @@ namespace BaseUtils
             }
         }
 
+        public static void ClearBitmapArea(Bitmap img, Rectangle backarea, Color c)     // allows transparent to be restored to areas..
+        {
+            using (Graphics dgr = Graphics.FromImage(img))
+            {
+                dgr.SetClip(backarea);   // set graphics to the clip area so we can clear a specific area
+                dgr.Clear(c);
+                dgr.ResetClip();
+            }
+        }
+
         // convert BMP to another format and return the bytes of that format
 
         public static byte[] ConvertTo(this Bitmap bmp, System.Drawing.Imaging.ImageFormat fmt)
