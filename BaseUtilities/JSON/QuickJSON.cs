@@ -165,11 +165,11 @@ namespace BaseUtils.JSON
             else
                 return (string)t.Value;
         }
-        public static explicit operator int? (JToken t)     // doubles get trunced.. as per previous system
-        {
-            if (t.TokenType == TType.Long)
+        public static explicit operator int? (JToken t)     
+        {                                                   
+            if (t.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
                 return (int)(long)t.Value;
-            else if (t.TokenType == TType.Double)
+            else if (t.TokenType == TType.Double)           // doubles get trunced.. as per previous system
                 return (int)(double)t.Value;
             else
                 return null;
@@ -183,11 +183,11 @@ namespace BaseUtils.JSON
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator uint? (JToken t)
+        public static explicit operator uint? (JToken t)    
         {
-            if (t.TokenType == TType.Long && (long)t.Value >= 0)
+            if (t.TokenType == TType.Long && (long)t.Value >= 0)        // it won't be a ulong/bigint since that would be too big for an uint
                 return (uint)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)   // doubles get trunced
                 return (uint)(double)t.Value;
             else
                 return null;
@@ -201,31 +201,31 @@ namespace BaseUtils.JSON
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator long? (JToken t)
+        public static explicit operator long? (JToken t)    
         {
-            if (t.TokenType == TType.Long)
+            if (t.TokenType == TType.Long)              
                 return (long)t.Value;
-            else if (t.TokenType == TType.Double)
+            else if (t.TokenType == TType.Double)       
                 return (long)(double)t.Value;
             else
                 return null;
         }
-        public static explicit operator long(JToken t)
+        public static explicit operator long(JToken t)  
         {
-            if (t.TokenType == TType.Long)
+            if (t.TokenType == TType.Long)              // it won't be a ulong/bigint since that would be too big for an long
                 return (long)t.Value;
-            else if (t.TokenType == TType.Double)
+            else if (t.TokenType == TType.Double)       // doubles get trunced
                 return (long)(double)t.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator ulong? (JToken t)
+        public static explicit operator ulong? (JToken t) 
         {
-            if (t.TokenType == TType.ULong)
+            if (t.TokenType == TType.ULong)             // it won't be a bigint since that would be too big for an ulong
                 return (ulong)t.Value;
             else if (t.TokenType == TType.Long && (long)t.Value >= 0)
                 return (ulong)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
+            else if (t.TokenType == TType.Double && (double)t.Value >= 0)       // doubles get trunced
                 return (ulong)(double)t.Value;
             else
                 return null;
@@ -243,10 +243,12 @@ namespace BaseUtils.JSON
         }
         public static explicit operator double? (JToken t)
         {
-            if (t.TokenType == TType.Long)
+            if (t.TokenType == TType.Long)                      // any of these types could be converted to double
                 return (double)(long)t.Value;
             else if (t.TokenType == TType.ULong)
                 return (double)(ulong)t.Value;
+            else if (t.TokenType == TType.BigInt)
+                return (double)(System.Numerics.BigInteger)t.Value;
             else if (t.TokenType == TType.Double)
                 return (double)t.Value;
             else
@@ -254,10 +256,12 @@ namespace BaseUtils.JSON
         }
         public static explicit operator double(JToken t)
         {
-            if (t.TokenType == TType.Long)
+            if (t.TokenType == TType.Long)                      
                 return (double)(long)t.Value;
             else if (t.TokenType == TType.ULong)
                 return (double)(ulong)t.Value;
+            else if (t.TokenType == TType.BigInt)
+                return (double)(System.Numerics.BigInteger)t.Value;
             else if (t.TokenType == TType.Double)
                 return (double)t.Value;
             else
@@ -265,10 +269,12 @@ namespace BaseUtils.JSON
         }
         public static explicit operator float? (JToken t)
         {
-            if (t.TokenType == TType.Long)
+            if (t.TokenType == TType.Long)                  // any of these types could be converted to double
                 return (float)(long)t.Value;
             else if (t.TokenType == TType.ULong)
                 return (float)(ulong)t.Value;
+            else if (t.TokenType == TType.BigInt)
+                return (float)(System.Numerics.BigInteger)t.Value;
             else if (t.TokenType == TType.Double)
                 return (float)(double)t.Value;
             else
@@ -280,6 +286,8 @@ namespace BaseUtils.JSON
                 return (float)(long)t.Value;
             else if (t.TokenType == TType.ULong)
                 return (float)(ulong)t.Value;
+            else if (t.TokenType == TType.BigInt)
+                return (float)(System.Numerics.BigInteger)t.Value;
             else if (t.TokenType == TType.Double)
                 return (float)(double)t.Value;
             else
@@ -298,7 +306,7 @@ namespace BaseUtils.JSON
         {
             if (t.TokenType == TType.Boolean)
                 return (bool)t.Value;
-            else if (t.TokenType == TType.Long)       // accept LONG 1/0 as boolean
+            else if (t.TokenType == TType.Long)      
                 return (long)t.Value != 0;
             else
                 throw new InvalidOperationException();
@@ -342,64 +350,6 @@ namespace BaseUtils.JSON
         #endregion
 
         #region Operators and functions
-
-        public bool DeepEquals(JToken other)
-        {
-            switch (TokenType)
-            {
-                case TType.Array:
-                    {
-                        JArray us = (JArray)this;
-                        if (other.TokenType == TType.Array)
-                        {
-                            JArray ot = (JArray)other;
-                            if (ot.Count == us.Count)
-                            {
-                                for (int i = 0; i < us.Count; i++)
-                                {
-                                    if (!us[i].DeepEquals(other[i]))
-                                        return false;
-                                }
-                                return true;
-                            }
-                            else
-                                return false;
-                        }
-                        else
-                            return false;
-                    }
-
-                case TType.Object:
-                    {
-                        JObject us = (JObject)this;
-                        if (other.TokenType == TType.Object)
-                        {
-                            JObject ot = (JObject)other;
-                            if (ot.Count == us.Count)
-                            {
-                                foreach (var kvp in us)
-                                {
-                                    if (!ot.ContainsKey(kvp.Key) || !kvp.Value.DeepEquals(ot[kvp.Key]))       // order unimportant to kvp
-                                        return false;
-                                }
-                                return true;
-                            }
-                            else
-                                return false;
-                        }
-                        else
-                            return false;
-                    }
-
-                default:
-                    return other.TokenType == this.TokenType && this.Value == other.Value;
-            }
-        }
-
-        static public bool DeepEquals(JToken left, JToken right)
-        {
-            return left != null && right != null && left.DeepEquals(right);
-        }
 
         // if called on a non indexed object, return JNotPresent().  
         // On an Array/Object, will return JNotPresent if not present, or indexer is not right type

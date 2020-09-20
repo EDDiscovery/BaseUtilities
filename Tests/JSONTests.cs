@@ -534,17 +534,38 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONDeepEquals()
         {
-            JToken decode = JToken.Parse(jsongithub);
-            Check.That(decode).IsNotNull();
-            JToken copy = decode.Clone();
-            Check.That(copy).IsNotNull();
-            string json1 = decode.ToString(true);
-            string json2 = copy.ToString(true);
-            Check.That(json1).Equals(json2);
-            System.Diagnostics.Debug.WriteLine(json2);
+            if ( false )
+            {
+                JToken decode = JToken.Parse(jsongithub);
+                Check.That(decode).IsNotNull();
+                JToken copy = decode.Clone();
+                Check.That(copy).IsNotNull();
+                string json1 = decode.ToString(true);
+                string json2 = copy.ToString(true);
+                Check.That(json1).Equals(json2);
+                System.Diagnostics.Debug.WriteLine(json2);
 
-            Check.That(decode.DeepEquals(copy)).IsTrue();
+                Check.That(decode.DeepEquals(copy)).IsTrue();
+            }
 
+            if (true)
+            {
+                string json1 = "{\"SystemAllegiance\":true,\"Array\":[10.0,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":true}";
+                JToken decode1 = JToken.Parse(json1);
+                string json1out = decode1.ToString();
+
+                Check.That(json1.Equals(json1out)).IsTrue();
+
+                string json2 = "{\"SystemAllegiance\":true,\"Array\":[10,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":1}";
+                JToken decode2 = JToken.Parse(json2);
+
+                Check.That(decode1.DeepEquals(decode2)).IsTrue();
+
+                string json3 = "{\"SystemAllegiance\":true,\"Array\":[10,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":\"string\"}";
+                JToken decode3 = JToken.Parse(json3);
+
+                Check.That(decode1.DeepEquals(decode3)).IsFalse();
+            }
         }
 
         public class Unlocked
