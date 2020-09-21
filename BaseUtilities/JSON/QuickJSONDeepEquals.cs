@@ -90,26 +90,22 @@ namespace BaseUtils.JSON
                     }
 
                 default:
-                    // logic here, is that if its read an integer, it always will pick the smallest rep (Long, ulong, Bigint) so they will be of the same type
-                    // but if someone has done 30.0, and the other 30, one will be double, one will be an integer, so we need to check that if either is double, 
-                    //      try and convert the other to double and compare. Then we are testing for value equality not type equality.
-                    // and since we accept 1/0 as true/false, we need to do the same with booleans
-                    // strings don't match with anything else.
+                    // compare this and other value.
+                    // if either is double we need to deal with it using an approxequals function due to floating point rep.
+                    //      and it allows an integer (30) to be compared with a float (30.0) so we try and convert both to doubles then approx equals
+                    // if both same token type, we can just use Equals
+                    // if one is a boolean, we convert both to boolean and compare (thus accepting 1/0 int as true/false)
 
-                    if (other.TokenType == this.TokenType)
-                    {
-                        bool equals = this.Value.Equals(other.Value);
-                        //System.Diagnostics.Debug.WriteLine("same type {0} vs {1} = {2}", this.Value, other.Value, equals);
-                        return equals;
-                    }
-                    else if (this.TokenType == TType.Double || other.TokenType == TType.Double)          // either is double
+                    if (this.TokenType == TType.Double || other.TokenType == TType.Double)          // either is double
                     {
                         double? usd = (double?)this;          // try and convert us to double
                         double? otherd = (double?)other;      // try and convert the other to double
+
                         if (usd != null && otherd != null)          // if we could, compare
                         {
-                            bool equals = usd.Value == otherd.Value;
-                            //System.Diagnostics.Debug.WriteLine("Convert to double {0} vs {1} = {2}", this.Value, other.Value, equals);
+                            const double epsilon = 2.2204460492503131E-12;                  // picked to be less than std E print range (14 digits).
+                            bool equals = usd.Value.ApproxEquals(otherd.Value, epsilon);
+                            //if (equals == false) System.Diagnostics.Debug.WriteLine("Convert to double {0} vs {1} = {2}", this.Value, other.Value, equals);
                             return equals;
                         }
                         else
@@ -118,6 +114,12 @@ namespace BaseUtils.JSON
                             return false;
                         }
                     }
+                    else if (other.TokenType == this.TokenType)         // if both the same token type, use Equals (int, string, boolean)
+                    {
+                        bool equals = this.Value.Equals(other.Value);
+                        //if ( equals == false ) System.Diagnostics.Debug.WriteLine("same type {0} vs {1} = {2}", this.Value, other.Value, equals);
+                        return equals;
+                    }
                     else if (this.TokenType == TType.Boolean || other.TokenType == TType.Boolean)          // either is boolean
                     {
                         bool? usb = (bool?)this;              // try and convert us to bool
@@ -125,7 +127,7 @@ namespace BaseUtils.JSON
                         if (usb != null && otherb != null)          // if we could, compare
                         {
                             bool equals = usb.Value == otherb.Value;
-                            //System.Diagnostics.Debug.WriteLine("Convert to bool {0} vs {1} = {2}", this.Value, other.Value, equals);
+                            //if (equals == false) System.Diagnostics.Debug.WriteLine("Convert to bool {0} vs {1} = {2}", this.Value, other.Value, equals);
                             return equals;
                         }
                         else
