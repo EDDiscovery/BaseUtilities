@@ -534,7 +534,7 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONDeepEquals()
         {
-            if ( false )
+            if ( true )
             {
                 JToken decode = JToken.Parse(jsongithub);
                 Check.That(decode).IsNotNull();
@@ -565,6 +565,16 @@ namespace EDDiscoveryTests
                 JToken decode3 = JToken.Parse(json3);
 
                 Check.That(decode1.DeepEquals(decode3)).IsFalse();
+            }
+
+
+            if (true)
+            {
+                string json1 = @"{""timestamp"":""2016-09-27T19:59:39Z"",""event"":""ShipyardTransfer"",""ShipType"":""FerDeLance"",""ShipID"":15,""System"":""Lembava"",""Distance"":939379235343040512.0,""TransferPrice"":2693097}";
+                string json2 = @"{""timestamp"":""2016-09-27T19:59:39Z"",""event"":""ShipyardTransfer"",""ShipType"":""FerDeLance"",""ShipID"":15,""System"":""Lembava"",""Distance"":939379235343040512.0,""TransferPrice"":2693097}";
+                JToken decode1 = JToken.Parse(json1);
+                JToken decode2 = JToken.Parse(json2);
+                Check.That(decode1.DeepEquals(decode2)).IsTrue();
             }
         }
 

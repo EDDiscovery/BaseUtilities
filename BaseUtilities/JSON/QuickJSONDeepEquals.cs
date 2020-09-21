@@ -114,6 +114,10 @@ namespace BaseUtils.JSON
                             return false;
                         }
                     }
+                    else if (this.TokenType == TType.Null || other.TokenType == TType.Null)    // if either is null
+                    {
+                        return this.TokenType == other.TokenType;       // if both are the same, ie. null, its true
+                    }
                     else if (other.TokenType == this.TokenType)         // if both the same token type, use Equals (int, string, boolean)
                     {
                         bool equals = this.Value.Equals(other.Value);
@@ -135,7 +139,6 @@ namespace BaseUtils.JSON
                             //System.Diagnostics.Debug.WriteLine("{0} vs {1} Not the same token type", this.TokenType, other.TokenType);
                             return false;
                         }
-
                     }
                     else
                     {
