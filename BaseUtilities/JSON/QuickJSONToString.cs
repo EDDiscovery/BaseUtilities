@@ -29,7 +29,7 @@ namespace BaseUtils.JSON
 
         public string ToStringLiteral()     // data as is, without quoting/escaping strings. Used for data extraction
         {
-            return ToString(false, "", "", "", true);
+            return ToString(this, "", "", "", true);
         }
 
         public string ToString(bool verbose = false, string pad = "  ")

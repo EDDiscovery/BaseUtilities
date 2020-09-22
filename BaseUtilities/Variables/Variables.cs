@@ -506,7 +506,7 @@ namespace BaseUtils
         #region JSON to variables   
 
         // verified 31/7/2020 with baseutils.JSON, recoded to properly work!
-        public void AddJSONVariables(JToken t, string name, string dateformat = "MM/dd/yyyy HH:mm:ss")     // give root name to start..
+        public void AddJSONVariables(JToken t, string name)     // give root name to start..
         {
             //System.Diagnostics.Debug.WriteLine(t.GetType().Name+ " " + name );
 
