@@ -102,7 +102,22 @@ namespace EDDiscoveryTests
                 }
             }
 
+            {
+                string json2 = @"{ ""data"": {""ver"":2, ""commander"":""Irisa Nyira"", ""fromSoftware"":""EDDiscovery"",  ""fromSoftwareVersion"":""11.7.2.0"", ""p0"": { ""name"": ""Hypo Aeb XF-M c8-0"" },   ""refs"": [ { ""name"": """"Hypua Hypoo MJ-S a72-0"""",  ""dist"": 658.84 } ] }  }";
+                JToken jo = JToken.Parse(json2, out string error, JToken.ParseOptions.CheckEOL );
+                Check.That(jo == null).IsTrue();
+            }
 
+            {
+                string quotedstr = "\"quote\"\nHello";
+                JObject jo = new JObject();
+                jo["str1"] = quotedstr;
+                string s = jo.ToString();
+                JObject jo1 = JObject.Parse(s);
+                Check.That(jo1 != null).IsTrue();
+                Check.That(jo1["str1"].Equals(quotedstr));
+
+            }
         }
 
         [Test]
