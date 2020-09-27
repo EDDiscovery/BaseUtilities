@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2019 EDDiscovery development team
+ * Copyright © 2017-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -162,6 +162,19 @@ namespace BaseUtils
         {
             System.Reflection.MethodInfo method = cls.GetMethod(methodname, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
             return method.MakeGenericMethod(gentype);
+        }
+
+        public static Object ChangeTo(this Type type, Object value)     // this extends ChangeType to handle nullables.
+        {
+            Type underlyingtype = Nullable.GetUnderlyingType(type);     // test if its a nullable type (double?)
+            if (underlyingtype != null)
+            {
+                return Convert.ChangeType(value, underlyingtype);
+            }
+            else
+            {
+                return Convert.ChangeType(value, type);       // convert to element type, which should work since we checked compatibility
+            }
         }
     }
 }

@@ -76,7 +76,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = Convert.ChangeType(ret, tt.GetElementType());       // convert to element type, which should work since we checked compatibility
+                            dynamic d = tt.GetElementType().ChangeTo(ret);
                             instance[i] = d;
                         }
                     }
@@ -99,7 +99,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = Convert.ChangeType(ret, types[0]);       // convert to element type, which should work since we checked compatibility
+                            dynamic d = types[0].ChangeTo(ret);
                             instance.Add(d);
                         }
                     }
@@ -135,7 +135,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = Convert.ChangeType(ret, types[1]);       // convert to element type, which should work since we checked compatibility
+                            dynamic d = types[1].ChangeTo(ret);
                             instance[kvp.Key] = d;
                         }
                     }
