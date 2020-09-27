@@ -686,6 +686,12 @@ namespace EDDiscoveryTests
                 var matsdict4 = jo4["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // and normal
                 Check.That(matsdict4).IsNotNull();
                 Check.That(matsdict4["iron"] == null);
+
+                string mats5 = @"{ ""Materials"":{ ""iron"":""present"", ""sulphur"":null } }";
+                JObject jo5 = JObject.Parse(mats5);
+                var matsdict5 = jo5["Materials"].ToObjectProtected<Dictionary<string, string>>();        // and normal
+                Check.That(matsdict4).IsNotNull();
+                Check.That(matsdict4["iron"] == null);
             }
 
 
