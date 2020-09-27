@@ -676,13 +676,19 @@ namespace EDDiscoveryTests
                 Check.That(matsdict2["iron"] == 19.741276);
 
                 string mats3 = @"{ ""Materials"":{ ""iron"":20, ""sulphur"":17.713514 } }";
-                JObject jo2 = JObject.Parse(mats3);
-                var matsdict3 = jo2["Materials"].ToObjectProtected<Dictionary<string, double>>();        // and normal
+                JObject jo3 = JObject.Parse(mats3);
+                var matsdict3 = jo3["Materials"].ToObjectProtected<Dictionary<string, double>>();        // and normal
                 Check.That(matsdict3).IsNotNull();
                 Check.That(matsdict3["iron"] == 20);
+
+                string mats4 = @"{ ""Materials"":{ ""iron"":null, ""sulphur"":17.713514 } }";
+                JObject jo4 = JObject.Parse(mats4);
+                var matsdict4 = jo4["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // and normal
+                Check.That(matsdict4).IsNotNull();
+                Check.That(matsdict4["iron"] == null);
             }
 
-    
+
             {
                 string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":2929,""Progress"":""Invited"",""Rank"":null},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
                 JToken englistj = JToken.Parse(englist);

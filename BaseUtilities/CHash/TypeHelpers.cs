@@ -169,7 +169,10 @@ namespace BaseUtils
             Type underlyingtype = Nullable.GetUnderlyingType(type);     // test if its a nullable type (double?)
             if (underlyingtype != null)
             {
-                return Convert.ChangeType(value, underlyingtype);
+                if (value == null)
+                    return null;
+                else
+                    return Convert.ChangeType(value, underlyingtype);
             }
             else
             {
