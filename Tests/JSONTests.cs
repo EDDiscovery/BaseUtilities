@@ -881,6 +881,41 @@ namespace EDDiscoveryTests
             }
 
             {
+                string mats = @"{ ""Materials"":{ ""iron"":19.741276, ""sulphur"":17.713514 } }";
+                JObject jo = JObject.Parse(mats);
+                var matsdict = jo["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // check it can handle nullable types
+                Check.That(matsdict).IsNotNull();
+                Check.That(matsdict["iron"].HasValue && matsdict["iron"].Value == 19.741276);
+                var json = JToken.FromObject(matsdict);
+                Check.That(json).IsNotNull();
+                var jsonw = new JObject();
+                jsonw["Materials"] = json;
+                Check.That(jsonw.DeepEquals(jo)).IsTrue();
+            }
+
+            {
+                var jo = new JArray();
+                jo.Add(10.23);
+                jo.Add(20.23);
+                var var1 = jo.ToObject<List<double>>();
+                var jback = JToken.FromObject(var1);
+                Check.That(jback.DeepEquals(jo)).IsTrue();
+            }
+
+            {
+                var mats2 = new Dictionary<string, double>();
+                mats2["Iron"] = 20.2;
+                mats2["Steel"] = 10;
+
+                var json = JObject.FromObject(mats2);
+                Check.That(json).IsNotNull();
+                Check.That(json["Iron"].Double()).Equals(20.2);
+                Check.That(json["Steel"].Double()).Equals(10);
+
+
+            }
+
+            {
                 string propertyv =
 @"[
   {
