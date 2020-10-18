@@ -101,6 +101,8 @@ namespace BaseUtils.JSON
                 s += prepad + "}" + postpad;
                 return s;
             }
+            else if (o.TokenType == TType.Error)
+                return "ERROR:" + (string)o.Value;
             else
                 return null;
         }

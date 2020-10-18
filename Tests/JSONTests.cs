@@ -654,10 +654,6 @@ namespace EDDiscoveryTests
         }
 
         public enum TestEnum { one,two, three};
-        public class FromObjectTest
-        {
-            public TestEnum t1;
-        }
 
         [Test]
         public void JSONToObject()
@@ -860,9 +856,44 @@ namespace EDDiscoveryTests
             }
         }
 
+        class FromTest
+        {
+            public int v1;
+            public string v2;
+            public FromTest2 other1;
+        }
+        class FromTest2
+        {
+            public int v1;
+            public string v2;
+            public FromTest other2;
+        }
+
+        public class FromObjectTest
+        {
+            public TestEnum t1;
+        }
+
         [Test]
         public void JSONFromObject()
         {
+            {
+                var fm = new FromTest() { v1 = 10, v2 = "Hello1" };
+                var fm2 = new FromTest2() { v1 = 20, v2 = "Hello2" };
+                fm.other1 = fm2;
+                fm2.other2 = fm;
+
+                JToken t = JToken.FromObjectWithError(fm, false);
+                Check.That(t.IsInError).IsTrue();
+                Check.That(((string)t.Value).Contains("Self")).IsTrue();        // check self ref fails
+                System.Diagnostics.Debug.WriteLine(t.Value.ToString());
+
+                JToken t2 = JToken.FromObjectWithError(fm, true);
+                Check.That(t2.IsObject).IsTrue();
+                Check.That(t2["other1"]["v1"].Int()).Equals(20);                // check ignores self ref and does as much as possible
+                System.Diagnostics.Debug.WriteLine(t.Value.ToString());
+            }
+
             {
                 var mats = new Materials[2];
                 mats[0] = new Materials();

@@ -27,7 +27,7 @@ namespace BaseUtils.JSON
     [System.Diagnostics.DebuggerDisplay("{TokenType} {ToString()}")]
     public partial class JToken : IEnumerable<JToken>, IEnumerable
     {
-        public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray }
+        public enum TType { Null, Boolean, String, Double, Long, ULong, BigInt, Object, Array, EndObject, EndArray, Error }
 
         public TType TokenType { get; set; }                    // type of token
         public Object Value { get; set; }                       // value of token, if it has one
@@ -47,6 +47,7 @@ namespace BaseUtils.JSON
         public bool IsProperty { get { return Name != null; } }                     // indicates that the object is an object property
         public bool IsEndObject { get { return TokenType == TType.EndObject; } }    // only seen for TokenReader
         public bool IsEndArray { get { return TokenType == TType.EndArray; } }      // only seen for TokenReader
+        public bool IsInError { get { return TokenType == TType.Error; } }          // only seen for FromObject when asking for error return
 
         #region Construction
 

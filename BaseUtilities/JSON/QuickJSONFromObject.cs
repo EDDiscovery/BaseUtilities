@@ -33,13 +33,30 @@ namespace BaseUtils.JSON
     public partial class JToken
     {
         // null if can't convert
-
         public static JToken FromObject(Object o)
         {
             return FromObject(o, false, null);
         }
 
-        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored)
+        // null if can't convert
+        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored = null)
+        {
+            Stack<Object> objectlist = new Stack<object>();
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist);
+            System.Diagnostics.Debug.Assert(objectlist.Count == 0);
+            return r.IsInError ? null : r;
+        }
+
+        // JToken Error on error, value is reason as a string
+        public static JToken FromObjectWithError(Object o, bool ignoreunserialisable, Type[] ignored = null)
+        {
+            Stack<Object> objectlist = new Stack<object>();
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist);
+            System.Diagnostics.Debug.Assert(objectlist.Count == 0);
+            return r;
+        }
+
+        private static JToken FromObjectInt(Object o, bool ignoreunserialisable, Type[] ignored, Stack<Object> objectlist)
         {
             Type tt = o.GetType();
 
@@ -49,15 +66,29 @@ namespace BaseUtils.JSON
 
                 JArray outarray = new JArray();
 
+                objectlist.Push(o);
+
                 for (int i = 0; i < b.Length; i++)
                 {
                     object oa = b.GetValue(i);
-                    JToken inner = FromObject(oa, ignoreunserialisable, ignored);
-                    if (inner == null)
-                        return null;
+                    if (objectlist.Contains(oa))        // self reference
+                    {
+                        objectlist.Pop();
+                        return new JToken(TType.Error, "Self Reference in Array");
+                    }
+
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist);
+
+                    if (inner.IsInError)      // used as an error type
+                    {
+                        objectlist.Pop();
+                        return inner;
+                    }
+
                     outarray.Add(inner);
                 }
 
+                objectlist.Pop();
                 return outarray;
             }
             else if (typeof(System.Collections.IList).IsAssignableFrom(tt))
@@ -66,14 +97,28 @@ namespace BaseUtils.JSON
 
                 JArray outarray = new JArray();
 
+                objectlist.Push(o);
+
                 foreach (var oa in ilist)
                 {
-                    JToken inner = FromObject(oa, ignoreunserialisable, ignored);
-                    if (inner == null)
-                        return null;
+                    if (objectlist.Contains(oa))        // self reference
+                    {
+                        objectlist.Pop();
+                        return new JToken(TType.Error, "Self Reference in IList");
+                    }
+
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist);
+
+                    if (inner.IsInError)      // used as an error type
+                    {
+                        objectlist.Pop();
+                        return inner;
+                    }
+
                     outarray.Add(inner);
                 }
 
+                objectlist.Pop();
                 return outarray;
             }
             else if (typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
@@ -82,14 +127,30 @@ namespace BaseUtils.JSON
 
                 JObject outobj = new JObject();
 
+                objectlist.Push(o);
+
                 foreach (dynamic kvp in idict)      // need dynamic since don't know the types of Value or Key
                 {
-                    JToken inner = FromObject(kvp.Value, ignoreunserialisable, ignored);
-                    if (inner == null)
-                        return null;
+                    if (objectlist.Contains(kvp.Value))   // self reference
+                    {
+                        if (ignoreunserialisable)       // if ignoring this, just continue with the next one
+                            continue;
+
+                        objectlist.Pop();
+                        return new JToken(TType.Error, "Self Reference in IDictionary");
+                    }
+
+                    JToken inner = FromObjectInt(kvp.Value, ignoreunserialisable, ignored, objectlist);
+                    if (inner.IsInError)      // used as an error type
+                    {
+                        objectlist.Pop();
+                        return inner;
+                    }
+
                     outobj[kvp.Key] = inner;
                 }
 
+                objectlist.Pop();
                 return outobj;
             }
             else if (tt.IsClass && tt != typeof(string))
@@ -98,6 +159,8 @@ namespace BaseUtils.JSON
 
                 var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
                                             System.Reflection.BindingFlags.Public );
+
+                objectlist.Push(o);
 
                 foreach (var mi in allmembers)
                 {
@@ -129,7 +192,7 @@ namespace BaseUtils.JSON
                         attrname = attr.Name;
                     }
 
-                    System.Diagnostics.Debug.WriteLine("Member " + mi.Name + " " + mi.MemberType + " attrname " + attrname);
+                    //System.Diagnostics.Debug.WriteLine("Member " + mi.Name + " " + mi.MemberType + " attrname " + attrname);
 
                     Object innervalue = null;
                     if (mi.MemberType == System.Reflection.MemberTypes.Property)
@@ -139,12 +202,24 @@ namespace BaseUtils.JSON
 
                     if ( innervalue != null )
                     {
-                        var token = FromObject(innervalue, ignoreunserialisable, ignored);     // may return null if not serializable
+                        if (objectlist.Contains(innervalue))        // self reference
+                        {
+                            if (ignoreunserialisable)               // if ignoring this, just continue with the next one
+                                continue;
 
-                        if (token == null)
+                            objectlist.Pop();
+                            return new JToken(TType.Error, "Self Reference by " + tt.Name + ":" + mi.Name );
+                        }
+
+                        var token = FromObjectInt(innervalue, ignoreunserialisable, ignored, objectlist);     // may return End Object if not serializable
+
+                        if (token.IsInError)
                         {
                             if (!ignoreunserialisable)
-                                return null;
+                            {
+                                objectlist.Pop();
+                                return token;
+                            }
                         }
                         else
                             outobj[attrname] = token;
@@ -155,13 +230,18 @@ namespace BaseUtils.JSON
                     }
                 }
 
+                objectlist.Pop();
                 return outobj;
             }
             else
             {
-                return JToken.CreateToken(o, false);        // return token or null indicating unserializable
+                var r = JToken.CreateToken(o, false);        // return token or null indicating unserializable
+                                                             //                return r ?? new JToken(TType.Error, "Unserializable " + tt.Name);
+                return r ?? new JToken(TType.Error, "Unserializable " + tt.Name);
             }
         }
+
+
     }
 }
 
