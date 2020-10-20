@@ -320,6 +320,24 @@ namespace BaseUtils.JSON
                 return DateTime.MinValue;
         }
 
+        public bool ValueEquals(Object value)               // NOTE not doing float/double due to approximations. Don't override Equals.
+        {
+            if (value is string)
+                return ((string)this) != null && ((string)this).Equals((string)value);
+            else if (value is int)
+                return ((int?)this) != null && ((int)this).Equals((int)value);
+            else if (value is uint)
+                return ((uint?)this) != null && ((uint)this).Equals((uint)value);
+            else if (value is ulong)
+                return ((ulong?)this) != null && ((ulong)this).Equals((ulong)value);
+            else if (value is long)
+                return ((long?)this) != null && ((long)this).Equals((long)value);
+            else if (value is bool)
+                return ((bool?)this) != null && ((bool)this).Equals((bool)value);
+            else
+                return false;
+        }
+
         public JToken Clone()   // make a copy of the token
         {
             switch (TokenType)
