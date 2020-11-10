@@ -22,6 +22,17 @@ namespace SQLLiteExtensions
 {
     // Connection with a register
 
+    public class SQLConnectionException : Exception
+    {
+        public string Filename { get; set; }
+
+        public SQLConnectionException(string filename, Exception innerException)
+            : base($"Unable to open database {filename}: {innerException.Message}", innerException)
+        {
+            Filename = filename;
+        }
+    }
+
     public class SQLExtConnectionRegister<TConn> : SQLExtConnection where TConn : SQLExtConnection, new()
     {
         public SQLExtConnectionRegister(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter) : base(mode)
@@ -44,7 +55,14 @@ namespace SQLLiteExtensions
 
                 // System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
 
-                connection.Open();
+                try
+                {
+                    connection.Open();
+                }
+                catch (Exception ex)
+                {
+                    throw new SQLConnectionException(dbfile, ex);
+                }
 
                 registerclass = new SQLExtRegister(this);
             }
