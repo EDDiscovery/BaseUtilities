@@ -280,7 +280,7 @@ public static class DataGridViewControlHelpersStaticFunc
 
     }
 
-    public static bool AllSelectionsOnSameRow(this DataGridView dgv)
+    public static bool IsAllSelectionsOnSameRow(this DataGridView dgv)
     {
         if (dgv.SelectedCells.Count > 0)
         {
@@ -303,6 +303,14 @@ public static class DataGridViewControlHelpersStaticFunc
         foreach (DataGridViewColumn c in dgv.Columns)
             count += c.Visible ? 0 : 1;
         return count;
+    }
+
+    public static int GetColumnPixelPosition(this DataGridView dgv, int col)
+    {
+        int xpos = dgv.RowHeadersVisible ? dgv.RowHeadersWidth : 0;
+        for (int i = 0; i < col; i++)
+            xpos += dgv.Columns[i].Visible ? dgv.Columns[i].Width : 0;
+        return xpos;
     }
 
     public static void SetCurrentCellOrRow(this DataGridView dgv, int row, int preferredcolumn)
