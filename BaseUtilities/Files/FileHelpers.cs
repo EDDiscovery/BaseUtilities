@@ -48,15 +48,31 @@ namespace BaseUtils
             return (errorifpastroot && above >0 ) ? null : di;
         }
 
-        public static void DeleteFileNoError(string path)
+        public static bool DeleteFileNoError(string path)
         {
             try
             {
                 File.Delete(path);
+                return true;
             }
             catch
             {       // on purpose no error - thats the point of it
                 //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
+            }
+        }
+
+        public static bool CreateDirectoryNoError(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch
+            {       // on purpose no error - thats the point of it
+                //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
             }
         }
     }
