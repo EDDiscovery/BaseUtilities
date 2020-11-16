@@ -48,15 +48,56 @@ namespace BaseUtils
             return (errorifpastroot && above >0 ) ? null : di;
         }
 
-        public static void DeleteFileNoError(string path)
+        public static bool DeleteFileNoError(string path)
         {
             try
             {
                 File.Delete(path);
+                return true;
             }
             catch
             {       // on purpose no error - thats the point of it
                 //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
+            }
+        }
+
+        public static bool CreateDirectoryNoError(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch
+            {       // on purpose no error - thats the point of it
+                //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
+            }
+        }
+
+        public static bool VerifyWriteToDirectory(string path)
+        {
+            try
+            {
+                for( int i = 0; i < int.MaxValue; i++)
+                {
+                    string tempfilename = Path.Combine(path, "tempfiletotestwrite" + i.ToStringInvariant());
+                    if ( !File.Exists(tempfilename))
+                    {
+                        File.WriteAllText(tempfilename, "Test content");        // will except if can't write
+                        if (!File.Exists(tempfilename))     // check its there
+                            return false;
+                        File.Delete(tempfilename);      // will except if can't delete
+                        return true;
+                    }
+                }
+
+                return false;       // lets hope we never get here
+            }
+            catch
+            {
+                return false;       // exception, can't write
             }
         }
     }

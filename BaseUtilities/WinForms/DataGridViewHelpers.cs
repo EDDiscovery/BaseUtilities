@@ -18,14 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.Form;
 
 public static class DataGridViewControlHelpersStaticFunc
 {
@@ -286,37 +280,104 @@ public static class DataGridViewControlHelpersStaticFunc
 
     }
 
-    public static void HandleClickOnDataGrid( this DataGridView dgv, MouseEventArgs e, out int leftclickrow, out int rightclickrow )
+    public static bool IsAllSelectionsOnSameRow(this DataGridView dgv)
     {
-        rightclickrow = -1;
-        leftclickrow = -1;
-
-        if (dgv.SelectedCells.Count < 2 || dgv.SelectedRows.Count == 1)      // if single row completely selected, or 1 cell or less..
+        if (dgv.SelectedCells.Count > 0)
         {
-            DataGridView.HitTestInfo hti = dgv.HitTest(e.X, e.Y);
-
-            if (hti.Type == DataGridViewHitTestType.Cell)
+            int rowno = dgv.SelectedCells[0].RowIndex;
+            for (int i = 1; i < dgv.SelectedCells.Count; i++)
             {
-                dgv.ClearSelection();                // select row under cursor.
-                dgv.Rows[hti.RowIndex].Selected = true;
+                if (dgv.SelectedCells[i].RowIndex != rowno)
+                    return false;
+            }
 
-                if (e.Button == MouseButtons.Right)         // right click on travel map, get in before the context menu
+            return true;
+        }
+        else
+            return false;
+    }
+
+    public static int ColumnsHidden(this DataGridView dgv)
+    {
+        int count = 0;
+        foreach (DataGridViewColumn c in dgv.Columns)
+            count += c.Visible ? 0 : 1;
+        return count;
+    }
+
+    public static int GetColumnPixelPosition(this DataGridView dgv, int col)
+    {
+        int xpos = dgv.RowHeadersVisible ? dgv.RowHeadersWidth : 0;
+        for (int i = 0; i < col; i++)
+            xpos += dgv.Columns[i].Visible ? dgv.Columns[i].Width : 0;
+        return xpos;
+    }
+
+    // tries to set row, preferredcolumn, else tries another one on same row
+    public static bool SetCurrentSelOnRow(this DataGridView dgv, int row, int preferredcolumn)
+    {
+        if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
+        {
+            if (preferredcolumn < dgv.Columns.Count && dgv.Columns[preferredcolumn].Visible)
+            {
+                dgv.CurrentCell = dgv.Rows[row].Cells[preferredcolumn];
+                return true;
+            }
+            else
+            {
+                for (int i = preferredcolumn + 1; i < dgv.Columns.Count; i++)
                 {
-                    rightclickrow = hti.RowIndex;
+                    if (dgv.Columns[i].Visible)
+                    {
+                        dgv.CurrentCell = dgv.Rows[row].Cells[i];
+                        return true;
+                    }
                 }
-                if (e.Button == MouseButtons.Left)         // right click on travel map, get in before the context menu
+                for (int i = preferredcolumn - 1; i >= 0; i--)
                 {
-                    leftclickrow = hti.RowIndex;
+                    if (dgv.Columns[i].Visible)
+                    {
+                        dgv.CurrentCell = dgv.Rows[row].Cells[i];
+                        return true;
+                    }
                 }
             }
         }
+
+        return false;
     }
 
+    // Sets selected to all cells on row and sets Current to first visible
+    public static bool SetCurrentAndSelectAllCellsOnRow(this DataGridView dgv, int row)
+    {
+        if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
+        {
+            DataGridViewRow rw = dgv.Rows[row];
+            bool setcurrent = false;
+            for (int i = 0; i < dgv.Columns.Count; i++)
+            {
+                if ( dgv.Columns[i].Visible)
+                {
+                    if (!setcurrent)
+                    {
+                        dgv.CurrentCell = rw.Cells[i];
+                        setcurrent = true;
+                    }
+
+                    rw.Cells[i].Selected = true;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 
     // index is some key and a DGV row. Move to it, try and display it, return true if we moved.
     // force means we must move somewhere.
 
-    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long,DataGridViewRow> index, ref Tuple<long, int> pos, bool force, int column)
+    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long,DataGridViewRow> index, ref Tuple<long, int> pos, bool force)
     {
         if (pos.Item1 == -2)          // if done, ignore
         {
@@ -326,7 +387,8 @@ public static class DataGridViewControlHelpersStaticFunc
             if (dgv.Rows.GetRowCount(DataGridViewElementStates.Visible) > 0)
             {
                 int rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
-                dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
+
+                dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
 
                 if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
                     dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
@@ -351,7 +413,8 @@ public static class DataGridViewControlHelpersStaticFunc
             {
                 //System.Diagnostics.Debug.WriteLine("Found Select " + pos.Item1 + " row " + rowno);
                 dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
-                dgv.CurrentCell = dgv.Rows[rowno].Cells[pos.Item2];       // its the current cell which needs to be set, moves the row marker as well            currentGridRow = (rowno!=-1) ? 
+
+                dgv.SetCurrentSelOnRow(rowno, pos.Item2);
 
                 if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
                     dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
@@ -364,7 +427,8 @@ public static class DataGridViewControlHelpersStaticFunc
                 if (dgv.Rows.GetRowCount(DataGridViewElementStates.Visible) > 0)
                 {
                     rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
-                    dgv.CurrentCell = dgv.Rows[rowno].Cells[column];
+
+                    dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
 
                     if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
                         dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
