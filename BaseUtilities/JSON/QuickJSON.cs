@@ -75,6 +75,34 @@ namespace BaseUtils.JSON
             else
                 return new JToken(TType.String, v);
         }
+        public static implicit operator JToken(bool v)      // same order as https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/built-in-types
+        {
+            return new JToken(TType.Boolean, v);
+        }
+        public static implicit operator JToken(byte v)
+        {
+            return new JToken(TType.Long, (long)v);
+        }
+        public static implicit operator JToken(sbyte v)
+        {
+            return new JToken(TType.Long, (long)v);
+        }
+        public static implicit operator JToken(char v)
+        {
+            return new JToken(TType.String, v.ToString());
+        }
+        public static implicit operator JToken(decimal v)
+        {
+            return new JToken(TType.Long, (long)v);
+        }
+        public static implicit operator JToken(double v)
+        {
+            return new JToken(TType.Double, v);
+        }
+        public static implicit operator JToken(float v)
+        {
+            return new JToken(TType.Double, (double)v);
+        }
         public static implicit operator JToken(int v)
         {
             return new JToken(TType.Long, (long)v);
@@ -91,17 +119,13 @@ namespace BaseUtils.JSON
         {
             return new JToken(TType.ULong, v);
         }
-        public static implicit operator JToken(double v)
+        public static implicit operator JToken(short v)
         {
-            return new JToken(TType.Double, v);
+            return new JToken(TType.Long, (long)v);
         }
-        public static implicit operator JToken(float v)
+        public static implicit operator JToken(ushort v)
         {
-            return new JToken(TType.Double, (double)v);
-        }
-        public static implicit operator JToken(bool v)
-        {
-            return new JToken(TType.Boolean, v);
+            return new JToken(TType.Long, (long)v);
         }
         public static implicit operator JToken(DateTime v)
         {
@@ -113,20 +137,32 @@ namespace BaseUtils.JSON
                 return Null();
             else if (o is string)
                 return (string)o;
+            else if (o is bool || o is bool?)
+                return (bool)o;
+            else if (o is byte || o is byte?)
+                return (byte)o;
+            else if (o is sbyte || o is sbyte?)
+                return (sbyte)o;
+            else if (o is char || o is char?)
+                return (char)o;
+            else if (o is decimal || o is decimal?)
+                return (decimal)o;
             else if (o is double || o is double?)
                 return (double)o;
             else if (o is float || o is float?)
                 return (float)o;
-            else if (o is long || o is long?)
-                return (long)o;
-            else if (o is ulong || o is ulong?)
-                return (ulong)o;
             else if (o is int || o is int?)
                 return (int)o;
             else if (o is uint || o is uint?)
                 return (uint)o;
-            else if (o is bool || o is bool?)
-                return (bool)o;
+            else if (o is long || o is long?)
+                return (long)o;
+            else if (o is ulong || o is ulong?)
+                return (ulong)o;
+            else if (o is short || o is short?)
+                return (short)o;
+            else if (o is ushort || o is ushort?)
+                return (ushort)o;
             else if (o is JArray)
             {
                 var ja = o as JArray;

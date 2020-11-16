@@ -33,31 +33,36 @@ namespace BaseUtils.JSON
     public partial class JToken
     {
         // null if can't convert
-        public static JToken FromObject(Object o)
+        public static JToken FromObject(Object o)       // beware of using this except for the simpliest classes, use one below and control the ignored/max recursion
         {
-            return FromObject(o, false, null);
+            return FromObject(o, false);
         }
 
         // null if can't convert
-        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored = null)
+        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256)
         {
             Stack<Object> objectlist = new Stack<object>();
-            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist);
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth);
             System.Diagnostics.Debug.Assert(objectlist.Count == 0);
             return r.IsInError ? null : r;
         }
 
         // JToken Error on error, value is reason as a string
-        public static JToken FromObjectWithError(Object o, bool ignoreunserialisable, Type[] ignored = null)
+        public static JToken FromObjectWithError(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256)
         {
             Stack<Object> objectlist = new Stack<object>();
-            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist);
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth);
             System.Diagnostics.Debug.Assert(objectlist.Count == 0);
             return r;
         }
 
-        private static JToken FromObjectInt(Object o, bool ignoreunserialisable, Type[] ignored, Stack<Object> objectlist)
+        private static JToken FromObjectInt(Object o, bool ignoreunserialisable, Type[] ignored, Stack<Object> objectlist, int lvl, int maxrecursiondepth)
         {
+            //System.Diagnostics.Debug.WriteLine(lvl + "From Object on " + o.GetType().Name);
+
+            if (lvl >= maxrecursiondepth)
+                return new JToken();        // returns NULL
+
             Type tt = o.GetType();
 
             if (tt.IsArray)
@@ -77,7 +82,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in Array");
                     }
 
-                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist);
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
 
                     if (inner.IsInError)      // used as an error type
                     {
@@ -107,7 +112,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in IList");
                     }
 
-                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist);
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
 
                     if (inner.IsInError)      // used as an error type
                     {
@@ -140,7 +145,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in IDictionary");
                     }
 
-                    JToken inner = FromObjectInt(kvp.Value, ignoreunserialisable, ignored, objectlist);
+                    JToken inner = FromObjectInt(kvp.Value, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
                     if (inner.IsInError)      // used as an error type
                     {
                         objectlist.Pop();
@@ -213,7 +218,7 @@ namespace BaseUtils.JSON
                             return new JToken(TType.Error, "Self Reference by " + tt.Name + ":" + mi.Name );
                         }
 
-                        var token = FromObjectInt(innervalue, ignoreunserialisable, ignored, objectlist);     // may return End Object if not serializable
+                        var token = FromObjectInt(innervalue, ignoreunserialisable, ignored, objectlist, lvl+1, maxrecursiondepth);     // may return End Object if not serializable
 
                         if (token.IsInError)
                         {
