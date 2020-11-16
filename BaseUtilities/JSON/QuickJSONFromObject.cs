@@ -153,7 +153,9 @@ namespace BaseUtils.JSON
                 objectlist.Pop();
                 return outobj;
             }
-            else if (tt.IsClass && tt != typeof(string))
+            else if ( (tt.IsClass && tt != typeof(string)) ||                           // if class, but not string (handled in CreateToken)
+                      (tt.IsValueType && !tt.IsPrimitive && !tt.IsEnum && tt != typeof(DateTime))     // if value type, not primitive, not enum, its a structure. Not datetime (handled in CreateToken)
+                      )
             {
                 JObject outobj = new JObject();
 

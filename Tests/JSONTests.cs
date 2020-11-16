@@ -16,7 +16,9 @@
 using BaseUtils.JSON;
 using NFluent;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 
@@ -659,6 +661,13 @@ namespace EDDiscoveryTests
         public void JSONToObject()
         {
             {
+                string ts = @"{""IsEmpty"":false,""Width"":10.1999998092651,""Height"":12.1999998092651,""Empty"":{""IsEmpty"":true,""Width"":0.0,""Height"":0.0}}";
+                JToken j = JToken.Parse(ts);
+                SizeF sf = j.ToObjectProtected<SizeF>(true);
+            }
+
+
+            {
                 string mats = @"{ ""Materials"":{ ""iron"":19.741276, ""sulphur"":17.713514 } }";
 
                 JObject jo = JObject.Parse(mats);
@@ -877,6 +886,30 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONFromObject()
         {
+            //{     check code for types.. see what type() is saying
+            //    int a = 10;
+            //    float f = 20;
+            //    Type tta = a.GetType();
+            //    string b = "hello";
+            //    Type ttb = b.GetType();
+            //    SizeF sf = new SizeF(10.2f, 12.2f);
+            //    Type ttc = sf.GetType();
+            //    DateTime tme = DateTime.UtcNow;
+            //    Type ttt = tme.GetType();
+            //    JArray ja = new JArray();
+            //    double? dt = 10.0;
+            //    TestEnum enumvalue = TestEnum.one;
+            //   // JToken t = JToken.FromObject(dt);
+            //}
+
+            {
+                SizeF sf = new SizeF(10.2f, 12.2f);
+
+                JToken t = JToken.FromObject(sf, true);
+                string ts = @"{""IsEmpty"":false,""Width"":10.1999998092651,""Height"":12.1999998092651,""Empty"":{""IsEmpty"":true,""Width"":0.0,""Height"":0.0}}";
+                Check.That(t.ToString()).Equals(ts);                // check ignores self ref and does as much as possible
+            }
+
             {
                 var fm = new FromTest() { v1 = 10, v2 = "Hello1" };
                 var fm2 = new FromTest2() { v1 = 20, v2 = "Hello2" };
@@ -990,6 +1023,7 @@ namespace EDDiscoveryTests
                 FromObjectTest r = t.ToObject<FromObjectTest>();
                 Check.That(r.t1 == TestEnum.three);
             }
+
 
         }
 
