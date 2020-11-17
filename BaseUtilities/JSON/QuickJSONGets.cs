@@ -253,7 +253,28 @@ namespace BaseUtils.JSON
             return jo.RenameObjectFields(prefix, "", true);
         }
 
+        public static JToken JSONParse(this string s, JToken.ParseOptions opt = JToken.ParseOptions.None)
+        {
+            if (s != null)
+                return JToken.Parse(s, opt);
+            else
+                return null;
+        }
 
+        public static JObject JSONParseObject(this string s, JToken.ParseOptions opt = JToken.ParseOptions.None)
+        {
+            if (s != null)
+                return JObject.Parse(s, opt);
+            else
+                return null;
+        }
+        public static JArray JSONParseArray(this string s, JToken.ParseOptions opt = JToken.ParseOptions.None)
+        {
+            if (s != null)
+                return JArray.Parse(s, opt);
+            else
+                return null;
+        }
     }
 }
 
