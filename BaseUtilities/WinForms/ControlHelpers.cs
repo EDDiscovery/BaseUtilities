@@ -710,6 +710,41 @@ public static class ControlHelpersStaticFunc
         return highest;
     }
 
+    static public void ApplyAnchor(this Control c, AnchorStyles ac, Point initialpos, Size initialsize, int widthdelta, int heightdelta)
+    {
+        if (ac == AnchorStyles.None)
+            return;
+
+        //System.Diagnostics.Debug.WriteLine("Control {0} is at {1}, initialpos {2} ", c.Name, c.Location, initialpos);
+        int left = initialpos.X;
+        int width = initialsize.Width;
+        if ((ac & AnchorStyles.Right) != 0)
+        {
+            if ((ac & AnchorStyles.Left) != 0)
+            {
+                width = Math.Max(initialsize.Width, initialsize.Width + widthdelta);
+            }
+            else
+                left = Math.Max(initialpos.X, initialpos.X + widthdelta);
+        }
+
+        int top = initialpos.Y;
+        int height = initialsize.Height;
+        if ((ac & AnchorStyles.Bottom) != 0)
+        {
+            if ((ac & AnchorStyles.Top) != 0)
+            {
+                height = Math.Max(initialsize.Height, initialsize.Height + heightdelta);
+            }
+            else
+                top = Math.Max(initialpos.Y, initialpos.Y + heightdelta);
+        }
+
+        //System.Diagnostics.Debug.WriteLine("Move to {0} to {1} {2}", c.Name, new Point(left, top), new Size(width, height));
+        c.Location = new Point(left, top);
+        c.Size = new Size(width, height);
+        //System.Diagnostics.Debug.WriteLine(".. results in {0} {1}", c.Location, c.Size);
+    }
 
     #endregion
 }
