@@ -452,4 +452,14 @@ public static class DataGridViewControlHelpersStaticFunc
             return -1;
     }
 
+    public static void CreateTextColumns(this DataGridView grid, params Object[] paras)
+    {
+        for (int i = 0; i < paras.Length-1; i += 3)
+        {
+            DataGridViewTextBoxColumn cl = new DataGridViewTextBoxColumn()
+                { FillWeight = (int)paras[i + 1], Name = (string)paras[i], HeaderText = (string)paras[i], MinimumWidth = (int)paras[i+2] };
+            grid.Columns.Add(cl);
+        }
+    }
+
 }
