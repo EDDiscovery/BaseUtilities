@@ -23,20 +23,20 @@ using System.Windows.Forms;
 
 public static class DataGridViewControlHelpersStaticFunc
 {
-    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext= null)
+    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null)
     {
         string s1 = e.CellValue1?.ToString();
         string s2 = e.CellValue2?.ToString();
 
         if (removetext != null)
         {
-            if ( s1 != null )
+            if (s1 != null)
                 s1 = s1.Replace(removetext, "");
-            if ( s2 != null )
+            if (s2 != null)
                 s2 = s2.Replace(removetext, "");
         }
 
-        double v1=0, v2=0;
+        double v1 = 0, v2 = 0;
 
         bool v1hasval = s1 != null && Double.TryParse(s1, out v1);
         bool v2hasval = s2 != null && Double.TryParse(s2, out v2);
@@ -64,8 +64,8 @@ public static class DataGridViewControlHelpersStaticFunc
 
         DateTime v1 = DateTime.MinValue, v2 = DateTime.MinValue;
 
-        bool v1hasval = s1!=null && DateTime.TryParse(e.CellValue1?.ToString(), out v1);
-        bool v2hasval = s2!=null && DateTime.TryParse(e.CellValue2?.ToString(), out v2);
+        bool v1hasval = s1 != null && DateTime.TryParse(e.CellValue1?.ToString(), out v1);
+        bool v2hasval = s2 != null && DateTime.TryParse(e.CellValue2?.ToString(), out v2);
 
         if (!v1hasval)
         {
@@ -80,7 +80,7 @@ public static class DataGridViewControlHelpersStaticFunc
             e.SortResult = v1.CompareTo(v2);
         }
 
-        if ( e.SortResult == 0 && userowtagtodistinguish)
+        if (e.SortResult == 0 && userowtagtodistinguish)
         {
             var left = e.Column.DataGridView.Rows[e.RowIndex1].Tag;
             var right = e.Column.DataGridView.Rows[e.RowIndex2].Tag;
@@ -150,7 +150,7 @@ public static class DataGridViewControlHelpersStaticFunc
     {
         foreach (DataGridViewRow row in grid.Rows)
         {
-            if (row.Cells[coln].Value.ToString().Equals(text,sc))
+            if (row.Cells[coln].Value.ToString().Equals(text, sc))
             {
                 return row.Index;
             }
@@ -168,7 +168,7 @@ public static class DataGridViewControlHelpersStaticFunc
         {
             //System.Diagnostics.Debug.WriteLine("Set row to " + Math.Max(0, rowclosest - drows / 2));
 
-            grid.SafeFirstDisplayedScrollingRowIndex( Math.Max(0, rown - drows / 2) );
+            grid.SafeFirstDisplayedScrollingRowIndex(Math.Max(0, rown - drows / 2));
             grid.Update();      //FORCE the update so we get an idea if its displayed
             drows--;
         }
@@ -251,15 +251,15 @@ public static class DataGridViewControlHelpersStaticFunc
         vw.ResumeLayout();
     }
 
-    public static bool IsNullOrEmpty( this DataGridViewCell cell)
+    public static bool IsNullOrEmpty(this DataGridViewCell cell)
     {
         return cell.Value == null || cell.Value.ToString().Length == 0;
     }
 
-    public static int GetNumberOfVisibleRowsAbove( this DataGridViewRowCollection table, int rowindex )
+    public static int GetNumberOfVisibleRowsAbove(this DataGridViewRowCollection table, int rowindex)
     {
         int visible = 0;
-        for( int i = 0; i < rowindex; i++ )
+        for (int i = 0; i < rowindex; i++)
         {
             if (table[i].Visible)
                 visible++;
@@ -356,7 +356,7 @@ public static class DataGridViewControlHelpersStaticFunc
             bool setcurrent = false;
             for (int i = 0; i < dgv.Columns.Count; i++)
             {
-                if ( dgv.Columns[i].Visible)
+                if (dgv.Columns[i].Visible)
                 {
                     if (!setcurrent)
                     {
@@ -377,7 +377,7 @@ public static class DataGridViewControlHelpersStaticFunc
     // index is some key and a DGV row. Move to it, try and display it, return true if we moved.
     // force means we must move somewhere.
 
-    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long,DataGridViewRow> index, ref Tuple<long, int> pos, bool force)
+    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long, DataGridViewRow> index, ref Tuple<long, int> pos, bool force)
     {
         if (pos.Item1 == -2)          // if done, ignore
         {
@@ -454,12 +454,50 @@ public static class DataGridViewControlHelpersStaticFunc
 
     public static void CreateTextColumns(this DataGridView grid, params Object[] paras)
     {
-        for (int i = 0; i < paras.Length-1; i += 3)
+        for (int i = 0; i < paras.Length - 1; i += 3)
         {
             DataGridViewTextBoxColumn cl = new DataGridViewTextBoxColumn()
-                { FillWeight = (int)paras[i + 1], Name = (string)paras[i], HeaderText = (string)paras[i], MinimumWidth = (int)paras[i+2] };
+            { FillWeight = (int)paras[i + 1], Name = (string)paras[i], HeaderText = (string)paras[i], MinimumWidth = (int)paras[i + 2] };
             grid.Columns.Add(cl);
         }
     }
 
+    public static void SaveColumnSettings(this DataGridView dgv, string root, Action<string, int> saveint, Action<string, double> savedouble)
+    {
+        for (int i = 0; i < dgv.Columns.Count; i++)
+        {
+            string k = root + (i + 1).ToString();
+            double fillw = dgv.Columns[i].Visible ? dgv.Columns[i].FillWeight : -dgv.Columns[i].FillWeight;
+            savedouble(k, fillw);
+            //System.Diagnostics.Debug.WriteLine("DGV Col {0} with {1}", k, fillw);
+        }
+
+        saveint(root + "HW", dgv.RowHeadersWidth);
+    }
+
+    // gets return MinValue if not there.
+    public static void LoadColumnSettings(this DataGridView dgv, string root, Func<string, int> getint, Func<string, double> getdouble)
+    {
+        int hw = getint(root + "HW");
+        if (hw >= 0)
+        {
+            dgv.SuspendLayout();
+
+            dgv.RowHeadersWidth = hw;
+
+            for (int i = 0; i < dgv.Columns.Count; i++)
+            {
+                string k = root + (i + 1).ToString();
+                double fillw = getdouble(k);
+                if (fillw > double.MinValue)
+                {
+                    // System.Diagnostics.Debug.WriteLine("DGV Col {0} with {1}", k, fillw);
+                    dgv.Columns[i].Visible = fillw > 0;
+                    dgv.Columns[i].FillWeight = (float)Math.Abs(fillw);
+                }
+            }
+
+            dgv.ResumeLayout();
+        }
+    }
 }
