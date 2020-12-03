@@ -24,7 +24,7 @@ namespace BaseUtils
     // Using RightClickRow/LeftClickRow you can tell in your mouse down if the click was on a valid row
     // also, if cell is in edit mode, and it has a ReturnPressedInEditMode, it can handle it differently
 
-    public class DataGridViewAltContextMenus : DataGridView
+    public class DataGridViewBaseEnhancements : DataGridView
     {
         public ContextMenuStrip ColumnHeaderMenuStrip { get; set; } = null;
         public ContextMenuStrip RowHeaderMenuStrip { get; set; } = null;
