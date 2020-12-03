@@ -22,6 +22,7 @@ namespace BaseUtils
     // Allows for alternate context menus for column and row header clicks
     // Class, on mouse down, computes the hit type, Hit Button, and HitIndex.
     // Using RightClickRow/LeftClickRow you can tell in your mouse down if the click was on a valid row
+    // also, if cell is in edit mode, and it has a ReturnPressedInEditMode, it can handle it differently
 
     public class DataGridViewAltContextMenus : DataGridView
     {
@@ -101,6 +102,26 @@ namespace BaseUtils
 
             base.OnMouseDown(e);
         }
+
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            //System.Diagnostics.Debug.WriteLine("PDK " + keyData + "on " + CurrentCell.ColumnIndex + ":" + CurrentCell.RowIndex);
+
+            Keys key = (keyData & Keys.KeyCode);
+
+            if (key == Keys.Return)
+            {
+                if (CurrentCell.EditType.GetMethod("ReturnPressedInEditMode") != null)
+                {
+                    dynamic ak = EditingControl;
+                    if (ak.ReturnPressedInEditMode())
+                        return true;
+                }
+            }
+            return base.ProcessDialogKey(keyData);
+        }
+
+
 
     }
 }
