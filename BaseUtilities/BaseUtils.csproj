@@ -141,7 +141,7 @@
     <Compile Include="WinForms\DataGridViewColumnHider.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="WinForms\DataGridViewAltContextMenus.cs">
+    <Compile Include="WinForms\DataGridViewBaseEnhancements.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="WinForms\HotSpotMap.cs" />
