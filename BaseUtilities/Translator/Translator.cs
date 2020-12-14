@@ -430,12 +430,7 @@ namespace BaseUtils
             Translate(parent, tt, parent.GetType().Name);
         }
 
-        public bool NameControl( Control c )
-        {
-            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer );
-        }
-
-        private void Translate(Control ctrl, ToolTip tt, string subname)
+        public void Translate(Control ctrl, ToolTip tt, string subname)
         {
             if (translations != null)
             {
@@ -454,5 +449,9 @@ namespace BaseUtils
             }
         }
 
-     }
+        private bool NameControl(Control c)
+        {
+            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
+        }
+    }
 }
