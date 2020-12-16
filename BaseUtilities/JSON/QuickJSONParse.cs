@@ -74,7 +74,21 @@ namespace BaseUtils.JSON
 
         public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
         {
-            JToken res = IntParse(parser, out error, flags, textbufsize);
+            char[] textbuffer = new char[textbufsize];      // textbuffer to use for string decodes - one get of it, multiple reuses, faster
+
+            JToken res = IntParse(parser, out error, flags, textbuffer);
+
+            if (res != null && (flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL())
+            {
+                return ParseError(parser, "Extra Chars after JSON", flags, out error);
+            }
+            else
+                return res;
+        }
+
+        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer)
+        {
+            JToken res = IntParse(parser, out error, flags, textbuffer);
 
             if (res != null && (flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL())
             {
@@ -85,7 +99,7 @@ namespace BaseUtils.JSON
         }
 
         // internal parse, does not check EOL
-        private static JToken IntParse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
+        private static JToken IntParse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer)
         {
             error = null;
 
@@ -94,8 +108,6 @@ namespace BaseUtils.JSON
             bool comma = false;
             JArray curarray = null;
             JObject curobject = null;
-
-            char[] textbuffer = new char[textbufsize];      // textbuffer to use for string decodes - one get of it, multiple reuses, faster
 
             // first decode the first value/object/array
             {
