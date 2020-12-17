@@ -23,12 +23,14 @@ namespace BaseUtils
     {
         static System.Diagnostics.Stopwatch stopwatch;
         static Dictionary<string, long> laptimes;       // holds lap counters, defined by string IDs
+        static Dictionary<string, long> startlaptimes;       // start time of lap counter
 
         private static void CreateStopWatch()
         {
             stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
             laptimes = new Dictionary<string, long>();
+            startlaptimes = new Dictionary<string, long>();
         }
 
         public static long TickCount        // current tick, with stopwatch creation
@@ -44,33 +46,46 @@ namespace BaseUtils
 
         // ID starting with @ means don't print it
 
-        public static Tuple<string,int> TickCountLapDelta(string id, bool reset = false)        // lap time to last recorded tick of this id
+        // return lap string, delta time to last lap, delta time to start 
+        public static Tuple<string,int,int> TickCountLapDelta(string id, bool reset = false)        
         {
             long tc = TickCount;
             string idtext = id.StartsWith("@") ? "" : (" " + id);
 
             string res;
             int delta = 0;
+            int totaldelta = 0;
 
             if (reset || !laptimes.ContainsKey(id))     // if reset, or not present
             {
                 res = string.Format("{0}{1}", tc, idtext);
+                startlaptimes[id] = tc;
             }
             else
             {
+                totaldelta = (int)(tc - startlaptimes[id]);
                 delta = (int)(tc - laptimes[id]);
-                res = string.Format("{0}{1}+{2}", tc, idtext, delta);
+                res = string.Format("{0} {1} +l{2} +t{3}", tc, idtext, delta, totaldelta);
             }
 
             laptimes[id] = tc;
-            return new Tuple<string,int>(res,delta);
+            return new Tuple<string,int,int>(res,delta,totaldelta);
         }
 
-        public static long TickCountFrom(string id)        // lap time to last recorded tick of this id
+        public static long TickCountFromLastLap(string id)        // lap time to last lap of this id
         {
             long tc = TickCount;
             if (laptimes.ContainsKey(id))     // if reset, or not present
                 return tc - laptimes[id];
+            else
+                return 0;
+        }
+
+        public static long TickCountFromStart(string id)        // total time from start
+        {
+            long tc = TickCount;
+            if (startlaptimes.ContainsKey(id))     // if reset, or not present
+                return tc - startlaptimes[id];
             else
                 return 0;
         }
@@ -80,22 +95,7 @@ namespace BaseUtils
             return TickCountLapDelta(id, reset).Item1;
         }
 
-        public static string TickCountLap(Object id, bool reset = false)        // lap time to last recorded tick of this object used as an identifier
-        {
-            return TickCountLap(id.GetType().Name, reset);
-        }
-
-        public static string TickCountLap(Type id, bool reset = false)        // lap time to last recorded tick of this type used as an identifier
-        {
-            return TickCountLap(id.Name, reset);
-        }
-
         public static string TickCountLap()        // default Program lap
-        {
-            return TickCountLap("@");
-        }
-
-        public static string TickCountLapDelta()        // default Program lap
         {
             return TickCountLap("@");
         }
