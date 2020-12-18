@@ -65,7 +65,7 @@ namespace BaseUtils
             {
                 totaldelta = (int)(tc - startlaptimes[id]);
                 delta = (int)(tc - laptimes[id]);
-                res = string.Format("{0} {1} +l{2} +t{3}", tc, idtext, delta, totaldelta);
+                res = string.Format("{0} {1} +l {2} +t {3}", tc, idtext, delta, totaldelta);
             }
 
             laptimes[id] = tc;

@@ -13,10 +13,13 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+using BaseUtils.Threads;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AudioExtensions
@@ -27,13 +30,16 @@ namespace AudioExtensions
         System.IO.MemoryStream Speak(string phrase, string culture, string voice , int volume, int rate);
     }
 
+
     public class SpeechSynthesizer
     {
         ISpeechEngine speechengine;
+        TaskQueue tq;
 
         public SpeechSynthesizer( ISpeechEngine engine )
         {
             speechengine = engine;
+            tq = new TaskQueue();
         }
 
         public string[] GetVoiceNames()
@@ -43,7 +49,22 @@ namespace AudioExtensions
 
         public System.IO.MemoryStream Speak(string say, string culture, string voice, int rate)     // may return null
         {
+            while (tq.Active)       // just to make sure we are not doing anything with the speech queue
+                Thread.Sleep(20);
+
             return speechengine.Speak(say, culture, voice, 100, rate);     // samples are always generated at 100 volume
+        }
+
+        public void SpeakQueue(string say, string culture, string voice, int rate, Action<System.IO.MemoryStream> callback)     // may return null
+        {
+            tq.Enqueue(()=> 
+            {
+                //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task run " + say);
+                var audio = speechengine.Speak(say, culture, voice, 100, rate);     // samples are always generated at 100 volume
+               // System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task got audio ");
+                callback(audio);
+               // System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task callback done");
+            });
         }
     }
 }
