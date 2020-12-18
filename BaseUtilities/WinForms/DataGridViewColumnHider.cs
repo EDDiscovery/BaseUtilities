@@ -23,49 +23,44 @@ namespace BaseUtils
         public DataGridViewColumnHider()
         {
             columnContextMenu = new ContextMenuStrip();
-            this.hideColumnToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.unhideAllColumnsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-
-            this.columnContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.hideColumnToolStripMenuItem,
-            this.unhideAllColumnsToolStripMenuItem});
-            this.columnContextMenu.Size = new System.Drawing.Size(179, 48);
-            this.columnContextMenu.Opening += ColumnContextMenu_Opening;
-
-            this.hideColumnToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
-            this.hideColumnToolStripMenuItem.Text = "Hide Column".Tx();
-            this.hideColumnToolStripMenuItem.Click += HideColumnToolStripMenuItem_Click;
-
-            this.unhideAllColumnsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
-            this.unhideAllColumnsToolStripMenuItem.Text = "Unhide all Columns".Tx();
-            this.unhideAllColumnsToolStripMenuItem.Click += UnhideAllColumnsToolStripMenuItem_Click;
+            columnContextMenu.Opening += ColumnContextMenu_Opening;
 
             TopLeftHeaderMenuStrip = ColumnHeaderMenuStrip = columnContextMenu;
+
+            var dummy = new System.Windows.Forms.ToolStripMenuItem();       // need to have this, otherwise it won't work
+            columnContextMenu.Items.Add(dummy);
         }
 
         private void ColumnContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            columnContextMenu.Items.Clear();
+
+            foreach (DataGridViewColumn c in this.Columns)      // add in ticks for all columns
+            {
+                var tsitem = new System.Windows.Forms.ToolStripMenuItem();
+                tsitem.Checked = true;
+                tsitem.CheckOnClick = true;
+                tsitem.CheckState = c.Visible ? CheckState.Checked : CheckState.Unchecked;
+                tsitem.Text = c.HeaderText.HasChars() ? c.HeaderText : ("C" + (c.Index+1).ToString());
+                tsitem.Tag = c;
+                tsitem.Size = new System.Drawing.Size(178, 22);
+                tsitem.Click += Tsitem_Click;
+                columnContextMenu.Items.Add(tsitem);
+            }
+        }
+
+        private void Tsitem_Click(object sender, System.EventArgs e)
+        {
+            var t = sender as ToolStripMenuItem;
+            var c = t.Tag as DataGridViewColumn;
+
             int colshidden = this.ColumnsHidden();
 
-            unhideAllColumnsToolStripMenuItem.Enabled =  colshidden> 0;
-            hideColumnToolStripMenuItem.Enabled = HitIndex >= 0 && HitIndex < Columns.Count && Columns.Count - colshidden > 1;
+            if (colshidden < ColumnCount - 1 || t.Checked)        // not at last column, or its turning on, action, can't remove last one
+                c.Visible = t.Checked;
         }
 
-        private void UnhideAllColumnsToolStripMenuItem_Click(object sender, System.EventArgs e)
-        {
-            foreach(DataGridViewColumn c in this.Columns)
-                c.Visible = true;
-        }
-
-        private void HideColumnToolStripMenuItem_Click(object sender, System.EventArgs e)
-        {
-            if (HitIndex >= 0)
-                Columns[HitIndex].Visible = false;
-        }
 
         private System.Windows.Forms.ContextMenuStrip columnContextMenu;
-        private System.Windows.Forms.ToolStripMenuItem hideColumnToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem unhideAllColumnsToolStripMenuItem;
-
     }
 }
