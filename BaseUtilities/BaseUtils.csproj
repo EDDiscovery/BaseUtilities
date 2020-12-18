@@ -85,6 +85,7 @@
     <Compile Include="StringParsers\StringParserQuickTextReader.cs" />
     <Compile Include="StringParsers\StringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
+    <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
