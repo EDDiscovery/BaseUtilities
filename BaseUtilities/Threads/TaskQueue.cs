@@ -15,47 +15,105 @@
  */
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace BaseUtils.Threads
 {
-    // Makes a thread to operate actions in order, thread stops when all actions are done.
+    // with thanks to https://michaelscodingspot.com/c-job-queues/
+    // Uses the thread pool to make a thread to consume actions in order, thread terminates when all tasks done
 
     public class TaskQueue
     {
-        public bool Active { get { return active != 0; } }
+        public bool Active { get { lock (jobs) { return jobs.Count > 0; } } }
 
-        private ConcurrentQueue<Action> actionqueue = new ConcurrentQueue<Action>();
-        private int active = 0;
+        private Queue<Action> jobs = new Queue<Action>();
+        private bool delegateQueuedOrRunning = false;
 
-        public TaskQueue()
+        public void Enqueue(Action job)
         {
-        }
-
-        public void Enqueue(Action a)
-        {
-            actionqueue.Enqueue(a);
-            if (Interlocked.CompareExchange(ref active, 1, 0) == 0)
-            { 
-              //  System.Diagnostics.Debug.WriteLine("Make Thread");
-                var thread = new Thread(new ThreadStart(Run));
-                thread.IsBackground = true;
-                thread.Start();
-            }
-        }
-
-        private void Run()
-        {
-            //System.Diagnostics.Debug.WriteLine("Start Thread");
-            while (actionqueue.TryDequeue(out Action nextaction))
+            lock (jobs)
             {
-              //  System.Diagnostics.Debug.WriteLine("Run task");
-                nextaction.Invoke();
+                jobs.Enqueue(job);
+                if (!delegateQueuedOrRunning)
+                {
+                    delegateQueuedOrRunning = true;
+                    ThreadPool.QueueUserWorkItem(ProcessQueuedItems, null);
+                }
             }
-            active = 0;
-            //System.Diagnostics.Debug.WriteLine("Finish");
+        }
+
+        private void ProcessQueuedItems(object ignored)
+        {
+            while (true)
+            {
+                Action job;
+                lock (jobs)
+                {
+                    if (jobs.Count == 0)        // its locked, so we can't get race conditions between adding/removing
+                    {
+                        delegateQueuedOrRunning = false;
+                        break;
+                    }
+
+                    job = jobs.Dequeue();
+                }
+
+                job.Invoke();
+            }
         }
     }
 }
+
+
+
+
+
+
+
+
+
+//        public bool Active { get { return active != 0; } }
+
+//        private ConcurrentQueue<Action> actionqueue = new ConcurrentQueue<Action>();
+//        private int active = 0;
+//        private Thread thread = null;
+
+//        public TaskQueue()
+//        {
+//        }
+
+//        public void Enqueue(Action a)
+//        {
+//            actionqueue.Enqueue(a);
+
+//            // no thread, or not alive, or indicating not active.
+//            if ( thread==null || !thread.IsAlive || Interlocked.CompareExchange(ref active, 1, 0)==0)
+
+
+
+//            if (Interlocked.CompareExchange(ref active, 1, 0) == 0)
+//            { 
+//              //  System.Diagnostics.Debug.WriteLine("Make Thread");
+//                var thread = new Thread(new ThreadStart(Run));
+//                thread.IsBackground = true;
+//                thread.Start();
+//            }
+//        }
+
+//        private void Run()
+//        {
+//            //System.Diagnostics.Debug.WriteLine("Start Thread");
+//            while (actionqueue.TryDequeue(out Action nextaction))
+//            {
+//              //  System.Diagnostics.Debug.WriteLine("Run task");
+//                nextaction.Invoke();
+//            }
+//            //active=1, alive
+//            Interlocked.CompareExchange(ref active, 0, 1);
+//            //active=0, alive
+//            //System.Diagnostics.Debug.WriteLine("Finish");
+//        }
+//    }
+//}
 
