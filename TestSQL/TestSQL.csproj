@@ -63,7 +63,6 @@
     <Compile Include="SystemClass.cs" />
     <Compile Include="ISystem.cs" />
     <Compile Include="SystemsDatabase.cs" />
-    <Compile Include="SystemsDBEDDBStore.cs" />
     <Compile Include="SystemsDBEDSMSystemAliases.cs" />
     <Compile Include="SystemsDBEDSMRemove.cs" />
     <Compile Include="SystemsDBGetByGrid.cs" />

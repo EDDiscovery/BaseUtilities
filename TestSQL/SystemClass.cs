@@ -149,7 +149,6 @@ namespace EliteDangerousCore
         {
             this.source = sys.source;
 
-            this.EDDBID = sys.EDDBID;
             this.Population = sys.Population;
             this.Faction = sys.Faction;
             this.Government = sys.Government;
@@ -160,7 +159,6 @@ namespace EliteDangerousCore
             this.Power = sys.Power;
             this.PowerState = sys.PowerState;
             this.NeedsPermit = sys.NeedsPermit;
-            this.EDDBUpdatedAt = sys.EDDBUpdatedAt;
         }
 
         public SystemClass(string name) : base()
@@ -194,12 +192,11 @@ namespace EliteDangerousCore
         }
 
         public SystemClass(SystemSource statusv, string name, int xi, int yi, int zi, long edsmid,
-                            long eddbid, int eddbupdateat, long population, string faction,
+                            long population, string faction,
                             EDGovernment g, EDAllegiance a, EDState s, EDSecurity security,
                             EDEconomy eco, string power, string powerstate, int needspermit,
                             int gridid = -1) : base(name, xi, yi, zi, edsmid, gridid)
         {
-            EDDBID = eddbid;
             Population = population;
             Faction = faction;
             Government = g;
@@ -210,14 +207,12 @@ namespace EliteDangerousCore
             Power = power;
             PowerState = powerstate;
             NeedsPermit = needspermit;
-            EDDBUpdatedAt = eddbupdateat;
             source = statusv;
         }
 
         public SystemSource source { get; set; }
 
-        public long EDDBID { get; set; }
-        public long Population { get; set; }        // may be 0 and still be in eddb pop list
+        public long Population { get; set; }        // just because its 0 does not mean it may have other info
         public string Faction { get; set; }
         public EDGovernment Government { get; set; }
         public EDAllegiance Allegiance { get; set; }
@@ -227,7 +222,6 @@ namespace EliteDangerousCore
         public string Power { get; set; }
         public string PowerState { get; set; }
         public int NeedsPermit { get; set; }
-        public int EDDBUpdatedAt { get; set; }
 
         public bool HasSystemStateInfo
         {
@@ -249,7 +243,7 @@ namespace EliteDangerousCore
             if (HasSystemStateInfo)
             {
                 x += " " + Population + " " + Faction + " " + Government + " " + Allegiance + " " + State + " " + Security + " " + PrimaryEconomy
-                                    + " " + Power + " " + PowerState + " " + NeedsPermit + " " + EDDBUpdatedAt;
+                                    + " " + Power + " " + PowerState + " " + NeedsPermit;
             }
             return x;
         }

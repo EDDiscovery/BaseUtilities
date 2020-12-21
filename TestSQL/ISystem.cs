@@ -139,7 +139,6 @@ namespace EliteDangerousCore
 
     public interface ISystemEDDB
     {
-        long EDDBID { get; set; }
         string Faction { get; set; }
         long Population { get; set; }
         EDGovernment Government { get; set; }
@@ -150,7 +149,6 @@ namespace EliteDangerousCore
         string Power { get; set; }
         string PowerState { get; set; }
         int NeedsPermit { get; set; }
-        int EDDBUpdatedAt { get; set; }
         bool HasSystemStateInfo { get; }
     }
 

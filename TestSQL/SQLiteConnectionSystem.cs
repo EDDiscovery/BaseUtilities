@@ -46,6 +46,7 @@ namespace EliteDangerousCore.DB
 
                 ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
                     {
+                    "DROP TABLE IF EXISTS EDDB",                // New Dec 20 - no more EDDB
                     "DROP TABLE IF EXISTS Distances",
                     "DROP TABLE IF EXISTS EddbSystems",
                     // keep edsmsystems
@@ -53,7 +54,6 @@ namespace EliteDangerousCore.DB
                     "DROP TABLE IF EXISTS SystemAliases",
                     // don't drop Systemnames
                     "DROP TABLE IF EXISTS station_commodities",
-                    "CREATE TABLE IF NOT EXISTS EDDB (edsmid INTEGER PRIMARY KEY NOT NULL, eddbid INTEGER, eddbupdatedat INTEGER, population INTEGER, faction TEXT, government INTEGER, allegiance INTEGER, state INTEGER, security INTEGER, primaryeconomy INTEGER, needspermit INTEGER, power TEXT, powerstate TEXT, properties TEXT)",
                     "CREATE TABLE IF NOT EXISTS Aliases (edsmid INTEGER PRIMARY KEY NOT NULL, edsmid_mergedto INTEGER, name TEXT COLLATE NOCASE)"
                     });
 

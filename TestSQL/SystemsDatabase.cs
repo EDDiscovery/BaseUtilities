@@ -33,9 +33,7 @@ namespace EliteDangerousCore.DB
         {
         }
 
-        public static SystemsDatabase Instance { get { if (instance == null) instance = new SystemsDatabase(); return instance; } }
-
-        private static SystemsDatabase instance;
+        public static SystemsDatabase Instance { get; } = new SystemsDatabase();        //STATIC constructor, make once at start of program
 
         public void Initialize()
         {
@@ -268,21 +266,6 @@ namespace EliteDangerousCore.DB
                 db.Connection.PutSettingString("EDSMLastSystems", time.ToString(CultureInfo.InvariantCulture));
                 System.Diagnostics.Debug.WriteLine("Last EDSM record " + time.ToString());
             }));
-        }
-
-        public DateTime GetLastEDDBDownloadTime()
-        {
-            return ExecuteWithDatabase( db => db.Connection.GetSettingDate("EDDBLastDownloadTime", DateTime.MinValue));
-        }
-
-        public void SetLastEDDBDownloadTime()
-        {
-            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingDate("EDDBLastDownloadTime", DateTime.UtcNow)));
-        }
-
-        public void ForceEDDBFullUpdate()
-        {
-            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingDate("EDDBLastDownloadTime", DateTime.MinValue)));
         }
 
         public int GetEDSMSectorIDNext()
