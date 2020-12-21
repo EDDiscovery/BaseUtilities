@@ -22,10 +22,8 @@ using System.Threading;
 
 namespace SQLLiteExtensions
 {
-    // This class wraps a DbCommand so it can take the
-    // transaction wrapper, and to work around
-    // SQLite not using a monitor or mutex when locking
-    // the database
+    // This class wraps a DbCommand 
+
     public class SQLExtCommand<TConn> : DbCommand where TConn : SQLExtConnection
     {
         // Overridden methods and properties passed to inner command
@@ -41,16 +39,12 @@ namespace SQLLiteExtensions
         public override void Cancel() { InnerCommand.Cancel(); }
         public override void Prepare() { InnerCommand.Prepare(); }
 
-        // transaction
-
-        protected override DbTransaction DbTransaction { get { return transaction; } set { SetTransaction(value); } }
+        protected override DbTransaction DbTransaction { get { return InnerCommand.Transaction; } set { SetTransaction(value); } }
 
         // interface
 
-        public SQLExtCommand(DbCommand cmd, SQLExtConnection conn, SQLExtTransactionLock<TConn> txnlock, DbTransaction txn = null)
+        public SQLExtCommand(DbCommand cmd, SQLExtConnection conn, DbTransaction txn = null)
         {
-            connection = conn;
-            this.txnlock = txnlock;
             InnerCommand = cmd;
             if (txn != null)
             {
@@ -62,80 +56,17 @@ namespace SQLLiteExtensions
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            int retries = 3;
-
-            while (true)
-            {
-                txnlock.OpenReader();
-                try
-                {
-                    return new SQLExtDataReader<TConn>(this.InnerCommand, behavior, txnlock: txnlock);
-                }
-                catch (Exception ex)
-                {
-                    txnlock.CloseReader();
-
-                    if (retries > 0)
-                    {
-                        var sqlex = ex as System.Data.SQLite.SQLiteException;
-
-                        if (sqlex != null && sqlex.ErrorCode == 5) // Database is locked
-                        {
-                            Trace.WriteLine($"Database locked - retrying\n{ex.StackTrace}");
-                            Thread.Sleep(100);
-                            retries--;
-                            continue;
-                        }
-                    }
-                    System.Diagnostics.Debug.WriteLine("SQL Command: " + this.InnerCommand.CommandText);
-                    throw;
-                }
-            }
+            return new SQLExtDataReader<TConn>(this.InnerCommand, behavior);
         }
 
         public override object ExecuteScalar()
         {
-            try
-            {
-                txnlock.OpenReader();
-                txnlock.BeginCommand(this);
-                return InnerCommand.ExecuteScalar();
-            }
-            finally
-            {
-                txnlock.EndCommand();
-                txnlock.CloseReader();
-            }
+            return InnerCommand.ExecuteScalar();
         }
 
         public override int ExecuteNonQuery()
         {
-            if (transaction != null)
-            {
-                try
-                {
-                    transaction.BeginCommand(this);
-                    return InnerCommand.ExecuteNonQuery();
-                }
-                finally
-                {
-                    transaction.EndCommand();
-                }
-            }
-            else
-            {
-                try
-                {
-                    txnlock.OpenWriter();
-                    txnlock.BeginCommand(this);
-                    return InnerCommand.ExecuteNonQuery();
-                }
-                finally
-                {
-                    txnlock.EndCommand();
-                    txnlock.CloseWriter();
-                }
-            }
+            return InnerCommand.ExecuteNonQuery();
         }
 
         // disposing: true if Dispose() was called, false
@@ -173,8 +104,7 @@ namespace SQLLiteExtensions
             // We only accept wrapped transactions in order to avoid deadlocks
             if (txn == null || txn is SQLExtTransaction<TConn>)
             {
-                transaction = (SQLExtTransaction<TConn>)txn;
-                InnerCommand.Transaction = transaction.InnerTransaction;
+                InnerCommand.Transaction = txn;
             }
             else
             {
@@ -183,11 +113,8 @@ namespace SQLLiteExtensions
         }
 
 
-        protected SQLExtTransaction<TConn> transaction;
-        protected SQLExtConnection connection;
-        protected SQLExtTransactionLock<TConn> txnlock;
-        private bool hasbeendisposed = false;
         public DbCommand InnerCommand { get; set; }
+        private bool hasbeendisposed;
     }
 }
 

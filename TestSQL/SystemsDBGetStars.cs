@@ -24,15 +24,12 @@ namespace EliteDangerousCore.DB
     {
         ///////////////////////////////////////// By Name
 
-        public static ISystem FindStar(string name)
+        internal static ISystem FindStar(string name)
         {
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
-            {
-                return FindStar(name, cn);
-            }
+            return SystemsDatabase.Instance.ExecuteWithDatabase(cn => FindStar(name, cn.Connection));
         }
 
-        public static ISystem FindStar(string name, SQLiteConnectionSystem cn)
+        internal static ISystem FindStar(string name, SQLiteConnectionSystem cn)
         {
             EliteNameClassifier ec = new EliteNameClassifier(name);
 
@@ -85,15 +82,12 @@ namespace EliteDangerousCore.DB
 
         ///////////////////////////////////////// By EDSMID
 
-        public static ISystem FindStar(long edsmid)
+        internal static ISystem FindStar(long edsmid)
         {
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
-            {
-                return FindStar(edsmid, cn);
-            }
+            return SystemsDatabase.Instance.ExecuteWithDatabase(cn => FindStar(edsmid, cn.Connection));
         }
 
-        public static ISystem FindStar(long edsmid, SQLiteConnectionSystem cn)
+        internal static ISystem FindStar(long edsmid, SQLiteConnectionSystem cn)
         {
             // No indexes needed- edsmid is primary key
 
@@ -117,15 +111,12 @@ namespace EliteDangerousCore.DB
 
         ///////////////////////////////////////// By Wildcard
 
-        public static List<ISystem> FindStarWildcard(string name, int limit = int.MaxValue)
+        internal static List<ISystem> FindStarWildcard(string name, int limit = int.MaxValue)
         {
-            using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
-            {
-                return FindStarWildcard(name, cn, limit);
-            }
+            return SystemsDatabase.Instance.ExecuteWithDatabase(cn => FindStarWildcard(name, cn.Connection, limit));
         }
 
-        public static List<ISystem> FindStarWildcard(string name, SQLiteConnectionSystem cn, int limit = int.MaxValue)
+        internal static List<ISystem> FindStarWildcard(string name, SQLiteConnectionSystem cn, int limit = int.MaxValue)
         {
             EliteNameClassifier ec = new EliteNameClassifier(name);
 
@@ -255,11 +246,11 @@ namespace EliteDangerousCore.DB
             }
             else
             {
-                return new SystemClass(ec.ToString(), reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt64(3),
+                return new SystemClass(SystemSource.FromEDSM, ec.ToString(), reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt64(3),
                                 reader.GetInt64(offset), reader.GetInt32(offset + 1), reader.GetInt64(offset + 2), reader.GetString(offset + 3),
                                 (EDGovernment)reader.GetInt64(offset + 4), (EDAllegiance)reader.GetInt64(offset + 5), (EDState)reader.GetInt64(offset + 6), (EDSecurity)reader.GetInt64(offset + 7),
                                 (EDEconomy)reader.GetInt64(offset + offset), reader.GetString(offset + 9), reader.GetString(offset + 10), reader.GetInt32(offset + 11),
-                                reader.GetInt32(5), SystemStatusEnum.EDSM);
+                                reader.GetInt32(5));
             }
         }
 
@@ -284,11 +275,21 @@ namespace EliteDangerousCore.DB
             }
             else
             {
-                return new SystemClass(ec.ToString(), reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt64(3),
+                return new SystemClass(SystemSource.FromEDSM, ec.ToString(), reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt64(3),
                                 reader.GetInt64(offset), reader.GetInt32(offset + 1), reader.GetInt64(offset + 2), reader.GetString(offset + 3),
                                 (EDGovernment)reader.GetInt64(offset + 4), (EDAllegiance)reader.GetInt64(offset + 5), (EDState)reader.GetInt64(offset + 6), (EDSecurity)reader.GetInt64(offset + 7),
                                 (EDEconomy)reader.GetInt64(offset + offset), reader.GetString(offset + 9), reader.GetString(offset + 10), reader.GetInt32(offset + 11),
-                                reader.GetInt32(5), SystemStatusEnum.EDSM);
+                                reader.GetInt32(5));
+            }
+        }
+
+        static IEnumerable<SystemClass> MakeSystemEnumerable(DbDataReader reader, bool eddbinfo = true, Action<ISystem> callback = null)
+        {
+            while (reader.Read())
+            {
+                var sys = MakeSystem(reader, eddbinfo);
+                callback?.Invoke(sys);
+                yield return sys;
             }
         }
 

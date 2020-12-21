@@ -1,28 +1,21 @@
 ﻿using EliteDangerousCore;
 using EliteDangerousCore.DB;
 using EMK.LightGeometry;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TestSQL
 {
-    public partial class Form1 : Form
+    public partial class TestSQLForm : Form
     {
-        public Form1()
+        public TestSQLForm()
         {
             InitializeComponent();
 
-            bool deletedb = false;
 
             string edsminfile = @"c:\code\edsm\edsmsystems.10e6.json";
+            bool deletedb = false;
             bool reloadjson = false;
 
             string eddbinfile = @"c:\code\edsm\eddbsystems.json";
@@ -36,12 +29,13 @@ namespace TestSQL
             if ( deletedb )
                 BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
 
-            SQLiteConnectionSystem.Initialize();
-            SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s),false);
+            SystemsDatabase.Instance.Start("SystemDB");
+            SystemsDatabase.Instance.Initialize();
+//            SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s),false);
 
             if (reloadjson)
             {
-                SQLiteConnectionSystem.UpgradeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+                SystemsDatabase.Instance.UpgradeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
             }
 
             if (reloadeddb)
@@ -105,21 +99,9 @@ namespace TestSQL
                 }
             }
 
-
-            ///////////////////////////////////////////// main tests
-
-            { 
-                //BaseUtils.AppTicks.TickCountLap();  // Repeated run 1420/2.. removed too slow
-                //ISystem s;
-
-                //for (int I = 0; I < 2; I++)
-                //{
-                //    long total = SystemsDB.GetTotalSystems();
-                //    System.Diagnostics.Debug.Assert(total > 9999);
-                //}
-
-                //System.Diagnostics.Debug.WriteLine("total systems for X: " + BaseUtils.AppTicks.TickCountLap());
-            }
+            // ********************************************
+            // TESTS BASED on the 10e6 json file
+            // ********************************************
 
             {
                 long aliasn;
@@ -151,11 +133,11 @@ namespace TestSQL
                 ISystem s;
 
                 BaseUtils.AppTicks.TickCountLap();
-
+                string star = "HIP 101456";
                 for (int I = 0; I < 50; I++)        
                 {
-                    s = SystemsDB.FindStar("HIP 14490" );       // This one is at the back of the DB
-                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("HIP 14490"));
+                    s = SystemsDB.FindStar(star);       // This one is at the back of the DB
+                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals(star));
                     //   System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
@@ -210,8 +192,12 @@ namespace TestSQL
 
                 for (int I = 0; I < 100; I++)
                 {
-                    s = SystemsDB.GetSystemByPosition(-100.7, 166.4, -36.8);
-                    System.Diagnostics.Debug.Assert(s != null && s.Name == "Col 285 Sector IZ-B b15-2");
+                    SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                    {
+                        s = SystemsDB.GetSystemByPosition(-100.7, 166.4, -36.8, db.Connection);
+                        System.Diagnostics.Debug.Assert(s != null && s.Name == "Col 285 Sector IZ-B b15-2");
+                    });
+
                   //  System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
@@ -320,11 +306,6 @@ namespace TestSQL
                 slist = SystemsDB.FindStarWildcard("4 S");
                 System.Diagnostics.Debug.Assert(slist != null && slist.Count >= 1);
 
-                slist = SystemsDB.FindStarWildcard("Beagle Point");
-                System.Diagnostics.Debug.Assert(slist != null && slist.Count == 1);
-                ISystem bp = slist[0];
-                slist = SystemsDB.FindAliasWildcard("Ceeckia ZQ-L C24-0");
-                System.Diagnostics.Debug.Assert(slist != null && slist.Count == 1 && bp.Name == slist[0].Name);
             }
 
             {   // xz index = 70ms
@@ -333,9 +314,12 @@ namespace TestSQL
                 BaseUtils.AppTicks.TickCountLap();
                 double x = 0, y = 0, z = 0;
 
-                SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 20, true);
-                System.Diagnostics.Debug.WriteLine("Stars Near Sol: " + BaseUtils.AppTicks.TickCountLap());
-                System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
+                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                {
+                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 20, true, db.Connection);
+                    System.Diagnostics.Debug.WriteLine("Stars Near Sol: " + BaseUtils.AppTicks.TickCountLap());
+                    System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
+                });
 
                 //foreach (var k in list)   System.Diagnostics.Debug.WriteLine(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
             }
@@ -346,19 +330,25 @@ namespace TestSQL
                 BaseUtils.AppTicks.TickCountLap();
                 double x = 490, y = 0, z = 0;
 
-                SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 50, true); //should span 2 grids 810/811
-                System.Diagnostics.Debug.WriteLine("Stars Near x490: " + BaseUtils.AppTicks.TickCountLap());
-                System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
+                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                {
+                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 50, true, db.Connection); //should span 2 grids 810/811
+                    System.Diagnostics.Debug.WriteLine("Stars Near x490: " + BaseUtils.AppTicks.TickCountLap());
+                    System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
+                });
 
                 //foreach (var k in list) System.Diagnostics.Debug.WriteLine(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
             }
 
             { // 142ms with xz and no sector lookup
-                BaseUtils.AppTicks.TickCountLap();
-                ISystem s;
-                s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.metric_waypointdev2);
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Sol"));
-                System.Diagnostics.Debug.WriteLine("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
+                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                {
+                    BaseUtils.AppTicks.TickCountLap();
+                    ISystem s;
+                    s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.SystemsNearestMetric.IterativeWaypointDevHalf,db.Connection);
+                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Alpha Centauri"));
+                    System.Diagnostics.Debug.WriteLine("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
+                });
 
             }
 
@@ -366,7 +356,7 @@ namespace TestSQL
                 SystemCache.AddToAutoCompleteList(new List<string>() { "galone", "galtwo", "sol2" });
                 List<string> sys;
                 sys = SystemCache.ReturnSystemAutoCompleteList("Sol", null);
-                System.Diagnostics.Debug.Assert(sys != null && sys.Contains("Sol") && sys.Count >= 5);
+                System.Diagnostics.Debug.Assert(sys != null && sys.Contains("Solati") && sys.Count >= 4);
             }
 
 
@@ -378,7 +368,7 @@ namespace TestSQL
 
                 BaseUtils.AppTicks.TickCountLap();
                 SystemsDB.GetSystemVector(5, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.Assert(vertices.Length > 10000);
+                System.Diagnostics.Debug.Assert(vertices.Length > 1000);
                 System.Diagnostics.Debug.WriteLine("5 load : " + BaseUtils.AppTicks.TickCountLap());
 
                 BaseUtils.AppTicks.TickCountLap();
@@ -394,7 +384,7 @@ namespace TestSQL
                 int lengthall = vertices.Length;
 
                 BaseUtils.AppTicks.TickCountLap();
-                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                SystemsDB.GetSystemVector(810, ref vertices, ref colours, ref vertices2, ref colours2, 100,(x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
                 System.Diagnostics.Debug.Assert(vertices.Length >= 20000);
                 System.Diagnostics.Debug.Assert(vertices2.Length >= 300000);
                 System.Diagnostics.Debug.Assert(vertices.Length + vertices2.Length == lengthall);
@@ -423,7 +413,8 @@ namespace TestSQL
 
             {
                 var v = SystemsDB.GetStarPositions(5, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-         //       var v2 = SystemClassDB.GetStarPositions(100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
+                System.Diagnostics.Debug.Assert(v.Count>450000);
+                //       var v2 = SystemClassDB.GetStarPositions(100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
             }
         }
     }

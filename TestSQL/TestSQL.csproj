@@ -62,6 +62,7 @@
     <Compile Include="SystemCache.cs" />
     <Compile Include="SystemClass.cs" />
     <Compile Include="ISystem.cs" />
+    <Compile Include="SystemsDatabase.cs" />
     <Compile Include="SystemsDBEDDBStore.cs" />
     <Compile Include="SystemsDBEDSMSystemAliases.cs" />
     <Compile Include="SystemsDBEDSMRemove.cs" />
@@ -72,11 +73,11 @@
     <Compile Include="SystemGridID.cs" />
     <Compile Include="EliteNameClassifier.cs" />
     <Compile Include="SystemsDBEDSMStore.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="TestSQLForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="TestSQLForm.Designer.cs">
+      <DependentUpon>TestSQLForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -108,6 +109,10 @@
     <ProjectReference Include="..\BaseUtilities\BaseUtils.csproj">
       <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
       <Name>BaseUtils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SQLLite\SQLLite.csproj">
+      <Project>{3d79de63-5eec-4f30-a879-fb4c6ba4b2dc}</Project>
+      <Name>SQLLite</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
