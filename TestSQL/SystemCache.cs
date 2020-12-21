@@ -32,73 +32,67 @@ namespace EliteDangerousCore.DB
 
         #region Public Interface for Find System
 
-        public static ISystem FindSystem(long edsmid, SQLiteConnectionSystem cn = null)
+        public static ISystem FindSystem(long edsmid)
         {
-            return FindSystem(new SystemClass(edsmid),cn);
+            return FindSystem(new SystemClass(edsmid));
         }
 
-        public static ISystem FindSystem(string name, SQLiteConnectionSystem cn = null)
+        public static ISystem FindSystem(string name, long edsmid)
         {
-            return FindSystem(new SystemClass(name),cn);
+            return FindSystem(new SystemClass(name, edsmid));
         }
 
-        public static ISystem FindSystem(ISystem find, SQLiteConnectionSystem cn = null)
+        public static ISystem FindSystem(string name)
+        {
+            return FindSystem(new SystemClass(name));
+        }
+
+        public static ISystem FindSystem(ISystem find)
+        {
+            if (SystemsDatabase.Instance.RebuildRunning) // Find the system in the cache if a rebuild is running
+            {
+                return FindSystem(find, null);
+            }
+            else 
+            {
+                return SystemsDatabase.Instance.ExecuteWithDatabase(conn => FindSystem(find, conn));
+            }
+        }
+
+        internal static ISystem FindSystem(string name, long edsmid, SystemsDatabaseConnection cn)
+        {
+            return FindSystem(new SystemClass(name, edsmid), cn);
+        }
+
+        internal static ISystem FindSystem(ISystem find, SystemsDatabaseConnection cn)
         {
             ISystem orgsys = find;
 
-            List<ISystem> foundlist = new List<ISystem>();
+            ISystem found = FindCachedSystem(find);
 
-            lock (systemsByEdsmId)          // Rob seen instances of it being locked together in multiple star distance threads, we need to serialise access to these two dictionaries
-            {                               // Concurrent dictionary no good, they could both be about to add the same thing at the same time and pass the contains test.
-
-                if (find.EDSMID > 0 && systemsByEdsmId.ContainsKey(find.EDSMID))        // add to list
-                {
-                    ISystem s = systemsByEdsmId[find.EDSMID];
-                    foundlist.Add(s);
-                }
-
-                if (systemsByName.ContainsKey(find.Name))            // and all names cached
-                {
-                    List<ISystem> s = systemsByName[find.Name];
-                    foundlist.AddRange(s);
-                }
-            }
-
-            ISystem found = null;
-
-            if (find.HasCoordinate && foundlist.Count > 0)           // if sys has a co-ord, find the best match within 0.5 ly
-                found = NearestTo(foundlist, find, 0.5);
-
-            if (found == null && foundlist.Count == 1 && !find.HasCoordinate) // if we did not find one, but we have only 1 candidate, use it.
-                found = foundlist[0];
-
-            if (found == null)                                    // nope, no cache, so use the db
+            if ((found == null || found.source != SystemSource.FromEDSM) && cn != null && !SystemsDatabase.Instance.RebuildRunning)   // not cached, connection and not rebuilding, try db
             {
                 //System.Diagnostics.Debug.WriteLine("Look up from DB " + sys.name + " " + sys.id_edsm);
 
-                bool owncn = cn == null;
-                if (owncn)
-                    cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
-
                 if (find.EDSMID > 0)        // if we have an ID, look it up
                 {
-                    found = DB.SystemsDB.FindStar(find.EDSMID,cn);
+                    found = DB.SystemsDB.FindStar(find.EDSMID,cn.Connection);
 
-                    if (found != null && find.Name.HasChars())      // if we find it, use the find name in the return as the EDSM name may be out of date..
+                    if (found != null && find.Name.HasChars() && find.Name != "UnKnown")      // if we find it, use the find name in the return as the EDSM name may be out of date..
                         found.Name = find.Name;
                 }
 
-                if (found == null && find.Name.HasChars())      // if not found by has a name
-                    found = DB.SystemsDB.FindStar(find.Name,cn);   // find by name, no wildcards
+                if (found == null && find.Name.HasChars() && find.Name != "UnKnown")      // if not found by has a name
+                    found = DB.SystemsDB.FindStar(find.Name,cn.Connection);   // find by name, no wildcards
 
                 if (found == null && find.HasCoordinate)        // finally, not found, but we have a co-ord, find it from the db  by distance
-                    found = DB.SystemsDB.GetSystemByPosition(find.X, find.Y, find.Z, cn);
+                    found = DB.SystemsDB.GetSystemByPosition(find.X, find.Y, find.Z, cn.Connection);
 
                 if (found == null)
                 {
-                    long newid = DB.SystemsDB.FindAlias(find.EDSMID, find.Name , cn);   // is there a named alias in there due to a system being renamed..
+                    long newid = DB.SystemsDB.FindAlias(find.EDSMID, find.Name , cn.Connection);   // is there a named alias in there due to a system being renamed..
                     if (newid >= 0)
-                        found = DB.SystemsDB.FindStar(newid);  // find it using the new id
+                        found = DB.SystemsDB.FindStar(newid,cn.Connection);  // find it using the new id
                 }
 
                 if (found != null)                              // if we have a good db, go for it
@@ -119,98 +113,222 @@ namespace EliteDangerousCore.DB
                     //System.Diagnostics.Trace.WriteLine($"DB found {found.name} {found.id_edsm} sysid {found.id_edsm}");
                 }
 
-                if (owncn)
-                    cn.Dispose();
-
                 return found;
             }
             else
             {                                               // FROM CACHE
+                if (found != null)
+                {
+                    return found;
+                }
+
+                if (find.source == SystemSource.FromJournal && find.Name != null && find.HasCoordinate == true)
+                {
+                    AddToCache(find);
+                    return find;
+                }
+
                 //System.Diagnostics.Trace.WriteLine($"Cached reference to {found.name} {found.id_edsm}");
                 return found;       // no need for extra work.
             }
         }
 
-        //
-        // Generally, cache is not used below, but systems are added to the cache to speed up above searches
-        //
-
-        static public List<ISystem> FindSystemWildcard(string name, int limit = int.MaxValue, SQLiteConnectionSystem cn = null)
+        private static ISystem FindCachedSystem(ISystem find)
         {
-            bool owncn = cn == null;
-            if (owncn)
-                cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
+            List<ISystem> foundlist = new List<ISystem>();
+            ISystem found = null;
 
-            var list = DB.SystemsDB.FindStarWildcard(name, cn, limit);
+            lock (systemsByEdsmId)          // Rob seen instances of it being locked together in multiple star distance threads, we need to serialise access to these two dictionaries
+            {                               // Concurrent dictionary no good, they could both be about to add the same thing at the same time and pass the contains test.
+
+                if (find.EDSMID > 0 && systemsByEdsmId.ContainsKey(find.EDSMID))        // add to list
+                {
+                    ISystem s = systemsByEdsmId[find.EDSMID];
+                    foundlist.Add(s);
+                }
+
+                if (systemsByName.ContainsKey(find.Name))            // and all names cached
+                {
+                    List<ISystem> s = systemsByName[find.Name];
+                    foundlist.AddRange(s);
+                }
+            }
+
+            if (find.HasCoordinate && foundlist.Count > 0)           // if sys has a co-ord, find the best match within 0.5 ly
+                found = NearestTo(foundlist, find, 0.5);
+
+            if (found == null && foundlist.Count == 1 && !find.HasCoordinate) // if we did not find one, but we have only 1 candidate, use it.
+                found = foundlist[0];
+
+            return found;
+        }
+
+        public static ISystem FindCachedJournalSystem(ISystem system)
+        {
+            var found = FindCachedSystem(system);
+
+            if ((found == null || (found.source != SystemSource.FromJournal && found.source != SystemSource.FromEDSM)) && system.HasCoordinate == true && system.Name != "")
+            {
+                AddToCache(system, found);
+                found = system;
+            }
+
+            return found;
+        }
+
+        public static List<ISystem> FindSystemWildcard(string name, int limit = int.MaxValue)
+        {
+            if (SystemsDatabase.Instance.RebuildRunning) // use the cache is db is updating
+            {
+                lock (systemsByEdsmId)
+                {
+                    name = name.ToLowerInvariant();
+
+                    return systemsByName.Where(kvp => kvp.Key.ToLowerInvariant().StartsWith(name))
+                                        .SelectMany(s => s.Value)
+                                        .Take(limit)
+                                        .ToList();
+                }
+            }
+            else
+            {
+                return SystemsDatabase.Instance.ExecuteWithDatabase(conn => FindSystemWildcard(name, conn, limit));
+            }
+        }
+
+        static private List<ISystem> FindSystemWildcard(string name, SystemsDatabaseConnection cn, int limit = int.MaxValue)
+        {
+            var list = DB.SystemsDB.FindStarWildcard(name, cn.Connection, limit);
             if (list != null)
             {
                 foreach (var x in list)
                     AddToCache(x);
             }
 
-            if (owncn)
-                cn.Dispose();
-
             return list;
         }
 
         public static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
                                                     int maxitems,
-                                                    double mindist, double maxdist, bool spherical, SQLiteConnectionSystem cn = null)
+                                                    double mindist, double maxdist, bool spherical)
         {
-            bool owncn = cn == null;
-            if (owncn)
-                cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
-
-            DB.SystemsDB.GetSystemListBySqDistancesFrom(distlist, x, y, z, maxitems, mindist, maxdist, spherical, cn, (s) => AddToCache(s));
-            if (distlist.Count > 0)
+            if (SystemsDatabase.Instance.RebuildRunning) // Return from cache if rebuild is running
             {
-                foreach (var s in distlist)
+                lock (systemsByEdsmId)
                 {
-                    AddToCache(s.Value);
+                    var sysdist = systemsByName.Values
+                                               .SelectMany(s => s)
+                                               .Select(s => new { distsq = s.DistanceSq(x, y, z), sys = s })
+                                               .OrderBy(s => s.distsq)
+                                               .ToList();
+                    var minsq = mindist * mindist;
+                    var maxsq = maxdist * maxdist;
+
+                    foreach (var sd in sysdist)
+                    {
+                        if (sd.distsq <= minsq && sd.distsq >= maxsq)
+                        {
+                            distlist.Add(sd.distsq, sd.sys);
+                        }
+
+                        if (distlist.Count >= maxitems)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
-
-            if (owncn)
-                cn.Dispose();
+            else
+            {
+                SystemsDatabase.Instance.ExecuteWithDatabase(conn => GetSystemListBySqDistancesFrom(distlist, x, y, z, maxitems, mindist, maxdist, spherical, conn));
+            }
         }
 
-        public static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn = null)
+        private static void GetSystemListBySqDistancesFrom(BaseUtils.SortedListDoubleDuplicate<ISystem> distlist, double x, double y, double z,
+                                                    int maxitems,
+                                                    double mindist, double maxdist, bool spherical, SystemsDatabaseConnection cn)
         {
-            return FindNearestSystemTo(x, y, z, 0.125, cn);
+            DB.SystemsDB.GetSystemListBySqDistancesFrom(distlist, x, y, z, maxitems, mindist, maxdist, spherical, cn.Connection, (s) => AddToCache(s));
         }
 
-        public static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance, SQLiteConnectionSystem cn = null)
+        public static ISystem GetSystemByPosition(double x, double y, double z, int warnthreshold = 500)
         {
-            bool owncn = cn == null;
-            if (owncn)
-                cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
+            return FindNearestSystemTo(x, y, z, 0.125, warnthreshold);
+        }
 
-            ISystem s = DB.SystemsDB.GetSystemByPosition(x, y, z, cn, maxdistance);
+        public static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance, int warnthreshold = 500)
+        {
+            if (SystemsDatabase.Instance.RebuildRunning) // Return from cache if rebuild is running
+            {
+                lock (systemsByEdsmId)
+                {
+                    return systemsByName.Values
+                                        .SelectMany(s => s)
+                                        .OrderBy(s => s.Distance(x, y, z))
+                                        .FirstOrDefault(e => e.Distance(x, y, z) < maxdistance);
+                }
+            }
+            else
+            {
+                return SystemsDatabase.Instance.ExecuteWithDatabase(conn => FindNearestSystemTo(x, y, z, maxdistance, conn), warnthreshold: warnthreshold);
+            }
+        }
+
+        private static ISystem FindNearestSystemTo(double x, double y, double z, double maxdistance, SystemsDatabaseConnection cn)
+        {
+            //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch(); sw.Start();  System.Diagnostics.Debug.WriteLine("Look up " + x + "," + y + "," + z + " : " + maxdistance);
+
+            ISystem s = DB.SystemsDB.GetSystemByPosition(x, y, z, cn.Connection, maxdistance);
             if (s != null)
                 AddToCache(s);
 
-            if (owncn)
-                cn.Dispose();
+            //System.Diagnostics.Debug.WriteLine(".. lookup done " + sw.ElapsedMilliseconds);
             return s;
         }
 
-        public static ISystem GetSystemNearestTo(Point3D currentpos,
+         public static ISystem GetSystemNearestTo(Point3D currentpos,
                                                  Point3D wantedpos,
                                                  double maxfromcurpos,
                                                  double maxfromwanted,
-                                                 int routemethod , 
-                                                 int limitto, 
-                                                 SQLiteConnectionSystem cn = null)
+                                                 SystemsDB.SystemsNearestMetric routemethod,
+                                                 int limitto)
         {
-            bool owncn = cn == null;
-            if (owncn)
-                cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader);
+            if (SystemsDatabase.Instance.RebuildRunning)    // return from cache is rebuild is running
+            {
+                lock (systemsByEdsmId)
+                {
+                    var candidates =
+                        systemsByName.Values
+                                     .SelectMany(s => s)
+                                     .Select(s => new
+                                     {
+                                         dc = s.Distance(currentpos.X, currentpos.Y, currentpos.Z),
+                                         dw = s.Distance(wantedpos.X, wantedpos.Y, wantedpos.Z),
+                                         sys = s
+                                     })
+                                     .Where(s => s.dw < maxfromwanted && s.dc < maxfromcurpos)
+                                     .OrderBy(s => s.dw)
+                                     .Select(s => s.sys)
+                                     .ToList();
 
-            ISystem sys = DB.SystemsDB.GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod, cn, (s) => AddToCache(s), limitto);
+                    return DB.SystemsDB.GetSystemNearestTo(candidates, currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod);
+                }
+            }
+            else
+            {
+                return SystemsDatabase.Instance.ExecuteWithDatabase(conn => GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod, limitto, conn));
+            }
+        }
 
-            if (owncn)
-                cn.Dispose();
+        private static ISystem GetSystemNearestTo(Point3D currentpos,
+                                                 Point3D wantedpos,
+                                                 double maxfromcurpos,
+                                                 double maxfromwanted,
+                                                 SystemsDB.SystemsNearestMetric routemethod,
+                                                 int limitto, 
+                                                 SystemsDatabaseConnection cn)
+        {
+            ISystem sys = DB.SystemsDB.GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, routemethod, cn.Connection, (s) => AddToCache(s), limitto);
 
             return sys;
         }
@@ -262,18 +380,39 @@ namespace EliteDangerousCore.DB
 
             if (input.HasChars())
             {
-                List<ISystem> systems = DB.SystemsDB.FindStarWildcard(input, MaximumStars);
-                foreach (var i in systems)
+                if (SystemsDatabase.Instance.RebuildRunning)
                 {
-                    AddToCache(i);
-                    ret.Add(i.Name);
-                }
+                    lock (systemsByEdsmId)
+                    {
+                        input = input.ToLowerInvariant();
 
-                List<ISystem> aliases = DB.SystemsDB.FindAliasWildcard(input);
-                foreach (var i in aliases)
+                        foreach (var kvp in systemsByName)
+                        {
+                            if (kvp.Key.ToLowerInvariant().StartsWith(input))
+                            {
+                                foreach (var s in kvp.Value)
+                                {
+                                    ret.Add(s.Name);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
                 {
-                    AddToCache(i);
-                    ret.Add(i.Name);      
+                    List<ISystem> systems = DB.SystemsDB.FindStarWildcard(input, MaximumStars);
+                    foreach (var i in systems)
+                    {
+                        AddToCache(i);
+                        ret.Add(i.Name);
+                    }
+
+                    List<ISystem> aliases = DB.SystemsDB.FindAliasWildcard(input);
+                    foreach (var i in aliases)
+                    {
+                        AddToCache(i);
+                        ret.Add(i.Name);
+                    }
                 }
             }
 
@@ -286,16 +425,44 @@ namespace EliteDangerousCore.DB
 
         static private void AddToCache(ISystem found, ISystem orgsys = null)
         {
-            if (found.EDSMID > 0)
-                systemsByEdsmId[found.EDSMID] = found;  // must be definition the best ID found.. and if the update date of sys is better, its now been updated
-
-            if (systemsByName.ContainsKey(found.Name))
+            lock (systemsByEdsmId)
             {
-                if ( !systemsByName[found.Name].Contains(found))
-                    systemsByName[found.Name].Add(found);   // add to list..
+                if (found.EDSMID > 0)
+                    systemsByEdsmId[found.EDSMID] = found;  // must be definition the best ID found.. and if the update date of sys is better, its now been updated
+
+                List<ISystem> byname;
+
+                if (!systemsByName.TryGetValue(found.Name, out byname))
+                {
+                    systemsByName[found.Name] = byname = new List<ISystem>();
+                }
+
+                int idx = -1;
+
+                if (found.EDSMID > 0)
+                {
+                    idx = byname.FindIndex(e => e.EDSMID == found.EDSMID);
+                }
+
+                if (idx < 0)
+                {
+                    idx = byname.FindIndex(e => e.Xi == found.Xi && e.Yi == found.Yi && e.Zi == found.Zi);
+                }
+
+                if (idx < 0 && orgsys != null)
+                {
+                    idx = byname.FindIndex(e => e.Xi == orgsys.Xi && e.Yi == orgsys.Yi && e.Zi == orgsys.Zi);
+                }
+
+                if (idx >= 0)
+                {
+                    byname[idx] = found;
+                }
+                else
+                {
+                    byname.Add(found);
+                }
             }
-            else
-                systemsByName[found.Name] = new List<ISystem> { found }; // or make list
         }
 
         static private ISystem NearestTo(List<ISystem> list, ISystem comparesystem, double mindist)

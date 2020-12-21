@@ -108,11 +108,11 @@ namespace EliteDangerousCore
         None = 10,
     }
 
-    public enum SystemStatusEnum                // Who made the information?
+    public enum SystemSource                // Who made the information?
     {
-        Unknown = 0,
-        EDSM = 1,
-        EDDiscovery = 3,
+        Synthesised,
+        FromEDSM,
+        FromJournal,
     }
 
     public interface ISystemBase : IEquatable<ISystemBase>
@@ -132,13 +132,13 @@ namespace EliteDangerousCore
 
         double Distance(ISystemBase other);
         double Distance(double x, double y, double z);
+        double DistanceSq(double x, double y, double z);
         bool Distance(ISystemBase other, double min, double max);
         bool Cuboid(ISystemBase other, double min, double max);
     }
 
     public interface ISystemEDDB
     {
-        long EDDBID { get; set; }
         string Faction { get; set; }
         long Population { get; set; }
         EDGovernment Government { get; set; }
@@ -149,14 +149,13 @@ namespace EliteDangerousCore
         string Power { get; set; }
         string PowerState { get; set; }
         int NeedsPermit { get; set; }
-        int EDDBUpdatedAt { get; set; }
-        bool HasEDDBInformation { get; }
+        bool HasSystemStateInfo { get; }
     }
 
     // Definition of the core interface so we can swap out an "offline" version during testing
     public interface ISystem : ISystemBase, ISystemEDDB
     {
-        SystemStatusEnum status { get; set; }        // Who made this entry, where did the info come from?
+        SystemSource source { get; set; }        // Who made this entry, where did the info come from?
         string ToString();
         string ToStringVerbose();
     }
