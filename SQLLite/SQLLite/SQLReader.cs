@@ -26,36 +26,11 @@ namespace SQLLiteExtensions
     // database
     public class SQLExtDataReader<TConn> : DbDataReader  where TConn : SQLExtConnection
     {
-        public SQLExtDataReader(DbCommand cmd, CommandBehavior behaviour, SQLExtTransaction<TConn> txn = null, SQLExtTransactionLock<TConn> txnlock = null)
+        public SQLExtDataReader(DbCommand cmd, CommandBehavior behaviour, SQLExtTransaction<TConn> txn = null)
         {
             this.command = cmd;
             this.InnerReader = cmd.ExecuteReader(behaviour);
             this.transaction = txn;
-            this.txnlock = txnlock;
-        }
-
-        protected void BeginCommand()
-        {
-            if (transaction != null)
-            {
-                transaction.BeginCommand(command);
-            }
-            else if (txnlock != null)
-            {
-                txnlock.BeginCommand(command);
-            }
-        }
-
-        protected void EndCommand()
-        {
-            if (transaction != null)
-            {
-                transaction.EndCommand();
-            }
-            else if (txnlock != null)
-            {
-                txnlock.EndCommand();
-            }
         }
 
         #region Overridden methods and properties passed to inner command
@@ -93,46 +68,31 @@ namespace SQLLiteExtensions
 
         public override System.Collections.IEnumerator GetEnumerator()
         {
-            BeginCommand();
             foreach (object val in InnerReader)
             {
-                EndCommand();
                 yield return val;
-                BeginCommand();
             }
-            EndCommand();
         }
 
         public override bool NextResult()
         {
-            BeginCommand();
             bool result = InnerReader.NextResult();
-            EndCommand();
             return result;
         }
 
         public override bool Read()
         {
-            BeginCommand();
             bool result = InnerReader.Read();
-            EndCommand();
             return result;
         }
 
         public override void Close()
         {
             InnerReader.Close();
-
-            if (txnlock != null)
-            {
-                txnlock.CloseReader();
-                txnlock = null;
-            }
         }
 
         protected DbDataReader InnerReader { get; set; }
         protected DbCommand command;
         protected SQLExtTransaction<TConn> transaction;
-        protected SQLExtTransactionLock<TConn> txnlock;
     }
 }

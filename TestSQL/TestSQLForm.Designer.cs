@@ -1,6 +1,6 @@
 ﻿namespace TestSQL
 {
-    partial class Form1
+    partial class TestSQLForm
     {
         /// <summary>
         /// Required designer variable.

@@ -19,38 +19,22 @@ using System.Data.Common;
 
 namespace SQLLiteExtensions
 {
-    // This class wraps a DbTransaction to work around
-    // SQLite not using a monitor or mutex when locking
-    // the database
+    // This class wraps a DbTransaction
+
     public class SQLExtTransaction<TConn> : DbTransaction where TConn : SQLExtConnection
     {
-        private SQLExtTransactionLock<TConn> transactionLock = null;
-
         public DbTransaction InnerTransaction { get; private set; }
 
-        public SQLExtTransaction(DbTransaction txn, SQLExtTransactionLock<TConn> txnlock)
+        public SQLExtTransaction(DbTransaction txn)
         {
-            transactionLock = txnlock;
             InnerTransaction = txn;
         }
 
-        #region Overridden methods and properties passed to inner transaction
         protected override DbConnection DbConnection { get { return InnerTransaction.Connection; } }
         public override IsolationLevel IsolationLevel { get { return InnerTransaction.IsolationLevel; } }
 
         public override void Commit() { InnerTransaction.Commit(); }
         public override void Rollback() { InnerTransaction.Rollback(); }
-        #endregion
-
-        public void BeginCommand(DbCommand cmd)
-        {
-            transactionLock.BeginCommand(cmd);
-        }
-
-        public void EndCommand()
-        {
-            transactionLock.EndCommand();
-        }
 
         // disposing: true if Dispose() was called, false
         // if being finalized by the garbage collector
@@ -63,11 +47,6 @@ namespace SQLLiteExtensions
                 {
                     InnerTransaction.Dispose();
                     InnerTransaction = null;
-                }
-
-                if (transactionLock != null)
-                {
-                    transactionLock.CloseWriter();
                 }
             }
 
