@@ -19,8 +19,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SQLLite", "SQLLite\SQLLite.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWebServer", "TestWebServer\TestWebServer.csproj", "{8C66841F-3B8B-4C2C-B881-EFA4BC424DBD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseUtils.WinForms", "BaseUtils.WinForms\BaseUtils.WinForms.csproj", "{61AFEA77-0276-4DCF-983F-589E6AF31258}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Audio.CSCore", "Audio.CSCore\Audio.CSCore.csproj", "{0E816ECD-490B-47CF-A1E2-17FB10E23256}"
@@ -32,7 +30,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpGet", "HttpGet\HttpGet.
 		{C657C881-F3E1-45BA-ACA5-966348010414} = {C657C881-F3E1-45BA-ACA5-966348010414}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSQL", "TestSQL\TestSQL.csproj", "{C51BF771-EEE6-4398-AB16-25420985F0E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
