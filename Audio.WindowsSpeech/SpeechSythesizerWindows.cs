@@ -78,8 +78,8 @@ namespace AudioExtensions
                 System.IO.MemoryStream stream = new System.IO.MemoryStream();
                 synth.SetOutputToWaveStream(stream);
 
-                string[] ssmlstart = new string[] { "<say-as ", "<emphasis" , "<phoneme" , "<sub" , "<prosody"};
-                string[] ssmlend = new string[] { "</say-as>", "</emphasis>" , "</phoneme>" , "</sub>" , "</prosody>" };
+                string[] ssmlstart = new string[] { "<say-as ", "<emphasis" , "<phoneme" , "<sub" , "<prosody", "<break", "<voice", "<lexicon"};
+                string[] ssmlend = new string[] { "</say-as>", "</emphasis>" , "</phoneme>" , "</sub>" , "</prosody>" , "/>", "</voice>", "/>"};
 
                 phrase = phrase.Trim();
 
@@ -111,8 +111,7 @@ namespace AudioExtensions
                         indexofend += ssmlend[ssmlindex].Length; // move to end of it
 
                         string ssmlcmd = phrase.Substring(0, indexofend).Replace('\'', '"');
-
-                        //for (int i = 0; i < ssmlcmd.Length; i++) System.Diagnostics.Debug.WriteLine("SSML :" + (int)ssmlcmd[i] + " = " + ssmlcmd[i]);
+                        //System.Diagnostics.Debug.WriteLine("SSML " + ssmlcmd);
 
                         try
                         {
