@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -134,7 +135,7 @@ namespace BaseUtils.JSON
 
                 objectlist.Push(o);
 
-                foreach (dynamic kvp in idict)      // need dynamic since don't know the types of Value or Key
+                foreach (DictionaryEntry kvp in idict)      // need dynamic since don't know the types of Value or Key
                 {
                     if (objectlist.Contains(kvp.Value))   // self reference
                     {
@@ -192,11 +193,11 @@ namespace BaseUtils.JSON
 
                     string attrname = mi.Name;
 
-                    var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
-                    if (rename.Length == 1)                                         // any ones with a rename, use that name     
+                    var rename = mi.GetCustomAttributes(false).OfType<JsonNameAttribute>().FirstOrDefault();
+
+                    if (rename != null)                                         // any ones with a rename, use that name     
                     {
-                        dynamic attr = rename[0];                                   // dynamic since compiler does not know rename type
-                        attrname = attr.Name;
+                        attrname = rename.Name;
                     }
 
                     //System.Diagnostics.Debug.WriteLine("Member " + mi.Name + " " + mi.MemberType + " attrname " + attrname);

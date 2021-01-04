@@ -22,11 +22,46 @@ namespace BaseUtils
     /// <typeparam name="T"></typeparam>
 
     public class Matrix<T>
+        where T : struct, System.IConvertible, System.IComparable<T>
     {
         private readonly int rows;
         private readonly int columns;
+        private static readonly System.Func<T, T> Negate;
+        private static readonly System.Func<T, T, T> Multiply;
+        private static readonly System.Func<T, T> Invert;
+        private static readonly System.Func<T, T, T> Add;
 
         protected T[,] matrix;
+
+        static Matrix()
+        {
+            var unaryparam = System.Linq.Expressions.Expression.Parameter(typeof(T), "v");
+            var binaryparam1 = System.Linq.Expressions.Expression.Parameter(typeof(T), "v1");
+            var binaryparam2 = System.Linq.Expressions.Expression.Parameter(typeof(T), "v2");
+
+            Negate =
+                System.Linq.Expressions.Expression.Lambda<System.Func<T, T>>(
+                    System.Linq.Expressions.Expression.Negate(unaryparam),
+                    unaryparam
+                ).Compile();
+            Invert =
+                System.Linq.Expressions.Expression.Lambda<System.Func<T, T>>(
+                    System.Linq.Expressions.Expression.Not(unaryparam),
+                    unaryparam
+                ).Compile();
+            Multiply =
+                System.Linq.Expressions.Expression.Lambda<System.Func<T, T, T>>(
+                    System.Linq.Expressions.Expression.Multiply(binaryparam1, binaryparam2),
+                    binaryparam1,
+                    binaryparam2
+                ).Compile();
+            Add =
+                System.Linq.Expressions.Expression.Lambda<System.Func<T, T, T>>(
+                    System.Linq.Expressions.Expression.Add(binaryparam1, binaryparam2),
+                    binaryparam1,
+                    binaryparam2
+                ).Compile();
+        }
 
         public Matrix(int n, int m)
         {
@@ -77,10 +112,10 @@ namespace BaseUtils
             {
                 for (int c = 0; c < m.columns; c++)
                 {
-                    T tmp = (dynamic)0;
+                    T tmp = (T)System.Convert.ChangeType(0, typeof(T));
                     for (int i = 0; i < m2.rows; i++)
                     {
-                        tmp += (dynamic)m1.matrix[r, i] * (dynamic)m2.matrix[i, c];
+                        tmp = Add(tmp, Multiply(m1.matrix[r, i], m2.matrix[i, c]));
                     }
 
                     m.matrix[r, c] = tmp;
@@ -111,7 +146,7 @@ namespace BaseUtils
             {
                 for (int c = 0; c < m.columns; c++)
                 {
-                    tmp.matrix[r, c] = -(dynamic)m.matrix[r, c];
+                    tmp.matrix[r, c] = Negate(m.matrix[r, c]);
                 }
             }
 

@@ -15,8 +15,8 @@
  */
 
 using BaseUtils;
+using BaseUtils.JSON;
 using BaseUtils.WebServer;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -111,14 +111,14 @@ namespace TestWebServer
         public void PushRecord()
         {
             JToken data = eddif.jr.PushRecord();
-            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(), true);
         }
 
         public void SupercruiseClick()
         {
             eddif.indicator.Supercruise = !eddif.indicator.Supercruise;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(), true);
 
         }
 
@@ -126,14 +126,14 @@ namespace TestWebServer
         {
             eddif.indicator.ShieldsUp = !eddif.indicator.ShieldsUp;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(), true);
         }
 
         public void NightVision()
         {
             eddif.indicator.NightVision = !eddif.indicator.NightVision;
             JToken data = eddif.indicator.PushRecord();
-            httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
+            httpws.SendWebSockets(data.ToString(), true);
         }
 
         class EDDIconNodes : IHTTPNode
@@ -169,7 +169,7 @@ namespace TestWebServer
 
                 public JToken Response(string key, JToken message, HttpListenerRequest request)
                 {
-                    System.Diagnostics.Debug.WriteLine("Journal Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
+                    System.Diagnostics.Debug.WriteLine("Journal Request " + key + " Fields " + message.ToString());
                     int startindex = message["start"].Int(0);
                     int length = message["length"].Int(0);
 
@@ -221,7 +221,7 @@ namespace TestWebServer
 
                 public JToken Response(string key, JToken message, HttpListenerRequest request)
                 {
-                    System.Diagnostics.Debug.WriteLine("Status Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
+                    System.Diagnostics.Debug.WriteLine("Status Request " + key + " Fields " + message.ToString());
                     int entry = message["entry"].Int(0);
 
                     return NewSRec("status", entry);
@@ -289,7 +289,7 @@ namespace TestWebServer
 
                 public JToken Response(string key, JToken message, HttpListenerRequest request)
                 {
-                    System.Diagnostics.Debug.WriteLine("indicator Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
+                    System.Diagnostics.Debug.WriteLine("indicator Request " + key + " Fields " + message.ToString());
                     return NewIRec("indicator");
                 }
 
@@ -374,7 +374,7 @@ namespace TestWebServer
 
                 public JToken Response(string key, JToken message, HttpListenerRequest request)
                 {
-                    System.Diagnostics.Debug.WriteLine("indicator Request " + key + " Fields " + message.ToString(Newtonsoft.Json.Formatting.None));
+                    System.Diagnostics.Debug.WriteLine("indicator Request " + key + " Fields " + message.ToString());
                     JObject response = new JObject();
 
                     string keyname = (string)message["key"];
@@ -383,7 +383,7 @@ namespace TestWebServer
                     {
                         ireq.NightVision = !ireq.NightVision;
                         JToken data = ireq.PushRecord();
-                        httpws.SendWebSockets(data.ToString(Newtonsoft.Json.Formatting.None), true);
+                        httpws.SendWebSockets(data.ToString(), true);
                         ireq.PushRecord();
                     }
 

@@ -111,11 +111,10 @@ namespace BaseUtils
 
             if (key == Keys.Return)
             {
-                if (CurrentCell.EditType.GetMethod("ReturnPressedInEditMode") != null)
+                var mi = CurrentCell.EditType.GetMethod("ReturnPressedInEditMode");
+                if (mi != null && (bool)mi.Invoke(EditingControl, new object[0]))
                 {
-                    dynamic ak = EditingControl;
-                    if (ak.ReturnPressedInEditMode())
-                        return true;
+                    return true;
                 }
             }
             return base.ProcessDialogKey(keyData);

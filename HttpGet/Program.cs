@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BaseUtils;
-using Newtonsoft.Json.Linq;
+using BaseUtils.JSON;
 
 // debug space for http code
 
@@ -24,10 +25,10 @@ namespace HttpGet
 
             foreach (JObject t in r)
             {
-                var url = t["url"].Value<string>();
-                var tag = t["tag_name"].Value<string>();
-                var name = t["name"].Value<string>();
-                var pdate = t["published_at"].Value<DateTime>();
+                var url = t["url"].Value.ToNullSafeString();
+                var tag = t["tag_name"].Value.ToNullSafeString();
+                var name = t["name"].Value.ToNullSafeString();
+                var pdate = t["published_at"].DateTime(CultureInfo.InvariantCulture);
 
                 Console.Write("\"" + tag +"\",\"" + name +"\"," + pdate);
 
@@ -37,8 +38,8 @@ namespace HttpGet
                 JArray assets = t["assets"] as JArray;
                 foreach (JObject asset in assets)
                 {
-                    var aname = asset["name"].Value<string>();
-                    var download = asset["download_count"].Value<int>();
+                    var aname = asset["name"].Value.ToNullSafeString();
+                    var download = asset["download_count"].Int();
 
                     if (aname.Contains(".exe"))
                     {

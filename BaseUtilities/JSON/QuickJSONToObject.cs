@@ -51,6 +51,30 @@ namespace BaseUtils.JSON
         // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.  
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
 
+        public static object ToArray<T>(this JToken tk, bool ignoretypeerrors = false)
+        {
+            var instance = new T[tk.Count];
+
+            for (int i = 0; i < tk.Count; i++)
+            {
+                object ret = ToObject(tk[i], typeof(T), ignoretypeerrors);      // get the underlying element, must match array element type
+
+                if (ret != null && ret is ToObjectError err)      // arrays must be full, any errors means an error
+                {
+                    err.PropertyName = typeof(T[]).Name + "." + i.ToString() + "." + err.PropertyName;
+                    return ret;
+                }
+                else
+                {
+                    instance[i] = (T)typeof(T).ChangeTo(ret);
+                }
+            }
+
+            return instance;
+        }
+
+        private static System.Collections.Generic.Dictionary<Type, Func<JToken, bool, object>> ArrayConverters = new System.Collections.Generic.Dictionary<Type, Func<JToken, bool, object>>();
+
         public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors = false)       // will return an instance of tt or ToObjectError, or null for token is null
         {
             if (tk == null)
@@ -63,34 +87,38 @@ namespace BaseUtils.JSON
 
                 if (tt.IsArray)
                 {
-                    dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
-
-                    for (int i = 0; i < tk.Count; i++)
+                    if (!ArrayConverters.TryGetValue(tt.GetElementType(), out var converter))
                     {
-                        Object ret = ToObject(tk[i], tt.GetElementType(), ignoretypeerrors);      // get the underlying element, must match array element type
-
-                        if (ret != null && ret.GetType() == typeof(ToObjectError))      // arrays must be full, any errors means an error
-                        {
-                            ((ToObjectError)ret).PropertyName = tt.Name + "." + i.ToString() + "." + ((ToObjectError)ret).PropertyName;
-                            return ret;
-                        }
-                        else
-                        {
-                            dynamic d = tt.GetElementType().ChangeTo(ret);
-                            instance[i] = d;
-                        }
+                        System.Linq.Expressions.Expression<Func<JToken, bool, object>> expr = (t, ie) => ToArray<object>(t, ie);
+                        var mi =
+                            ((System.Linq.Expressions.MethodCallExpression)expr.Body)
+                                .Method
+                                .GetGenericMethodDefinition()
+                                .MakeGenericMethod(tt.GetElementType());
+                        var tkparam = System.Linq.Expressions.Expression.Parameter(typeof(JToken), "tk");
+                        var ieparam = System.Linq.Expressions.Expression.Parameter(typeof(bool), "ignoretypeerrors");
+                        ArrayConverters[tt.GetElementType()] = converter = System.Linq.Expressions.Expression.Lambda<Func<JToken, bool, object>>(
+                            System.Linq.Expressions.Expression.Call(
+                                null,
+                                mi,
+                                tkparam,
+                                ieparam
+                            ),
+                            tkparam,
+                            ieparam
+                        ).Compile();
                     }
 
-                    return instance;
+                    return converter(tk, ignoretypeerrors);
                 }
                 else if (typeof(System.Collections.IList).IsAssignableFrom(tt))
                 {
-                    dynamic instance = Activator.CreateInstance(tt);        // create the List
+                    System.Collections.IList instance = (System.Collections.IList)Activator.CreateInstance(tt);        // create the List
                     var types = tt.GetGenericArguments();
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], types[0], ignoretypeerrors);      // get the underlying element, must match types[0] which is list type
+                        object ret = ToObject(tk[i], types[0], ignoretypeerrors);      // get the underlying element, must match types[0] which is list type
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))  // lists must be full, any errors are errors
                         {
@@ -99,7 +127,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = types[0].ChangeTo(ret);
+                            var d = types[0].ChangeTo(ret);
                             instance.Add(d);
                         }
                     }
@@ -113,7 +141,7 @@ namespace BaseUtils.JSON
             {
                 if (typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
                 {
-                    dynamic instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
+                    System.Collections.IDictionary instance = (System.Collections.IDictionary)Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
                     var types = tt.GetGenericArguments();
 
                     foreach (var kvp in (JObject)tk)
@@ -135,7 +163,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = types[1].ChangeTo(ret);
+                            var d = types[1].ChangeTo(ret);
                             instance[kvp.Key] = d;
                         }
                     }
@@ -153,11 +181,10 @@ namespace BaseUtils.JSON
 
                     string[] memberjsonname = fieldpropertymembers.Select(mi =>
                     {                                                           // go thru each and look for ones with the rename attr
-                        var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
-                        if (rename.Length == 1)
+                        var rename = mi.GetCustomAttributes(false).OfType<JsonNameAttribute>().FirstOrDefault();
+                        if (rename != null)
                         {
-                            dynamic attr = rename[0];               // if so, dynamically pick up the name
-                            return (string)attr.Name;
+                            return rename.Name;
                         }
                         else
                             return mi.Name;
