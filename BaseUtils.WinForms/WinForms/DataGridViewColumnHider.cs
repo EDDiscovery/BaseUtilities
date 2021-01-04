@@ -18,7 +18,7 @@ using System.Windows.Forms;
 
 namespace BaseUtils
 {
-    public class DataGridViewColumnHider : DataGridViewAltContextMenus
+    public class DataGridViewColumnHider : DataGridViewBaseEnhancements
     {
         public DataGridViewColumnHider()
         {
