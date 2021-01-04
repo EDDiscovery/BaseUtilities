@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright © 2016-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -14,9 +14,6 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.IO;
@@ -26,6 +23,8 @@ namespace BaseUtils
 {
     public class DownloadFileHandler
     {
+        public static string UserAgent { get; set; } = Assembly.GetEntryAssembly().GetName().Name + " v" + Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+
         static public bool DownloadFile(string url, string filename)
         {
             bool newfile = false;
@@ -73,7 +72,7 @@ namespace BaseUtils
 
             BaseUtils.HttpCom.WriteLog("DownloadFile", url);
             var request = (HttpWebRequest)HttpWebRequest.Create(url);
-            request.UserAgent = BrowserInfo.UserAgent;
+            request.UserAgent = UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
             if (filename != null && File.Exists(etagFilename))

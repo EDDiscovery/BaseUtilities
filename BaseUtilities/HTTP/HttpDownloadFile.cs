@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019 EDDiscovery development team
+ * Copyright © 2019-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,19 +13,18 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Reflection;
-using System.Threading.Tasks;
 using System.IO;
 using System.Net;
+using System.Reflection;
 
 namespace BaseUtils
 {
     public static class DownloadFile
     {
+        public static string UserAgent { get; set; } = Assembly.GetEntryAssembly().GetName().Name + " v" + Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+
         static public bool HTTPDownloadFile(string url,
                                         string filename,                                // if non null, store filename
                                         bool alwaysnewfile,                             // if true, etag is not used, always downloaded 
@@ -49,7 +48,7 @@ namespace BaseUtils
             BaseUtils.HttpCom.WriteLog("DownloadFile", url + ": ->" + filename + ":" + etagFilename);
 
             var request = (HttpWebRequest)HttpWebRequest.Create(url);
-            request.UserAgent = BrowserInfo.UserAgent;
+            request.UserAgent = UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
             if (etagFilename != null && File.Exists(etagFilename) && File.Exists(filename))   // if we want to etag it, and we have it, and we have the file, we can do a check
