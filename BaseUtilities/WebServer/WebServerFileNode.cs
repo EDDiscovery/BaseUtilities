@@ -25,7 +25,7 @@ namespace BaseUtils.WebServer
 
     public class HTTPFileNode : IHTTPNode
     {
-        public string[] BinaryTypes = new string[] { ".png", ".bmp" };
+        public string[] BinaryTypes = new string[] { ".png", ".bmp", ".ico", ".jpg" , ".jpeg", ".tif", ".tiff", ".gif" , ".raw", ".eps" };
 
         private string path;
 
@@ -47,7 +47,10 @@ namespace BaseUtils.WebServer
                     string ext = Path.GetExtension(file);
 
                     if (BinaryTypes.ContainsIn(ext, StringComparison.InvariantCultureIgnoreCase) != -1 )
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Transfer " + file + " as binary");
                         return File.ReadAllBytes(file);
+                    }
                     else
                     {
                         string data = File.ReadAllText(file, Encoding.UTF8);

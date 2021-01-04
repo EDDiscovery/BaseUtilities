@@ -1509,7 +1509,9 @@ namespace BaseUtils
 
         protected bool TickCount(out string output)
         {
-            output = Environment.TickCount.ToStringInvariant();
+            int tick = Environment.TickCount;
+            uint ticku = (uint)tick;
+            output = ticku.ToStringInvariant();
             return true;
         }
 

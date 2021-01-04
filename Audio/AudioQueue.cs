@@ -23,7 +23,7 @@ namespace AudioExtensions
         public delegate void SampleStart(AudioQueue sender, Object tag);
         public delegate void SampleOver(AudioQueue sender, Object tag);
 
-        public enum Priority { Low, Normal, High };
+        public enum Priority { Low, Normal, High, HighClear };
         static public Priority GetPriority(string s) { Priority p; if (Enum.TryParse<AudioQueue.Priority>(s, true, out p)) return p; else return Priority.Normal; }
 
         public class AudioSample
@@ -134,25 +134,32 @@ namespace AudioExtensions
                 {
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000).ToString("00000") + " Priority insert " + newdata.priority + " front " + audioqueue[0].priority);
 
-                    if (audioqueue[0].priority == Priority.Low)                 // if low at front, remove all other lows after it
+                    List<AudioSample> removelist = new List<AudioSample>();
+
+                    if (newdata.priority == Priority.HighClear)                     // if high clear
                     {
-                        List<AudioSample> remove = new List<AudioSample>();
+                        for (int i = 1; i < audioqueue.Count; i++)                  // remove all after current
+                            removelist.Add(audioqueue[i]);
+                    }
+                    else if (audioqueue[0].priority == Priority.Low)                 // if low at front, remove all other lows after it
+                    {
                         for (int i = 1; i < audioqueue.Count; i++)
                         {
                             if (audioqueue[i].priority == Priority.Low)
                             {
-                                remove.Add(audioqueue[i]);
+                                removelist.Add(audioqueue[i]);
                                 //System.Diagnostics.Debug.WriteLine("Queue to remove " + i);
                             }
                         }
-                        foreach (AudioSample a in remove)
-                        {
-                            FinishSample(a,false);
-                            audioqueue.Remove(a);
-                        }
                     }
 
-                    if (audioqueue[0].priority == Priority.High)                // High playing, don't interrupt, but this one next
+                    foreach (AudioSample a in removelist)
+                    {
+                        FinishSample(a, false);
+                        audioqueue.Remove(a);
+                    }
+
+                    if (audioqueue[0].priority == Priority.High || audioqueue[0].priority == Priority.HighClear)  // High playing, don't interrupt, but this one next
                         audioqueue.Insert(1, newdata);  // add one past front
                     else
                     {                                       
