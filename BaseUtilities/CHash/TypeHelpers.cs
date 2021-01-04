@@ -124,5 +124,31 @@ namespace BaseUtils
             return (T)Enum.Parse(typeof(T), value, true);
         }
 
+        static public Type FieldPropertyType(this MemberInfo mi)        // from member info for properties/fields return type
+        {
+            if (mi.MemberType == System.Reflection.MemberTypes.Property)
+                return ((System.Reflection.PropertyInfo)mi).PropertyType;
+            else if (mi.MemberType == System.Reflection.MemberTypes.Field)
+                return ((System.Reflection.FieldInfo)mi).FieldType;
+            else
+                return null;
+        }
+
+        public static void SetValue<T>(this MemberInfo mi, T instance,  Object value)   // given a member of fields/property, set value in instance
+        {
+            if (mi.MemberType == System.Reflection.MemberTypes.Field)
+                ((System.Reflection.FieldInfo)mi).SetValue(instance, value);
+            else if (mi.MemberType == System.Reflection.MemberTypes.Field)
+                ((System.Reflection.PropertyInfo)mi).SetValue(instance, value);
+            else
+                throw new NotSupportedException();
+        }
+
+        // cls = class type (such as typeof(JTokenExtensions)).. gentype = <T> parameter.  then Invoke with return.Invoke(null,new Object[] { values..}) if static, null = instance if not
+        public static MethodInfo CreateGeneric(Type cls, string methodname, Type gentype)
+        {
+            System.Reflection.MethodInfo method = cls.GetMethod(methodname, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            return method.MakeGenericMethod(gentype);
+        }
     }
 }

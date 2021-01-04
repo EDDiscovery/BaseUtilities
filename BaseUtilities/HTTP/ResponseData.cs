@@ -13,7 +13,7 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
+using BaseUtils.JSON;
 using System;
 using System.Collections.Specialized;
 using System.Net;
@@ -47,7 +47,7 @@ namespace BaseUtils
                 if (Body.Length > 0)
                 {
                     JObject jbody = JObject.Parse(Body);
-                    JArray jerrors = (JArray)jbody["errors"];
+                    JArray jerrors = jbody != null ? jbody["errors"].Array() : null;
                     if (jerrors != null)
                     {
                         foreach (JObject jerror in jerrors)

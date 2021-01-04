@@ -187,10 +187,10 @@ namespace BaseUtils.WebServer
             return okay;
         }
 
-        // send JSON, using newtonsoft JSON class
-        public bool SendWebSockets(Newtonsoft.Json.Linq.JToken json, bool wait = false)
+        // send JSON
+        public bool SendWebSockets(BaseUtils.JSON.JToken json, bool wait = false)
         {
-            return SendWebSockets(json.ToString(Newtonsoft.Json.Formatting.None), wait);
+            return SendWebSockets(json.ToString(), wait);
         }
 
         #region Implementation

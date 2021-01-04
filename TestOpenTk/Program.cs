@@ -25,7 +25,8 @@ namespace TestOpenTk
                 string arg1 = args.Next();
 
                 {
-                    Application.Run(new RandomStars());
+                    //Application.Run(new RandomStars());
+                    Application.Run(new DebugForm());
                 }
 
             }

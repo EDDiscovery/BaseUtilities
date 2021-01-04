@@ -20,7 +20,9 @@ using System.Linq;
 
 namespace BaseUtils
 {
-    public class QuickJSONFormatter         // Quick and dirty formatter when you want to do it quickly without the JSON.NET overhead.
+    // Quick formatter using Fluent syntax when you want to do it quickly 
+
+    public class QuickJSONFormatter        
     {
         enum StackType { Array, Object };
 

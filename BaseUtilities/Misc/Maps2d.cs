@@ -13,12 +13,12 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
+
+using BaseUtils.JSON;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 
 namespace BaseUtils
 {
@@ -121,7 +121,7 @@ namespace BaseUtils
         {
             FilePath = filepath;
 
-            var jo = (JObject)JObject.Parse(json);
+            var jo = JObject.Parse(json);
 
             TopLeft = new Point(jo["x1"].Int(), jo["y1"].Int());
             pxTopLeft = new Point(jo["px1"].Int(), jo["py1"].Int());

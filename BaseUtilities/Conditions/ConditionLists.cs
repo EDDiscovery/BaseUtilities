@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,13 +13,11 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-using Newtonsoft.Json.Linq;
+
+using BaseUtils.JSON;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BaseUtils;
 
 namespace BaseUtils
 { 
@@ -80,7 +78,8 @@ namespace BaseUtils
             return GetJSONObject().ToString();
         }
 
-        public JObject GetJSONObject()
+        // verified 31/7/2020 with baseutils.JSON. 
+        public JObject GetJSONObject() 
         {
             JObject evt = new JObject();
 
@@ -129,13 +128,14 @@ namespace BaseUtils
                 JObject jo = (JObject)JObject.Parse(s);
                 return FromJSON(jo);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("Bad condition JSON:" + ex);
                 return false;
             }
         }
 
-        public bool FromJSON(JObject jo)
+        public bool FromJSON(JObject jo)        // rechecked 31/7/2020 with quickjson
         {
             try
             {
@@ -145,6 +145,7 @@ namespace BaseUtils
 
                 foreach (JObject j in jf)
                 {
+                    // verified 31/7/2020 with baseutils.JSON.   If object not present, returns JNotPresent and Str() returns default
                     string evname = (string)j["EventName"];
                     ConditionEntry.LogicalCondition ftinner = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["ICond"].Str("Or"));
                     ConditionEntry.LogicalCondition ftouter = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["OCond"].Str("Or"));
@@ -182,7 +183,10 @@ namespace BaseUtils
 
                 return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Bad condition JSON:" + ex);
+            }
 
             return false;
         }
@@ -385,8 +389,9 @@ namespace BaseUtils
                 valuesneeded.Add(othervars);
                 return CheckConditions(fel, valuesneeded, out errlist, out errclass, passed);    // and check, passing in the values collected against the conditions to test.
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("Bad check condition:" + ex);
                 errlist = "class failed to parse";
                 return null;
             }
