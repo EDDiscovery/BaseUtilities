@@ -13,80 +13,88 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using BaseUtils.JSON;
 using System;
+using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace BaseUtils
 {
-    // Quicker version of StringParser.
+    // uses a text reader to feed in data so string parser is unlimited in length
 
     [System.Diagnostics.DebuggerDisplay("Action {new string(line,pos,line.Length-pos)} : ({new string(line,0,line.Length)})")]
-    public class StringParser2
+    public class StringParserQuickTextReader : IStringParserQuick
     {
-        private int pos;        // always left after an operation on the next non space char
-        private char[] line;
+        // ensure chunksize is big enough to read the longest number
 
-        #region Init and basic status
-
-        public StringParser2(string l, int p = 0)
+        public StringParserQuickTextReader(TextReader t, int chunksize)
         {
-            line = l.ToCharArray();
-            pos = p;
-            SkipSpace();
+            tr = t;
+            line = new char[chunksize];
         }
 
         public int Position { get { return pos; } }
-        public string Line { get { return new string(line,0,line.Length); } }
-        public string LineLeft { get { return new string(line,pos,line.Length-pos); } }
-        public bool IsEOL { get { return pos == line.Length; } }
-        public int Left { get { return Math.Max(line.Length - pos,0); } }
+        public string Line { get { return new string(line, 0, length); } }
 
-        #endregion
+        private TextReader tr;
+        private char[] line;
+        private int length = 0;
+        private int pos = 0;
 
-        #region Character or String related functions
-
-        public void SkipSpace()
+        public bool IsEOL()
         {
-            while (pos < line.Length && char.IsWhiteSpace(line[pos]))
-                pos++;
+            if (pos < length)       // if we have data, its not eol
+                return false;
+            else
+                return !Reload();   // else reload. reload returns true if okay, so its inverted for EOL
         }
 
-        public void SkipCharAndSkipSpace()
+        public char GetChar()
         {
-            pos++;
-            while (pos < line.Length && char.IsWhiteSpace(line[pos]))
-                pos++;
+            if (pos < length)
+                return line[pos++];
+            else
+            {
+                Reload();
+                return pos < length ? line[pos++] : char.MinValue;
+            }
         }
 
         public char PeekChar()
         {
-            return (pos < line.Length) ? line[pos] : ' ';
-        }
-
-
-        public char GetChar()       // minvalue if at EOL.. Default no skip for backwards compat
-        {
-            return (pos < line.Length) ? line[pos++] : ' ';
-        }
-
-        public char GetChar(bool skipspace)       // minvalue if at EOL.. Default no skip for backwards compat
-        {
-            if (pos < line.Length)
-            {
-                char ch = line[pos++];
-                if (skipspace)
-                    SkipSpace();
-                return ch;
-            }
+            if (pos < length)
+                return line[pos];
             else
-                return char.MinValue;
+            {
+                Reload();
+                return pos < length ? line[pos] : char.MinValue;
+            }
+        }
+
+        public void SkipSpace()
+        {
+            while (pos < length && char.IsWhiteSpace(line[pos]))        // first skip what we have
+                pos++;
+
+            while (pos == length)                   // if we reached end, then reload, and skip, and repeat if required
+            {
+                if (!Reload())
+                    return;
+                while (pos < length && char.IsWhiteSpace(line[pos]))
+                    pos++;
+            }
         }
 
         public bool IsStringMoveOn(string s)
         {
-            for( int i = 0; i < s.Length; i++)
+            if (pos > length - s.Length)            // if not enough to cover s, reload
+                Reload();
+
+            if (pos + s.Length > length)            // if not enough for string, not true
+                return false;
+
+            for (int i = 0; i < s.Length; i++)
             {
                 if (line[pos + i] != s[i])
                     return false;
@@ -100,7 +108,10 @@ namespace BaseUtils
 
         public bool IsCharMoveOn(char t, bool skipspace = true)
         {
-            if (pos < line.Length && line[pos] == t)
+            if (pos == length)                          // if at end, reload
+                Reload();
+
+            if (pos < length && line[pos] == t)
             {
                 pos++;
                 if (skipspace)
@@ -116,40 +127,36 @@ namespace BaseUtils
             pos--;
         }
 
-
-        #endregion
-
-        #region WORDs bare
-
-        // Your on a " or ' quoted string, extract it
-
-        private static char[] buffer = new char[16384];     // generous static buffer
-        public void SetMaxStringLength(int n)
-        {
-            buffer = new char[n];
-        }
-
-        public string NextQuotedWordString(char quote, bool replaceescape = false)
+        public int NextQuotedString(char quote, char[] buffer, bool replaceescape = false)
         {
             int bpos = 0;
 
             while (true)
             {
-                if (pos == line.Length || bpos== buffer.Length)  // if reached end of line, or out of buffer, error
+                if (pos == line.Length)                 // if out of chars, reload
+                    Reload();
+
+                if (pos == line.Length || bpos == buffer.Length)  // if reached end of line, or out of buffer, error
                 {
-                    return null;
+                    return -1;
                 }
                 else if (line[pos] == quote)        // if reached quote, end of string
                 {
                     pos++; //skip end quote
 
-                    while (pos < line.Length && char.IsWhiteSpace(line[pos]))   // skip spaces
-                        pos++;
+                    SkipSpace();
 
-                    return new string(buffer, 0, bpos);
+                    return bpos;
                 }
-                else if (line[pos] == '\\' && pos < line.Length - 1) // 2 chars min
+                else if (line[pos] == '\\' ) // 2 chars min
                 {
+                    if (pos >= length - 6)      // this number left for a good go
+                    {
+                        Reload();
+                        if (length < 1)
+                            return -1;
+                    }
+
                     pos++;
                     char esc = line[pos++];     // grab escape and move on
 
@@ -195,6 +202,8 @@ namespace BaseUtils
                                         buffer[bpos++] = c;
                                     }
                                 }
+                                else
+                                    return -1;
                                 break;
                         }
                     }
@@ -204,26 +213,32 @@ namespace BaseUtils
             }
         }
 
-
-        #endregion
-
-        #region Numbers and Bools
-
         static char[] decchars = new char[] { '.', 'e', 'E', '+', '-' };
 
-        public JToken NextJValue(bool sign)     // must be on a digit
+        public JToken JNextNumber(bool sign)     // must be on a digit
         {
             ulong ulv = 0;
             bool bigint = false;
             int start = pos;
+            bool slid = false;
 
             while (true)
             {
-                if (pos == line.Length)         // if at end, return as ulong
+                if (pos == line.Length)
+                {
+                    System.Diagnostics.Debug.Assert(slid == false);         // must not slide more than once
+                    Reload(start);              // get more data, keeping text back to start
+                    start = 0;                  // start of number now at 0 in buffer
+                    slid = true;
+                }
+
+                if (pos == line.Length)         // if at end, return number got
                 {
                     if (bigint)
                     {
                         string part = new string(line, start, pos - start);    // get double string
+
+                        SkipSpace();
 
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
                             return new JToken(JToken.TType.BigInt, sign ? -bv : bv);
@@ -237,22 +252,34 @@ namespace BaseUtils
                     else if (sign)
                         return null;
                     else
-                        return new JToken(JToken.TType.ULong,ulv);
+                        return new JToken(JToken.TType.ULong, ulv);
                 }
                 else if (line[pos] < '0' || line[pos] > '9')        // if at end of integer..
                 {
                     if (line[pos] == '.' || line[pos] == 'E' || line[pos] == 'e')  // if we have gone into a decimal, collect the string and return
                     {
-                        while (pos < line.Length && ((line[pos] >= '0' && line[pos] <= '9') || decchars.Contains(line[pos])))
-                            pos++;
+                        while(true)
+                        {
+                            if (pos == line.Length)
+                            {
+                                System.Diagnostics.Debug.Assert(slid == false);         // must not slide more than once
+                                Reload(start);              // get more data, keeping text back to start
+                                start = 0;                  // start of number now at 0 in buffer
+                                slid = true;
+                            }
+
+                            if (pos < line.Length && ((line[pos] >= '0' && line[pos] <= '9') || decchars.Contains(line[pos])))
+                                pos++;
+                            else
+                                break;
+                        }
 
                         string part = new string(line, start, pos - start);    // get double string
 
-                        while (pos < line.Length && char.IsWhiteSpace(line[pos]))   // skip spaces
-                            pos++;
+                        SkipSpace();
 
                         if (double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double dv))
-                            return new JToken(JToken.TType.Double,sign ? -dv : dv);
+                            return new JToken(JToken.TType.Double, sign ? -dv : dv);
                         else
                             return null;
                     }
@@ -260,8 +287,10 @@ namespace BaseUtils
                     {
                         string part = new string(line, start, pos - start);    // get double string
 
+                        SkipSpace();
+
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
-                            return new JToken(JToken.TType.BigInt,sign ? -bv : bv);
+                            return new JToken(JToken.TType.BigInt, sign ? -bv : bv);
                         else
                             return null;
                     }
@@ -270,8 +299,7 @@ namespace BaseUtils
                         if (pos == start)   // this means no chars, caused by a - nothing
                             return null;
 
-                        while (pos < line.Length && char.IsWhiteSpace(line[pos]))   // skip spaces
-                            pos++;
+                        SkipSpace();
 
                         if (ulv <= long.MaxValue)
                             return new JToken(JToken.TType.Long, sign ? -(long)ulv : (long)ulv);
@@ -291,7 +319,29 @@ namespace BaseUtils
             }
         }
 
-        #endregion
+        private bool Reload(int from = -1)          // from means keep at this position onwards, default is pos.
+        {
+            if (from == -1)
+                from = pos;
+
+            if (from < length)                      // if any left, slide
+            {
+                Array.Copy(line, from, line, 0, length - from);
+                length -= from;
+                pos -= from;
+            }
+            else
+            {
+                pos = length = 0;
+            }
+
+            if (length < line.Length)               // if space left, fill
+            {
+                length += tr.ReadBlock(line, length, line.Length - length);
+            }
+
+            return length > 0;
+        }
 
     }
 }

@@ -46,17 +46,17 @@ namespace TestOpenTk
             {
                 foreach (var l in fl.filelines)
                 {
-                    JObject t = JObject.Parse(l, out string error, true);
+                    JObject t = JObject.Parse(l, out string error, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t["timestamp"] != null);
-                    JObject t2 = JObject.Parse(l, out string error2, true);
+                    JObject t2 = JObject.Parse(l, out string error2, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t2["timestamp"] != null);
-                    JObject t3 = JObject.Parse(l, out string error3, true);
+                    JObject t3 = JObject.Parse(l, out string error3, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t3["timestamp"] != null);
-                    JObject t4 = JObject.Parse(l, out string error4, true);
+                    JObject t4 = JObject.Parse(l, out string error4, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t4["timestamp"] != null);
-                    JObject t5 = JObject.Parse(l, out string error5, true);
+                    JObject t5 = JObject.Parse(l, out string error5, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t5["timestamp"] != null);
-                    JObject t6 = JObject.Parse(l, out string error6, true);
+                    JObject t6 = JObject.Parse(l, out string error6, JToken.ParseOptions.CheckEOL);
                     System.Diagnostics.Trace.Assert(t6["timestamp"] != null);
                 }
 

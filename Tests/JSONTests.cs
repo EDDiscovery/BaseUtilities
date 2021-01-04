@@ -27,7 +27,7 @@ namespace EDDiscoveryTests
     {
         void Dump(string s)
         {
-            foreach(var c in s)
+            foreach (var c in s)
             {
                 System.Diagnostics.Debug.WriteLine((int)c + ":" + ((int)c > 32 ? c : '?'));
             }
@@ -36,9 +36,9 @@ namespace EDDiscoveryTests
         public void JSONBasic()
         {
             //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
-           string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
+            string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
 
-         //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
+            //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
 
             JToken decoded = JToken.Parse(json);
             Check.That(decoded).IsNotNull();
@@ -56,8 +56,28 @@ namespace EDDiscoveryTests
             JObject jo = decoded as JObject;
             Check.That(jo).IsNotNull();
 
-           // string j = jo["timest\"am\tp"].Str();
-          //  Check.That(j).Equals("2020-06-29T09:53:54Z");
+            // string j = jo["timest\"am\tp"].Str();
+            //  Check.That(j).Equals("2020-06-29T09:53:54Z");
+
+            JArray ja = new JArray(20.2, 30.3, 40.4);
+            Check.That(ja).IsNotNull();
+            Check.That(ja.Count).Equals(3);
+
+            JArray jb = new JArray("hello", "jim", "sheila");
+            Check.That(jb).IsNotNull();
+            Check.That(jb.Count).Equals(3);
+
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            dict["fred"] = "one";
+            dict["jim"] = "two";
+            JObject jod = new JObject(dict);
+
+            Dictionary<string, float> dict2 = new Dictionary<string, float>();
+            dict2["fred"] = 20.0f;
+            dict2["jim"] = 30f;
+            JObject jod2 = new JObject(dict2);
+
+
 
         }
 
@@ -135,9 +155,9 @@ namespace EDDiscoveryTests
 
             Check.That(ja.ToString()).IsEqualTo(expectedjson);
 
-       //     string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
+            //     string s = ja.Find<JString>(x => x is JString && ((JString)x).Value.Equals("one"))?.Value;
 
-        //    Check.That(s).IsNotNull().Equals("one");
+            //    Check.That(s).IsNotNull().Equals("one");
 
             JObject o = ja.Find<JObject>(x => x is JObject);
             Check.That(o).IsNotNull();
@@ -413,6 +433,7 @@ namespace EDDiscoveryTests
             var e1 = asset.FirstOrDefault(func);
             Check.That(e1).IsNotNull();
             Check.That(e1["size"].IsInt).IsTrue();
+            Check.That(e1["size1"]?.IsInt ?? true).IsTrue();
             Check.That(e1["size"].Int() == 11140542).IsTrue();
             Check.That(e1["state"].Str() == "uploaded").IsTrue();
         }
@@ -447,64 +468,21 @@ namespace EDDiscoveryTests
             System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
             st.Start();
 
-            foreach ( var fl in filelines)
-            { 
+            foreach (var fl in filelines)
+            {
                 foreach (var l in fl.filelines)
                 {
-                    JObject t = JObject.Parse(l, out string error, true);
+                    JObject t = JObject.Parse(l, out string error, JToken.ParseOptions.CheckEOL);
                     Check.That(t).IsNotNull();
-                    JObject t2 = JObject.Parse(l, out string error2, true);
+                    JObject t2 = JObject.Parse(l, out string error2, JToken.ParseOptions.CheckEOL);
                     Check.That(t2).IsNotNull();
-                    JObject t3 = JObject.Parse(l, out string error3, true);
+                    JObject t3 = JObject.Parse(l, out string error3, JToken.ParseOptions.CheckEOL);
                     Check.That(t3).IsNotNull();
-                    JObject t4 = JObject.Parse(l, out string error4, true);
+                    JObject t4 = JObject.Parse(l, out string error4, JToken.ParseOptions.CheckEOL);
                     Check.That(t4).IsNotNull();
-                    JObject t5 = JObject.Parse(l, out string error5, true);
+                    JObject t5 = JObject.Parse(l, out string error5, JToken.ParseOptions.CheckEOL);
                     Check.That(t5).IsNotNull();
-                    JObject t6 = JObject.Parse(l, out string error6, true);
-                    Check.That(t6).IsNotNull();
-                }
-
-            }
-
-            long time = st.ElapsedMilliseconds;
-            System.Diagnostics.Debug.WriteLine("Read journals took " + time);
-
-        }
-
-        [Test]
-        public void JSONNewtonSoftSpeed()
-        {
-            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
-
-            List<FileLines> filelines = new List<FileLines>();
-
-            foreach (var f in files)
-            {
-                // System.Diagnostics.Debug.WriteLine("Check " + f);
-                string[] lines = File.ReadAllLines(f);
-                filelines.Add(new FileLines { filelines = lines });
-            }
-
-            System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
-            st.Start();
-
-            foreach (var f in filelines)
-            {
-               // System.Diagnostics.Debug.WriteLine("Check " + f);
-                foreach (var l in f.filelines)
-                {
-                    Newtonsoft.Json.Linq.JToken t = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t2 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t2).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t3 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t3).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t4 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t4).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t5 = Newtonsoft.Json.Linq.JToken.Parse(l);
-                    Check.That(t5).IsNotNull();
-                    Newtonsoft.Json.Linq.JToken t6 = Newtonsoft.Json.Linq.JToken.Parse(l);
+                    JObject t6 = JObject.Parse(l, out string error6, JToken.ParseOptions.CheckEOL);
                     Check.That(t6).IsNotNull();
                 }
 
@@ -561,11 +539,20 @@ namespace EDDiscoveryTests
 
         public class Materials
         {
+            public int Count;
             public string Name;
             public string Name_Localised;
             public string FriendlyName;
             public string Category;
-            public int Count;
+            public System.Drawing.Bitmap fred;
+
+            [BaseUtils.JSON.JsonName("QValue")]
+            public int? qint;
+
+            [BaseUtils.JSON.JsonIgnore]
+            public int PropGet { get; }
+
+            public int PropGetSet { get; set; }
         }
 
         public class SimpleTest
@@ -574,6 +561,32 @@ namespace EDDiscoveryTests
             public string two;
             public int three;
             public bool four;
+        }
+
+        public class Material
+        {
+            public string Name { get; set; }        //FDNAME
+            public string FriendlyName { get; set; }        //friendly
+            public int Count { get; set; }
+
+            public void Normalise()
+            {
+            }
+        }
+
+        public class ProgressInformation
+        {
+            public string Engineer { get; set; }
+            public long EngineerID { get; set; }
+            public int? Rank { get; set; }       // only when unlocked
+            public string Progress { get; set; }
+            public int? RankProgress { get; set; }  // newish 3.x only when unlocked
+        }
+
+        public enum TestEnum { one,two, three};
+        public class FromObjectTest
+        {
+            public TestEnum t1;
         }
 
         [Test]
@@ -649,8 +662,16 @@ namespace EDDiscoveryTests
     }
   ]
 }";
+            {
+                string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":2929,""Progress"":""Invited"",""Rank"":null},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
+                JToken englistj = JToken.Parse(englist);
+
+                var pinfo = englistj["Engineers"]?.ToObjectProtected<ProgressInformation[]>();
+                Check.That(pinfo).IsNotNull();
+                Check.That(pinfo.Count()).Equals(25);
 
 
+            }
             {
                 string json = "[ \"one\",\"two\",\"three\" ] ";
                 JToken decode = JToken.Parse(json);
@@ -691,6 +712,245 @@ namespace EDDiscoveryTests
                 Check.That(MaterialList.Length).IsEqualTo(4);
 
 
+            }
+            {
+                string listp2 = @"{ ""Materials"":[ ""iron"" , ""nickel"" ]}";
+                JToken evt3 = JObject.Parse(listp2);
+                var liste = evt3["Materials"].ToObjectProtected<List<string>>();  // name in fd logs is lower case
+                Check.That(liste).IsNotNull();
+                Check.That(liste.Count).IsEqualTo(2);
+
+                string dicp2 = @"{ ""Materials"":{ ""iron"":22.1, ""nickel"":16.7, ""sulphur"":15.6, ""carbon"":13.2, ""chromium"":9.9, ""phosphorus"":8.4 }}";
+                JToken evt2 = JObject.Parse(dicp2);
+                var Materials2 = evt2["Materials"].ToObjectProtected<Dictionary<string, double>>();  // name in fd logs is lower case
+                Check.That(Materials2).IsNotNull();
+                Check.That(Materials2.Count).IsEqualTo(6);
+
+                var Materials3fail = evt2["Materials"].ToObjectProtected<Dictionary<string, string>>();  // name in fd logs is lower case
+                Check.That(Materials3fail).IsNull();
+
+
+
+                string dicpair = @"{ ""Materials"":[ { ""Name"":""iron"", ""Percent"":19.741276 }, { ""Name"":""sulphur"", ""Percent"":17.713514 }, { ""Name"":""nickel"", ""Percent"":14.931473 }, { ""Name"":""carbon"", ""Percent"":14.895230 }, { ""Name"":""phosphorus"", ""Percent"":9.536182 } ] }";
+                JToken evt = JObject.Parse(dicpair);
+                JToken mats = evt["Materials"];
+
+                if (mats != null)
+                {
+                    var Materials = new Dictionary<string, double>();
+                    foreach (JObject jo in mats)                                        // name in fd logs is lower case
+                    {
+                        string name = jo["Name"].Str();
+
+                        Materials[name.ToLowerInvariant()] = jo["Percent"].Double();
+                    }
+                }
+
+                string matlist = @"{ ""Raw"":[ { ""Name"":""iron"", ""Count"":10 }, { ""Name"":""sulphur"", ""Count"":17 } ] }";
+                JToken matlistj = JToken.Parse(matlist);
+                var Raw = matlistj["Raw"]?.ToObjectProtected<Material[]>();
+                Check.That(Raw).IsNotNull();
+                Check.That(Raw.Count()).Equals(2);
+
+
+            }
+        }
+
+        [Test]
+        public void JSONFromObject()
+        {
+            {
+                var mats = new Materials[2];
+                mats[0] = new Materials();
+                mats[0].Name = "0";
+                mats[0].Name_Localised = "L0";
+                mats[0].fred = new System.Drawing.Bitmap(20, 20);
+                mats[1] = new Materials();
+                mats[1].Name = "1";
+                mats[1].Name_Localised = "L1";
+                mats[1].qint = 20;
+
+                JToken t = JToken.FromObject(mats, true, new System.Type[] { typeof(System.Drawing.Bitmap) });
+                Check.That(t).IsNotNull();
+                string json = t.ToString(true);
+                System.Diagnostics.Debug.WriteLine("JSON " + json);
+            }
+
+            {
+                string propertyv =
+@"[
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":null,
+    ""PropGetSet"":1
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""L1"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":20
+  }
+]
+";
+                JToken matpro = JToken.Parse(propertyv);
+                var Materials = matpro.ToObject<Materials[]>();
+
+                JToken t = JToken.FromObject(Materials, true, new System.Type[] { typeof(System.Drawing.Bitmap) });
+                string s = t.ToString();
+                System.Diagnostics.Debug.WriteLine("JSON is " + s);
+
+                string expout = @"[{""PropGetSet"":1,""Count"":0,""Name"":""0"",""Name_Localised"":""L0"",""FriendlyName"":null,""Category"":null,""QValue"":null},{""PropGetSet"":0,""Count"":0,""Name"":""1"",""Name_Localised"":""L1"",""FriendlyName"":null,""Category"":null,""QValue"":20}]";
+                System.Diagnostics.Debug.WriteLine("exp is " + expout);
+
+                Check.That(s).Equals(expout);
+            }
+
+            {
+                FromObjectTest s = new FromObjectTest();
+                s.t1 = TestEnum.three;
+
+                JToken t = JToken.FromObject(s);
+
+                FromObjectTest r = t.ToObject<FromObjectTest>();
+                Check.That(r.t1 == TestEnum.three);
+            }
+
+        }
+
+        [Test]
+        public void JSONtextReader()
+        {
+                string propertyv =
+@"    [
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":null,
+    ""PropGetSet"":1
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""This is a long string to try and make the thing break"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":20
+  }
+]
+";
+            {
+                using (StringReader sr = new StringReader(propertyv))         // read directly from file..
+                {
+                    foreach (var t in JToken.ParseToken(sr, JToken.ParseOptions.None))
+                    {
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+
+                }
+
+            }
+
+            {
+
+                using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
+                {
+                    foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None))
+                    {
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+
+                }
+            }
+            {
+                using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
+                {
+                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None).GetEnumerator();
+
+                    while (enumerator.MoveNext())
+                    {
+                        var t = enumerator.Current;
+                        if (t.IsProperty)
+                            System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
+                        else
+                            System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                    }
+                }
+            }
+
+            {
+                string propertyq =
+@"    [
+  {
+    ""Count"":0,
+    ""Name"":""0"",
+    ""Name_Localised"":""L0"",
+    ""FriendlyName"":null,
+    ""ArrayValue"":[1,2,3],
+    ""Category"":null,
+    ""QValue"":null,
+    ""PropGetSet"":1
+  },
+  {
+    ""Count"":0,
+    ""Name"":""1"",
+    ""Name_Localised"":""This is a long string to try and make the thing break"",
+    ""FriendlyName"":null,
+    ""Category"":null,
+    ""QValue"":20
+  }
+]
+";
+
+                using (StringReader sr = new StringReader(propertyq))         // read directly from file..
+                {
+                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None,128).GetEnumerator();
+
+                    while (enumerator.MoveNext())
+                    {
+                        var t = enumerator.Current;
+                        if (t.IsObject)
+                        {
+                            JObject to = t as JObject;
+                            bool res = enumerator.Load();
+                            Check.That(res).IsTrue();
+                            Check.That(to["Category"]).IsNotNull();
+                        }
+                    }
+                }
+            }
+
+
+            string filename = @"c:\code\edsm\edsmsystems.10000.json";
+            if ( File.Exists(filename))
+            {
+                using (FileStream originalFileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+                {
+                    using (StreamReader sr = new StreamReader(originalFileStream))
+                    {
+                        foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None,2999))
+                        {
+                            if (t.IsProperty)
+                                System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
+                            else
+                                System.Diagnostics.Debug.WriteLine("Token " + t.TokenType + " " + t.Value);
+                        }
+                    }
+                }
             }
 
         }

@@ -134,12 +134,25 @@ namespace BaseUtils
                 return null;
         }
 
-        public static void SetValue<T>(this MemberInfo mi, T instance,  Object value)   // given a member of fields/property, set value in instance
+        public static bool SetValue(this MemberInfo mi, Object instance,  Object value)   // given a member of fields/property, set value in instance
         {
             if (mi.MemberType == System.Reflection.MemberTypes.Field)
-                ((System.Reflection.FieldInfo)mi).SetValue(instance, value);
-            else if (mi.MemberType == System.Reflection.MemberTypes.Field)
-                ((System.Reflection.PropertyInfo)mi).SetValue(instance, value);
+            {
+                var fi = (System.Reflection.FieldInfo)mi;
+                fi.SetValue(instance, value);
+                return true;
+            }
+            else if (mi.MemberType == System.Reflection.MemberTypes.Property)
+            {
+                var pi = (System.Reflection.PropertyInfo)mi;
+                if (pi.SetMethod != null)
+                {
+                    pi.SetValue(instance, value);
+                    return true;
+                }
+                else
+                    return false;
+            }
             else
                 throw new NotSupportedException();
         }

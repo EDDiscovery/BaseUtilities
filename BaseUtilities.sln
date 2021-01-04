@@ -28,11 +28,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Audio.WindowsSpeech", "Audio.WindowsSpeech\Audio.WindowsSpeech.csproj", "{EBC2DDB2-9E32-4E27-90A0-47C810345766}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpGet", "HttpGet\HttpGet.csproj", "{2A824DB5-E4E5-4AF8-AB79-FB78227D2A18}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C657C881-F3E1-45BA-ACA5-966348010414} = {C657C881-F3E1-45BA-ACA5-966348010414}
+	EndProjectSection
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -204,5 +204,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9CD4AAE2-A8F8-4B1C-8EB4-A81877FB0BCD}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal
