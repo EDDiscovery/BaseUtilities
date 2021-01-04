@@ -87,7 +87,13 @@ namespace BaseUtils.JSON
 
         public new static JObject Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed.
         {
-            var res = JToken.Parse(s,flags);
+            var res = JToken.Parse(s, flags);
+            return res as JObject;
+        }
+
+        public new static JObject ParseThrowCommaEOL(string s)        // throws if fails, allows trailing commas and checks EOL
+        {
+            var res = JToken.Parse(s, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError);
             return res as JObject;
         }
 

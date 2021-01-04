@@ -35,48 +35,72 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONBasic()
         {
-            //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
-            string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
+            { 
+                //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
+                string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
 
-            //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
+                //   string json = "{ \"timestamp\":\"2016-09-27T19:43:21Z\", \"event\":\"Fileheader\", \"part\":1, \"language\":\"English\\\\UK\", \"gameversion\":\"2.2 (Beta 3)\", \"build\":\"r121970/r0 \" }";
 
-            JToken decoded = JToken.Parse(json);
-            Check.That(decoded).IsNotNull();
-            string outstr = decoded.ToString(true);
-            System.Diagnostics.Debug.WriteLine("" + outstr);
-            Dump(outstr);
+                JToken decoded = JToken.Parse(json);
+                Check.That(decoded).IsNotNull();
+                string outstr = decoded.ToString(true);
+                System.Diagnostics.Debug.WriteLine("" + outstr);
+                Dump(outstr);
 
-            JToken decoded2 = JToken.Parse(outstr);
+                JToken decoded2 = JToken.Parse(outstr);
 
-            string outstr2 = decoded2.ToString(true);
-            System.Diagnostics.Debug.WriteLine("" + outstr2);
+                string outstr2 = decoded2.ToString(true);
+                System.Diagnostics.Debug.WriteLine("" + outstr2);
 
-            Check.That(outstr).IsEqualTo(outstr2);
+                Check.That(outstr).IsEqualTo(outstr2);
 
-            JObject jo = decoded as JObject;
-            Check.That(jo).IsNotNull();
+                JObject jo = decoded as JObject;
+                Check.That(jo).IsNotNull();
 
-            // string j = jo["timest\"am\tp"].Str();
-            //  Check.That(j).Equals("2020-06-29T09:53:54Z");
+                // string j = jo["timest\"am\tp"].Str();
+                //  Check.That(j).Equals("2020-06-29T09:53:54Z");
 
-            JArray ja = new JArray(20.2, 30.3, 40.4);
-            Check.That(ja).IsNotNull();
-            Check.That(ja.Count).Equals(3);
+                JArray ja = new JArray(20.2, 30.3, 40.4);
+                Check.That(ja).IsNotNull();
+                Check.That(ja.Count).Equals(3);
 
-            JArray jb = new JArray("hello", "jim", "sheila");
-            Check.That(jb).IsNotNull();
-            Check.That(jb.Count).Equals(3);
+                JArray jb = new JArray("hello", "jim", "sheila");
+                Check.That(jb).IsNotNull();
+                Check.That(jb.Count).Equals(3);
 
-            Dictionary<string, string> dict = new Dictionary<string, string>();
-            dict["fred"] = "one";
-            dict["jim"] = "two";
-            JObject jod = new JObject(dict);
+                Dictionary<string, string> dict = new Dictionary<string, string>();
+                dict["fred"] = "one";
+                dict["jim"] = "two";
+                JObject jod = new JObject(dict);
 
-            Dictionary<string, float> dict2 = new Dictionary<string, float>();
-            dict2["fred"] = 20.0f;
-            dict2["jim"] = 30f;
-            JObject jod2 = new JObject(dict2);
+                Dictionary<string, float> dict2 = new Dictionary<string, float>();
+                dict2["fred"] = 20.0f;
+                dict2["jim"] = 30f;
+                JObject jod2 = new JObject(dict2);
+            }
+            {
+                string json1 = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\"w:18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
+                JToken jo = JToken.Parse(json1, out string error, JToken.ParseOptions.None);
+                Check.That(error).Contains("missing : after");
+            }
+            {
+                string json1 = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 } extra";
+                JToken jo = JToken.Parse(json1, out string error, JToken.ParseOptions.CheckEOL);
+                Check.That(error).Contains("Extra Chars");
+            }
 
+            {
+                string json1 = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 } extra";
+                try
+                {
+                    JToken jo = JToken.Parse(json1, out string error, JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError);
+                    Check.That(true).IsFalse();
+                }
+                catch (JToken.JsonException ex)
+                {
+                    Check.That(ex.Error).Contains("Extra Chars");
+                }
+            }
 
 
         }

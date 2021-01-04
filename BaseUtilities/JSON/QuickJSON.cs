@@ -392,6 +392,11 @@ namespace BaseUtils.JSON
             }
         }
 
+        static public bool DeepEquals(JToken left, JToken right)
+        {
+            return left != null && right != null && left.DeepEquals(right);
+        }
+
         // if called on a non indexed object, return JNotPresent().  
         // On an Array/Object, will return JNotPresent if not present, or indexer is not right type
         public virtual JToken this[object key] { get { return null; } set { throw new NotImplementedException(); } }
