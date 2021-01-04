@@ -142,7 +142,8 @@ namespace BaseUtils.JSON
 
                     return instance;
                 }
-                else if (tt.IsClass)
+                else if (tt.IsClass ||      // if class 
+                         (tt.IsValueType && !tt.IsPrimitive && !tt.IsEnum && tt != typeof(DateTime)))   // or struct, but not datetime (handled below)
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
@@ -196,7 +197,14 @@ namespace BaseUtils.JSON
                                     {
                                         if (!mi.SetValue(instance, ret))         // and set. Set will fail if the property is get only
                                         {
-                                            return new ToObjectError("Cannot set value on property " + mi.Name);
+                                            if (ignoretypeerrors)
+                                            {
+                                                System.Diagnostics.Debug.WriteLine("Ignoring cannot set value on property " + mi.Name);
+                                            }
+                                            else
+                                            {
+                                                return new ToObjectError("Cannot set value on property " + mi.Name);
+                                            }
                                         }
                                     }
                                 }

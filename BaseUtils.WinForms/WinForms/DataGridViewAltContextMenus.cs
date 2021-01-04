@@ -67,7 +67,7 @@ namespace BaseUtils
 
             if (HitType == DataGridViewHitTestType.Cell)
             {
-                if (!SingleRowSelect || this.AllSelectionsOnSameRow())
+                if (!SingleRowSelect || this.IsAllSelectionsOnSameRow())
                 {
                     if (e.Button == MouseButtons.Right && SingleRowSelect)
                     {

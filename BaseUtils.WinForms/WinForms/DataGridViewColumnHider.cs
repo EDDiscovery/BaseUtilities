@@ -48,8 +48,7 @@ namespace BaseUtils
             int colshidden = this.ColumnsHidden();
 
             unhideAllColumnsToolStripMenuItem.Enabled =  colshidden> 0;
-            // if no header rows, don't allow the last column to be hidden.
-            hideColumnToolStripMenuItem.Enabled = HitIndex >= 0 && HitIndex < Columns.Count && (this.RowHeadersVisible || Columns.Count - colshidden > 1);
+            hideColumnToolStripMenuItem.Enabled = HitIndex >= 0 && HitIndex < Columns.Count && Columns.Count - colshidden > 1;
         }
 
         private void UnhideAllColumnsToolStripMenuItem_Click(object sender, System.EventArgs e)
