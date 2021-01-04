@@ -90,8 +90,6 @@ namespace EDDiscoveryTests
             Check.That(Color.Black.Average(Color.Yellow).ToArgb()).Equals(Color.Olive.ToArgb());
             Check.That(Color.Red.Average(Color.Blue).ToArgb()).Equals(Color.Purple.ToArgb());
             Check.That(Color.Lime.Average(Color.Blue).ToArgb()).Equals(Color.Teal.ToArgb());
-
-            Check.ThatCode(() => { Color.Black.Average(Color.Black, float.NaN); }).Throws<ArgumentOutOfRangeException>();
         }
 
         [Test]

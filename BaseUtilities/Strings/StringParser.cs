@@ -501,6 +501,21 @@ namespace BaseUtils
             return s?.InvariantParseDoubleNull();
         }
 
+        public double? NextDoubleInclusiveTest()        // using a positive test. Not changing original negative test for compatibility
+        {
+            string s = NextWord((c) => { return char.IsDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'; });
+            return s?.InvariantParseDoubleNull();
+        }
+
+        public object NextLongOrDouble()        // using a positive test, give back a long or a double.
+        {
+            string s = NextWord((c) => { return char.IsDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'; });
+            if (s.IndexOfAny(new char[] { '.', 'e', 'E', '+' })>=0)
+                return s?.InvariantParseDoubleNull();
+            else
+                return s?.InvariantParseLongNull();
+        }
+
         public double NextDouble(double def, string terminators = " ")
         {
             string s = NextWord(terminators);

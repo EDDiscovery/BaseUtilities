@@ -36,7 +36,7 @@ namespace EDDiscoveryTests
                 points.Add(new Vector2(200, 100));
 
                 Vector2 centroid = PolygonTriangulator.Centroid(points, out float area);
-                Check.That(centroid.X == 150 && centroid.Y == 150 && area == 10000);
+                Check.That(centroid.X == 150 && centroid.Y == 150 && area == 10000).IsTrue();
             }
 
             {
@@ -52,24 +52,24 @@ namespace EDDiscoveryTests
 
                 List<List<Vector2>> res = PolygonTriangulator.Triangulate(points, false);
 
-                Check.That(res.Count == 3);
+                Check.That(res.Count == 3).IsTrue();
 
-                Check.That(res[0].Count == 3);
-                Check.That(res[0][0] == new Vector2(0, 100));
-                Check.That(res[0][1] == new Vector2(100, 200));
-                Check.That(res[0][2] == new Vector2(100, 100));
+                Check.That(res[0].Count == 3).IsTrue();
+                Check.That(res[0][0] == new Vector2(0, 100)).IsTrue();
+                Check.That(res[0][1] == new Vector2(100, 200)).IsTrue();
+                Check.That(res[0][2] == new Vector2(100, 100)).IsTrue();
 
-                Check.That(res[1].Count == 4);
-                Check.That(res[1][0] == new Vector2(100, 100));
-                Check.That(res[1][1] == new Vector2(200, 200));
-                Check.That(res[1][2] == new Vector2(300, 100));
-                Check.That(res[1][3] == new Vector2(150, 0));
+                Check.That(res[1].Count == 4).IsTrue();
+                Check.That(res[1][0] == new Vector2(100, 100)).IsTrue();
+                Check.That(res[1][1] == new Vector2(200, 200)).IsTrue();
+                Check.That(res[1][2] == new Vector2(300, 100)).IsTrue();
+                Check.That(res[1][3] == new Vector2(150, 0)).IsTrue();
 
-                Check.That(res[2].Count == 4);
-                Check.That(res[2][0] == new Vector2(150, 0));
-                Check.That(res[2][1] == new Vector2(0, 50));
-                Check.That(res[2][2] == new Vector2(0, 100));
-                Check.That(res[1][3] == new Vector2(100, 100));
+                Check.That(res[2].Count == 4).IsTrue();
+                Check.That(res[2][0] == new Vector2(150, 0)).IsTrue();
+                Check.That(res[2][1] == new Vector2(0, 50)).IsTrue();
+                Check.That(res[2][2] == new Vector2(0, 100)).IsTrue();
+                Check.That(res[1][3] == new Vector2(150, 0)).IsTrue();
             }
 
 
