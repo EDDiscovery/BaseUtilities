@@ -102,7 +102,22 @@ namespace EDDiscoveryTests
                 }
             }
 
+            {
+                string json2 = @"{ ""data"": {""ver"":2, ""commander"":""Irisa Nyira"", ""fromSoftware"":""EDDiscovery"",  ""fromSoftwareVersion"":""11.7.2.0"", ""p0"": { ""name"": ""Hypo Aeb XF-M c8-0"" },   ""refs"": [ { ""name"": """"Hypua Hypoo MJ-S a72-0"""",  ""dist"": 658.84 } ] }  }";
+                JToken jo = JToken.Parse(json2, out string error, JToken.ParseOptions.CheckEOL );
+                Check.That(jo == null).IsTrue();
+            }
 
+            {
+                string quotedstr = "\"quote\"\nHello";
+                JObject jo = new JObject();
+                jo["str1"] = quotedstr;
+                string s = jo.ToString();
+                JObject jo1 = JObject.Parse(s);
+                Check.That(jo1 != null).IsTrue();
+                Check.That(jo1["str1"].Equals(quotedstr));
+
+            }
         }
 
         [Test]
@@ -534,17 +549,48 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONDeepEquals()
         {
-            JToken decode = JToken.Parse(jsongithub);
-            Check.That(decode).IsNotNull();
-            JToken copy = decode.Clone();
-            Check.That(copy).IsNotNull();
-            string json1 = decode.ToString(true);
-            string json2 = copy.ToString(true);
-            Check.That(json1).Equals(json2);
-            System.Diagnostics.Debug.WriteLine(json2);
+            if ( true )
+            {
+                JToken decode = JToken.Parse(jsongithub);
+                Check.That(decode).IsNotNull();
+                JToken copy = decode.Clone();
+                Check.That(copy).IsNotNull();
+                string json1 = decode.ToString(true);
+                string json2 = copy.ToString(true);
+                Check.That(json1).Equals(json2);
+                System.Diagnostics.Debug.WriteLine(json2);
 
-            Check.That(decode.DeepEquals(copy)).IsTrue();
+                Check.That(decode.DeepEquals(copy)).IsTrue();
+            }
 
+            if (true)
+            {
+                string json1 = "{\"SystemAllegiance\":true,\"Array\":[10.0,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":true}";
+                JToken decode1 = JToken.Parse(json1);
+                string json1out = decode1.ToString();
+
+                Check.That(json1.Equals(json1out)).IsTrue();
+
+                string json2 = "{\"SystemAllegiance\":true,\"Array\":[10,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":1}";
+                JToken decode2 = JToken.Parse(json2);
+
+                Check.That(decode1.DeepEquals(decode2)).IsTrue();
+
+                string json3 = "{\"SystemAllegiance\":true,\"Array\":[10,-20.2321212123,-30.232,-30.0],\"String\":\"string\",\"bool\":\"string\"}";
+                JToken decode3 = JToken.Parse(json3);
+
+                Check.That(decode1.DeepEquals(decode3)).IsFalse();
+            }
+
+
+            if (true)
+            {
+                string json1 = @"{""timestamp"":""2016-09-27T19:59:39Z"",""event"":""ShipyardTransfer"",""ShipType"":""FerDeLance"",""ShipID"":15,""System"":""Lembava"",""Distance"":939379235343040512.0,""TransferPrice"":2693097}";
+                string json2 = @"{""timestamp"":""2016-09-27T19:59:39Z"",""event"":""ShipyardTransfer"",""ShipType"":""FerDeLance"",""ShipID"":15,""System"":""Lembava"",""Distance"":939379235343040512.0,""TransferPrice"":2693097}";
+                JToken decode1 = JToken.Parse(json1);
+                JToken decode2 = JToken.Parse(json2);
+                Check.That(decode1.DeepEquals(decode2)).IsTrue();
+            }
         }
 
         public class Unlocked
@@ -616,7 +662,73 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONToObject()
         {
-            string jmd = @"
+            {
+                string mats = @"{ ""Materials"":{ ""iron"":19.741276, ""sulphur"":17.713514 } }";
+
+                JObject jo = JObject.Parse(mats);
+
+                var matsdict = jo["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // check it can handle nullable types
+                Check.That(matsdict).IsNotNull();
+                Check.That(matsdict["iron"].HasValue && matsdict["iron"].Value == 19.741276);
+
+                var matsdict2 = jo["Materials"].ToObjectProtected<Dictionary<string, double>>();        // and normal
+                Check.That(matsdict2).IsNotNull();
+                Check.That(matsdict2["iron"] == 19.741276);
+
+                string mats3 = @"{ ""Materials"":{ ""iron"":20, ""sulphur"":17.713514 } }";
+                JObject jo3 = JObject.Parse(mats3);
+                var matsdict3 = jo3["Materials"].ToObjectProtected<Dictionary<string, double>>();        // and normal
+                Check.That(matsdict3).IsNotNull();
+                Check.That(matsdict3["iron"] == 20);
+
+                string mats4 = @"{ ""Materials"":{ ""iron"":null, ""sulphur"":17.713514 } }";
+                JObject jo4 = JObject.Parse(mats4);
+                var matsdict4 = jo4["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // and normal
+                Check.That(matsdict4).IsNotNull();
+                Check.That(matsdict4["iron"] == null);
+
+                string mats5 = @"{ ""Materials"":{ ""iron"":""present"", ""sulphur"":null } }";
+                JObject jo5 = JObject.Parse(mats5);
+                var matsdict5 = jo5["Materials"].ToObjectProtected<Dictionary<string, string>>();        // and normal
+                Check.That(matsdict4).IsNotNull();
+                Check.That(matsdict4["iron"] == null);
+            }
+
+
+            {
+                string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":2929,""Progress"":""Invited"",""Rank"":null},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
+                JToken englistj = JToken.Parse(englist);
+
+                var pinfo = englistj["Engineers"]?.ToObjectProtected<ProgressInformation[]>();
+                Check.That(pinfo).IsNotNull();
+                Check.That(pinfo.Count()).Equals(25);
+            }
+
+            {
+                string json = "[ \"one\",\"two\",\"three\" ] ";
+                JToken decode = JToken.Parse(json);
+
+                var decoded = decode.ToObject(typeof(string[]));
+                if (decoded is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
+
+                var decoded2 = decode.ToObject(typeof(string));
+                Check.That(decoded2).IsInstanceOfType(typeof(JTokenExtensions.ToObjectError));
+                if (decoded2 is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded2).ErrorString);
+            }
+
+            {
+                string json = "{ \"one\":\"one\", \"two\":\"two\" , \"three\":30, \"four\":true }";
+                JToken decode = JToken.Parse(json);
+
+                var decoded = decode.ToObject(typeof(SimpleTest));
+                if (decoded is JTokenExtensions.ToObjectError)
+                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
+            }
+
+            {
+                string jmd = @"
 {
   ""timestamp"": ""2018 - 04 - 24T21: 25:46Z"",
   ""event"": ""TechnologyBroker"",
@@ -686,40 +798,8 @@ namespace EDDiscoveryTests
     }
   ]
 }";
-            {
-                string englist = @"{ ""timestamp"":""2020 - 08 - 03T12: 07:15Z"",""event"":""EngineerProgress"",""Engineers"":[{""Engineer"":""Etienne Dorn"",""EngineerID"":2929,""Progress"":""Invited"",""Rank"":null},{""Engineer"":""Zacariah Nemo"",""EngineerID"":300050,""Progress"":""Known""},{""Engineer"":""Tiana Fortune"",""EngineerID"":300270,""Progress"":""Invited""},{""Engineer"":""Chloe Sedesi"",""EngineerID"":300300,""Progress"":""Invited""},{""Engineer"":""Marco Qwent"",""EngineerID"":300200,""Progress"":""Unlocked"",""RankProgress"":55,""Rank"":3},{""Engineer"":""Petra Olmanova"",""EngineerID"":300130,""Progress"":""Invited""},{""Engineer"":""Hera Tani"",""EngineerID"":300090,""Progress"":""Unlocked"",""RankProgress"":59,""Rank"":3},{""Engineer"":""Tod 'The Blaster' McQuinn"",""EngineerID"":300260,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Marsha Hicks"",""EngineerID"":300150,""Progress"":""Invited""},{""Engineer"":""Selene Jean"",""EngineerID"":300210,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lei Cheung"",""EngineerID"":300120,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Juri Ishmaak"",""EngineerID"":300250,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Felicity Farseer"",""EngineerID"":300100,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Broo Tarquin"",""EngineerID"":300030,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Professor Palin"",""EngineerID"":300220,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Colonel Bris Dekker"",""EngineerID"":300140,""Progress"":""Invited""},{""Engineer"":""Elvira Martuuk"",""EngineerID"":300160,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Lori Jameson"",""EngineerID"":300230,""Progress"":""Invited""},{""Engineer"":""The Dweller"",""EngineerID"":300180,""Progress"":""Unlocked"",""RankProgress"":0,""Rank"":5},{""Engineer"":""Liz Ryder"",""EngineerID"":300080,""Progress"":""Unlocked"",""RankProgress"":81,""Rank"":3},{""Engineer"":""Didi Vatermann"",""EngineerID"":300000,""Progress"":""Invited""},{""Engineer"":""The Sarge"",""EngineerID"":300040,""Progress"":""Invited""},{""Engineer"":""Mel Brandon"",""EngineerID"":300280,""Progress"":""Known""},{""Engineer"":""Ram Tah"",""EngineerID"":300110,""Progress"":""Invited""},{""Engineer"":""Bill Turner"",""EngineerID"":300010,""Progress"":""Invited""}]}";
-                JToken englistj = JToken.Parse(englist);
-
-                var pinfo = englistj["Engineers"]?.ToObjectProtected<ProgressInformation[]>();
-                Check.That(pinfo).IsNotNull();
-                Check.That(pinfo.Count()).Equals(25);
 
 
-            }
-            {
-                string json = "[ \"one\",\"two\",\"three\" ] ";
-                JToken decode = JToken.Parse(json);
-
-                var decoded = decode.ToObject(typeof(string[]));
-                if (decoded is JTokenExtensions.ToObjectError)
-                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
-
-                var decoded2 = decode.ToObject(typeof(string));
-                Check.That(decoded2).IsInstanceOfType(typeof(JTokenExtensions.ToObjectError));
-                if (decoded2 is JTokenExtensions.ToObjectError)
-                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded2).ErrorString);
-            }
-
-            {
-                string json = "{ \"one\":\"one\", \"two\":\"two\" , \"three\":30, \"four\":true }";
-                JToken decode = JToken.Parse(json);
-
-                var decoded = decode.ToObject(typeof(SimpleTest));
-                if (decoded is JTokenExtensions.ToObjectError)
-                    System.Diagnostics.Debug.WriteLine("Err " + ((JTokenExtensions.ToObjectError)decoded).ErrorString);
-            }
-
-            {
                 JToken decode = JToken.Parse(jmd);
                 Check.That(decode).IsNotNull();
                 string json1 = decode.ToString(true);
@@ -798,6 +878,41 @@ namespace EDDiscoveryTests
                 Check.That(t).IsNotNull();
                 string json = t.ToString(true);
                 System.Diagnostics.Debug.WriteLine("JSON " + json);
+            }
+
+            {
+                string mats = @"{ ""Materials"":{ ""iron"":19.741276, ""sulphur"":17.713514 } }";
+                JObject jo = JObject.Parse(mats);
+                var matsdict = jo["Materials"].ToObjectProtected<Dictionary<string, double?>>();        // check it can handle nullable types
+                Check.That(matsdict).IsNotNull();
+                Check.That(matsdict["iron"].HasValue && matsdict["iron"].Value == 19.741276);
+                var json = JToken.FromObject(matsdict);
+                Check.That(json).IsNotNull();
+                var jsonw = new JObject();
+                jsonw["Materials"] = json;
+                Check.That(jsonw.DeepEquals(jo)).IsTrue();
+            }
+
+            {
+                var jo = new JArray();
+                jo.Add(10.23);
+                jo.Add(20.23);
+                var var1 = jo.ToObject<List<double>>();
+                var jback = JToken.FromObject(var1);
+                Check.That(jback.DeepEquals(jo)).IsTrue();
+            }
+
+            {
+                var mats2 = new Dictionary<string, double>();
+                mats2["Iron"] = 20.2;
+                mats2["Steel"] = 10;
+
+                var json = JObject.FromObject(mats2);
+                Check.That(json).IsNotNull();
+                Check.That(json["Iron"].Double()).Equals(20.2);
+                Check.That(json["Steel"].Double()).Equals(10);
+
+
             }
 
             {

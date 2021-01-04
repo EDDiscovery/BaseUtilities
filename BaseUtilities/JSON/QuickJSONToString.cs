@@ -29,7 +29,7 @@ namespace BaseUtils.JSON
 
         public string ToStringLiteral()     // data as is, without quoting/escaping strings. Used for data extraction
         {
-            return ToString(false, "", "", "", true);
+            return ToString(this, "", "", "", true);
         }
 
         public string ToString(bool verbose = false, string pad = "  ")
@@ -47,7 +47,7 @@ namespace BaseUtils.JSON
                     return prepad + "\"" + ((string)o.Value).EscapeControlCharsFull() + "\"" + postpad;
             }
             else if (o.TokenType == TType.Double)
-                return prepad + ((double)o.Value).ToStringInvariant() + postpad;
+                return prepad + ((double)o.Value).ToStringInvariant("0.0############################") + postpad;         // new! preserve that its a double by insisting on at least a single decimalm digit
             else if (o.TokenType == TType.Long)
                 return prepad + ((long)o.Value).ToStringInvariant() + postpad;
             else if (o.TokenType == TType.ULong)

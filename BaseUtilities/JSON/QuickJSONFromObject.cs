@@ -82,7 +82,7 @@ namespace BaseUtils.JSON
 
                 JObject outobj = new JObject();
 
-                foreach (KeyValuePair<string, Object> kvp in idict)
+                foreach (dynamic kvp in idict)      // need dynamic since don't know the types of Value or Key
                 {
                     JToken inner = FromObject(kvp.Value, ignoreunserialisable, ignored);
                     if (inner == null)

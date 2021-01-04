@@ -518,7 +518,18 @@ public static class ObjectExtensionsNumbersBool
         return 1 / Math.Sqrt(2 * Math.PI * stddist) * Math.Exp(-(x - u) * (x - u) / (2 * stddist * stddist));       // Wichura 1998, Gentle 2003, https://www.statsdirect.com/help/randomization/generate_random_numbers.htm
     }
 
+    public static bool ApproxEquals(this double left, double right, double epsilon = 2.2204460492503131E-16)       // fron newtonsoft JSON, et al, calculate relative epsilon and compare
+    {
+        if (left == right)
+        {
+            return true;
+        }
 
+        double tolerance = ((Math.Abs(left) + Math.Abs(right)) + 10.0) * epsilon;       // given an arbitary epsilon, scale to magnitude of values
+        double difference = left - right;
+        //System.Diagnostics.Debug.WriteLine("Approx equal {0} {1}", tolerance, difference);
+        return (-tolerance < difference && tolerance > difference);
+    }
 
     #endregion
 }
