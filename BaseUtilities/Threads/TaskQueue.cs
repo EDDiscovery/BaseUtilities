@@ -24,6 +24,8 @@ namespace BaseUtils.Threads
 
     public class TaskQueue
     {
+        public bool Active { get { return active != 0; } }
+
         private ConcurrentQueue<Action> actionqueue = new ConcurrentQueue<Action>();
         private int active = 0;
 
