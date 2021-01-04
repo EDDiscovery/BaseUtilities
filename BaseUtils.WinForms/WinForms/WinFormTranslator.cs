@@ -116,7 +116,7 @@ public static class WinFormTranslatorExtensions
         return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
     }
 
-    private static void Translate(Translator translator, Control ctrl, ToolTip tt, string subname)
+    public static void Translate(this Translator translator, Control ctrl, ToolTip tt, string subname)
     {
         if (translator.Translating)
         {
