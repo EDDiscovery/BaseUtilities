@@ -65,7 +65,7 @@ namespace OpenTKUtils.Common
             else
             {                                                               // replace open gl computation with our own.
                 Matrix4 scale = Matrix4.CreateScale(zoom);
-                Matrix4 offset = Matrix4.CreateTranslation(-position.X, -position.Y, -position.Z);
+                Matrix4 offset = Matrix4.CreateTranslation(-position.X, position.Y, -position.Z);
                 Matrix4 rotcam = Matrix4.Identity;
                 rotcam *= Matrix4.CreateRotationY((float)(-cameraDir.Y * Math.PI / 180.0f));
                 rotcam *= Matrix4.CreateRotationX((float)((cameraDir.X - 90) * Math.PI / 180.0f));

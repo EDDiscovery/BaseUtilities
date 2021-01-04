@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2016 EDDiscovery development team
+ * Copyright © 2015 - 2020 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -19,33 +19,18 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
-    public class Map2d
+    public class Map2d : IDisposable
     {
-        public string FilePath;
-        
+        public string FilePath { get; private set; }
+        public string FileName { get { return Path.GetFileNameWithoutExtension(FilePath); } }
+
         public Point TopLeft, TopRight, BottomLeft, BottomRight; // galaxy loc
-        public double Area;                                         
+        public double Area;
 
         public Point pxTopLeft, pxTopRight, pxBottomLeft, pxBottomRight;        // bitmap
-
-        public List<Point> Yaxispoints;
-        private List<Double> polynoms; 
-
-        public Map2d(string filename)
-        {
-            FilePath = filename;
-            Yaxispoints = new List<Point>();
-        }
-
-        public Point LYPos(Point p)     // p is pixel.. (0,0) = top of map
-        {
-            return new Point(p.X * LYWidth / PixelWidth + TopLeft.X, TopRight.Y - p.Y * LYHeight / PixelHeight);
-        }
 
         public int PixelWidth { get { return pxTopRight.X - pxTopLeft.X; } }
         public int PixelHeight { get { return pxBottomRight.Y - pxTopRight.Y; } }
@@ -53,26 +38,49 @@ namespace BaseUtils
         public int LYWidth { get { return BottomRight.X - BottomLeft.X; } }
         public int LYHeight { get { return (TopLeft.Y - BottomLeft.Y); } }
 
-        public string FileName
-        {
-            get
+        public Image Image { get          // MAY except
             {
-                return Path.GetFileNameWithoutExtension(FilePath);
+                if (img == null)
+                {
+                    img = new Bitmap(FilePath);
+                    own = true;
+                }
+                return img;
+            } }
+
+        private Image img = null;       // loaded only on reference
+
+        private bool own = false;       // do we own the bitmap
+
+        public Map2d()
+        {
+        }
+
+        public Map2d(string name, string json, Image bmp)
+        {
+            LoadImage(name, json, bmp);
+        }
+
+        public void Dispose()
+        {
+            if (img != null)
+            {
+                if ( own )
+                    img.Dispose();
+                img = null;
             }
         }
 
-        public Point TransformCoordinate(Point coordinate)
+        public Point LYPos(Point p)     // p is pixel.. (0,0) = top of map
+        {
+            return new Point(p.X * LYWidth / PixelWidth + TopLeft.X, TopRight.Y - p.Y * LYHeight / PixelHeight);
+        }
+
+        public Point TransformCoordinate(Point coordinately)    // to point screen
         {
             int diffx1, diffx2, diffy1, diffy2;
             int diffpx1, diffpx2, diffpy1, diffpy2;
 
-            // string json = ToJson();
-            if (polynoms == null)
-            {
-                if (Yaxispoints!= null && Yaxispoints.Count>0)
-                    polynoms = FindPolynomialLeastSquaresFit(Yaxispoints, 3);
-
-            }
             //Transform trans;
 
             diffx1 = TopRight.X - TopLeft.X;
@@ -92,162 +100,68 @@ namespace BaseUtils
             dy1 = diffpy1 / (double)diffy1;
             dy2 = diffpy2 / (double)diffy2;
 
-            Point newPoint = new Point(coordinate.X - BottomLeft.X, coordinate.Y - BottomLeft.Y);
+            Point newPoint = new Point(coordinately.X - BottomLeft.X, coordinately.Y - BottomLeft.Y);
 
             // Calculate dx and dy for point;
             double dx, dy;
 
             dx = dx2 + newPoint.Y / (double)diffy1 * (dx1 - dx2);
-            dy = dy2 + newPoint.X / (double)diffx1 * (dy1- dy2);
+            dy = dy2 + newPoint.X / (double)diffx1 * (dy1 - dy2);
 
 
             int x, y;
 
             x = (int)(newPoint.X * dx + pxBottomLeft.X + newPoint.Y / (double)diffy1 * (pxTopLeft.X - pxBottomLeft.X));
-            if (polynoms != null)
-                y = (int)(CalcYPixel(coordinate.Y) + newPoint.X / (double)diffx1 * (pxTopRight.Y - pxTopLeft.Y));
-            else
-                y = (int)(newPoint.Y * dy + pxBottomLeft.Y + newPoint.X / (double)diffx1 * (pxTopRight.Y - pxTopLeft.Y));
-
+            y = (int)(newPoint.Y * dy + pxBottomLeft.Y + newPoint.X / (double)diffx1 * (pxTopRight.Y - pxTopLeft.Y));
 
             return new Point(x, y);
-
         }
 
-
-        private double CalcYPixel(double ypos)
+        public void LoadImage(string filepath, string json, Image def, bool own = false)
         {
-            double pos = 0;
+            FilePath = filepath;
 
-            for (int ii=0; ii< polynoms.Count; ii++) 
-            {
-                pos +=  Math.Pow(ypos, ii) * polynoms[ii];
-            }
+            var jo = (JObject)JObject.Parse(json);
 
-            return pos;
+            TopLeft = new Point(jo["x1"].Int(), jo["y1"].Int());
+            pxTopLeft = new Point(jo["px1"].Int(), jo["py1"].Int());
+
+            TopRight = new Point(jo["x2"].Int(), jo["y1"].Int());
+            pxTopRight = new Point(jo["px2"].Int(), jo["py1"].Int());
+
+            BottomLeft = new Point(jo["x1"].Int(), jo["y2"].Int());
+            pxBottomLeft = new Point(jo["px1"].Int(), jo["py2"].Int());
+
+            BottomRight = new Point(jo["x2"].Int(), jo["y2"].Int());
+            pxBottomRight = new Point(jo["px2"].Int(), jo["py2"].Int());
+
+            Area = (double)(TopRight.X - TopLeft.X) * (double)(TopLeft.Y - BottomRight.Y);
+
+            img = def;
+            this.own = own;
         }
 
-        // Find the least squares linear fit.
-        public  List<double> FindPolynomialLeastSquaresFit(List<Point> points, int degree)
+        public bool LoadImage(string jsonpath)
         {
-            // Allocate space for (degree + 1) equations with 
-            // (degree + 2) terms each (including the constant term).
-            double[,] coeffs = new double[degree + 1, degree + 2];
+            string imagename = File.Exists(jsonpath.Replace(".json", ".png")) ? jsonpath.Replace(".json", ".png") : jsonpath.Replace(".json", ".jpg");
 
-            // Calculate the coefficients for the equations.
-            for (int j = 0; j <= degree; j++)
+            if (File.Exists(imagename))
             {
-                // Calculate the coefficients for the jth equation.
-
-                // Calculate the constant term for this equation.
-                coeffs[j, degree + 1] = 0;
-                foreach (Point pt in points)
+                try
                 {
-                    coeffs[j, degree + 1] -= Math.Pow(pt.X, j) * pt.Y;
+                    LoadImage(imagename, File.ReadAllText(jsonpath), null);      // lazy load this one.  We own it
+                    return true;
                 }
-
-                // Calculate the other coefficients.
-                for (int a_sub = 0; a_sub <= degree; a_sub++)
+                catch (Exception ex)
                 {
-                    // Calculate the dth coefficient.
-                    coeffs[j, a_sub] = 0;
-                    foreach (Point pt in points)
-                    {
-                        coeffs[j, a_sub] -= Math.Pow(pt.X, a_sub + j);
-                    }
+                    System.Diagnostics.Debug.WriteLine("Map exception on load " + ex);
                 }
             }
 
-            // Solve the equations.
-            double[] answer = GaussianElimination(coeffs);
-
-            // Return the result converted into a List<double>.
-            return answer.ToList<double>();
+            return false;
         }
 
-
-        // Perform Gaussian elimination on these coefficients.
-        // Return the array of values that gives the solution.
-        private static double[] GaussianElimination(double[,] coeffs)
-        {
-            int max_equation = coeffs.GetUpperBound(0);
-            int max_coeff = coeffs.GetUpperBound(1);
-            for (int i = 0; i <= max_equation; i++)
-            {
-                // Use equation_coeffs[i, i] to eliminate the ith
-                // coefficient in all of the other equations.
-
-                // Find a row with non-zero ith coefficient.
-                if (coeffs[i, i] == 0)
-                {
-                    for (int j = i + 1; j <= max_equation; j++)
-                    {
-                        // See if this one works.
-                        if (coeffs[j, i] != 0)
-                        {
-                            // This one works. Swap equations i and j.
-                            // This starts at k = i because all
-                            // coefficients to the left are 0.
-                            for (int k = i; k <= max_coeff; k++)
-                            {
-                                double temp = coeffs[i, k];
-                                coeffs[i, k] = coeffs[j, k];
-                                coeffs[j, k] = temp;
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                // Make sure we found an equation with
-                // a non-zero ith coefficient.
-                double coeff_i_i = coeffs[i, i];
-                if (coeff_i_i == 0)
-                {
-                    throw new ArithmeticException(String.Format(
-                        "There is no unique solution for these points.",
-                        coeffs.GetUpperBound(0) - 1));
-                }
-
-                // Normalize the ith equation.
-                for (int j = i; j <= max_coeff; j++)
-                {
-                    coeffs[i, j] /= coeff_i_i;
-                }
-
-                // Use this equation value to zero out
-                // the other equations' ith coefficients.
-                for (int j = 0; j <= max_equation; j++)
-                {
-                    // Skip the ith equation.
-                    if (j != i)
-                    {
-                        // Zero the jth equation's ith coefficient.
-                        double coef_j_i = coeffs[j, i];
-                        for (int d = 0; d <= max_coeff; d++)
-                        {
-                            coeffs[j, d] -= coeffs[i, d] * coef_j_i;
-                        }
-                    }
-                }
-            }
-
-            // At this point, the ith equation contains
-            // 2 non-zero entries:
-            //      The ith entry which is 1
-            //      The last entry coeffs[max_coeff]
-            // This means Ai = equation_coef[max_coeff].
-            double[] solution = new double[max_equation + 1];
-            for (int i = 0; i <= max_equation; i++)
-            {
-                solution[i] = coeffs[i, max_coeff];
-            }
-
-            // Return the solution values.
-            return solution;
-        }
-
-        public static List<Map2d> LoadImages(string datapath)
+        public static List<Map2d> LoadFromFolder(string datapath)
         {
             List<Map2d> maps = new List<Map2d>();
 
@@ -260,8 +174,8 @@ namespace BaseUtils
                 {
                     foreach (FileInfo fi in allFiles)
                     {
-                        Map2d map = LoadImage(fi.FullName);
-                        if (map != null)
+                        Map2d map = new Map2d();
+                        if (map.LoadImage(fi.FullName))
                             maps.Add(map);
                     }
 
@@ -277,53 +191,12 @@ namespace BaseUtils
                     );
                 }
             }
-            catch
+            catch ( Exception ex )
             {
+                System.Diagnostics.Debug.WriteLine("Map exception on load " + ex);
             }
 
             return maps;
-        }
-
-        static public Map2d LoadImage(string filename)          // give the JSON file name
-        {
-            JObject pfile = null;
-            string json = BaseUtils.FileHelpers.TryReadAllTextFromFile(filename);
-
-            if (json != null)
-            {
-                try
-                {
-                    pfile = (JObject)JObject.Parse(json);
-
-                    Map2d map;
-
-                    if (File.Exists(filename.Replace(".json", ".png")))
-                        map = new Map2d(filename.Replace(".json", ".png"));
-                    else
-                        map = new Map2d(filename.Replace(".json", ".jpg"));
-
-                    map.TopLeft = new Point(pfile["x1"].Int(), pfile["y1"].Int());
-                    map.pxTopLeft = new Point(pfile["px1"].Int(), pfile["py1"].Int());
-
-                    map.TopRight = new Point(pfile["x2"].Int(), pfile["y1"].Int());
-                    map.pxTopRight = new Point(pfile["px2"].Int(), pfile["py1"].Int());
-
-                    map.BottomLeft = new Point(pfile["x1"].Int(), pfile["y2"].Int());
-                    map.pxBottomLeft = new Point(pfile["px1"].Int(), pfile["py2"].Int());
-
-                    map.BottomRight = new Point(pfile["x2"].Int(), pfile["y2"].Int());
-                    map.pxBottomRight = new Point(pfile["px2"].Int(), pfile["py2"].Int());
-
-                    map.Area = (double)(map.TopRight.X - map.TopLeft.X) * (double)(map.TopLeft.Y - map.BottomRight.Y);
-
-                    return map;
-                }
-                catch
-                {
-                }
-            }
-
-            return null;
         }
     }
 }
