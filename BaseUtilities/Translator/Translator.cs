@@ -134,7 +134,7 @@ namespace BaseUtils
             }
             else
             {
-                langsel = languages.Find(x => Path.GetFileNameWithoutExtension(x.Item2).Equals(language));
+                langsel = languages.Find(x => Path.GetFileNameWithoutExtension(x.Item2).Equals(language, StringComparison.InvariantCultureIgnoreCase));
             }
 
             if (langsel == null)
