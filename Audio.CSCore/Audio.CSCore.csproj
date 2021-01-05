@@ -7,6 +7,9 @@
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT' and '$(NETCoreSdkVersion)' != '' and '$(NETCoreSdkVersion.Substring(0, 3))' == '3.1'">
     <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT' and '$(NETCoreSdkVersion)' != '' and '$(NETCoreSdkVersion.Substring(0, 1))' == '5'">
+    <TargetFrameworks>net461;netcoreapp3.1;net5.0</TargetFrameworks>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CSCore" Version="1.2.1.2" />
   </ItemGroup>

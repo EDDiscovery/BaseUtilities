@@ -46,9 +46,11 @@ namespace BaseUtils
         // Log the exception info if we can, and ask the user to report it.
         [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
         [System.Security.SecurityCritical]
+#pragma warning disable SYSLIB0004 // Type or member is obsolete
         [System.Runtime.ConstrainedExecution.ReliabilityContract(
             System.Runtime.ConstrainedExecution.Consistency.WillNotCorruptState,
             System.Runtime.ConstrainedExecution.Cer.Success)]
+#pragma warning restore SYSLIB0004 // Type or member is obsolete
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             try

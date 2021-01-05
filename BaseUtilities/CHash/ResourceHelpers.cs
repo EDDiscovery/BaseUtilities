@@ -47,7 +47,9 @@ namespace BaseUtils
                             using (MemoryStream ms = new MemoryStream(rawdata))     // convert to memory stream
                             {
                                 BinaryFormatter formatter = new BinaryFormatter();      // resources seem
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
                                 return formatter.Deserialize(ms);   // and deserialise object out
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                             }
                         }
                     }
