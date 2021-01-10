@@ -20,7 +20,9 @@ using System.Linq;
 
 public static class ObjectExtensionsStringsPick
 {
-    public static string PickOneOf(this string str, char separ, System.Random rx)   // pick one of x;y;z or if ;x;y;z, pick x and one of y or z
+    // pick one of x;y;z or if ;x;y;z, pick x and one of y or z
+
+    public static string PickOneOf(this string str, char separ, System.Random rx)   
     {
         string[] a = str.Split(separ);
 
@@ -41,7 +43,9 @@ public static class ObjectExtensionsStringsPick
             return a[0];
     }
 
-    public static string PickOneOfGroups(this string exp, System.Random rx) // pick one of x;y;z or if ;x;y;z, pick x and one of y or z, include {x;y;z}
+    // pick one of x;y;z or if ;x;y;z, pick x and one of y or z, include {x;y;z}
+
+    public static string PickOneOfGroups(this string exp, System.Random rx) 
     {
         string res = "";
         exp = exp.Trim();
@@ -63,8 +67,20 @@ public static class ObjectExtensionsStringsPick
             }
             else
             {
-                res += exp.PickOneOf(';', rx);
-                break;
+                int nextgroup = exp.IndexOf('{');
+
+                if (nextgroup >= 0)
+                {
+                    string pl = exp.Substring(0, nextgroup);
+                    exp = exp.Substring(nextgroup);
+
+                    res += pl.PickOneOf(';', rx);
+                }
+                else
+                {
+                    res += exp.PickOneOf(';', rx);          // thats all left, no more groups, pick
+                    break;
+                }
             }
         }
 
