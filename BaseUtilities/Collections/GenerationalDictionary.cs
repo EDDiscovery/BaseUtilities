@@ -55,7 +55,7 @@ namespace BaseUtils
             dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
         }
 
-        public Dictionary<TKey,TValue> GetGenerationUpTo(uint generation)
+        public Dictionary<TKey, TValue> GetGenerationUpTo(uint generation)
         {
             Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
             foreach (var kvp in dictionary)
@@ -75,6 +75,17 @@ namespace BaseUtils
 
                 if (v != null)
                     ret[kvp.Key] = v;
+            }
+
+            return ret;
+        }
+
+        public Dictionary<TKey, TValue> GetLastEntries()
+        {
+            Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
+            foreach (var kvp in dictionary)
+            {
+                ret[kvp.Key] = kvp.Value[kvp.Value.Count - 1].Item2;
             }
 
             return ret;
