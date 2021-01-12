@@ -21,7 +21,7 @@ namespace BaseUtils
 {
     // this is a dictionary which holds a history, by generation, of previous values of the key
 
-    public class GenerationalDictionary<TKey, TValue> 
+    public class GenerationalDictionary<TKey, TValue>
     {
         public uint Generation { get; private set; } = 0;
 
@@ -30,6 +30,21 @@ namespace BaseUtils
         public void NextGeneration()
         {
             Generation++;
+        }
+
+        public bool ContainsKey(TKey k)     // do we have a list of entries under k
+        {
+            return dictionary.ContainsKey(k);
+        }
+
+        public TValue GetLast(TKey k)       // get last entry of key K
+        {
+            if (dictionary.TryGetValue(k, out List<Tuple<uint, TValue>> list))
+            {
+                return list[list.Count - 1].Item2;
+            }
+            else
+                return default(TValue);
         }
 
         public void Add(TKey k , TValue v)
