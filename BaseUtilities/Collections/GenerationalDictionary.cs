@@ -37,25 +37,27 @@ namespace BaseUtils
             return dictionary.ContainsKey(k);
         }
 
-        public TValue GetLast(TKey k)       // get last entry of key K
+        public TValue Get(TKey k, uint generation)  // get key, null if not
         {
+            TValue v = default(TValue);
             if (dictionary.TryGetValue(k, out List<Tuple<uint, TValue>> list))
             {
-                return list[list.Count - 1].Item2;
+                foreach (var t in list)
+                {
+                    if (t.Item1 <= generation)  // for all generations before and it, its a good value
+                    {
+                        v = t.Item2;
+                        if (t.Item1 == generation)  // stop if we hit generation
+                            break;
+                    }
+                    else
+                        break;      // stop, generations are always added in order, and the generation we are on is > one we want
+                }
             }
-            else
-                return default(TValue);
+            return v;
         }
 
-        public void Add(TKey k , TValue v)
-        {
-            if (!dictionary.ContainsKey(k))
-                dictionary[k] = new List<Tuple<uint, TValue>>();
-
-            dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
-        }
-
-        public Dictionary<TKey, TValue> GetGenerationUpTo(uint generation)
+        public Dictionary<TKey, TValue> Get(uint generation, Predicate<TValue> predicate = null)
         {
             Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
             foreach (var kvp in dictionary)
@@ -73,14 +75,49 @@ namespace BaseUtils
                         break;      // stop, generations are always added in order, and the generation we are on is > one we want
                 }
 
-                if (v != null)
+                if (v != null && (predicate == null || predicate(v)))
                     ret[kvp.Key] = v;
             }
 
             return ret;
         }
 
-        public Dictionary<TKey, TValue> GetLastEntries()
+        public List<TValue> GetValues(uint generation, Predicate<TValue> predicate = null)
+        {
+            List<TValue> ret = new List<TValue>();
+            foreach (var kvp in dictionary)
+            {
+                TValue v = default(TValue);
+                foreach (var t in kvp.Value)
+                {
+                    if (t.Item1 <= generation)  // for all generations before and it, its a good value
+                    {
+                        v = t.Item2;
+                        if (t.Item1 == generation)  // stop if we hit generation
+                            break;
+                    }
+                    else
+                        break;      // stop, generations are always added in order, and the generation we are on is > one we want
+                }
+
+                if (v != null && (predicate == null || predicate(v)))
+                    ret.Add(v);
+            }
+
+            return ret;
+        }
+
+        public TValue GetLast(TKey k)       // get last entry of key K
+        {
+            if (dictionary.TryGetValue(k, out List<Tuple<uint, TValue>> list))
+            {
+                return list[list.Count - 1].Item2;
+            }
+            else
+                return default(TValue);
+        }
+
+        public Dictionary<TKey, TValue> GetLast()
         {
             Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
             foreach (var kvp in dictionary)
@@ -90,5 +127,45 @@ namespace BaseUtils
 
             return ret;
         }
+
+        public List<TValue> GetLastValues()
+        {
+            List<TValue> ret = new List<TValue>();
+            foreach (var kvp in dictionary)
+            {
+                ret.Add(kvp.Value[kvp.Value.Count - 1].Item2);
+            }
+            return ret;
+        }
+
+        public List<TKey> GetKeys()
+        {
+            List<TKey> ret = new List<TKey>();
+            foreach (var kvp in dictionary)
+            {
+                ret.Add(kvp.Key);
+            }
+            return ret;
+        }
+
+        public void Add(TKey k, TValue v)
+        {
+            if (!dictionary.ContainsKey(k))
+                dictionary[k] = new List<Tuple<uint, TValue>>();
+
+            dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
+        }
+
+        public void AddGeneration(TKey k, TValue v)
+        {
+            Generation++;
+
+            if (!dictionary.ContainsKey(k))
+                dictionary[k] = new List<Tuple<uint, TValue>>();
+
+            dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
+        }
+
+
     }
 }
