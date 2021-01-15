@@ -267,6 +267,15 @@ public static class DataGridViewControlHelpersStaticFunc
         return visible;
     }
 
+    public static int SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv)
+    {
+#if MONO
+        return dgv.CurrentCell != null ? dgv.CurrentCell.RowIndex : 0;
+#else
+        return dgv.FirstDisplayedScrollingRowIndex;
+#endif
+    }
+
     public static void SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv, int rowno)
     {
 #if MONO
