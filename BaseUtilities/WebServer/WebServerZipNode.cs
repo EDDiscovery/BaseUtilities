@@ -24,7 +24,7 @@ namespace BaseUtils.WebServer
 {
     public class HTTPZipNode : IHTTPNode
     {
-        public string[] BinaryTypes = new string[] { ".png", ".bmp" };
+        public string[] BinaryTypes = new string[] { ".png", ".bmp", ".ico", ".jpg" , ".jpeg", ".tif", ".tiff", ".gif" , ".raw", ".eps" };
 
         private string path;
 
