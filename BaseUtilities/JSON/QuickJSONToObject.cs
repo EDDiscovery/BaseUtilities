@@ -21,15 +21,15 @@ namespace BaseUtils.JSON
 {
     public static class JTokenExtensions
     {
-        public static T ToObject<T>(this JToken tk)         // returns null if not decoded
+        public static T ToObjectQ<T>(this JToken tk)            // quick version, with checkcustomattr off
         {
-            return ToObjectProtected<T>(tk,false);
+            return ToObject<T>(tk, false, true);
         }
 
-        public static T ToObjectProtected<T>(this JToken tk, bool ignoretypeerrors = false)  // backwards compatible naming
+        public static T ToObject<T>(this JToken tk, bool ignoretypeerrors = false, bool checkcustomattr = true)  // backwards compatible naming
         {
             Type tt = typeof(T);
-            Object ret = tk.ToObject(tt,ignoretypeerrors);
+            Object ret = tk.ToObject(tt, ignoretypeerrors, checkcustomattr);
             if (ret is ToObjectError)
             {
                 System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
@@ -50,8 +50,9 @@ namespace BaseUtils.JSON
 
         // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.  
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
-
-        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors = false)       // will return an instance of tt or ToObjectError, or null for token is null
+        // checkcustomattr check for custom attributes - this takes time so you may want to turn it off
+        // will return an instance of tt or ToObjectError, or null for token is null
+        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr)
         {
             if (tk == null)
             {
@@ -67,7 +68,7 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], tt.GetElementType(), ignoretypeerrors);      // get the underlying element, must match array element type
+                        Object ret = ToObject(tk[i], tt.GetElementType(), ignoretypeerrors, checkcustomattr);      // get the underlying element, must match array element type
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))      // arrays must be full, any errors means an error
                         {
@@ -90,7 +91,7 @@ namespace BaseUtils.JSON
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        Object ret = ToObject(tk[i], types[0], ignoretypeerrors);      // get the underlying element, must match types[0] which is list type
+                        Object ret = ToObject(tk[i], types[0], ignoretypeerrors, checkcustomattr);      // get the underlying element, must match types[0] which is list type
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))  // lists must be full, any errors are errors
                         {
@@ -118,7 +119,7 @@ namespace BaseUtils.JSON
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        Object ret = ToObject(kvp.Value, types[1],ignoretypeerrors);        // get the value as the dictionary type - it must match type or it get OE
+                        Object ret = ToObject(kvp.Value, types[1], ignoretypeerrors, checkcustomattr);        // get the value as the dictionary type - it must match type or it get OE
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))
                         {
@@ -151,17 +152,24 @@ namespace BaseUtils.JSON
                                                 System.Reflection.BindingFlags.Public);
                     var fieldpropertymembers = allmembers.Where(x => x.MemberType == System.Reflection.MemberTypes.Property || x.MemberType == System.Reflection.MemberTypes.Field).ToArray();
 
-                    string[] memberjsonname = fieldpropertymembers.Select(mi =>
-                    {                                                           // go thru each and look for ones with the rename attr
-                        var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
-                        if (rename.Length == 1)
-                        {
-                            dynamic attr = rename[0];               // if so, dynamically pick up the name
-                            return (string)attr.Name;
-                        }
-                        else
-                            return mi.Name;
-                    }).ToArray();
+                    string[] memberjsonname;
+
+                    if (checkcustomattr)
+                    {
+                        memberjsonname = fieldpropertymembers.Select(mi =>
+                        {                                                           // go thru each and look for ones with the rename attr
+                            var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
+                            if (rename.Length == 1)
+                            {
+                                dynamic attr = rename[0];               // if so, dynamically pick up the name
+                                return (string)attr.Name;
+                            }
+                            else
+                                return mi.Name;
+                        }).ToArray();
+                    }
+                    else
+                        memberjsonname = fieldpropertymembers.Select(x => x.Name).ToArray();
 
                     foreach (var kvp in (JObject)tk)
                     {
@@ -171,14 +179,15 @@ namespace BaseUtils.JSON
                         {
                             var mi = fieldpropertymembers[pos];
 
-                            var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false);
-                            if (ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
+                            var ca = checkcustomattr ? mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false) : null;
+
+                            if (ca == null || ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
                             {
                                 Type otype = mi.FieldPropertyType();
 
                                 if (otype != null)                          // and its a field or property
                                 {
-                                    Object ret = ToObject(kvp.Value, otype, ignoretypeerrors);    // get the value - must match otype.. ret may be zero for ? types
+                                    Object ret = ToObject(kvp.Value, otype, ignoretypeerrors, checkcustomattr);    // get the value - must match otype.. ret may be zero for ? types
 
                                     if (ret != null && ret.GetType() == typeof(ToObjectError))
                                     {
@@ -343,7 +352,7 @@ namespace BaseUtils.JSON
                     if (dt != null)
                         return dt;
                 }
-                else if ( tt.IsEnum)
+                else if (tt.IsEnum)
                 {
                     if (!tk.IsString)
                         return null;
