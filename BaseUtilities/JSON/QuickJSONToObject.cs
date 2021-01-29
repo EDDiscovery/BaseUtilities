@@ -23,7 +23,7 @@ namespace BaseUtils.JSON
     {
         public static T ToObjectQ<T>(this JToken tk)            // quick version, with checkcustomattr off
         {
-            return ToObject<T>(tk, false, true);
+            return ToObject<T>(tk, false, false);
         }
 
         public static T ToObject<T>(this JToken tk, bool ignoretypeerrors = false, bool checkcustomattr = true)  // backwards compatible naming
