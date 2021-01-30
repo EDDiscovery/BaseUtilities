@@ -16,6 +16,7 @@
 
 using System;
 using System.Linq;
+using static BaseUtils.JSON.JToken;
 
 namespace BaseUtils.JSON
 {
@@ -29,16 +30,23 @@ namespace BaseUtils.JSON
         public static T ToObject<T>(this JToken tk, bool ignoretypeerrors = false, bool checkcustomattr = true)  // backwards compatible naming
         {
             Type tt = typeof(T);
-            Object ret = tk.ToObject(tt, ignoretypeerrors, checkcustomattr);
-            if (ret is ToObjectError)
+            try
             {
-                System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
-                return default(T);
+                Object ret = tk.ToObject(tt, ignoretypeerrors, checkcustomattr);        // paranoia, since there are a lot of dynamics, trap any exceptions
+                if (ret is ToObjectError)
+                {
+                    System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
+                    return default(T);
+                }
+                else if (ret != null)      // or null
+                    return (T)ret;          // must by definition have returned tt.
             }
-            else if (ret != null)      // or null
-                return (T)ret;          // must by definition have returned tt.
-            else
-                return default(T);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception JSON ToObject " + ex.Message + " " + ex.StackTrace);
+            }
+
+            return default(T);
         }
 
         public class ToObjectError
@@ -52,6 +60,8 @@ namespace BaseUtils.JSON
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
         // checkcustomattr check for custom attributes - this takes time so you may want to turn it off
         // will return an instance of tt or ToObjectError, or null for token is null
+        // this may except in unusual circumstances (which i've not found yet, but there are dynamic type changes in there)
+
         public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr)
         {
             if (tk == null)
@@ -148,37 +158,56 @@ namespace BaseUtils.JSON
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
-                    var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                                System.Reflection.BindingFlags.Public);
-                    var fieldpropertymembers = allmembers.Where(x => x.MemberType == System.Reflection.MemberTypes.Property || x.MemberType == System.Reflection.MemberTypes.Field).ToArray();
+                    System.Reflection.MemberInfo[] fi = tt.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                                                          System.Reflection.BindingFlags.Public);
+                    string[] finames = null;
 
-                    string[] memberjsonname;
+                    System.Reflection.MemberInfo[] pi = null;   // lazy load this
+                    string[] pinames = null;
 
-                    if (checkcustomattr)
+                    if ( checkcustomattr )
                     {
-                        memberjsonname = fieldpropertymembers.Select(mi =>
-                        {                                                           // go thru each and look for ones with the rename attr
-                            var rename = mi.GetCustomAttributes(typeof(JsonNameAttribute), false);
-                            if (rename.Length == 1)
-                            {
-                                dynamic attr = rename[0];               // if so, dynamically pick up the name
-                                return (string)attr.Name;
-                            }
-                            else
-                                return mi.Name;
-                        }).ToArray();
+                        finames = new string[fi.Length];
+                        for (int i = 0; i < fi.Length; i++)
+                        {
+                            var rename = fi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                            finames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : fi[i].Name;
+                        }
                     }
-                    else
-                        memberjsonname = fieldpropertymembers.Select(x => x.Name).ToArray();
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        var pos = System.Array.FindIndex(memberjsonname, x => x == kvp.Key);
+                        System.Reflection.MemberInfo mi = null;
 
-                        if (pos >= 0)                                   // if we found a class member
+                        var fipos = finames != null ? System.Array.IndexOf(finames, kvp.Key) : System.Array.FindIndex(fi, x => x.Name == kvp.Key);
+                        if (fipos >= 0)     // try and find field first..
                         {
-                            var mi = fieldpropertymembers[pos];
+                            mi = fi[fipos];
+                        }
+                        else
+                        {
+                            if (pi == null)     // lazy load pick up, only load these if fields not found
+                            {
+                                pi = tt.GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                                                              System.Reflection.BindingFlags.Public);
+                                if (checkcustomattr)
+                                {
+                                    pinames = new string[pi.Length];
+                                    for (int i = 0; i < pi.Length; i++)
+                                    {
+                                        var rename = pi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                                        pinames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : pi[i].Name;
+                                    }
+                                }
+                            }
 
+                            var pipos = pinames != null ? System.Array.IndexOf(pinames, kvp.Key) : System.Array.FindIndex(pi, x => x.Name == kvp.Key);
+                            if (pipos >= 0)
+                                mi = pi[pipos];
+                        }
+
+                        if (mi != null)                                   // if we found a class member
+                        {
                             var ca = checkcustomattr ? mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false) : null;
 
                             if (ca == null || ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
@@ -234,9 +263,10 @@ namespace BaseUtils.JSON
             {
                 if (tt == typeof(int))
                 {
-                    var ret = (int?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
+                        return (int)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double)           // doubles get trunced.. as per previous system
+                        return (int)(double)tk.Value;
                 }
                 else if (tt == typeof(int?))
                 {
@@ -248,9 +278,10 @@ namespace BaseUtils.JSON
                 }
                 else if (tt == typeof(long))
                 {
-                    var ret = (long?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)                 
+                        return tk.Value;
+                    else if (tk.TokenType == TType.Double)          
+                        return (long)(double)tk.Value;
                 }
                 else if (tt == typeof(long?))
                 {
@@ -334,9 +365,8 @@ namespace BaseUtils.JSON
                 {
                     if (tk.IsNull)
                         return null;
-                    var str = (string)tk;
-                    if (str != null)
-                        return str;
+                    else if (tk.IsString)
+                        return tk.Value;
                 }
                 else if (tt == typeof(DateTime))
                 {
