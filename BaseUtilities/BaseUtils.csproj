@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CHash\ObjectActivator.cs" />
     <Compile Include="CHash\ResourceHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\GenerationalDictionary.cs" />
@@ -127,7 +128,7 @@
     <Compile Include="DebugTraceAndLogs\ExceptionForm.Designer.cs">
       <DependentUpon>ExceptionForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="CHash\FileHandles.cs" />
+    <Compile Include="Files\FileHandles.cs" />
     <Compile Include="Keys\KeyObjectExtensions.cs" />
     <Compile Include="Misc\Maps2d.cs" />
     <Compile Include="Numbers\BaseFunctions.cs" />
