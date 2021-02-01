@@ -38,45 +38,47 @@ namespace BaseUtils.JSON
             ThrowOnError = 4,
         }
 
+        private const int defaultstackdepth = 256;
+
         // parsers null or throw if failed, dependent on flags.  Default is null
 
         public static JToken Parse(string s, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            return Parse(parser, out string unused, flags, s.Length);
+            return Parse(parser, out string unused, flags, s.Length, defaultstackdepth);
         }
 
         public static JToken ParseThrow(string s, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            return Parse(parser, out string unused, flags | ParseOptions.ThrowOnError, s.Length);
+            return Parse(parser, out string unused, flags | ParseOptions.ThrowOnError, s.Length, defaultstackdepth);
         }
 
         public static JToken ParseThrowCommaEOL(string s)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            return Parse(parser, out string unused, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError, s.Length);
+            return Parse(parser, out string unused, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.ThrowOnError, s.Length, defaultstackdepth);
         }
 
         public static JToken Parse(string s, out string error, ParseOptions flags = ParseOptions.None)
         {
             StringParserQuick parser = new StringParserQuick(s);
-            return Parse(parser, out error, flags, s.Length);
+            return Parse(parser, out error, flags, s.Length, defaultstackdepth);
         }
 
         public static JToken Parse(System.IO.TextReader trx, out string error, ParseOptions flags = ParseOptions.None, int chunksize = 16384, int textmaxsize = 16384)
         {
             StringParserQuickTextReader parser = new StringParserQuickTextReader(trx, chunksize);
-            return Parse(parser, out error, flags, textmaxsize);
+            return Parse(parser, out error, flags, textmaxsize, defaultstackdepth);
         }
 
-        // normally, use Parse above. Used only if you want to feed in another type of parser..
+        // normally, use Parse above. Used only if you want to feed in another type of parser or want complete control
 
-        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize)
+        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, int textbufsize, int stackdepth)
         {
             char[] textbuffer = new char[textbufsize];      // textbuffer to use for string decodes - one get of it, multiple reuses, faster
 
-            JToken res = IntParse(parser, out error, flags, textbuffer);
+            JToken res = IntParse(parser, out error, flags, textbuffer, stackdepth);
 
             if (res != null && (flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL())
             {
@@ -86,9 +88,9 @@ namespace BaseUtils.JSON
                 return res;
         }
 
-        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer)
+        public static JToken Parse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer, int stackdepth)
         {
-            JToken res = IntParse(parser, out error, flags, textbuffer);
+            JToken res = IntParse(parser, out error, flags, textbuffer,stackdepth);
 
             if (res != null && (flags & ParseOptions.CheckEOL) != 0 && !parser.IsEOL())
             {
@@ -99,11 +101,11 @@ namespace BaseUtils.JSON
         }
 
         // internal parse, does not check EOL
-        private static JToken IntParse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer)
+        private static JToken IntParse(IStringParserQuick parser, out string error, ParseOptions flags, char[] textbuffer, int stackdepth)
         {
             error = null;
 
-            JToken[] stack = new JToken[256];
+            JToken[] stack = new JToken[stackdepth];
             int sptr = 0;
             bool comma = false;
             JArray curarray = null;

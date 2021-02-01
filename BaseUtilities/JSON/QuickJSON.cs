@@ -195,156 +195,156 @@ namespace BaseUtils.JSON
             return new JToken(TType.Null);
         }
 
-        public static explicit operator string(JToken t)
+        public static explicit operator string(JToken tk)
         {
-            if (t.TokenType == TType.Null || t.TokenType != TType.String)
+            if (tk.TokenType == TType.Null || tk.TokenType != TType.String)
                 return null;
             else
-                return (string)t.Value;
+                return (string)tk.Value;
         }
-        public static explicit operator int? (JToken t)     
+        public static explicit operator int? (JToken tk)     
         {                                                   
-            if (t.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
-                return (int)(long)t.Value;
-            else if (t.TokenType == TType.Double)           // doubles get trunced.. as per previous system
-                return (int)(double)t.Value;
+            if (tk.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
+                return (int)(long)tk.Value;
+            else if (tk.TokenType == TType.Double)           // doubles get trunced.. as per previous system
+                return (int)(double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator int(JToken t)
+        public static explicit operator int(JToken tk)
         {
-            if (t.TokenType == TType.Long)
-                return (int)(long)t.Value;
-            else if (t.TokenType == TType.Double)
-                return (int)(double)t.Value;
+            if (tk.TokenType == TType.Long)
+                return (int)(long)tk.Value;
+            else if (tk.TokenType == TType.Double)
+                return (int)(double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator uint? (JToken t)    
+        public static explicit operator uint? (JToken tk)    
         {
-            if (t.TokenType == TType.Long && (long)t.Value >= 0)        // it won't be a ulong/bigint since that would be too big for an uint
-                return (uint)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)   // doubles get trunced
-                return (uint)(double)t.Value;
+            if (tk.TokenType == TType.Long && (long)tk.Value >= 0)        // it won't be a ulong/bigint since that would be too big for an uint
+                return (uint)(long)tk.Value;
+            else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)   // doubles get trunced
+                return (uint)(double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator uint(JToken t)
+        public static explicit operator uint(JToken tk)
         {
-            if (t.TokenType == TType.Long && (long)t.Value >= 0)
-                return (uint)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
-                return (uint)(double)t.Value;
+            if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                return (uint)(long)tk.Value;
+            else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                return (uint)(double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator long? (JToken t)    
+        public static explicit operator long? (JToken tk)    
         {
-            if (t.TokenType == TType.Long)              
-                return (long)t.Value;
-            else if (t.TokenType == TType.Double)       
-                return (long)(double)t.Value;
+            if (tk.TokenType == TType.Long)              
+                return (long)tk.Value;
+            else if (tk.TokenType == TType.Double)       
+                return (long)(double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator long(JToken t)  
+        public static explicit operator long(JToken tk)  
         {
-            if (t.TokenType == TType.Long)              // it won't be a ulong/bigint since that would be too big for an long
-                return (long)t.Value;
-            else if (t.TokenType == TType.Double)       // doubles get trunced
-                return (long)(double)t.Value;
+            if (tk.TokenType == TType.Long)              // it won't be a ulong/bigint since that would be too big for an long
+                return (long)tk.Value;
+            else if (tk.TokenType == TType.Double)       // doubles get trunced
+                return (long)(double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator ulong? (JToken t) 
+        public static explicit operator ulong? (JToken tk) 
         {
-            if (t.TokenType == TType.ULong)             // it won't be a bigint since that would be too big for an ulong
-                return (ulong)t.Value;
-            else if (t.TokenType == TType.Long && (long)t.Value >= 0)
-                return (ulong)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)       // doubles get trunced
-                return (ulong)(double)t.Value;
+            if (tk.TokenType == TType.ULong)             // it won't be a bigint since that would be too big for an ulong
+                return (ulong)tk.Value;
+            else if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                return (ulong)(long)tk.Value;
+            else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)       // doubles get trunced
+                return (ulong)(double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator ulong(JToken t)
+        public static explicit operator ulong(JToken tk)
         {
-            if (t.TokenType == TType.ULong)
-                return (ulong)t.Value;
-            else if (t.TokenType == TType.Long && (long)t.Value >= 0)
-                return (ulong)(long)t.Value;
-            else if (t.TokenType == TType.Double && (double)t.Value >= 0)
-                return (ulong)(double)t.Value;
+            if (tk.TokenType == TType.ULong)
+                return (ulong)tk.Value;
+            else if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                return (ulong)(long)tk.Value;
+            else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                return (ulong)(double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator double? (JToken t)
+        public static explicit operator double? (JToken tk)
         {
-            if (t.TokenType == TType.Long)                      // any of these types could be converted to double
-                return (double)(long)t.Value;
-            else if (t.TokenType == TType.ULong)
-                return (double)(ulong)t.Value;
-            else if (t.TokenType == TType.BigInt)
-                return (double)(System.Numerics.BigInteger)t.Value;
-            else if (t.TokenType == TType.Double)
-                return (double)t.Value;
+            if (tk.TokenType == TType.Long)                      // any of these types could be converted to double
+                return (double)(long)tk.Value;
+            else if (tk.TokenType == TType.ULong)
+                return (double)(ulong)tk.Value;
+            else if (tk.TokenType == TType.BigInt)
+                return (double)(System.Numerics.BigInteger)tk.Value;
+            else if (tk.TokenType == TType.Double)
+                return (double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator double(JToken t)
+        public static explicit operator double(JToken tk)
         {
-            if (t.TokenType == TType.Long)                      
-                return (double)(long)t.Value;
-            else if (t.TokenType == TType.ULong)
-                return (double)(ulong)t.Value;
-            else if (t.TokenType == TType.BigInt)
-                return (double)(System.Numerics.BigInteger)t.Value;
-            else if (t.TokenType == TType.Double)
-                return (double)t.Value;
+            if (tk.TokenType == TType.Long)                      
+                return (double)(long)tk.Value;
+            else if (tk.TokenType == TType.ULong)
+                return (double)(ulong)tk.Value;
+            else if (tk.TokenType == TType.BigInt)
+                return (double)(System.Numerics.BigInteger)tk.Value;
+            else if (tk.TokenType == TType.Double)
+                return (double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator float? (JToken t)
+        public static explicit operator float? (JToken tk)
         {
-            if (t.TokenType == TType.Long)                  // any of these types could be converted to double
-                return (float)(long)t.Value;
-            else if (t.TokenType == TType.ULong)
-                return (float)(ulong)t.Value;
-            else if (t.TokenType == TType.BigInt)
-                return (float)(System.Numerics.BigInteger)t.Value;
-            else if (t.TokenType == TType.Double)
-                return (float)(double)t.Value;
+            if (tk.TokenType == TType.Long)                  // any of these types could be converted to double
+                return (float)(long)tk.Value;
+            else if (tk.TokenType == TType.ULong)
+                return (float)(ulong)tk.Value;
+            else if (tk.TokenType == TType.BigInt)
+                return (float)(System.Numerics.BigInteger)tk.Value;
+            else if (tk.TokenType == TType.Double)
+                return (float)(double)tk.Value;
             else
                 return null;
         }
-        public static explicit operator float(JToken t)
+        public static explicit operator float(JToken tk)
         {
-            if (t.TokenType == TType.Long)
-                return (float)(long)t.Value;
-            else if (t.TokenType == TType.ULong)
-                return (float)(ulong)t.Value;
-            else if (t.TokenType == TType.BigInt)
-                return (float)(System.Numerics.BigInteger)t.Value;
-            else if (t.TokenType == TType.Double)
-                return (float)(double)t.Value;
+            if (tk.TokenType == TType.Long)
+                return (float)(long)tk.Value;
+            else if (tk.TokenType == TType.ULong)
+                return (float)(ulong)tk.Value;
+            else if (tk.TokenType == TType.BigInt)
+                return (float)(System.Numerics.BigInteger)tk.Value;
+            else if (tk.TokenType == TType.Double)
+                return (float)(double)tk.Value;
             else
                 throw new InvalidOperationException();
         }
-        public static explicit operator bool? (JToken t)
+        public static explicit operator bool? (JToken tk)
         {
-            if (t.TokenType == TType.Boolean)
-                return (bool)t.Value;
-            else if (t.TokenType == TType.Long)       // accept LONG 1/0 as boolean
-                return (long)t.Value != 0;
+            if (tk.TokenType == TType.Boolean)
+                return (bool)tk.Value;
+            else if (tk.TokenType == TType.Long)       // accept LONG 1/0 as boolean
+                return (long)tk.Value != 0;
             else
                 return null;
         }
-        public static explicit operator bool(JToken t)
+        public static explicit operator bool(JToken tk)
         {
-            if (t.TokenType == TType.Boolean)
-                return (bool)t.Value;
-            else if (t.TokenType == TType.Long)      
-                return (long)t.Value != 0;
+            if (tk.TokenType == TType.Boolean)
+                return (bool)tk.Value;
+            else if (tk.TokenType == TType.Long)      
+                return (long)tk.Value != 0;
             else
                 throw new InvalidOperationException();
         }

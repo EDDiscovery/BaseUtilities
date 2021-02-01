@@ -1,16 +1,16 @@
 ﻿/*
- * Copyright © 2020 robby & EDDiscovery development team
+ * Copyright © 2021 robby & EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
@@ -56,7 +56,7 @@ namespace BaseUtils.JSON
             public ToObjectError(string s) { ErrorString = s; PropertyName = ""; }
         };
 
-        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.  
+        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
         // checkcustomattr check for custom attributes - this takes time so you may want to turn it off
         // will return an instance of tt or ToObjectError, or null for token is null
@@ -153,7 +153,7 @@ namespace BaseUtils.JSON
 
                     return instance;
                 }
-                else if (tt.IsClass ||      // if class 
+                else if (tt.IsClass ||      // if class
                          (tt.IsValueType && !tt.IsPrimitive && !tt.IsEnum && tt != typeof(DateTime)))   // or struct, but not datetime (handled below)
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
@@ -165,7 +165,7 @@ namespace BaseUtils.JSON
                     System.Reflection.MemberInfo[] pi = null;   // lazy load this
                     string[] pinames = null;
 
-                    if ( checkcustomattr )
+                    if (checkcustomattr)
                     {
                         finames = new string[fi.Length];
                         for (int i = 0; i < fi.Length; i++)
@@ -261,123 +261,84 @@ namespace BaseUtils.JSON
             }
             else
             {
-                if (tt == typeof(int))
-                {
-                    if (tk.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
-                        return (int)(long)tk.Value;
-                    else if (tk.TokenType == TType.Double)           // doubles get trunced.. as per previous system
-                        return (int)(double)tk.Value;
-                }
-                else if (tt == typeof(int?))
+                string name = tt.Name;                              // compare by name quicker than is
+
+                if (name.Equals("Nullable`1"))                      // nullable types
                 {
                     if (tk.IsNull)
                         return null;
-                    var ret = (int?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+
+                    name = tt.GenericTypeArguments[0].Name;         // get underlying type..
                 }
-                else if (tt == typeof(long))
-                {
-                    if (tk.TokenType == TType.Long)                 
-                        return tk.Value;
-                    else if (tk.TokenType == TType.Double)          
-                        return (long)(double)tk.Value;
-                }
-                else if (tt == typeof(long?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (long?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(uint))
-                {
-                    var ret = (uint?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(uint?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (uint?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(ulong))
-                {
-                    var ret = (ulong?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(ulong?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (ulong?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(double))
-                {
-                    var ret = (double?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(double?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (double?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(float))
-                {
-                    var ret = (float?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(float?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (float?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(bool))
-                {
-                    var ret = (bool?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(bool?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (bool?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(string))
+
+                if (name.Equals("String"))                          // copies of QuickJSON explicit operators in QuickJSON.cs
                 {
                     if (tk.IsNull)
                         return null;
                     else if (tk.IsString)
                         return tk.Value;
                 }
-                else if (tt == typeof(DateTime))
+                else if (name.Equals("Int32"))
                 {
-                    DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
-                    if (dt != null)
-                        return dt;
+                    if (tk.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
+                        return (int)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double)           // doubles get trunced.. as per previous system
+                        return (int)(double)tk.Value;
                 }
-                else if (tt == typeof(DateTime?))
+                else if (name.Equals("Int64"))
                 {
-                    if (tk.IsNull)
-                        return null;
+                    if (tk.TokenType == TType.Long)
+                        return tk.Value;
+                    else if (tk.TokenType == TType.Double)
+                        return (long)(double)tk.Value;
+                }
+                else if (name.Equals("Boolean"))
+                {
+                    if (tk.TokenType == TType.Boolean)
+                        return (bool)tk.Value;
+                    else if (tk.TokenType == TType.Long)
+                        return (long)tk.Value != 0;
+                }
+                else if (name.Equals("Double"))
+                {
+                    if (tk.TokenType == TType.Long)
+                        return (double)(long)tk.Value;
+                    else if (tk.TokenType == TType.ULong)
+                        return (double)(ulong)tk.Value;
+                    else if (tk.TokenType == TType.BigInt)
+                        return (double)(System.Numerics.BigInteger)tk.Value;
+                    else if (tk.TokenType == TType.Double)
+                        return (double)tk.Value;
+                }
+                else if (name.Equals("Single"))
+                {
+                    if (tk.TokenType == TType.Long)
+                        return (float)(long)tk.Value;
+                    else if (tk.TokenType == TType.ULong)
+                        return (float)(ulong)tk.Value;
+                    else if (tk.TokenType == TType.BigInt)
+                        return (float)(System.Numerics.BigInteger)tk.Value;
+                    else if (tk.TokenType == TType.Double)
+                        return (float)(double)tk.Value;
+                }
+                else if (name.Equals("UInt32"))
+                {
+                    if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                        return (uint)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                        return (uint)(double)tk.Value;
+                }
+                else if (name.Equals("UInt64"))
+                {
+                    if (tk.TokenType == TType.ULong)
+                        return (ulong)tk.Value;
+                    else if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                        return (ulong)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                        return (ulong)(double)tk.Value;
+                }
+                else if (name.Equals("DateTime"))
+                {
                     DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
                     if (dt != null)
                         return dt;
