@@ -840,7 +840,7 @@ namespace BaseUtils
 
         #endregion
 
-        #region Find
+        #region Find/Replace
 
         // Move pointer to string if found
 
@@ -850,6 +850,22 @@ namespace BaseUtils
             if (indexof != -1)
                 pos = indexof;
             return (indexof != -1);
+        }
+
+        public bool Replace(int start, int length, string s)      // cut out start/length, replace with s. offset is adjusted
+        {
+            if (start < line.Length && start + length <= line.Length)
+            {
+                if (pos >= start + length)                        // if past the replace area, adjust by the difference between the 
+                    pos += s.Length - length;
+                else if (pos >= start)                            // if inside the replacement, move to the replacement.
+                    pos = start;                                  // else before the replacement..
+
+                line = line.Substring(0,start) + s + line.Substring(start + length);
+                return true;
+            }
+            else
+                return false;
         }
 
         // Static wrappers
