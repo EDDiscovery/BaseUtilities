@@ -563,6 +563,7 @@ namespace BaseUtils
                     long? l = s.InvariantParseLongNull();
                     if (l != null)
                         return l;
+#if JSONBIGINT
                     else
                     {
                         if (System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture,
@@ -574,6 +575,7 @@ namespace BaseUtils
                                 return b;
                         }
                     }
+#endif
                 }
             }
 
@@ -592,9 +594,9 @@ namespace BaseUtils
                 return null;
         }
 
-        #endregion
+#endregion
 
-        #region Converters for evaluations
+#region Converters for evaluations
 
         // 
         // Summary:
@@ -791,9 +793,9 @@ namespace BaseUtils
             return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape, Top);
         }
 
-        #endregion
+#endregion
 
-        #region Reversing
+#region Reversing
 
         public bool ReverseBack( bool quotes = true, bool brackets = true)      // one or both must be true
         {
@@ -838,9 +840,9 @@ namespace BaseUtils
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region Find
+#region Find
 
         // Move pointer to string if found
 
@@ -871,7 +873,7 @@ namespace BaseUtils
             return sp.NextQuotedWordListSepar(lowercase, replaceescape, separ);
         }
 
-        #endregion
+#endregion
 
     }
 }

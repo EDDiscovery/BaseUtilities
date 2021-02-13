@@ -305,8 +305,10 @@ namespace BaseUtils.JSON
                         return (double)(long)tk.Value;
                     else if (tk.TokenType == TType.ULong)
                         return (double)(ulong)tk.Value;
+#if JSONBIGINT
                     else if (tk.TokenType == TType.BigInt)
                         return (double)(System.Numerics.BigInteger)tk.Value;
+#endif
                     else if (tk.TokenType == TType.Double)
                         return (double)tk.Value;
                 }
@@ -316,8 +318,10 @@ namespace BaseUtils.JSON
                         return (float)(long)tk.Value;
                     else if (tk.TokenType == TType.ULong)
                         return (float)(ulong)tk.Value;
+#if JSONBIGINT
                     else if (tk.TokenType == TType.BigInt)
                         return (float)(System.Numerics.BigInteger)tk.Value;
+#endif
                     else if (tk.TokenType == TType.Double)
                         return (float)(double)tk.Value;
                 }

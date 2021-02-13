@@ -284,8 +284,10 @@ namespace BaseUtils.JSON
                 return (double)(long)tk.Value;
             else if (tk.TokenType == TType.ULong)
                 return (double)(ulong)tk.Value;
+#if JSONBIGINT
             else if (tk.TokenType == TType.BigInt)
                 return (double)(System.Numerics.BigInteger)tk.Value;
+#endif
             else if (tk.TokenType == TType.Double)
                 return (double)tk.Value;
             else
@@ -297,8 +299,10 @@ namespace BaseUtils.JSON
                 return (double)(long)tk.Value;
             else if (tk.TokenType == TType.ULong)
                 return (double)(ulong)tk.Value;
+#if JSONBIGINT
             else if (tk.TokenType == TType.BigInt)
                 return (double)(System.Numerics.BigInteger)tk.Value;
+#endif
             else if (tk.TokenType == TType.Double)
                 return (double)tk.Value;
             else
@@ -310,8 +314,10 @@ namespace BaseUtils.JSON
                 return (float)(long)tk.Value;
             else if (tk.TokenType == TType.ULong)
                 return (float)(ulong)tk.Value;
+#if JSONBIGINT
             else if (tk.TokenType == TType.BigInt)
                 return (float)(System.Numerics.BigInteger)tk.Value;
+#endif
             else if (tk.TokenType == TType.Double)
                 return (float)(double)tk.Value;
             else
@@ -323,8 +329,10 @@ namespace BaseUtils.JSON
                 return (float)(long)tk.Value;
             else if (tk.TokenType == TType.ULong)
                 return (float)(ulong)tk.Value;
+#if JSONBIGINT
             else if (tk.TokenType == TType.BigInt)
                 return (float)(System.Numerics.BigInteger)tk.Value;
+#endif
             else if (tk.TokenType == TType.Double)
                 return (float)(double)tk.Value;
             else
@@ -402,9 +410,9 @@ namespace BaseUtils.JSON
             }
         }
 
-        #endregion
+#endregion
 
-        #region Operators and functions
+#region Operators and functions
 
         // if called on a non indexed object, return JNotPresent().  
         // On an Array/Object, will return JNotPresent if not present, or indexer is not right type
@@ -429,7 +437,7 @@ namespace BaseUtils.JSON
         public virtual int Count { get { return 0; } }        // number of children
         public virtual void Clear() { throw new NotImplementedException(); }    // clear all children
 
-        #endregion
+#endregion
 
     }
 }
