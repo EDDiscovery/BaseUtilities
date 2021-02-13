@@ -21,6 +21,12 @@ namespace BaseUtils
 {
     public static class TypeHelpers
     {
+        public sealed class PropertyNameAttribute : Attribute // applicable to FromObject and ToObject, don't serialise this
+        {
+            public string Text { get; set; }
+            public PropertyNameAttribute(string text) { Text = text; }
+        }
+
         public class PropertyNameInfo
         {
             public string Name;
@@ -50,7 +56,10 @@ namespace BaseUtils
                     {
                         if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                         {
-                            PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType, linelen, comment);
+                            var ca = pi.GetCustomAttributes(typeof(PropertyNameAttribute), false);
+                            string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
+
+                            PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType, linelen, comment, help);
                             ret.Add(pni);
                             //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
                         }
@@ -63,7 +72,10 @@ namespace BaseUtils
                     {
                         if (excludedeclaretype == null || fi.DeclaringType != excludedeclaretype)
                         {
-                            PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen, comment);
+                            var ca = fi.GetCustomAttributes(typeof(PropertyNameAttribute), false);
+                            string help = ca.Length > 0 ? ((dynamic)ca[0]).Name : "";
+
+                            PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen, comment, help);
                             ret.Add(pni);
                             //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
                         }
@@ -76,24 +88,40 @@ namespace BaseUtils
                 return null;
         }
 
-        static public PropertyNameInfo PNI( string name, Type t , int ll, string comment)
+        static public PropertyNameInfo PNI( string name, Type t , int ll, string comment, string help)
         {
             string pname = t.FullName;
             if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
-                return new PropertyNameInfo(name, "Enumeration:" + enums.FormatIntoLines(ll), ConditionEntry.MatchType.Equals, comment);
+                help = ("Enumeration:" + enums.FormatIntoLines(ll)).AppendPrePad(help, Environment.NewLine);
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Equals, comment);
             }
             else if (pname.Contains("System.Double"))
-                return new PropertyNameInfo(name, "Floating point value", ConditionEntry.MatchType.NumericGreaterEqual, comment);
+            {
+                help = "Floating point value".AppendPrePad(help, ":");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericGreaterEqual, comment);
+            }
             else if (pname.Contains("System.Boolean"))
-                return new PropertyNameInfo(name, "Boolean value, 1 = true, 0 = false", ConditionEntry.MatchType.IsTrue, comment);
+            {
+                help = "Boolean value, 1 = true, 0 = false".AppendPrePad(help, ":");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.IsTrue, comment);
+            }
             else if (pname.Contains("System.Int"))
-                return new PropertyNameInfo(name, "Integer value", ConditionEntry.MatchType.NumericEquals, comment);
+            {
+                help = "Integer value".AppendPrePad(help, ":");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericEquals, comment);
+            }
             else if (pname.Contains("System.DateTime"))
-                return new PropertyNameInfo(name, "Date Time Value, US format", ConditionEntry.MatchType.DateAfter, comment);
+            {
+                help = "Date Time Value, US format".AppendPrePad(help, ":");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.DateAfter, comment);
+            }
             else
-                return new PropertyNameInfo(name, "String value", ConditionEntry.MatchType.Contains, comment);
+            {
+                help = "String value".AppendPrePad(help, ":");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Contains, comment);
+            }
         }
 
         static public MethodInfo FindMember(this MemberInfo[] methods, Type[] paras)    // Must be MethodInfo's, find matching these paras..

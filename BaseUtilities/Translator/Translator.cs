@@ -329,6 +329,7 @@ namespace BaseUtils
                 else
                 {
                     logger?.WriteLine(string.Format("{0}: {1} @", id, normal.EscapeControlChars().AlwaysQuoteString()));
+                    normal = "! " + normal + " !";          // no id at all, use ! to indicate
                     translations.Add(key, normal);
                     //System.Diagnostics.Debug.WriteLine("*** Missing Translate ID: {0}: \"{1}\" => \"{2}\"", id, normal.EscapeControlChars(), "<" + normal.EscapeControlChars() + ">");
                     return normal;
