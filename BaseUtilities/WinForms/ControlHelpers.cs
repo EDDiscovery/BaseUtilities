@@ -337,13 +337,18 @@ public static class ControlHelpersStaticFunc
             width += scrollbarallowwidth;                                   // need a scroll bar
         }
 
-        if (left + width >= scr.Bounds.Right - margin)
+        if (left + width >= scr.Bounds.Right - margin)                      // too far right
         {
             left = scr.Bounds.Right - margin - width;
         }
 
+        if (left < scr.Bounds.Left + margin)                                // too far left
+        {
+            left = scr.Bounds.Left + margin;
+        }
 
-      //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(left, top) + " size " + new Size(width,height));
+
+        //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(left, top) + " size " + new Size(width,height));
         p.Location = new Point(left, top);
         p.Size = new Size(width, height);
     }
