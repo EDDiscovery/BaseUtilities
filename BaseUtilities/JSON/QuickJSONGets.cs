@@ -133,6 +133,7 @@ namespace BaseUtils.JSON
             return tk != null ? (float?)tk : null;
         }
 
+#if JSONBIGINT
         public static System.Numerics.BigInteger BigInteger(this JToken tk, System.Numerics.BigInteger def)
         {
             if (tk == null)
@@ -146,6 +147,7 @@ namespace BaseUtils.JSON
             else
                 return def;
         }
+#endif
 
         public static bool Bool(this JToken tk, bool def = false)
         {

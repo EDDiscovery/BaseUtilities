@@ -563,6 +563,7 @@ namespace BaseUtils
                     long? l = s.InvariantParseLongNull();
                     if (l != null)
                         return l;
+#if JSONBIGINT
                     else
                     {
                         if (System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture,
@@ -574,6 +575,7 @@ namespace BaseUtils
                                 return b;
                         }
                     }
+#endif
                 }
             }
 
@@ -592,9 +594,9 @@ namespace BaseUtils
                 return null;
         }
 
-        #endregion
+#endregion
 
-        #region Converters for evaluations
+#region Converters for evaluations
 
         // 
         // Summary:
@@ -791,9 +793,9 @@ namespace BaseUtils
             return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape, Top);
         }
 
-        #endregion
+#endregion
 
-        #region Reversing
+#region Reversing
 
         public bool ReverseBack( bool quotes = true, bool brackets = true)      // one or both must be true
         {
@@ -838,9 +840,9 @@ namespace BaseUtils
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region Find
+        #region Find/Replace
 
         // Move pointer to string if found
 
@@ -850,6 +852,22 @@ namespace BaseUtils
             if (indexof != -1)
                 pos = indexof;
             return (indexof != -1);
+        }
+
+        public bool Replace(int start, int length, string s)      // cut out start/length, replace with s. offset is adjusted
+        {
+            if (start < line.Length && start + length <= line.Length)
+            {
+                if (pos >= start + length)                        // if past the replace area, adjust by the difference between the 
+                    pos += s.Length - length;
+                else if (pos >= start)                            // if inside the replacement, move to the replacement.
+                    pos = start;                                  // else before the replacement..
+
+                line = line.Substring(0,start) + s + line.Substring(start + length);
+                return true;
+            }
+            else
+                return false;
         }
 
         // Static wrappers
@@ -871,7 +889,7 @@ namespace BaseUtils
             return sp.NextQuotedWordListSepar(lowercase, replaceescape, separ);
         }
 
-        #endregion
+#endregion
 
     }
 }

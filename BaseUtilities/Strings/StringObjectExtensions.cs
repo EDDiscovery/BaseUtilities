@@ -362,17 +362,18 @@ public static class ObjectExtensionsStrings
         return total;
     }
 
-    public static string Truncate(this string str, int start, int length)
+    public static string Truncate(this string str, int start, int length, string endmarker = "")
     {
-        int len = str.Length - start;
-        if (str == null || len < 1)
+        if (str == null)                // nothing, return empty
             return "";
+
+        int len = str.Length - start;
+        if (len < 1)                    // if start beyond length
+            return "";
+        else if (len > length)           // if we need to cut, because len left > length allowed
+            return str.Substring(start, length) + endmarker;
         else
-        {
-            if (length > len)
-                length = len;
-            return str.Substring(start, length);
-        }
+            return str.Substring(start);        // len left is less than length, return the whole lot
     }
 
     static public string WordWrap(this string input, int linelen)

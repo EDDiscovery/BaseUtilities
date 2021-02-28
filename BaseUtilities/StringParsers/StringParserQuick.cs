@@ -177,7 +177,6 @@ namespace BaseUtils
             }
         }
 
-
         #endregion
 
         #region Numbers and Bools
@@ -196,11 +195,13 @@ namespace BaseUtils
                 {
                     if (bigint)
                     {
+#if JSONBIGINT
                         string part = new string(line, start, pos - start);    // get double string
 
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
                             return new JToken(JToken.TType.BigInt, sign ? -bv : bv);
                         else
+#endif
                             return null;
                     }
                     else if (pos == start)      // no chars read
@@ -231,6 +232,7 @@ namespace BaseUtils
                     }
                     else if (bigint)
                     {
+#if JSONBIGINT
                         string part = new string(line, start, pos - start);    // get double string
 
                         while (pos < line.Length && char.IsWhiteSpace(line[pos]))   // skip spaces
@@ -239,6 +241,7 @@ namespace BaseUtils
                         if (System.Numerics.BigInteger.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out System.Numerics.BigInteger bv))
                             return new JToken(JToken.TType.BigInt,sign ? -bv : bv);
                         else
+#endif
                             return null;
                     }
                     else
@@ -267,7 +270,7 @@ namespace BaseUtils
             }
         }
 
-        #endregion
+#endregion
 
     }
 }

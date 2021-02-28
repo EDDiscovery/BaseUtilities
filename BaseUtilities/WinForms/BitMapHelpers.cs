@@ -373,13 +373,17 @@ namespace BaseUtils
             return newbmp;
         }
 
-        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt )
+        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt = null)
         {
             using (Bitmap t = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(t))
                 {
-                    return g.MeasureString(text, f, new Size(10000, 10000), fmt);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;      // recommendation from https://docs.microsoft.com/en-us/dotnet/api/system.drawing.graphics.measurestring?view=dotnet-plat-ext-5.0
+                    if (fmt != null)
+                        return g.MeasureString(text, f, new Size(10000, 10000), fmt);
+                    else
+                        return g.MeasureString(text, f, new Size(10000, 10000));
                 }
             }
         }

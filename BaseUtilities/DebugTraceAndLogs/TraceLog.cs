@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright © 2016 - 2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -67,7 +67,7 @@ namespace BaseUtils
             public override void WriteLine() { Write("\n"); }
         }
 
-        public static void RedirectTrace(string logroot, string filename = null)
+        public static void RedirectTrace(string logroot, bool debugtoo, string filename = null)
         {
             if (Directory.Exists(logroot))
             {
@@ -81,8 +81,10 @@ namespace BaseUtils
                 // Log trace events to the above file
                 var tlw = new TraceLogWriter();
                 System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
-                //System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.ConsoleTraceListener(true));
-                Console.SetOut(tlw);
+#if !(NETSTANDARD || NETCOREAPP)
+                if ( debugtoo )
+                    System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
+#endif
             }
         }
 

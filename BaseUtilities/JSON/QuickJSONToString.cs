@@ -52,8 +52,10 @@ namespace BaseUtils.JSON
                 return prepad + ((long)o.Value).ToStringInvariant() + postpad;
             else if (o.TokenType == TType.ULong)
                 return prepad + ((ulong)o.Value).ToStringInvariant() + postpad;
+#if JSONBIGINT
             else if (o.TokenType == TType.BigInt)
                 return prepad + ((System.Numerics.BigInteger)o.Value).ToString(System.Globalization.CultureInfo.InvariantCulture) + postpad;
+#endif
             else if (o.TokenType == TType.Boolean)
                 return prepad + ((bool)o.Value).ToString().ToLower() + postpad;
             else if (o.TokenType == TType.Null)

@@ -1,44 +1,52 @@
 ﻿/*
- * Copyright © 2020 robby & EDDiscovery development team
+ * Copyright © 2021 robby & EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Linq;
+using static BaseUtils.JSON.JToken;
 
 namespace BaseUtils.JSON
 {
     public static class JTokenExtensions
     {
-        public static T ToObject<T>(this JToken tk)         // returns null if not decoded
+        public static T ToObjectQ<T>(this JToken tk)            // quick version, with checkcustomattr off
         {
-            return ToObjectProtected<T>(tk,false);
+            return ToObject<T>(tk, false, false);
         }
 
-        public static T ToObjectProtected<T>(this JToken tk, bool ignoretypeerrors = false)  // backwards compatible naming
+        public static T ToObject<T>(this JToken tk, bool ignoretypeerrors = false, bool checkcustomattr = true)  // backwards compatible naming
         {
             Type tt = typeof(T);
-            Object ret = tk.ToObject(tt,ignoretypeerrors);
-            if (ret is ToObjectError)
+            try
             {
-                System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
-                return default(T);
+                Object ret = tk.ToObject(tt, ignoretypeerrors, checkcustomattr);        // paranoia, since there are a lot of dynamics, trap any exceptions
+                if (ret is ToObjectError)
+                {
+                    System.Diagnostics.Debug.WriteLine("To Object error:" + ((ToObjectError)ret).ErrorString + ":" + ((ToObjectError)ret).PropertyName);
+                    return default(T);
+                }
+                else if (ret != null)      // or null
+                    return (T)ret;          // must by definition have returned tt.
             }
-            else if (ret != null)      // or null
-                return (T)ret;          // must by definition have returned tt.
-            else
-                return default(T);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception JSON ToObject " + ex.Message + " " + ex.StackTrace);
+            }
+
+            return default(T);
         }
 
         public class ToObjectError
@@ -48,34 +56,13 @@ namespace BaseUtils.JSON
             public ToObjectError(string s) { ErrorString = s; PropertyName = ""; }
         };
 
-        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.  
+        // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
+        // checkcustomattr check for custom attributes - this takes time so you may want to turn it off
+        // will return an instance of tt or ToObjectError, or null for token is null
+        // this may except in unusual circumstances (which i've not found yet, but there are dynamic type changes in there)
 
-        public static object ToArray<T>(this JToken tk, bool ignoretypeerrors = false)
-        {
-            var instance = new T[tk.Count];
-
-            for (int i = 0; i < tk.Count; i++)
-            {
-                object ret = ToObject(tk[i], typeof(T), ignoretypeerrors);      // get the underlying element, must match array element type
-
-                if (ret != null && ret is ToObjectError err)      // arrays must be full, any errors means an error
-                {
-                    err.PropertyName = typeof(T[]).Name + "." + i.ToString() + "." + err.PropertyName;
-                    return ret;
-                }
-                else
-                {
-                    instance[i] = (T)typeof(T).ChangeTo(ret);
-                }
-            }
-
-            return instance;
-        }
-
-        private static System.Collections.Generic.Dictionary<Type, Func<JToken, bool, object>> ArrayConverters = new System.Collections.Generic.Dictionary<Type, Func<JToken, bool, object>>();
-
-        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors = false)       // will return an instance of tt or ToObjectError, or null for token is null
+        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr)
         {
             if (tk == null)
             {
@@ -87,38 +74,34 @@ namespace BaseUtils.JSON
 
                 if (tt.IsArray)
                 {
-                    if (!ArrayConverters.TryGetValue(tt.GetElementType(), out var converter))
+                    dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
+
+                    for (int i = 0; i < tk.Count; i++)
                     {
-                        System.Linq.Expressions.Expression<Func<JToken, bool, object>> expr = (t, ie) => ToArray<object>(t, ie);
-                        var mi =
-                            ((System.Linq.Expressions.MethodCallExpression)expr.Body)
-                                .Method
-                                .GetGenericMethodDefinition()
-                                .MakeGenericMethod(tt.GetElementType());
-                        var tkparam = System.Linq.Expressions.Expression.Parameter(typeof(JToken), "tk");
-                        var ieparam = System.Linq.Expressions.Expression.Parameter(typeof(bool), "ignoretypeerrors");
-                        ArrayConverters[tt.GetElementType()] = converter = System.Linq.Expressions.Expression.Lambda<Func<JToken, bool, object>>(
-                            System.Linq.Expressions.Expression.Call(
-                                null,
-                                mi,
-                                tkparam,
-                                ieparam
-                            ),
-                            tkparam,
-                            ieparam
-                        ).Compile();
+                        Object ret = ToObject(tk[i], tt.GetElementType(), ignoretypeerrors, checkcustomattr);      // get the underlying element, must match array element type
+
+                        if (ret != null && ret.GetType() == typeof(ToObjectError))      // arrays must be full, any errors means an error
+                        {
+                            ((ToObjectError)ret).PropertyName = tt.Name + "." + i.ToString() + "." + ((ToObjectError)ret).PropertyName;
+                            return ret;
+                        }
+                        else
+                        {
+                            dynamic d = tt.GetElementType().ChangeTo(ret);
+                            instance[i] = d;
+                        }
                     }
 
-                    return converter(tk, ignoretypeerrors);
+                    return instance;
                 }
                 else if (typeof(System.Collections.IList).IsAssignableFrom(tt))
                 {
-                    System.Collections.IList instance = (System.Collections.IList)Activator.CreateInstance(tt);        // create the List
+                    dynamic instance = Activator.CreateInstance(tt);        // create the List
                     var types = tt.GetGenericArguments();
 
                     for (int i = 0; i < tk.Count; i++)
                     {
-                        object ret = ToObject(tk[i], types[0], ignoretypeerrors);      // get the underlying element, must match types[0] which is list type
+                        Object ret = ToObject(tk[i], types[0], ignoretypeerrors, checkcustomattr);      // get the underlying element, must match types[0] which is list type
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))  // lists must be full, any errors are errors
                         {
@@ -127,7 +110,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            var d = types[0].ChangeTo(ret);
+                            dynamic d = types[0].ChangeTo(ret);
                             instance.Add(d);
                         }
                     }
@@ -141,12 +124,12 @@ namespace BaseUtils.JSON
             {
                 if (typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
                 {
-                    System.Collections.IDictionary instance = (System.Collections.IDictionary)Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
+                    dynamic instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
                     var types = tt.GetGenericArguments();
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        Object ret = ToObject(kvp.Value, types[1],ignoretypeerrors);        // get the value as the dictionary type - it must match type or it get OE
+                        Object ret = ToObject(kvp.Value, types[1], ignoretypeerrors, checkcustomattr);        // get the value as the dictionary type - it must match type or it get OE
 
                         if (ret != null && ret.GetType() == typeof(ToObjectError))
                         {
@@ -163,49 +146,77 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            var d = types[1].ChangeTo(ret);
+                            dynamic d = types[1].ChangeTo(ret);
                             instance[kvp.Key] = d;
                         }
                     }
 
                     return instance;
                 }
-                else if (tt.IsClass ||      // if class 
+                else if (tt.IsClass ||      // if class
                          (tt.IsValueType && !tt.IsPrimitive && !tt.IsEnum && tt != typeof(DateTime)))   // or struct, but not datetime (handled below)
                 {
                     var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
-                    var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                                System.Reflection.BindingFlags.Public);
-                    var fieldpropertymembers = allmembers.Where(x => x.MemberType == System.Reflection.MemberTypes.Property || x.MemberType == System.Reflection.MemberTypes.Field).ToArray();
+                    System.Reflection.MemberInfo[] fi = tt.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                                                          System.Reflection.BindingFlags.Public);
+                    string[] finames = null;
 
-                    string[] memberjsonname = fieldpropertymembers.Select(mi =>
-                    {                                                           // go thru each and look for ones with the rename attr
-                        var rename = mi.GetCustomAttributes(false).OfType<JsonNameAttribute>().FirstOrDefault();
-                        if (rename != null)
+                    System.Reflection.MemberInfo[] pi = null;   // lazy load this
+                    string[] pinames = null;
+
+                    if (checkcustomattr)
+                    {
+                        finames = new string[fi.Length];
+                        for (int i = 0; i < fi.Length; i++)
                         {
-                            return rename.Name;
+                            var rename = fi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                            finames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : fi[i].Name;
                         }
-                        else
-                            return mi.Name;
-                    }).ToArray();
+                    }
 
                     foreach (var kvp in (JObject)tk)
                     {
-                        var pos = System.Array.FindIndex(memberjsonname, x => x == kvp.Key);
+                        System.Reflection.MemberInfo mi = null;
 
-                        if (pos >= 0)                                   // if we found a class member
+                        var fipos = finames != null ? System.Array.IndexOf(finames, kvp.Key) : System.Array.FindIndex(fi, x => x.Name == kvp.Key);
+                        if (fipos >= 0)     // try and find field first..
                         {
-                            var mi = fieldpropertymembers[pos];
+                            mi = fi[fipos];
+                        }
+                        else
+                        {
+                            if (pi == null)     // lazy load pick up, only load these if fields not found
+                            {
+                                pi = tt.GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                                                              System.Reflection.BindingFlags.Public);
+                                if (checkcustomattr)
+                                {
+                                    pinames = new string[pi.Length];
+                                    for (int i = 0; i < pi.Length; i++)
+                                    {
+                                        var rename = pi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                                        pinames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : pi[i].Name;
+                                    }
+                                }
+                            }
 
-                            var ca = mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false);
-                            if (ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
+                            var pipos = pinames != null ? System.Array.IndexOf(pinames, kvp.Key) : System.Array.FindIndex(pi, x => x.Name == kvp.Key);
+                            if (pipos >= 0)
+                                mi = pi[pipos];
+                        }
+
+                        if (mi != null)                                   // if we found a class member
+                        {
+                            var ca = checkcustomattr ? mi.GetCustomAttributes(typeof(JsonIgnoreAttribute), false) : null;
+
+                            if (ca == null || ca.Length == 0)                                              // ignore any ones with JsonIgnore on it.
                             {
                                 Type otype = mi.FieldPropertyType();
 
                                 if (otype != null)                          // and its a field or property
                                 {
-                                    Object ret = ToObject(kvp.Value, otype, ignoretypeerrors);    // get the value - must match otype.. ret may be zero for ? types
+                                    Object ret = ToObject(kvp.Value, otype, ignoretypeerrors, checkcustomattr);    // get the value - must match otype.. ret may be zero for ? types
 
                                     if (ret != null && ret.GetType() == typeof(ToObjectError))
                                     {
@@ -250,127 +261,93 @@ namespace BaseUtils.JSON
             }
             else
             {
-                if (tt == typeof(int))
-                {
-                    var ret = (int?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(int?))
+                string name = tt.Name;                              // compare by name quicker than is
+
+                if (name.Equals("Nullable`1"))                      // nullable types
                 {
                     if (tk.IsNull)
                         return null;
-                    var ret = (int?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+
+                    name = tt.GenericTypeArguments[0].Name;         // get underlying type..
                 }
-                else if (tt == typeof(long))
-                {
-                    var ret = (long?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(long?))
+
+                if (name.Equals("String"))                          // copies of QuickJSON explicit operators in QuickJSON.cs
                 {
                     if (tk.IsNull)
                         return null;
-                    var ret = (long?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    else if (tk.IsString)
+                        return tk.Value;
                 }
-                else if (tt == typeof(uint))
+                else if (name.Equals("Int32"))
                 {
-                    var ret = (uint?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)                  // it won't be a ulong/bigint since that would be too big for an int
+                        return (int)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double)           // doubles get trunced.. as per previous system
+                        return (int)(double)tk.Value;
                 }
-                else if (tt == typeof(uint?))
+                else if (name.Equals("Int64"))
                 {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (uint?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)
+                        return tk.Value;
+                    else if (tk.TokenType == TType.Double)
+                        return (long)(double)tk.Value;
                 }
-                else if (tt == typeof(ulong))
+                else if (name.Equals("Boolean"))
                 {
-                    var ret = (ulong?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Boolean)
+                        return (bool)tk.Value;
+                    else if (tk.TokenType == TType.Long)
+                        return (long)tk.Value != 0;
                 }
-                else if (tt == typeof(ulong?))
+                else if (name.Equals("Double"))
                 {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (ulong?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)
+                        return (double)(long)tk.Value;
+                    else if (tk.TokenType == TType.ULong)
+                        return (double)(ulong)tk.Value;
+#if JSONBIGINT
+                    else if (tk.TokenType == TType.BigInt)
+                        return (double)(System.Numerics.BigInteger)tk.Value;
+#endif
+                    else if (tk.TokenType == TType.Double)
+                        return (double)tk.Value;
                 }
-                else if (tt == typeof(double))
+                else if (name.Equals("Single"))
                 {
-                    var ret = (double?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long)
+                        return (float)(long)tk.Value;
+                    else if (tk.TokenType == TType.ULong)
+                        return (float)(ulong)tk.Value;
+#if JSONBIGINT
+                    else if (tk.TokenType == TType.BigInt)
+                        return (float)(System.Numerics.BigInteger)tk.Value;
+#endif
+                    else if (tk.TokenType == TType.Double)
+                        return (float)(double)tk.Value;
                 }
-                else if (tt == typeof(double?))
+                else if (name.Equals("UInt32"))
                 {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (double?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                        return (uint)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                        return (uint)(double)tk.Value;
                 }
-                else if (tt == typeof(float))
+                else if (name.Equals("UInt64"))
                 {
-                    var ret = (float?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
+                    if (tk.TokenType == TType.ULong)
+                        return (ulong)tk.Value;
+                    else if (tk.TokenType == TType.Long && (long)tk.Value >= 0)
+                        return (ulong)(long)tk.Value;
+                    else if (tk.TokenType == TType.Double && (double)tk.Value >= 0)
+                        return (ulong)(double)tk.Value;
                 }
-                else if (tt == typeof(float?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (float?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(bool))
-                {
-                    var ret = (bool?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(bool?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var ret = (bool?)tk;
-                    if (ret.HasValue)
-                        return ret.Value;
-                }
-                else if (tt == typeof(string))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    var str = (string)tk;
-                    if (str != null)
-                        return str;
-                }
-                else if (tt == typeof(DateTime))
+                else if (name.Equals("DateTime"))
                 {
                     DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
                     if (dt != null)
                         return dt;
                 }
-                else if (tt == typeof(DateTime?))
-                {
-                    if (tk.IsNull)
-                        return null;
-                    DateTime? dt = tk.DateTime(System.Globalization.CultureInfo.InvariantCulture);
-                    if (dt != null)
-                        return dt;
-                }
-                else if ( tt.IsEnum)
+                else if (tt.IsEnum)
                 {
                     if (!tk.IsString)
                         return null;

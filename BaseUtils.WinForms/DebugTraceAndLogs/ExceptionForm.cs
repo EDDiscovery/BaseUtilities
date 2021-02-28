@@ -213,7 +213,7 @@ namespace BaseUtils
 
             try
             {
-                Process.Start(reportURL);
+                BrowserInfo.LaunchBrowser(reportURL);
                 if (clipSet)
                     MessageBox.Show(this, "Diagnostic information has been copied to your clipboard. Please include this in your issue submission.", string.Empty, MessageBoxButtons.OK);
             }

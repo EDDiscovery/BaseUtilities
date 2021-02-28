@@ -6,12 +6,12 @@
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
+ *
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
@@ -267,8 +267,39 @@ public static class DataGridViewControlHelpersStaticFunc
         return visible;
     }
 
+    public static int SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv)
+    {
+#if MONO
+        return dgv.CurrentCell != null ? dgv.CurrentCell.RowIndex : 0;
+#else
+        return dgv.FirstDisplayedScrollingRowIndex;
+#endif
+    }
+
     public static void SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv, int rowno)
     {
+#if MONO
+        // MONO does not implement SafeFirstDisplayedScrollingRowIndex
+        if ( rowno >= 0 && rowno < dgv.Rows.Count)
+        {
+            for( int i = 0 ; i < dgv.Columns.Count ; i++)
+            {
+                if ( dgv.Columns[i].Visible)
+                {
+                    while ( !dgv.Rows[rowno].Visible && rowno<dgv.Rows.Count)
+                            rowno++;
+                    int rowsvisible = dgv.DisplayedRowCount(false);
+                    int rownobot = Math.Min(rowsvisible+rowno-1,dgv.Rows.Count-1);
+                    while ( !dgv.Rows[rownobot].Visible && rownobot>1)
+                        rownobot--;
+                    dgv.CurrentCell = dgv.Rows[rownobot].Cells[i];      // blam top and bottom to try and get the best view
+                    dgv.CurrentCell = dgv.Rows[rowno].Cells[i];
+                    dgv.Rows[rowno].Selected = true;
+                    break;
+                }
+            }
+        }
+#else
         try
         {
             dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
@@ -277,6 +308,7 @@ public static class DataGridViewControlHelpersStaticFunc
         {
             System.Diagnostics.Debug.WriteLine("DGV exception FDR " + e);       // v.rare.
         }
+#endif
 
     }
 
@@ -390,7 +422,7 @@ public static class DataGridViewControlHelpersStaticFunc
 
                 dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
 
-                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
                     dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                 //System.Diagnostics.Debug.WriteLine("No Default Select " + rowno);
@@ -416,7 +448,7 @@ public static class DataGridViewControlHelpersStaticFunc
 
                 dgv.SetCurrentSelOnRow(rowno, pos.Item2);
 
-                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
                     dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                 pos = new Tuple<long, int>(-2, 0);    // cancel next find
@@ -430,7 +462,7 @@ public static class DataGridViewControlHelpersStaticFunc
 
                     dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
 
-                    if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines.. 
+                    if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
                         dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
                     //System.Diagnostics.Debug.WriteLine("Force Default Select " + rowno);
