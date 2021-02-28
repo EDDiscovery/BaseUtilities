@@ -81,10 +81,6 @@ namespace BaseUtils
                 // Log trace events to the above file
                 var tlw = new TraceLogWriter();
                 System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
-#if !(NETSTANDARD || NETCOREAPP)
-                if ( debugtoo )
-                    System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
-#endif
             }
         }
 
