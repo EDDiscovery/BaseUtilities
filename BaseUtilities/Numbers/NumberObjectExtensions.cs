@@ -531,6 +531,16 @@ public static class ObjectExtensionsNumbersBool
         return (-tolerance < difference && tolerance > difference);
     }
 
+    static public double Length(double x, double y, double z, double ox, double oy, double oz)
+    {
+        return Math.Sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy) + (z - oz) * (z - oz));
+    }
+
+    static public double Length(double x, double y,  double ox, double oy)
+    {
+        return Math.Sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy));
+    }
+
     #endregion
 }
 

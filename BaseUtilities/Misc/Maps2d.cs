@@ -76,45 +76,54 @@ namespace BaseUtils
             return new Point(p.X * LYWidth / PixelWidth + TopLeft.X, TopRight.Y - p.Y * LYHeight / PixelHeight);
         }
 
-        public Point TransformCoordinate(Point coordinately)    // to point screen
+        public PointF TransformCoordinate(PointF pos, bool logicaltopixel = true)    // from position to picture co-ord (true) or the reverse
         {
-            int diffx1, diffx2, diffy1, diffy2;
-            int diffpx1, diffpx2, diffpy1, diffpy2;
+            int dltop = TopRight.X - TopLeft.X;
+            int dptop = pxTopRight.X - pxTopLeft.X;
 
-            //Transform trans;
+            int dlbottom = BottomRight.X - BottomLeft.X;
+            int dpbottom = pxBottomRight.X - pxBottomLeft.X;
 
-            diffx1 = TopRight.X - TopLeft.X;
-            diffx2 = BottomRight.X - BottomLeft.X;
-            diffy1 = TopLeft.Y - BottomLeft.Y;
-            diffy2 = TopRight.Y - BottomRight.Y;
+            int dlleft = TopLeft.Y - BottomLeft.Y;
+            int dpleft = pxTopLeft.Y - pxBottomLeft.Y;
 
-            diffpx1 = pxTopRight.X - pxTopLeft.X;
-            diffpx2 = pxBottomRight.X - pxBottomLeft.X;
-            diffpy1 = pxTopLeft.Y - pxBottomLeft.Y;
-            diffpy2 = pxTopRight.Y - pxBottomRight.Y;
+            int dlright = TopRight.Y - BottomRight.Y;
+            int dpright = pxTopRight.Y - pxBottomRight.Y;
 
-            double dx1, dx2, dy1, dy2;
+            if (logicaltopixel)
+            {
+                double ratiotop = dptop / (double)dltop;      // this is the ratio between the pixel differences and the logical co-ord differences on one side of the rectangle
+                double ratiobottom = dpbottom / (double)dlbottom;       // do the same for the other sides
+                double ratioleft = dpleft / (double)dlleft;
+                double ratioright = dpright / (double)dlright;
 
-            dx1 = diffpx1 / (double)diffx1;
-            dx2 = diffpx2 / (double)diffx2;
-            dy1 = diffpy1 / (double)diffy1;
-            dy2 = diffpy2 / (double)diffy2;
+                PointF offset = new PointF(pos.X - BottomLeft.X, pos.Y - BottomLeft.Y);     // offset from bottom left to offset, + is right, + is up
 
-            Point newPoint = new Point(coordinately.X - BottomLeft.X, coordinately.Y - BottomLeft.Y);
+                double xratio = ratiobottom + (ratiotop - ratiobottom) * (offset.Y / (double)dlleft);  // ratio across x, at the offset Y, by scaling by the delta Y
+                double yratio = ratioright + (ratioleft - ratioright) * (offset.X / (double)dltop);     // for y
 
-            // Calculate dx and dy for point;
-            double dx, dy;
+                float x = (float)(offset.X * xratio + pxBottomLeft.X + offset.Y / (double)dlleft * (pxTopLeft.X - pxBottomLeft.X));
+                float y = (float)(offset.Y * yratio + pxBottomLeft.Y + offset.X / (double)dltop * (pxTopRight.Y - pxTopLeft.Y));
 
-            dx = dx2 + newPoint.Y / (double)diffy1 * (dx1 - dx2);
-            dy = dy2 + newPoint.X / (double)diffx1 * (dy1 - dy2);
+                return new PointF(x, y);
+            }
+            else
+            {
+                double ratiotop = dltop / (double)dptop;      // inverse ratio to above.
+                double ratiobottom = dlbottom / (double)dpbottom;
+                double ratioleft = dlleft / (double)dpleft;
+                double ratioright = dlright / (double)dpright;
 
+                PointF offset = new PointF(pos.X - pxBottomLeft.X, pos.Y - pxBottomLeft.Y);     
 
-            int x, y;
+                double xratio = ratiobottom + (ratiotop - ratiobottom) * (offset.Y / (double)dpleft);  
+                double yratio = ratioright + (ratioleft - ratioright) * (offset.X / (double)dptop);
 
-            x = (int)(newPoint.X * dx + pxBottomLeft.X + newPoint.Y / (double)diffy1 * (pxTopLeft.X - pxBottomLeft.X));
-            y = (int)(newPoint.Y * dy + pxBottomLeft.Y + newPoint.X / (double)diffx1 * (pxTopRight.Y - pxTopLeft.Y));
+                float x = (float)(offset.X * xratio + BottomLeft.X + offset.Y / (double)dpleft * (TopLeft.X - BottomLeft.X));
+                float y = (float)(offset.Y * yratio + BottomLeft.Y + offset.X / (double)dptop * (TopRight.Y - TopLeft.Y));
 
-            return new Point(x, y);
+                return new PointF(x, y);
+            }
         }
 
         public void LoadImage(string filepath, string json, Image def, bool own = false)
