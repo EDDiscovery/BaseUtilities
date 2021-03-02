@@ -24,6 +24,8 @@ namespace SQLLiteExtensions
 
     public class SQLExtConnectionRegister<TConn> : SQLExtConnection where TConn : SQLExtConnection, new()
     {
+        public SQLExtRegister RegisterClass;
+
         public SQLExtConnectionRegister(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter) : base(mode)
         {
             try
@@ -46,7 +48,7 @@ namespace SQLLiteExtensions
 
                 connection.Open();
 
-                registerclass = new SQLExtRegister(this);
+                RegisterClass = new SQLExtRegister(this);
             }
             catch
             {
@@ -106,79 +108,6 @@ namespace SQLLiteExtensions
 
             base.Dispose(disposing);
         }
-
-        #region Register
-
-        private SQLExtRegister registerclass;
-
-        public bool keyExists(string sKey)
-        {
-            return registerclass.keyExists(sKey);
-        }
-
-        public bool DeleteKey(string key)
-        {
-            return registerclass.DeleteKey(key);
-        }
-
-        public int GetSettingInt(string key, int defaultvalue)
-        {
-            return registerclass.GetSettingInt(key, defaultvalue);
-        }
-
-        public bool PutSettingInt(string key, int intvalue)
-        {
-            return registerclass.PutSettingInt(key, intvalue);
-        }
-
-        public double GetSettingDouble(string key, double defaultvalue)
-        {
-            return registerclass.GetSettingDouble(key, defaultvalue);
-        }
-
-        public bool PutSettingDouble(string key, double doublevalue)
-        {
-            return registerclass.PutSettingDouble(key, doublevalue); 
-        }
-
-        public bool GetSettingBool(string key, bool defaultvalue)
-        {
-            return registerclass.GetSettingBool(key, defaultvalue); 
-        }
-
-        public bool PutSettingBool(string key, bool boolvalue)
-        {
-            return registerclass.PutSettingBool(key, boolvalue);
-        }
-
-        public string GetSettingString(string key, string defaultvalue)
-        {
-            return registerclass.GetSettingString(key, defaultvalue);
-        }
-
-        public bool PutSettingString(string key, string strvalue)       
-        {
-            return registerclass.PutSettingString(key, strvalue); 
-        }
-
-        public DateTime GetSettingDate(string key, DateTime defaultvalue)
-        {
-            string s = registerclass.GetSettingString(key, "--"); 
-
-            if (!DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
-            {
-                date = defaultvalue;
-            }
-
-            return date;
-        }
-
-        public bool PutSettingDate(string key, DateTime value)      
-        {
-            return registerclass.PutSettingString(key, value.ToStringZulu());
-        }
-
-        #endregion
 
 
     }

@@ -56,227 +56,88 @@ namespace SQLLiteExtensions
             }
         }
 
-        public int GetSettingInt(string key, int defaultvalue)
+        public T GetSetting<T>(string key, T defaultvalue)
         {
-            try
+            Type tt = typeof(T);
+            Object ret = null;
+
+            if (tt == typeof(int))
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueInt from Register WHERE ID = @ID", txn))
+                ret = GetSetting(key, "ValueInt");
+                if (ret != null)            // DB returns Long, so we need to convert
+                    ret = Convert.ToInt32(ret);
+            }
+            else if (tt == typeof(long))
+                ret = GetSetting(key, "ValueInt"c;
+            else if (tt == typeof(double))
+                ret = GetSetting(key, "ValueDouble");
+            else if (tt == typeof(string))
+                ret = GetSetting(key, "ValueString");
+            else if (tt == typeof(bool))
+            {
+                ret = GetSetting(key, "ValueInt");
+                if (ret != null)        // convert return to bool
+                    ret = Convert.ToInt32(ret) != 0;
+            }
+            else if (tt == typeof(DateTime))
+            {
+                ret = GetSetting(key, "ValueString");
+                if (ret != null)
                 {
-                    cmd.AddParameterWithValue("@ID", key);
-
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    int val = Convert.ToInt32(ob);
-
-                    return val;
+                    string s = Convert.ToString(ret);
+                    if (DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
+                        ret = date;
+                    else
+                        ret = null;
                 }
             }
-            catch
-            {
-                return defaultvalue;
-            }
+            else
+                System.Diagnostics.Debug.Assert(false, "Not valid type");
+
+            return ret != null ? (T)ret : (T)defaultvalue;
         }
 
-        public bool PutSettingInt(string key, int intvalue)
+        public bool PutSetting<T>(string key, T value)
         {
-            try
+            Type tt = typeof(T);
+
+            if (tt == typeof(int))
+                return PutSetting(key, "ValueInt:int32", value);
+            else if (tt == typeof(long))
+                return PutSetting(key, "ValueInt:int64", value);
+            else if (tt == typeof(double))
+                return PutSetting(key, "ValueDouble:Double", value);
+            else if (tt == typeof(string))
+                return PutSetting(key, "ValueString:string", value);
+            else if (tt == typeof(bool))
+                return PutSetting(key, "ValueInt:int32", Convert.ToBoolean(value) ? 1 : 0);
+            else if (tt == typeof(DateTime))
+                return PutSetting(key, "ValueString:string", Convert.ToDateTime(value).ToStringZulu());
+            else
             {
-                if (keyExists(key))
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueInt", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @valint)", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
+                System.Diagnostics.Debug.Assert(false, "Not valid type");
                 return false;
             }
         }
 
-        public double GetSettingDouble(string key, double defaultvalue)
+        private Object GetSetting(string key, string sqlname)
         {
-            try
+            using (DbCommand cmd = cn.CreateSelect("Register", outparas: sqlname, inparas: new string[] { "ID:string" }, where: "ID=@ID"))
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueDouble from Register WHERE ID = @ID", txn))
-                {
-                    cmd.AddParameterWithValue("@ID", key);
-
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    double val = Convert.ToDouble(ob);
-
-                    return val;
-                }
-            }
-            catch
-            {
-                return defaultvalue;
+                cmd.Parameters[0].Value = key;
+                return cmd.ExecuteScalar();
             }
         }
 
-        public bool PutSettingDouble(string key, double doublevalue)
+        private bool PutSetting(string key, string sqlnametype, object value)
         {
-            try
+            using (DbCommand cmd = cn.CreateReplace("Register", new string[] { "ID:string", sqlnametype }))
             {
-                if (keyExists(key))
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueDouble", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @valdbl)", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valdbl", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                cmd.Parameters[0].Value = key;
+                cmd.Parameters[1].Value = value;
+                cmd.ExecuteNonQuery();
+                return true;
             }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool GetSettingBool(string key, bool defaultvalue)
-        {
-            return GetSettingInt(key, defaultvalue ? 1 : 0) != 0;
-        }
-
-        public bool PutSettingBool(string key, bool boolvalue)
-        {
-            return PutSettingInt(key, boolvalue ? 1 : 0);
-        }
-
-        public string GetSettingString(string key, string defaultvalue)
-        {
-            try
-            {
-                using (DbCommand cmd = cn.CreateCommand("SELECT ValueString from Register WHERE ID = @ID", txn))
-                {
-                    cmd.AddParameterWithValue("@ID", key);
-                    object ob = cmd.ExecuteScalar();
-
-                    if (ob == null || ob == DBNull.Value)
-                        return defaultvalue;
-
-                    string val = (string)ob;
-
-                    return val;
-                }
-            }
-            catch
-            {
-                return defaultvalue;
-            }
-        }
-
-        public bool PutSettingString(string key, string strvalue)
-        {
-            try
-            {
-                if (keyExists(key))
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueString", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-                else
-                {
-                    using (DbCommand cmd = cn.CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)", txn))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public class Entry
-        {
-            public string ValueString { get; private set; }
-            public long ValueInt { get; private set; }
-            public double ValueDouble { get; private set; }
-            public byte[] ValueBlob { get; private set; }
-
-            protected Entry()
-            {
-            }
-
-            public Entry(string stringval = null, byte[] blobval = null, long intval = 0, double floatval = Double.NaN)
-            {
-                ValueString = stringval;
-                ValueBlob = blobval;
-                ValueInt = intval;
-                ValueDouble = floatval;
-            }
-        }
-
-
-        public Dictionary<string, Entry> GetRegister()
-        {
-            Dictionary<string, Entry> regs = new Dictionary<string, Entry>();
-
-            using (DbCommand cmd = cn.CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register", txn))
-            {
-                using (DbDataReader rdr = cmd.ExecuteReader())
-                {
-                    while (rdr.Read())
-                    {
-                        string id = (string)rdr["Id"];
-                        object valint = rdr["ValueInt"];
-                        object valdbl = rdr["ValueDouble"];
-                        object valblob = rdr["ValueBlob"];
-                        object valstr = rdr["ValueString"];
-                        regs[id] = new Entry(
-                            valstr as string,
-                            valblob as byte[],
-                            (valint as long?) ?? 0L,
-                            (valdbl as double?) ?? Double.NaN
-                        );
-                    }
-                }
-            }
-
-            return regs;
         }
     }
 }

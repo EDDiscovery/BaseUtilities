@@ -208,7 +208,7 @@ namespace SQLLiteExtensions
             doAfterQueries?.Invoke();
 
             SQLExtRegister reg = new SQLExtRegister(this);
-            reg.PutSettingInt("DBVer", newVersion);
+            reg.PutSetting("DBVer", newVersion);
         }
 
         // Query operators

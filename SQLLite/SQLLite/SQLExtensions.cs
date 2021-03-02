@@ -206,7 +206,8 @@ public static class SQLiteCommandExtensions
 
     // for these, types are optional if paras given as name:type strings
 
-    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null, bool insertorreplace = false, bool insertorignore = false)
+    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null, 
+                                         bool insertorreplace = false, bool insertorignore = false)
     {
         string plist = "";
         string atlist = "";
@@ -296,58 +297,5 @@ public static class SQLiteCommandExtensions
         return cmd;
     }
 
-
-
-
-
-    // Dodgy old ones - check this on re-integration
-
-    public static DataSet SQLQueryText(this SQLExtConnection cn, DbCommand cmd)
-    {
-        try
-        {
-            DataSet ds = new DataSet();
-            DbDataAdapter da = cn.CreateDataAdapter(cmd);
-            da.Fill(ds);
-            return ds;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlQuery Exception: " + ex.Message);
-            throw;
-        }
-    }
-
-    static public int SQLNonQueryText(this SQLExtConnection cn, DbCommand cmd)
-    {
-        int rows = 0;
-
-        try
-        {
-            rows = cmd.ExecuteNonQuery();
-            return rows;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlNonQueryText Exception: " + ex.Message);
-            throw;
-        }
-    }
-
-    static public object SQLScalar(this SQLExtConnection cn, DbCommand cmd)
-    {
-        object ret = null;
-
-        try
-        {
-            ret = cmd.ExecuteScalar();
-            return ret;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine("SqlNonQuery Exception: " + ex.Message);
-            throw;
-        }
-    }
 
 }
