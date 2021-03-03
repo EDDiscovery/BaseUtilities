@@ -68,7 +68,7 @@ namespace SQLLiteExtensions
                     ret = Convert.ToInt32(ret);
             }
             else if (tt == typeof(long))
-                ret = GetSetting(key, "ValueInt"c;
+                ret = GetSetting(key, "ValueInt");
             else if (tt == typeof(double))
                 ret = GetSetting(key, "ValueDouble");
             else if (tt == typeof(string))
@@ -102,17 +102,17 @@ namespace SQLLiteExtensions
             Type tt = typeof(T);
 
             if (tt == typeof(int))
-                return PutSetting(key, "ValueInt:int32", value);
+                return PutSetting(key, "ValueInt", value);
             else if (tt == typeof(long))
-                return PutSetting(key, "ValueInt:int64", value);
+                return PutSetting(key, "ValueInt", value);
             else if (tt == typeof(double))
-                return PutSetting(key, "ValueDouble:Double", value);
+                return PutSetting(key, "ValueDouble", value);
             else if (tt == typeof(string))
-                return PutSetting(key, "ValueString:string", value);
+                return PutSetting(key, "ValueString", value);
             else if (tt == typeof(bool))
-                return PutSetting(key, "ValueInt:int32", Convert.ToBoolean(value) ? 1 : 0);
+                return PutSetting(key, "ValueInt", Convert.ToBoolean(value) ? 1 : 0);
             else if (tt == typeof(DateTime))
-                return PutSetting(key, "ValueString:string", Convert.ToDateTime(value).ToStringZulu());
+                return PutSetting(key, "ValueString", Convert.ToDateTime(value).ToStringZulu());
             else
             {
                 System.Diagnostics.Debug.Assert(false, "Not valid type");
@@ -122,19 +122,20 @@ namespace SQLLiteExtensions
 
         private Object GetSetting(string key, string sqlname)
         {
-            using (DbCommand cmd = cn.CreateSelect("Register", outparas: sqlname, inparas: new string[] { "ID:string" }, where: "ID=@ID"))
+            using (DbCommand cmd = cn.CreateCommand("SELECT " + sqlname + " from Register WHERE ID = @ID", txn))
             {
-                cmd.Parameters[0].Value = key;
+                cmd.AddParameterWithValue("@ID", key);
                 return cmd.ExecuteScalar();
             }
         }
 
-        private bool PutSetting(string key, string sqlnametype, object value)
+        private bool PutSetting(string key, string sqlname, object value)
         {
-            using (DbCommand cmd = cn.CreateReplace("Register", new string[] { "ID:string", sqlnametype }))
+            using (DbCommand cmd = cn.CreateCommand("INSERT OR REPLACE INTO Register (ID," + sqlname + ") VALUES (@ID,@Value)", txn))
             {
-                cmd.Parameters[0].Value = key;
-                cmd.Parameters[1].Value = value;
+                //System.Diagnostics.Debug.WriteLine("DB Write " + key + ": " + value + " " + cmd.CommandText);
+                cmd.AddParameterWithValue("@ID", key);
+                cmd.AddParameterWithValue("@Value", value);
                 cmd.ExecuteNonQuery();
                 return true;
             }
