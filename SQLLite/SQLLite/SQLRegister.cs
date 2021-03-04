@@ -64,7 +64,7 @@ namespace SQLLiteExtensions
             if (tt == typeof(int))
             {
                 ret = GetSetting(key, "ValueInt");
-                if (ret != null)            // DB returns Long, so we need to convert
+                if (ret != null )            // DB returns Long, so we need to convert
                     ret = Convert.ToInt32(ret);
             }
             else if (tt == typeof(long))
@@ -125,7 +125,8 @@ namespace SQLLiteExtensions
             using (DbCommand cmd = cn.CreateCommand("SELECT " + sqlname + " from Register WHERE ID = @ID", txn))
             {
                 cmd.AddParameterWithValue("@ID", key);
-                return cmd.ExecuteScalar();
+                var ret = cmd.ExecuteScalar();
+                return ret is System.DBNull ? null : ret;
             }
         }
 
