@@ -61,6 +61,7 @@
     <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Conditions\Condition.cs" />
     <Compile Include="Conditions\ConditionEntry.cs" />
+    <Compile Include="DDE\DDEServer.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />
     <Compile Include="Functions\FunctionsBasic.cs" />
@@ -137,10 +138,11 @@
     <Compile Include="Numbers\UserDefinedFunctions.cs" />
     <Compile Include="Translator\Translator.cs" />
     <Compile Include="Win32\NativeMethods.cs" />
-    <Compile Include="Win32\Processes.cs" />
+    <Compile Include="Process\Processes.cs" />
     <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
     <Compile Include="Misc\SHA.cs" />
     <Compile Include="WinForms\BitMapHelpers.cs" />
+    <Compile Include="WinForms\ControlSplitter.cs" />
     <Compile Include="WinForms\DataGridViewColumnHider.cs">
       <SubType>Component</SubType>
     </Compile>

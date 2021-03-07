@@ -22,6 +22,11 @@ namespace BaseUtils.JSON
     {
         // done as extension classes as it allows null to be in tk
 
+        public static JToken I(this JToken tk, object id)           // safe [] allowing previous to be null
+        {
+            return tk != null ? tk[id] : null;
+        }
+
         public static bool IsNull(this JToken tk)
         {
             return tk == null || tk.IsNull;

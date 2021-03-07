@@ -24,9 +24,9 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 
-public static class ControlHelpersStaticFunc
+public static partial class ControlHelpersStaticFunc
 {
-    #region Control
+    #region Control, Control Collections
 
     static public void DisposeTree(this Control c, int lvl)     // pass lvl = 0 to dispose of this object itself..
     {
@@ -113,9 +113,125 @@ public static class ControlHelpersStaticFunc
         }
     }
 
+    static public void InsertRangeBefore(this Control.ControlCollection coll, Control startpoint, IEnumerable<Control> clist)
+    {
+        List<Control> cur = new List<Control>();
+        foreach (Control c in coll)
+        {
+            if (c == startpoint)
+                cur.AddRange(clist);
+
+            cur.Add(c);
+        }
+        coll.Clear();
+        coll.AddRange(cur.ToArray());
+    }
+
+    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad, Type[] excludedtypes = null, bool debugout = false)
+    {
+        Size s = new Size(0, 0);
+        foreach (Control c in parent.Controls)
+        {
+            if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
+            {
+                if (debugout)
+                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size + " R " + c.Right + " B" + c.Bottom);
+                s.Width = Math.Max(s.Width, c.Right);
+                s.Height = Math.Max(s.Height, c.Bottom);
+            }
+        }
+
+        if (debugout)
+            System.Diagnostics.Debug.WriteLine("Control Measured " + s);
+        s.Width += hpad;
+        s.Height += vpad;
+        return s;
+    }
+
+    static public void ApplyAnchor(this Control c, AnchorStyles ac, Point initialpos, Size initialsize, int widthdelta, int heightdelta)
+    {
+        if (ac == AnchorStyles.None)
+            return;
+
+        //System.Diagnostics.Debug.WriteLine("Control {0} is at {1}, initialpos {2} ", c.Name, c.Location, initialpos);
+        int left = initialpos.X;
+        int width = initialsize.Width;
+        if ((ac & AnchorStyles.Right) != 0)
+        {
+            if ((ac & AnchorStyles.Left) != 0)
+            {
+                width = Math.Max(initialsize.Width, initialsize.Width + widthdelta);
+            }
+            else
+                left = Math.Max(initialpos.X, initialpos.X + widthdelta);
+        }
+
+        int top = initialpos.Y;
+        int height = initialsize.Height;
+        if ((ac & AnchorStyles.Bottom) != 0)
+        {
+            if ((ac & AnchorStyles.Top) != 0)
+            {
+                height = Math.Max(initialsize.Height, initialsize.Height + heightdelta);
+            }
+            else
+                top = Math.Max(initialpos.Y, initialpos.Y + heightdelta);
+        }
+
+        //System.Diagnostics.Debug.WriteLine("Move to {0} to {1} {2}", c.Name, new Point(left, top), new Size(width, height));
+        c.Location = new Point(left, top);
+        c.Size = new Size(width, height);
+        //System.Diagnostics.Debug.WriteLine(".. results in {0} {1}", c.Location, c.Size);
+    }
+
+    static public Rectangle RectangleScreenCoords(this Control c)
+    {
+        Point p = c.PointToScreen(new Point(0, 0));
+        return new Rectangle(p.X, p.Y, c.Width, c.Height);
+    }
+
+    static public void DebugSizePosition(this Control p, ToolTip t)     // assign info to tooltip
+    {
+        t.SetToolTip(p, p.Name + " " + p.Location + p.Size + "F:" + p.ForeColor + "B:" + p.BackColor);
+        foreach (Control c in p.Controls)
+            c.DebugSizePosition(t);
+    }
+
+    static public Control FirstY(this Control.ControlCollection cc, Type[] t)
+    {
+        int miny = int.MaxValue;
+        int minx = int.MaxValue;
+        Control highest = null;
+        foreach (Control c in cc)
+        {
+            if (t.Contains(c.GetType()))
+            {
+                if (c.Top < miny || (c.Top == miny && c.Left < minx))
+                {
+                    miny = c.Top;
+                    minx = c.Left;
+                    highest = c;
+                }
+            }
+        }
+
+        return highest;
+    }
+
+    static public string GetHeirarchy(this Control c, bool name = false)
+    {
+        string str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "");
+        while (c.Parent != null)
+        {
+            c = c.Parent;
+            str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "") + ":" + str;
+        }
+        return str;
+    }
+
     #endregion
 
-    #region Misc
+    #region Content Align
 
     static public StringFormat StringFormatFromContentAlignment(ContentAlignment c)
     {
@@ -166,6 +282,20 @@ public static class ControlHelpersStaticFunc
         return new Rectangle(left, top, image.Width, image.Height);
     }
 
+    #endregion
+
+    #region Rectangles
+
+    public static int XCenter(this Rectangle r)
+    {
+        return (r.Right + r.Left) / 2;
+    }
+
+    public static int YCenter(this Rectangle r)
+    {
+        return (r.Top + r.Bottom) / 2;
+    }
+
     static public GraphicsPath RectCutCorners(int x, int y, int width, int height, int roundnessleft, int roundnessright)
     {
         GraphicsPath gr = new GraphicsPath();
@@ -200,74 +330,10 @@ public static class ControlHelpersStaticFunc
         return gr;
     }
 
-    static public System.ComponentModel.IContainer GetParentContainerComponents(this Control p)
-    {
-        IContainerControl c = p.GetContainerControl();  // get container control (UserControl or Form)
+    #endregion
 
-        if (c != null)  // paranoia in case control is not connected
-        {
-            // find all fields, incl private of them
-            var memcc = c.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
 
-            var icontainers = (from f in memcc      // pick out a list of IContainers (should be only 1)
-                               where f.FieldType.FullName == "System.ComponentModel.IContainer"
-                               select f);
-            return icontainers?.FirstOrDefault()?.GetValue(c) as System.ComponentModel.IContainer;  // But IT may be null if no containers are on the form
-        }
-
-        return null;
-    }
-
-    static public void CopyToolTips( this System.ComponentModel.IContainer c, Control outerctrl, Control[] ctrlitems)
-    {
-        if ( c != null )
-        {
-            var clisttt = c.Components.OfType<ToolTip>().ToList(); // find all tooltips
-
-            foreach (ToolTip t in clisttt)
-            {
-                string s = t.GetToolTip(outerctrl);
-                if (s != null && s.Length>0)
-                {
-                    foreach (Control inner in ctrlitems)
-                        t.SetToolTip(inner, s);
-                }
-            }
-        }
-    }
-
-    // used to compute ImageAttributes, given a disabled scaling, a remap table, and a optional color matrix
-    static public void ComputeDrawnPanel( out ImageAttributes Enabled, 
-                    out ImageAttributes Disabled, 
-                    float disabledscaling, System.Drawing.Imaging.ColorMap[] remap, float[][] colormatrix = null)
-    {
-        Enabled = new ImageAttributes();
-        Enabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
-        if (colormatrix != null)
-            Enabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-        Disabled = new ImageAttributes();
-        Disabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
-
-        if (colormatrix != null)
-        {
-            colormatrix[0][0] *= disabledscaling;     // the identity positions are scaled by BDS 
-            colormatrix[1][1] *= disabledscaling;
-            colormatrix[2][2] *= disabledscaling;
-            Disabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-        }
-        else
-        {
-            float[][] disabledMatrix = {
-                        new float[] {disabledscaling,  0,  0,  0, 0},        // red scaling factor of BDS
-                        new float[] {0,  disabledscaling,  0,  0, 0},        // green scaling factor of BDS
-                        new float[] {0,  0,  disabledscaling,  0, 0},        // blue scaling factor of BDS
-                        new float[] {0,  0,  0,  1, 0},        // alpha scaling factor of 1
-                        new float[] {0,0,0, 0, 1}};    // three translations of 0
-
-            Disabled.SetColorMatrix(new ColorMatrix(disabledMatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-        }
-    }
+    #region Screen Alignment
 
     static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
     {
@@ -361,176 +427,9 @@ public static class ControlHelpersStaticFunc
 
     #endregion
 
-    #region Splitter
-
-    static public void SplitterDistance(this SplitContainer sp, double value)           // set the splitter distance from a double value.. safe from exceptions.
-    {
-        if (!double.IsNaN(value) && !double.IsInfinity(value))
-        {
-            int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
-            int curDist = sp.SplitterDistance;
-            //System.Diagnostics.Debug.WriteLine("Size is " + a);
-            if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
-                a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-            //System.Diagnostics.Debug.WriteLine("Now Size is " + a + " " + sp.Panel1MinSize + " " + (sp.Height - sp.Panel2MinSize));
-
-            try
-            {       // protect it against excepting because even with the careful protection above and below, it can still mess up if the window is completely small
-                sp.SplitterDistance = Math.Min(Math.Max((int)Math.Round(a * value), sp.Panel1MinSize), a - sp.Panel2MinSize);
-            }
-            catch
-            {
-                System.Diagnostics.Debug.WriteLine("Splitter failed to set in " + sp.GetType().Name);
-            }
-            //System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.Panel1MinSize}-{sp.Panel2MinSize} Set SplitterDistance to {value:N2} (was {curDist}, now {sp.SplitterDistance})");
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.Panel1MinSize}-{sp.Panel2MinSize} Set SplitterDistance attempted with unsupported value ({value})");
-        }
-    }
-
-    static public double GetSplitterDistance(this SplitContainer sp)                    // get the splitter distance as a fractional double
-    {
-        int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
-        if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
-            a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-        double v = (double)sp.SplitterDistance / (double)a;
-        //System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.SplitterDistance} Get SplitterDistance {a} -> {v:N2}");
-        return v;
-    }
-
-    static public double GetPanelsSizeSum(this SplitContainer sp)                    // get the splitter panels size sum
-    {
-        int a = (sp.Orientation == Orientation.Vertical) ? sp.Width : sp.Height;
-        if (a == 0)     // Sometimes the size is {0,0} if minimized. Calc dimension from the inner panels. See issue #1508.
-            a = (sp.Orientation == Orientation.Vertical ? sp.Panel1.Width + sp.Panel2.Width : sp.Panel1.Height + sp.Panel2.Height) + sp.SplitterWidth;
-        double s = (double)a;
-        //System.Diagnostics.Debug.WriteLine($"SplitContainer {sp.Name} {sp.DisplayRectangle} {sp.SplitterDistance} Get PanelSizeSum {a} -> {s:N2}");
-        return s;
-    }
-
-    // Make a tree of splitters, controlled by the string in sp
-
-    static public SplitContainer SplitterTreeMakeFromCtrlString(BaseUtils.StringParser sp, 
-                                                            Func<Orientation, int, SplitContainer> MakeSC, 
-                                                            Func<string, Control> MakeNode , int lvl)
-    {
-        char tomake;
-        if (sp.SkipUntil(new char[] { 'H', 'V', 'U' }) && (tomake = sp.GetChar()) != 'U')
-        {
-            sp.IsCharMoveOn('(');   // ignore (
-
-            SplitContainer sc = MakeSC(tomake == 'H' ? Orientation.Horizontal : Orientation.Vertical, lvl);
-
-            double percent = sp.NextDouble(",") ?? 0.5;
-            sc.SplitterDistance(percent);
-            
-            SplitContainer one = SplitterTreeMakeFromCtrlString(sp, MakeSC, MakeNode, lvl+1);
-
-            if (one == null)
-            {
-                string para = sp.PeekChar() == '\'' ? sp.NextQuotedWord() : "";
-                sc.Panel1.Controls.Add(MakeNode(para));
-            }
-            else
-                sc.Panel1.Controls.Add(one);
-
-            SplitContainer two = SplitterTreeMakeFromCtrlString(sp, MakeSC, MakeNode, lvl+1);
-
-            if (two == null)
-            {
-                string para = sp.PeekChar() == '\'' ? sp.NextQuotedWord() : "";
-                sc.Panel2.Controls.Add(MakeNode(para));
-            }
-            else
-                sc.Panel2.Controls.Add(two);
-
-            return sc;
-        }
-        else
-            return null;
-    }
-
-    // Report control state of a tree of splitters
-
-    static public string SplitterTreeState(this SplitContainer sc, string cur, Func<Control, string> getpara)
-    {
-        string state = sc.Orientation == Orientation.Horizontal ? "H( " : "V( ";
-        state += sc.GetSplitterDistance().ToStringInvariant("0.##") + ", ";
-
-        SplitContainer one = sc.Panel1.Controls[0] as SplitContainer;
-
-        if (one != null)
-        {
-            string substate = SplitterTreeState(one, "", getpara);
-            state = state + substate;
-        }
-        else
-            state += "U'" + getpara(sc.Panel1.Controls[0]) + "'";
-
-        state += ", ";
-        SplitContainer two = sc.Panel2.Controls[0] as SplitContainer;
-
-        if (two != null)
-        {
-            string substate = SplitterTreeState(two, "", getpara);
-            state = state + substate;
-        }
-        else
-            state += "U'" + getpara(sc.Panel2.Controls[0]) + "'";
-
-        state += ") ";
-
-        return state;
-    }
-
-    // Run actions at each Splitter Panel node
-
-    static public void RunActionOnSplitterTree(this SplitContainer sc, Action<SplitterPanel, Control> action)       
-    {
-        SplitContainer one = sc.Panel1.Controls[0] as SplitContainer;
-
-        if (one != null)
-            RunActionOnSplitterTree(one, action);
-        else
-            action(sc.Panel1, sc.Panel1.Controls[0]);
-
-        SplitContainer two = sc.Panel2.Controls[0] as SplitContainer;
-
-        if (two != null)
-            RunActionOnSplitterTree(two, action);
-        else
-            action(sc.Panel2, sc.Panel2.Controls[0]);
-    }
 
 
-    static public void Merge(this SplitContainer topsplitter , int panel )      // currentsplitter has a splitter underneath it in panel (0/1)
-    {
-        SplitContainer insidesplitter = (SplitContainer)topsplitter.Controls[panel].Controls[0];  // get that split container, error if not. 
-
-        Control keep = insidesplitter.Panel1.Controls[0];      // we keep this control - the left/top one
-
-        insidesplitter.Panel2.Controls[0].Dispose();        // and we dispose(close) the right/bot one
-
-        insidesplitter.Panel1.Controls.Clear();             // clear the control list on the inside splitter so it does not kill the keep list
-        insidesplitter.Dispose();                            // get rid of the inside splitter
-
-        topsplitter.Controls[panel].Controls.Add(keep);     // add the keep list back onto the the top splitter panel.
-    }
-
-    static public void Split(this SplitContainer currentsplitter, int panel ,  SplitContainer sc, Control ctrl )    // currentsplitter, split panel into a SC with a ctrl
-    {
-        Control cur = currentsplitter.Controls[panel].Controls[0];      // what we current have attached..
-        currentsplitter.Controls[panel].Controls.Clear();   // clear list
-        sc.Panel1.Controls.Add(cur);
-        sc.Panel2.Controls.Add(ctrl);
-        currentsplitter.Controls[panel].Controls.Add(sc);
-    }
-
-    #endregion
-
-    #region Misc
+    #region Context Menu Strips
 
     public static string GetToolStripState( this ContextMenuStrip cms )     // semi colon list of checked items
     {
@@ -582,26 +481,9 @@ public static class ControlHelpersStaticFunc
         }
     }
 
-    public static Size FindMaxSubControlArea(this Control parent, int hpad, int vpad , Type[] excludedtypes = null, bool debugout = false)
-    {
-        Size s = new Size(0, 0);
-        foreach (Control c in parent.Controls)
-        {
-            if (excludedtypes == null || !excludedtypes.Contains(c.GetType()))
-            {
-                if (debugout)
-                    System.Diagnostics.Debug.WriteLine("Control " + c.GetType().Name + " " + c.Name + " " + c.Location + " " + c.Size + " R " + c.Right + " B" + c.Bottom);
-                s.Width = Math.Max(s.Width, c.Right);
-                s.Height = Math.Max(s.Height, c.Bottom);
-            }
-        }
+    #endregion
 
-        if (debugout )
-            System.Diagnostics.Debug.WriteLine("Control Measured " + s);
-        s.Width += hpad;
-        s.Height += vpad;
-        return s;
-    }
+    #region Misc
 
     public static Font GetFontToFitRectangle(this Graphics g, string text, Font fnt, Rectangle textarea, StringFormat fmt)
     {
@@ -644,27 +526,6 @@ public static class ControlHelpersStaticFunc
     }
 
 
-    public static int XCenter(this Rectangle r)
-    {
-        return (r.Right + r.Left) / 2;
-    }
-
-    public static int YCenter(this Rectangle r)
-    {
-        return (r.Top + r.Bottom) / 2;
-    }
-
-    static public string GetHeirarchy(this Control c, bool name = false)
-    {
-        string str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "");
-        while ( c.Parent != null )
-        {
-            c = c.Parent;
-            str = c.GetType().Name + (name && c.Name.HasChars() ? (" '" + c.Name + "'") : "") + ":" + str;
-        }
-        return str;
-    }
-
     static public SizeF CurrentAutoScaleFactor(this Form f)
     {
         if (f.AutoScaleMode == AutoScaleMode.None)      // if in autoscale none, CurrentAutoScaleDimensions returns 0,0 but we want a 1,1 return
@@ -681,75 +542,75 @@ public static class ControlHelpersStaticFunc
             return new SizeF(6 / f.CurrentAutoScaleDimensions.Width, 13 / f.CurrentAutoScaleDimensions.Height);
     }
 
-    static public Rectangle RectangleScreenCoords(this Control c)
+    static public void CopyToolTips(this System.ComponentModel.IContainer c, Control outerctrl, Control[] ctrlitems)
     {
-        Point p = c.PointToScreen(new Point(0, 0));
-        return new Rectangle(p.X, p.Y, c.Width, c.Height);
-    }
-
-    static public void DebugSizePosition(this Control p, ToolTip t)     // assign info to tooltip
-    {
-        t.SetToolTip(p, p.Name + " " + p.Location + p.Size +"F:" + p.ForeColor + "B:" + p.BackColor);
-        foreach (Control c in p.Controls)
-            c.DebugSizePosition(t);
-    }
-
-    static public Control FirstY(this Control.ControlCollection cc, Type[] t)
-    {
-        int miny = int.MaxValue;
-        int minx = int.MaxValue;
-        Control highest = null;
-        foreach( Control c in cc)
+        if (c != null)
         {
-            if (t.Contains(c.GetType()) )
+            var clisttt = c.Components.OfType<ToolTip>().ToList(); // find all tooltips
+
+            foreach (ToolTip t in clisttt)
             {
-                if (c.Top < miny || (c.Top == miny && c.Left < minx))
+                string s = t.GetToolTip(outerctrl);
+                if (s != null && s.Length > 0)
                 {
-                    miny = c.Top;
-                    minx = c.Left;
-                    highest = c;
+                    foreach (Control inner in ctrlitems)
+                        t.SetToolTip(inner, s);
                 }
             }
         }
-
-        return highest;
     }
 
-    static public void ApplyAnchor(this Control c, AnchorStyles ac, Point initialpos, Size initialsize, int widthdelta, int heightdelta)
+    static public System.ComponentModel.IContainer GetParentContainerComponents(this Control p)
     {
-        if (ac == AnchorStyles.None)
-            return;
+        IContainerControl c = p.GetContainerControl();  // get container control (UserControl or Form)
 
-        //System.Diagnostics.Debug.WriteLine("Control {0} is at {1}, initialpos {2} ", c.Name, c.Location, initialpos);
-        int left = initialpos.X;
-        int width = initialsize.Width;
-        if ((ac & AnchorStyles.Right) != 0)
+        if (c != null)  // paranoia in case control is not connected
         {
-            if ((ac & AnchorStyles.Left) != 0)
-            {
-                width = Math.Max(initialsize.Width, initialsize.Width + widthdelta);
-            }
-            else
-                left = Math.Max(initialpos.X, initialpos.X + widthdelta);
+            // find all fields, incl private of them
+            var memcc = c.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+            var icontainers = (from f in memcc      // pick out a list of IContainers (should be only 1)
+                               where f.FieldType.FullName == "System.ComponentModel.IContainer"
+                               select f);
+            return icontainers?.FirstOrDefault()?.GetValue(c) as System.ComponentModel.IContainer;  // But IT may be null if no containers are on the form
         }
 
-        int top = initialpos.Y;
-        int height = initialsize.Height;
-        if ((ac & AnchorStyles.Bottom) != 0)
-        {
-            if ((ac & AnchorStyles.Top) != 0)
-            {
-                height = Math.Max(initialsize.Height, initialsize.Height + heightdelta);
-            }
-            else
-                top = Math.Max(initialpos.Y, initialpos.Y + heightdelta);
-        }
+        return null;
+    }
 
-        //System.Diagnostics.Debug.WriteLine("Move to {0} to {1} {2}", c.Name, new Point(left, top), new Size(width, height));
-        c.Location = new Point(left, top);
-        c.Size = new Size(width, height);
-        //System.Diagnostics.Debug.WriteLine(".. results in {0} {1}", c.Location, c.Size);
+    // used to compute ImageAttributes, given a disabled scaling, a remap table, and a optional color matrix
+    static public void ComputeDrawnPanel(out ImageAttributes Enabled,
+                    out ImageAttributes Disabled,
+                    float disabledscaling, System.Drawing.Imaging.ColorMap[] remap, float[][] colormatrix = null)
+    {
+        Enabled = new ImageAttributes();
+        Enabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
+        if (colormatrix != null)
+            Enabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+        Disabled = new ImageAttributes();
+        Disabled.SetRemapTable(remap, ColorAdjustType.Bitmap);
+
+        if (colormatrix != null)
+        {
+            colormatrix[0][0] *= disabledscaling;     // the identity positions are scaled by BDS 
+            colormatrix[1][1] *= disabledscaling;
+            colormatrix[2][2] *= disabledscaling;
+            Disabled.SetColorMatrix(new ColorMatrix(colormatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+        }
+        else
+        {
+            float[][] disabledMatrix = {
+                        new float[] {disabledscaling,  0,  0,  0, 0},        // red scaling factor of BDS
+                        new float[] {0,  disabledscaling,  0,  0, 0},        // green scaling factor of BDS
+                        new float[] {0,  0,  disabledscaling,  0, 0},        // blue scaling factor of BDS
+                        new float[] {0,  0,  0,  1, 0},        // alpha scaling factor of 1
+                        new float[] {0,0,0, 0, 1}};    // three translations of 0
+
+            Disabled.SetColorMatrix(new ColorMatrix(disabledMatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+        }
     }
 
     #endregion
+
 }
