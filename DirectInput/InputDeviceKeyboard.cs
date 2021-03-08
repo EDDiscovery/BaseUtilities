@@ -218,6 +218,11 @@ namespace DirectInputDevices
             return (events.Count > 0) ? events : null;
         }
 
+        public List<string> EventButtonNames()
+        {
+            return KeyObjectExtensions.KeyListString(true);
+        }
+
         public string EventName(InputDeviceEvent e)     // in Forms.keys naming convention - not in sharp DX.
         {
             Keys k = (Keys)(e.EventNumber);

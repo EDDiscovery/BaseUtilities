@@ -75,6 +75,14 @@ namespace DirectInputDevices
             return (events.Count > 0) ? events : null;
         }
 
+        public List<string> EventButtonNames()
+        {
+            var l = new List<string>();
+            for (int i = 0; i < butstate.Length; i++)
+                l.Add("Mouse_" + (i + 1));
+
+            return l;
+        }
 
         public string EventName(InputDeviceEvent e) // need to return frontier naming convention!
         {

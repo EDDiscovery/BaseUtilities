@@ -210,8 +210,25 @@ namespace DirectInputDevices
             }
         }
 
+
         Dictionary<int, string> povdir = new Dictionary<int, string>() { { 0, "Up" }, { 4500, "UpRight" }, { 9000, "Right" },{ 13500, "DownRight" },{ 18000, "Down" },
                             { 22500, "DownLeft" }, {27000, "Left" }, {31500, "UpLeft" } };
+
+        public List<string> EventButtonNames()
+        {
+            var l = new List<string>();
+            for (int i = 0; i < butstate.Length; i++)
+                l.Add("Joy_" + (i + 1));
+
+            var povnames = povdir.Values.ToList();
+            for( int i = 0; i < povvalue.Length; i++)
+            {
+                for( int j = 0; j < povdir.Count; j++)
+                    l.Add("Joy_POV" + (i+1).ToStringInvariant() + povnames[j]);
+            }
+
+            return l;
+        }
 
         public string EventName(InputDeviceEvent e)
         {
