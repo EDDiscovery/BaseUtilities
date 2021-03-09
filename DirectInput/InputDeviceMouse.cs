@@ -101,6 +101,12 @@ namespace DirectInputDevices
             return null;
         }
 
+        public string Name()
+        {
+            return msi.Name;
+        }
+
+
         public override string ToString()
         {
             return msi.Name + ":" + msi.Instanceguid + ":" + msi.Productguid;

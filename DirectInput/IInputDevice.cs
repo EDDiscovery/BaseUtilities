@@ -30,8 +30,10 @@ namespace DirectInputDevices
 
         bool? IsPressed(string eventname);          // if an input supports pressed, true/false, else null
 
-        string ToString();
+        string Name();                              // device name
 
-        List<string> EventButtonNames();
+        string ToString();                          // description
+
+        List<string> EventButtonNames();            // names of actionable button/keys
     }
 }

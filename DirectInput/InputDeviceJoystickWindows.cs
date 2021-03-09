@@ -274,6 +274,11 @@ namespace DirectInputDevices
             return null;
         }
 
+        public string Name()
+        {
+            return jsi.Name;
+        }
+
         public override string ToString()
         {
             return jsi.Name + ":" + jsi.Instanceguid + ":" + jsi.Productguid + ":" + jsi.ProductId.ToString("x") + "," + jsi.VendorId.ToString("x") + ":" + butstate.Length + "," + povvalue.Length + "," + slidercount;
