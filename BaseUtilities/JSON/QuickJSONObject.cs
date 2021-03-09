@@ -54,14 +54,14 @@ namespace BaseUtils.JSON
         public override JToken this[object key]
         {
             get { if (key is string && Objects.TryGetValue((string)key, out JToken v)) return v; else return null; }
-            set { System.Diagnostics.Debug.Assert(key is string && value != null); Objects[(string)key] = value; }
+            set { System.Diagnostics.Debug.Assert(key is string); Objects[(string)key] = (value == null) ? JToken.Null() : value; }
         }
 
         // Returns value or null if not present
         public JToken this[string key]
         {
             get { if (Objects.TryGetValue(key, out JToken v)) return v; else return null; }
-            set { System.Diagnostics.Debug.Assert(value != null); Objects[key] = value; }
+            set { Objects[key] = (value == null) ? JToken.Null() : value; }
         }
 
         public bool ContainsKey(string n) { return Objects.ContainsKey(n); }

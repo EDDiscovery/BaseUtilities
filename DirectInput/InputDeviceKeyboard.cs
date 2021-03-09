@@ -260,6 +260,11 @@ namespace DirectInputDevices
             return ks.IsPressed(ky);
         }
 
+        public string Name()
+        {
+            return ksi.Name;
+        }
+
         public override string ToString()
         {
             return ksi.Name + ":" + ksi.Instanceguid + ":" + ksi.Productguid;
