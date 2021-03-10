@@ -150,57 +150,76 @@ namespace EDDiscoveryTests
         }
 
         [Test]
-        public void JSONObject1()
+        public void JSONObject()
         {
-            JObject j1 = new JObject();
-            j1["One"] = "one";
-            j1["Two"] = "two";
-            JArray ja = new JArray();
-            ja.AddRange(new List<JToken> { "one", "two", 10.23 });
-            j1["Array"] = ja;
-
-            System.Diagnostics.Debug.WriteLine("" + j1.ToString().QuoteString());
-
-            string expectedjson = "{\"One\":\"one\",\"Two\":\"two\",\"Array\":[\"one\",\"two\",10.23]}";
-
-            Check.That(j1.ToString()).IsEqualTo(expectedjson);
-        }
-
-        [Test]
-        public void JSONObject2()
-        {
-            JObject jo = new JObject
             {
-                ["timestamp"] = true,
-                ["event"] = true,
-                ["StarSystem"] = true,
-                ["SystemAddress"] = true,
-            };
+                JObject j1 = new JObject();
+                j1["One"] = "one";
+                j1["Two"] = "two";
+                JArray ja = new JArray();
+                ja.AddRange(new List<JToken> { "one", "two", 10.23 });
+                j1["Array"] = ja;
 
-            System.Diagnostics.Debug.WriteLine("" + jo.ToString().QuoteString());
+                System.Diagnostics.Debug.WriteLine("" + j1.ToString().QuoteString());
 
-            string expectedjson = "{\"timestamp\":true,\"event\":true,\"StarSystem\":true,\"SystemAddress\":true}";
+                string expectedjson = "{\"One\":\"one\",\"Two\":\"two\",\"Array\":[\"one\",\"two\",10.23]}";
 
-            Check.That(jo.ToString()).IsEqualTo(expectedjson);
-
-            int count = 0;
-            foreach (KeyValuePair<string, JToken> p in jo)
-            {
-                count++;
-            }
-            Check.That(count).Equals(4);
-
-            JToken basv = jo;
-
-            Check.That(count).Equals(4);
-
-            int count2 = 0;
-            foreach (var v1 in basv)
-            {
-                count2++;
+                Check.That(j1.ToString()).IsEqualTo(expectedjson);
             }
 
-            Check.That(count).Equals(4);
+            {
+                JObject jo = new JObject
+                {
+                    ["timestamp"] = true,
+                    ["event"] = true,
+                    ["StarSystem"] = true,
+                    ["SystemAddress"] = true,
+                };
+
+                System.Diagnostics.Debug.WriteLine("" + jo.ToString().QuoteString());
+
+                string expectedjson = "{\"timestamp\":true,\"event\":true,\"StarSystem\":true,\"SystemAddress\":true}";
+
+                Check.That(jo.ToString()).IsEqualTo(expectedjson);
+
+                int count = 0;
+                foreach (KeyValuePair<string, JToken> p in jo)
+                {
+                    count++;
+                }
+                Check.That(count).Equals(4);
+
+                JToken basv = jo;
+
+                Check.That(count).Equals(4);
+
+                int count2 = 0;
+                foreach (var v1 in basv)
+                {
+                    count2++;
+                }
+
+                Check.That(count).Equals(4);
+            }
+
+            {
+                JObject jo = new JObject
+                {
+                    ["timestamp"] = "T0",
+                    ["event"] = true,
+                    ["StarSystem"] = null,              // this was a miss!
+                    ["SystemAddress"] = true,
+                };
+
+                Check.That(jo.Count).Equals(4);
+                Check.That(jo.Contains("event")).IsTrue();
+                Check.That(jo.Contains("SystemAddress")).IsTrue();
+                Check.That(jo["StarSystem"].IsNull).IsTrue();
+                Check.That(jo["SystemAddress"].IsBool).IsTrue();
+                Check.That(jo["timestamp"].IsString).IsTrue();
+                Check.That(jo["timestamp"].Str()).Equals("T0");
+
+            }
         }
 
         [Test]

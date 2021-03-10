@@ -61,7 +61,7 @@ namespace BaseUtils.JSON
                                 //System.Diagnostics.Debug.WriteLine("Check {0} keys", us.Count);
                                 foreach (var kvp in us)
                                 {
-                                    if (!ot.ContainsKey(kvp.Key))
+                                    if (!ot.Contains(kvp.Key))
                                     {
                                         //System.Diagnostics.Debug.WriteLine("Cannot find key {0}", kvp.Key);
                                         return false;

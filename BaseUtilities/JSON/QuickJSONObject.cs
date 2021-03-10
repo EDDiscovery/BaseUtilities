@@ -64,12 +64,12 @@ namespace BaseUtils.JSON
             set { Objects[key] = (value == null) ? JToken.Null() : value; }
         }
 
-        public bool ContainsKey(string n) { return Objects.ContainsKey(n); }
-        public bool TryGetValue(string n, out JToken value) { return Objects.TryGetValue(n, out value); }
-
         public string[] PropertyNames() { return Objects.Keys.ToArray(); }
 
-        public override JToken Contains(string[] ids)     // see if Object contains one of these keys
+        public bool Contains(string n) { return Objects.ContainsKey(n); }
+        public bool TryGetValue(string n, out JToken value) { return Objects.TryGetValue(n, out value); }
+
+        public JToken Contains(string[] ids)     // see if Object contains one of these keys
         {
             foreach (string key in ids)
             {
