@@ -146,8 +146,9 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            dynamic d = types[1].ChangeTo(ret);
-                            instance[kvp.Key] = d;
+                            dynamic k = types[0].ChangeTo(kvp.Key);             // convert kvp.Key, to the dictionary type. May except if not compatible
+                            dynamic d = types[1].ChangeTo(ret);                 // convert value to the data type.
+                            instance[k] = d;
                         }
                     }
 

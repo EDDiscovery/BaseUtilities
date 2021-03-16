@@ -41,6 +41,41 @@ namespace BaseUtils
                 return null;
         }
 
+        public static string[] TryReadAllLinesFromFile(string filename)
+        {
+            if (File.Exists(filename))
+            {
+                try
+                {
+                    return File.ReadAllLines(filename, Encoding.UTF8);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            else
+                return null;
+        }
+
+        public static bool TryAppendToFile(string filename, string content)
+        {
+            if (File.Exists(filename))
+            {
+                try
+                {
+                    File.AppendAllText(filename, content);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+                return false;
+        }
+
         // if erroriftoobig = false, returns top folder if above is too big for directory depth
         public static DirectoryInfo GetDirectoryAbove( this DirectoryInfo di, int above, bool errorifpastroot = false )        
         {

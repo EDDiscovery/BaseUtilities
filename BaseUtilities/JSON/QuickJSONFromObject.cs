@@ -152,7 +152,13 @@ namespace BaseUtils.JSON
                         return inner;
                     }
 
-                    outobj[kvp.Key] = inner;
+                    if ( kvp.Key is DateTime)               // handle date time specially, use zulu format
+                    {
+                        DateTime t = (DateTime)kvp.Key;
+                        outobj[t.ToStringZulu()] = inner;
+                    }
+                    else
+                        outobj[kvp.Key.ToString()] = inner;
                 }
 
                 objectlist.Pop();
