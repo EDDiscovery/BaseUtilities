@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -25,27 +26,47 @@ public static class DataGridViewControlHelpersStaticFunc
 {
     static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null)
     {
-        string s1 = e.CellValue1?.ToString();
-        string s2 = e.CellValue2?.ToString();
+        var ds = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
+        var gs = CultureInfo.CurrentCulture.NumberFormat.NumberGroupSeparator[0];
+        var ns = CultureInfo.CurrentCulture.NumberFormat.NegativeSign[0];
 
-        if (removetext != null)
+        string s1 = e.CellValue1?.ToString();
+        double v1 = 0;
+        if (s1 != null)
         {
-            if (s1 != null)
+            if (removetext != null)
                 s1 = s1.Replace(removetext, "");
-            if (s2 != null)
-                s2 = s2.Replace(removetext, "");
+
+            s1 = s1.Trim();
+            int index = s1.IndexOfNonNumberDigit(CultureInfo.CurrentCulture);
+            if (index >= 0)
+                s1 = s1.Substring(0,index);
+
+            if (!Double.TryParse(s1, out v1))
+                s1 = null;
         }
 
-        double v1 = 0, v2 = 0;
+        string s2 = e.CellValue2?.ToString();
+        double v2 = 0;
+        if (s2 != null)
+        {
+            if (removetext != null)
+                s2 = s2.Replace(removetext, "");
 
-        bool v1hasval = s1 != null && Double.TryParse(s1, out v1);
-        bool v2hasval = s2 != null && Double.TryParse(s2, out v2);
+            s2 = s2.Trim();
+            int index = s2.IndexOfNonNumberDigit(CultureInfo.CurrentCulture);
+            if (index >= 0)
+                s2 = s2.Substring(0,index);
 
-        if (!v1hasval)
+            if (!Double.TryParse(s2, out v2))
+                s2 = null;
+        }
+
+        if (s1 == null)
         {
             e.SortResult = 1;
         }
-        else if (!v2hasval)
+        else if (s2 == null)
         {
             e.SortResult = -1;
         }

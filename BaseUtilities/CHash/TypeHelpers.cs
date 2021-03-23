@@ -91,7 +91,12 @@ namespace BaseUtils
         static public PropertyNameInfo PNI( string name, Type t , int ll, string comment, string help)
         {
             string pname = t.FullName;
-            if (t.IsEnum)
+            if (typeof(System.Collections.IDictionary).IsAssignableFrom(t))
+            {
+                help = ("Dictionary Class (" + t.GenericTypeArguments[0].Name + "," + t.GenericTypeArguments[1].Name + ")").AppendPrePad(help, " : ");
+                return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericGreaterEqual, comment);
+            }
+            else if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
                 help = ("Enumeration:" + enums.FormatIntoLines(ll)).AppendPrePad(help, Environment.NewLine);
@@ -99,27 +104,27 @@ namespace BaseUtils
             }
             else if (pname.Contains("System.Double"))
             {
-                help = "Floating point value".AppendPrePad(help, ":");
+                help = "Floating point value".AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericGreaterEqual, comment);
             }
             else if (pname.Contains("System.Boolean"))
             {
-                help = "Boolean value, 1 = true, 0 = false".AppendPrePad(help, ":");
+                help = "Boolean value, 1 = true, 0 = false".AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.IsTrue, comment);
             }
             else if (pname.Contains("System.Int"))
             {
-                help = "Integer value".AppendPrePad(help, ":");
+                help = "Integer value".AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericEquals, comment);
             }
             else if (pname.Contains("System.DateTime"))
             {
-                help = "Date Time Value, US format".AppendPrePad(help, ":");
+                help = "Date Time Value, US format".AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.DateAfter, comment);
             }
             else
             {
-                help = "String value".AppendPrePad(help, ":");
+                help = "String value".AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Contains, comment);
             }
         }

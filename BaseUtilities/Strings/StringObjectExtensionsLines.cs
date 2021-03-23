@@ -191,7 +191,7 @@ public static class ObjectExtensionsLineStrings
         foreach (var s in list)
         {
             if (res.Length != lastlf)
-                res.Append(",");
+                res.Append(", ");
             res.Append(s);
             if (res.Length - lastlf >= linelimit)
             {

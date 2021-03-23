@@ -543,12 +543,41 @@ public static class ObjectExtensionsStrings
         res = char.MinValue;
         int i = str.IndexOfAny(set);
         if (i >= 0)
-        { 
+        {
             res = str[i];
             return str.Substring(i + 1);
         }
 
         return null;
+    }
+
+    // find the index of the first char matching expression, like Array.FindIndex.
+    static public int IndexOf(this string str, Predicate<char> predicate)
+    {
+        for (int i = 0; i < str.Length; i++)
+        {
+            if (predicate(str[i]))
+                return i;
+        }
+        return -1;
+    }
+
+    // find the index of the first char not a number character
+    static public int IndexOfNonNumberDigit(this string str, System.Globalization.CultureInfo ci)
+    {
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            if (char.IsDigit(c) || str.Substring(i).StartsWith(ci.NumberFormat.NumberDecimalSeparator) ||
+                        str.Substring(i).StartsWith(ci.NumberFormat.NumberGroupSeparator) ||
+                        str.Substring(i).StartsWith(ci.NumberFormat.NegativeSign) ||
+                        c == 'e' || c == 'E')
+            {
+            }
+            else
+                return i;
+        }
+        return -1;
     }
 
 
