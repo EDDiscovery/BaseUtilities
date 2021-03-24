@@ -42,6 +42,11 @@ namespace BaseUtils.JSON
                 this.Add(JToken.CreateToken(o));
         }
 
+        public JArray(JToken o) : this()        // construct with this token at start
+        {
+            Add(o);
+        }
+
         private List<JToken> Elements { get; set; }
 
         // if out of range, or indexer not int,  null

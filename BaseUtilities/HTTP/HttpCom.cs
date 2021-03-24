@@ -26,23 +26,9 @@ namespace BaseUtils
 {
     public class HttpCom
     {
-        protected string httpserveraddress { get; set; }
-
-        static public string LogPath = null;           // set path to cause logging to occur
+        static public string LogPath { get; set; } = null;           // set path to cause logging to occur
 
         public String MimeType { get; set; } = "application/json; charset=utf-8";
-
-        protected static string EscapeLongDataString(string str)
-        {
-            string ret = "";
-
-            for (int p = 0; p < str.Length; p += 16384)
-            {
-                ret += Uri.EscapeDataString(str.Substring(p, Math.Min(str.Length - p, 16384)));
-            }
-
-            return ret;
-        }
 
         protected ResponseData RequestPost(string postData, string action, NameValueCollection headers = null, bool handleException = false )
         {
@@ -60,7 +46,8 @@ namespace BaseUtils
         }
 
         // responsecallback is in TASK you must convert back to foreground
-        protected void RequestGetAsync(string action, Action<ResponseData,Object> responsecallback, Object tag = null, NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
+        protected void RequestGetAsync(string action, Action<ResponseData,Object> responsecallback, Object tag = null, 
+                                        NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
         {
             Task.Factory.StartNew(() =>
             {
@@ -69,19 +56,20 @@ namespace BaseUtils
             });
         }
 
-        protected string RemoveApiKey(string str)
-        {
-            str = Regex.Replace(str, "apiKey=[^&]*", "apiKey=xxx", RegexOptions.IgnoreCase);
-            str = Regex.Replace(str, "password=[^&]*", "password=xxx", RegexOptions.IgnoreCase);
-            return str;
-        }
+        // method = "POST", "GET", "PATCH"
+        // postdata only for post, normally json. Otherwise empty or null.
+        // endpoint = end point to access, added to httpserveraddress in class ("journal")
+        // headers = HTTP headers to send, may be null
+        // handleException = true, swallow exceptions. Else this will throw
+        // timeout = timeout!
+        // return ResponseData Always.  Status code is Unauthorized (no HTTP path), BadRequest (exception due to data), or server response.
 
-        protected ResponseData Request(string method, string postData, string action, NameValueCollection headers, bool handleException,
+        protected ResponseData Request(string method, string postData, string endpoint, NameValueCollection headers, bool handleException,
                                         int timeout)
         {
             if (httpserveraddress == null || httpserveraddress.Length == 0)           // for debugging, set _serveraddress empty
             {
-                System.Diagnostics.Trace.WriteLine(method + action);
+                System.Diagnostics.Trace.WriteLine(method + endpoint);
                 return new ResponseData(HttpStatusCode.Unauthorized);
             }
 
@@ -89,7 +77,7 @@ namespace BaseUtils
             {
                 try
                 {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + action);
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + endpoint);
                     request.Method = method;
                     request.ContentType = MimeType;    //request.Headers.Add("Accept-Encoding", "gzip,deflate");
 
@@ -111,7 +99,7 @@ namespace BaseUtils
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + RemoveApiKey(action)) + " Thread" + System.Threading.Thread.CurrentThread.Name);
+                    System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + RemoveApiKey(endpoint)) + " Thread" + System.Threading.Thread.CurrentThread.Name);
                     WriteLog(method + " " + request.RequestUri, postData);
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -174,6 +162,24 @@ namespace BaseUtils
             }
         }
 
+        protected string RemoveApiKey(string str)
+        {
+            str = Regex.Replace(str, "apiKey=[^&]*", "apiKey=xxx", RegexOptions.IgnoreCase);
+            str = Regex.Replace(str, "password=[^&]*", "password=xxx", RegexOptions.IgnoreCase);
+            return str;
+        }
+
+        protected static string EscapeLongDataString(string str)
+        {
+            string ret = "";
+
+            for (int p = 0; p < str.Length; p += 16384)
+            {
+                ret += Uri.EscapeDataString(str.Substring(p, Math.Min(str.Length - p, 16384)));
+            }
+
+            return ret;
+        }
 
         private static Object LOCK = new Object();
         static public  void WriteLog(string str1, string str2)
@@ -221,5 +227,6 @@ namespace BaseUtils
             return data;
         }
 
+        protected string httpserveraddress { get; set; }
     }
 }
