@@ -114,6 +114,13 @@ namespace BaseUtils
             return this;
         }
 
+        public QuickJSONFormatter Literal(string text)
+        {
+            Prefix();
+            json += text;
+            return this;
+        }
+
         public QuickJSONFormatter UTC(string name)
         {
             Prefix();
