@@ -97,7 +97,11 @@ namespace BaseUtils.JSON
                     bool notlast = i++ < jo.Count - 1;
                     if (e.Value is JObject || e.Value is JArray)
                     {
-                        s += objpad + "\"" + e.Key.EscapeControlCharsFull() + "\":" + postpad;
+                        if (stringliterals)
+                            s += objpad + e.Key.EscapeControlCharsFull() + ":" + postpad;
+                        else
+                            s += objpad + "\"" + e.Key.EscapeControlCharsFull() + "\":" + postpad;
+
                         s += ToString(e.Value, objpad, postpad, oapad, stringliterals);
                         if (notlast)
                         {
@@ -106,7 +110,12 @@ namespace BaseUtils.JSON
                     }
                     else
                     {
-                        s += objpad + "\"" + e.Key.EscapeControlCharsFull() + "\":" + ToString(e.Value, "", "", oapad, stringliterals) + (notlast ? "," : "") + postpad;
+                        if (stringliterals)
+                            s += objpad + e.Key.EscapeControlCharsFull() + ":";
+                        else
+                            s += objpad + "\"" + e.Key.EscapeControlCharsFull() + "\":";
+
+                        s += ToString(e.Value, "", "", oapad, stringliterals) + (notlast ? "," : "") + postpad;
                     }
                 }
                 s += prepad + "}" + postpad;
