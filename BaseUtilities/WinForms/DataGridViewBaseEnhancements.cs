@@ -20,9 +20,14 @@ using System.Windows.Forms;
 namespace BaseUtils
 {
     // Allows for alternate context menus for column and row header clicks
+    
     // Class, on mouse down, computes the hit type, Hit Button, and HitIndex.
     // Using RightClickRow/LeftClickRow you can tell in your mouse down if the click was on a valid row
-    // also, if cell is in edit mode, and it has a ReturnPressedInEditMode, it can handle it differently
+
+    // if cell is in edit mode, and it has a member called ReturnPressedInEditMode, it can handle return differently
+
+    // fix the #1487 issue for all inheritors, https://stackoverflow.com/questions/34344499/invalidoperationexception-this-operation-cannot-be-performed-while-an-auto-fill
+    // by making sure the top left header cell is present
 
     public class DataGridViewBaseEnhancements : DataGridView
     {
@@ -45,6 +50,20 @@ namespace BaseUtils
 
         private ContextMenuStrip defaultstrip = null;
         private bool cmschangingoverride = false;
+
+        public DataGridViewBaseEnhancements()
+        {
+        }
+
+        // Touching the TopLeftHeaderCell here prevents
+        // System.InvalidOperationException: This operation cannot be performed while an auto-filled column is being resized.
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            var hc = this.TopLeftHeaderCell;        // this works, before base function. doing this.TopLeftHeaderCell = new .. does not work
+            //System.Diagnostics.Debug.WriteLine("Fix #1487 for " + this.Name); // name is not reliable due to when handle create is called in sequence
+            base.OnHandleCreated(e);
+        }
 
         protected override void OnContextMenuStripChanged(EventArgs e)
         {
