@@ -27,11 +27,12 @@ namespace BaseUtils
         {
             public Stack( TextReader s, string p )
             {
-                SR = s; Path=p;
+                SR = s; Path=p; LineNumber = 0;
             }
 
             public TextReader SR;
             public string Path;
+            public int LineNumber;
 
             public void Dispose()
             {
@@ -42,6 +43,7 @@ namespace BaseUtils
         private List<Stack> filestack = new List<Stack>();
 
         public string CurrentFile { get { return filestack.Count > 0 ? filestack.Last().Path : null; } }
+        public int CurrentLine { get { return filestack.Count > 0 ? filestack.Last().LineNumber : 0; } }   // after read
 
         public bool Open(string path)       // can open on top to produce a include file stack
         {
@@ -77,6 +79,7 @@ namespace BaseUtils
                 while (filestack.Count > 0)
                 {
                     string s = filestack.Last().SR.ReadLine();
+                    //System.Diagnostics.Debug.WriteLine("RL:" + CurrentFile + ":" + (CurrentLine+1) + " '" + s + "'");
 
                     if (s == null)
                     {
@@ -84,7 +87,10 @@ namespace BaseUtils
                         filestack.Remove(filestack.Last());
                     }
                     else
+                    {
+                        filestack.Last().LineNumber++;
                         return s;
+                    }
                 }
 
                 return null;

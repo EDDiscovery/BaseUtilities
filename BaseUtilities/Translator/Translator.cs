@@ -84,6 +84,7 @@ namespace BaseUtils
         private Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
         private Dictionary<string, string> originalenglish = null;      // optional load
         private Dictionary<string, string> originalfile = null;         // optional load
+        private Dictionary<string, int> originalline = null;            // optional load
         private List<Type> ExcludedControls = new List<Type>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
@@ -97,7 +98,8 @@ namespace BaseUtils
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
         public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
-        public string GetOriginalFile (string fullid) => originalfile[fullid];         // ensure its there first!
+        public string GetOriginalFile(string fullid) => originalfile[fullid];         // ensure its there first!
+        public int GetOriginalLine(string fullid) => originalline[fullid];         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
         // You can call this multiple times if required for debugging purposes
 
@@ -153,6 +155,7 @@ namespace BaseUtils
                     translations = new Dictionary<string, string>();
                     originalenglish = new Dictionary<string, string>();
                     originalfile = new Dictionary<string, string>();
+                    originalline = new Dictionary<string, int>();
 
                     string prefix = "";
 
@@ -191,9 +194,15 @@ namespace BaseUtils
                             }
 
                             if (filename == null || !lr.Open(filename))     // if no file found, or can't open..
+                            {
+                                System.Diagnostics.Debug.WriteLine("*** Cannot include " + line);
                                 logger?.WriteLine(string.Format("*** Cannot include {0}", line));
+                            }
                             else
-                                logger?.WriteLine("Read " + filename);
+                            {
+                                System.Diagnostics.Debug.WriteLine("Reading file " + filename);
+                                logger?.WriteLine("Readingfile " + filename);
+                            }
                         }
                         else if (line.Length > 0 && !line.StartsWith("//"))
                         {
@@ -201,12 +210,12 @@ namespace BaseUtils
 
                             string id = s.NextWord(" :");
 
-                            if ( id.Equals("SECTION"))
+                            if (id.Equals("SECTION"))
                             {
                                 prefix = s.NextQuotedWord(" /");
                             }
                             else
-                            { 
+                            {
                                 if (id.StartsWith(".") && prefix.HasChars())
                                     id = prefix + id;
                                 else
@@ -238,16 +247,21 @@ namespace BaseUtils
                                     {
                                         if (!translations.ContainsKey(id))
                                         {
+//                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
                                             //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
                                             translations[id] = foreign;
                                             if (loadorgenglish)
                                                 originalenglish[id] = orgenglish;
                                             if (loadfile)
+                                            {
                                                 originalfile[id] = lr.CurrentFile;
+                                                originalline[id] = lr.CurrentLine;
+                                            }
                                         }
                                         else
                                         {
                                             logger?.WriteLine(string.Format("*** Translator Repeat {0}", id));
+                                            System.Diagnostics.Debug.WriteLine(string.Format("*** Translator Repeat {0}", id));
                                         }
                                     }
                                 }
