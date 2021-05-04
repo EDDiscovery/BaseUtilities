@@ -83,6 +83,7 @@ namespace BaseUtils.JSON
 
         public void Add(string key, JToken value) { this[key] = value; }
         public bool Remove(string key) { return Objects.Remove(key); }
+        public void Remove(params string[] key) { foreach( var k in key) Objects.Remove(k); }
         public override void Clear() { Objects.Clear(); }
 
         public new static JObject Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed.

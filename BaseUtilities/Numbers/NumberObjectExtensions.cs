@@ -175,7 +175,7 @@ public static class ObjectExtensionsNumbersBool
     static public long InvariantParseLong(this string s, long def)
     {
         long i;
-        return long.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i) ? i: def;
+        return long.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i) ? i : def;
     }
 
     static public long? InvariantParseLongNull(this string s)
@@ -198,6 +198,12 @@ public static class ObjectExtensionsNumbersBool
             return i;
         else
             return null;
+    }
+
+    static public ulong InvariantParseULong(this string s, ulong def)
+    {
+        ulong i;
+        return ulong.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i) ? i : def;
     }
 
     #endregion

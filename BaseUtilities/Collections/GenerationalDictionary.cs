@@ -24,12 +24,20 @@ namespace BaseUtils
     public class GenerationalDictionary<TKey, TValue>
     {
         public uint Generation { get; private set; } = 0;
+        public uint UpdatesAtThisGeneration { get; private set; } = 0;
 
         private Dictionary<TKey, List<Tuple<uint, TValue>>> dictionary = new Dictionary<TKey, List<Tuple<uint, TValue>>>();
 
         public void NextGeneration()
         {
             Generation++;
+            UpdatesAtThisGeneration = 0;
+        }
+
+        public void AbandonGeneration()
+        {
+            Generation--;
+            UpdatesAtThisGeneration = 0;
         }
 
         public bool ContainsKey(TKey k)     // do we have a list of entries under k
@@ -117,23 +125,46 @@ namespace BaseUtils
                 return default(TValue);
         }
 
-        public Dictionary<TKey, TValue> GetLast()
+        public Dictionary<TKey, TValue> GetLast(Predicate<TValue> predicate = null)
         {
             Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
-            foreach (var kvp in dictionary)
+            if (predicate == null)
             {
-                ret[kvp.Key] = kvp.Value[kvp.Value.Count - 1].Item2;
+                foreach (var kvp in dictionary)
+                {
+                    ret[kvp.Key] = kvp.Value[kvp.Value.Count - 1].Item2;
+                }
+            }
+            else
+            {
+                foreach (var kvp in dictionary)
+                {
+                    if (predicate(kvp.Value[kvp.Value.Count - 1].Item2))
+                        ret[kvp.Key] = kvp.Value[kvp.Value.Count - 1].Item2;
+                }
             }
 
             return ret;
         }
 
-        public List<TValue> GetLastValues()
+        public List<TValue> GetLastValues(Predicate<TValue> predicate = null)
         {
             List<TValue> ret = new List<TValue>();
-            foreach (var kvp in dictionary)
+            if (predicate == null)
             {
-                ret.Add(kvp.Value[kvp.Value.Count - 1].Item2);
+                foreach (var kvp in dictionary)
+                {
+                    ret.Add(kvp.Value[kvp.Value.Count - 1].Item2);
+                }
+            }
+            else
+            {
+                foreach (var kvp in dictionary)
+                {
+                    if (predicate(kvp.Value[kvp.Value.Count - 1].Item2))
+                        ret.Add(kvp.Value[kvp.Value.Count - 1].Item2);
+                }
+
             }
             return ret;
         }
@@ -154,16 +185,18 @@ namespace BaseUtils
                 dictionary[k] = new List<Tuple<uint, TValue>>();
 
             dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
+            UpdatesAtThisGeneration++;
         }
 
         public void AddGeneration(TKey k, TValue v)
         {
-            Generation++;
+            NextGeneration();
 
             if (!dictionary.ContainsKey(k))
                 dictionary[k] = new List<Tuple<uint, TValue>>();
 
             dictionary[k].Add(new Tuple<uint, TValue>(Generation, v));
+            UpdatesAtThisGeneration++;
         }
 
 

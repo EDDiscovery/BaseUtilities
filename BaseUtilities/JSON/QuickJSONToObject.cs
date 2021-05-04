@@ -49,6 +49,22 @@ namespace BaseUtils.JSON
             return default(T);
         }
 
+        public static Object ToObjectProtected(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr,
+                                    System.Reflection.BindingFlags membersearchflags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static,
+                                    Object initialobject = null)
+        {
+            try
+            {
+                return ToObject(tk, tt, ignoretypeerrors, checkcustomattr, membersearchflags, initialobject);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception JSON ToObject " + ex.Message + " " + ex.StackTrace);
+            }
+            return null;
+       
+        }
+
         public class ToObjectError
         {
             public string ErrorString;
@@ -59,10 +75,14 @@ namespace BaseUtils.JSON
         // returns Object of type tt, or ToObjectError, or null if tk == JNotPresent.
         // ignoreerrors means don't worry if individual fields are wrong type in json vs in classes/dictionaries
         // checkcustomattr check for custom attributes - this takes time so you may want to turn it off
+        // membersearchflags controls how to find members - default is all fields/properties which are public, and static fields.  Use these plus DeclaredOnly for only members of the top class
+        // initialobject, set if you want the top level object to be an preexisting object.  Will except if types are not compatible.
         // will return an instance of tt or ToObjectError, or null for token is null
-        // this may except in unusual circumstances (which i've not found yet, but there are dynamic type changes in there)
+        // this WILL except if assigning the type is incompatible between JSON and the field/property type
 
-        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr)
+        public static Object ToObject(this JToken tk, Type tt, bool ignoretypeerrors, bool checkcustomattr,
+                                    System.Reflection.BindingFlags membersearchflags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static,
+                                    Object initialobject = null)
         {
             if (tk == null)
             {
@@ -74,7 +94,7 @@ namespace BaseUtils.JSON
 
                 if (tt.IsArray)
                 {
-                    dynamic instance = Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
+                    dynamic instance = initialobject != null ? initialobject : Activator.CreateInstance(tt, tk.Count);   // dynamic holder for instance of array[]
 
                     for (int i = 0; i < tk.Count; i++)
                     {
@@ -96,7 +116,7 @@ namespace BaseUtils.JSON
                 }
                 else if (typeof(System.Collections.IList).IsAssignableFrom(tt))
                 {
-                    dynamic instance = Activator.CreateInstance(tt);        // create the List
+                    dynamic instance = initialobject != null ? initialobject : Activator.CreateInstance(tt);        // create the List
                     var types = tt.GetGenericArguments();
 
                     for (int i = 0; i < tk.Count; i++)
@@ -124,7 +144,7 @@ namespace BaseUtils.JSON
             {
                 if (typeof(System.Collections.IDictionary).IsAssignableFrom(tt))       // if its a Dictionary<x,y> then expect a set of objects
                 {
-                    dynamic instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
+                    dynamic instance = initialobject != null ? initialobject : Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
                     var types = tt.GetGenericArguments();
 
                     foreach (var kvp in (JObject)tk)
@@ -157,10 +177,9 @@ namespace BaseUtils.JSON
                 else if (tt.IsClass ||      // if class
                          (tt.IsValueType && !tt.IsPrimitive && !tt.IsEnum && tt != typeof(DateTime)))   // or struct, but not datetime (handled below)
                 {
-                    var instance = Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
+                    var instance = initialobject != null ? initialobject : Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
-                    System.Reflection.MemberInfo[] fi = tt.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                                          System.Reflection.BindingFlags.Public);
+                    System.Reflection.MemberInfo[] fi = tt.GetFields(membersearchflags);
                     string[] finames = null;
 
                     System.Reflection.MemberInfo[] pi = null;   // lazy load this
@@ -189,8 +208,8 @@ namespace BaseUtils.JSON
                         {
                             if (pi == null)     // lazy load pick up, only load these if fields not found
                             {
-                                pi = tt.GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                                              System.Reflection.BindingFlags.Public);
+                                pi = tt.GetProperties(membersearchflags);
+
                                 if (checkcustomattr)
                                 {
                                     pinames = new string[pi.Length];
@@ -251,7 +270,7 @@ namespace BaseUtils.JSON
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine("JSONToObject: No such member " + kvp.Key + " in " + tt.Name);
+                           // System.Diagnostics.Debug.WriteLine("JSONToObject: No such member " + kvp.Key + " in " + tt.Name);
                         }
                     }
 

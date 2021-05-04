@@ -67,6 +67,7 @@ namespace BaseUtils.JSON
         public void Add(JToken o) { Elements.Add(o); }
         public void AddRange(IEnumerable<JToken> o) { Elements.AddRange(o); }
         public void RemoveAt(int index) { Elements.RemoveAt(index); }
+        public void RemoveRange(int index,int count) { Elements.RemoveRange(index,count); }
         public override void Clear() { Elements.Clear(); }
 
         public JToken Find(System.Predicate<JToken> predicate) { return Elements.Find(predicate); }       // find an entry matching the predicate
