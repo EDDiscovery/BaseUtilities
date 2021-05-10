@@ -51,5 +51,7 @@ public static class CollectionStaticHelpers
 
         return true;
     }
+
+    public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T> source) => source != null ? source : System.Linq.Enumerable.Empty<T>();
 }
 
