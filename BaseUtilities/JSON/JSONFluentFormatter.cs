@@ -74,7 +74,7 @@ namespace BaseUtils
             Prefix();
             if (name != null)
                 json += "\"" + name + "\":";
-            json += v.ToString("0.######");
+            json += v.ToString("0.0#####");
             return this;
         }
 
