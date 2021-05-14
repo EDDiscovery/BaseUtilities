@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,65 +13,67 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
     public class Condition
     {
-        public string eventname;                        // logical event its associated with
-        public List<ConditionEntry> fields;             // its condition fields
-        public ConditionEntry.LogicalCondition innercondition;         // condition between fields
-        public ConditionEntry.LogicalCondition outercondition;         // condition between this set of Condition and the next set of Condition
-        public string action;                           // action associated with a pass (definition is up to user)
-        public Variables actionvars;                    // any variables associated with the action
+        public string EventName { get; set; }                        // logical event its associated with
+        public List<ConditionEntry> Fields { get; set; }             // its condition fields
+        public ConditionEntry.LogicalCondition InnerCondition { get; set; }         // condition between fields
+        public ConditionEntry.LogicalCondition OuterCondition { get; set; }         // condition between this set of Condition and the next set of Condition
+        public string Action { get; set; }                           // action associated with a pass (definition is up to user)
+        public Variables ActionVars { get; set; }                    // any variables associated with the action
+        public bool Disabled { get; set; }                           // if condition is currently disabled for consideration
+        public string GroupName { get; set; }                        // group its assocated with. Can be null
 
         #region Init
 
         public Condition()
         {
-            eventname = action;
-            actionvars = new Variables();
+            EventName = Action;
+            ActionVars = new Variables();
         }
 
         public Condition(string e, string a, Variables ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition i = ConditionEntry.LogicalCondition.Or , ConditionEntry.LogicalCondition o = ConditionEntry.LogicalCondition.Or)
         {
-            eventname = e;
-            action = a;
-            actionvars = new Variables(ad);
-            innercondition = i;
-            outercondition = o;
-            fields = f;
+            EventName = e;
+            Action = a;
+            ActionVars = new Variables(ad);
+            InnerCondition = i;
+            OuterCondition = o;
+            Fields = f;
         }
 
         public Condition(Condition other)   // full clone
         {
-            eventname = other.eventname;
-            if (other.fields != null)
+            EventName = other.EventName;
+            if (other.Fields != null)
             {
-                fields = new List<ConditionEntry>();
-                foreach (ConditionEntry e in other.fields)
-                    fields.Add(new ConditionEntry(e));
+                Fields = new List<ConditionEntry>();
+                foreach (ConditionEntry e in other.Fields)
+                    Fields.Add(new ConditionEntry(e));
             }
-            innercondition = other.innercondition;
-            outercondition = other.outercondition;
-            action = other.action;
-            actionvars = new Variables(other.actionvars);
+            InnerCondition = other.InnerCondition;
+            OuterCondition = other.OuterCondition;
+            Action = other.Action;
+            ActionVars = new Variables(other.ActionVars);
+            Disabled = other.Disabled;
+            GroupName = other.GroupName;
         }
 
         public bool Create(string e, string a, string d, string i, string o)   // i,o can have spaces inserted into enum
         {
             try
             {
-                eventname = e;
-                action = a;
-                actionvars = new Variables(a, Variables.FromMode.MultiEntryComma);
-                innercondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), i.Replace(" ", ""), true);       // must work, exception otherwise
-                outercondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), o.Replace(" ", ""), true);       // must work, exception otherwise
+                EventName = e;
+                Action = a;
+                ActionVars = new Variables(a, Variables.FromMode.MultiEntryComma);
+                InnerCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), i.Replace(" ", ""), true);       // must work, exception otherwise
+                OuterCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), o.Replace(" ", ""), true);       // must work, exception otherwise
                 return true;
             }
             catch { }
@@ -85,9 +87,9 @@ namespace BaseUtils
 
         public bool IsAlwaysTrue()
         {
-            foreach (ConditionEntry c in fields)
+            foreach (ConditionEntry c in Fields)
             {
-                if (c.matchtype == ConditionEntry.MatchType.AlwaysTrue)
+                if (c.MatchCondition == ConditionEntry.MatchType.AlwaysTrue)
                     return true;
             }
 
@@ -96,9 +98,9 @@ namespace BaseUtils
 
         public bool IsAlwaysFalse()
         {
-            foreach (ConditionEntry c in fields)
+            foreach (ConditionEntry c in Fields)
             {
-                if (c.matchtype != ConditionEntry.MatchType.AlwaysFalse)
+                if (c.MatchCondition != ConditionEntry.MatchType.AlwaysFalse)
                     return false;
             }
 
@@ -107,19 +109,19 @@ namespace BaseUtils
 
         public bool Is(string itemname, ConditionEntry.MatchType mt)        // one condition, of this type
         {
-            return fields.Count == 1 && fields[0].itemname == itemname && fields[0].matchtype == mt;
+            return Fields.Count == 1 && Fields[0].ItemName == itemname && Fields[0].MatchCondition == mt;
         }
 
         public void SetAlwaysTrue()
         {
-            fields = new List<ConditionEntry>();
-            fields.Add(new ConditionEntry("Condition", ConditionEntry.MatchType.AlwaysTrue, ""));
+            Fields = new List<ConditionEntry>();
+            Fields.Add(new ConditionEntry("Condition", ConditionEntry.MatchType.AlwaysTrue, ""));
         }
 
         public void SetAlwaysFalse()
         {
-            fields = new List<ConditionEntry>();
-            fields.Add(new ConditionEntry("Condition", ConditionEntry.MatchType.AlwaysFalse, ""));
+            Fields = new List<ConditionEntry>();
+            Fields.Add(new ConditionEntry("Condition", ConditionEntry.MatchType.AlwaysFalse, ""));
         }
 
         static public Condition AlwaysTrue()
@@ -136,32 +138,60 @@ namespace BaseUtils
             return cd;
         }
 
-        public bool SetOuterCondition(string o)
-        {
-            return Enum.TryParse<ConditionEntry.LogicalCondition>(o.Replace(" ", ""), out outercondition);
-        }
-
         public void Set(ConditionEntry f)
         {
-            fields = new List<ConditionEntry>() { f };
+            Fields = new List<ConditionEntry>() { f };
         }
 
         public void Add(ConditionEntry f)
         {
-            if (fields == null)
-                fields = new List<ConditionEntry>();
-            fields.Add(f);
+            if (Fields == null)
+                Fields = new List<ConditionEntry>();
+            Fields.Add(f);
         }
 
         // list into CV the variables needed for the condition entry list
 
         public void IndicateValuesNeeded(ref Variables vr)
         {
-            foreach (ConditionEntry fd in fields)
+            foreach (ConditionEntry fd in Fields)
             {
-                if (!ConditionEntry.IsNullOperation(fd.matchtype) && !fd.itemname.Contains("%"))     // nulls need no data..  nor does anything with expand in
-                    vr[fd.itemname] = null;
+                if (!ConditionEntry.IsNullOperation(fd.MatchCondition) && !fd.ItemName.Contains("%"))     // nulls need no data..  nor does anything with expand in
+                    vr[fd.ItemName] = null;
             }
+        }
+
+        #endregion
+
+        #region Comparision
+
+        // if field is empty/null, not considered. wildcard match of any of the fields
+        public bool WildCardMatch(string groupname, string eventname, string actionstr, string actionvarstr, string condition, bool caseinsensitive = true)
+        {
+            if ((groupname.HasChars() && GroupName.HasChars() && GroupName.WildCardMatch(groupname, caseinsensitive)) ||        // groupname can be null
+                (eventname.HasChars() && EventName.WildCardMatch(eventname, caseinsensitive)) ||
+                (actionstr.HasChars() && Action.WildCardMatch(actionstr, caseinsensitive)) ||
+                (actionvarstr.HasChars() && ActionVars.ToString().WildCardMatch(actionvarstr, caseinsensitive)))
+            {
+                return true;
+            }
+            if (condition.HasChars())
+            {
+                string cond = ToString(false);
+                if (cond.WildCardMatch(condition, caseinsensitive))
+                    return true;
+            }
+            return false;
+        }
+
+        // Sees if two conditions are equal. Case insensitivity only for groupbname,eventname,action.  Others the case is significant (variables, condition)
+        public bool Equals(Condition c, StringComparison ci = StringComparison.InvariantCultureIgnoreCase)
+        {
+            return (GroupName.HasChars() && GroupName.Equals(c.GroupName, ci) &&         // groupname can be null
+                            EventName.Equals(c.EventName, ci) &&
+                            Action.Equals(c.Action, ci) &&
+                            ActionVars.ToString() == c.ActionVars.ToString()
+                            && ToString(false) == c.ToString(false));
         }
 
         #endregion
@@ -174,12 +204,12 @@ namespace BaseUtils
 
             if (includeaction)
             {
-                ret += eventname.QuoteString(comma: true) + ", " + action.QuoteString(comma: true) + ", ";
-                if (actionvars.Count == 0)
+                ret += EventName.QuoteString(comma: true) + ", " + Action.QuoteString(comma: true) + ", ";
+                if (ActionVars.Count == 0)
                     ret += "\"\", ";
                 else
                 {
-                    string v = actionvars.ToString();
+                    string v = ActionVars.ToString();
                     if (v.Contains("\"") || v.Contains(","))
                         ret += "\"" + v.Replace("\"", "\\\"") + "\", ";     // verified 12/06/2020
                     else
@@ -187,20 +217,20 @@ namespace BaseUtils
                 }
             }
 
-            for (int i = 0; fields != null && i < fields.Count; i++)
+            for (int i = 0; Fields != null && i < Fields.Count; i++)
             {
                 if (i > 0)
-                    ret += " " + innercondition.ToString() + " ";
+                    ret += " " + InnerCondition.ToString() + " ";
 
-                if (ConditionEntry.IsNullOperation(fields[i].matchtype))
-                    ret += "Condition " + ConditionEntry.OperatorNames[(int)fields[i].matchtype];
+                if (ConditionEntry.IsNullOperation(Fields[i].MatchCondition))
+                    ret += "Condition " + ConditionEntry.OperatorNames[(int)Fields[i].MatchCondition];
                 else
                 {
-                    ret += (fields[i].itemname).QuoteString(bracket: multi) +               // commas do not need quoting as conditions at written as if always at EOL.
-                            " " + ConditionEntry.OperatorNames[(int)fields[i].matchtype];
+                    ret += (Fields[i].ItemName).QuoteString(bracket: multi) +               // commas do not need quoting as conditions at written as if always at EOL.
+                            " " + ConditionEntry.OperatorNames[(int)Fields[i].MatchCondition];
 
-                    if (!ConditionEntry.IsUnaryOperation(fields[i].matchtype))
-                        ret += " " + fields[i].matchstring.QuoteString(bracket: multi);     // commas do not need quoting..
+                    if (!ConditionEntry.IsUnaryOperation(Fields[i].MatchCondition))
+                        ret += " " + Fields[i].MatchString.QuoteString(bracket: multi);     // commas do not need quoting..
                 }
             }
 
@@ -213,25 +243,28 @@ namespace BaseUtils
             return Read(sp, includeevent, delimchars);
         }
 
-        public string Read(BaseUtils.StringParser sp, bool includeevent = false, string delimchars = " ")    // if includeevent is set, it must be there..
-        {                                                                                           // demlimchars is normally space, but can be ") " if its inside a multi.
-            fields = new List<ConditionEntry>();
-            innercondition = outercondition = ConditionEntry.LogicalCondition.Or;
-            eventname = ""; action = "";
-            actionvars = new Variables();
+        // if includeevent is set, it must be there..
+        // demlimchars is normally space, but can be ") " if its inside a multi.
+
+        public string Read(BaseUtils.StringParser sp, bool includeevent = false, string delimchars = " ") 
+        {                                                                                           
+            Fields = new List<ConditionEntry>();
+            InnerCondition = OuterCondition = ConditionEntry.LogicalCondition.Or;
+            EventName = ""; Action = "";
+            ActionVars = new Variables();
 
             if (includeevent)                                                                   
             {
                 string actionvarsstr;
-                if ((eventname = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
-                    (action = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
+                if ((EventName = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
+                    (Action = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(',') ||
                     (actionvarsstr = sp.NextQuotedWord(", ")) == null || !sp.IsCharMoveOn(','))
                 {
                     return "Incorrect format of EVENT data associated with condition";
                 }
 
                 if ( actionvarsstr.HasChars())
-                    actionvars = new Variables(actionvarsstr, Variables.FromMode.MultiEntryComma); 
+                    ActionVars = new Variables(actionvarsstr, Variables.FromMode.MultiEntryComma); 
             }
 
             ConditionEntry.LogicalCondition? ic = null;
@@ -265,12 +298,12 @@ namespace BaseUtils
                         return "Missing value part (right side) of condition";
                 }
 
-                ConditionEntry ce = new ConditionEntry() { itemname = var, matchtype = mt, matchstring = value };
-                fields.Add(ce);
+                ConditionEntry ce = new ConditionEntry() { ItemName = var, MatchCondition = mt, MatchString = value };
+                Fields.Add(ce);
 
                 if (sp.IsEOL || sp.PeekChar() == ')')           // end is either ) or EOL
                 {
-                    innercondition = (ic == null) ? ConditionEntry.LogicalCondition.Or : ic.Value;
+                    InnerCondition = (ic == null) ? ConditionEntry.LogicalCondition.Or : ic.Value;
                     return "";
                 }
                 else

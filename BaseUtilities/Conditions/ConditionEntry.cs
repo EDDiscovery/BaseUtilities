@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017 - 2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,11 +13,8 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
@@ -150,21 +147,21 @@ namespace BaseUtils
 
         public ConditionEntry()
         {
-            itemname = matchstring = "";
+            ItemName = MatchString = "";
         }
 
         public ConditionEntry(string i, MatchType m, string s)
         {
-            itemname = i;
-            matchtype = m;
-            matchstring = s;
+            ItemName = i;
+            MatchCondition = m;
+            MatchString = s;
         }
 
         public ConditionEntry(ConditionEntry other)
         {
-            itemname = other.itemname;
-            matchtype = other.matchtype;
-            matchstring = other.matchstring;
+            ItemName = other.ItemName;
+            MatchCondition = other.MatchCondition;
+            MatchString = other.MatchString;
         }
 
 
@@ -185,16 +182,17 @@ namespace BaseUtils
                 return "Condition operator " + condi + " is not recognised";
         }
 
-        public string itemname;
-        public MatchType matchtype;                     // true: Contents match for true, else contents dont match for true
-        public string matchstring;                     // always set
+        public string ItemName { get; set; }
+        public MatchType MatchCondition { get; set; }               
+        public string MatchString { get; set; }                     
 
         public bool Create(string i, string ms, string v)     // ms can have spaces inserted into enum
         {
-            if (MatchTypeFromString(ms, out matchtype))
+            if (MatchTypeFromString(ms, out MatchType matchtypev))
             {
-                itemname = i;
-                matchstring = v;
+                ItemName = i;
+                MatchString = v;
+                MatchCondition = matchtypev;
 
                 return true;
             }
