@@ -495,10 +495,10 @@ public static class ObjectExtensionsStrings
             return "^" + value + ".*$";
     }
 
-    public static bool WildCardMatch(this string value, string match)
+    public static bool WildCardMatch(this string value, string match, bool caseinsensitive = false)
     {
         match = match.RegExWildCardToRegular();
-        return System.Text.RegularExpressions.Regex.IsMatch(value, match);
+        return System.Text.RegularExpressions.Regex.IsMatch(value, match,caseinsensitive ? System.Text.RegularExpressions.RegexOptions.IgnoreCase : System.Text.RegularExpressions.RegexOptions.None);
     }
 
     // find start, find terminate, if found replace with replace plus any intermidate text if keepafter>0 (keeping after this no of char)
