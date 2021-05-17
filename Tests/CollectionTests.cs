@@ -89,12 +89,12 @@ namespace EDDiscoveryTests
 
             Random rnd = new Random(1001);
 
-            const int generations = 1000;
+            const int generations = 1004;
             const int depth = 10000;
 
             int[] genskip = new int[depth];
             for (int i = 0; i < depth; i++)
-                genskip[i] = rnd.Next(4) + 1;
+                genskip[i] = rnd.Next(23) + 1;
 
             for (uint g = 0; g < generations; g++)
             {
@@ -127,7 +127,7 @@ namespace EDDiscoveryTests
             {
                 var dict = gd.Get(g + 1);
                 Check.That(dict.Count).Equals(depth);
-                for ( int i = 0; i < depth; i++ )
+                for (int i = 0; i < depth; i++)
                 {
                     bool present = g % genskip[i] == 0;
                     if (present)
@@ -140,10 +140,24 @@ namespace EDDiscoveryTests
                 //System.Diagnostics.Debug.WriteLine("");
             }
 
-            //200x10000 = 2462 debug mode
-            //400x10000 = 20445
-            //600x10000 = 23496
-            // 1000x10000 = release 36249, 38705
+            for (uint g = 0; g < generations; g++)
+            {
+                var values = gd.GetValues(g + 1);
+                Check.That(values.Count).Equals(depth);
+                for (int i = 0; i < depth; i++)
+                {
+                    bool present = g % genskip[i] == 0;
+                    if (present)
+                        Check.That(values[i]).Equals(g);
+                    else
+                        Check.That(values[i]).IsNotEqualTo(g);
+                }
+
+                //foreach( var kvp in dict)  {         System.Diagnostics.Debug.WriteLine("{0} {1}={2}", g+1, kvp.Key, kvp.Value);    }
+                //System.Diagnostics.Debug.WriteLine("");
+            }
+
+            //1004x10000 = release 3035
 
         }
     }

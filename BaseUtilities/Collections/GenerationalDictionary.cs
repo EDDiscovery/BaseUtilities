@@ -50,6 +50,9 @@ namespace BaseUtils
             TValue v = default(TValue);
             if (dictionary.TryGetValue(k, out DictionaryWithLastKey<uint, TValue> dict))       // try find key, return dictionary list of gens
             {
+                if (dict.LastKey <= generation)                                     // if last key added (generation) was less or equal to the generation required, just return the last one
+                    return dict[dict.LastKey];
+
                 do
                 {
                     if (dict.TryGetValue(generation, out TValue res))               // in gen list, try find value at generation
@@ -66,12 +69,20 @@ namespace BaseUtils
             foreach (var kvp in dictionary)
             {
                 TValue v = default(TValue);
-                uint g = generation;
-                do
+
+                if (kvp.Value.LastKey <= generation)                    // if last key added (generation) was less or equal to the generation required, just return the last one
                 {
-                    if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
-                        break;
-                } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
+                    v = kvp.Value[kvp.Value.LastKey];
+                }
+                else
+                {
+                    uint g = generation;
+                    do
+                    {
+                        if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
+                            break;
+                    } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
+                }
 
                 if (v != null && (predicate == null || predicate(v)))   // if got, and predicate is null or true
                     ret[kvp.Key] = v;
@@ -86,12 +97,20 @@ namespace BaseUtils
             foreach (var kvp in dictionary)
             {
                 TValue v = default(TValue);
-                uint g = generation;
-                do
+
+                if (kvp.Value.LastKey <= generation)                    // if last key added (generation) was less or equal to the generation required, just return the last one
                 {
-                    if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
-                        break;
-                } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
+                    v = kvp.Value[kvp.Value.LastKey];
+                }
+                else
+                {
+                    uint g = generation;
+                    do
+                    {
+                        if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
+                            break;
+                    } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
+                }
 
                 if (v != null && (predicate == null || predicate(v)))
                     ret.Add(v);
