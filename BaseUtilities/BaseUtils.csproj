@@ -53,6 +53,7 @@
     <Compile Include="CHash\ObjectActivator.cs" />
     <Compile Include="CHash\ResourceHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
+    <Compile Include="Collections\DictionaryWithLastKey.cs" />
     <Compile Include="Collections\GenerationalDictionary.cs" />
     <Compile Include="Collections\DictionaryOfDictionaries.cs" />
     <Compile Include="Collections\DisposableDictionary.cs" />

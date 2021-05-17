@@ -18,7 +18,9 @@ using NFluent;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 
 namespace EDDiscoveryTests
 {
@@ -74,10 +76,75 @@ namespace EDDiscoveryTests
 
             Dictionary<string, string> test = new Dictionary<string, string>();
             test["on"] = "oN";
-            foreach( KeyValuePair<string,string> v in test )
+            foreach (KeyValuePair<string, string> v in test)
             {
 
             }
+        }
+
+        [Test]
+        public void GenerationalDictionary()
+        {
+            GenerationalDictionary<int, uint> gd = new GenerationalDictionary<int, uint>();
+
+            Random rnd = new Random(1001);
+
+            const int generations = 1000;
+            const int depth = 10000;
+
+            int[] genskip = new int[depth];
+            for (int i = 0; i < depth; i++)
+                genskip[i] = rnd.Next(4) + 1;
+
+            for (uint g = 0; g < generations; g++)
+            {
+                gd.NextGeneration();
+
+                for (int i = 0; i < depth; i++)
+                {
+                    if (g % genskip[i] == 0)
+                    {
+                  //      System.Diagnostics.Debug.WriteLine("{0} Add {1}", (g+1), i);
+                        gd.Add(i, g);
+                    }
+                }
+            }
+
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
+            for (uint g = 0; g < generations; g++)
+            {
+                var dict = gd.Get(g + 1);
+                Check.That(dict.Count).Equals(depth);
+            }
+
+            long time = sw.ElapsedMilliseconds;
+            File.WriteAllText(@"c:\code\time.txt", "Time taken " + time);
+
+            for (uint g = 0; g < generations; g++)
+            {
+                var dict = gd.Get(g + 1);
+                Check.That(dict.Count).Equals(depth);
+                for ( int i = 0; i < depth; i++ )
+                {
+                    bool present = g % genskip[i] == 0;
+                    if (present)
+                        Check.That(dict[i]).Equals(g);
+                    else
+                        Check.That(dict[i]).IsNotEqualTo(g);
+                }
+
+                //foreach( var kvp in dict)  {         System.Diagnostics.Debug.WriteLine("{0} {1}={2}", g+1, kvp.Key, kvp.Value);    }
+                //System.Diagnostics.Debug.WriteLine("");
+            }
+
+            //200x10000 = 2462 debug mode
+            //400x10000 = 20445
+            //600x10000 = 23496
+            // 1000x10000 = release 36249, 38705
+
         }
     }
 }
