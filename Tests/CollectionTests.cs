@@ -91,10 +91,11 @@ namespace EDDiscoveryTests
 
             const int generations = 1004;
             const int depth = 10000;
+            const int modulo = 2;
 
             int[] genskip = new int[depth];
             for (int i = 0; i < depth; i++)
-                genskip[i] = rnd.Next(23) + 1;
+                genskip[i] = rnd.Next(23) + modulo + 1;     // need to be bigger than modulo
 
             for (uint g = 0; g < generations; g++)
             {
@@ -102,9 +103,9 @@ namespace EDDiscoveryTests
 
                 for (int i = 0; i < depth; i++)
                 {
-                    if (g % genskip[i] == 0)
+                    if (g % genskip[i] == modulo)
                     {
-                  //      System.Diagnostics.Debug.WriteLine("{0} Add {1}", (g+1), i);
+                      //  System.Diagnostics.Debug.WriteLine("{0} Add {1}", (g+1), i);
                         gd.Add(i, g);
                     }
                 }
@@ -114,24 +115,20 @@ namespace EDDiscoveryTests
 
             sw.Start();
 
-            for (uint g = 0; g < generations; g++)
-            {
-                var dict = gd.Get(g + 1);
-                Check.That(dict.Count).Equals(depth);
-            }
-
             long time = sw.ElapsedMilliseconds;
             File.WriteAllText(@"c:\code\time.txt", "Time taken " + time);
 
             for (uint g = 0; g < generations; g++)
             {
                 var dict = gd.Get(g + 1);
-                Check.That(dict.Count).Equals(depth);
+              //  System.Diagnostics.Debug.WriteLine("At gen {0} get {1} {2}", g + 1, dict.Count, string.Join(",",dict.Values));
                 for (int i = 0; i < depth; i++)
                 {
-                    bool present = g % genskip[i] == 0;
+                    bool present = g % genskip[i] == modulo;
                     if (present)
                         Check.That(dict[i]).Equals(g);
+                    else if (g < modulo)
+                        Check.That(dict.ContainsKey(i)).IsFalse();
                     else
                         Check.That(dict[i]).IsNotEqualTo(g);
                 }
@@ -143,12 +140,13 @@ namespace EDDiscoveryTests
             for (uint g = 0; g < generations; g++)
             {
                 var values = gd.GetValues(g + 1);
-                Check.That(values.Count).Equals(depth);
                 for (int i = 0; i < depth; i++)
                 {
-                    bool present = g % genskip[i] == 0;
+                    bool present = g % genskip[i] == modulo;
                     if (present)
                         Check.That(values[i]).Equals(g);
+                    else if (g < modulo)
+                        Check.That(values.Contains((uint)i)).IsFalse();
                     else
                         Check.That(values[i]).IsNotEqualTo(g);
                 }

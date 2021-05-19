@@ -26,7 +26,7 @@ namespace BaseUtils
         public uint Generation { get; private set; } = 0;
         public uint UpdatesAtThisGeneration { get; private set; } = 0;
 
-        private Dictionary<TKey, DictionaryWithLastKey<uint, TValue>> dictionary = new Dictionary<TKey, DictionaryWithLastKey<uint, TValue>>();
+        private Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>> dictionary = new Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>>();
 
         public void NextGeneration()
         {
@@ -48,10 +48,13 @@ namespace BaseUtils
         public TValue Get(TKey k, uint generation)  // get key, null if not
         {
             TValue v = default(TValue);
-            if (dictionary.TryGetValue(k, out DictionaryWithLastKey<uint, TValue> dict))       // try find key, return dictionary list of gens
+            if (dictionary.TryGetValue(k, out DictionaryWithFirstLastKey<uint, TValue> dict))       // try find key, return dictionary list of gens
             {
-                if (dict.LastKey <= generation)                                     // if last key added (generation) was less or equal to the generation required, just return the last one
+                if (generation >= dict.LastKey)                                    // if generation is at or greater to last key added, return lastkey
                     return dict[dict.LastKey];
+
+                if (generation < dict.FirstKey )                                    // if generation is less than first key, no result
+                    return v;
 
                 do
                 {
@@ -68,24 +71,29 @@ namespace BaseUtils
             Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
             foreach (var kvp in dictionary)
             {
-                TValue v = default(TValue);
-
-                if (kvp.Value.LastKey <= generation)                    // if last key added (generation) was less or equal to the generation required, just return the last one
+                if (generation >= kvp.Value.LastKey)                    // if generation is at or greater to last key added, return lastkey
                 {
-                    v = kvp.Value[kvp.Value.LastKey];
+                    TValue v = kvp.Value[kvp.Value.LastKey];            // get value
+                    if (predicate == null || predicate(v))              // no predicate or passed, store it
+                        ret[kvp.Key] = v;
                 }
-                else
+                else if (generation >= kvp.Value.FirstKey)              // if generation is greater than first key added, we can find it
                 {
                     uint g = generation;
                     do
                     {
-                        if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
+                        if (kvp.Value.TryGetValue(g, out TValue v))     // in gen list, try find value at generation, if so, got it
+                        {
+                            if (predicate == null || predicate(v))      // no predicate or passed, store it
+                                ret[kvp.Key] = v;
                             break;
+                        }
                     } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
                 }
+                else
+                {
 
-                if (v != null && (predicate == null || predicate(v)))   // if got, and predicate is null or true
-                    ret[kvp.Key] = v;
+                }
             }
 
             return ret;
@@ -96,24 +104,25 @@ namespace BaseUtils
             List<TValue> ret = new List<TValue>();
             foreach (var kvp in dictionary)
             {
-                TValue v = default(TValue);
-
-                if (kvp.Value.LastKey <= generation)                    // if last key added (generation) was less or equal to the generation required, just return the last one
+                if (generation >= kvp.Value.LastKey)                    // if generation is at or greater to last key added, return lastkey
                 {
-                    v = kvp.Value[kvp.Value.LastKey];
+                    TValue v = kvp.Value[kvp.Value.LastKey];            // get value
+                    if (predicate == null || predicate(v))              // no predicate or passed, store it
+                        ret.Add(v);
                 }
-                else
+                else if (generation >= kvp.Value.FirstKey)              // if generation is greater than first key added, we can find it
                 {
                     uint g = generation;
                     do
                     {
-                        if (kvp.Value.TryGetValue(g, out v))               // in gen list, try find value at generation, if so, got it
+                        if (kvp.Value.TryGetValue(g, out TValue v))     // in gen list, try find value at generation, if so, got it
+                        {
+                            if (predicate == null || predicate(v))      // no predicate or passed, store it
+                                ret.Add(v);
                             break;
+                        }
                     } while (g-- > 0);                                     // go back in generations until we get to zero, inclusive
                 }
-
-                if (v != null && (predicate == null || predicate(v)))
-                    ret.Add(v);
             }
 
             return ret;
@@ -121,7 +130,7 @@ namespace BaseUtils
 
         public TValue GetLast(TKey k)       // get last entry of key K
         {
-            if (dictionary.TryGetValue(k, out DictionaryWithLastKey<uint, TValue> dict))
+            if (dictionary.TryGetValue(k, out DictionaryWithFirstLastKey<uint, TValue> dict))
             {
                 return dict[dict.LastKey];
             }
@@ -183,26 +192,25 @@ namespace BaseUtils
             return ret;
         }
 
-        public void Add(TKey k, TValue v)
+        public void Add(TKey k, TValue v)       // don't double add
         {
             if (!dictionary.ContainsKey(k))
-                dictionary[k] = new DictionaryWithLastKey<uint, TValue>();
+                dictionary[k] = new DictionaryWithFirstLastKey<uint, TValue>();
 
             dictionary[k].Add(Generation, v);
             UpdatesAtThisGeneration++;
         }
 
-        public void AddGeneration(TKey k, TValue v)
+        public void AddGeneration(TKey k, TValue v)   // don't double add
         {
             NextGeneration();
 
             if (!dictionary.ContainsKey(k))
-                dictionary[k] = new DictionaryWithLastKey<uint, TValue>();
+                dictionary[k] = new DictionaryWithFirstLastKey<uint, TValue>();
 
             dictionary[k].Add(Generation, v);
             UpdatesAtThisGeneration++;
         }
-
 
     }
 }

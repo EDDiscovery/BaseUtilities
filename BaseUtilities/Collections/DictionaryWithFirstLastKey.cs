@@ -21,14 +21,19 @@ namespace BaseUtils
 {
     // this is a dictionary which tracks the last key added thru ADD
 
-    public class DictionaryWithLastKey<TKey, TValue> : Dictionary<TKey,TValue>
+    public class DictionaryWithFirstLastKey<TKey, TValue> : Dictionary<TKey,TValue>
     {
-        public TKey LastKey { get; set; } = default(TKey);
+        public TKey FirstKey { get; set; } = default(TKey);     // first one added
+        public TKey LastKey { get; set; } = default(TKey);      // last one
 
         public new void Add(TKey k,TValue v)
-        {
+        {   
+            if ( Count == 0)                                    // if nothing in the dictionary, its first key
+                FirstKey = k;
             base.Add(k, v);
             LastKey = k;
         }
+
+        public new TValue this[TKey k] { get { return base[k]; } set { if (Count == 0) FirstKey = k; base[k] = value; LastKey = k; } }
     }
 }
