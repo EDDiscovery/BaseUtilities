@@ -56,6 +56,8 @@ namespace BaseUtils
 
         public IEnumerable<Condition> Enumerable { get { return conditionlist; } }
 
+        public List<Condition> List { get { return conditionlist; } }
+
         public void Add(Condition fe)
         {
             conditionlist.Add(fe);
@@ -329,7 +331,7 @@ namespace BaseUtils
                 fel = (from fil in conditionlist
                        where
                        !fil.Disabled &&
-                     (fil.EventName.Equals("All") || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
+                     (fil.EventName.Equals("All", StringComparison.InvariantCultureIgnoreCase) || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
                      fil.ActionVars.Exists(flagvar)
                        select fil).ToList();
 
@@ -337,7 +339,7 @@ namespace BaseUtils
                 fel = (from fil in conditionlist
                        where
                        !fil.Disabled &&
-                     (fil.EventName.Equals("All") || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase))
+                     (fil.EventName.Equals("All", StringComparison.InvariantCultureIgnoreCase) || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase))
                        select fil).ToList();
 
             return (fel.Count == 0) ? null : fel;
@@ -482,8 +484,9 @@ namespace BaseUtils
 
             bool? outerres = null;
 
-            foreach (Condition fe in fel)        // find all values needed
+            for( int oc = 0; oc < fel.Count; oc++)
             {
+                Condition fe = fel[oc];
                 if (fe.Disabled)                // disabled means that its ignored
                     continue;
 
@@ -800,12 +803,17 @@ namespace BaseUtils
                 {
                     outerres = innerres.Value;
 
-                    if (shortcircuitouter)                          // check short circuits
+                    if (shortcircuitouter && oc < fel.Count - 1)       // check short circuits on NEXT ONE!
                     {
-                        if (fe.OuterCondition == ConditionEntry.LogicalCondition.Or && outerres == true)
+                        // if NEXT outer condition is an OR, and we are true
+                        // if NEXT outer condition is an AND, and we are false
+
+                        if ((fel[oc + 1].OuterCondition == ConditionEntry.LogicalCondition.Or && outerres == true) ||
+                            (fel[oc + 1].OuterCondition == ConditionEntry.LogicalCondition.And && outerres == false))
+                        {
+                           // System.Diagnostics.Debug.WriteLine("Short circuit on {0} cur {1}", fel[oc + 1].OuterCondition, outerres);
                             break;
-                        else if (fe.OuterCondition == ConditionEntry.LogicalCondition.And && outerres == false)
-                            break;
+                        }
                     }
                 }
                 else if (fe.OuterCondition == ConditionEntry.LogicalCondition.Or)
@@ -813,19 +821,27 @@ namespace BaseUtils
                     outerres |= innerres.Value;
 
                     if (shortcircuitouter && outerres.Value == true)      // no point continuing, first one true wins
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Short circuit second on {0} cur {1}", fe.OuterCondition, outerres);
                         break;
+                    }
                 }
                 else if (fe.OuterCondition == ConditionEntry.LogicalCondition.And)
                 {
                     outerres &= innerres.Value;
 
                     if (shortcircuitouter && outerres.Value == false)      // no point continuing, first one false wins
+                    {
+                        //System.Diagnostics.Debug.WriteLine("Short circuit second on {0} cur {1}", fe.OuterCondition, outerres);
                         break;
+                    }
                 }
                 else if (fe.OuterCondition == ConditionEntry.LogicalCondition.Nor)
                     outerres = !(outerres | innerres.Value);
                 else if (fe.OuterCondition == ConditionEntry.LogicalCondition.Nand)
                     outerres = !(outerres & innerres.Value);
+                else
+                    System.Diagnostics.Debug.Assert(false, "Bad outer condition");
             }
 
             return outerres;

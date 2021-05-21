@@ -103,6 +103,7 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConditionTests.cs" />
     <Compile Include="Threads.cs" />
     <Compile Include="StringTests.cs" />
     <Compile Include="JSONTests.cs" />

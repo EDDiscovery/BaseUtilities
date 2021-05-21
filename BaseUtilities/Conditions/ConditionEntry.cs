@@ -143,6 +143,7 @@ namespace BaseUtils
             And,    // all true
             Nor,    // any true produces a false
             Nand,   // any not true produces a true
+            NA,     // not applicable - use for outer condition on first entry
         }
 
         public ConditionEntry()
