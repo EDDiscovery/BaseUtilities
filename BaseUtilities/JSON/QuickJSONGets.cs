@@ -48,7 +48,7 @@ namespace BaseUtils.JSON
             return tk != null ? (string)tk : null;
         }
 
-        public static T Enum<T>(this JToken tk, T def)
+        public static T Enum<T>(this JToken tk, T def)      // tk is long
         {
             if (tk != null && tk.IsLong)
             {
@@ -57,6 +57,21 @@ namespace BaseUtils.JSON
             }
             else
                 return def;
+        }
+
+
+        public static T EnumStr<T>(this JToken tk, T def, bool ignorecase = true) where T:struct    // tk is string
+        {
+            if (tk != null && tk.IsString)
+            {
+                string s = (string)tk.Value;
+                if (System.Enum.TryParse(s, ignorecase,out T result) )
+                {
+                    return result;
+                }
+            }
+
+            return def;
         }
 
 
