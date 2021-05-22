@@ -192,23 +192,26 @@ namespace BaseUtils
             return ret;
         }
 
-        public void Add(TKey k, TValue v)       // don't double add
-        {
-            if (!dictionary.ContainsKey(k))
-                dictionary[k] = new DictionaryWithFirstLastKey<uint, TValue>();
+        // set key to value at this generation 
 
-            dictionary[k].Add(Generation, v);
-            UpdatesAtThisGeneration++;
+        public TValue this[TKey key] { set                    
+            {
+                if (!dictionary.ContainsKey(key))
+                    dictionary[key] = new DictionaryWithFirstLastKey<uint, TValue>();
+
+                dictionary[key][Generation] = value;
+                UpdatesAtThisGeneration++;
+            }
         }
 
-        public void AddGeneration(TKey k, TValue v)   // don't double add
+        // add, will except if Key:Generation already exists
+
+        public void Add(TKey key, TValue value) 
         {
-            NextGeneration();
+            if (!dictionary.ContainsKey(key))
+                dictionary[key] = new DictionaryWithFirstLastKey<uint, TValue>();
 
-            if (!dictionary.ContainsKey(k))
-                dictionary[k] = new DictionaryWithFirstLastKey<uint, TValue>();
-
-            dictionary[k].Add(Generation, v);
+            dictionary[key].Add(Generation, value);
             UpdatesAtThisGeneration++;
         }
 

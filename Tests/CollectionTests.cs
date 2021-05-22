@@ -105,8 +105,8 @@ namespace EDDiscoveryTests
                 {
                     if (g % genskip[i] == modulo)
                     {
-                      //  System.Diagnostics.Debug.WriteLine("{0} Add {1}", (g+1), i);
-                        gd.Add(i, g);
+                        //  System.Diagnostics.Debug.WriteLine("{0} Add {1}", (g+1), i);
+                        gd[i] = g;
                     }
                 }
             }
