@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2020 EDDiscovery development team
+ * Copyright © 2016 - 2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -198,6 +198,30 @@ public static class ObjectExtensionsDates
     {
         return new DateTime(tme.Year, tme.Month, tme.Day, 0,0,0, tme.Kind);
     }
+
+    // left and right can be null or not dates..
+
+    static public int CompareDate(this string left, string right)
+    {
+        DateTime v1 = DateTime.MinValue, v2 = DateTime.MinValue;
+
+        bool v1hasval = left != null && DateTime.TryParse(left, out v1);
+        bool v2hasval = right != null && DateTime.TryParse(right, out v2);
+
+        if (!v1hasval)
+        {
+            return 1;
+        }
+        else if (!v2hasval)
+        {
+            return -1;
+        }
+        else
+        {
+            return v1.CompareTo(v2);
+        }
+    }
+
 }
 
 

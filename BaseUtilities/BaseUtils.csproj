@@ -84,6 +84,7 @@
     <Compile Include="JSON\QuickJSONToString.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
+    <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="StringParsers\IStringParserQuick.cs" />
     <Compile Include="StringParsers\StringParserQuickTextReader.cs" />
