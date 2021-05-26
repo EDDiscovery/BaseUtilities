@@ -15,6 +15,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace BaseUtils
@@ -44,24 +45,22 @@ namespace BaseUtils
 
         // bf default is DefaultLookup in the .net code for GetProperties()
         static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
-                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null )       // give a list of properties for a given name
+                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null , Type[] propexcluded = null, int depth = 5 )       // give a list of properties for a given name
         {
+            if (depth < 0)
+                return null;
+
             if (jtype != null)
             {
                 List<PropertyNameInfo> ret = new List<PropertyNameInfo>();
 
                 foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties(bf))
                 {
-                    if (excludedeclaretype == null || pi.DeclaringType != excludedeclaretype)
+                    if ((excludedeclaretype == null || pi.DeclaringType != excludedeclaretype) && (propexcluded == null || !propexcluded.Contains(pi.PropertyType)))
                     {
                         if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                         {
-                            var ca = pi.GetCustomAttributes(typeof(PropertyNameAttribute), false);
-                            string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
-
-                            PropertyNameInfo pni = PNI(prefix + pi.Name, pi.PropertyType, linelen, comment, help);
-                            ret.Add(pni);
-                            //    System.Diagnostics.Debug.WriteLine("Prop " + pi.Name + " " + pi.PropertyType.FullName);
+                            AddToPNI(ret, pi.PropertyType, prefix + pi.Name, pi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bf, fields, linelen, comment, excludedeclaretype, propexcluded, depth - 1);
                         }
                     }
                 }
@@ -70,14 +69,9 @@ namespace BaseUtils
                 {
                     foreach (FieldInfo fi in jtype.GetFields())
                     {
-                        if (excludedeclaretype == null || fi.DeclaringType != excludedeclaretype)
+                        if ((excludedeclaretype == null || fi.DeclaringType != excludedeclaretype) && (propexcluded == null || !propexcluded.Contains(fi.FieldType)))
                         {
-                            var ca = fi.GetCustomAttributes(typeof(PropertyNameAttribute), false);
-                            string help = ca.Length > 0 ? ((dynamic)ca[0]).Name : "";
-
-                            PropertyNameInfo pni = PNI(prefix + fi.Name, fi.FieldType, linelen, comment, help);
-                            ret.Add(pni);
-                            //    System.Diagnostics.Debug.WriteLine("Fields " + fi.Name + " " + fi.FieldType.FullName);
+                            AddToPNI(ret, fi.FieldType, prefix + fi.Name, fi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bf, fields, linelen, comment, excludedeclaretype, propexcluded, depth - 1);
                         }
                     }
                 }
@@ -86,6 +80,34 @@ namespace BaseUtils
             }
             else
                 return null;
+        }
+
+        static public void AddToPNI(List<PropertyNameInfo> ret, Type pt, string name, object [] ca, BindingFlags bf, bool fields, int linelen, string comment, 
+                                                                    Type excludedeclaretype, Type[] propexcluded, int depth)
+        {
+            if (pt.IsArray)
+            {
+                Type arraytype = pt.GetElementType();
+
+                ret.Add(new PropertyNameInfo(name + "Count", "Integer Index"));
+
+                var pni = GetPropertyFieldNames(arraytype, name + "[]_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, depth - 1);
+                if (pni != null)
+                    ret.AddRange(pni);
+
+            }
+            else if (pt.IsClass && pt != typeof(string))
+            {
+                var pni = GetPropertyFieldNames(pt, name + "_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, depth - 1);
+                if (pni != null)
+                    ret.AddRange(pni);
+            }
+            else
+            {
+                string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
+                PropertyNameInfo pni = PNI(name, pt, linelen, comment, help);
+                ret.Add(pni);
+            }
         }
 
         static public PropertyNameInfo PNI( string name, Type t , int ll, string comment, string help)
