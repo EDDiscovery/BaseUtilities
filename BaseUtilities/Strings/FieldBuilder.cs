@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -14,10 +14,6 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
@@ -111,6 +107,14 @@ namespace BaseUtils
                             {
                                 output = (string)value;
                             }
+                            else if (value is int)
+                            {
+                                output = ((int)value).ToString(format, ct);
+                            }
+                            else if (value is long)
+                            {
+                                output = ((long)value).ToString(format, ct);
+                            }
                             else if (value is double)
                             {
                                 output = ((double)value).ToString(format, ct);
@@ -119,13 +123,21 @@ namespace BaseUtils
                             {
                                 output = ((float)value).ToString(format, ct);
                             }
-                            else if (value is int)
+                            else if (value is ushort)
                             {
-                                output = ((int)value).ToString(format,ct);
+                                output = ((ushort)value).ToString(format, ct);
                             }
-                            else if (value is long)
+                            else if (value is short)
                             {
-                                output = ((long)value).ToString(format,ct);
+                                output = ((short)value).ToString(format, ct);
+                            }
+                            else if (value is uint)
+                            {
+                                output = ((uint)value).ToString(format, ct);
+                            }
+                            else if (value is ulong)
+                            {
+                                output = ((ulong)value).ToString(format, ct);
                             }
                             else if (value is double?)
                             {
@@ -137,11 +149,27 @@ namespace BaseUtils
                             }
                             else if (value is int?)
                             {
-                                output = ((int?)value).Value.ToString(format,ct);
+                                output = ((int?)value).Value.ToString(format, ct);
+                            }
+                            else if (value is uint?)
+                            {
+                                output = ((uint?)value).Value.ToString(format, ct);
+                            }
+                            else if (value is ushort?)
+                            {
+                                output = ((ushort?)value).Value.ToString(format, ct);
+                            }
+                            else if (value is short?)
+                            {
+                                output = ((short?)value).Value.ToString(format, ct);
                             }
                             else if (value is long?)
                             {
-                                output = ((long?)value).Value.ToString(format,ct);
+                                output = ((long?)value).Value.ToString(format, ct);
+                            }
+                            else if (value is ulong?)
+                            {
+                                output = ((ulong?)value).Value.ToString(format, ct);
                             }
                             else if (value is DateTime)
                             {

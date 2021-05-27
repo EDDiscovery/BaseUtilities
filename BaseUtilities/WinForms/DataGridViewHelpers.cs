@@ -86,13 +86,27 @@ public static class DataGridViewControlHelpersStaticFunc
 
         if (usetag)
         {
-            if (!left.HasChars())
-                left = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            if (!right.HasChars())
-                right = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-        }
+            bool lchar = left.HasChars();
+            bool rchar = right.HasChars();
 
-        e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+            if (!lchar)
+                left = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
+            if (!rchar)
+                right = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
+
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+
+            if ( e.SortResult == 0)
+            {
+                if (!lchar)
+                    e.SortResult = 1;
+                else if (!rchar)
+                    e.SortResult = -1;
+            }
+        }
+        else
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+
         e.Handled = true;
     }
 
