@@ -179,19 +179,22 @@ namespace BaseUtils.JSON
                 {
                     var instance = initialobject != null ? initialobject : Activator.CreateInstance(tt);        // create the class, so class must has a constructor with no paras
 
-                    System.Reflection.MemberInfo[] fi = tt.GetFields(membersearchflags);
-                    string[] finames = null;
+                    System.Reflection.MemberInfo[] fi = tt.GetFields(membersearchflags);        // get field list..
+                    object[] finames = null;        // alternate names of all fields, loaded only if checkcustom is on,  Object array of string[]
 
-                    System.Reflection.MemberInfo[] pi = null;   // lazy load this
-                    string[] pinames = null;
+                    System.Reflection.MemberInfo[] pi = null;   // lazy load the property list
+                    object[] pinames = null;       // alternate names of all the properties,  Object array of string[]
 
                     if (checkcustomattr)
                     {
-                        finames = new string[fi.Length];
-                        for (int i = 0; i < fi.Length; i++)
+                        finames = new object[fi.Length];
+                        for (int i = 0; i < fi.Length; i++)     // thru all the fi fields, see if they have a custom attribute of JsonNameAttribute, if so, pick up the names list
                         {
-                            var rename = fi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
-                            finames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : fi[i].Name;
+                            var attrlist = fi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                            if (attrlist.Length == 1)
+                                finames[i] = ((dynamic)attrlist[0]).Names;
+                            else
+                                finames[i] = new string[] { fi[i].Name };
                         }
                     }
 
@@ -199,12 +202,25 @@ namespace BaseUtils.JSON
                     {
                         System.Reflection.MemberInfo mi = null;
 
-                        var fipos = finames != null ? System.Array.IndexOf(finames, kvp.Key) : System.Array.FindIndex(fi, x => x.Name == kvp.Key);
-                        if (fipos >= 0)     // try and find field first..
+                        if (finames == null)
                         {
-                            mi = fi[fipos];
+                            var fipos = System.Array.FindIndex(fi, x => x.Name.Equals(kvp.Key, StringComparison.InvariantCultureIgnoreCase));     // straight name lookup
+                            if (fipos >= 0)
+                                mi = fi[fipos];
                         }
                         else
+                        {
+                            for (int fipos = 0; fipos < finames.Length; fipos++)
+                            {
+                                if (System.Array.IndexOf((string[])finames[fipos], kvp.Key) >= 0)
+                                {
+                                    mi = fi[fipos];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ( mi == null )
                         {
                             if (pi == null)     // lazy load pick up, only load these if fields not found
                             {
@@ -212,18 +228,35 @@ namespace BaseUtils.JSON
 
                                 if (checkcustomattr)
                                 {
-                                    pinames = new string[pi.Length];
+                                    pinames = new object[pi.Length];
                                     for (int i = 0; i < pi.Length; i++)
                                     {
-                                        var rename = pi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
-                                        pinames[i] = rename.Length == 1 ? (string)((dynamic)rename[0]).Name : pi[i].Name;
+                                        var attrlist = pi[i].GetCustomAttributes(typeof(JsonNameAttribute), false);
+                                        if ( attrlist.Length == 1 )
+                                            pinames[i] = ((dynamic)attrlist[0]).Names;
+                                        else
+                                            pinames[i] = new string[] { pi[i].Name };
                                     }
                                 }
                             }
 
-                            var pipos = pinames != null ? System.Array.IndexOf(pinames, kvp.Key) : System.Array.FindIndex(pi, x => x.Name == kvp.Key);
-                            if (pipos >= 0)
-                                mi = pi[pipos];
+                            if (pinames == null)
+                            {
+                                var pipos = System.Array.FindIndex(pi, x => x.Name.Equals(kvp.Key, StringComparison.InvariantCultureIgnoreCase));
+                                if (pipos >= 0)
+                                    mi = pi[pipos];
+                            }
+                            else
+                            {
+                                for (int pipos = 0; pipos < pinames.Length; pipos++)
+                                {
+                                    if (System.Array.IndexOf((string[])pinames[pipos], kvp.Key) >= 0)
+                                    {
+                                        mi = pi[pipos];
+                                        break;
+                                    }
+                                }
+                            }
                         }
 
                         if (mi != null)                                   // if we found a class member

@@ -24,11 +24,12 @@ namespace BaseUtils.JSON
     {                                                           
     }
 
-    public sealed class JsonNameAttribute : Attribute // applicable to FromObject and ToObject, use this name as the JSON name
+    public sealed class JsonNameAttribute : Attribute // applicable to FromObject and ToObject, use this name as the JSON name.  ToObject supports multiple names, FromObject only 1
     {
-        public string Name { get; set; }
-        public JsonNameAttribute(string name) { Name = name; }
+        public string[] Names { get; set; }
+        public JsonNameAttribute(params string[] names) { Names = names; }
     }
+
 
     public partial class JToken
     {
@@ -202,7 +203,7 @@ namespace BaseUtils.JSON
                     if (rename.Length == 1)                                         // any ones with a rename, use that name     
                     {
                         dynamic attr = rename[0];                                   // dynamic since compiler does not know rename type
-                        attrname = attr.Name;
+                        attrname = attr.Names[0];                                   // only first entry is used for FromObject
                     }
 
                     //System.Diagnostics.Debug.WriteLine("Member " + mi.Name + " " + mi.MemberType + " attrname " + attrname);

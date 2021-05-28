@@ -64,7 +64,7 @@ namespace EDDiscoveryTests
                 Check.That(decoded5).IsNotNull();
                 Check.That(decoded5.ToString()).Equals(@"{}");
             }
-            { 
+            {
                 //string json = "{ \"timest\\\"amp\":\"2020-06-29T09:53:54Z\", \"bigint\":298182772762562557788377626262773 \"ulong\":18446744073709551615 \"event\":\"FSDJump\t\", \"StarSystem\":\"Shinrarta Dezhra\", \"SystemAddress\":3932277478106, \"StarPos\":[55.71875,17.59375,27.15625], \"SystemAllegiance\":\"PilotsFederation\", \"SystemEconomy\":\"$economy_HighTech;\", \"SystemEconomy_Localised\":\"High Tech\", \"SystemSecondEconomy\":\"$economy_Industrial;\", \"SystemSecondEconomy_Localised\":\"Industrial\", \"SystemGovernment\":\"$government_Democracy;\", \"SystemGovernment_Localised\":\"Democracy\", \"SystemSecurity\":\"$SYSTEM_SECURITY_high;\", \"SystemSecurity_Localised\":\"High Security\", \"Population\":85206935, \"Body\":\"Shinrarta Dezhra\", \"BodyID\":1, \"BodyType\":\"Star\", \"JumpDist\":5.600, \"FuelUsed\":0.387997, \"FuelLevel\":31.612003, \"Factions\":[ { \"Name\":\"LTT 4487 Industry\", \"FactionState\":\"None\", \"Government\":\"Corporate\", \"Influence\":0.288000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Drought\", \"Trend\":0 } ] }, { \"Name\":\"Future of Arro Naga\", \"FactionState\":\"Outbreak\", \"Government\":\"Democracy\", \"Influence\":0.139000, \"Allegiance\":\"Federation\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"ActiveStates\":[ { \"State\":\"Outbreak\" } ] }, { \"Name\":\"The Dark Wheel\", \"FactionState\":\"CivilUnrest\", \"Government\":\"Democracy\", \"Influence\":0.376000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"PendingStates\":[ { \"State\":\"Expansion\", \"Trend\":0 } ], \"RecoveringStates\":[ { \"State\":\"PublicHoliday\", \"Trend\":0 } ], \"ActiveStates\":[ { \"State\":\"CivilUnrest\" } ] }, { \"Name\":\"Los Chupacabras\", \"FactionState\":\"None\", \"Government\":\"PrisonColony\", \"Influence\":0.197000, \"Allegiance\":\"Independent\", \"Happiness\":\"$Faction_HappinessBand2;\", \"Happiness_Localised\":\"Happy\", \"MyReputation\":0.000000, \"RecoveringStates\":[ { \"State\":\"Outbreak\", \"Trend\":0 } ] } ], \"SystemFaction\":{ \"Name\":\"Pilots' Federation Local Branch\" } }";
                 string json = "{ \"timest\\\"am\tp\":\"2020-06-29T09:53:54Z\", \"ulong\":18446744073709551615, \"bigint\":-298182772762562557788377626262773, \"array\":[ 10, 20, 30  ], \"object\":{ \"a\":20, \"b\":30}, \"fred\":20029 }";
 
@@ -133,7 +133,7 @@ namespace EDDiscoveryTests
 
             {
                 string json2 = @"{ ""data"": {""ver"":2, ""commander"":""Irisa Nyira"", ""fromSoftware"":""EDDiscovery"",  ""fromSoftwareVersion"":""11.7.2.0"", ""p0"": { ""name"": ""Hypo Aeb XF-M c8-0"" },   ""refs"": [ { ""name"": """"Hypua Hypoo MJ-S a72-0"""",  ""dist"": 658.84 } ] }  }";
-                JToken jo = JToken.Parse(json2, out string error, JToken.ParseOptions.CheckEOL );
+                JToken jo = JToken.Parse(json2, out string error, JToken.ParseOptions.CheckEOL);
                 Check.That(jo == null).IsTrue();
             }
 
@@ -541,7 +541,7 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONSpeed()
         {
-            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "*.log").ToArray();
+            string[] files = Directory.EnumerateFiles(@"C:\Users\RK\Saved Games\Frontier Developments\Elite Dangerous", "Journal.*.log").ToArray();
 
             List<FileLines> filelines = new List<FileLines>();
 
@@ -597,7 +597,7 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONDeepEquals()
         {
-            if ( true )
+            if (true)
             {
                 JToken decode = JToken.Parse(jsongithub);
                 Check.That(decode).IsNotNull();
@@ -686,7 +686,7 @@ namespace EDDiscoveryTests
         public class Material
         {
             public string Name { get; set; }        //FDNAME
-            public string Name_Localised { get; set; }     
+            public string Name_Localised { get; set; }
             public string FriendlyName { get; set; }        //friendly
             public int Count { get; set; }
 
@@ -704,7 +704,7 @@ namespace EDDiscoveryTests
             public int? RankProgress { get; set; }  // newish 3.x only when unlocked
         }
 
-        public enum TestEnum { one,two, three};
+        public enum TestEnum { one, two, three };
 
         public class OtherTypes
         {
@@ -757,7 +757,7 @@ namespace EDDiscoveryTests
 
                 long tick = sw.ElapsedTicks;
 
-                for( int i = 0; i < 3000; i++ )
+                for (int i = 0; i < 3000; i++)
                 {
                     var matsraw3r = jo["Raw"].ToObjectQ<Material[]>();        // check it can handle nullable types
                     Check.That(matsraw3r).IsNotNull();
@@ -1121,6 +1121,7 @@ namespace EDDiscoveryTests
 ";
                 JToken matpro = JToken.Parse(propertyv);
                 var Materials = matpro.ToObject<Materials[]>();
+                Check.That(Materials).IsNotNull();
 
                 JToken t = JToken.FromObject(Materials, true, new System.Type[] { typeof(System.Drawing.Bitmap) });
                 string s = t.ToString();
@@ -1148,7 +1149,7 @@ namespace EDDiscoveryTests
         [Test]
         public void JSONtextReader()
         {
-                string propertyv =
+            string propertyv =
 @"    [
   {
     ""Count"":0,
@@ -1188,7 +1189,7 @@ namespace EDDiscoveryTests
 
                 using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
                 {
-                    foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None))
+                    foreach (var t in JToken.ParseToken(sr, JToken.ParseOptions.None))
                     {
                         if (t.IsProperty)
                             System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
@@ -1201,7 +1202,7 @@ namespace EDDiscoveryTests
             {
                 using (StringReader sr = new StringReader(jsongithub))         // read directly from file..
                 {
-                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None).GetEnumerator();
+                    var enumerator = JToken.ParseToken(sr, JToken.ParseOptions.None).GetEnumerator();
 
                     while (enumerator.MoveNext())
                     {
@@ -1240,7 +1241,7 @@ namespace EDDiscoveryTests
 
                 using (StringReader sr = new StringReader(propertyq))         // read directly from file..
                 {
-                    var enumerator = JToken.ParseToken(sr,JToken.ParseOptions.None,128).GetEnumerator();
+                    var enumerator = JToken.ParseToken(sr, JToken.ParseOptions.None, 128).GetEnumerator();
 
                     while (enumerator.MoveNext())
                     {
@@ -1258,13 +1259,13 @@ namespace EDDiscoveryTests
 
 
             string filename = @"c:\code\edsm\edsmsystems.10000.json";
-            if ( File.Exists(filename))
+            if (File.Exists(filename))
             {
                 using (FileStream originalFileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
                 {
                     using (StreamReader sr = new StreamReader(originalFileStream))
                     {
-                        foreach (var t in JToken.ParseToken(sr,JToken.ParseOptions.None,2999))
+                        foreach (var t in JToken.ParseToken(sr, JToken.ParseOptions.None, 2999))
                         {
                             if (t.IsProperty)
                                 System.Diagnostics.Debug.WriteLine("Property " + t.Name + " " + t.TokenType + " `" + t.Value + "`");
@@ -1277,5 +1278,72 @@ namespace EDDiscoveryTests
 
         }
 
+        public class AltNameClass
+        {
+            public string Name;
+            [JsonNameAttribute("Category", "Type")]
+            public string Category;
+            public int Count;
+        }
+
+        [Test]
+        public void JSONAltNamesToObject()
+        {
+            {
+                string propertyv =
+                @"
+      {
+        ""Count"":0,
+        ""Name"":""Name"",
+        ""Category"":""Cat""
+      }
+    ";
+                JToken matpro = JToken.Parse(propertyv);
+                var AltNameClass = matpro.ToObject<AltNameClass>();
+                Check.That(AltNameClass).IsNotNull();
+                Check.That(AltNameClass.Name).Equals("Name");
+                Check.That(AltNameClass.Count).Equals(0);
+                Check.That(AltNameClass.Category).Equals("Cat");
+
+
+            }
+            {
+                string propertyv =
+                @"
+      {
+        ""Count"":0,
+        ""Name"":""Name"",
+        ""Type"":""Cat""
+      }
+    ";
+                JToken matpro = JToken.Parse(propertyv);
+                var AltNameClass = matpro.ToObject<AltNameClass>();
+                Check.That(AltNameClass).IsNotNull();
+                Check.That(AltNameClass.Name).Equals("Name");
+                Check.That(AltNameClass.Count).Equals(0);
+                Check.That(AltNameClass.Category).Equals("Cat");
+
+
+            }
+            {
+                string propertyv =
+                @"
+      {
+        ""Count"":0,
+        ""Name"":""Name"",
+        ""Fred"":""Cat""
+      }
+    ";
+                JToken matpro = JToken.Parse(propertyv);
+                var AltNameClass = matpro.ToObject<AltNameClass>();
+                Check.That(AltNameClass).IsNotNull();
+                Check.That(AltNameClass.Name).Equals("Name");
+                Check.That(AltNameClass.Count).Equals(0);
+                Check.That(AltNameClass.Category).IsNull();
+
+
+            }
+
+        }
     }
 }
