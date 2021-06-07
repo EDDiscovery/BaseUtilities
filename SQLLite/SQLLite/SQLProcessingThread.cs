@@ -115,6 +115,7 @@ namespace SQLLiteExtensions
         private ConcurrentBag<Thread> ReadOnlyThreads = new ConcurrentBag<Thread>();
         private int ThreadsAvailable = 0;
         private int RunningThreads = 0;
+        private int WriterCount = 0;
 
         public long? SqlThreadId => SqlThread?.ManagedThreadId;
 
@@ -287,9 +288,9 @@ namespace SQLLiteExtensions
             ReadOnlyThreads.Add(thread);
         }
 
-        public void SetReadOnly()
+        private void SetReadOnlyInternal()
         {
-            if (!ReadOnly && !StopRequested)
+            if (!StopRequested)
             {
                 SwitchToReadOnlyRequested = true;
                 Interlocked.MemoryBarrier();
@@ -306,55 +307,77 @@ namespace SQLLiteExtensions
 
                 ReadOnly = true;
                 SwitchToReadOnlyRequested = false;
+                StopCompleted = new ManualResetEvent(true);
+                StopRequestedEvent = new ManualResetEvent(false);
                 StopRequestedEvent.Reset();
                 ReadOnlyLock.ReleaseWriterLock();
                 StartReadonlyThread();
             }
         }
 
+        private void SetReadWriteInternal()
+        {
+            SwitchToReadOnlyRequested = true;
+            StopRequestedEvent.Set();
+            Interlocked.MemoryBarrier();
+            ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
+            StopCompleted.WaitOne();
+            ReadOnly = false;
+            ReadOnlyLock.ReleaseWriterLock();
+            StopCompleted = new ManualResetEvent(true);
+            StopRequestedEvent = new ManualResetEvent(false);
+
+            while (ReadOnlyThreads.TryTake(out var thread));
+
+            SwitchToReadOnlyRequested = false;
+
+            SqlThread = new Thread(SqlThreadProc);
+            SqlThread.Name = SqlThreadName;
+            SqlThread.IsBackground = true;
+            System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name} SQL Thread " + SqlThreadName);
+            SqlThread.Start();
+        }
+
         public void SetReadWrite()
         {
-            if (ReadOnly)
+            var stopcompleted = StopCompleted;
+
+            if (Interlocked.Increment(ref WriterCount) == 1)
             {
-                SwitchToReadOnlyRequested = true;
-                StopRequestedEvent.Set();
-                Interlocked.MemoryBarrier();
-                ReadOnlyLock.AcquireWriterLock(Timeout.Infinite);
-                StopCompleted.WaitOne();
-                ReadOnly = false;
-                ReadOnlyLock.ReleaseWriterLock();
-                StopRequestedEvent.Reset();
+                SetReadWriteInternal();
+            }
+            else if (ReadOnly)
+            {
+                stopcompleted.WaitOne();
+            }
+        }
 
-                while (ReadOnlyThreads.TryTake(out var thread));
+        public void SetReadOnly()
+        {
+            int count = Interlocked.Decrement(ref WriterCount);
 
-                SwitchToReadOnlyRequested = false;
+            if (count < 0)
+            {
+                count = Interlocked.Increment(ref WriterCount);
+            }
 
-                SqlThread = new Thread(SqlThreadProc);
-                SqlThread.Name = SqlThreadName;
-                SqlThread.IsBackground = true;
-                System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + $"Start {typeof(ConnectionType).Name} SQL Thread " + SqlThreadName);
-                SqlThread.Start();
+            if (count == 0 && !ReadOnly)
+            {
+                SetReadOnlyInternal();
             }
         }
 
         public T WithReadWrite<T>(Func<T> action)
         {
-            if (ReadOnly)
-            {
-                SetReadWrite();
+            SetReadWrite();
 
-                try
-                {
-                    return action();
-                }
-                finally
-                {
-                    SetReadOnly();
-                }
-            }
-            else
+            try
             {
                 return action();
+            }
+            finally
+            {
+                SetReadOnly();
             }
         }
 
