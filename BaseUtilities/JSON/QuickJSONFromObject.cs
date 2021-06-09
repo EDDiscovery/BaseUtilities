@@ -40,24 +40,24 @@ namespace BaseUtils.JSON
         }
 
         // null if can't convert
-        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256)
+        public static JToken FromObject(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256, System.Reflection.BindingFlags membersearchflags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static)
         {
             Stack<Object> objectlist = new Stack<object>();
-            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth);
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth, membersearchflags);
             System.Diagnostics.Debug.Assert(objectlist.Count == 0);
             return r.IsInError ? null : r;
         }
 
         // JToken Error on error, value is reason as a string
-        public static JToken FromObjectWithError(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256)
+        public static JToken FromObjectWithError(Object o, bool ignoreunserialisable, Type[] ignored = null, int maxrecursiondepth = 256, System.Reflection.BindingFlags membersearchflags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static)
         {
             Stack<Object> objectlist = new Stack<object>();
-            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth);
+            var r = FromObjectInt(o, ignoreunserialisable, ignored, objectlist,0,maxrecursiondepth, membersearchflags);
             System.Diagnostics.Debug.Assert(objectlist.Count == 0);
             return r;
         }
 
-        private static JToken FromObjectInt(Object o, bool ignoreunserialisable, Type[] ignored, Stack<Object> objectlist, int lvl, int maxrecursiondepth)
+        private static JToken FromObjectInt(Object o, bool ignoreunserialisable, Type[] ignored, Stack<Object> objectlist, int lvl, int maxrecursiondepth, System.Reflection.BindingFlags membersearchflags )
         {
             //System.Diagnostics.Debug.WriteLine(lvl + "From Object on " + o.GetType().Name);
 
@@ -83,7 +83,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in Array");
                     }
 
-                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth, membersearchflags);
 
                     if (inner.IsInError)      // used as an error type
                     {
@@ -113,7 +113,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in IList");
                     }
 
-                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
+                    JToken inner = FromObjectInt(oa, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth, membersearchflags);
 
                     if (inner.IsInError)      // used as an error type
                     {
@@ -146,7 +146,7 @@ namespace BaseUtils.JSON
                         return new JToken(TType.Error, "Self Reference in IDictionary");
                     }
 
-                    JToken inner = FromObjectInt(kvp.Value, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth);
+                    JToken inner = FromObjectInt(kvp.Value, ignoreunserialisable, ignored, objectlist,lvl+1, maxrecursiondepth, membersearchflags);
                     if (inner.IsInError)      // used as an error type
                     {
                         objectlist.Pop();
@@ -171,8 +171,7 @@ namespace BaseUtils.JSON
             {
                 JObject outobj = new JObject();
 
-                var allmembers = tt.GetMembers(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
-                                            System.Reflection.BindingFlags.Public );
+                var allmembers = tt.GetMembers(membersearchflags);
 
                 objectlist.Push(o);
 
@@ -225,7 +224,7 @@ namespace BaseUtils.JSON
                             return new JToken(TType.Error, "Self Reference by " + tt.Name + ":" + mi.Name );
                         }
 
-                        var token = FromObjectInt(innervalue, ignoreunserialisable, ignored, objectlist, lvl+1, maxrecursiondepth);     // may return End Object if not serializable
+                        var token = FromObjectInt(innervalue, ignoreunserialisable, ignored, objectlist, lvl+1, maxrecursiondepth, membersearchflags);     // may return End Object if not serializable
 
                         if (token.IsInError)
                         {
