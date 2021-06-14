@@ -179,7 +179,7 @@ namespace BaseUtils
             return list;
         }
 
-        public string ToString( System.Globalization.CultureInfo ci)
+        public string ToString(System.Globalization.CultureInfo ci)
         {
             if (InError)
                 return ((StringParser.ConvertError)value).ErrorValue;
@@ -189,6 +189,26 @@ namespace BaseUtils
                 return ((long)value).ToString(ci);
             else
                 return (string)value;
+        }
+
+        public bool ToSafeString(string fmt, out string ret)
+        {
+            if (InError)
+            {
+                ret = ((StringParser.ConvertError)value).ErrorValue;
+                return false;
+            }
+            else if (value is double)
+            {
+                return ((double)value).SafeToString(fmt, out ret);
+            }
+            else if (value is long)
+                return ((long)value).SafeToString(fmt, out ret);
+            else
+            {
+                ret = (string)value;
+                return true;
+            }
         }
 
         #endregion

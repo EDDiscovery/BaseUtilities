@@ -44,7 +44,7 @@ namespace BaseUtils
                 #region Numbers
                 functions.Add("abs", new FuncEntry(Abs, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));  // first is macro or lit. second is macro or literal
                 functions.Add("int", new FuncEntry(Int, FuncEntry.PT.ImeSE, FuncEntry.PT.LmeSE));  // first is macro or lit, second is macro or lit
-                functions.Add("eval", new FuncEntry(Eval, 1, FuncEntry.PT.LmeSE, FuncEntry.PT.LS));   // can be string, can be variable, can be literal p2 is not a variable, and can't be a string
+                functions.Add("eval", new FuncEntry(Eval, 1, FuncEntry.PT.LmeSE, FuncEntry.PT.LS, FuncEntry.PT.LmeSE));   // can be string, can be variable, can be literal p2 is not a variable, and can't be a string. p3 can be string, can be variable
                 functions.Add("floor", new FuncEntry(Floor, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));     // first is macros or lit, second is macro or literal
                 functions.Add("hnum", new FuncEntry(Hnum, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));   // para 1 literal or var, para 2 string, literal or var
 
@@ -780,7 +780,23 @@ namespace BaseUtils
         {
             // string, or if macro name use macro value, else literal
             string s = paras[0].Value;
-            bool tryit = paras.Count > 1 && paras[1].Value.Equals("Try", StringComparison.InvariantCultureIgnoreCase);
+            bool tryit = false;
+            if ( paras.Count >= 2 )
+            {
+                if (paras[1].Value.Equals("Try", StringComparison.InvariantCultureIgnoreCase))
+                    tryit = true;
+                else if (!paras[1].Value.Equals("Error", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    output = "Eval parameter 2 invalid";
+                    return false;
+                }
+            }
+
+            string fmt = "";
+            if ( paras.Count >= 3)
+            {
+                fmt = paras[2].Value;
+            }
 
             BaseUtils.Eval ev = new BaseUtils.Eval(s, checkend: true, allowfp: true, allowstrings: false);
 
@@ -792,8 +808,13 @@ namespace BaseUtils
                 return true;
             }
 
-            output = ev.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            return ev.InError == false; 
+            if (fmt == "")
+            {
+                output = ev.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return ev.InError == false;
+            }
+            else
+                return ev.ToSafeString(fmt, out output);
         }
 
         const double LM = 0.000001;
