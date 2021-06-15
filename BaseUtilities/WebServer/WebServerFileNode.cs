@@ -25,8 +25,6 @@ namespace BaseUtils.WebServer
 
     public class HTTPFileNode : IHTTPNode
     {
-        public string[] BinaryTypes = new string[] { ".png", ".bmp", ".ico", ".jpg" , ".jpeg", ".tif", ".tiff", ".gif" , ".raw", ".eps" };
-
         private string path;
 
         public HTTPFileNode(string pathbase)
@@ -34,7 +32,7 @@ namespace BaseUtils.WebServer
             this.path = pathbase;
         }
 
-        public virtual byte[] Response(string partialpath, HttpListenerRequest request)
+        public virtual NodeResponse Response(string partialpath, HttpListenerRequest request)
         {
             string file = Path.Combine(path, partialpath);
 
@@ -46,15 +44,17 @@ namespace BaseUtils.WebServer
                 {
                     string ext = Path.GetExtension(file);
 
-                    if (BinaryTypes.ContainsIn(ext, StringComparison.InvariantCultureIgnoreCase) != -1 )
-                    {
-                        //System.Diagnostics.Debug.WriteLine("Transfer " + file + " as binary");
-                        return File.ReadAllBytes(file);
+                    var content = Server.GetContentType(partialpath);
+
+                    if ( content.Item2)
+                    { 
+                       // System.Diagnostics.Debug.WriteLine("Transfer " + file + " as binary");
+                        return new NodeResponse(File.ReadAllBytes(file), content.Item1);
                     }
                     else
                     {
                         string data = File.ReadAllText(file, Encoding.UTF8);
-                        return Encoding.UTF8.GetBytes(data);
+                        return new NodeResponse( Encoding.UTF8.GetBytes(data), content.Item1);
                     }
                 }
                 catch (Exception e)
@@ -65,7 +65,7 @@ namespace BaseUtils.WebServer
 
             System.Diagnostics.Debug.WriteLine("File Request: Not found: " + file);
             string text = "Resource not available " + request.Url + " local " + file + Environment.NewLine;
-            return Encoding.UTF8.GetBytes(text);
+            return new NodeResponse(Encoding.UTF8.GetBytes(text), "text/plain");
         }
     }
 }

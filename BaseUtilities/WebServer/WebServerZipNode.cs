@@ -24,8 +24,6 @@ namespace BaseUtils.WebServer
 {
     public class HTTPZipNode : IHTTPNode
     {
-        public string[] BinaryTypes = new string[] { ".png", ".bmp", ".ico", ".jpg" , ".jpeg", ".tif", ".tiff", ".gif" , ".raw", ".eps" };
-
         private string path;
 
         public HTTPZipNode(string pathbase)
@@ -33,7 +31,7 @@ namespace BaseUtils.WebServer
             this.path = pathbase;
         }
 
-        public virtual byte[] Response(string partialpath, HttpListenerRequest request)
+        public virtual NodeResponse Response(string partialpath, HttpListenerRequest request)
         {
             try
             {
@@ -52,10 +50,11 @@ namespace BaseUtils.WebServer
                         {
                             var memstrm = new MemoryStream(); // Image will own this
                             zipstrm.CopyTo(memstrm);
-                            string ext = Path.GetExtension(partialpath);
 
-                            if (BinaryTypes.ContainsIn(ext, StringComparison.InvariantCultureIgnoreCase) != -1)
-                                return memstrm.ToArray();
+                            var content = Server.GetContentType(partialpath);
+
+                            if (content.Item2)
+                                return new NodeResponse(memstrm.ToArray(), content.Item1);
                             else
                             {
                                 memstrm.Position = 0;
@@ -63,7 +62,7 @@ namespace BaseUtils.WebServer
                                 {
                                     string s = sr.ReadToEnd();
                                     var data = Encoding.UTF8.GetBytes(s);
-                                    return data;
+                                    return new NodeResponse(data, content.Item1);
                                 }
                             }
                         }
@@ -77,7 +76,7 @@ namespace BaseUtils.WebServer
 
             System.Diagnostics.Debug.WriteLine("File Request: Not found: " + partialpath);
             string text = "Resource not available " + request.Url + " local " + partialpath + Environment.NewLine;
-            return Encoding.UTF8.GetBytes(text);
+            return new NodeResponse(Encoding.UTF8.GetBytes(text), "text/plain");
         }
     }
 }

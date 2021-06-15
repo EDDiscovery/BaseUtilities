@@ -29,7 +29,7 @@ namespace BaseUtils.WebServer
         public Action<string> ServerLog { get; set; } = null;   // set to get server log messages
         public int WebSocketMsgBufferSize { get; set; } = 8192; // set max size of received packet
 
-        public delegate byte[] HTTPResponderFunc(HttpListenerRequest lr, Object lrdata);    // template for HTTP responders
+        public delegate NodeResponse HTTPResponderFunc(HttpListenerRequest lr, Object lrdata);    // template for HTTP responders
         public delegate void WebSocketsResponderFunc(HttpListenerRequest lr, WebSocket ws,  // template for web socket responders
                                         WebSocketReceiveResult res, byte[] buffer, Object lrdata);
 
@@ -49,6 +49,8 @@ namespace BaseUtils.WebServer
             prefixesString = string.Join(";", prefixes);
 
             tks = new CancellationTokenSource();
+
+
         }
 
         // call to add a HTTP responder
@@ -203,9 +205,10 @@ namespace BaseUtils.WebServer
             {
                 ServerLog?.Invoke(ctx.Request.RequestInfo());
 
-                byte[] buf = httpresponder.Item1(ctx.Request, httpresponder.Item2);      // get response from method.  Always responds with data
-                ctx.Response.ContentLength64 = buf.Length;
-                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                NodeResponse res = httpresponder.Item1(ctx.Request, httpresponder.Item2);      // get response from method.  Always responds with data
+                ctx.Response.ContentType = res.ContentType;
+                ctx.Response.ContentLength64 = res.Data.Length;
+                ctx.Response.OutputStream.Write(res.Data, 0, res.Data.Length);
             }
             catch ( Exception e)
             {   // suppress any exceptions
@@ -293,6 +296,21 @@ namespace BaseUtils.WebServer
         }
 
         #endregion
+
+        public static string[] BinaryMIMETypes { get; set; } = new string[] { "image/" };
+
+        public static Tuple<string,bool> GetContentType(string path)
+        {
+            string contenttype = System.Web.MimeMapping.GetMimeMapping(path);
+            bool readbin = BinaryMIMETypes.StartsWith(contenttype, StringComparison.InvariantCultureIgnoreCase) >= 0;
+
+            if (contenttype == "application/x-javascript")
+                contenttype = "text/javascript";        // per https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+
+            System.Diagnostics.Debug.WriteLine("File {0} = {1} bin {2}", path, contenttype, readbin);
+
+            return new Tuple<string, bool>(contenttype, readbin);
+        }
 
         #region vars
 

@@ -21,9 +21,21 @@ using System.Text;
 
 namespace BaseUtils.WebServer
 {
+    // this is the data passed back to send, and other parameters
+    public class NodeResponse
+    {
+        public byte[] Data { get; set; }
+        public string ContentType { get; set; }
+        public NodeResponse(byte[] d, string ct)
+        {
+            Data = d;
+            ContentType = ct;
+        }
+    }
+
     public interface IHTTPNode
     {
-        byte[] Response(string partialpath, HttpListenerRequest request);       // if return null, you get a resource unavailable message back
+        NodeResponse Response(string partialpath, HttpListenerRequest request);       // if return null, you get a resource unavailable message back
     }
 
     // this holds a list of http dispatchers and processes the HTTPlistenerrequest and decides which one to use
@@ -54,7 +66,7 @@ namespace BaseUtils.WebServer
 
         // receive the request, find the node, dispatch, else moan
 
-        public byte[] Response(HttpListenerRequest request)
+        public NodeResponse Response(HttpListenerRequest request)
         {
             string resourcepath = request.Url.AbsolutePath;
 
@@ -82,7 +94,7 @@ namespace BaseUtils.WebServer
                 return URLNotFound.Response(resourcepath, request);
 
             string notfound = "Resource not available " + request.Url;
-            return Encoding.UTF8.GetBytes(notfound);
+            return new NodeResponse(Encoding.UTF8.GetBytes(notfound),"text/plain");
         }
     }
 
