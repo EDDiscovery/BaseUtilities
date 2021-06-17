@@ -208,6 +208,30 @@ namespace BaseUtils.WebServer
                 NodeResponse res = httpresponder.Item1(ctx.Request, httpresponder.Item2);      // get response from method.  Always responds with data
                 ctx.Response.ContentType = res.ContentType;
                 ctx.Response.ContentLength64 = res.Data.Length;
+                if ( res.Headers != null )
+                    ctx.Response.Headers.Add(res.Headers);
+
+#if false
+                var x = ctx.Response.Headers.AllKeys;
+
+                WebHeaderCollection headers = ctx.Response.Headers;
+                foreach (string key in headers.AllKeys)
+                {
+                    string[] values = headers.GetValues(key);
+                    if (values.Length > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine("The values of the " + key + " header are: ");
+                        foreach (string value in values)
+                        {
+                            System.Diagnostics.Debug.WriteLine("   " + value);
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("There is no value associated with the header.");
+                    }
+                }
+#endif
                 ctx.Response.OutputStream.Write(res.Data, 0, res.Data.Length);
             }
             catch ( Exception e)
@@ -295,7 +319,7 @@ namespace BaseUtils.WebServer
             System.Diagnostics.Debug.WriteLine("WEBSOCKET terminate " + prefixesString);
         }
 
-        #endregion
+#endregion
 
         public static string[] BinaryMIMETypes { get; set; } = new string[] { "image/" };
 
@@ -312,7 +336,7 @@ namespace BaseUtils.WebServer
             return new Tuple<string, bool>(contenttype, readbin);
         }
 
-        #region vars
+#region vars
 
         protected HttpListener listener = new HttpListener();
 
@@ -326,7 +350,7 @@ namespace BaseUtils.WebServer
         protected string prefixesString;    // debug only
 
         CancellationTokenSource tks;        // for graceful shut down
-        #endregion
+#endregion
 
     }
 

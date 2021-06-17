@@ -26,10 +26,13 @@ namespace BaseUtils.WebServer
     {
         public byte[] Data { get; set; }
         public string ContentType { get; set; }
-        public NodeResponse(byte[] d, string ct)
+        public WebHeaderCollection Headers { get; set; }
+
+        public NodeResponse(byte[] d, string ct, WebHeaderCollection hc = null)
         {
             Data = d;
             ContentType = ct;
+            Headers = hc;
         }
     }
 
