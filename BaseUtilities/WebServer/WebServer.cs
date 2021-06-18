@@ -48,9 +48,8 @@ namespace BaseUtils.WebServer
 
             prefixesString = string.Join(";", prefixes);
 
-            tks = new CancellationTokenSource();
-
-
+            cancellation = new CancellationTokenSource();
+            stopped = new ManualResetEvent(false);
         }
 
         // call to add a HTTP responder
@@ -68,8 +67,13 @@ namespace BaseUtils.WebServer
         //stop - does not wait for thread pools to terminate
         public void Stop()
         {
-            tks.Cancel();
+            cancellation.Cancel();
+            stopped.WaitOne();                  // wait till main thread pool has stopped, but there may be outstanding thread pools out there
+            while (threadsActive != 0)          // so we wait until interlocked thread count is zero
+                Thread.Sleep(50);
         }
+
+        int threadsActive = 0;
 
         // call this to run the system - returns after kicking it off
         public bool Run()
@@ -83,17 +87,24 @@ namespace BaseUtils.WebServer
                 return false;       // probably due to a security exception
             }
 
+            Interlocked.Increment(ref threadsActive);
+
             ThreadPool.QueueUserWorkItem((o) =>         // in a thread pool, handing incoming requests
             {
-                System.Diagnostics.Debug.WriteLine("Listening on " + prefixesString);
+                System.Diagnostics.Debug.WriteLine("WS-Listening on " + prefixesString);
 
                 try
                 {
+                    // make a callback function up to receive incoming requests
+
                     AsyncCallback OnContextReceived = new AsyncCallback((res) => 
                     {
-                        if (!tks.IsCancellationRequested)       // make sure we are not in cancellation mode
+
+                        if (!cancellation.IsCancellationRequested)       // make sure we are not in cancellation mode
                         {
                             HttpListenerContext ctx = listener.EndGetContext(res);
+
+                           // System.Diagnostics.Debug.WriteLine("WS-Async handle call " + ctx.Request.Url.AbsolutePath + " on " + Thread.CurrentThread.ManagedThreadId + " TC " + threadsActive);
 
                             if (ctx.Request.IsWebSocketRequest)
                             {
@@ -104,8 +115,14 @@ namespace BaseUtils.WebServer
                                     System.Diagnostics.Debug.WriteLine("WEBSOCKET Requesting protocol " + protocol);
                                     //System.Diagnostics.Debug.WriteLine("Headers:" + ctx.Request.RequestHeaders().LineTextInsersion("  "));
 
+                                    Interlocked.Increment(ref threadsActive);   // incrememnt before thread, so it holds the stop
+
                                     // a new thread handles the web sockets
-                                    ThreadPool.QueueUserWorkItem((ox) => { ProcessWebSocket(ctx, protocol, websocketresponders[protocol], tks.Token); });  
+                                    ThreadPool.QueueUserWorkItem((ox) => 
+                                    {
+                                        ProcessWebSocket(ctx, protocol, websocketresponders[protocol], cancellation.Token);
+                                        Interlocked.Decrement(ref threadsActive);
+                                    });  
                                 }
                                 else
                                 {
@@ -130,20 +147,25 @@ namespace BaseUtils.WebServer
                                 }
                             }
                         }
+
                     });
 
-                    while (!tks.IsCancellationRequested)            // sit here, spawing off a begin get context (which OnContextReceived services) 
+                    int txno = 0;
+
+                    while (!cancellation.IsCancellationRequested)            // sit here, spawing off a begin get context (which OnContextReceived services) 
                                                                     // and wait for either a completion or a cancellation
                     {
-                        //System.Diagnostics.Debug.WriteLine("beinggetcontext");
-                        IAsyncResult iar=  listener.BeginGetContext(OnContextReceived, null);
-                        //System.Diagnostics.Debug.WriteLine("wait");
-                        WaitHandle.WaitAny(new WaitHandle[] { iar.AsyncWaitHandle, tks.Token.WaitHandle });
-                        //System.Diagnostics.Debug.WriteLine("wait over");
+                        //System.Diagnostics.Debug.WriteLine("WS-beinggetcontext " + txno + " on " + Thread.CurrentThread.ManagedThreadId + " TC "  + threadsActive);
+                        IAsyncResult iar =  listener.BeginGetContext(OnContextReceived, null);
+                        //System.Diagnostics.Debug.WriteLine("WS-wait " + txno);
+                        WaitHandle.WaitAny(new WaitHandle[] { iar.AsyncWaitHandle, cancellation.Token.WaitHandle });
+                        //System.Diagnostics.Debug.WriteLine("WS-wait over " + txno);
+                        txno++;
                     }
 
-                    System.Diagnostics.Debug.WriteLine("listener abort");
+                    System.Diagnostics.Debug.WriteLine("WS-listener abort");
                     listener.Abort();
+
                 }
                 catch ( Exception e )
                 {
@@ -151,11 +173,13 @@ namespace BaseUtils.WebServer
 
                 } // suppress any exceptions
 
-                System.Diagnostics.Debug.WriteLine("Listening close");
+                System.Diagnostics.Debug.WriteLine("WS-Listening close");
                 listener.Close();
                 listener = null;
-                System.Diagnostics.Debug.WriteLine("Listening now null");
+                System.Diagnostics.Debug.WriteLine("WS-Listening now null");
 
+                Interlocked.Decrement(ref threadsActive);
+                stopped.Set();
             });
 
             return true;
@@ -349,7 +373,8 @@ namespace BaseUtils.WebServer
 
         protected string prefixesString;    // debug only
 
-        CancellationTokenSource tks;        // for graceful shut down
+        CancellationTokenSource cancellation;        // for graceful shut down
+        ManualResetEvent stopped;
 #endregion
 
     }
