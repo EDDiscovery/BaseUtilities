@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016-2020 EDDiscovery development team
+ * Copyright © 2016-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -27,9 +27,9 @@ namespace BaseUtils.Icons
 {
     public class IconSet : IIcons
     {
-        private Dictionary<string, Object> Icons { get; set; } = new Dictionary<string, Object>();
+        private Dictionary<string, Object> Icons { get; set; } = new Dictionary<string, Object>(StringComparer.InvariantCultureIgnoreCase);
 
-        public bool Contains(string name)       // contains this icon
+        public bool Contains(string name)       // contains this icon. Icons are case insensitive, as the windows file system is.
         {
             return Icons.ContainsKey(name);
         }
@@ -207,15 +207,14 @@ namespace BaseUtils.Icons
             Icons[name] = i;
         }
 
-        public Image Get(string name)
+        public Image Get(string name)       // name is case insensitive
         {
             if (Icons == null)      // seen designer barfing over this
                 return new Bitmap(1, 1);
 
-            //System.Diagnostics.Debug.WriteLine("ICON " + name);
-
             if (!Icons.TryGetValue(name, out object o))            // if not found, must return someting, so default
             {
+                System.Diagnostics.Debug.WriteLine("*** MISSING ICON " + name);
                 if (!Icons.TryGetValue("Default", out o))            // if not found, must return someting, so default
                     return new Bitmap(1, 1);
             }
