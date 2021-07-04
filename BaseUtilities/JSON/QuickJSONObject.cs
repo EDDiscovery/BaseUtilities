@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020 robby & EDDiscovery development team
+ * Copyright © 2021 robby & EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -24,7 +24,7 @@ namespace BaseUtils.JSON
     // small light JSON decoder and encoder.
     // Object class, holds key/value pairs
 
-    public class JObject : JToken, IEnumerable<KeyValuePair<string, JToken>>
+    public partial class JObject : JToken, IEnumerable<KeyValuePair<string, JToken>>
     {
         public JObject()
         {
