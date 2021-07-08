@@ -27,39 +27,49 @@ public static class DataGridViewControlHelpersStaticFunc
     // sort using number. Removetext will remove text suggested
     // usetag means use cell tag as subsititute text
 
-    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null, bool usetag = false)
+    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null, bool usecelltag = false)
     {
-        string left = e.CellValue1?.ToString();
-        string right = e.CellValue2?.ToString();
-
-        if (usetag)
+        if (usecelltag)
         {
-            if (!left.HasChars())
-                left = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            if (!right.HasChars())
-                right = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
+            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
+            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
+
+            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
+            var right = tagr != null ? tagr : e.CellValue2?.ToString();
+
+            e.SortResult = left.CompareNumeric(right, removetext);
         }
-        e.SortResult = left.CompareNumeric(right, removetext);
+        else
+        {
+            string left = e.CellValue1?.ToString();
+            string right = e.CellValue2?.ToString();
+            e.SortResult = left.CompareNumeric(right, removetext);
+        }
+
         e.Handled = true;
     }
 
     // sort using date. userowtagtodistinquish = true use .row as long tag
     // usetag means use cell tag as subsititute text
 
-    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e, bool userowtagtodistinguish = false, bool usetag = false)
+    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e, bool userowtagtodistinguish = false, bool usecelltag = false)
     {
-        string left = e.CellValue1?.ToString();
-        string right = e.CellValue2?.ToString();
-
-        if (usetag)
+        if (usecelltag)
         {
-            if (!left.HasChars())
-                left = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            if (!right.HasChars())
-                right = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-        }
+            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
+            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
 
-        e.SortResult = left.CompareDate(right);
+            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
+            var right = tagr != null ? tagr : e.CellValue2?.ToString();
+
+            e.SortResult = left.CompareDate(right);
+        }
+        else
+        {
+            string left = e.CellValue1?.ToString();
+            string right = e.CellValue2?.ToString();
+            e.SortResult = left.CompareDate(right);
+        }
 
         if (e.SortResult == 0 && userowtagtodistinguish)
         {
@@ -79,33 +89,24 @@ public static class DataGridViewControlHelpersStaticFunc
     // sort using alpha culture/case sensitive
     // usetag means use cell tag as subsititute text
 
-    static public void SortDataGridViewColumnAlpha(this DataGridViewSortCompareEventArgs e, bool usetag = false)
+    static public void SortDataGridViewColumnAlpha(this DataGridViewSortCompareEventArgs e, bool usecelltag = false)
     {
-        string left = e.CellValue1?.ToString();
-        string right = e.CellValue2?.ToString();
-
-        if (usetag)
+        if (usecelltag)
         {
-            bool lchar = left.HasChars();
-            bool rchar = right.HasChars();
+            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
+            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
 
-            if (!lchar)
-                left = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            if (!rchar)
-                right = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
+            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
+            var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
             e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
-
-            if ( e.SortResult == 0)
-            {
-                if (!lchar)
-                    e.SortResult = 1;
-                else if (!rchar)
-                    e.SortResult = -1;
-            }
         }
         else
+        {
+            string left = e.CellValue1?.ToString();
+            string right = e.CellValue2?.ToString();
             e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+        }
 
         e.Handled = true;
     }
