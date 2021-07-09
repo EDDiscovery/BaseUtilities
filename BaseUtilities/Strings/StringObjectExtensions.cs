@@ -580,7 +580,42 @@ public static class ObjectExtensionsStrings
         return -1;
     }
 
+    static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase)
+    {
+        if (s == null)
+            return null;
 
+        var start = new int[s.Length];
+        var len = new int[s.Length];
+        var sections = 0;
 
+        int ipos = 0;
+        for( ipos = 0; ipos < s.Length;)            // ipos is left at start of last section, or may be at s.Length
+        {
+            int nextpos = s.IndexOf(splitchars, ipos, cmp);
+            if (nextpos >= 0)
+            {
+                start[sections] = ipos;
+                len[sections++] = nextpos - ipos;
+                ipos = nextpos + splitchars.Length;
+            }
+            else
+            {
+                start[sections] = ipos;             // if not found, add last section
+                len[sections++] = s.Length - ipos;
+                break;
+            }
+        }
+
+        if (sections == 0)
+            return new string[] { "" };     // mimic "".split('') behaviour
+        else
+        {
+            string[] ret = new string[sections];
+            for (int j = 0; j < sections; j++)
+                ret[j] = s.Substring(start[j], len[j]);
+            return ret;
+        }
+    }
 }
 

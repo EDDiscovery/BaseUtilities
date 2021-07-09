@@ -85,6 +85,7 @@ namespace BaseUtils
         private Dictionary<string, string> originalenglish = null;      // optional load
         private Dictionary<string, string> originalfile = null;         // optional load
         private Dictionary<string, int> originalline = null;            // optional load
+        private Dictionary<string, bool> inuse = null;                  // optional load
         private List<Type> ExcludedControls = new List<Type>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
@@ -101,14 +102,31 @@ namespace BaseUtils
         public string GetOriginalFile(string fullid) => originalfile[fullid];         // ensure its there first!
         public int GetOriginalLine(string fullid) => originalline[fullid];         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
-        // You can call this multiple times if required for debugging purposes
+        public List<string> NotUsed()                                               // if track use on, whats not used
+        {
+            if (inuse != null)
+            {
+                List<string> res = new List<string>();
+                foreach (var kvp in translations)
+                {
+                    if (!inuse.ContainsKey(kvp.Key))
+                        res.Add(kvp.Key);
+                }
+                return res;
+            }
+            else
+                return null;
+        }
 
+
+        // You can call this multiple times if required for debugging purposes
         public void LoadTranslation(string language, CultureInfo uicurrent, 
                                     string[] txfolders, int includesearchupdepth, 
                                     string logdir, 
                                     string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
                                     bool loadorgenglish = false,                // optional load original english and store
-                                    bool loadfile = false                       // remember file where it came from
+                                    bool loadfile = false,                      // remember file where it came from
+                                    bool trackinuse = false                     // mark if in use
                                     )       
         {
 #if DEBUG
@@ -121,6 +139,8 @@ namespace BaseUtils
             translations = null;        // forget any
             originalenglish = null;
             originalfile = null;
+            originalline = null;
+            inuse = null;
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
@@ -156,6 +176,8 @@ namespace BaseUtils
                     originalenglish = new Dictionary<string, string>();
                     originalfile = new Dictionary<string, string>();
                     originalline = new Dictionary<string, int>();
+                    if ( trackinuse)
+                        inuse = new Dictionary<string, bool>();
 
                     string prefix = "";
 
@@ -334,6 +356,8 @@ namespace BaseUtils
 
                 if (translations.ContainsKey(key))
                 {
+                    if (inuse != null)
+                        inuse[key] = true;
 #if DEBUG
                     return translations[key] ?? normal.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
