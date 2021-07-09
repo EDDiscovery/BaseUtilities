@@ -120,7 +120,7 @@ namespace BaseUtils
 
 
         // You can call this multiple times if required for debugging purposes
-        public void LoadTranslation(string language, CultureInfo uicurrent, 
+        public bool LoadTranslation(string language, CultureInfo uicurrent, 
                                     string[] txfolders, int includesearchupdepth, 
                                     string logdir, 
                                     string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
@@ -161,7 +161,7 @@ namespace BaseUtils
             }
 
             if (langsel == null)
-                return;
+                return false;
 
             System.Diagnostics.Debug.WriteLine("Load Language " + langsel.Item2);
             logger?.WriteLine("Read " + langsel.Item2 + " from " + langsel.Item1);
@@ -176,7 +176,7 @@ namespace BaseUtils
                     originalenglish = new Dictionary<string, string>();
                     originalfile = new Dictionary<string, string>();
                     originalline = new Dictionary<string, int>();
-                    if ( trackinuse)
+                    if (trackinuse)
                         inuse = new Dictionary<string, bool>();
 
                     string prefix = "";
@@ -269,7 +269,7 @@ namespace BaseUtils
                                     {
                                         if (!translations.ContainsKey(id))
                                         {
-//                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
+                                            //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
                                             //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
                                             translations[id] = foreign;
                                             if (loadorgenglish)
@@ -290,7 +290,11 @@ namespace BaseUtils
                             }
                         }
                     }
+
+                    return true;
                 }
+                else
+                    return false;
             }
         }
 
