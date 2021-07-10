@@ -173,15 +173,6 @@ public static class ObjectExtensionsDates
         return ts.ToString();
     }
 
-    public static string SecondsToWeeksDaysHoursMinutesSeconds(this int seconds)
-    {
-        TimeSpan s = TimeSpan.FromSeconds(seconds);
-        int days = s.Days % 7;
-        int weeks = (s.Days - days) / 7;
-        return (weeks>0 ? $"{weeks} weeks " : "" ) + (days>0 ? $"{days} days " : "") + 
-                          $"{s.Hours} hours" + (weeks==0 ? $" {s.Minutes} minutes {s.Seconds} seconds" : "");
-    }
-
     static public DateTime ParseDateTime(this string s, DateTime def, CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)
     {
         DateTime ret;
