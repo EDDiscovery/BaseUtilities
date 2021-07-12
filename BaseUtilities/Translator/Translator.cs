@@ -28,6 +28,11 @@ public static class TranslatorExtensions
         return BaseUtils.Translator.Instance.Translate(s, s.FirstAlphaNumericText());
     }
 
+    static public string TxID(this string s, string id)              // use the text, pass id
+    {
+        return BaseUtils.Translator.Instance.Translate(s, id);
+    }
+
     static public string Tx(this string s, Object c, string id)     // use the type plus an id
     {
         return BaseUtils.Translator.Instance.Translate(s, c.GetType().Name, id);
@@ -405,7 +410,7 @@ namespace BaseUtils
                     {
                         string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
                         if (debugit)
-                            System.Diagnostics.Debug.WriteLine(" -> Check " + id + " " + ctrl.Text);
+                            System.Diagnostics.Debug.WriteLine("Check " + id + " " + ctrl.Text);
                         ctrl.Text = Translate(ctrl.Text, id);
                         if (debugit)
                             System.Diagnostics.Debug.WriteLine(" -> Ctrl now is " + ctrl.Text);
