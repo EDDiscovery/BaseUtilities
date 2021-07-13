@@ -1345,5 +1345,33 @@ namespace EDDiscoveryTests
             }
 
         }
+
+        [Test]
+        public void JSONBadFormatting()
+        {
+            {
+                string propertyv = @"{ ""timestamp"":""2021-07-13T13:18:55Z"", ""event"":""Status"", ""Flags"":2097152, ""Flags2"":17, ""Oxygen"":1.0," +
+                                   @"""Health"":1.0, ""Temperature"":78.0, ""SelectedWeapon"":""$humanoid_fists_name;"", ""SelectedWeapon_Localised"":""Unarmed"", ""Gravity"":0.166399, ""LegalState"":""Clean"", ""Latitude"":3.2, ""Longitude"":6.2, ""Heading"":92.3, ""BodyName"":""Nervi 2g""}";
+
+                JToken matpro = JToken.Parse(propertyv);
+                Check.That(matpro).IsNotNull();
+            }
+            { 
+                string propertyv = @"{ ""timestamp"":""2021-07-13T13:18:55Z"", ""event"":""Status"", ""Flags"":2097152, ""Flags2"":17, ""Oxygen"":1.0," +
+                                   @"""Health"":1.0, ""Temperature"":-nan(ind), ""SelectedWeapon"":""$humanoid_fists_name;"", ""SelectedWeapon_Localised"":""Unarmed"", ""Gravity"":0.166399, ""LegalState"":""Clean"", ""Latitude"":3.2, ""Longitude"":6.2, ""Heading"":92.3, ""BodyName"":""Nervi 2g""}";
+
+                JToken matpro = JToken.Parse(propertyv, out string err, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL);
+                Check.That(matpro).IsNull();
+
+                JToken matpro2 = JToken.Parse(propertyv, out err, JToken.ParseOptions.AllowTrailingCommas | JToken.ParseOptions.CheckEOL | JToken.ParseOptions.IgnoreBadObjectValue);
+                Check.That(matpro2).IsNotNull();
+
+                var e = matpro2["SelectedWeapon"];
+                Check.That(e.Str().Equals("$humanoid_fists_name;")).IsTrue();
+
+
+            }
+        }
+
     }
 }

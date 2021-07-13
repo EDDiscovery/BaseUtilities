@@ -147,40 +147,56 @@ namespace BaseUtils.JSON
 
                                 if (o == null)
                                 {
-                                    throw new TokenException(GenErrorString(parser, "Object bad value"));
-                                }
-
-                                o.Name = name;
-
-                                yield return o;
-
-                                if (o.TokenType == JToken.TType.Array) // if array, we need to change to this as controlling object on top of stack
-                                {
-                                    if (sptr == stack.Length - 1)
+                                    if ((flags & ParseOptions.IgnoreBadObjectValue) != 0)       // if we get a bad value, and flag set, try and move to the next start point
                                     {
-                                        throw new TokenException(GenErrorString(parser, "Stack overflow"));
+                                        while (true)
+                                        {
+                                            char nc = parser.PeekChar();
+                                            if (nc == char.MinValue || nc == '"' || nc == '}')  // looking for next property " or } or eol
+                                                break;
+                                            else
+                                                parser.GetChar();
+                                        }
                                     }
-
-                                    stack[++sptr] = o;          // push this one onto stack
-                                    curarray = o as JArray;                 // this is now the current object
-                                    curobject = null;
-                                    comma = false;
-                                    break;
-                                }
-                                else if (o.TokenType == JToken.TType.Object)   // if object, this is the controlling object
-                                {
-                                    if (sptr == stack.Length - 1)
+                                    else
                                     {
-                                        throw new TokenException(GenErrorString(parser, "Stack overflow"));
+                                        throw new TokenException(GenErrorString(parser, "Object bad value"));
                                     }
-
-                                    stack[++sptr] = o;          // push this one onto stack
-                                    curobject = o as JObject;                 // this is now the current object
-                                    comma = false;
                                 }
                                 else
                                 {
-                                    comma = parser.IsCharMoveOn(',');
+                                    o.Name = name;
+
+                                    yield return o;
+
+                                    if (o.TokenType == JToken.TType.Array) // if array, we need to change to this as controlling object on top of stack
+                                    {
+                                        if (sptr == stack.Length - 1)
+                                        {
+                                            throw new TokenException(GenErrorString(parser, "Stack overflow"));
+                                        }
+
+                                        stack[++sptr] = o;          // push this one onto stack
+                                        curarray = o as JArray;                 // this is now the current object
+                                        curobject = null;
+                                        comma = false;
+                                        break;
+                                    }
+                                    else if (o.TokenType == JToken.TType.Object)   // if object, this is the controlling object
+                                    {
+                                        if (sptr == stack.Length - 1)
+                                        {
+                                            throw new TokenException(GenErrorString(parser, "Stack overflow"));
+                                        }
+
+                                        stack[++sptr] = o;          // push this one onto stack
+                                        curobject = o as JObject;                 // this is now the current object
+                                        comma = false;
+                                    }
+                                    else
+                                    {
+                                        comma = parser.IsCharMoveOn(',');
+                                    }
                                 }
                             }
                         }

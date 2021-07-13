@@ -36,6 +36,7 @@ namespace BaseUtils.JSON
             AllowTrailingCommas = 1,
             CheckEOL = 2,
             ThrowOnError = 4,
+            IgnoreBadObjectValue = 8,
         }
 
         private const int defaultstackdepth = 256;
@@ -190,39 +191,55 @@ namespace BaseUtils.JSON
 
                                 if (o == null)
                                 {
-                                    return ParseError(parser, "Object bad value", flags, out error);
-                                }
-
-                                o.Name = name;                          // object gets the name, indicating its a property
-                                curobject[name] = o;                    // assign to dictionary
-
-                                if (o.TokenType == TType.Array)         // if array, we need to change to this as controlling object on top of stack
-                                {
-                                    if (sptr == stack.Length - 1)
+                                    if ((flags & ParseOptions.IgnoreBadObjectValue) != 0)       // if we get a bad value, and flag set, try and move to the next start point
                                     {
-                                        return ParseError(parser, "Stack overflow", flags, out error);
+                                        while (true)
+                                        {
+                                            char nc = parser.PeekChar();
+                                            if (nc == char.MinValue || nc == '"' || nc == '}')  // looking for next property " or } or eol
+                                                break;
+                                            else
+                                                parser.GetChar();
+                                        }
                                     }
-
-                                    stack[++sptr] = o;                  // push this one onto stack
-                                    curarray = o as JArray;             // this is now the current object
-                                    curobject = null;
-                                    comma = false;
-                                    break;
-                                }
-                                else if (o.TokenType == TType.Object)   // if object, this is the controlling object
-                                {
-                                    if (sptr == stack.Length - 1)
+                                    else
                                     {
-                                        return ParseError(parser, "Stack overflow", flags, out error);
+                                        return ParseError(parser, "Object bad value", flags, out error);
                                     }
-
-                                    stack[++sptr] = o;                  // push this one onto stack
-                                    curobject = o as JObject;           // this is now the current object
-                                    comma = false;
                                 }
                                 else
                                 {
-                                    comma = parser.IsCharMoveOn(',');
+                                    o.Name = name;                          // object gets the name, indicating its a property
+                                    curobject[name] = o;                    // assign to dictionary
+
+                                    if (o.TokenType == TType.Array)         // if array, we need to change to this as controlling object on top of stack
+                                    {
+                                        if (sptr == stack.Length - 1)
+                                        {
+                                            return ParseError(parser, "Stack overflow", flags, out error);
+                                        }
+
+                                        stack[++sptr] = o;                  // push this one onto stack
+                                        curarray = o as JArray;             // this is now the current object
+                                        curobject = null;
+                                        comma = false;
+                                        break;
+                                    }
+                                    else if (o.TokenType == TType.Object)   // if object, this is the controlling object
+                                    {
+                                        if (sptr == stack.Length - 1)
+                                        {
+                                            return ParseError(parser, "Stack overflow", flags, out error);
+                                        }
+
+                                        stack[++sptr] = o;                  // push this one onto stack
+                                        curobject = o as JObject;           // this is now the current object
+                                        comma = false;
+                                    }
+                                    else
+                                    {
+                                        comma = parser.IsCharMoveOn(',');
+                                    }
                                 }
                             }
                         }
