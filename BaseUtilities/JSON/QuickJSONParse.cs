@@ -36,7 +36,8 @@ namespace BaseUtils.JSON
             AllowTrailingCommas = 1,
             CheckEOL = 2,
             ThrowOnError = 4,
-            IgnoreBadObjectValue = 8,
+            IgnoreBadObjectValue = 8,           // key not entered into object.
+            IgnoreBadArrayValue = 16,           // entry replaced with Null
         }
 
         private const int defaultstackdepth = 256;
@@ -257,7 +258,28 @@ namespace BaseUtils.JSON
 
                         if (o == null)
                         {
-                            return ParseError(parser, "Bad array value", flags, out error);
+                            if ((flags & ParseOptions.IgnoreBadArrayValue) != 0)       // if we get a bad value, and flag set, try and move to the next start point
+                            {
+                                curarray.Add(JToken.Null());                // add a null
+
+                                while (true)
+                                {
+                                    char nc = parser.PeekChar();
+                                    if (nc == char.MinValue || nc == ']')  // looking for EOL or ] - we leave that on the parser, as next time around we want it to read an end array
+                                        break;
+                                    else if ( nc == ',')        // if on comma, waste it, we have our value, go onto next
+                                    {
+                                        parser.GetChar();
+                                        break;
+                                    }
+                                    else
+                                        parser.GetChar();
+                                }
+                            }
+                            else
+                            {
+                                return ParseError(parser, "Bad array value", flags, out error);
+                            }
                         }
                         else if (o.TokenType == TType.EndArray)          // if end marker, jump back
                         {
