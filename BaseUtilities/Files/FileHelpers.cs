@@ -140,5 +140,10 @@ namespace BaseUtils
                 return false;       // exception, can't write
             }
         }
+
+        public static string AddSuffixToFilename(this string file, string suffix)
+        {
+            return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(file), System.IO.Path.GetFileNameWithoutExtension(file) + suffix) + System.IO.Path.GetExtension(file);
+        }
     }
 }

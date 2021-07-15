@@ -45,7 +45,8 @@ public static class ObjectExtensionsStrings
         return (obj.HasValue && obj != double.NaN) ? obj.Value.ToString(format) : string.Empty;
     }
 
-    public static string Left(this string obj, int length)      // obj = null, return "".  Length can be > string
+    // obj = null, return "".  Length can be > string
+    public static string Left(this string obj, int length)      
     {
         if (obj != null)
         {
@@ -58,7 +59,8 @@ public static class ObjectExtensionsStrings
             return string.Empty;
     }
 
-    public static string Left(this string obj, string match, StringComparison cmp = StringComparison.CurrentCulture, bool allifnotthere = false)
+    // obj = null/empty, return "". If text in string, return stuff left of it. If text not in string, return either empty or all of it
+    public static string LeftOf(this string obj, string match, StringComparison cmp = StringComparison.CurrentCulture, bool allifnotthere = false)
     {
         if (obj != null && obj.Length > 0)
         {
@@ -72,7 +74,8 @@ public static class ObjectExtensionsStrings
             return string.Empty;
     }
 
-    public static string Mid(this string obj, int start, int length = 999999)      // obj = null, return "".  Mid, start/length can be out of limits
+    // obj = null, return "". start/length can be out of limits
+    public static string Mid(this string obj, int start, int length = 999999)   
     {
         if (obj != null)
         {
@@ -86,7 +89,8 @@ public static class ObjectExtensionsStrings
         return string.Empty;
     }
 
-    public static string Mid(this string obj, string match, StringComparison cmp = StringComparison.CurrentCulture, bool allifnotthere = false)
+    // obj = null/empty, return "". If text in string, return stuff from it onwards. If text not in string, return either empty or all of it
+    public static string MidOf(this string obj, string match, StringComparison cmp = StringComparison.CurrentCulture, bool allifnotthere = false)
     {
         if (obj != null && obj.Length > 0)
         {
@@ -100,7 +104,8 @@ public static class ObjectExtensionsStrings
             return string.Empty;
     }
 
-    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    //extend for case
+    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)        
     {
         return data.IndexOf(comparision, c) >= 0;
     }
@@ -110,26 +115,24 @@ public static class ObjectExtensionsStrings
         return (obj == null || obj.Length == 0) ? alt : obj;
     }
 
-    public static string ToNullUnknownString(this object obj)
+    // if object.ToString equals unknowntext, return "" else return string, but do a space replace
+    public static string ToNullUnknownString(this object obj, string unknowntext = "Unknown", string spacereplacetext="_")
     {
         if (obj == null)
             return string.Empty;
         else
         {
             string str = obj.ToString();
-            return str.Equals("Unknown") ? "" : str.Replace("_", " ");
+            return str.Equals(unknowntext) ? "" : str.Replace(spacereplacetext, " ");
         }
     }
 
-    public static string ReplaceUnderscoresNull(this object obj)
+    // if it starts with this, skip it
+    public static string Skip(this string s, string t, StringComparison c = StringComparison.InvariantCulture)
     {
-        if (obj == null)
-            return null;
-        else
-        {
-            string str = obj.ToString();
-            return str.Equals("Unknown") ? "" : str.Replace("_", " ");
-        }
+        if (s.StartsWith(t, c))
+            s = s.Substring(t.Length);
+        return s;
     }
 
     // if it starts with start, and if extra is there (configurable), replace it with replacestring..
@@ -150,7 +153,18 @@ public static class ObjectExtensionsStrings
             return obj;
     }
 
-    public static string FirstAlphaNumericText(this string obj)     // skip to find first alpha text ignoring whitespace
+    // trim, then if it ends with this, trim it
+    public static string TrimReplaceEnd(this string obj, char endreplace)
+    {
+        obj = obj.Trim();
+        int ep = obj.Length - 1;
+        while (ep >= 0 && obj[ep] == endreplace)
+            ep--;
+        return obj.Substring(0, ep+1);
+    }
+
+    // skip to find first alpha text ignoring whitespace
+    public static string FirstAlphaNumericText(this string obj)     
     {
         if (obj == null)
             return null;
@@ -174,7 +188,8 @@ public static class ObjectExtensionsStrings
         }
     }
 
-    public static string QuoteFirstAlphaDigit(this string obj, char quotemark = '\'')    // find first alpha text and quote it.. strange function
+    // find first alpha text and quote it.. strange function
+    public static string QuoteFirstAlphaDigit(this string obj, char quotemark = '\'')    
     {
         if (obj == null)
             return null;
@@ -194,25 +209,12 @@ public static class ObjectExtensionsStrings
         }
     }
 
+    // only keep IsLetterOrDigit
     public static string ReplaceNonAlphaNumeric(this string obj)
     {
         char[] arr = obj.ToCharArray();
         arr = Array.FindAll<char>(arr, (c => char.IsLetterOrDigit(c)));
         return new string(arr);
-    }
-
-    public static string Skip(this string s, string t, StringComparison c = StringComparison.InvariantCulture)
-    {
-        if (s.StartsWith(t, c))
-            s = s.Substring(t.Length);
-        return s;
-    }
-
-    public static string SkipIf(this string s, string t, bool cond, StringComparison c = StringComparison.InvariantCulture)
-    {
-        if (cond && s.StartsWith(t, c))
-            s = s.Substring(t.Length);
-        return s;
     }
 
     public static void AppendPrePad(this System.Text.StringBuilder sb, string other, string prepad = " ")
@@ -225,7 +227,7 @@ public static class ObjectExtensionsStrings
         }
     }
 
-    public static bool AppendPrePad(this System.Text.StringBuilder sb, string other, string prefix, string prepad = " ")
+    public static bool AppendPrePad(this System.Text.StringBuilder sb, string other, string prefix, string prepad )
     {
         if (other != null && other.Length > 0)
         {
@@ -251,6 +253,7 @@ public static class ObjectExtensionsStrings
         return sb;
     }
 
+    // extend for case
     public static string Replace(this string str, string oldValue, string newValue, StringComparison comparison)
     {
         System.Text.StringBuilder sb = new System.Text.StringBuilder(str.Length * 4);
@@ -269,19 +272,6 @@ public static class ObjectExtensionsStrings
         sb.Append(str.Substring(previousIndex));
 
         return sb.ToString();
-    }
-
-    public static int FirstCharNonWhiteSpace(this string obj)
-    {
-        int i = 0;
-        while (i < obj.Length && char.IsWhiteSpace(obj[i]))
-            i++;
-        return i;
-    }
-
-    public static string AddSuffixToFilename(this string file, string suffix)
-    {
-        return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(file), System.IO.Path.GetFileNameWithoutExtension(file) + suffix) + System.IO.Path.GetExtension(file);
     }
 
     public static string SafeVariableString(this string normal)
