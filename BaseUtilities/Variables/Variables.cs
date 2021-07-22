@@ -88,6 +88,10 @@ namespace BaseUtils
         public List<string> NameList { get { return values.Keys.ToList(); } }
 
         public bool Exists(string s) { return values.ContainsKey(s); }
+        public bool Contains(string s) { return values.ContainsKey(s); }        // to be more consistent
+        public bool TryGet(string s, out string ex) { return values.TryGetValue(s, out ex); }
+        // will not complain if not there, so true only if there and its of this value
+        public bool Equals(string s, string cmp, StringComparison cs = StringComparison.InvariantCultureIgnoreCase) { return values.ContainsKey(s) && values[s].Equals(cmp,cs); }
 
         public void Clear() { values.Clear(); }
 
