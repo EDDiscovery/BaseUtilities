@@ -102,6 +102,20 @@ namespace BaseUtils
             }
         }
 
+        public static bool TryCopy(string source, string file, bool overwrite)
+        {
+            try
+            {
+                File.Copy(source, file, overwrite);
+                return true;
+            }
+            catch
+            {       // on purpose no error - thats the point of it
+                //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
+            }
+        }
+
         public static bool CreateDirectoryNoError(string path)
         {
             try
