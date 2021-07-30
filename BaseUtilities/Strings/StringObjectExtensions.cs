@@ -366,27 +366,6 @@ public static class ObjectExtensionsStrings
             return str.Substring(start);        // len left is less than length, return the whole lot
     }
 
-    static public string WordWrap(this string input, int linelen)
-    {
-        String[] split = input.Split(new char[] { ' ' });
-
-        string ans = "";
-        int l = 0;
-        for (int i = 0; i < split.Length; i++)
-        {
-            ans += split[i];
-            l += split[i].Length;
-            if (l > linelen)
-            {
-                ans += Environment.NewLine;
-                l = 0;
-            }
-            else
-                ans += " ";
-        }
-
-        return ans;
-    }
 
     static public int IndexOf(this string s, string[] array, out int fi)   // in array, find one with first occurance, return which one in i
     {

@@ -347,17 +347,17 @@ public static partial class ControlHelpersStaticFunc
 
     // the Location has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
     static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, 
-                                                    int margin = 16, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
+                                                    Size margin, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
         Screen scr = Screen.FromPoint(p.Location);
         Rectangle scrb = scr.Bounds;
 
         int left = p.Left;
-        int width = Math.Min(wantedwidth, scrb.Width - margin * 2);         // ensure within screen limits taking off margins
+        int width = Math.Min(wantedwidth, scrb.Width - margin.Width * 2);         // ensure within screen limits taking off margins
 
         if (halign == HorizontalAlignment.Right)
         {
-            left = scr.Bounds.Left + Math.Max(scrb.Width-margin-width, margin);               
+            left = scr.Bounds.Left + Math.Max(scrb.Width-margin.Width-width, margin.Width);               
         }
         else if (halign == HorizontalAlignment.Center)
         {
@@ -365,15 +365,15 @@ public static partial class ControlHelpersStaticFunc
         }
         else if (halign == HorizontalAlignment.Left)
         {
-            left = scr.Bounds.Left + margin;
+            left = scr.Bounds.Left + margin.Width;
         }
 
         int top = p.Top;
-        int height = Math.Min(wantedheight, scrb.Height - margin * 2);        // ensure within screen
+        int height = Math.Min(wantedheight, scrb.Height - margin.Height * 2);        // ensure within screen
 
         if (vertalign == VerticalAlignment.Bottom )
         {
-            top = scr.Bounds.Top + Math.Max(scrb.Height - margin - height, margin);
+            top = scr.Bounds.Top + Math.Max(scrb.Height - margin.Height - height, margin.Height);
         }
         else if (vertalign == VerticalAlignment.Middle)
         {
@@ -381,12 +381,12 @@ public static partial class ControlHelpersStaticFunc
         }
         else if (vertalign == VerticalAlignment.Top)
         {
-            top = scr.Bounds.Top + margin;
+            top = scr.Bounds.Top + margin.Height;
         }
 
         int botscreen = scr.Bounds.Bottom;
 
-        int availableh = botscreen - top - margin;                        // available height from top to bottom less margin
+        int availableh = botscreen - top - margin.Height;                        // available height from top to bottom less margin
 
         if (height > availableh)                                            // if not enough height available
         {
@@ -396,21 +396,21 @@ public static partial class ControlHelpersStaticFunc
             }
             else
             {
-                top = scr.Bounds.Top + Math.Max(margin, scrb.Height - margin - height);      // at least margin, or at least height-margin-wantedheight
-                height = Math.Min(scrb.Height - margin * 2, height);        // and limit to margin*2
+                top = scr.Bounds.Top + Math.Max(margin.Height, scrb.Height - margin.Height - height);      // at least margin, or at least height-margin-wantedheight
+                height = Math.Min(scrb.Height - margin.Height * 2, height);        // and limit to margin*2
             }
 
             width += scrollbarallowwidth;                                   // need a scroll bar
         }
 
-        if (left + width >= scr.Bounds.Right - margin)                      // too far right
+        if (left + width >= scr.Bounds.Right - margin.Width)                      // too far right
         {
-            left = scr.Bounds.Right - margin - width;
+            left = scr.Bounds.Right - margin.Width - width;
         }
 
-        if (left < scr.Bounds.Left + margin)                                // too far left
+        if (left < scr.Bounds.Left + margin.Width)                                // too far left
         {
-            left = scr.Bounds.Left + margin;
+            left = scr.Bounds.Left + margin.Width;
         }
 
 
