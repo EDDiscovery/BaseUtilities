@@ -229,18 +229,16 @@ namespace DirectInputDevices
             return k.VKeyToString();
         }
 
-        public bool? IsPressed( string keyname )        // keyname is in keys
+        public bool? IsPressed( string keyname )        // keyname is in keys.  Returns null if key name not known, else return if pressed
         {
-            Key? k = SharpKeyConversion.KeysToSharpKey(keyname.ToVkey());       // to VKEY, then to Sharp key
+            var vk = keyname.ToVkey();
 
-            if ( k != null )
-                return (ks != null) ? ks.IsPressed(k.Value) : false;        // use keyboard state to determine
-            else
+            if (vk != Keys.None)
             {
-                System.Diagnostics.Debug.WriteLine("FAILED IsPressed " + keyname);
+                return IsKeyPressed(vk);
             }
-
-            return false;
+            else
+                return null;
         }
 
         public bool IsDIPressed(Key k, bool recheck = false) // check. Optional rescan or use GetEvents
@@ -251,13 +249,30 @@ namespace DirectInputDevices
             return ks.IsPressed(k);
         }
 
-        public bool IsKeyPressed(Keys k, bool recheck = false) // check. Optional rescan or use GetEvents. Needs a diff name from above for some reason
+        public bool IsKeyPressed(System.Windows.Forms.Keys k, bool recheck = false) // check. Optional rescan or use GetEvents. Needs a diff name from above for some reason
         {
             if (recheck || ks == null)
                 ks = keyboard.GetCurrentState();
 
-            Key ky = SharpKeyConversion.KeysToSharpKey(k);
-            return ks.IsPressed(ky);
+            var kp = ks.PressedKeys; foreach (var x in kp) System.Diagnostics.Debug.WriteLine($"Keys down SK {x}");
+
+            if (k == Keys.ShiftKey)  // this concept is r or l shift
+            {
+                return ks.IsPressed(Key.LeftShift) || ks.IsPressed(Key.RightShift);
+            }
+            else if (k == Keys.ControlKey)  // this concept is r or l control
+            {
+                return ks.IsPressed(Key.LeftControl) || ks.IsPressed(Key.RightControl);
+            }
+            else if (k == Keys.Menu)  // this concept is r or l alt
+            {
+                return ks.IsPressed(Key.LeftAlt) || ks.IsPressed(Key.RightAlt);
+            }
+            else
+            {
+                SharpDX.DirectInput.Key ky = SharpKeyConversion.KeysToSharpKey(k);
+                return ks.IsPressed(ky);
+            }
         }
 
         public string Name()
