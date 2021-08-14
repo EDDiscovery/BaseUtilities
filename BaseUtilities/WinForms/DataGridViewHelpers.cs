@@ -265,47 +265,52 @@ public static class DataGridViewControlHelpersStaticFunc
 
     public static int SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv)
     {
-#if MONO
-        return dgv.CurrentCell != null ? dgv.CurrentCell.RowIndex : 0;
-#else
-        return dgv.FirstDisplayedScrollingRowIndex;
-#endif
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+        {
+            return dgv.CurrentCell != null ? dgv.CurrentCell.RowIndex : 0;
+        }
+        else
+        {
+            return dgv.FirstDisplayedScrollingRowIndex;
+        }
     }
 
     public static void SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv, int rowno)
     {
-#if MONO
-        // MONO does not implement SafeFirstDisplayedScrollingRowIndex
-        if ( rowno >= 0 && rowno < dgv.Rows.Count)
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
         {
-            for( int i = 0 ; i < dgv.Columns.Count ; i++)
+            // MONO does not implement SafeFirstDisplayedScrollingRowIndex
+            if (rowno >= 0 && rowno < dgv.Rows.Count)
             {
-                if ( dgv.Columns[i].Visible)
+                for (int i = 0; i < dgv.Columns.Count; i++)
                 {
-                    while ( !dgv.Rows[rowno].Visible && rowno<dgv.Rows.Count)
+                    if (dgv.Columns[i].Visible)
+                    {
+                        while (!dgv.Rows[rowno].Visible && rowno < dgv.Rows.Count)
                             rowno++;
-                    int rowsvisible = dgv.DisplayedRowCount(false);
-                    int rownobot = Math.Min(rowsvisible+rowno-1,dgv.Rows.Count-1);
-                    while ( !dgv.Rows[rownobot].Visible && rownobot>1)
-                        rownobot--;
-                    dgv.CurrentCell = dgv.Rows[rownobot].Cells[i];      // blam top and bottom to try and get the best view
-                    dgv.CurrentCell = dgv.Rows[rowno].Cells[i];
-                    dgv.Rows[rowno].Selected = true;
-                    break;
+                        int rowsvisible = dgv.DisplayedRowCount(false);
+                        int rownobot = Math.Min(rowsvisible + rowno - 1, dgv.Rows.Count - 1);
+                        while (!dgv.Rows[rownobot].Visible && rownobot > 1)
+                            rownobot--;
+                        dgv.CurrentCell = dgv.Rows[rownobot].Cells[i];      // blam top and bottom to try and get the best view
+                        dgv.CurrentCell = dgv.Rows[rowno].Cells[i];
+                        dgv.Rows[rowno].Selected = true;
+                        break;
+                    }
                 }
             }
         }
-#else
-        try
+        else
         {
-            dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
+            try
+            {
+                dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("DGV exception FDR " + e);       // v.rare.
+            }
         }
-        catch (Exception e)
-        {
-            System.Diagnostics.Debug.WriteLine("DGV exception FDR " + e);       // v.rare.
-        }
-#endif
-
     }
 
     public static bool IsAllSelectionsOnSameRow(this DataGridView dgv)
