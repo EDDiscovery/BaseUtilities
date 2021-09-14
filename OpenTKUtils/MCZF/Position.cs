@@ -75,6 +75,10 @@ namespace OpenTKUtils.Common
                         //System.Diagnostics.Debug.WriteLine("{0} Slew start to {1} in {2}",  Environment.TickCount % 10000 , targetposSlewPosition , targetposSlewTime);
                     }
                 }
+                else
+                {
+                    targetposSlewProgress = 1.0f;       // disable slew we are already there
+                }
             }
         }
 
