@@ -175,6 +175,7 @@
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="WinForms\FontLoader.cs" />
+    <Compile Include="XML\xml.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DebugTraceAndLogs\ExceptionForm.resx">
