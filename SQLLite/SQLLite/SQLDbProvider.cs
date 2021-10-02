@@ -27,15 +27,18 @@ namespace SQLLiteExtensions
     public static class SQLDbProvider
     {
         public static DbProviderFactory DbProvider()      // get the provider, and cache it
-        { 
-            if (dbprovider == null)
+        {
+            lock (Locker)
             {
-                dbprovider = GetSqliteProvider();
-                System.Diagnostics.Debug.WriteLine("SQLLite Found factory");
+                if (dbprovider == null)
+                {
+                    dbprovider = GetSqliteProvider();
+                }
+                return dbprovider;
             }
-            return dbprovider;
         }
 
+        private static Object Locker = new object();
         private static DbProviderFactory dbprovider;
 
         private static DbProviderFactory GetSqliteProvider()

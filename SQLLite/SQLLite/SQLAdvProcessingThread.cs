@@ -26,37 +26,33 @@ namespace SQLLiteExtensions
         public int Threads { get { return runningThreads; } }
         public int MaxThreads { get; set; } = 10;                       // maximum to create                     
         public int MinThreads { get; set; } = 3;                       // maximum to create                    
-                                                                       
+
+        public string Name { get; set; } = "SQLAdvProcessingThread";                            // thread name
+
         public bool MultiThreaded { get { return multithreaded; } set { SetMultithreaded(value); } }    // default is not
 
         protected abstract ConnectionType CreateConnection();   // override in derived class to make the connection
 
         // Execute SQL with the database in a thread.  Must indicate direction by name
 
-        public T Read<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
+        public T DBRead<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
         {
             return Execute(() => func.Invoke(connection.Value), false, 1, warnthreshold, jobname);
         }
 
-        public void Read(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
+        public void DBRead(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
         {
             Execute<object>(() => { action.Invoke(connection.Value); return null; }, false, 1, warnthreshold, jobname);
         }
 
-        public void Write(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
+        public void DBWrite(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
         {
             Execute<object>(() => { action.Invoke(connection.Value); return null; }, true, 1, warnthreshold, jobname);
         }
 
-        public T Write<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
+        public T DBWrite<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
         {
             return Execute(() => func.Invoke(connection.Value), true, 1, warnthreshold, jobname);
-        }
-
-        public void Start(string threadname)
-        {
-            name = "SQLProcessingThread-" + threadname;
-            SetMultithreaded(MultiThreaded);            // start - use the MT to start it
         }
 
         public void Stop()
@@ -82,7 +78,6 @@ namespace SQLLiteExtensions
 
         private ReaderWriterLock rwLock = new ReaderWriterLock();       // used to prevent writes when readers are running in MT scenarios
 
-        private string name;                            // thread name
         private bool multithreaded = false;             // if MT
         private bool stopCreatingNewThreads = false;    // halt thread creation during stop
 
@@ -211,7 +206,7 @@ namespace SQLLiteExtensions
         {
             using (var job = new Job<T>(func, write, skipframes, warnthreshold, Thread.CurrentThread.Name + jobname))       // make a new job
             {
-                if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith(name))            // we should not be calling this from a thread made by us
+                if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith(Name))            // we should not be calling this from a thread made by us
                 { 
                     System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
                     job.Exec();
@@ -221,9 +216,12 @@ namespace SQLLiteExtensions
                 {
                     System.Diagnostics.Debug.WriteLine($"Submitting job write {write}, ta {runningThreadsAvailable} rt {runningThreads} mt {MultiThreaded} ct {createdThreads} stop {stopCreatingNewThreads}");
 
-                    if (MultiThreaded && runningThreadsAvailable == 0 && !stopCreatingNewThreads) // if MT and out of threads, and allowed to create new ones
+                    if (!stopCreatingNewThreads)   // if we can create new threads..
                     {
-                        TryStartThread();      // try and start another thread to service the request
+                        if (runningThreads == 0 || (MultiThreaded && runningThreadsAvailable == 0)) // no threads, or MT and none available
+                        {
+                            TryStartThread();      // try and start another thread to service the request
+                        }
                     }
 
                     jobQueue.Enqueue(job);
@@ -255,7 +253,7 @@ namespace SQLLiteExtensions
             if (tno <= MaxThreads)                      // if not exceeded, we can make one
             {
                 var thread = new Thread(SqlThreadProc);
-                thread.Name = $"{name}-" + tno;
+                thread.Name = $"{Name}-" + tno;
                 thread.IsBackground = true;
                 System.Diagnostics.Debug.WriteLine($"**************** Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} mt {MultiThreaded}");
                 thread.Start();
