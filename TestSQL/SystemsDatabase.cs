@@ -218,22 +218,22 @@ namespace EliteDangerousCore.DB
 
         public string GetEDSMGridIDs()
         {
-            return ExecuteWithDatabase( db => db.Connection.GetSettingString("EDSMGridIDs", "Not Set"));
+            return ExecuteWithDatabase( db => db.Connection.RegisterClass.GetSetting("EDSMGridIDs", "Not Set"));
         }
 
         public bool SetEDSMGridIDs(string value)
         {
-            return WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingString("EDSMGridIDs", value)));
+            return WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.RegisterClass.PutSetting("EDSMGridIDs", value)));
         }
 
         public DateTime GetEDSMGalMapLast()
         {
-            return ExecuteWithDatabase( db => db.Connection.GetSettingDate("EDSMGalMapLast", DateTime.MinValue));
+            return ExecuteWithDatabase( db => db.Connection.RegisterClass.GetSetting("EDSMGalMapLast", DateTime.MinValue));
         }
 
         public bool SetEDSMGalMapLast(DateTime value)
         {
-            return WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingDate("EDSMGalMapLast", value)));
+            return WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.RegisterClass.PutSetting("EDSMGalMapLast", value)));
         }
 
         #region Time markers
@@ -242,14 +242,14 @@ namespace EliteDangerousCore.DB
 
         public void ForceEDSMFullUpdate()
         {
-            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingString("EDSMLastSystems", "2010-01-01 00:00:00")));
+            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.RegisterClass.PutSetting("EDSMLastSystems", "2010-01-01 00:00:00")));
         }
 
         public DateTime GetLastEDSMRecordTimeUTC()
         {
             return ExecuteWithDatabase( db =>
             {
-                string rwsystime = db.Connection.GetSettingString("EDSMLastSystems", "2000-01-01 00:00:00"); // Latest time from RW file.
+                string rwsystime = db.Connection.RegisterClass.GetSetting("EDSMLastSystems", "2000-01-01 00:00:00"); // Latest time from RW file.
                 DateTime edsmdate;
 
                 if (!DateTime.TryParse(rwsystime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out edsmdate))
@@ -263,19 +263,19 @@ namespace EliteDangerousCore.DB
         {
             WithReadWrite(() => ExecuteWithDatabase( db =>
             {
-                db.Connection.PutSettingString("EDSMLastSystems", time.ToString(CultureInfo.InvariantCulture));
+                db.Connection.RegisterClass.PutSetting("EDSMLastSystems", time.ToString(CultureInfo.InvariantCulture));
                 System.Diagnostics.Debug.WriteLine("Last EDSM record " + time.ToString());
             }));
         }
 
         public int GetEDSMSectorIDNext()
         {
-            return ExecuteWithDatabase( db => db.Connection.GetSettingInt("EDSMSectorIDNext", 1));
+            return ExecuteWithDatabase( db => db.Connection.RegisterClass.GetSetting("EDSMSectorIDNext", 1));
         }
 
         public void SetEDSMSectorIDNext(int val)
         {
-            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.PutSettingInt("EDSMSectorIDNext", val)));
+            WithReadWrite(() => ExecuteWithDatabase( db => db.Connection.RegisterClass.PutSetting("EDSMSectorIDNext", val)));
         }
 
         #endregion

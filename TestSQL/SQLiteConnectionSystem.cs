@@ -42,7 +42,7 @@ namespace EliteDangerousCore.DB
                 // BE VERY careful with connections when creating/deleting tables - you end up with SQL Schema errors or it not seeing the table
 
                 SQLExtRegister reg = new SQLExtRegister(this);
-                int dbver = reg.GetSettingInt("DBVer", 0);      // use reg, don't use the built in func as they create new connections and confuse the schema
+                int dbver = reg.GetSetting("DBVer", (int)0);      // use reg, don't use the built in func as they create new connections and confuse the schema
 
                 ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
                     {
@@ -88,7 +88,7 @@ namespace EliteDangerousCore.DB
 
                 if (dbver < 200)
                 {
-                    reg.PutSettingInt("DBVer", 200);
+                    reg.PutSetting("DBVer", (int)200);
                     reg.DeleteKey("EDDBSystemsTime");       // force a reload of EDDB
                 }
 
