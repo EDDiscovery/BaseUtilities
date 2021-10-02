@@ -31,7 +31,7 @@ namespace SQLLiteExtensions
             try
             {
                 DBFile = dbfile;
-                connection = DbFactory.CreateConnection();
+                connection = SQLDbProvider.DbProvider().CreateConnection();
 
                 // Use the database selected by maindb as the 'main' database
                 connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
@@ -44,7 +44,7 @@ namespace SQLLiteExtensions
                     connection.ConnectionString += "Read Only=True;";
                 }
 
-                // System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
+                System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
 
                 connection.Open();
 
@@ -79,13 +79,6 @@ namespace SQLLiteExtensions
             return cmd;
         }
 
-        public override DbDataAdapter CreateDataAdapter(DbCommand cmd)
-        {
-            DbDataAdapter da = DbFactory.CreateDataAdapter();
-            da.SelectCommand = cmd;
-            return da;
-        }
-
         public override void Dispose()
         {
             Dispose(true);
@@ -99,7 +92,7 @@ namespace SQLLiteExtensions
             {
                 if (connection != null)
                 {
-                    //   System.Diagnostics.Debug.WriteLine("Closed connection " + connection.ConnectionString);
+                    System.Diagnostics.Debug.WriteLine("SQLConnectionRegister closed connection " + connection.ConnectionString);
                     connection.Close();
                     connection.Dispose();
                     connection = null;

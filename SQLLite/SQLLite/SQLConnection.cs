@@ -24,115 +24,22 @@ using System.Threading;
 
 namespace SQLLiteExtensions
 {
-    // Base class
-    // Its a connection class which has a DB factory and delegates the connection/transactions to its derived classes.
-    // has a upgrade function 
-
+    // Base class for Connections
+    
     public abstract class SQLExtConnection : IDisposable              // USE this for connections.. 
     {
         public enum AccessMode { Reader, Writer, ReaderWriter };           
 
         protected SQLExtConnection( AccessMode mode = AccessMode.ReaderWriter )
         {
-            lock (openConnections)
+            lock (openConnections)  // thread lock
             {
                 openConnections.Add(this);
-                if (openConnections.Count > 10)     // this is a lot of parallel connections.. warn as we may be forgetting to close them
-                    System.Diagnostics.Debug.WriteLine("SQLlite warning open connection count now " + openConnections.Count);
+                if (openConnections.Count > 50)     // this is a lot of parallel connections.. warn as we may be forgetting to close them
+                    System.Diagnostics.Debug.WriteLine("SQLExtConnection warning open connection count now " + openConnections.Count);
             }
+
             owningThread = Thread.CurrentThread;
-        }
-
-        private static DbProviderFactory GetSqliteProviderFactory()
-        {
-            if (WindowsSqliteProviderWorks())
-            {
-                return GetWindowsSqliteProviderFactory();
-            }
-
-            var factory = GetMonoSqliteProviderFactory();
-
-            if (DbFactoryWorks(factory))
-            {
-                return factory;
-            }
-
-            throw new InvalidOperationException("Unable to get a working Sqlite driver");
-        }
-
-        private static bool WindowsSqliteProviderWorks()
-        {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-            {
-                return false;
-            }
-
-            try
-            {
-                // This will throw an exception if the SQLite.Interop.dll can't be loaded.
-                string sqliteversion = SQLiteConnection.SQLiteVersion;
-
-                if (!String.IsNullOrEmpty(sqliteversion))
-                {
-                    System.Diagnostics.Trace.WriteLine($"SQLite Version {sqliteversion}");
-                    return true;
-                }
-            }
-            catch
-            {
-            }
-
-            return false;
-        }
-
-        private static bool DbFactoryWorks(DbProviderFactory factory)
-        {
-            if (factory != null)
-            {
-                try
-                {
-                    using (var conn = factory.CreateConnection())
-                    {
-                        conn.ConnectionString = "Data Source=:memory:;Pooling=true;";
-                        conn.Open();
-                        return true;
-                    }
-                }
-                catch
-                {
-                }
-            }
-
-            return false;
-        }
-
-        private static DbProviderFactory GetMonoSqliteProviderFactory()
-        {
-            try
-            {
-                // Disable CS0618 warning for LoadWithPartialName
-#pragma warning disable 618
-                var asm = System.Reflection.Assembly.LoadWithPartialName("Mono.Data.Sqlite");
-#pragma warning restore 618
-                var factorytype = asm.GetType("Mono.Data.Sqlite.SqliteFactory");
-                return (DbProviderFactory)factorytype.GetConstructor(new Type[0]).Invoke(new object[0]);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static DbProviderFactory GetWindowsSqliteProviderFactory()
-        {
-            try
-            {
-                return new System.Data.SQLite.SQLiteFactory();
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         protected void AssertThreadOwner()
@@ -149,12 +56,12 @@ namespace SQLLiteExtensions
         public abstract DbTransaction BeginTransaction(IsolationLevel isolevel);
         public abstract DbTransaction BeginTransaction();
         public abstract void Dispose();
-        public abstract DbDataAdapter CreateDataAdapter(DbCommand cmd);
 
         protected virtual void Dispose(bool disposing)
         {
             lock (openConnections)
             {
+                System.Diagnostics.Debug.WriteLine("SQLConnection dispose");
                 openConnections.Remove(this);
                 hasbeendisposed = true;
             }
@@ -227,21 +134,16 @@ namespace SQLLiteExtensions
                 command.ExecuteNonQuery();
         }
 
-        public DbCommandBuilder CreateCommandBuilder()
-        {
-            return DbFactory.CreateCommandBuilder();
-        }
-
         public Type GetConnectionType()
         {
             return connection.GetType();
         }
 
+        // implemented by derived class
 
         protected DbConnection connection;      // the connection
         protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
-        protected static DbProviderFactory DbFactory = GetSqliteProviderFactory();
-        public string DBFile { get; protected set; }
+        public string DBFile { get; protected set; }    // the File name
         protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging to track connections
         private bool hasbeendisposed = false;
     }
