@@ -24,8 +24,8 @@ namespace SQLLiteExtensions
     {
         #region Public control 
         public int Threads { get { return runningThreads; } }
-        public int MaxThreads { get; set; } = 10;                       // maximum to create                     
-        public int MinThreads { get; set; } = 3;                       // maximum to create                    
+        public int MaxThreads { get; set; } = 10;                      // maximum to create when MultiThreaded = true, 1 or more
+        public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
         public string Name { get; set; } = "SQLAdvProcessingThread";                            // thread name
 
@@ -218,14 +218,15 @@ namespace SQLLiteExtensions
 
                     if (!stopCreatingNewThreads)   // if we can create new threads..
                     {
-                        if (runningThreads == 0 || (MultiThreaded && runningThreadsAvailable == 0)) // no threads, or MT and none available
+                        // if no threads, or MT and read and none available (no point creating new threads for write since they will be sequenced by the RWLock)
+                        if (runningThreads == 0 || (MultiThreaded && !write && runningThreadsAvailable == 0)) 
                         {
                             TryStartThread();      // try and start another thread to service the request
                         }
                     }
 
                     jobQueue.Enqueue(job);
-                    jobQueuedEvent.Set();           // kick one of the threads and execute it.
+                    jobQueuedEvent.Set();  // kick one of the threads and execute it.
                     return job.Wait();     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
                 }
             }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019-2020 EDDiscovery development team
+ * Copyright © 2019-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -26,82 +26,9 @@ namespace SQLLiteExtensions
     {
         public SQLExtRegister RegisterClass;
 
-        public SQLExtConnectionRegister(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter) : base(mode)
+        public SQLExtConnectionRegister(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter) : base(dbfile,utctimeindicator, mode)
         {
-            try
-            {
-                DBFile = dbfile;
-                connection = SQLDbProvider.DbProvider().CreateConnection();
-
-                // Use the database selected by maindb as the 'main' database
-                connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
-
-                if (utctimeindicator)   // indicate treat dates as UTC.
-                    connection.ConnectionString += "DateTimeKind=Utc;";
-
-                if (mode == AccessMode.Reader)
-                {
-                    connection.ConnectionString += "Read Only=True;";
-                }
-
-                System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
-
-                connection.Open();
-
-                RegisterClass = new SQLExtRegister(this);
-            }
-            catch
-            {
-                throw;
-            }
+            RegisterClass = new SQLExtRegister(this);
         }
-
-
-        public override DbTransaction BeginTransaction(IsolationLevel isolevel)
-        {
-            AssertThreadOwner();
-            return connection.BeginTransaction(isolevel);
-        }
-
-        public override DbTransaction BeginTransaction()
-        {
-            AssertThreadOwner();
-            return connection.BeginTransaction();
-        }
-
-        public override DbCommand CreateCommand(string query, DbTransaction tn = null)
-        {
-            AssertThreadOwner();
-            DbCommand cmd = connection.CreateCommand();
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = 30;
-            cmd.CommandText = query;
-            return cmd;
-        }
-
-        public override void Dispose()
-        {
-            Dispose(true);
-        }
-
-        // disposing: true if Dispose() was called, false
-        // if being finalized by the garbage collector
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (connection != null)
-                {
-                    System.Diagnostics.Debug.WriteLine("SQLConnectionRegister closed connection " + connection.ConnectionString);
-                    connection.Close();
-                    connection.Dispose();
-                    connection = null;
-                }
-            }
-
-            base.Dispose(disposing);
-        }
-
-
     }
 }

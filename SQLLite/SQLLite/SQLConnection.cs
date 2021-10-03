@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019-2020 EDDiscovery development team
+ * Copyright © 2019-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -28,56 +28,81 @@ namespace SQLLiteExtensions
     
     public abstract class SQLExtConnection : IDisposable              // USE this for connections.. 
     {
-        public enum AccessMode { Reader, Writer, ReaderWriter };           
+        public enum AccessMode { Reader, Writer, ReaderWriter };
+        public string DBFile { get; private set; }    // the File name
 
-        protected SQLExtConnection( AccessMode mode = AccessMode.ReaderWriter )
+        protected SQLExtConnection(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter )
         {
-            lock (openConnections)  // thread lock
+            try
             {
-                openConnections.Add(this);
-                if (openConnections.Count > 50)     // this is a lot of parallel connections.. warn as we may be forgetting to close them
-                    System.Diagnostics.Debug.WriteLine("SQLExtConnection warning open connection count now " + openConnections.Count);
+                DBFile = dbfile;
+                connection = SQLDbProvider.DbProvider().CreateConnection();
+
+                // Use the database selected by maindb as the 'main' database
+                connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
+
+                if (utctimeindicator)   // indicate treat dates as UTC.
+                    connection.ConnectionString += "DateTimeKind=Utc;";
+
+                if (mode == AccessMode.Reader)
+                {
+                    connection.ConnectionString += "Read Only=True;";
+                }
+
+                System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
+
+                connection.Open();
+
+                owningThread = Thread.CurrentThread;
             }
-
-            owningThread = Thread.CurrentThread;
-        }
-
-        protected void AssertThreadOwner()
-        {
-            if (Thread.CurrentThread != owningThread)
+            catch
             {
-                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {owningThread.Name} ({owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
-            }
-        }
-
-        // subbed to derived class to implement..
-
-        public abstract DbCommand CreateCommand(string cmd, DbTransaction tn = null);
-        public abstract DbTransaction BeginTransaction(IsolationLevel isolevel);
-        public abstract DbTransaction BeginTransaction();
-        public abstract void Dispose();
-
-        protected virtual void Dispose(bool disposing)
-        {
-            lock (openConnections)
-            {
-                System.Diagnostics.Debug.WriteLine("SQLConnection dispose");
-                openConnections.Remove(this);
-                hasbeendisposed = true;
+                throw;
             }
         }
 
+        public virtual DbCommand CreateCommand(string query, DbTransaction tn = null)
+        {
+            AssertThreadOwner();
+            DbCommand cmd = connection.CreateCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandTimeout = 30;
+            cmd.CommandText = query;
+            return cmd;
+        }
+
+        public virtual DbTransaction BeginTransaction()
+        {
+            AssertThreadOwner();
+            return connection.BeginTransaction();
+        }
+
+        public virtual DbTransaction BeginTransaction(IsolationLevel isolevel)
+        {
+            AssertThreadOwner();
+            return connection.BeginTransaction(isolevel);
+        }
+        public virtual void Dispose()
+        {
+            Dispose(true);
+        }
+        
+        public virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (connection != null)
+                {
+                    System.Diagnostics.Debug.WriteLine("SQLConnectionRegister closed connection " + connection.ConnectionString);
+                    connection.Close();
+                    connection.Dispose();
+                    connection = null;
 #if DEBUG
-        //since finalisers impose a penalty, we shall check only in debug mode
-        ~SQLExtConnection()
-        {
-            if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
-            {
-                System.Windows.Forms.MessageBox.Show("Missing dispose for connection " + DBFile);
-                System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for connection" + DBFile);       // must have been disposed
+                    hasbeendisposed = true;
+#endif
+                }
             }
         }
-#endif
 
         // provided for DB upgrade operations at the basic level..
 
@@ -139,12 +164,29 @@ namespace SQLLiteExtensions
             return connection.GetType();
         }
 
-        // implemented by derived class
-
-        protected DbConnection connection;      // the connection
-        protected Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
-        public string DBFile { get; protected set; }    // the File name
-        protected static List<SQLExtConnection> openConnections = new List<SQLExtConnection>(); // debugging to track connections
+#if DEBUG
+        //since finalisers impose a penalty, we shall check only in debug mode
         private bool hasbeendisposed = false;
+        ~SQLExtConnection()
+        {
+            if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
+            {
+                System.Windows.Forms.MessageBox.Show("Missing dispose for connection " + DBFile);
+                System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for connection" + DBFile);       // must have been disposed
+            }
+        }
+#endif
+
+        protected void AssertThreadOwner()
+        {
+            if (Thread.CurrentThread != owningThread)
+            {
+                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {owningThread.Name} ({owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
+            }
+        }
+
+        protected DbConnection connection;      // the connection, available to inheritors
+
+        private Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
     }
 }
