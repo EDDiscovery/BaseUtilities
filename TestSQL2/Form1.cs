@@ -66,7 +66,6 @@ namespace TestSQL2
             if (procthread == null)
             {
                 procthread = new SQLiteThread();
-                procthread.Start("ProcThread");
                 WriteLine("Started");
             }
         }
@@ -77,7 +76,7 @@ namespace TestSQL2
 
             if (write)
             {
-                procthread.Write((connection) =>            // does not matter the contents of the operation, point is to send a write down
+                procthread.DBWrite((connection) =>            // does not matter the contents of the operation, point is to send a write down
                 {
                     var query1 = connection.CreateSelect("Sectors", "*", limit: limit);
 
@@ -94,7 +93,7 @@ namespace TestSQL2
             }
             else
             {
-                procthread.Read((connection) =>
+                procthread.DBRead((connection) =>
                 {
                     var query1 = connection.CreateSelect("Sectors", "*", limit: limit);
 

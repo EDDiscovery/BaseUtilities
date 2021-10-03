@@ -49,7 +49,7 @@ namespace SQLLiteExtensions
                     connection.ConnectionString += "Read Only=True;";
                 }
 
-                System.Diagnostics.Debug.WriteLine("Created connection " + connection.ConnectionString);
+                System.Diagnostics.Debug.WriteLine("SQLExtConnection created connection " + connection.ConnectionString);
 
                 connection.Open();
 
@@ -93,7 +93,7 @@ namespace SQLLiteExtensions
             {
                 if (connection != null)
                 {
-                    System.Diagnostics.Debug.WriteLine("SQLConnectionRegister closed connection " + connection.ConnectionString);
+                    System.Diagnostics.Debug.WriteLine("SQLExtConnection closed connection " + connection.ConnectionString);
                     connection.Close();
                     connection.Dispose();
                     connection = null;
@@ -171,7 +171,7 @@ namespace SQLLiteExtensions
         {
             if (!hasbeendisposed)       // finalisation may come very late.. not immediately as its done on garbage collection.  Warn by message and assert.
             {
-                System.Windows.Forms.MessageBox.Show("Missing dispose for connection " + DBFile);
+                System.Windows.Forms.MessageBox.Show("SQLConnection missing dispose for connection " + DBFile);
                 System.Diagnostics.Debug.Assert(hasbeendisposed, "Missing dispose for connection" + DBFile);       // must have been disposed
             }
         }

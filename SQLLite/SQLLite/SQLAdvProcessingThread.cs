@@ -112,7 +112,7 @@ namespace SQLLiteExtensions
                                 try
                                 {
                                     Interlocked.Decrement(ref runningThreadsAvailable);        // one less thread ready for use
-                                    System.Diagnostics.Debug.WriteLine($"Thread state ta {runningThreadsAvailable} rt {runningThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
+                                    System.Diagnostics.Debug.WriteLine($"Thread state ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
 
                                     while (jobQueue.Count != 0 )
                                     {
@@ -214,14 +214,22 @@ namespace SQLLiteExtensions
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Submitting job write {write}, ta {runningThreadsAvailable} rt {runningThreads} mt {MultiThreaded} ct {createdThreads} stop {stopCreatingNewThreads}");
+                    System.Diagnostics.Debug.WriteLine($"Submitting job write {write}, ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
 
                     if (!stopCreatingNewThreads)   // if we can create new threads..
                     {
-                        // if no threads, or MT and read and none available (no point creating new threads for write since they will be sequenced by the RWLock)
-                        if (runningThreads == 0 || (MultiThreaded && !write && runningThreadsAvailable == 0)) 
+                        int tno = Interlocked.Increment(ref createdThreads);        // test how many running, interlocked
+
+                        // if tno == 1, there are no threads created, we must make one
+                        // else if MT, not write, and none available, and not exceeding MaxThreads, make another. No point making threads for write
+
+                        if (tno == 1 || (runningThreadsAvailable == 0 && MultiThreaded && !write && tno <= MaxThreads))                      
                         {
-                            TryStartThread();      // try and start another thread to service the request
+                            StartThread(tno);
+                        }
+                        else
+                        {
+                            Interlocked.Decrement(ref createdThreads);      // need to decrease it back
                         }
                     }
 
@@ -243,27 +251,21 @@ namespace SQLLiteExtensions
             {
                 StopAllThreads();       // stop everything
                 multithreaded = mt;     // set state
-                for (int i = 0; i < (multithreaded ? MinThreads : 1); i++)        // 1 thread for non MT, else MinThreads
-                    TryStartThread();          // set up N threads
+                for (int i = 0; i < (multithreaded ? MinThreads : 1); i++)      // 1 thread for non MT, else MinThreads
+                {
+                    int tno = Interlocked.Increment(ref createdThreads);        // get next tno
+                    StartThread(tno);      
+                }
             }
         }
 
-        private void TryStartThread()                   // add another thread to the pool, as long as we don't exceed the limit
+        private void StartThread(int tno)
         {
-            int tno = Interlocked.Increment(ref createdThreads);
-            if (tno <= MaxThreads)                      // if not exceeded, we can make one
-            {
-                var thread = new Thread(SqlThreadProc);
-                thread.Name = $"{Name}-" + tno;
-                thread.IsBackground = true;
-                System.Diagnostics.Debug.WriteLine($"**************** Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} mt {MultiThreaded}");
-                thread.Start();
-            }
-            else
-            {
-                Interlocked.Decrement(ref createdThreads);      // need to decrease it back
-                System.Diagnostics.Debug.WriteLine($"**************** Reject Thread Creation ta {runningThreadsAvailable} rt {runningThreads} tno was {tno}");
-            }
+            var thread = new Thread(SqlThreadProc);
+            thread.Name = $"{Name}-" + tno;
+            thread.IsBackground = true;
+            System.Diagnostics.Debug.WriteLine($"**************** Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
+            thread.Start();
         }
 
         private void StopAllThreads()
