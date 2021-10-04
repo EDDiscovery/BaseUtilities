@@ -56,7 +56,6 @@
     <Compile Include="SQLLite\SQLDbProvider.cs" />
     <Compile Include="SQLLite\SQLConnectionRegister.cs" />
     <Compile Include="SQLLite\SQLAdvProcessingThread.cs" />
-    <Compile Include="SQLLite\SQLProcessingThread.cs" />
     <Compile Include="SQLLite\SQLRegister.cs" />
     <Compile Include="SQLLite\SQLExtensions.cs" />
     <Compile Include="SQLLite\SQLConnection.cs" />

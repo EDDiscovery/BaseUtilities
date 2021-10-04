@@ -20,6 +20,8 @@ using System.Threading;
 
 namespace SQLLiteExtensions
 {
+    // allows multithreaded access to a SQL database, sequencing the reads/writes
+ 
     public abstract class SQLAdvProcessingThread<ConnectionType> where ConnectionType : IDisposable
     {
         #region Public control 
@@ -27,37 +29,37 @@ namespace SQLLiteExtensions
         public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
-        public string Name { get; set; } = "SQLAdvProcessingThread";                            // thread name
+        public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
         public bool MultiThreaded { get { return multithreaded; } set { SetMultithreaded(value); } }    // default is not
 
-        protected abstract ConnectionType CreateConnection();   // override in derived class to make the connection
+        protected abstract ConnectionType CreateConnection();           // override in derived class to make the connection
 
         // Execute SQL with the database in a thread.  Must indicate direction by name
 
-        public T DBRead<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
+        public T DBRead<T>(Func<ConnectionType, T> func, uint warnthreshold = 500, string jobname = "")
         {
-            return Execute(() => func.Invoke(connection.Value), false, 1, warnthreshold, jobname);
+            return Execute(() => func.Invoke(connection.Value), false, warnthreshold, jobname);
         }
 
-        public void DBRead(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
+        public void DBRead(Action<ConnectionType> action, uint warnthreshold = 500, string jobname = "")
         {
-            Execute<object>(() => { action.Invoke(connection.Value); return null; }, false, 1, warnthreshold, jobname);
+            Execute<object>(() => { action.Invoke(connection.Value); return null; }, false, warnthreshold, jobname);
         }
 
-        public void DBWrite(Action<ConnectionType> action, int warnthreshold = 500, string jobname = "")
+        public void DBWrite(Action<ConnectionType> action, uint warnthreshold = 500, string jobname = "")
         {
-            Execute<object>(() => { action.Invoke(connection.Value); return null; }, true, 1, warnthreshold, jobname);
+            Execute<object>(() => { action.Invoke(connection.Value); return null; }, true, warnthreshold, jobname);
         }
 
-        public T DBWrite<T>(Func<ConnectionType, T> func, int warnthreshold = 500, string jobname = "")
+        public T DBWrite<T>(Func<ConnectionType, T> func, uint warnthreshold = 500, string jobname = "")
         {
-            return Execute(() => func.Invoke(connection.Value), true, 1, warnthreshold, jobname);
+            return Execute(() => func.Invoke(connection.Value), true, warnthreshold, jobname);
         }
 
         public void Stop()
         {
-            StopAllThreads();
+            StopAllThreads();   // stop and keep them stopped, can't restart from this
         }
 
         #endregion
@@ -98,7 +100,7 @@ namespace SQLLiteExtensions
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"Start SQL thread {Thread.CurrentThread.Name}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} Start thread {Thread.CurrentThread.Name}");
 
                 using (connection.Value = CreateConnection())   // hold connection over whole period.
                 {
@@ -112,7 +114,7 @@ namespace SQLLiteExtensions
                                 try
                                 {
                                     Interlocked.Decrement(ref runningThreadsAvailable);        // one less thread ready for use
-                                    System.Diagnostics.Debug.WriteLine($"Thread state ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
+                                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} Thread state ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
 
                                     while (jobQueue.Count != 0 )
                                     {
@@ -125,7 +127,7 @@ namespace SQLLiteExtensions
                                             
                                             if ( !MultiThreaded )       // if not multithreaded mode, we can just execute
                                             {
-                                                System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} execute job from {job.jobname} write {job.write}");
+                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute job from {job.jobname} write {job.write}");
                                                 job.Exec();
                                             }
                                             else if (job.write)
@@ -136,15 +138,15 @@ namespace SQLLiteExtensions
                                                     rwLock.AcquireWriterLock(1000000);
                                                     int active = Interlocked.Increment(ref checkRWLock);
                                                     System.Diagnostics.Debug.Assert(active == 1);
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
+                                                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
                                                     job.Exec();
                                                     active = Interlocked.Decrement(ref checkRWLock);
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
+                                                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
                                                     rwLock.ReleaseWriterLock();
                                                 }
                                                 catch
                                                 {
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} failed to get writer lock");
+                                                    System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} failed to get writer lock");
                                                     job.Exec();
                                                 }
                                             }
@@ -154,15 +156,15 @@ namespace SQLLiteExtensions
                                                 {
                                                     rwLock.AcquireReaderLock(1000000);
                                                     int active = Interlocked.Increment(ref checkRWLock);
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} execute mt job from {job.jobname} active {active}");
+                                                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute mt job from {job.jobname} active {active}");
                                                     job.Exec();
                                                     active = Interlocked.Decrement(ref checkRWLock);
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} finish mt job from {job.jobname} active {active}");
+                                                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish mt job from {job.jobname} active {active}");
                                                     rwLock.ReleaseReaderLock();
                                                 }
                                                 catch
                                                 {
-                                                    System.Diagnostics.Debug.WriteLine($"On thread {Thread.CurrentThread.Name} failed to get readers lock");
+                                                    System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} failed to get readers lock");
                                                     job.Exec();
                                                 }
 
@@ -186,14 +188,14 @@ namespace SQLLiteExtensions
             }
             finally
             {
-                System.Diagnostics.Debug.WriteLine($"Stop SQL thread {Thread.CurrentThread.Name}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} stop thread {Thread.CurrentThread.Name}");
 
                 Interlocked.Decrement(ref runningThreadsAvailable);            // stopping threads.. decr count, if 0, say all stopped
 
                 if (Interlocked.Decrement(ref runningThreads) == 0)
                 {
                     stoppedAllThreads.Set();
-                    System.Diagnostics.Debug.WriteLine($"All threads stopped");
+                    System.Diagnostics.Debug.WriteLine($"SQL {Name} All threads stopped");
                 }
             }
         }
@@ -202,19 +204,20 @@ namespace SQLLiteExtensions
 
         #region Execute 
 
-        protected T Execute<T>(Func<T> func, bool write, int skipframes, int warnthreshold, string jobname)  // in caller thread, queue to job queue, wait for complete
+        protected T Execute<T>(Func<T> func, bool write, uint warnthreshold, string jobname)  // in caller thread, queue to job queue, wait for complete
         {
-            using (var job = new Job<T>(func, write, skipframes, warnthreshold, Thread.CurrentThread.Name + jobname))       // make a new job
+            using (var job = new Job<T>(func, write, Thread.CurrentThread.Name + jobname))       // make a new job
             {
                 if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith(Name))            // we should not be calling this from a thread made by us
                 { 
-                    System.Diagnostics.Trace.WriteLine($"{typeof(ConnectionType).Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(skipframes, true).ToString()}");
+                    System.Diagnostics.Trace.WriteLine($"SQL {Name} Database Re-entrancy\n{new System.Diagnostics.StackTrace(0, true).ToString()}");
                     job.Exec();
                     return job.Wait();
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Submitting job write {write}, ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
+                    //System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write?"Write":"Read")} job, ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded} stop {stopCreatingNewThreads}");
+                    //System.Diagnostics.Debug.WriteLine($"... {new System.Diagnostics.StackTrace(2, true)}");
 
                     if (!stopCreatingNewThreads)   // if we can create new threads..
                     {
@@ -235,21 +238,33 @@ namespace SQLLiteExtensions
 
                     jobQueue.Enqueue(job);
                     jobQueuedEvent.Set();  // kick one of the threads and execute it.
-                    return job.Wait();     // must be infinite - can't release the caller thread until the job finished. try it with 10ms for instance, route finder just fails.
+
+                    T ret = job.Wait();     // must be infinite - can't release the caller thread until the job finished. 
+
+                    if ( job.executiontime >= warnthreshold)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job exceeded warning threshold {warnthreshold} time {job.executiontime}\r\n... {new System.Diagnostics.StackTrace(2, true)}");
+                    }
+
+                    return ret;
                 }
             }
         }
 
-        protected void Execute(Action action, bool write, int skipframes, int warnthreshold, string jobname )
+        protected void Execute(Action action, bool write, uint warnthreshold, string jobname )
         {
-            Execute<object>(() => { action(); return null; }, write, skipframes + 1, warnthreshold, jobname);
+            Execute<object>(() => { action(); return null; }, write, warnthreshold, jobname);
         }
 
         private void SetMultithreaded(bool mt)
         {
+            if (stopCreatingNewThreads)     // if stopped, and we are trying to change this, throw
+                throw new Exception();
+
             lock (locker)
             {
                 StopAllThreads();       // stop everything
+                stopCreatingNewThreads = false;                  // Reset so we can start making threads again
                 multithreaded = mt;     // set state
                 for (int i = 0; i < (multithreaded ? MinThreads : 1); i++)      // 1 thread for non MT, else MinThreads
                 {
@@ -264,26 +279,24 @@ namespace SQLLiteExtensions
             var thread = new Thread(SqlThreadProc);
             thread.Name = $"{Name}-" + tno;
             thread.IsBackground = true;
-            System.Diagnostics.Debug.WriteLine($"**************** Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
+            System.Diagnostics.Debug.WriteLine($"SQL {Name} Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
             thread.Start();
         }
 
-        private void StopAllThreads()
+        private void StopAllThreads()                       // leaves stopCreatingNewThreads in true state
         {
-            stopCreatingNewThreads = true;                // just stop the threads creating new readers
+            stopCreatingNewThreads = true;                  // just stop the threads creating new readers
 
             stopRequestedEvent.Set();                       // stop the threads - all of them
             Interlocked.MemoryBarrier();                    // ??
             stoppedAllThreads.WaitOne();                    // until the last one indicates its finished
 
             System.Diagnostics.Debug.Assert(runningThreadsAvailable == 0 && runningThreads == 0);  // ensure the counters are right
-            System.Diagnostics.Debug.WriteLine("All threads indicated stopped");
+            System.Diagnostics.Debug.WriteLine($"SQL {Name} stop all threads indicated stopped");
 
             createdThreads = 0;
             stoppedAllThreads = new ManualResetEvent(true);   // all threads are stopped
             stopRequestedEvent = new ManualResetEvent(false);
-
-            stopCreatingNewThreads = false;
         }
 
         #endregion
@@ -297,39 +310,29 @@ namespace SQLLiteExtensions
     }
     internal class Job<T> : Job, IDisposable
     {
-        private Func<T> Func;           // this is the code to call to execute the job
-        private T result;               // passed back result of the job
         public string jobname { get; set; }
         public bool write { get; set; }
+        public uint executiontime { get; set; }   // set after wait for the amount of time between creation and finish execution
 
+        private Func<T> func;           // this is the code to call to execute the job
+        private T result;               // passed back result of the job
         private ManualResetEventSlim waithandle;    // set when job finished
-        private string stackTrace;
-        private int warnThreshold;
         private Exception exception;
-        private System.Diagnostics.Stopwatch stopwatch;
 
-        public Job(Func<T> func, bool write, int skipframes, int warnthreshold, string jobname)       // in calller thread, set the job up
+        public Job(Func<T> func, bool write, string jobname)       // in calller thread, set the job up
         {
-            this.Func = func;
+            this.func = func;
             this.write = write;
-            this.stackTrace = new System.Diagnostics.StackTrace(skipframes + 1, true).ToString();       // stack trace of caller thread
-            this.warnThreshold = warnthreshold;
             this.jobname = jobname;
             this.waithandle = new ManualResetEventSlim(false);
-            this.stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            this.executiontime = (uint)Environment.TickCount;
         }
 
         public void Exec()     // in SQL thread, do the job
         {
-            if (stopwatch.ElapsedMilliseconds > warnThreshold)
-            {
-                System.Diagnostics.Trace.WriteLine($"Job delayed for {stopwatch.ElapsedMilliseconds}ms");
-            }
-            stopwatch.Reset();
-
             try
             {
-                result = Func.Invoke();
+                result = func.Invoke();
             }
             catch (Exception ex)
             {
@@ -337,11 +340,7 @@ namespace SQLLiteExtensions
             }
             finally
             {
-                if (stopwatch.ElapsedMilliseconds > warnThreshold)
-                {
-                    System.Diagnostics.Trace.WriteLine($"Database connection held for {stopwatch.ElapsedMilliseconds}ms\n{stackTrace}");
-                }
-
+                executiontime = (uint)Environment.TickCount - executiontime;        // we use tickcount for this, accurate enough, low overhead
                 waithandle.Set();
             }
         }
@@ -366,5 +365,10 @@ namespace SQLLiteExtensions
         }
     }
 
-
+    public class SQLProcessingThreadException : Exception
+    {
+        public SQLProcessingThreadException(Exception innerexception) : base(innerexception.Message, innerexception)
+        {
+        }
+    }
 }
