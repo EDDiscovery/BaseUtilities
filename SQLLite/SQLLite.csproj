@@ -59,11 +59,6 @@
     <Compile Include="SQLLite\SQLProcessingThread.cs" />
     <Compile Include="SQLLite\SQLRegister.cs" />
     <Compile Include="SQLLite\SQLExtensions.cs" />
-    <Compile Include="SQLLite\SQLCommand.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="SQLLite\SQLTransaction.cs" />
-    <Compile Include="SQLLite\SQLReader.cs" />
     <Compile Include="SQLLite\SQLConnection.cs" />
   </ItemGroup>
   <ItemGroup>

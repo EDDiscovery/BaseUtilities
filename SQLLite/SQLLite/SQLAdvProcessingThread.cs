@@ -24,7 +24,7 @@ namespace SQLLiteExtensions
     {
         #region Public control 
         public int Threads { get { return runningThreads; } }
-        public int MaxThreads { get; set; } = 10;                      // maximum to create when MultiThreaded = true, 1 or more
+        public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
         public string Name { get; set; } = "SQLAdvProcessingThread";                            // thread name
