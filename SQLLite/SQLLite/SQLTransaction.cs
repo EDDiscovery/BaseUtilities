@@ -20,11 +20,8 @@ using System.Data.Common;
 namespace SQLLiteExtensions
 {
     // This class wraps a DbTransaction
-
-    public class SQLExtTransaction<TConn> : DbTransaction where TConn : SQLExtConnection
+    public class SQLExtTransaction: DbTransaction
     {
-        public DbTransaction InnerTransaction { get; private set; }
-
         public SQLExtTransaction(DbTransaction txn)
         {
             InnerTransaction = txn;
@@ -52,5 +49,7 @@ namespace SQLLiteExtensions
 
             base.Dispose(disposing);
         }
+        public DbTransaction InnerTransaction { get; private set; }
+
     }
 }

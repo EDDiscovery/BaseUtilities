@@ -14,15 +14,11 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using System;
-using System.Data;
-using System.Data.Common;
-
 namespace SQLLiteExtensions
 {
     // Connection with a register
 
-    public class SQLExtConnectionRegister<TConn> : SQLExtConnection where TConn : SQLExtConnection, new()
+    public class SQLExtConnectionRegister: SQLExtConnection
     {
         public SQLExtRegister RegisterClass;
 

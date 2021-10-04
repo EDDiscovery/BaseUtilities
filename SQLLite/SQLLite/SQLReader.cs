@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019-2020 EDDiscovery development team
+ * Copyright © 2019-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -20,17 +20,13 @@ using System.Data.Common;
 
 namespace SQLLiteExtensions
 {
-    // This class wraps a DbDataReader so it can take the
-    // transaction lock, and to work around SQLite
-    // not using a monitor or mutex when locking the
-    // database
-    public class SQLExtDataReader<TConn> : DbDataReader  where TConn : SQLExtConnection
+    // Implementation of abstract class
+    public class SQLExtDataReader : DbDataReader 
     {
-        public SQLExtDataReader(DbCommand cmd, CommandBehavior behaviour, SQLExtTransaction<TConn> txn = null)
+        public SQLExtDataReader(DbCommand cmd, CommandBehavior behaviour)
         {
             this.command = cmd;
             this.InnerReader = cmd.ExecuteReader(behaviour);
-            this.transaction = txn;
         }
 
         #region Overridden methods and properties passed to inner command
@@ -93,6 +89,5 @@ namespace SQLLiteExtensions
 
         protected DbDataReader InnerReader { get; set; }
         protected DbCommand command;
-        protected SQLExtTransaction<TConn> transaction;
     }
 }

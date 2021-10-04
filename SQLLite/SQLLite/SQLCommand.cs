@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019-2020 EDDiscovery development team
+ * Copyright © 2019-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -17,8 +17,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
-using System.Threading;
 
 namespace SQLLiteExtensions
 {
@@ -39,7 +37,7 @@ namespace SQLLiteExtensions
         public override void Cancel() { InnerCommand.Cancel(); }
         public override void Prepare() { InnerCommand.Prepare(); }
 
-        protected override DbTransaction DbTransaction { get { return InnerCommand.Transaction; } set { SetTransaction(value); } }
+        protected override DbTransaction DbTransaction { get { return InnerCommand.Transaction; } set { InnerCommand.Transaction = value; } }
 
         // interface
 
@@ -48,7 +46,7 @@ namespace SQLLiteExtensions
             InnerCommand = cmd;
             if (txn != null)
             {
-                SetTransaction(txn);
+                InnerCommand.Transaction = txn;
             }
         }
 
@@ -56,7 +54,7 @@ namespace SQLLiteExtensions
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            return new SQLExtDataReader<TConn>(this.InnerCommand, behavior);
+            return new SQLExtDataReader(this.InnerCommand, behavior);
         }
 
         public override object ExecuteScalar()
@@ -81,13 +79,16 @@ namespace SQLLiteExtensions
                     InnerCommand = null;
                 }
 
+#if DEBUG
                 hasbeendisposed = true;
+#endif
             }
 
             base.Dispose(disposing);
         }
 
 #if DEBUG
+        private bool hasbeendisposed;
         //since finalisers impose a penalty, we shall check only in debug mode
         ~SQLExtCommand()
         {
@@ -99,22 +100,7 @@ namespace SQLLiteExtensions
         }
 #endif
 
-        protected void SetTransaction(DbTransaction txn)
-        {
-            // We only accept wrapped transactions in order to avoid deadlocks
-            if (txn == null || txn is SQLExtTransaction<TConn>)
-            {
-                InnerCommand.Transaction = txn;
-            }
-            else
-            {
-                throw new InvalidOperationException(String.Format("Expected a {0}; got a {1}", typeof(SQLExtTransaction<TConn>).FullName, txn.GetType().FullName));
-            }
-        }
-
-
         public DbCommand InnerCommand { get; set; }
-        private bool hasbeendisposed;
     }
 }
 

@@ -15,18 +15,16 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SQLite;
 using System.IO;
 using System.Threading;
 
 namespace SQLLiteExtensions
 {
-    // Base class for Connections
-    
-    public abstract class SQLExtConnection : IDisposable              // USE this for connections.. 
+    // A connection
+
+    public abstract class SQLExtConnection : IDisposable             
     {
         public enum AccessMode { Reader, Writer, ReaderWriter };
         public string DBFile { get; private set; }    // the File name
@@ -104,7 +102,7 @@ namespace SQLLiteExtensions
             }
         }
 
-        // provided for DB upgrade operations at the basic level..
+        // provided for DB upgrade operations 
 
         public void PerformUpgrade( int newVersion, bool catchErrors, bool backupDbFile, string[] queries, Action doAfterQueries = null)
         {
