@@ -24,7 +24,7 @@ namespace SQLLiteExtensions
 {
     // A connection
 
-    public abstract class SQLExtConnection : IDisposable             
+    public class SQLExtConnection : IDisposable             
     {
         public enum AccessMode { Reader, Writer, ReaderWriter };
         public string DBFile { get; private set; }    // the File name
