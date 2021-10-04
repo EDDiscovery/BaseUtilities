@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2019 EDDiscovery development team
+ * Copyright 2015-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -27,9 +27,9 @@ namespace EliteDangerousCore.DB
             if (SystemsDatabase.Instance.RebuildRunning)
                 return 0;
 
-            return SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+            return SystemsDatabase.Instance.DBRead(db =>
             {
-                var cn = db.Connection;
+                var cn = db;
                 using (DbCommand cmd = cn.CreateCommand("select Count(1) from Systems"))
                 {
                     return (long)cmd.ExecuteScalar();
@@ -47,12 +47,12 @@ namespace EliteDangerousCore.DB
             if (SystemsDatabase.Instance.RebuildRunning)
                 return ret;
 
-            return SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+            return SystemsDatabase.Instance.DBRead(db =>
             {
 
                 //BaseUtils.AppTicks.TickCountLap("Star");
 
-                var cn = db.Connection;
+                var cn = db;
 
                 using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryNamed, where, orderby, limit: limit, joinlist: MakeSystemQueryNamedJoinList))
                 {
@@ -82,10 +82,10 @@ namespace EliteDangerousCore.DB
             if (SystemsDatabase.Instance.RebuildRunning)
                 return ret;
 
-            return SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+            return SystemsDatabase.Instance.DBRead(db =>
             {
 
-                var cn = db.Connection;
+                var cn = db;
 
                 using (DbCommand cmd = cn.CreateSelect("Systems s",
                                                        outparas: "s.x,s.y,s.z",

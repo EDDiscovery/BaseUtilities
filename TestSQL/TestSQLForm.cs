@@ -25,7 +25,9 @@ namespace TestSQL
             if ( deletedb )
                 BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
 
-            SystemsDatabase.Instance.Start("SystemDB");
+            SystemsDatabase.Instance.MaxThreads = 8;
+            SystemsDatabase.Instance.MinThreads = 2;
+            SystemsDatabase.Instance.MultiThreaded = true;
             SystemsDatabase.Instance.Initialize();
 //            SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s),false);
 
@@ -164,9 +166,9 @@ namespace TestSQL
 
                 for (int I = 0; I < 100; I++)
                 {
-                    SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                    SystemsDatabase.Instance.DBRead(db =>
                     {
-                        s = SystemsDB.GetSystemByPosition(-100.7, 166.4, -36.8, db.Connection);
+                        s = SystemsDB.GetSystemByPosition(-100.7, 166.4, -36.8, db);
                         System.Diagnostics.Debug.Assert(s != null && s.Name == "Col 285 Sector IZ-B b15-2");
                     });
 
@@ -191,8 +193,8 @@ namespace TestSQL
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Chamaeleon Sector FG-W b2-3") && s.Xi == 71440 && s.Yi == -12288 && s.Zi == 35092);
                 s = SystemCache.FindSystem("kanur");
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
-                s = SystemCache.FindSystem(s.EDSMID);
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
+                //s = SystemCache.FindSystem(s.EDSMID);
+                //System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
                 s = SystemCache.FindSystem("CM DRACO");     // this is an alias system
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("CM Draconis") && s.EDSMID == 19700);
             }
@@ -286,9 +288,9 @@ namespace TestSQL
                 BaseUtils.AppTicks.TickCountLap();
                 double x = 0, y = 0, z = 0;
 
-                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                SystemsDatabase.Instance.DBRead(db =>
                 {
-                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 20, true, db.Connection);
+                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 20, true, db);
                     System.Diagnostics.Debug.WriteLine("Stars Near Sol: " + BaseUtils.AppTicks.TickCountLap());
                     System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
                 });
@@ -302,9 +304,9 @@ namespace TestSQL
                 BaseUtils.AppTicks.TickCountLap();
                 double x = 490, y = 0, z = 0;
 
-                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                SystemsDatabase.Instance.DBRead(db =>
                 {
-                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 50, true, db.Connection); //should span 2 grids 810/811
+                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 50, true, db); //should span 2 grids 810/811
                     System.Diagnostics.Debug.WriteLine("Stars Near x490: " + BaseUtils.AppTicks.TickCountLap());
                     System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
                 });
@@ -313,11 +315,11 @@ namespace TestSQL
             }
 
             { // 142ms with xz and no sector lookup
-                SystemsDatabase.Instance.ExecuteWithDatabase(db =>
+                SystemsDatabase.Instance.DBRead(db =>
                 {
                     BaseUtils.AppTicks.TickCountLap();
                     ISystem s;
-                    s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.SystemsNearestMetric.IterativeWaypointDevHalf,db.Connection);
+                    s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.SystemsNearestMetric.IterativeWaypointDevHalf,db);
                     System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Alpha Centauri"));
                     System.Diagnostics.Debug.WriteLine("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
                 });

@@ -8,12 +8,13 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>TestSQL</RootNamespace>
     <AssemblyName>TestSQL</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -40,9 +41,6 @@
     <Reference Include="System.Data.SQLite, Version=1.0.113.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
       <HintPath>..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.113.3\lib\net46\System.Data.SQLite.dll</HintPath>
     </Reference>
-    <Reference Include="System.Data.SQLite.Linq, Version=1.0.113.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.113.0\lib\net46\System.Data.SQLite.Linq.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -55,19 +53,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CoreReplace.cs" />
-    <Compile Include="SystemCache.cs" />
-    <Compile Include="SystemClass.cs" />
-    <Compile Include="ISystem.cs" />
-    <Compile Include="SystemsDatabase.cs" />
-    <Compile Include="SystemsDBEDSMSystemAliases.cs" />
-    <Compile Include="SystemsDBEDSMRemove.cs" />
-    <Compile Include="SystemsDBGetByGrid.cs" />
-    <Compile Include="SystemsDBGetByDistance.cs" />
-    <Compile Include="SystemsDBGetLists.cs" />
-    <Compile Include="SystemsDBGetStars.cs" />
-    <Compile Include="SystemGridID.cs" />
-    <Compile Include="EliteNameClassifier.cs" />
-    <Compile Include="SystemsDBEDSMStore.cs" />
+    <Compile Include="EliteDangerous\ISystem.cs" />
+    <Compile Include="EliteDangerous\SystemClass.cs" />
+    <Compile Include="SystemDB\SystemCache.cs" />
+    <Compile Include="SystemDB\SystemsDatabase.cs" />
+    <Compile Include="SystemDB\SystemsDBEDSMSystemAliases.cs" />
+    <Compile Include="SystemDB\SystemsDBEDSMRemove.cs" />
+    <Compile Include="SystemDB\SystemsDBGetByGrid.cs" />
+    <Compile Include="SystemDB\SystemsDBGetByDistance.cs" />
+    <Compile Include="SystemDB\SystemsDBGetLists.cs" />
+    <Compile Include="SystemDB\SystemsDBGetStars.cs" />
+    <Compile Include="SystemDB\SystemGridID.cs" />
+    <Compile Include="SystemDB\EliteNameClassifier.cs" />
+    <Compile Include="SystemDB\SystemsDBEDSMStore.cs" />
     <Compile Include="TestSQLForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -76,7 +74,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SQLiteConnectionSystem.cs" />
+    <Compile Include="SystemDB\SQLiteConnectionSystem.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -85,6 +83,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

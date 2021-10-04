@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2019 EDDiscovery development team
+ * Copyright 2015-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -19,13 +19,9 @@ using System;
 
 namespace EliteDangerousCore.DB
 {
-    internal class SQLiteConnectionSystem : SQLExtConnectionRegister<SQLiteConnectionSystem>
+    public class SQLiteConnectionSystem : SQLExtConnectionRegister
     {
-        public SQLiteConnectionSystem() : this(false)
-        {
-        }
-
-        public SQLiteConnectionSystem(bool ro) : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true, mode: ro ? AccessMode.Reader : AccessMode.ReaderWriter)
+        public SQLiteConnectionSystem() : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true)
         {
         }
 
@@ -44,9 +40,8 @@ namespace EliteDangerousCore.DB
                 SQLExtRegister reg = new SQLExtRegister(this);
                 int dbver = reg.GetSetting("DBVer", (int)0);      // use reg, don't use the built in func as they create new connections and confuse the schema
 
-                ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
+                ExecuteNonQueries(new string[]                  // always set up
                     {
-                    "DROP TABLE IF EXISTS EDDB",                // New Dec 20 - no more EDDB
                     "DROP TABLE IF EXISTS Distances",
                     "DROP TABLE IF EXISTS EddbSystems",
                     // keep edsmsystems
@@ -63,7 +58,7 @@ namespace EliteDangerousCore.DB
 
                 if ( dbver < 200 || oldsystems)
                 {
-                    ExecuteNonQueries(new string[]             // always kill these old tables and make EDDB new table
+                    ExecuteNonQueries(new string[]             // always kill these old tables 
                     {
                     "DROP TABLE IF EXISTS Systems", // New! this is an hold over which never got deleted when we moved to the 102 schema
                     });
@@ -89,14 +84,13 @@ namespace EliteDangerousCore.DB
                 if (dbver < 200)
                 {
                     reg.PutSetting("DBVer", (int)200);
-                    reg.DeleteKey("EDDBSystemsTime");       // force a reload of EDDB
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("UpgradeSystemsDB error: " + ex.Message + Environment.NewLine + ex.StackTrace);
+                System.Windows.Forms.MessageBox.Show("UpgradeSystemsDB error: " + ex.Message + Environment.NewLine + ex.StackTrace);
                 return false;
             }
         }
