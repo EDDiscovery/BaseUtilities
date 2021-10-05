@@ -64,6 +64,11 @@ namespace BaseUtils.JSON
             set { Objects[key] = (value == null) ? JToken.Null() : value; }
         }
 
+        public override JToken First() { return Objects.First().Value; }
+        public override JToken Last() { return Objects.Last().Value; }
+        public override JToken FirstOrDefault() { return Objects.Count > 0 ? Objects.First().Value : null; }
+        public override JToken LastOrDefault() { return Objects.Count > 0 ? Objects.Last().Value : null; }
+
         public string[] PropertyNames() { return Objects.Keys.ToArray(); }
 
         public bool Contains(string n) { return Objects.ContainsKey(n); }
@@ -80,6 +85,7 @@ namespace BaseUtils.JSON
         }
 
         public override int Count { get { return Objects.Count; } }
+
 
         public void Add(string key, JToken value) { this[key] = value; }
         public bool Remove(string key) { return Objects.Remove(key); }

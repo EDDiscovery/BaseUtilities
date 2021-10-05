@@ -418,6 +418,10 @@ namespace BaseUtils.JSON
         // On an Array/Object, get return null if not present, or indexer is not right type
         // On an Array/Object, set will throw if indexer is not of right type or index out of range (Arrays)
         public virtual JToken this[object key] { get { return null; } set { throw new NotImplementedException(); } }
+        public virtual JToken First() { throw new NotImplementedException(); }
+        public virtual JToken Last() { throw new NotImplementedException(); }
+        public virtual JToken FirstOrDefault() { throw new NotImplementedException(); }
+        public virtual JToken LastOrDefault() { throw new NotImplementedException(); }
 
         public IEnumerator<JToken> GetEnumerator()
         {

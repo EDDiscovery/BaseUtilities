@@ -59,6 +59,11 @@ namespace BaseUtils.JSON
         // must be in range.
         public JToken this[int element] { get { return Elements[element]; } set { Elements[element] = value; } }
 
+        public override JToken First() { return Elements[0]; }
+        public override JToken Last() { return Elements[Elements.Count-1]; }
+        public override JToken FirstOrDefault() { return Elements.Count > 0 ? Elements[0] : null; }
+        public override JToken LastOrDefault() { return Elements.Count > 0 ? Elements[Elements.Count-1] : null; }
+
         // try and get a value.
         public bool TryGetValue(int n, out JToken value) { if (n >= 0 && n < Elements.Count) { value = Elements[n]; return true; } else { value = null; return false; } }
 
