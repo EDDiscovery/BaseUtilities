@@ -246,6 +246,8 @@ namespace SQLLiteExtensions
                         System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job exceeded warning threshold {warnthreshold} time {job.executiontime}\r\n... {new System.Diagnostics.StackTrace(2, true)}");
                     }
 
+                    job.Dispose();
+
                     return ret;
                 }
             }
@@ -316,7 +318,7 @@ namespace SQLLiteExtensions
 
         private Func<T> func;           // this is the code to call to execute the job
         private T result;               // passed back result of the job
-        private ManualResetEventSlim waithandle;    // set when job finished
+        private ManualResetEvent waithandle;    // set when job finished
         private Exception exception;
 
         public Job(Func<T> func, bool write, string jobname)       // in calller thread, set the job up
@@ -324,7 +326,7 @@ namespace SQLLiteExtensions
             this.func = func;
             this.write = write;
             this.jobname = jobname;
-            this.waithandle = new ManualResetEventSlim(false);
+            this.waithandle = new ManualResetEvent(false);
             this.executiontime = (uint)Environment.TickCount;
         }
 
@@ -347,7 +349,7 @@ namespace SQLLiteExtensions
 
         public T Wait()     // in caller thread, wait for the job to complete.
         {
-            waithandle.Wait();
+            waithandle.WaitOne();
 
             if (exception != null)
             {
@@ -372,3 +374,4 @@ namespace SQLLiteExtensions
         }
     }
 }
+
