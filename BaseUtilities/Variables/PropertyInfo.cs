@@ -102,7 +102,14 @@ namespace BaseUtils
             else if ((typeof(System.Collections.IDictionary).IsAssignableFrom(pt)))
             {
                 var pni = PNI(name + "Count", typeof(int), 0, "Dictionary Count", "Count of items. Use <name>_itemname for particular item");
+            }
+            else if (typeof(System.Collections.IList).IsAssignableFrom(pt))
+            {
+                var pni = PNI(name + "Count", typeof(int), 0, "List Count", "Count of items. Use <name>[index, 1..N]_itemname for particular item");
                 ret.Add(pni);
+                var subclasslist = GetPropertyFieldNames(pt.GenericTypeArguments[0], name + "[]_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, depth - 1);
+                if (subclasslist != null)
+                    ret.AddRange(subclasslist);
             }
             else if (pt.IsClass && pt != typeof(string))
             {
