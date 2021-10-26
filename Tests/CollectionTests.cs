@@ -116,7 +116,7 @@ namespace EDDiscoveryTests
             sw.Start();
 
             long time = sw.ElapsedMilliseconds;
-            File.WriteAllText(@"c:\code\time.txt", "Time taken " + time);
+            //File.WriteAllText(@"c:\code\time.txt", "Time taken " + time);
 
             for (uint g = 0; g < generations; g++)
             {

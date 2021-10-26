@@ -24,19 +24,20 @@ namespace BaseUtils
 {
     public class CSVWrite
     {
-        protected string delimiter = ",";
-        protected System.Globalization.CultureInfo formatculture = new System.Globalization.CultureInfo("en-US");
+        public string Delimiter { get; private set; }  = ",";
 
-        public void SetCSVDelimiter( bool comma )
+        private System.Globalization.CultureInfo formatculture = new System.Globalization.CultureInfo("en-US");
+
+        public void SetCSVDelimiter( bool usecomma)
         {
-            if (comma)
+            if (usecomma)
             {
-                delimiter = ",";
+                Delimiter = ",";
                 formatculture = new System.Globalization.CultureInfo("en-US");
             }
             else
             {
-                delimiter = ";";
+                Delimiter = ";";
                 formatculture = new System.Globalization.CultureInfo("sv");
             }
         }
@@ -84,7 +85,7 @@ namespace BaseUtils
                     else
                         System.Diagnostics.Debug.Assert(false, "defformat does not support this type");
 
-                    if (output.Contains(",") || output.Contains("\"") || output.Contains("\r") || output.Contains("\n"))
+                    if (output.Contains(Delimiter) || output.Contains("\"") || output.Contains("\r") || output.Contains("\n"))
                     {
                         output = output.Replace("\r\n", "\n");
                         output = output.Replace("\"", "\"\"");
@@ -94,7 +95,7 @@ namespace BaseUtils
             }
 
             if (delimit)
-                return output + delimiter;
+                return output + Delimiter;
             else
                 return output;
         }

@@ -772,7 +772,7 @@ namespace EDDiscoveryTests
                 long time = sw.ElapsedTicks - tick;
                 double timems = (double)time / Stopwatch.Frequency * 1000;
                 System.Diagnostics.Trace.WriteLine("Time is " + timems);
-                File.WriteAllText(@"c:\code\time.txt", "Time is " + timems);
+                //File.WriteAllText(@"c:\code\time.txt", "Time is " + timems);
             }
 
             {

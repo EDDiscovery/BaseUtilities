@@ -88,7 +88,7 @@ namespace BaseUtils
                         for (cols = 0; (t = GetHeader(cols)) != null; cols++)
                         {
                             if (cols > 0)
-                                writer.Write(delimiter);
+                                writer.Write(Delimiter);
                             writer.Write(Format(t, false));
                         }
 

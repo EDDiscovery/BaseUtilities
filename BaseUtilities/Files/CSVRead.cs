@@ -24,11 +24,18 @@ namespace BaseUtils
 {
     public class CSVRead
     {
-        StreamReader indata;
+        public string Delimiter { get; private set; } = ",";
+
+        private StreamReader indata;
 
         public CSVRead(StreamReader s)
         {
             indata = s;
+        }
+
+        public void SetCSVDelimiter(bool usecomma)
+        {
+            Delimiter = usecomma ? "," : ";";
         }
 
         public enum State { EOF, Item, ItemEOL };
@@ -66,7 +73,7 @@ namespace BaseUtils
             }
             else
             {
-                while ((c = indata.Peek()) != -1 && c != ',' && c != '\r')
+                while ((c = indata.Peek()) != -1 && c != Delimiter[0] && c != '\r')
                 {
                     //System.Diagnostics.Debug.WriteLine("NChar " + c);
                     s += (char)c;
@@ -213,7 +220,7 @@ namespace BaseUtils
             }
         }
 
-        public bool Read(string file, FileShare fs = FileShare.None )
+        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true )
         {
             Rows = new List<Row>();
 
@@ -227,6 +234,7 @@ namespace BaseUtils
                     using (StreamReader sr = new StreamReader(s))
                     {
                         CSVRead csv = new CSVRead(sr);
+                        csv.SetCSVDelimiter(commadelimit);
 
                         CSVRead.State st;
 
