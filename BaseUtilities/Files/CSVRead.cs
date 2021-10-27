@@ -26,9 +26,9 @@ namespace BaseUtils
     {
         public string Delimiter { get; private set; } = ",";
 
-        private StreamReader indata;
+        private TextReader indata;
 
-        public CSVRead(StreamReader s)
+        public CSVRead(TextReader s)
         {
             indata = s;
         }
@@ -38,18 +38,17 @@ namespace BaseUtils
             Delimiter = usecomma ? "," : ";";
         }
 
-        public enum State { EOF, Item, ItemEOL };
+        public enum State { EOF, Item, ItemEOL, Error };
 
         public State Next(out string s)
         {
             s = "";
 
-            if (indata.EndOfStream)
+            int c = indata.Peek();
+
+            if (c == -1)
                 return State.EOF;
-
-            int c;
-
-            if (indata.Peek() == '"')
+            else if (c == '"')
             {
                 indata.Read();
 
@@ -81,16 +80,21 @@ namespace BaseUtils
                 }
             }
 
-            int e = indata.Read();
-            //System.Diagnostics.Debug.WriteLine("SChar " + e);
-
-            if (e == '\r')
+            while(true)
             {
-                e = indata.Read();
-                return State.ItemEOL;
+                int e = indata.Read();       // after terminator
+                if (e == '\r')
+                {
+                    e = indata.Read();      // crlf
+                    return State.ItemEOL;
+                }
+                else if (e == -1 || e == Delimiter[0])  // if eof, or delimiter, its fine for this item, return
+                    return State.Item;
+                else if (char.IsWhiteSpace((char)e))    // if whitespace, skip
+                    continue;
+                else
+                    return State.Error;
             }
-            else
-                return State.Item;
         }
 
         void RemoveSpaces()
@@ -180,6 +184,17 @@ namespace BaseUtils
                 return v != null ? v.InvariantParseLongNull() : null;
             }
 
+            public double? GetDouble(int cell)
+            {
+                string v = this[cell];
+                return v != null ? v.InvariantParseDoubleNull() : null;
+            }
+            public double? GetDouble(string cellname)
+            {
+                string v = this[cellname];
+                return v != null ? v.InvariantParseDoubleNull() : null;
+            }
+
             public void SetPosition(int cell)           // set position to N
             {
                 nextcell = cell;
@@ -220,48 +235,76 @@ namespace BaseUtils
             }
         }
 
-        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true )
+        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true, Action<int, Row> rowoutput = null)
         {
-            Rows = new List<Row>();
-
             if (!File.Exists(file))
                 return false;
 
             try
             {
-                using (Stream s = File.Open(file,FileMode.Open,FileAccess.Read,fs))
+                using (Stream s = File.Open(file, FileMode.Open, FileAccess.Read, fs))
                 {
-                    using (StreamReader sr = new StreamReader(s))
-                    {
-                        CSVRead csv = new CSVRead(sr);
-                        csv.SetCSVDelimiter(commadelimit);
-
-                        CSVRead.State st;
-
-                        Row l = new Row();
-
-                        string str;
-                        while ((st = csv.Next(out str)) != CSVRead.State.EOF)
-                        {
-                            l.Cells.Add(str);
-
-                            if (st == CSVRead.State.ItemEOL)
-                            {
-                                Rows.Add(l);
-                                l = new Row();
-                            }
-                        }
-
-                        if (l.Cells.Count > 0)
-                            Rows.Add(l);
-
-                        return true;
-                    }
+                    return Read(s, commadelimit, rowoutput);
                 }
             }
             catch
             {
                 return false;
+            }
+        }
+
+        public bool Read(Stream s, bool commadelimit = true, Action<int, Row> rowoutput = null)
+        {
+            using (StreamReader sr = new StreamReader(s))
+            {
+                return Read(sr, commadelimit, rowoutput);
+            }
+        }
+
+        // read from TR with comma/semi selection
+        // optionally send rows to rowoutput instead of storing
+        public bool Read(TextReader tr, bool commadelimit = true, Action<int,Row> rowoutput = null)
+        {
+            Rows = new List<Row>();
+
+            CSVRead csv = new CSVRead(tr);
+            csv.SetCSVDelimiter(commadelimit);
+
+            Row l = new Row();
+            int r = 0;
+
+            while (true)
+            {
+                var state = csv.Next(out string str);
+                if (state == CSVRead.State.Item)
+                {
+                    l.Cells.Add(str);
+                }
+                else if (state == CSVRead.State.ItemEOL)
+                {
+                    l.Cells.Add(str);
+                    
+                    if ( rowoutput!=null )
+                        rowoutput.Invoke(r++, l);
+                    else
+                        Rows.Add(l);
+
+                    l = new Row();
+                }
+                else if (state == CSVRead.State.EOF)
+                {
+                    if (l.Cells.Count > 0)
+                    {
+                        if ( rowoutput != null )
+                            rowoutput?.Invoke(r++, l);
+                        else
+                            Rows.Add(l);
+                    }
+
+                    return true;
+                }
+                else
+                    return false;       // error, end
             }
         }
 
