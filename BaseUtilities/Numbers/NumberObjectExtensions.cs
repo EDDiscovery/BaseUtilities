@@ -76,6 +76,14 @@ public static class ObjectExtensionsNumbersBool
         else
             return null;
     }
+    static public int? ParseIntNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)     // s can be null
+    {
+        int i;
+        if (s != null && int.TryParse(s, System.Globalization.NumberStyles.Integer | ns, culture, out i))
+            return i;
+        else
+            return null;
+    }
 
     static public int? InvariantParseIntNullOffset(this string s, int offset)     // s can be null, can have a +/- in front indicating offset
     {
@@ -135,10 +143,19 @@ public static class ObjectExtensionsNumbersBool
             return null;
     }
 
-    static public double? ParseDoubleNull(this string s)
+    static public double? ParseDoubleNull(this string s)    // current culture
     {
         double i;
         if (s != null && double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out i))
+            return i;
+        else
+            return null;
+    }
+
+    static public double? ParseDoubleNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        double i;
+        if (s != null && double.TryParse(s, System.Globalization.NumberStyles.Float |ns, culture, out i))
             return i;
         else
             return null;
@@ -158,6 +175,15 @@ public static class ObjectExtensionsNumbersBool
     {
         float i;
         if (s != null && float.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out i))
+            return i;
+        else
+            return null;
+    }
+
+    static public double? ParseFloatNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        float i;
+        if (s != null && float.TryParse(s, System.Globalization.NumberStyles.Float | ns, culture, out i))
             return i;
         else
             return null;
@@ -187,6 +213,15 @@ public static class ObjectExtensionsNumbersBool
             return null;
     }
 
+    static public long? ParseLongNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        long i;
+        if (s != null && long.TryParse(s, System.Globalization.NumberStyles.Integer | ns, culture, out i))
+            return i;
+        else
+            return null;
+    }
+
     #endregion
 
     #region ULong
@@ -195,6 +230,15 @@ public static class ObjectExtensionsNumbersBool
     {
         ulong i;
         if (s != null && ulong.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i))
+            return i;
+        else
+            return null;
+    }
+
+    static public ulong? ParseULongNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        ulong i;
+        if (s != null && ulong.TryParse(s, System.Globalization.NumberStyles.Integer | ns, culture, out i))
             return i;
         else
             return null;

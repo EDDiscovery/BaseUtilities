@@ -32,12 +32,12 @@ namespace EDDiscoveryTests
         public void CSVBasic()
         {
 
-            CheckCSV(false);
-            CheckCSV(true);
+            CheckCSV(false, "100 123,12");
+            CheckCSV(true, "100,123.12");
 
         }
 
-        public void CheckCSV(bool comma)
+        public void CheckCSV(bool comma, string decimalvalue)
         {
             string workingfolder = Path.GetTempPath();
 
@@ -47,11 +47,11 @@ namespace EDDiscoveryTests
             wr.SetCSVDelimiter(comma);
             wr.GetPreHeader += (o) => { if (o == 0) return new object[] { "Pre header" }; else return null; };
             wr.GetLineHeader += (o) => { if (o == 0) return new object[] { "CA", "CB", "CC" }; else return null; };
-            wr.GetLine += (i) => { if (i < 10) return new object[] { i.ToStringInvariant(), (i + 1).ToStringInvariant(), (i + 2).ToStringInvariant(), chks1, chks2 }; else return null; };
+            wr.GetLine += (i) => { if (i < 10) return new object[] { i.ToStringInvariant(), decimalvalue, (i + 2).ToStringInvariant(), chks1, chks2 }; else return null; };
             wr.WriteCSV(Path.Combine(workingfolder, "comma.csv"));
 
             CSVFile rd = new CSVFile();
-            if (rd.Read(Path.Combine(workingfolder, "comma.csv"), FileShare.ReadWrite, comma))
+            if (rd.Read(Path.Combine(workingfolder, "comma.csv"), FileShare.ReadWrite, comma, ns:System.Globalization.NumberStyles.AllowThousands))
             {
                 CSVFile.Row r0 = rd[0];
                 Check.That(r0[0].Equals("Pre header")).IsTrue();
@@ -63,7 +63,7 @@ namespace EDDiscoveryTests
                 {
                     CSVFile.Row rw = rd[2 + i];
                     Check.That(rw[0].Equals((i).ToStringInvariant())).IsTrue();
-                    Check.That(rw[1].Equals((i + 1).ToStringInvariant())).IsTrue();
+                    Check.That(rw.GetDouble(1) == 100123.12).IsTrue();
                     Check.That(rw[2].Equals((i + 2).ToStringInvariant())).IsTrue();
                     Check.That(rw[3].Equals(chks1)).IsTrue();
                     Check.That(rw[4].Equals(chks2)).IsTrue();

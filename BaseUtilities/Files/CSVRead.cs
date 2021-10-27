@@ -109,10 +109,15 @@ namespace BaseUtils
     {
         public class Row
         {
-            public Row()
+            public Row(System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns)
             {
                 Cells = new List<string>();
+                formatculture = culture;
+                numberstyles = ns;
             }
+
+            private System.Globalization.CultureInfo formatculture;
+            private System.Globalization.NumberStyles numberstyles;
 
             public List<string> Cells;
             public int nextcell = 0;        // next cell to Next()
@@ -163,36 +168,36 @@ namespace BaseUtils
             public int? GetInt(int cell)
             {
                 string v = this[cell];
-                return v != null ? v.InvariantParseIntNull() : null;
+                return v != null ? v.ParseIntNull(formatculture, numberstyles) : null;
             }
 
             public int? GetInt(string cellname)
             {
                 string v = this[cellname];
-                return v != null ? v.InvariantParseIntNull() : null;
+                return v != null ? v.ParseIntNull(formatculture, numberstyles) : null;
             }
 
             public long? GetLong(int cell)
             {
                 string v = this[cell];
-                return v != null ? v.InvariantParseLongNull() : null;
+                return v != null ? v.ParseLongNull(formatculture, numberstyles) : null;
             }
 
             public long? GetLong(string cellname)
             {
                 string v = this[cellname];
-                return v != null ? v.InvariantParseLongNull() : null;
+                return v != null ? v.ParseLongNull(formatculture, numberstyles) : null;
             }
 
             public double? GetDouble(int cell)
             {
                 string v = this[cell];
-                return v != null ? v.InvariantParseDoubleNull() : null;
+                return v != null ? v.ParseDoubleNull(formatculture, numberstyles) : null;
             }
             public double? GetDouble(string cellname)
             {
                 string v = this[cellname];
-                return v != null ? v.InvariantParseDoubleNull() : null;
+                return v != null ? v.ParseDoubleNull(formatculture, numberstyles) : null;
             }
 
             public void SetPosition(int cell)           // set position to N
@@ -213,13 +218,13 @@ namespace BaseUtils
             public int? NextInt()
             {
                 string v = this[nextcell++];
-                return v != null ? v.InvariantParseIntNull() : null;
+                return v != null ? v.ParseIntNull(formatculture, numberstyles) : null;
             }
 
             public long? NextLong()
             {
                 string v = this[nextcell++];
-                return v != null ? v.InvariantParseLongNull() : null;
+                return v != null ? v.ParseLongNull(formatculture, numberstyles) : null;
             }
         }
 
@@ -235,7 +240,13 @@ namespace BaseUtils
             }
         }
 
-        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true, Action<int, Row> rowoutput = null)
+        public string Delimiter { get; private set; }  = ",";
+
+
+        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true, Action<int, Row> rowoutput = null,
+                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
+                            string noncommacountry = "sv"               // for finwen, space is the default thousands.
+            )
         {
             if (!File.Exists(file))
                 return false;
@@ -244,7 +255,7 @@ namespace BaseUtils
             {
                 using (Stream s = File.Open(file, FileMode.Open, FileAccess.Read, fs))
                 {
-                    return Read(s, commadelimit, rowoutput);
+                    return Read(s, commadelimit, rowoutput, ns, noncommacountry);
                 }
             }
             catch
@@ -253,24 +264,34 @@ namespace BaseUtils
             }
         }
 
-        public bool Read(Stream s, bool commadelimit = true, Action<int, Row> rowoutput = null)
+        public bool Read(Stream s, bool commadelimit = true, Action<int, Row> rowoutput = null,
+                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
+                            string noncommacountry = "sv"               // space is the default thousands.
+            )
         {
             using (StreamReader sr = new StreamReader(s))
             {
-                return Read(sr, commadelimit, rowoutput);
+                return Read(sr, commadelimit, rowoutput, ns, noncommacountry);
             }
         }
 
         // read from TR with comma/semi selection
         // optionally send rows to rowoutput instead of storing
-        public bool Read(TextReader tr, bool commadelimit = true, Action<int,Row> rowoutput = null)
+        public bool Read(TextReader tr, 
+                            bool commadelimit = true,       // true means us/uk dot and comma, else its the noncommacountry to select the format.
+                            Action<int,Row> rowoutput = null ,
+                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
+                            string noncommacountry = "sv"               // space is the default thousands.
+            )
         {
             Rows = new List<Row>();
+
+            System.Globalization.CultureInfo formatculture = new System.Globalization.CultureInfo(commadelimit ? "en-US" : noncommacountry);   // select format culture based on comma
 
             CSVRead csv = new CSVRead(tr);
             csv.SetCSVDelimiter(commadelimit);
 
-            Row l = new Row();
+            Row l = new Row(formatculture,ns);
             int r = 0;
 
             while (true)
@@ -289,7 +310,7 @@ namespace BaseUtils
                     else
                         Rows.Add(l);
 
-                    l = new Row();
+                    l = new Row(formatculture,ns);
                 }
                 else if (state == CSVRead.State.EOF)
                 {
