@@ -258,7 +258,11 @@ namespace BaseUtils.Icons
 
         public static Image GetIcon(string name)        // static access. does not barf if no instance, instead returns small bitmap
         {
-            return Instance?.Get(name) ?? new Bitmap(1,1);
+            return Instance?.Get(name) ?? new Bitmap(1, 1);
+        }
+        public static Bitmap GetBitmap(string name)        // static access. does not barf if no instance, instead returns small bitmap
+        {
+            return (Bitmap)(Instance?.Get(name)) ?? new Bitmap(1, 1);
         }
     }
 }
