@@ -263,7 +263,7 @@ namespace BaseUtils
                                     else if (s.IsCharMoveOn('@'))
                                         foreign = null;
                                     else
-                                        err = false;
+                                        err = true;
 
                                     if (err == true)
                                     {
