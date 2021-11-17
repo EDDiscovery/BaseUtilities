@@ -369,7 +369,7 @@ namespace BaseUtils.Win32Constants
         /// </summary>
         public const int KEYMENU = 0xF100;
 
-        public const int ARRANGE = 0xF110;  // TODO: SC_ARRANGE is undocumented
+        public const int ARRANGE = 0xF110;  // Note SC_ARRANGE is undocumented
 
         /// <summary>
         /// Restores the window to its normal position and size.
