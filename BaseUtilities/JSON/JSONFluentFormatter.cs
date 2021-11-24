@@ -121,7 +121,7 @@ namespace BaseUtils
             return this;
         }
 
-        public QuickJSONFormatter UTC(string name)
+        public QuickJSONFormatter UTC(string name)      // obeys current culture and date system
         {
             Prefix();
             DateTime dt = DateTime.UtcNow;

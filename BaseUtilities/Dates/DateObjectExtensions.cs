@@ -152,10 +152,18 @@ public static class ObjectExtensionsDates
     {
         return dt.ToString("MM/dd/yyyy HH:mm:ss");
     }
+    public static string ToStringUSInvariant(this DateTime dt)     // US fixed format . Use for ACTION programs
+    {
+        return dt.ToString("MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+    }
 
     public static string ToStringYearFirst(this DateTime dt)     // year first format
     {
         return dt.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+    public static string ToStringYearFirstInvariant(this DateTime dt)     // year first format
+    {
+        return dt.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
     }
 
     public static string ToStringZulu(this DateTime dt)     // zulu warrior format web style
@@ -165,6 +173,13 @@ public static class ObjectExtensionsDates
         else
             return dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
 
+    }
+    public static string ToStringZuluInvariant(this DateTime dt)     // zulu warrior format web style in UTC Gregorian time
+    {
+        if (dt.Millisecond != 0)
+            return dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'", CultureInfo.InvariantCulture);
+        else
+            return dt.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'", CultureInfo.InvariantCulture);
     }
 
     public static string SecondsToString(this int s)

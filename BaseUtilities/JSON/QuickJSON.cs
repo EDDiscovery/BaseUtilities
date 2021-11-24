@@ -127,7 +127,7 @@ namespace BaseUtils.JSON
         {
             return new JToken(TType.Long, (long)v);
         }
-        public static implicit operator JToken(DateTime v)
+        public static implicit operator JToken(DateTime v)      // obeys current culture and calandar - beware.
         {
             return new JToken(TType.String, v.ToStringZulu());
         }
@@ -179,7 +179,7 @@ namespace BaseUtils.JSON
             }
             else if (o is DateTime)
             {
-                return ((DateTime)o).ToStringZulu();
+                return ((DateTime)o).ToStringZulu();        // obeys current culture and calandar
             }
             else if (except)
                 throw new NotImplementedException();
