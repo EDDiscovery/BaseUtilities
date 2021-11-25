@@ -101,8 +101,22 @@ namespace BaseUtils
             return GetJSONObject().ToString();
         }
 
-        // verified 31/7/2020 with baseutils.JSON. 
-        public JObject GetJSONObject() 
+        public HashSet<string> VariablesUsed()
+        {
+            HashSet<string> str = new HashSet<string>();
+            foreach (Condition c in conditionlist)
+            {
+                foreach( var f in c.Fields)
+                {
+                    str.Add(f.ItemName);
+                }
+            }
+
+            return str;
+        }
+
+            // verified 31/7/2020 with baseutils.JSON. 
+            public JObject GetJSONObject() 
         {
             JObject evt = new JObject();
 

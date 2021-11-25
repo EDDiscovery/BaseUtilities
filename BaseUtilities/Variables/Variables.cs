@@ -358,26 +358,36 @@ namespace BaseUtils
             return true;
         }
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth )      // get all data in the class
+        // of a class, enumerate and store values in variables
+
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null )      
         {
             Type jtype = o.GetType();
 
             foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties())
             {
-                if (pi.GetIndexParameters().GetLength(0) == 0 && (propexcluded == null || !propexcluded.Contains(pi.PropertyType)))      // only properties with zero parameters are called
+                if (onlyenumerate == null || onlyenumerate.Contains(pi.Name))
                 {
-                    string name = prefix + pi.Name;
-                    System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded);
+                    //System.Diagnostics.Debug.WriteLine($"Prop {pi.Name}");
+                    if (pi.GetIndexParameters().GetLength(0) == 0 && (propexcluded == null || !propexcluded.Contains(pi.PropertyType)))      // only properties with zero parameters are called
+                    {
+                        string name = prefix + pi.Name;
+                        System.Reflection.MethodInfo getter = pi.GetGetMethod();
+                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded);
+                    }
                 }
             }
 
             foreach (System.Reflection.FieldInfo fi in jtype.GetFields())
             {
-                if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
+                if (onlyenumerate == null || onlyenumerate.Contains(fi.Name))
                 {
-                    string name = prefix + fi.Name;
-                    AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded);
+                    //System.Diagnostics.Debug.WriteLine($"Field {fi.Name}");
+                    if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
+                    {
+                        string name = prefix + fi.Name;
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded);
+                    }
                 }
             }
         }
