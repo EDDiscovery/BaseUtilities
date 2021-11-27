@@ -105,5 +105,11 @@ namespace BaseUtils
                 return Convert.ChangeType(value, type);       // convert to element type, which should work since we checked compatibility
             }
         }
+
+        public static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> items)      // for some reason missing from HashSet
+        {
+            foreach (var d in items)
+                hash.Add(d);
+        }
     }
 }
