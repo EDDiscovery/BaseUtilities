@@ -148,7 +148,7 @@
     <Compile Include="Misc\SHA.cs" />
     <Compile Include="WinForms\BitMapHelpers.cs" />
     <Compile Include="WinForms\ControlSplitter.cs" />
-    <Compile Include="WinForms\DataGridViewColumnHider.cs">
+    <Compile Include="WinForms\DataGridViewColumnControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="WinForms\DataGridViewBaseEnhancements.cs">

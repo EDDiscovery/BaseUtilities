@@ -338,14 +338,6 @@ public static class DataGridViewControlHelpersStaticFunc
         return count;
     }
 
-    public static int GetColumnPixelPosition(this DataGridView dgv, int col)
-    {
-        int xpos = dgv.RowHeadersVisible ? dgv.RowHeadersWidth : 0;
-        for (int i = 0; i < col; i++)
-            xpos += dgv.Columns[i].Visible ? dgv.Columns[i].Width : 0;
-        return xpos;
-    }
-
     // tries to set row, preferredcolumn, else tries another one on same row
     public static bool SetCurrentSelOnRow(this DataGridView dgv, int row, int preferredcolumn)
     {
@@ -502,7 +494,9 @@ public static class DataGridViewControlHelpersStaticFunc
             string k = root + (i + 1).ToString();
             double fillw = dgv.Columns[i].Visible ? dgv.Columns[i].FillWeight : -dgv.Columns[i].FillWeight;
             savedouble(k, fillw);
-            //System.Diagnostics.Debug.WriteLine("DGV Col {0} with {1}", k, fillw);
+            k += "_DI";
+            saveint(k, dgv.Columns[i].DisplayIndex);
+            System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
         }
 
         saveint(root + "HW", dgv.RowHeadersWidth);
@@ -518,17 +512,40 @@ public static class DataGridViewControlHelpersStaticFunc
 
             dgv.RowHeadersWidth = hw;
 
+            int[] displayindexes = new int[dgv.ColumnCount];
+            int dicount = 0;
+
             for (int i = 0; i < dgv.Columns.Count; i++)
             {
                 string k = root + (i + 1).ToString();
                 double fillw = getdouble(k);
                 if (fillw > double.MinValue)
                 {
-                    // System.Diagnostics.Debug.WriteLine("DGV Col {0} with {1}", k, fillw);
                     dgv.Columns[i].Visible = fillw > 0;
                     dgv.Columns[i].FillWeight = (float)Math.Abs(fillw);
+
+                    k += "_DI";
+                    int di = getint(k);
+                    if (di >= 0 && di < dgv.ColumnCount)
+                    {
+                        displayindexes[di] = i;
+                        dicount++;
+                    }
                 }
             }
+
+            if ( dicount == dgv.ColumnCount)
+            {
+                // when you change the display index, the others shuffle around. So need to set them it seems in display index increasing order.
+                // hence the array, and we set in this order.
+                for (int d = 0; d < dgv.ColumnCount; d++)     
+                {
+                    //System.Diagnostics.Debug.WriteLine($"DGV {root} {displayindexes[d]} => di {d}");
+                    dgv.Columns[displayindexes[d]].DisplayIndex = d;
+                }
+            }
+
+            for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
 
             dgv.ResumeLayout();
         }
