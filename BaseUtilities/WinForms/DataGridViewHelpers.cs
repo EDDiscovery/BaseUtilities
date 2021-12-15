@@ -154,6 +154,18 @@ public static class DataGridViewControlHelpersStaticFunc
 
         return -1;
     }
+    static public int FindRowWithTag(this DataGridView grid, object tag)
+    {
+        foreach (DataGridViewRow row in grid.Rows)
+        {
+            if (row.Tag == tag)
+            {
+                return row.Index;
+            }
+        }
+
+        return -1;
+    }
 
     // try and force this row to centre or top
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
