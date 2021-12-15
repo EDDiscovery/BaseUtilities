@@ -549,7 +549,10 @@ public static class ObjectExtensionsStrings
         return -1;
     }
 
-    static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase)
+    // mimics Split('s') if emptyendifmarkersatend is true
+
+    static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase, 
+                                    bool emptyendifmarkeratend = false)
     {
         if (s == null)
             return null;
@@ -567,6 +570,12 @@ public static class ObjectExtensionsStrings
                 start[sections] = ipos;
                 len[sections++] = nextpos - ipos;
                 ipos = nextpos + splitchars.Length;
+
+                if ( ipos == s.Length && emptyendifmarkeratend)  // marker at end.. and we want the normal split behaviour
+                {
+                    start[sections] = 0;
+                    len[sections++] = 0;
+                }
             }
             else
             {

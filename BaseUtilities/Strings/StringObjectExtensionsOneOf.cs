@@ -21,10 +21,11 @@ using System.Linq;
 public static class ObjectExtensionsStringsPick
 {
     // pick one of x;y;z or if ;x;y;z, pick x and one of y or z
+    // separs are case sensitive
 
-    public static string PickOneOf(this string str, char separ, System.Random rx)   
+    public static string PickOneOf(this string str, string separ, System.Random rx)    
     {
-        string[] a = str.Split(separ);
+        string[] a = str.Split(separ, StringComparison.InvariantCulture, emptyendifmarkeratend:true);
 
         if (a.Length >= 2)          // x;y
         {
@@ -45,40 +46,40 @@ public static class ObjectExtensionsStringsPick
 
     // pick one of x;y;z or if ;x;y;z, pick x and one of y or z, include {x;y;z}
 
-    public static string PickOneOfGroups(this string exp, System.Random rx) 
+    public static string PickOneOfGroups(this string exp, System.Random rx, string separ = ";", string groupstart = "{", string groupend = "}") 
     {
         string res = "";
         exp = exp.Trim();
 
         while (exp.Length > 0)
         {
-            if (exp[0] == '{')
+            if (exp.StartsWith(groupstart))
             {
-                int end = exp.IndexOf('}');
+                int end = exp.IndexOf(groupend);
 
                 if (end == -1)              // missing end bit, assume the lot..
                     end = exp.Length;
 
-                string pl = exp.Substring(1, end - 1);
+                string pl = exp.Substring(groupstart.Length, end - groupstart.Length);
 
-                exp = (end < exp.Length) ? exp.Substring(end + 1) : "";
+                exp = (end + groupend.Length < exp.Length) ? exp.Substring(end + groupend.Length) : "";
 
-                res += pl.PickOneOf(';', rx);
+                res += pl.PickOneOf(separ, rx);
             }
             else
             {
-                int nextgroup = exp.IndexOf('{');
+                int nextgroup = exp.IndexOf(groupstart);
 
                 if (nextgroup >= 0)
                 {
                     string pl = exp.Substring(0, nextgroup);
                     exp = exp.Substring(nextgroup);
 
-                    res += pl.PickOneOf(';', rx);
+                    res += pl.PickOneOf(separ, rx);
                 }
                 else
                 {
-                    res += exp.PickOneOf(';', rx);          // thats all left, no more groups, pick
+                    res += exp.PickOneOf(separ, rx);          // thats all left, no more groups, pick
                     break;
                 }
             }
@@ -87,6 +88,10 @@ public static class ObjectExtensionsStringsPick
         return res;
     }
 
+
+
+    //string t = "{{group1<!>group2}} and {{group3<!>group4}}";
+    //string r = t.PickOneOfGroups(new Random(), "<!>", "{{", "}}");
 
 }
 

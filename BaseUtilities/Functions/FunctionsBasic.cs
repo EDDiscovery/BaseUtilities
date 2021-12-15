@@ -32,13 +32,13 @@ namespace BaseUtils
                 functions.Add("exist", new FuncEntry(Exist, 1, 20, FuncEntry.PT.M)); // no macros, all literal, can be strings
                 functions.Add("existsdefault", new FuncEntry(ExistsDefault, FuncEntry.PT.M, FuncEntry.PT.MESE));   // first is a macro but can not exist, second is a string or macro which must exist
                 functions.Add("expand", new FuncEntry(Expand, 1, 20, FuncEntry.PT.ME)); // check var, can be string (if so expanded)
-
                 functions.Add("expandarray", new FuncEntry(ExpandArray, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS, FuncEntry.PT.MESE));
                 functions.Add("expandvars", new FuncEntry(ExpandVars, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS));   // var 1 is text root/string, not var, not string, var 2 can be var or string, var 3/4 is integers or variables, checked in function
                 functions.Add("findarray", new FuncEntry(FindArray, 2, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("indirect", new FuncEntry(Indirect, 1, 20, FuncEntry.PT.ME));   // check var
                 functions.Add("i", new FuncEntry(IndirectI, FuncEntry.PT.ME, FuncEntry.PT.LS));   // first is a macro name, second is literal or string
                 functions.Add("ispresent", new FuncEntry(Ispresent, 2, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // 1 may not be there, 2 either a macro or can be string. 3 is optional and a var or literal
+                functions.Add("variable", new FuncEntry(Variable, 1, 20, FuncEntry.PT.ME));   // check var
                 #endregion
 
                 #region Numbers
@@ -84,7 +84,7 @@ namespace BaseUtils
                 functions.Add("length", new FuncEntry(Length, FuncEntry.PT.MESE));
                 functions.Add("lowerinvariant", new FuncEntry(LowerInvariant, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("lower", new FuncEntry(Lower, 1, 20, FuncEntry.PT.MESE));
-                functions.Add("phrase", new FuncEntry(Phrase, FuncEntry.PT.MESE));
+                functions.Add("phrase", new FuncEntry(Phrase, 1, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
 
                 functions.Add("regex", new FuncEntry(Regex, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("replace", new FuncEntry(Replace, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
@@ -210,10 +210,27 @@ namespace BaseUtils
                     output = res;
                     return false;
                 }
-
                 output += res;
             }
-        
+
+            return true;
+        }
+
+        protected bool Variable(out string output)
+        {
+            output = "";
+
+            foreach (Parameter p in paras)          // output been expanded by ME to get macro names, now expand them out
+            {
+                if (vars.Exists(p.Value))           // if its a variable, return the contents
+                    output += vars[p.Value];
+                else
+                {
+                    output = "No such variable " + p.Value;
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -223,6 +240,8 @@ namespace BaseUtils
 
             foreach (Parameter p in paras)          // output been expanded by ME.. 
             {
+                System.Diagnostics.Debug.WriteLine($"Indirect {p.Value}");
+
                 if (vars.Exists(p.Value))         // if macro name, expand..
                 {
                     if (caller.ExpandStringFull(vars[p.Value], out string res, recdepth + 1) == Functions.ExpandResult.Failed)
@@ -230,6 +249,8 @@ namespace BaseUtils
                         output = res;
                         return false;
                     }
+
+                    System.Diagnostics.Debug.WriteLine($"Variable expanded to {res}");
 
                     output += res;
                 }
@@ -506,7 +527,7 @@ namespace BaseUtils
 
         protected bool Phrase(out string output)
         {
-            output = paras[0].Value.PickOneOfGroups(rnd);
+            output = paras[0].Value.PickOneOfGroups(rnd, paras.Count > 1 ? paras[1].Value : ";", paras.Count > 2 ? paras[2].Value : "{", paras.Count > 3 ? paras[3].Value : "}");
             return true;
         }
 
