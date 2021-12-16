@@ -21,13 +21,13 @@ using System.Linq;
 public static class ObjectExtensionsStringsLists
 {
     // does the list contain comparision
-    public static int ContainsIn(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    public static int ContainsIn(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture, bool ignoreempty = false)   
     {
         int i = 0;
         foreach (var s in list)
         {
             //System.Diagnostics.Debug.WriteLine("{0} contains {1}", s, comparision);
-            if (s.Contains(comparision, c))
+            if ((s.Length > 0 || !ignoreempty) && s.Contains(comparision, c))
             {
                 //System.Diagnostics.Debug.WriteLine("..Matched {0} with {1}", s, comparision);
                 return i;
@@ -40,13 +40,13 @@ public static class ObjectExtensionsStringsLists
     }
 
     // does the comparision contain any in the list
-    public static int ComparisionContains(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    public static int ComparisionContains(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture, bool ignoreempty = false) 
     {
         int i = 0;
         foreach (var s in list)
         {
             //System.Diagnostics.Debug.WriteLine("{0} contains {1}", comparision, s);
-            if (comparision.Contains(s, c))
+            if ((s.Length > 0 || !ignoreempty) && comparision.Contains(s, c))
             {
                 //System.Diagnostics.Debug.WriteLine("..Matched {0} with {1}", comparision ,s);
                 return i;
@@ -59,7 +59,7 @@ public static class ObjectExtensionsStringsLists
     }
 
     // does comparision starts with any in list
-    public static int StartsWith(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture, bool ignoreempty = false)   
+    public static int StartsWith(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture, bool ignoreempty = false)
     {
         int i = 0;
         foreach (var s in list)
