@@ -508,7 +508,7 @@ public static class DataGridViewControlHelpersStaticFunc
             savedouble(k, fillw);
             k += "_DI";
             saveint(k, dgv.Columns[i].DisplayIndex);
-            System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
+         //   System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
         }
 
         saveint(root + "HW", dgv.RowHeadersWidth);
@@ -557,7 +557,7 @@ public static class DataGridViewControlHelpersStaticFunc
                 }
             }
 
-            for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
+           // for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
 
             dgv.ResumeLayout();
         }
