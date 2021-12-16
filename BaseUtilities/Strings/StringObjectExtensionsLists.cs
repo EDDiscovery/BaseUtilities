@@ -59,12 +59,12 @@ public static class ObjectExtensionsStringsLists
     }
 
     // does comparision starts with any in list
-    public static int StartsWith(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)        //extend for case
+    public static int StartsWith(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture, bool ignoreempty = false)   
     {
         int i = 0;
         foreach (var s in list)
         {
-            if (comparision.StartsWith(s, c))
+            if ((s.Length>0 || !ignoreempty ) && comparision.StartsWith(s, c))
                 return i;
 
             i++;
