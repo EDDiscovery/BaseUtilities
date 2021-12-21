@@ -98,7 +98,7 @@ namespace BaseUtils.JSON
                 if (kvp.Key.WildCardMatch(wildcard, caseinsensitive))
                     list.Add(kvp.Key);
             }
-            Remove(list.ToArray());
+            foreach (var k in list) Objects.Remove(k);
         }
         public override void Clear() { Objects.Clear(); }
 

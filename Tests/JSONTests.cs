@@ -393,6 +393,30 @@ namespace EDDiscoveryTests
 
             Check.That(obj.ToString()).IsEqualTo(expectedjson2);
 
+
+            {
+                JObject obj2 = new JObject()
+                {
+                    ["Factions"] = "f1",
+                    ["Json"] = "j1",
+                    ["Facoids"] = "f2",
+                    ["Freds"] = "j1",
+                };
+
+                Check.That(obj2.Contains("Factions")).IsTrue();
+                Check.That(obj2.Contains("Json")).IsTrue();
+                Check.That(obj2.Contains("Facoids")).IsTrue();
+                Check.That(obj2.Contains("Freds")).IsTrue();
+
+                obj2.RemoveWildcard("Fac*");
+
+                Check.That(obj2.Contains("Factions")).IsFalse();
+                Check.That(obj2.Contains("Json")).IsTrue();
+                Check.That(obj2.Contains("Facoids")).IsFalse();
+                Check.That(obj2.Contains("Freds")).IsTrue();
+
+            }
+
         }
 
         string jsongithub = @"
