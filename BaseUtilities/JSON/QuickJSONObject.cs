@@ -42,7 +42,7 @@ namespace BaseUtils.JSON
 
         public JObject(JObject other) : this()              // create with deep copy from another object
         {
-            foreach( var kvp in other.Objects)
+            foreach (var kvp in other.Objects)
             {
                 Objects[kvp.Key] = kvp.Value.Clone();
             }
@@ -89,7 +89,17 @@ namespace BaseUtils.JSON
 
         public void Add(string key, JToken value) { this[key] = value; }
         public bool Remove(string key) { return Objects.Remove(key); }
-        public void Remove(params string[] key) { foreach( var k in key) Objects.Remove(k); }
+        public void Remove(params string[] key) { foreach (var k in key) Objects.Remove(k); }
+        public void RemoveWildcard(string wildcard, bool caseinsensitive = false)       // use * ?
+        {
+            var list = new List<string>();
+            foreach (var kvp in Objects)
+            {
+                if (kvp.Key.WildCardMatch(wildcard, caseinsensitive))
+                    list.Add(kvp.Key);
+            }
+            Remove(list.ToArray());
+        }
         public override void Clear() { Objects.Clear(); }
 
         public new static JObject Parse(string s, ParseOptions flags = ParseOptions.None)        // null if failed.
