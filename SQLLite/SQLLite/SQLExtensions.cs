@@ -133,6 +133,25 @@ public static class SQLiteCommandExtensions
 
         return tables;
     }
+    static public string SQLIntegrity(this SQLExtConnection r)
+    {
+        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+
+        using (DbCommand cmd = r.CreateCommand("pragma Integrity_Check"))
+        {
+            using (DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string ret = (string)reader[0];
+                    System.Diagnostics.Debug.WriteLine($"Integrity check {r.ToString()} {ret} in {sw.ElapsedMilliseconds}ms");
+                    return ret;
+                }
+            }
+        }
+        return null;
+    }
 
     public static void Vacuum(this SQLExtConnection r)
     {
