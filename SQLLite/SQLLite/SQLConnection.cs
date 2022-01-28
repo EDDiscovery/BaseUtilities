@@ -102,48 +102,9 @@ namespace SQLLiteExtensions
             }
         }
 
-        // provided for DB upgrade operations 
-
-        public void PerformUpgrade( int newVersion, bool catchErrors, bool backupDbFile, string[] queries, Action doAfterQueries = null)
-        {
-            if (backupDbFile)
-            {
-                string dbfile = DBFile;
-
-                try
-                {
-                    File.Copy(dbfile, dbfile.Replace(".sqlite", $"{newVersion - 1}.sqlite"));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine("Exception: " + ex.Message);
-                    System.Diagnostics.Trace.WriteLine("Trace: " + ex.StackTrace);
-                }
-            }
-
-            try
-            {
-                ExecuteNonQueries(queries);
-            }
-            catch (Exception ex)
-            {
-                if (!catchErrors)
-                    throw;
-
-                System.Diagnostics.Trace.WriteLine("Exception: " + ex.Message);
-                System.Diagnostics.Trace.WriteLine("Trace: " + ex.StackTrace);
-                System.Windows.Forms.MessageBox.Show($"UpgradeDB{newVersion} error: " + ex.Message);
-            }
-
-            doAfterQueries?.Invoke();
-
-            SQLExtRegister reg = new SQLExtRegister(this);
-            reg.PutSetting("DBVer", newVersion);
-        }
-
         // Query operators
 
-        public void ExecuteNonQueries(string[] queries)
+        public void ExecuteNonQueries(params string[] queries)
         {
             foreach (var query in queries)
             {

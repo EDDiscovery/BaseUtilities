@@ -26,5 +26,18 @@ namespace SQLLiteExtensions
         {
             RegisterClass = new SQLExtRegister(this);
         }
+
+        // return true if created
+        public bool CreateRegistry()
+        {
+            var tables = this.Tables();
+            if (!tables.Contains("Register"))
+            {
+                ExecuteNonQuery("CREATE TABLE Register (ID TEXT PRIMARY KEY NOT NULL, ValueInt INTEGER, ValueDouble DOUBLE, ValueString TEXT, ValueBlob BLOB)");
+                return true;
+            }
+            else
+                return false;
+        }
     }
 }
