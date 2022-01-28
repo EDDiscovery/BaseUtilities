@@ -60,6 +60,7 @@ namespace SQLLiteExtensions
         public void Stop()
         {
             StopAllThreads();   // stop and keep them stopped, can't restart from this
+            System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
         }
 
         #endregion

@@ -47,7 +47,7 @@ namespace SQLLiteExtensions
                     connection.ConnectionString += "Read Only=True;";
                 }
 
-                System.Diagnostics.Debug.WriteLine("SQLExtConnection created connection " + connection.ConnectionString);
+                System.Diagnostics.Debug.WriteLine($"SQLExtConnection created connection {connection.ConnectionString} on {Thread.CurrentThread.Name}");
 
                 connection.Open();
 
@@ -91,9 +91,9 @@ namespace SQLLiteExtensions
             {
                 if (connection != null)
                 {
-                    System.Diagnostics.Debug.WriteLine("SQLExtConnection closed connection " + connection.ConnectionString);
+                    System.Diagnostics.Debug.WriteLine($"SQLExtConnection closed connection {connection.ConnectionString} on {Thread.CurrentThread.Name}");
                     connection.Close();
-                    connection.Dispose();
+                    connection.Dispose();       // note, SQL pools connections, so it may still be physically open. Use System.Data.SQLite.SQLiteConnection.ClearAllPools() to force dropping all connections
                     connection = null;
 #if DEBUG
                     hasbeendisposed = true;
