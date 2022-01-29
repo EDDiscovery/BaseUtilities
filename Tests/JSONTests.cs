@@ -746,6 +746,28 @@ namespace EDDiscoveryTests
         }
 
         [Test]
+        public void JSONRoundtripdouble()
+        {
+            {
+                JObject jo = new JObject()          
+                {
+                    ["a"] = 10,
+                    ["b"] = 1029292882892.2,
+                    ["c"] = double.MinValue,
+                    ["d"] = double.MaxValue,
+                    ["e"] = 10E10,
+                };
+
+                string s = jo.ToString();
+                JObject ji = JObject.Parse(s);
+
+                Check.That(jo["a"].Double()).Equals(ji["a"].Double());
+                Check.That(ji["c"].Double()).Equals(double.MinValue);
+                Check.That(ji["d"].Double()).Equals(double.MaxValue);
+            }
+        }
+
+        [Test]
         public void JSONToObject()
         {
             {
@@ -1048,7 +1070,7 @@ namespace EDDiscoveryTests
                 SizeF sf = new SizeF(10.2f, 12.2f);
 
                 JToken t = JToken.FromObject(sf, true);
-                string ts = @"{""IsEmpty"":false,""Width"":10.1999998092651,""Height"":12.1999998092651,""Empty"":{""IsEmpty"":true,""Width"":0.0,""Height"":0.0}}";
+                string ts = @"{""IsEmpty"":false,""Width"":10.199999809265137,""Height"":12.199999809265137,""Empty"":{""IsEmpty"":true,""Width"":0.0,""Height"":0.0}}";
                 Check.That(t.ToString()).Equals(ts);                // check ignores self ref and does as much as possible
             }
 

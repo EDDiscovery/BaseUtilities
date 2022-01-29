@@ -56,7 +56,12 @@ namespace BaseUtils.JSON
                     return prepad + "\"" + ((string)o.Value).EscapeControlCharsFull() + "\"" + postpad;
             }
             else if (o.TokenType == TType.Double)
-                return prepad + ((double)o.Value).ToStringInvariant("0.0############################") + postpad;         // new! preserve that its a double by insisting on at least a single decimalm digit
+            {
+                string sd = ((double)o.Value).ToStringInvariant("R");       // round trip it - use 'R' since minvalue won't work very well. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#RFormatString
+                if (!(sd.Contains("E") || sd.Contains(".")))                // needs something to indicate its a double, and if it does not have a dot or E, it needs a .0
+                    sd += ".0";
+                return prepad + sd + postpad;
+            }
             else if (o.TokenType == TType.Long)
                 return prepad + ((long)o.Value).ToStringInvariant() + postpad;
             else if (o.TokenType == TType.ULong)
