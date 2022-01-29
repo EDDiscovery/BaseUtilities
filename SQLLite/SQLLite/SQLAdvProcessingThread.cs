@@ -57,16 +57,26 @@ namespace SQLLiteExtensions
             return Execute(() => func.Invoke(connection.Value), true, warnthreshold, jobname);
         }
 
-        // clear connections, you should do this when you've changed the tables around. SQL does not like using an existing connection over a table reorg
-        public void ClearDownConnections()      
+        // clear connections, and restart minimum number of connections
+        // you should do this when you've changed the tables around. SQL does not like using an existing connection over a table reorg
+        public void ClearDownRestart()      
         {
-            SetMultithreaded(multithreaded);                // this has the effect of clearing the threads and restarting
+            SetMultithreaded(multithreaded);                            // this has the effect of clearing the threads and restarting
             System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
         }
 
+        // clear connections and leave DB without any connections active.  Can restart with the next execute
+        public void ClearDown()
+        {
+            StopAllThreads();                                           // all threads stopped
+            System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
+            stopCreatingNewThreads = false;                             // and we can restart
+        }
+
+        // stop dead for good - no recovery
         public void Stop()
         {
-            StopAllThreads();   // stop and keep them stopped, can't restart from this
+            StopAllThreads();   
             System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
         }
 
