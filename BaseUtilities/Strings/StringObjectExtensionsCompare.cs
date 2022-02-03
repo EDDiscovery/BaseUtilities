@@ -19,9 +19,12 @@ using System.Globalization;
 
 public static class ObjectExtensionsStringsCompare
 {
-    static public int CompareNumeric(this string left, string right, string removetext = null)
+    // read first number in the string, return if read..
+    
+    static public Tuple<double, bool> ReadNumeric(string left, string removetext = null)
     {
         double vleft = 0;
+        bool leftgood = false;
         if (left != null)
         {
             if (removetext != null)
@@ -32,32 +35,25 @@ public static class ObjectExtensionsStringsCompare
             if (index >= 0)
                 left = left.Substring(0, index);
 
-            if (!Double.TryParse(left, out vleft))
-                return 1;
+            if (Double.TryParse(left, out vleft))
+                leftgood = true;
         }
-        else
+
+        return new Tuple<double, bool>(vleft, leftgood);
+    }
+
+    // compare two strings numerically
+
+    static public int CompareNumeric(this string left, string right, string removetext = null)
+    {
+        var datal = ReadNumeric(left, removetext);
+        var datar = ReadNumeric(right, removetext);
+        if (datal.Item2 == false)        // left bad, right better
             return 1;
-
-        // s1 is not null, and v1 is set
-
-        double vright = 0;
-        if (right != null)
-        {
-            if (removetext != null)
-                right = right.Replace(removetext, "");
-
-            right = right.Trim();
-            int index = right.IndexOfNonNumberDigit(CultureInfo.CurrentCulture);
-            if (index >= 0)
-                right = right.Substring(0, index);
-
-            if (!Double.TryParse(right, out vright))
-                return -1;
-        }
-        else
+        else if (datar.Item2 == false)   // right bad, left better
             return -1;
-
-        return vleft.CompareTo(vright);
+        else
+            return datal.Item1.CompareTo(datar.Item1);
     }
 
 }

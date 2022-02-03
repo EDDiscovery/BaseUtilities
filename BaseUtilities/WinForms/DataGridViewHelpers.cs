@@ -24,6 +24,32 @@ using System.Windows.Forms;
 
 public static class DataGridViewControlHelpersStaticFunc
 {
+    // 
+    static public void SortDataGridViewColumnNumericThenAlpha(this DataGridViewSortCompareEventArgs e, string removetext = null)
+    {
+        string left = e.CellValue1?.ToString();
+        string right = e.CellValue2?.ToString();
+        var datal = ObjectExtensionsStringsCompare.ReadNumeric(left, removetext);
+        var datar = ObjectExtensionsStringsCompare.ReadNumeric(right, removetext);
+
+        if (datal.Item2 == false && datar.Item2 == false)
+        {
+            if (left == null)
+                e.SortResult = 1;
+            else if (right == null)
+                e.SortResult = -1;
+            else
+                e.SortResult = left.CompareTo(right);
+        }
+        else if (datal.Item2 == false)
+            e.SortResult = 1;
+        else if (datar.Item2 == false)
+            e.SortResult = -1;
+        else
+            e.SortResult = datal.Item1.CompareTo(datar.Item1);
+        e.Handled = true;
+    }
+
     // sort using number. Removetext will remove text suggested
     // usetag means use cell tag as subsititute text
 
