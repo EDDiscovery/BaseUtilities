@@ -14,7 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using BaseUtils.JSON;
+using QuickJSON;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -66,7 +66,7 @@ namespace BaseUtils.WebServer
 
             try
             {
-                // verified 31/7/2020 with baseutils.JSON. Note safe if requestID not not present or jk returns a non object
+                // verified 31/7/2020 with QuickJSON Note safe if requestID not not present or jk returns a non object
                 JToken jk = JToken.Parse(s);
                 string req = jk != null ? jk[RequestID].Str(null) : null;
 

@@ -13,6 +13,7 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+using QuickJSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -572,7 +573,7 @@ namespace BaseUtils
 
             try
             {
-                JSON.JToken tk = JSON.JToken.Parse(json);
+                JToken tk = JToken.Parse(json);
                 if (tk != null)
                 {
                     vars.AddJSONVariables(tk, varprefix);

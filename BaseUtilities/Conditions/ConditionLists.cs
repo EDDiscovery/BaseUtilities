@@ -14,7 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using BaseUtils.JSON;
+using QuickJSON;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -115,7 +115,7 @@ namespace BaseUtils
             return str;
         }
 
-            // verified 31/7/2020 with baseutils.JSON. 
+            // verified 31/7/2020 with QuickJSON 
             public JObject GetJSONObject() 
         {
             JObject evt = new JObject();
@@ -182,7 +182,7 @@ namespace BaseUtils
 
                 foreach (JObject j in jf)
                 {
-                    // verified 31/7/2020 with baseutils.JSON.   If object not present, returns JNotPresent and Str() returns default
+                    // verified 31/7/2020 with QuickJSON   If object not present, returns JNotPresent and Str() returns default
                     string evname = (string)j["EventName"];
                     ConditionEntry.LogicalCondition ftinner = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["ICond"].Str("Or"));
                     ConditionEntry.LogicalCondition ftouter = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["OCond"].Str("Or"));

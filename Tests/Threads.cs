@@ -13,7 +13,7 @@
 * 
 * EDDiscovery is not affiliated with Frontier Developments plc.
 */
-using BaseUtils.JSON;
+using QuickJSON;
 using BaseUtils.Threads;
 using NFluent;
 using NUnit.Framework;

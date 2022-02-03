@@ -13,7 +13,8 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
- 
+
+using QuickJSON;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -214,7 +215,7 @@ namespace BaseUtils.WebServer
         }
 
         // send JSON
-        public bool SendWebSockets(BaseUtils.JSON.JToken json, bool wait = false)
+        public bool SendWebSockets(JToken json, bool wait = false)
         {
             return SendWebSockets(json.ToString(), wait);
         }

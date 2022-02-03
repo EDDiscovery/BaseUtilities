@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="QuickJSON, Version=0.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\RJKJSoft.QuickJSON.0.9.0\lib\net48\QuickJSON.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -72,25 +75,12 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
-    <Compile Include="JSON\QuickJSON.cs" />
-    <Compile Include="JSON\QuickJSONDeepEquals.cs" />
-    <Compile Include="JSON\QuickJSONObjectFilter.cs" />
-    <Compile Include="JSON\QuickJSONObject.cs" />
-    <Compile Include="JSON\QuickJSONArray.cs" />
-    <Compile Include="JSON\QuickJSONGets.cs" />
-    <Compile Include="JSON\QuickJSONFromObject.cs" />
-    <Compile Include="JSON\QuickJSONToObject.cs" />
-    <Compile Include="JSON\QuickJSONParse.cs" />
-    <Compile Include="JSON\QuickJSONTokenReader.cs" />
-    <Compile Include="JSON\QuickJSONToString.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
     <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="StringParsers\IStringParserQuick.cs" />
-    <Compile Include="StringParsers\StringParserQuickTextReader.cs" />
-    <Compile Include="StringParsers\StringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="Variables\PropertyInfo.cs" />
@@ -124,7 +114,6 @@
     <Compile Include="HTTP\HttpCom.cs" />
     <Compile Include="HTTP\HttpUriEncode.cs" />
     <Compile Include="HTTP\ResponseData.cs" />
-    <Compile Include="JSON\JSONFluentFormatter.cs" />
     <Compile Include="Keys\EnhancedSendKeys.cs" />
     <Compile Include="Keys\KeyboardState.cs" />
     <Compile Include="Misc\CommandArgs.cs" />
