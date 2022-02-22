@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020 EDDiscovery development team
+ * Copyright © 2020-2021 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -23,46 +23,20 @@ using System.Windows.Forms;
 
 public static class TranslatorExtensions
 {
-    static public string Tx(this string s)              // use the text, alpha numeric only, as the translation id
+    static public string TxID(this string s, Enum id)               // given english text and enumeration, translate
     {
-        return BaseUtils.Translator.Instance.Translate(s, s.FirstAlphaNumericText());
+        return BaseUtils.Translator.Instance.Translate(s, id.ToString().Replace("_","."));
     }
 
-    static public string TxID(this string s, string id)              // use the text, pass id
+    static public string TxID(this string s, Type type, string id)    // given english text, type for base name, and id for rest, translate
     {
-        return BaseUtils.Translator.Instance.Translate(s, id);
+        return BaseUtils.Translator.Instance.Translate(s, type.Name + "." + id);
     }
 
-    static public string Tx(this string s, Object c, string id)     // use the type plus an id
+    static public string TxID(this string s, string name, string id)    // given english text, string for base name, and id for rest, translate
     {
-        return BaseUtils.Translator.Instance.Translate(s, c.GetType().Name, id);
+        return BaseUtils.Translator.Instance.Translate(s, name + "." + id);
     }
-
-    static public string Txb(this string s, Object c, string id)     // use the base type plus an id
-    {
-        return BaseUtils.Translator.Instance.Translate(s, c.GetType().BaseType.Name, id);
-    }
-
-    static public string Tx(this string s, Type c)    // use a type definition using the string as the id
-    {
-        return BaseUtils.Translator.Instance.Translate(s, c.Name, s.FirstAlphaNumericText());
-    }
-
-    static public string Tx(this string s, Object c)              // use the object type with string as id
-    {
-        return BaseUtils.Translator.Instance.Translate(s, c.GetType().Name, s.FirstAlphaNumericText());
-    }
-
-    static public string Txb(this string s, Object c)     // use the base type using the string as the id
-    {
-        return BaseUtils.Translator.Instance.Translate(s, c.GetType().BaseType.Name, s.FirstAlphaNumericText());
-    }
-
-    static public string Tx(this string s, Type c, string id)    // use a type definition with id
-    {
-        return BaseUtils.Translator.Instance.Translate(s, c.Name, id);
-    }
-
 }
 
 namespace BaseUtils
@@ -131,7 +105,8 @@ namespace BaseUtils
                                     string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
                                     bool loadorgenglish = false,                // optional load original english and store
                                     bool loadfile = false,                      // remember file where it came from
-                                    bool trackinuse = false                     // mark if in use
+                                    bool trackinuse = false,                    // mark if in use
+                                    bool debugout = false                       // list translators in log file
                                     )       
         {
 #if DEBUG
@@ -237,7 +212,7 @@ namespace BaseUtils
 
                             string id = s.NextWord(" :");
 
-                            if (id.Equals("SECTION"))
+                            if (id.Equals("SECTION",StringComparison.InvariantCultureIgnoreCase))
                             {
                                 prefix = s.NextQuotedWord(" /");
                             }
@@ -275,7 +250,10 @@ namespace BaseUtils
                                         if (!translations.ContainsKey(id))
                                         {
                                             //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
-                                            //logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, english, foreign));
+
+                                            if ( debugout )
+                                                logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id , orgenglish, foreign));
+
                                             translations[id] = foreign;
                                             if (loadorgenglish)
                                                 originalenglish[id] = orgenglish;
@@ -386,34 +364,48 @@ namespace BaseUtils
                 return normal;
         }
 
-        public string Translate(string normal, string root, string id)
-        {
-            return Translate(normal, root + "." + id);
-        }
+        // translate controls, verify control name is in enumset.
 
-        public void Translate(Control ctrl, Control[] ignorelist = null)
+        public void TranslateVerify(Control ctrl, Type enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
         {
-            Translate(ctrl, ctrl.GetType().Name, ignorelist);
+            bool okay = TranslateVerify(ctrl, enumset, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
+            System.Diagnostics.Debug.Assert(okay, "Missing control enumerations");
         }
 
         // Call direct only for debugging, normally use the one above.
-        public void Translate(Control ctrl, string subname, Control[] ignorelist , bool debugit = false )
+        // controls can use %id% in their text for redirection
+        private bool TranslateVerify(Control ctrl, Type enumset, string subname, Control[] ignorelist, bool debugit = false)
         {
+            bool okay = true;
+
             if (translations != null)
             {
-                if (debugit)
-                    System.Diagnostics.Debug.WriteLine("T: " + subname + " .. " + ctrl.Name + " (" + ctrl.GetType().Name + ")");
-
                 if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType()))
                 {
-                    if (ctrl.Text.HasChars())
+                    if (ctrl.Text != null && ctrl.Text.Length>1 && ctrl.Text.HasLetterChars() && ctrl.Text != "<code>")
                     {
-                        string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
-                        if (debugit)
-                            System.Diagnostics.Debug.WriteLine("Check " + id + " " + ctrl.Text);
-                        ctrl.Text = Translate(ctrl.Text, id);
-                        if (debugit)
-                            System.Diagnostics.Debug.WriteLine(" -> Ctrl now is " + ctrl.Text);
+                        if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
+                        {
+                            string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
+                            ctrl.Text = Translate(id,id);
+                            if (debugit)
+                                System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
+                        }
+                        else
+                        {
+                            string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
+
+                            if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // Control '{ctrl.Text.EscapeControlChars()}'");
+                                okay = false;
+                            }
+
+                            ctrl.Text = Translate(ctrl.Text, id);
+
+                            if (debugit)
+                                System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
+                        }
                     }
 
                     if (ctrl is DataGridView)
@@ -421,8 +413,17 @@ namespace BaseUtils
                         DataGridView v = ctrl as DataGridView;
                         foreach (DataGridViewColumn c in v.Columns)
                         {
-                            if (c.HeaderText.HasChars())
-                                c.HeaderText = Translate(c.HeaderText, subname.AppendPrePad(c.Name, "."));
+                            if (c.HeaderText != null && c.HeaderText.Length>1 && c.HeaderText.HasLetterChars())
+                            {
+                                string id = subname.AppendPrePad(c.Name, ".");
+                                if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // Column Header '{c.HeaderText.EscapeControlChars()}'");
+                                    okay = false;
+                                }
+
+                                c.HeaderText = Translate(c.HeaderText, id );
+                            }
                         }
                     }
 
@@ -432,10 +433,12 @@ namespace BaseUtils
                     foreach (Control c in ctrl.Controls)
                     {
                         string name = subname;
-                        if ( NameControl(c) )
+
+                        if (NameControl(c))
                             name = name.AppendPrePad(c.Name, ".");
 
-                        Translate(c, name, ignorelist, debugit);
+                        bool subokay = TranslateVerify(c, enumset, name, ignorelist, debugit);
+                        okay = okay && subokay;
                     }
                 }
                 else
@@ -443,63 +446,105 @@ namespace BaseUtils
                     //logger?.WriteLine("Rejected " + subname + " of " + ctrl.GetType().Name);
                 }
             }
+
+            return okay;
         }
-    
-        public void Translate(ToolStrip ctrl, Control parent )
+
+        public void TranslateVerify(ToolStrip ctrl, Type enumset, Control parent)
         {
             if (translations != null)
             {
                 string subname = parent.GetType().Name;
 
+                bool okay = true;
+
                 foreach (ToolStripItem msi in ctrl.Items)
                 {
-                    Translate(msi, subname);
+                    bool subokay = TranslateVerify(msi, enumset, subname);
+                    okay = okay && subokay;
                 }
+
+                System.Diagnostics.Debug.Assert(okay, "Missing tooltip enumerations");
             }
         }
 
-        private void Translate(ToolStripItem msi, string subname)
+        private bool TranslateVerify(ToolStripItem msi, Type enumset, string subname)
         {
+            bool okay = true;
+
             string itemname = msi.Name;
 
-            if (msi.Text.HasChars())
-                msi.Text = Translate(msi.Text, subname.AppendPrePad(itemname, "."));
+            if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && msi.Text != "<code>")
+            {
+                string id = subname.AppendPrePad(itemname, ".");
+                if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
+                {
+                    System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // ToolStrip control '{msi.Text.EscapeControlChars()}'");
+                    okay = false;
+                }
+
+                msi.Text = Translate(msi.Text, id);
+            }
 
             var ddi = msi as ToolStripDropDownItem;
             if (ddi != null)
             {
                 foreach (ToolStripItem dd in ddi.DropDownItems)
-                    Translate(dd, subname.AppendPrePad(itemname, "."));
+                {
+                    bool subokay = TranslateVerify(dd, enumset, subname.AppendPrePad(itemname, "."));
+                    okay = okay && subokay;
+                }
             }
+
+            return okay;
         }
 
-        public void Translate(ToolTip tt, Control parent)
+
+        public void TranslateVerify(ToolTip tt, Type enumset, Control parent, string subname = null)
         {
-            Translate(parent, tt, parent.GetType().Name);
+            bool okay = TranslateVerify(tt, parent, enumset, subname!=null ? subname : parent.GetType().Name);
+            System.Diagnostics.Debug.Assert(okay, "Missing toolstrip enumerations");
         }
 
-        public void Translate(Control ctrl, ToolTip tt, string subname)
+        private bool TranslateVerify(ToolTip tt, Control ctrl, Type enumset, string subname)
         {
+            bool okay = true;
+
             if (translations != null)
             {
                 string s = tt.GetToolTip(ctrl);
-                if (s.HasChars())
-                    tt.SetToolTip(ctrl, Translate(s, subname.AppendPrePad("ToolTip", ".")));
+                if (s != null && s.Length > 1 && s.HasLetterChars() && s != "<code>")
+                {
+                    string id = subname.AppendPrePad("ToolTip", ".");
+
+                    if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // ToolTip '{s.EscapeControlChars()}'");
+                        okay = false;
+                    }
+
+                    tt.SetToolTip(ctrl, Translate(s, id));
+                }
 
                 foreach (Control c in ctrl.Controls)
                 {
-                    string name = subname;
-                    if ( NameControl(c))      // containers don't send thru 
-                        name = name.AppendPrePad(c.Name, ".");
+                    string id = subname;
 
-                    Translate(c, tt, name);
+                    if (NameControl(c))      // containers don't send thru 
+                        id = id.AppendPrePad(c.Name, ".");
+
+                    bool subokay = TranslateVerify(tt, c, enumset, id);
+                    okay = okay && subokay;
                 }
             }
+
+            return okay;
         }
 
         private bool NameControl(Control c)
         {
             return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
         }
+
     }
 }

@@ -25,6 +25,18 @@ public static class ObjectExtensionsStrings
     {
         return obj != null && obj.Length > 0;
     }
+    static public bool HasLetterChars(this string obj)
+    {
+        if ( obj != null && obj.Length > 0 )
+        {
+            foreach(char x in obj)
+            {
+                if (char.IsLetter(x))
+                    return true;
+            }
+        }
+        return false;
+    }
     static public bool IsEmpty(this string obj)
     {
         return obj == null || obj.Length == 0;
