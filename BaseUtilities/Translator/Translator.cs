@@ -270,6 +270,10 @@ namespace BaseUtils
                                         }
                                     }
                                 }
+                                else
+                                {
+                                    logger?.WriteLine(string.Format($"Line misformat '{line}"));
+                                }
                             }
                         }
                     }
