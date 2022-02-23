@@ -250,7 +250,6 @@ namespace BaseUtils
                                         if (!translations.ContainsKey(id))
                                         {
                                             //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
-
                                             if ( debugout )
                                                 logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id , orgenglish, foreign));
 
@@ -370,122 +369,206 @@ namespace BaseUtils
 
         // translate controls, verify control name is in enumset.
 
-        public void TranslateVerify(Control ctrl, Type enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
+        private bool NameControl(Control c)
         {
-            bool okay = TranslateVerify(ctrl, enumset, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
-            System.Diagnostics.Debug.Assert(okay, "Missing control enumerations");
+            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
+        }
+
+
+        // translate controls, verify control name is in enumset.
+
+        public void TranslateControls(Control ctrl, Enum[] enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
+        {
+            if (translations != null)
+            {
+                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+
+                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+                var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
+                if (errlist.HasChars())
+                    System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist}}};");
+                if (enumset != null)
+                {
+                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
+                }
+            }
         }
 
         // Call direct only for debugging, normally use the one above.
         // controls can use %id% in their text for redirection
-        private bool TranslateVerify(Control ctrl, Type enumset, string subname, Control[] ignorelist, bool debugit = false)
+        private string Tx(Control ctrl, List<string> enumset, string subname, Control[] ignorelist, bool debugit = false)
         {
-            bool okay = true;
+            string errlist = "";
 
-            if (translations != null)
+            if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType()))
             {
-                if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType()))
+                if (ctrl.Text != null && ctrl.Text.Length > 1 && ctrl.Text.HasLetterChars() && ctrl.Text != "<code>")
                 {
-                    if (ctrl.Text != null && ctrl.Text.Length>1 && ctrl.Text.HasLetterChars() && ctrl.Text != "<code>")
+                    if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
                     {
-                        if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
-                        {
-                            string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
-                            ctrl.Text = Translate(id,id);
-                            if (debugit)
-                                System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
-                        }
+                        string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
+                        ctrl.Text = Translate(id, id);
+                        if (debugit)
+                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
+                    }
+                    else
+                    {
+                        string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
+
+                        string enumid = id.Replace(".", "_");
+
+                        if (enumset == null || !enumset.Contains(enumid))
+                            errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
                         else
-                        {
-                            string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
+                            enumset.Remove(enumid);
 
-                            if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
-                            {
-                                System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // Control '{ctrl.Text.EscapeControlChars()}'");
-                                okay = false;
-                            }
+                        ctrl.Text = Translate(ctrl.Text, id);
 
-                            ctrl.Text = Translate(ctrl.Text, id);
-
-                            if (debugit)
-                                System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
-                        }
-                    }
-
-                    if (ctrl is DataGridView)
-                    {
-                        DataGridView v = ctrl as DataGridView;
-                        foreach (DataGridViewColumn c in v.Columns)
-                        {
-                            if (c.HeaderText != null && c.HeaderText.Length>1 && c.HeaderText.HasLetterChars())
-                            {
-                                string id = subname.AppendPrePad(c.Name, ".");
-                                if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // Column Header '{c.HeaderText.EscapeControlChars()}'");
-                                    okay = false;
-                                }
-
-                                c.HeaderText = Translate(c.HeaderText, id );
-                            }
-                        }
-                    }
-
-                    if (ctrl is TabPage)
-                        subname = subname.AppendPrePad(ctrl.Name, ".");
-
-                    foreach (Control c in ctrl.Controls)
-                    {
-                        string name = subname;
-
-                        if (NameControl(c))
-                            name = name.AppendPrePad(c.Name, ".");
-
-                        bool subokay = TranslateVerify(c, enumset, name, ignorelist, debugit);
-                        okay = okay && subokay;
+                        if (debugit)
+                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
                     }
                 }
-                else
+
+                if (ctrl is DataGridView)
                 {
-                    //logger?.WriteLine("Rejected " + subname + " of " + ctrl.GetType().Name);
+                    DataGridView v = ctrl as DataGridView;
+                    foreach (DataGridViewColumn c in v.Columns)
+                    {
+                        if (c.HeaderText != null && c.HeaderText.Length > 1 && c.HeaderText.HasLetterChars())
+                        {
+                            string id = subname.AppendPrePad(c.Name, ".");
+
+                            string enumid = id.Replace(".", "_");
+
+                            if (enumset == null || !enumset.Contains(enumid))
+                                errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
+                            else
+                                enumset.Remove(enumid);
+
+                            c.HeaderText = Translate(c.HeaderText, id);
+                        }
+                    }
+                }
+
+                if (ctrl is TabPage)
+                    subname = subname.AppendPrePad(ctrl.Name, ".");
+
+                foreach (Control c in ctrl.Controls)
+                {
+                    string name = subname;
+
+                    if (NameControl(c))
+                        name = name.AppendPrePad(c.Name, ".");
+
+                    errlist = errlist.AppendPrePad(Tx(c, enumset, name, ignorelist, debugit), ", ");
                 }
             }
+            else
+            {
+                //logger?.WriteLine("Rejected " + subname + " of " + ctrl.GetType().Name);
+            }
 
-            return okay;
+            return errlist;
         }
 
-        public void TranslateVerify(ToolStrip ctrl, Type enumset, Control parent)
+
+        public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null)
         {
             if (translations != null)
             {
+                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+
+                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+                var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name);
+                if (errlist.HasChars())
+                    System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist}}};");
+                if (enumset != null)
+                {
+                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
+                }
+            }
+        }
+
+        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, string subname)
+        {
+            string errlist = "";
+
+            string s = tt.GetToolTip(ctrl);
+            //System.Diagnostics.Debug.WriteLine($"Tooltip {ctrl.Name} = {s}");
+            if (s != null && s.Length > 1 && s.HasLetterChars() && s != "<code>")
+            {
+                string id = subname.AppendPrePad("ToolTip", ".");
+
+                string enumid = id.Replace(".", "_");
+
+                if (enumset == null || !enumset.Contains(enumid))
+                    errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
+                else
+                    enumset.Remove(enumid);
+
+                tt.SetToolTip(ctrl, Translate(s, id));
+            }
+
+            foreach (Control c in ctrl.Controls)
+            {
+                string id = subname;
+
+                if (NameControl(c))      // containers don't send thru 
+                    id = id.AppendPrePad(c.Name, ".");
+
+                errlist = errlist.AppendPrePad( Tx(tt, c, enumset, id), ", ");
+            }
+
+            return errlist;
+        }
+
+
+        public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, Control parent)
+        {
+            if (translations != null)
+            {
+                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+
+                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+
                 string subname = parent.GetType().Name;
 
-                bool okay = true;
+                string errlist = "";
 
                 foreach (ToolStripItem msi in ctrl.Items)
                 {
-                    bool subokay = TranslateVerify(msi, enumset, subname);
-                    okay = okay && subokay;
+                    errlist = errlist.AppendPrePad( Tx(msi, elist, subname) , ", ");
                 }
 
-                System.Diagnostics.Debug.Assert(okay, "Missing tooltip enumerations");
+                if (errlist.HasChars())
+                    System.Diagnostics.Debug.WriteLine($"        var enumlistcms = new Enum[] {{{errlist}}};");
+
+                if (enumset != null)
+                {
+                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
+                }
             }
         }
 
-        private bool TranslateVerify(ToolStripItem msi, Type enumset, string subname)
+        private string Tx(ToolStripItem msi, List<string> enumset, string subname)
         {
-            bool okay = true;
+            string errlist = "";
 
             string itemname = msi.Name;
 
             if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && msi.Text != "<code>")
             {
                 string id = subname.AppendPrePad(itemname, ".");
-                if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
-                {
-                    System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // ToolStrip control '{msi.Text.EscapeControlChars()}'");
-                    okay = false;
-                }
+
+                string enumid = id.Replace(".", "_");
+
+                if (enumset == null || !enumset.Contains(enumid))
+                    errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
+                else
+                    enumset.Remove(enumid);
 
                 msi.Text = Translate(msi.Text, id);
             }
@@ -495,60 +578,11 @@ namespace BaseUtils
             {
                 foreach (ToolStripItem dd in ddi.DropDownItems)
                 {
-                    bool subokay = TranslateVerify(dd, enumset, subname.AppendPrePad(itemname, "."));
-                    okay = okay && subokay;
+                    errlist = errlist.AppendPrePad( Tx(dd, enumset, subname.AppendPrePad(itemname, ".")), ", ");
                 }
             }
 
-            return okay;
+            return errlist;
         }
-
-
-        public void TranslateVerify(ToolTip tt, Type enumset, Control parent, string subname = null)
-        {
-            bool okay = TranslateVerify(tt, parent, enumset, subname!=null ? subname : parent.GetType().Name);
-            System.Diagnostics.Debug.Assert(okay, "Missing toolstrip enumerations");
-        }
-
-        private bool TranslateVerify(ToolTip tt, Control ctrl, Type enumset, string subname)
-        {
-            bool okay = true;
-
-            if (translations != null)
-            {
-                string s = tt.GetToolTip(ctrl);
-                if (s != null && s.Length > 1 && s.HasLetterChars() && s != "<code>")
-                {
-                    string id = subname.AppendPrePad("ToolTip", ".");
-
-                    if (!Enum.IsDefined(enumset, id.Replace(".", "_")))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    {id.Replace(".", "_")}, // ToolTip '{s.EscapeControlChars()}'");
-                        okay = false;
-                    }
-
-                    tt.SetToolTip(ctrl, Translate(s, id));
-                }
-
-                foreach (Control c in ctrl.Controls)
-                {
-                    string id = subname;
-
-                    if (NameControl(c))      // containers don't send thru 
-                        id = id.AppendPrePad(c.Name, ".");
-
-                    bool subokay = TranslateVerify(tt, c, enumset, id);
-                    okay = okay && subokay;
-                }
-            }
-
-            return okay;
-        }
-
-        private bool NameControl(Control c)
-        {
-            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
-        }
-
     }
 }
