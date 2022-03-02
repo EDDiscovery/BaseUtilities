@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -33,7 +33,7 @@ namespace BaseUtils
                 functions.Add("exist", new FuncEntry(Exist, 1, 20, FuncEntry.PT.M)); // no macros, all literal, can be strings
                 functions.Add("existsdefault", new FuncEntry(ExistsDefault, FuncEntry.PT.M, FuncEntry.PT.MESE));   // first is a macro but can not exist, second is a string or macro which must exist
                 functions.Add("expand", new FuncEntry(Expand, 1, 20, FuncEntry.PT.ME)); // check var, can be string (if so expanded)
-                functions.Add("expandarray", new FuncEntry(ExpandArray, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS, FuncEntry.PT.MESE));
+                functions.Add("expandarray", new FuncEntry(ExpandArray, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("expandvars", new FuncEntry(ExpandVars, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS));   // var 1 is text root/string, not var, not string, var 2 can be var or string, var 3/4 is integers or variables, checked in function
                 functions.Add("findarray", new FuncEntry(FindArray, 2, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("indirect", new FuncEntry(Indirect, 1, 20, FuncEntry.PT.ME));   // check var
@@ -101,6 +101,8 @@ namespace BaseUtils
                 functions.Add("trim", new FuncEntry(Trim, FuncEntry.PT.MESE));
                 functions.Add("upperinvariant", new FuncEntry(UpperInvariant, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("upper", new FuncEntry(Upper, 1, 20, FuncEntry.PT.MESE));
+                functions.Add("wordcount", new FuncEntry(WordCount, 1, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
+                functions.Add("wordfind", new FuncEntry(WordFind, 2, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE));
                 functions.Add("wordof", new FuncEntry(WordOf, 2, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.MESE));
                 functions.Add("wordlistcount", new FuncEntry(WordListCount, 1, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("wordlistentry", new FuncEntry(WordListEntry, 2, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.MESE));
@@ -416,6 +418,44 @@ namespace BaseUtils
             return true;
         }
 
+        protected bool WordCount(out string output)
+        {
+            string s = paras[0].Value;
+            string splitter = (paras.Count >= 2) ? paras[1].Value : ";";
+            char splitchar = (splitter.Length > 0) ? splitter[0] : ';';
+
+            string[] split = s.Split(splitchar);
+            output = split.Length.ToStringInvariant();
+
+            return true;
+        }
+        protected bool WordFind(out string output)
+        {
+            string s = paras[0].Value;
+            string t = paras[1].Value;
+            string splitter = (paras.Count >= 3) ? paras[2].Value : ";";
+            char splitchar = (splitter.Length > 0) ? splitter[0] : ';';
+
+            bool caseinsensitive = (paras.Count >= 4) ? paras[3].Int != 0 : true;
+            StringComparison cp = caseinsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
+
+            bool contains = (paras.Count >= 5) ? paras[4].Int != 0 : false;
+
+            string[] split = s.Split(splitchar);
+
+            output = "0";
+
+            for (int i = 0; i < split.Length; i++)
+            {
+                if (contains ? split[i].Contains(t, cp) : split[i].Equals(t, cp))
+                {
+                    output = (i + 1).ToStringInvariant();
+                    break;
+                }
+            }
+
+            return true;
+        }
         protected bool WordOf(out string output)
         {
             string s = paras[0].Value;
@@ -872,12 +912,14 @@ namespace BaseUtils
 
         protected bool ExpandArray(out string output)
         {
-            output = "";
-
-            string postname = paras.Count == 6 ? paras[5].Value : "";
-            bool splitcaps = paras.Count == 5 && paras[4].Value.IndexOf("splitcaps", StringComparison.InvariantCultureIgnoreCase) >= 0;
+            string separ = paras[1].Value;
+            string lastsepar = paras.Count >= 7 ? paras[6].Value : separ;
+            string postname = paras.Count >= 6 ? paras[5].Value : "";
+            bool splitcaps = paras.Count >= 5 && paras[4].Value.IndexOf("splitcaps", StringComparison.InvariantCultureIgnoreCase) >= 0;
             int start = paras[2].Int;
             int length = paras[3].Int;
+
+            List<string> entries = new List<string>();
 
             for (int i = start; i < start + length; i++)
             {
@@ -885,16 +927,23 @@ namespace BaseUtils
 
                 if (vars.Exists(aname))
                 {
-                    if (i != start)
-                        output += paras[1].Value;
-
                     if (splitcaps)
-                        output += vars[aname].SplitCapsWordFull();
+                        entries.Add(vars[aname].SplitCapsWordFull());
                     else
-                        output += vars[aname];
+                        entries.Add(vars[aname]);
                 }
                 else
                     break;
+            }
+
+            output = "";
+
+            for( int i = 0; i < entries.Count; i++)
+            {
+                if (i != 0)
+                    output += (i < entries.Count - 1) ? separ : lastsepar;
+
+                output += entries[i];
             }
 
             return true;
@@ -907,11 +956,11 @@ namespace BaseUtils
             int length = paras[3].Int;
 
             bool splitcaps = paras.Count == 5 && paras[4].Value.IndexOf("splitcaps", StringComparison.InvariantCultureIgnoreCase) >= 0;
+            bool nameonly = paras.Count == 5 && paras[4].Value.IndexOf("nameonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
+            bool valueonly = paras.Count == 5 && paras[4].Value.IndexOf("valueonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
 
             output = "";
 
-            bool nameonly = paras.Count == 5 && paras[4].Value.IndexOf("nameonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
-            bool valueonly = paras.Count == 5 && paras[4].Value.IndexOf("valueonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
 
             int index = 0;
             foreach (string key in vars.NameEnumuerable)
