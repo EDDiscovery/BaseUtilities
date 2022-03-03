@@ -332,9 +332,13 @@ namespace BaseUtils
             });
         }
 
-        public string Translate(string normal, string id)
+        // Translate string. Normal is the english text, ID is the ID to look up.
+        // if translator is off english is returned.
+        // any <code> items are returned as is.
+
+        public string Translate(string english, string id)
         {
-            if (translations != null && !normal.Equals("<code>") )
+            if (translations != null && !english.Equals("<code>") )
             {
                 string key = id;
                 if (OutputIDs)
@@ -349,62 +353,57 @@ namespace BaseUtils
                     if (inuse != null)
                         inuse[key] = true;
 #if DEBUG
-                    return translations[key] ?? normal.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
+                    return translations[key] ?? english.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
                     return translations[key] ?? normal;
 #endif
                 }
                 else
                 {
-                    logger?.WriteLine(string.Format("{0}: {1} @", id, normal.EscapeControlChars().AlwaysQuoteString()));
-                    normal = "! " + normal + " !";          // no id at all, use ! to indicate
-                    translations.Add(key, normal);
+                    logger?.WriteLine(string.Format("{0}: {1} @", id, english.EscapeControlChars().AlwaysQuoteString()));
+                    english = "! " + english + " !";          // no id at all, use ! to indicate
+                    translations.Add(key, english);
                     //System.Diagnostics.Debug.WriteLine("*** Missing Translate ID: {0}: \"{1}\" => \"{2}\"", id, normal.EscapeControlChars(), "<" + normal.EscapeControlChars() + ">");
-                    return normal;
+                    return english;
                 }
             }
             else
-                return normal;
-        }
-
-        // translate controls, verify control name is in enumset.
-
-        private bool NameControl(Control c)
-        {
-            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
+                return english;
         }
 
 
         // translate controls, verify control name is in enumset.
+        // all controls to translate must be in the enumset and enumset must have exactly that list. Else assert in debug
+        // controls can be marked <code> to say don't translate, or use %id% to indicate to use an ID
+        // We must go thru this procedure even if translations are off due to the embedded IDs such as %OK%
 
         public void TranslateControls(Control ctrl, Enum[] enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
         {
-            if (translations != null)
-            {
-                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+            System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
-                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-                var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
-                if (errlist.HasChars())
-                    System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist}}};");
-                if (enumset != null)
-                {
-                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
-                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
-                }
+            var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+            var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
+            if (errlist.HasChars())
+                System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist}}};");
+            if (enumset != null)
+            {
+                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
 
-        // Call direct only for debugging, normally use the one above.
-        // controls can use %id% in their text for redirection
         private string Tx(Control ctrl, List<string> enumset, string subname, Control[] ignorelist, bool debugit = false)
         {
             string errlist = "";
 
             if ((ignorelist == null || !ignorelist.Contains(ctrl)) && !ExcludedControls.Contains(ctrl.GetType()))
             {
+                // if text is valid, not a single char, has letters, and not <code>, try
+
                 if (ctrl.Text != null && ctrl.Text.Length > 1 && ctrl.Text.HasLetterChars() && ctrl.Text != "<code>")
                 {
+                    // if embedded id, try and translate the ID
+
                     if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
                     {
                         string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
@@ -412,17 +411,20 @@ namespace BaseUtils
                         if (debugit)
                             System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
                     }
-                    else
+                    else 
                     {
+                        // else make ID for control
+
                         string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
 
+                        // make sure enumset has it, else add to errlist
                         string enumid = id.Replace(".", "_");
-
                         if (enumset == null || !enumset.Contains(enumid))
                             errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
                         else
                             enumset.Remove(enumid);
 
+                        // translate
                         ctrl.Text = Translate(ctrl.Text, id);
 
                         if (debugit)
@@ -430,6 +432,7 @@ namespace BaseUtils
                     }
                 }
 
+                // if datagrid view, we need to deal with headers
                 if (ctrl is DataGridView)
                 {
                     DataGridView v = ctrl as DataGridView;
@@ -451,14 +454,16 @@ namespace BaseUtils
                     }
                 }
 
+                // if tabpage, add on the page name
                 if (ctrl is TabPage)
                     subname = subname.AppendPrePad(ctrl.Name, ".");
 
+                // do sub controls
                 foreach (Control c in ctrl.Controls)
                 {
                     string name = subname;
 
-                    if (NameControl(c))
+                    if (InsertName(c))
                         name = name.AppendPrePad(c.Name, ".");
 
                     errlist = errlist.AppendPrePad(Tx(c, enumset, name, ignorelist, debugit), ", ");
@@ -472,7 +477,7 @@ namespace BaseUtils
             return errlist;
         }
 
-
+        // translate tooltips.  Does not support %id%.  <code> is ignored.
         public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null)
         {
             if (translations != null)
@@ -515,7 +520,7 @@ namespace BaseUtils
             {
                 string id = subname;
 
-                if (NameControl(c))      // containers don't send thru 
+                if (InsertName(c))      // containers don't send thru 
                     id = id.AppendPrePad(c.Name, ".");
 
                 errlist = errlist.AppendPrePad( Tx(tt, c, enumset, id), ", ");
@@ -524,7 +529,7 @@ namespace BaseUtils
             return errlist;
         }
 
-
+        // translate toolstrips.  Does not support %id%.  <code> is ignored.
         public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, Control parent)
         {
             if (translations != null)
@@ -584,5 +589,13 @@ namespace BaseUtils
 
             return errlist;
         }
+
+        // helper
+        private bool InsertName(Control c)
+        {
+            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
+        }
+
+
     }
 }
