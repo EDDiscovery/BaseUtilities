@@ -355,7 +355,7 @@ namespace BaseUtils
 #if DEBUG
                     return translations[key] ?? english.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
-                    return translations[key] ?? normal;
+                    return translations[key] ?? english;
 #endif
                 }
                 else
