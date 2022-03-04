@@ -57,5 +57,47 @@ namespace EDDiscoveryTests
             CheckStr("A\tA\nA\rA\bA\fA\"A");
             CheckRep(@"A\tA\u23ABA","A\tA\u23ABA");
         }
+
+        [Test]
+        public void ObjectExtensions_Strings()
+        {
+            {
+                string s = ObjectExtensionsStrings.RegExWildCardToRegular("*fred");
+                System.Diagnostics.Debug.WriteLine($"Pattern is {s}");
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfred", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfredwww", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsFalse();
+            }
+            {
+                string s = ObjectExtensionsStrings.RegExWildCardToRegular("*fred*");
+                System.Diagnostics.Debug.WriteLine($"Pattern is {s}");
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fre", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsFalse();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fred", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfred", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfredwww", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+            }
+            {
+                string s = ObjectExtensionsStrings.RegExWildCardToRegular("*fr?d*");
+                System.Diagnostics.Debug.WriteLine($"Pattern is {s}");
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fre", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsFalse();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fred", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("frxd", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfred", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("wwwfredwww", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+            }
+            {
+                string s = ObjectExtensionsStrings.RegExWildCardToRegular("*f()r?d*");
+                System.Diagnostics.Debug.WriteLine($"Pattern is {s}");
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("...f()red...", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+            }
+            {
+                string s = ObjectExtensionsStrings.RegExWildCardToRegular("fr$(^ed");
+                System.Diagnostics.Debug.WriteLine($"Pattern is {s}");
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fr$(^ed", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsTrue();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("xfr$(^ed", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsFalse();
+                Check.That(System.Text.RegularExpressions.Regex.IsMatch("fr$(^edx", s, System.Text.RegularExpressions.RegexOptions.IgnoreCase)).IsFalse();
+            }
+        }
+
+
     }
 }

@@ -471,9 +471,23 @@ public static class ObjectExtensionsStrings
     public static string RegExWildCardToRegular(this string value)
     {
         if (value.Contains("*") || value.Contains("?"))
-            return "^" + System.Text.RegularExpressions.Regex.Escape(value).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+        {
+            if (value.StartsWith("*"))
+            {
+                // no anchor start
+                return System.Text.RegularExpressions.Regex.Escape(value).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+            }
+            else
+            {
+                // anchor start (^), text with ? replaced by . (any) and * by .* (any in a row) and end anchor ($)
+                return "^" + System.Text.RegularExpressions.Regex.Escape(value).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+            }
+        }
         else
-            return "^" + value + ".*$";
+        {
+            // anchor start, need to escape all chars, anchor end
+            return "^" + System.Text.RegularExpressions.Regex.Escape(value) + "$";
+        }
     }
 
     public static bool WildCardMatch(this string value, string match, bool caseinsensitive = false)
