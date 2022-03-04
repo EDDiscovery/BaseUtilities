@@ -361,19 +361,21 @@ namespace BaseUtils
 
         // give back all conditions which match itemname and have a compatible matchtype.. used for key presses/voice input to compile a list of condition data to check for
         // obeys disabled flag
-
-        public List<Tuple<string, ConditionEntry.MatchType>> ReturnValuesOfSpecificConditions(string itemname, List<ConditionEntry.MatchType> matchtypes)      // given itemname, give me a list of values it is matched against
+        public List<Tuple<string,ConditionEntry>> ReturnSpecificConditions(string eventname, string itemname, List<ConditionEntry.MatchType> matchtypes)      // given itemname, give me a list of values it is matched against
         {
-            List<Tuple<string, ConditionEntry.MatchType>> ret = new List<Tuple<string, ConditionEntry.MatchType>>();
+            var ret = new List<Tuple<string, ConditionEntry>>();
 
             foreach (Condition fe in conditionlist)        // find all values needed
             {
                 if (!fe.Disabled)
                 {
-                    foreach (ConditionEntry ce in fe.Fields)
+                    if (fe.EventName == eventname)
                     {
-                        if (ce.ItemName.Equals(itemname) && matchtypes.Contains(ce.MatchCondition))
-                            ret.Add(new Tuple<string, ConditionEntry.MatchType>(ce.MatchString, ce.MatchCondition));
+                        foreach (ConditionEntry ce in fe.Fields)
+                        {
+                            if (ce.ItemName.Equals(itemname) && matchtypes.Contains(ce.MatchCondition))
+                                ret.Add(new Tuple<string, ConditionEntry>(fe.GroupName, ce));
+                        }
                     }
                 }
             }

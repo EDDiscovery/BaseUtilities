@@ -111,9 +111,19 @@ public static class KeyObjectExtensions
         return k;
     }
 
-    public static string VKeyToString(this Keys key, Keys modifier)     // using Control.Modifier produce a key string
+    public static string WMKeyToString(this Keys key, ulong lparam, Keys modifier)     // using Control.Modifier produce a key string
     {
         string k = "";
+
+        ulong sc = (lparam >> 16) & 0xff;
+        bool ext = (lparam & 0x01000000) != 0;
+
+        if (key == Keys.ShiftKey)
+            return sc == 0x2a ? "Shift" : "RShift";
+        else if (key == Keys.ControlKey)
+            return ext ? "RCtrl" : "Ctrl";
+        else if (key == Keys.Menu)
+            return ext ? "RAlt" : "Alt";
 
         if ((modifier & Keys.Shift) != 0)
         {
@@ -128,7 +138,7 @@ public static class KeyObjectExtensions
             k = k.AppendPrePad("Ctrl", "+");
         }
 
-        if (key != Keys.None)
+        if (key != Keys.None )
             k = k.AppendPrePad(key.VKeyToString(), "+");
 
         return k;

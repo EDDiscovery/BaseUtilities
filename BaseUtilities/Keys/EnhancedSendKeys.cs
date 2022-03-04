@@ -13,19 +13,12 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
- 
+
 using BaseUtils.Win32;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using static ObjectExtensionsStrings;
 
