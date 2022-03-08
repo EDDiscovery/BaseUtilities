@@ -119,6 +119,21 @@ public static class ObjectExtensionsNumbersBool
             return null;
     }
 
+    static public int? ReadDecimalInt(ref string s)
+    {
+        int i = 0;
+        while (i < s.Length && char.IsDigit(s[i]))
+            i++;
+        int? v = InvariantParseIntNull(s.Substring(0, i));
+        if (v != null)
+        {
+            s = s.Substring(i);
+            return v;
+        }
+        else
+            return null;
+    }
+
     #endregion
 
     #region Double
