@@ -24,14 +24,21 @@ using static ObjectExtensionsStrings;
 
 // syntax: [<delay>] [<rep>] [<prefix>] [<shifters>] [<add>] [ seq | '('seq [' ' seq].. ')']
 // delay = '[' d1 [',' d2 [ ',' d3 ] ] ']' in decimal ms.
-//          d1 applies to main vkey sequence, or to shifters if no vkey sequence is given
-//          d2 applies to shifters when vkey sequence is given, or to updelay when no vkey sequence is given
-//          updelay applies to presses, or to shifters when combined with vkey sequence
-// rep = '#' + decimal number - repeat the sequence N times
-// prefix = one of '^' '<' : up    
-// prefix = one of '!' '>' : down  . No prefix indicates press (down then up)
+//          vkey only : d1 = key down delay, d2 = key up delay
+//          shift+vkey : d1 = key down delay, d2 = shift delay, d3 = key up delay
+//          shift : d1 = key down delay, d2 = shift up delay
+//          ^vkey : d1 = key up/down delay
+//          ^shift : d1 = key up/down delay
+//          ^shift+vkey : d1 = key up/down delay, d2 = shift key up/down delay
+//
+// rep = '#' + decimal number - repeat the sequence N times, >1
+//
+// prefix = one of '^' '<' : up only   
+// prefix = one of '!' '>' : down only. No prefix indicates press (down then up)
+//
 // shifters = '' | 'Shift' | 'Shift+Alt' | 'Shift+Alt+Ctrl' | 'Alt' | 'Alt+Ctrl' | 'Ctrl'
 // add = '' or '+' when both shifters and vkey is present
+//
 // seq = vkey | shortlist. Multiple sequences can be given, space seperated, inside the ()
 // vkey = Vkey name, See KeyObjectExtensions.ToVkey.  NumEnter is principle addition, D0-9 are just 0-9.
 // shortlist = '0'-'9' | 'A'-'Z' | 'a'-'z'.  List of Vkeys in this range.
@@ -50,11 +57,11 @@ namespace BaseUtils
 
         public class SKEvent
         {
-            internal int wm;        // windows message code
-            internal Keys vkey;    // vkey  
-            internal short sc;      // scan code
-            internal bool extkey;   // is it an extended key code
-            internal int delay;     // key delay
+            public int wm;        // windows message code
+            public Keys vkey;    // vkey  
+            public short sc;      // scan code
+            public bool extkey;   // is it an extended key code
+            public int delay;     // key delay
 
             public SKEvent(int wma, Keys vk, int del)
             {
@@ -146,8 +153,8 @@ namespace BaseUtils
                 {
                     s = s.Substring(1);
                     var r = ObjectExtensionsNumbersBool.ReadDecimalInt(ref s);
-                    if (r == null)
-                        return "Missing decimal count after #";
+                    if (r == null || r < 1)
+                        return "Missing/Invalid decimal count after #";
                     s = s.TrimStart();
                     repeat = r.Value;
                 }
@@ -201,19 +208,25 @@ namespace BaseUtils
                     }
                 }
 
+                bool vkeyspresent = s.Length > 0 && s[0] != ' ';
+                bool shiftpresent = shift != Keys.None || ctrl != Keys.None || alt != Keys.None;
+
+                // keydown is d1 or def
+                int keydowndelay = (d1 != -1) ? d1 : defdelay;
+
+                // if mainpart present, its d2 or defshift.  If no main part, its d1 or def shift
+                int shiftdelay = (vkeyspresent) ? (d2 != -1 ? d2 : defshiftdelay) : (d1 != -1 ? d1 : defshiftdelay);
+
+                // if in up/down mode, its d1 or def up.   If its got shift and vkeys, its d3/defup.  else its d2/defup
+                int keyupdelay = (kmd == KMode.up || kmd == KMode.down) ? (d1 != -1 ? d1 : defupdelay) : ((shiftpresent && vkeyspresent)? (d3 != -1 ? d3 : defupdelay) : (d2 != -1 ? d2 : defupdelay));
+
+               // System.Diagnostics.Debug.WriteLine("--" + Environment.NewLine+ $"Key down {keydowndelay} shiftdelay {shiftdelay} keyup {keyupdelay}");
+
                 string repeatarea = s;      // keep it pristine for repeats
 
                 for (int rpc = 0; rpc < repeat; rpc++)  // and repeat..
                 {
                     s = repeatarea;
-                    bool mainpart = s.Length > 0 && s[0] != ' ';
-
-                    // keydown is d1 or def
-                    int keydowndelay = (d1 != -1) ? d1 : defdelay;
-                    // if mainpart present, its d2 or defshift.  If no main part, its d1 or def shift
-                    int shiftdelay = (mainpart) ? (d2 != -1 ? d2 : defshiftdelay) : (d1 != -1 ? d1 : defshiftdelay);
-                    // if in up/down mode, its d1 or def up.   If its got a main part, its d3/defup.  else its d2/defup
-                    int keyupdelay = (kmd == KMode.up || kmd == KMode.down) ? (d1 != -1 ? d1 : defupdelay) : (mainpart ? (d3 != -1 ? d3 : defupdelay) : (d2 != -1 ? d2 : defupdelay));
 
                     //System.Diagnostics.Debug.WriteLine(string.Format("{0} {1} {2} {3} {4} {5} ", d1, d2, d3, keydowndelay, shiftdelay, keyupdelay));
 
@@ -226,7 +239,7 @@ namespace BaseUtils
                     if (alt != Keys.None)
                         events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.SYSKEYUP : BaseUtils.Win32Constants.WM.SYSKEYDOWN, alt, shiftdelay));
 
-                    if (mainpart)
+                    if (vkeyspresent)
                     {
                         if (s.Length == 0)
                             return "Invalid no characters after shifters";
@@ -289,6 +302,8 @@ namespace BaseUtils
                         s = s.Substring(1).TrimStart();
                 }
             }
+
+           // foreach (BaseUtils.EnhancedSendKeysParser.SKEvent x in events) System.Diagnostics.Debug.WriteLine($"Event {x.wm} {x.sc} {x.vkey} {x.delay}");
 
             return "";
         }
