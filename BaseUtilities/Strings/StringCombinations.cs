@@ -20,10 +20,12 @@ using System.Linq;
 
 namespace BaseUtils
 {
-    // given a list of words, separated by wordsepar, find all combinations.  c is the OR operator.  
+    // given a list of words:
+    // separated out groups by groupchar ';'
+    // within each group, generate a list of word-sets, separated by spaces (wordchar)
+    // within each word-set, list one or more words making up the set.  Use orchar '|' to seperate the words
     // Quoted strings are treated as single words
-    // [text] indicate text is optional.  If there is one in there, there will be an empty string on the vertical line showing its optional.
-    // [] indicates the whole OR sequence is optional
+    // use [] around a word to indicate its optional, or the whole word-set in a list is optional: [fred] or one|two|[] . This is indicated by one empty string in the output set
     // examples : a [b] 'hello there'|'goodbye'|lucky  a|b|[]
 
     public class StringCombinations

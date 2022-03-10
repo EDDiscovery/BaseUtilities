@@ -52,7 +52,7 @@ namespace BaseUtils
     {
         public interface IAdditionalKeyParser
         {
-            Tuple<string, int, string> Parse(string s);      // return replace key string, or null if not recognised.  int is parse length, Any errors signal in second string or null
+            Tuple<string, int, string> Parse(string s, bool beforeprefix);      // return replace key string, or null if not recognised.  int is parse length, Any errors signal in second string or null
         }
 
         public class SKEvent
@@ -103,7 +103,7 @@ namespace BaseUtils
             {
                 if (additionalkeyparser != null)                               // See if key needs translating out - moved to here to allow for control sequences before this key
                 {
-                    Tuple<string, int, string> t = additionalkeyparser.Parse(s);      // Allow the parser to sniff the string
+                    Tuple<string, int, string> t = additionalkeyparser.Parse(s,true);      // Allow the parser to sniff the string, tell it its a pre prefix event
 
                     if (t.Item3 != null)                                        // error condition here, such as no matching key binding
                         return t.Item3;
@@ -175,9 +175,9 @@ namespace BaseUtils
                     s = s.Substring(1);
                 }
 
-                if (additionalkeyparser != null)                               // Also see here if key needs translating out - 9.0.3.0
+                if (additionalkeyparser != null)                               // Also see here if key needs translating out after the prefixes
                 {
-                    Tuple<string, int, string> t = additionalkeyparser.Parse(s);      // Allow the parser to sniff the string
+                    Tuple<string, int, string> t = additionalkeyparser.Parse(s,false);      // Allow the parser to sniff the string
 
                     if (t.Item3 != null)                                        // error condition here, such as no matching key binding
                         return t.Item3;
@@ -303,7 +303,7 @@ namespace BaseUtils
                 }
             }
 
-           // foreach (BaseUtils.EnhancedSendKeysParser.SKEvent x in events) System.Diagnostics.Debug.WriteLine($"Event {x.wm} {x.sc} {x.vkey} {x.delay}");
+            //foreach (BaseUtils.EnhancedSendKeysParser.SKEvent x in events) System.Diagnostics.Debug.WriteLine($"Event {x.wm} {x.sc} {x.vkey} {x.delay}");
 
             return "";
         }
@@ -456,7 +456,7 @@ namespace BaseUtils
 
                         currentInput[0].inputUnion.ki.wVk = (short)skEvent.vkey;
 
-                        System.Diagnostics.Debug.WriteLine(Environment.TickCount % 10000 + " Send " + skEvent.vkey.VKeyToString() + " " + currentInput[0].inputUnion.ki.wScan.ToString("2X") + " " + currentInput[0].inputUnion.ki.dwFlags);
+                        System.Diagnostics.Debug.WriteLine(AppTicks.MSd + " Send " + skEvent.vkey.VKeyToString() + " " + currentInput[0].inputUnion.ki.wScan.ToString("2X") + " " + currentInput[0].inputUnion.ki.dwFlags);
                         // send only currentInput[0]
                         UnsafeNativeMethods.SendInput(1, currentInput, INPUTSize);
 

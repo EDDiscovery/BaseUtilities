@@ -99,5 +99,12 @@ namespace BaseUtils
         {
             return TickCountLap("@");
         }
+
+        public static uint MS(uint mod = 10000)         // ms from enviroment, uint and modulo
+        {
+            return ((uint)Environment.TickCount) % mod;
+        }
+
+        public static uint MSd { get { return ((uint)Environment.TickCount) % 10000; } }
     }
 }

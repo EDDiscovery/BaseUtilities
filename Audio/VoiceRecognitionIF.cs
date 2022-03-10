@@ -1,8 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿/*
+ * Copyright © 2017-2022 EDDiscovery development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * 
+ * EDDiscovery is not affiliated with Frontier Developments plc.
+ */
 
 #pragma warning disable 0067
 
@@ -16,38 +26,35 @@ namespace AudioExtensions
         event SpeechRecognised SpeechNotRecognised;
         bool IsOpen { get; }
         float Confidence { get; set; }
-        int BabbleTimeout { get; set; }
-        int EndSilenceTimeout { get; set; }
-        int EndSilenceTimeoutAmbigious { get; set; }
-        int InitialSilenceTimeout { get; set; }
 
-        bool Open(System.Globalization.CultureInfo ctp);     
-        bool Add(string s);
-        bool AddRange(List<string> s);
-        bool Start();       // start recognition
-        void Stop(bool waitforstop);    // after stop you can add/start
-        bool Clear();       // unload all grammars, must be stopped. then Add/Start
+        bool Open(System.Globalization.CultureInfo ctp, bool winform);
         void Close();   // can close without stop
+
+        void BeginGrammarUpdate();
+        void AddGrammar(string s);
+        void EndGrammarUpdate();
+
+        void UpdateParas(int babbletimeout, int endsilencetimeout, int endsilencetimeoutambiguous, int initialsilencetimeout);
+
     }
 
 
-    public class VoiceRecognitionDummy: IVoiceRecognition
+    public class VoiceRecognitionDummy : IVoiceRecognition
     {
         public event SpeechRecognised SpeechRecognised;
         public event SpeechRecognised SpeechNotRecognised;
         public bool IsOpen { get { return false; } }
         public float Confidence { get; set; } = 0.98F;
-        public int BabbleTimeout { get; set; }
-        public int EndSilenceTimeout { get; set; }
-        public int EndSilenceTimeoutAmbigious { get; set; }
-        public int InitialSilenceTimeout { get; set; }
-        public bool Open(System.Globalization.CultureInfo ctp) { return false; }       // Dispose to close
-        public bool Start() { return false; }
-        public bool Add(string s) { return false; }
-        public bool AddRange(List<string> s) { return false; }
-        public void Stop(bool stop) { }
-        public bool Clear() { return false; }
+ 
+        public bool Open(System.Globalization.CultureInfo ctp, bool winform) { return false; }       // Dispose to close
         public void Close() { }
+
+        public void BeginGrammarUpdate() { }
+        public void AddGrammar(string s) { }
+        public void EndGrammarUpdate() { }
+
+        public void UpdateParas(int babbletimeout, int endsilencetimeout, int endsilencetimeoutambiguous, int initialsilencetimeout) { }
+
     }
 
 }
