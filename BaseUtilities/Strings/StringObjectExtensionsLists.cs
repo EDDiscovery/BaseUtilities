@@ -64,7 +64,35 @@ public static class ObjectExtensionsStringsLists
         int i = 0;
         foreach (var s in list)
         {
-            if ((s.Length>0 || !ignoreempty ) && comparision.StartsWith(s, c))
+            if ((s.Length > 0 || !ignoreempty) && comparision.StartsWith(s, c))
+                return i;
+
+            i++;
+        }
+
+        return -1;
+    }
+
+    public static int StartsWithInList(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)
+    {
+        int i = 0;
+        foreach (var s in list)
+        {
+            if (s.StartsWith(comparision, c))
+                return i;
+
+            i++;
+        }
+
+        return -1;
+    }
+
+    public static int EndsWithInList(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)
+    {
+        int i = 0;
+        foreach (var s in list)
+        {
+            if (s.EndsWith(comparision, c))
                 return i;
 
             i++;

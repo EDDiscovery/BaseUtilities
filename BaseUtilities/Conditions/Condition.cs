@@ -21,14 +21,15 @@ namespace BaseUtils
 {
     public class Condition
     {
-        public string EventName { get; set; }                        // logical event its associated with
         public List<ConditionEntry> Fields { get; set; }             // its condition fields
         public ConditionEntry.LogicalCondition InnerCondition { get; set; }         // condition between fields
-        public ConditionEntry.LogicalCondition OuterCondition { get; set; }         // condition between this set of Condition and the next set of Condition
+        public ConditionEntry.LogicalCondition OuterCondition { get; set; }         // condition between this set of Condition a nd the next set of Condition
+        public string EventName { get; set; }                        // logical event its associated with (definition is up to user)
         public string Action { get; set; }                           // action associated with a pass (definition is up to user)
-        public Variables ActionVars { get; set; }                    // any variables associated with the action
+        public Variables ActionVars { get; set; }                    // any variables associated with the action (definition is up to user)
         public bool Disabled { get; set; }                           // if condition is currently disabled for consideration
-        public string GroupName { get; set; }                        // group its assocated with. Can be null
+        public string GroupName { get; set; }                        // group its assocated with. Can be null. (definition is up to user)
+        public object Tag { get; set; }                              // User tag data
 
         #region Init
 
@@ -63,6 +64,7 @@ namespace BaseUtils
             ActionVars = new Variables(other.ActionVars);
             Disabled = other.Disabled;
             GroupName = other.GroupName;
+            Tag = other.Tag;
         }
 
         public bool Create(string e, string a, string d, string i, string o)   // i,o can have spaces inserted into enum
