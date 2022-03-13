@@ -58,7 +58,11 @@ namespace AudioExtensions
                     return false;
             }
 
-            DirectSoundOut dso = new DirectSoundOut(200, System.Threading.ThreadPriority.Highest);    // seems good quality at 200 ms latency
+            // seems good quality at 200 ms latency
+            // note CS core is crap at samples around 200ms of length.. i've debugged it using audacity and they are truncated 
+            // need to find a replacement to cscore - not been updated since 2017
+
+            DirectSoundOut dso = new DirectSoundOut(200, System.Threading.ThreadPriority.Highest);   
 
             if (dso == null)    // if no DSO, fail..
                 return false;
@@ -566,6 +570,8 @@ namespace AudioExtensions
             {
                 if (BaseSource.WaveFormat.BytesPerSample == 2)                  // FOR NOW, presuming its PCM, cope with a few different formats.
                 {
+                    //System.Diagnostics.Debug.WriteLine($"@ {(double)sample / WaveFormat.SampleRate}={curamplitude}");
+
                     for (int i = 0; i < readbase; i += 2)
                     {
                         short v1 = BitConverter.ToInt16(buffer, i + offset);
@@ -574,7 +580,7 @@ namespace AudioExtensions
 
                         curamplitude += sample < attackend ? attackramp : sample < decayend ? decayramp : sample < sustainend ? 0 : sample < releaseend ? releaseramp : 0;
 
-                        //if ( sample == attackend || sample == decayend || sample == sustainend || sample == releaseend )  System.Diagnostics.Debug.WriteLine($"{(double)sample/WaveFormat.SampleRate}={curamplitude}");
+                        //if (sample == attackend || sample == decayend || sample == sustainend || sample == releaseend) System.Diagnostics.Debug.WriteLine($"{(double)sample / WaveFormat.SampleRate}={curamplitude}");
 
                         curamplitude = Math.Max(-1, Math.Min(1, curamplitude));
                         var bytes = BitConverter.GetBytes(v1);
@@ -696,22 +702,23 @@ namespace AudioExtensions
 
         public int Read(byte[] buffer, int offset, int count)
         {
+            //System.Diagnostics.Debug.WriteLine($"@ {pos} {(double)pos / 2 / WaveFormat.SampleRate} get {count} at {offset}");
             if (pos < totalbytes)
             {
                 int totake = Math.Min(count, (int)(totalbytes - pos));      // and we return zeros
 
                 if (totake > 0)
                 {
-                    for( int i = 0; i < totake; i += 2)
+                    for ( int i = 0; i < totake; i += 2)
                     {
                         phase += increasepersample;       // move accumulator on
                         double sinv = Math.Sin(phase);    // sine value (0-1)
                         sinv *= currentamplitude;                      // by amplitude to 16 bit value
                         buffer[i + offset] = (byte)(((int)sinv) & 0xff);        // low
                         buffer[i + offset + 1] = (byte)(((int)sinv) >> 8);      // high
+                        phase %= Math.PI * 2;
                     }
 
-                    phase %= Math.PI * 2;
                 }
 
                 pos += totake;

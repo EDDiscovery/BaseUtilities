@@ -155,6 +155,14 @@ namespace BaseUtils
             else
                 return def;
         }
+        public double GetDouble(string name, double def = 0)     // get or default
+        {
+            double i;
+            if (values.ContainsKey(name) && values[name].InvariantParse(out i))
+                return i;
+            else
+                return def;
+        }
 
         public string GetString(string name, string def = null, bool checklen = false)      // optional check length
         {
