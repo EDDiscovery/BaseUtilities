@@ -264,6 +264,29 @@ namespace AudioExtensions
             else
                 return null;
         }
+        public AudioSample Tone(double frequency, double amplitude, double lengthms)
+        {
+            AudioData audio = ad.Tone(frequency, amplitude, lengthms);
+
+            if (audio != null)
+            {
+                return new AudioSample() { audiodata = audio };
+            }
+            else
+                return null;
+        }
+
+        public AudioSample Envelope(AudioSample last, double attackms, double decayms, double sustainms, double releasems,
+                                    double maxamplitude, double sustainamplitude)
+        {
+            AudioData audio = ad.Envelope(last.audiodata, attackms, decayms, sustainms, releasems, maxamplitude, sustainamplitude);
+            if (audio != null)
+            {
+                return new AudioSample() { audiodata = audio };
+            }
+            else
+                return null;
+        }
 
         public void Submit(AudioSample s, int vol, Priority p)       // submit to queue
         {

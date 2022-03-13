@@ -43,6 +43,9 @@ namespace AudioExtensions
 
         AudioData Mix(AudioData last, AudioData mix);            // either may be null, in which case null.. Converted to mix format
         AudioData Append(AudioData front, AudioData append);      // either may be null, in which case null.. Converted to append format
+        AudioData Envelope(AudioData audio, double attackms, double decayms, double sustainms, double releasems,
+                                            double maxamplitude, double sustainamplitude);      // audio = null results in null
+        AudioData Tone(double frequency, double amplitude, double lengthms);
 
         int Lengthms(AudioData audio);                     // whats the length?
         int TimeLeftms(AudioData audio);

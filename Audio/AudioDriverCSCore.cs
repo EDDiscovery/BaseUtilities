@@ -161,8 +161,8 @@ namespace AudioExtensions
                 int t = Environment.TickCount;
 
                 IWaveSource current = o.data as IWaveSource;
+                //System.Diagnostics.Debug.WriteLine((Environment.TickCount - t).ToString("00000") + "Driver Init done");
                 aout.Initialize(current);
-                //System.Diagnostics.Debug.WriteLine((Environment.TickCount-t).ToString("00000") + "Driver Init done");
                 aout.Volume = (float)(vol) / 100;
                 aout.Play();
                 //System.Diagnostics.Debug.WriteLine((Environment.TickCount - t).ToString("00000") + "Driver Play done");
@@ -276,6 +276,24 @@ namespace AudioExtensions
                 frontws = ChangeSampleDepth(frontws, mixws.WaveFormat.SampleRate, mixws.WaveFormat.BitsPerSample);
 
             IWaveSource s = new MixWaveSource(frontws, mixws);
+            System.Diagnostics.Debug.Assert(s != null);
+            return new AudioData(s);
+        }
+
+        public AudioData Envelope(AudioData audio, double attackms, double decayms, double sustainms, double releasems,
+                                            double maxamplitude, double sustainamplitude)
+        {
+            if ( audio == null)
+                return null;
+
+            IWaveSource aws = (IWaveSource)audio.data;
+
+            return new AudioData(new EnvelopeWaveSource(aws, attackms,decayms,sustainms,releasems,maxamplitude,sustainamplitude));
+        }
+
+        public AudioData Tone(double frequency, double amplitude, double lengthms)     // Single tone at frequency for x ms, amplitude = 0 to 100.
+        {
+            IWaveSource s = new ToneWaveSource(frequency,amplitude, lengthms);
             System.Diagnostics.Debug.Assert(s != null);
             return new AudioData(s);
         }
@@ -434,7 +452,7 @@ namespace AudioExtensions
 
     public class MixWaveSource : WaveAggregatorBase  // based on the TrimmedWaveSource in the CS Example
     {
-        IWaveSource mix;
+        private IWaveSource mix;
 
         public MixWaveSource(IWaveSource ws, IWaveSource o) : base(ws)
         {
@@ -507,11 +525,108 @@ namespace AudioExtensions
 
     }
 
+    public class EnvelopeWaveSource : WaveAggregatorBase
+    {
+        long attackend, decayend, sustainend, releaseend;       // at sample rate
+        double attackramp, decayramp, releaseramp;      // +- 1
+        double curamplitude = 0;        // 0-1
+        long sample = 0;
+
+        public EnvelopeWaveSource(IWaveSource audio, double attackms, double decayms, double sustainms, double releasems,
+                                            double maxamplitude, double sustainamplitude) : base(audio)
+        {
+            attackend = (long)(audio.WaveFormat.SampleRate * attackms / 1000);
+            if (attackend < 1)
+                curamplitude = maxamplitude;
+            else
+                attackramp = (maxamplitude / 100.0) / attackend;
+
+            double x1 = attackend * attackramp;
+
+            decayend = (long)(audio.WaveFormat.SampleRate * decayms / 1000);
+            decayramp = (sustainamplitude - maxamplitude) / 100.0 / decayend;
+            decayend += attackend;
+
+            sustainend = (long)(audio.WaveFormat.SampleRate * sustainms / 1000);
+            sustainend += decayend;
+
+            releaseend = (long)(audio.WaveFormat.SampleRate * releasems / 1000);
+            releaseramp = (0 - sustainamplitude) / 100.0 / releaseend;
+            releaseend += sustainend;
+        }
+
+        public override long Length { get { return base.Length; } }
+        public override long Position { get { return base.Position; } }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int readbase = BaseSource.Read(buffer, offset, count);      // want count, stored at offset
+
+            if (readbase > 0)         // mix into data the mix source.. ensure the mix source never runs out.
+            {
+                if (BaseSource.WaveFormat.BytesPerSample == 2)                  // FOR NOW, presuming its PCM, cope with a few different formats.
+                {
+                    for (int i = 0; i < readbase; i += 2)
+                    {
+                        short v1 = BitConverter.ToInt16(buffer, i + offset);
+
+                        v1 = (short)(v1 * curamplitude);
+
+                        curamplitude += sample < attackend ? attackramp : sample < decayend ? decayramp : sample < sustainend ? 0 : sample < releaseend ? releaseramp : 0;
+
+                        //if ( sample == attackend || sample == decayend || sample == sustainend || sample == releaseend )  System.Diagnostics.Debug.WriteLine($"{(double)sample/WaveFormat.SampleRate}={curamplitude}");
+
+                        curamplitude = Math.Max(-1, Math.Min(1, curamplitude));
+                        var bytes = BitConverter.GetBytes(v1);
+                        buffer[i + offset] = bytes[0];
+                        buffer[i + offset + 1] = bytes[1];
+                        sample++;
+                    }
+                }
+                else if (BaseSource.WaveFormat.BytesPerSample == 4)
+                {
+                    for (int i = 0; i < readbase; i += 4)
+                    {
+                        long v1 = BitConverter.ToInt32(buffer, i + offset);
+
+                        v1 = (long)(v1 * curamplitude);
+
+                        curamplitude += sample < attackend ? attackramp : sample < decayend ? decayramp : sample < sustainend ? 0 : sample < releaseend ? releaseramp : 0;
+
+                        var bytes = BitConverter.GetBytes(v1);
+                        buffer[i + offset] = bytes[0];
+                        buffer[i + offset + 1] = bytes[1];
+                        buffer[i + offset + 2] = bytes[2];
+                        buffer[i + offset + 3] = bytes[3];
+                        sample++;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < readbase; i += 1)
+                    {
+                        byte v1 = buffer[i];
+
+                        v1 = (byte)(v1 * curamplitude);
+
+                        curamplitude += sample < attackend ? attackramp : sample < decayend ? decayramp : sample < sustainend ? 0 : sample < releaseend ? releaseramp : 0;
+
+                        buffer[i] = v1;
+
+                        sample++;
+                    }
+                }
+            }
+
+            return readbase;
+        }
+
+    }
 
     public class NullWaveSource : IWaveSource  // empty audio
     {
-        long pos = 0;
-        long totalbytes = 0;
+        private long pos = 0;
+        private long totalbytes = 0;
         private readonly WaveFormat _waveFormat;
 
         public NullWaveSource(int ms) 
@@ -555,6 +670,69 @@ namespace AudioExtensions
         {
         }
     }
+
+    public class ToneWaveSource : IWaveSource  // tone, Pcm, 22050, 16 bit
+    {
+        private long pos = 0;
+        private long totalbytes = 0;
+        private readonly WaveFormat _waveFormat;
+        private double increasepersample;
+        private double currentamplitude;
+        private double phase = Math.PI/2;
+
+        public ToneWaveSource(double frequency, double amplitude, double lengthms)
+        {
+            _waveFormat = new WaveFormat(22050, 16, 1, AudioEncoding.Pcm);       // default format
+            totalbytes = _waveFormat.MillisecondsToBytes(lengthms);
+            increasepersample = Math.PI * 2 * frequency / 22050.0;          // go from 0-2 PI, over freq/22050
+            this.currentamplitude = 32767.0 * amplitude / 100.0;                        // amplitude
+
+        }
+
+        public WaveFormat WaveFormat
+        {
+            get { return _waveFormat; }
+        }
+
+        public int Read(byte[] buffer, int offset, int count)
+        {
+            if (pos < totalbytes)
+            {
+                int totake = Math.Min(count, (int)(totalbytes - pos));      // and we return zeros
+
+                if (totake > 0)
+                {
+                    for( int i = 0; i < totake; i += 2)
+                    {
+                        phase += increasepersample;       // move accumulator on
+                        double sinv = Math.Sin(phase);    // sine value (0-1)
+                        sinv *= currentamplitude;                      // by amplitude to 16 bit value
+                        buffer[i + offset] = (byte)(((int)sinv) & 0xff);        // low
+                        buffer[i + offset + 1] = (byte)(((int)sinv) >> 8);      // high
+                    }
+
+                    phase %= Math.PI * 2;
+                }
+
+                pos += totake;
+                return totake;
+            }
+
+            return 0;
+        }
+
+        public long Length { get { return totalbytes; } set { } }
+        public long Position { get { return pos; } set { } }
+        public bool CanSeek
+        {
+            get { return false; }
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
 
 
 }

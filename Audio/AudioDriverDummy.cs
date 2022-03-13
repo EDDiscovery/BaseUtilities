@@ -80,6 +80,11 @@ namespace AudioExtensions
             return null;
         }
 
+        public AudioData Tone(double frequency, double amplitude, double lengthms)
+        {
+            return null;
+        }
+
         public int Lengthms(AudioData audio)
         {
             return 0;                     // whats the length?
@@ -90,5 +95,9 @@ namespace AudioExtensions
             return 0;
         }
 
+        public AudioData Envelope(AudioData audio, double attackms, double decayms, double sustainms, double releasems, double maxamplitude, double sustainamplitude)
+        {
+            return null;
+        }
     }
 }
