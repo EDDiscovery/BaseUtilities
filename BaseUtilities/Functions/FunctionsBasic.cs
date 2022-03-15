@@ -243,7 +243,7 @@ namespace BaseUtils
 
             foreach (Parameter p in paras)          // output been expanded by ME.. 
             {
-                System.Diagnostics.Debug.WriteLine($"Indirect {p.Value}");
+                //System.Diagnostics.Debug.WriteLine($"Indirect {p.Value}");
 
                 if (vars.Exists(p.Value))         // if macro name, expand..
                 {
@@ -253,7 +253,7 @@ namespace BaseUtils
                         return false;
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"Variable expanded to {res}");
+                    //System.Diagnostics.Debug.WriteLine($"Variable expanded to {res}");
 
                     output += res;
                 }
