@@ -480,19 +480,16 @@ namespace BaseUtils
         // translate tooltips.  Does not support %id%.  <code> is ignored.
         public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null)
         {
-            if (translations != null)
-            {
-                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+            System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
-                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-                var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name);
-                if (errlist.HasChars())
-                    System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist}}};");
-                if (enumset != null)
-                {
-                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
-                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
-                }
+            var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+            var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name);
+            if (errlist.HasChars())
+                System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist}}};");
+            if (enumset != null)
+            {
+                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
 
@@ -532,29 +529,26 @@ namespace BaseUtils
         // translate toolstrips.  Does not support %id%.  <code> is ignored.
         public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, Control parent)
         {
-            if (translations != null)
+            System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+
+            var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+
+            string subname = parent.GetType().Name;
+
+            string errlist = "";
+
+            foreach (ToolStripItem msi in ctrl.Items)
             {
-                System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
+                errlist = errlist.AppendPrePad( Tx(msi, elist, subname) , ", ");
+            }
 
-                var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+            if (errlist.HasChars())
+                System.Diagnostics.Debug.WriteLine($"        var enumlistcms = new Enum[] {{{errlist}}};");
 
-                string subname = parent.GetType().Name;
-
-                string errlist = "";
-
-                foreach (ToolStripItem msi in ctrl.Items)
-                {
-                    errlist = errlist.AppendPrePad( Tx(msi, elist, subname) , ", ");
-                }
-
-                if (errlist.HasChars())
-                    System.Diagnostics.Debug.WriteLine($"        var enumlistcms = new Enum[] {{{errlist}}};");
-
-                if (enumset != null)
-                {
-                    System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
-                    System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
-                }
+            if (enumset != null)
+            {
+                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
 
