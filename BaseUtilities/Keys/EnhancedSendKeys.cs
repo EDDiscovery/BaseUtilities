@@ -456,7 +456,7 @@ namespace BaseUtils
 
                         currentInput[0].inputUnion.ki.wVk = (short)skEvent.vkey;
 
-                        System.Diagnostics.Debug.WriteLine(AppTicks.MSd + " Send " + skEvent.vkey.VKeyToString() + " " + currentInput[0].inputUnion.ki.wScan.ToString("2X") + " " + currentInput[0].inputUnion.ki.dwFlags);
+                        //System.Diagnostics.Debug.WriteLine(AppTicks.MSd + " Send " + skEvent.vkey.VKeyToString() + " " + currentInput[0].inputUnion.ki.wScan.ToString("2X") + " " + currentInput[0].inputUnion.ki.dwFlags);
                         // send only currentInput[0]
                         UnsafeNativeMethods.SendInput(1, currentInput, INPUTSize);
 
