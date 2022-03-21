@@ -254,7 +254,7 @@ namespace DirectInputDevices
             if (recheck || ks == null)
                 ks = keyboard.GetCurrentState();
 
-            var kp = ks.PressedKeys; foreach (var x in kp) System.Diagnostics.Debug.WriteLine($"Keys down SK {x}");
+            //var kp = ks.PressedKeys; foreach (var x in kp) System.Diagnostics.Debug.WriteLine($"Keys down SK {x}");
 
             if (k == Keys.ShiftKey)  // this concept is r or l shift
             {
