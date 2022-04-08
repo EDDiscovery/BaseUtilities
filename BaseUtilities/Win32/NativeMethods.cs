@@ -369,10 +369,18 @@ namespace BaseUtils.Win32
             Style = -26
         }
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetKeyboardLayout(uint idThread);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern short VkKeyScan(char key);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern short VkKeyScanEx(char key, IntPtr dwhkl);
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern short VkKeyScanExW(char key, IntPtr dwhkl);
+        [DllImport("user32.dll")]
+        public static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetKeyNameText(int lParam, [Out] StringBuilder str, int len);
 
