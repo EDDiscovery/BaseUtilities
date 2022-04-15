@@ -25,7 +25,11 @@ public static class TranslatorExtensions
 {
     static public string TxID(this string s, Enum id)               // given english text and enumeration, translate
     {
-        return BaseUtils.Translator.Instance.Translate(s, id.ToString().Replace("_","."));
+        return BaseUtils.Translator.Instance.Translate(s, id.ToString().Replace("_", "."));
+    }
+    static public bool TxDefined(Enum id)                           // is it defined?
+    {
+        return BaseUtils.Translator.Instance.IsDefined(id.ToString().Replace("_", "."));
     }
 
     static public string TxID(this string s, Type type, string id)    // given english text, type for base name, and id for rest, translate
