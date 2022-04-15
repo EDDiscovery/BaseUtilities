@@ -124,6 +124,11 @@ namespace EDDiscoveryTests
         public void StringSearch()
         {
             {
+                var ss = new StringSearchTerms("", "");
+                Check.That(ss.Terms).IsNull();
+                Check.That(ss.Enabled).IsFalse();
+            }
+            {
                 var ss = new StringSearchTerms("hello there", "");
                 Check.That(ss.Terms.Length).IsEqualTo(1);
                 Check.That(ss.Terms[0]).IsEqualTo("hello there");
@@ -171,6 +176,20 @@ namespace EDDiscoveryTests
                 Check.That(ss.Terms.Length).IsEqualTo(3);
                 Check.That(ss.Terms[0]).IsEqualTo("hello there");
                 Check.That(ss.Terms[1]).IsNull();
+                Check.That(ss.Terms[2]).IsEqualTo("jim");
+            }
+            {
+                var ss = new StringSearchTerms("body:jim", "station:body");
+                Check.That(ss.Terms.Length).IsEqualTo(3);
+                Check.That(ss.Terms[0]).IsNull();
+                Check.That(ss.Terms[1]).IsNull();
+                Check.That(ss.Terms[2]).IsEqualTo("jim");
+            }
+            {
+                var ss = new StringSearchTerms("body:jim station:fred", "station:body");
+                Check.That(ss.Terms.Length).IsEqualTo(3);
+                Check.That(ss.Terms[0]).IsNull();
+                Check.That(ss.Terms[1]).IsEqualTo("fred");
                 Check.That(ss.Terms[2]).IsEqualTo("jim");
             }
         }
