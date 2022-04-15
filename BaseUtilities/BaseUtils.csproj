@@ -77,6 +77,8 @@
     <Compile Include="IconSet\IIconSet.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
+    <Compile Include="Strings\StringObjectExtensionsArray.cs" />
+    <Compile Include="Strings\StringObjectSearchTerms.cs" />
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
     <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />

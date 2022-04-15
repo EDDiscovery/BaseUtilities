@@ -29,7 +29,7 @@ namespace EDDiscoveryTests
         void DumpStr(string c)
         {
             foreach (char x in c)
-                System.Diagnostics.Debug.Write(" " + (int)x + ":" + ((int)x>=32 ? x : '?'));
+                System.Diagnostics.Debug.Write(" " + (int)x + ":" + ((int)x >= 32 ? x : '?'));
             System.Diagnostics.Debug.WriteLine("");
         }
 
@@ -43,7 +43,7 @@ namespace EDDiscoveryTests
             Check.That(s2 == org).IsTrue();
         }
 
-        void CheckRep(string org,string expected)
+        void CheckRep(string org, string expected)
         {
             DumpStr(org);
             string s2 = org.ReplaceEscapeControlCharsFull();
@@ -55,7 +55,7 @@ namespace EDDiscoveryTests
         public void Escape()
         {
             CheckStr("A\tA\nA\rA\bA\fA\"A");
-            CheckRep(@"A\tA\u23ABA","A\tA\u23ABA");
+            CheckRep(@"A\tA\u23ABA", "A\tA\u23ABA");
         }
 
         [Test]
@@ -99,5 +99,80 @@ namespace EDDiscoveryTests
         }
 
 
+        [Test]
+        public void FieldBuilder()
+        {
+            bool OnCrime = false;
+            bool Telepresence = false;
+            string Crew = "Jim";
+            string info;
+            info = BaseUtils.FieldBuilder.Build("Crew Member: ", Crew, "; Due to Crime", OnCrime, "; Telepresence", Telepresence);
+            System.Diagnostics.Debug.WriteLine($"<{info}>");
+            info = BaseUtils.FieldBuilder.Build("Crew Member: ", Crew, ";Due to Crime", OnCrime, ";Telepresence", Telepresence);
+            System.Diagnostics.Debug.WriteLine($"<{info}>");
+            OnCrime = true;
+            info = BaseUtils.FieldBuilder.Build("Crew Member: ", Crew, ";Due to Crime", OnCrime, ";Telepresence", Telepresence);
+            System.Diagnostics.Debug.WriteLine($"<{info}>");
+            info = BaseUtils.FieldBuilder.Build("Crew Member: ", Crew, "; Due to Crime", OnCrime, "; Telepresence", Telepresence);
+            System.Diagnostics.Debug.WriteLine($"<{info}>");
+            Telepresence = true;
+            info = BaseUtils.FieldBuilder.Build("Crew Member: ", Crew, "; Due to Crime", OnCrime, "; Telepresence", Telepresence);
+            System.Diagnostics.Debug.WriteLine($"<{info}>");
+        }
+
+        [Test]
+        public void StringSearch()
+        {
+            {
+                var ss = new StringSearchTerms("hello there", "");
+                Check.That(ss.Terms.Length).IsEqualTo(1);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+            }
+            {
+                var ss = new StringSearchTerms("hello there", "station");
+                Check.That(ss.Terms.Length).IsEqualTo(2);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsNull();
+            }
+            {
+                var ss = new StringSearchTerms("hello station:fred there", "station");
+                Check.That(ss.Terms.Length).IsEqualTo(2);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsEqualTo("fred");
+            }
+            {
+                var ss = new StringSearchTerms("hello station:'fred and jim' there", "station");
+                Check.That(ss.Terms.Length).IsEqualTo(2);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsEqualTo("fred and jim");
+            }
+            {
+                var ss = new StringSearchTerms("hello station:", "station");
+                Check.That(ss.Terms.Length).IsEqualTo(2);
+                Check.That(ss.Terms[0]).IsEqualTo("hello");
+                Check.That(ss.Terms[1]).IsNull();
+            }
+            {
+                var ss = new StringSearchTerms("hello station:'fred and jim' there", "station:body");
+                Check.That(ss.Terms.Length).IsEqualTo(3);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsEqualTo("fred and jim");
+                Check.That(ss.Terms[2]).IsNull();
+            }
+            {
+                var ss = new StringSearchTerms("hello station:'fred and jim' there body:jim", "station:body");
+                Check.That(ss.Terms.Length).IsEqualTo(3);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsEqualTo("fred and jim");
+                Check.That(ss.Terms[2]).IsEqualTo("jim");
+            }
+            {
+                var ss = new StringSearchTerms("hello there body:jim", "station:body");
+                Check.That(ss.Terms.Length).IsEqualTo(3);
+                Check.That(ss.Terms[0]).IsEqualTo("hello there");
+                Check.That(ss.Terms[1]).IsNull();
+                Check.That(ss.Terms[2]).IsEqualTo("jim");
+            }
+        }
     }
 }
