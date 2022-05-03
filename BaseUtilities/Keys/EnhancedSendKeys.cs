@@ -22,7 +22,19 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static ObjectExtensionsStrings;
 
-// syntax: [<delay>] [<rep>] [<prefix>] [<shifters>] [<add>] [ seq | '('seq [' ' seq].. ')']
+// seq = vkey | shortlist | '(' <keyseq> [' ']')'       -- place this in a subroutine
+// shortlist = '0'-'9' | 'A'-'Z' | 'a'-'z'.  List of Vkeys in this range.
+// vkey = Vkey name, See KeyObjectExtensions.ToVkey.  NumEnter is principle addition, D0-9 are just 0-9.
+// 
+// fullkey = [<shifters>] [<add>] <seq>
+// shifters = '' | 'Shift' | 'Shift+Alt' | 'Shift+Alt+Ctrl' | 'Alt' | 'Alt+Ctrl' | 'Ctrl'
+// add = '' or '+' when both shifters and vkey is present
+//
+// extkey = [<prefix>] [<fullkey>]
+// prefix = one of '^' '<' : up only   
+// prefix = one of '!' '>' : down only. No prefix indicates press (down then up)
+//
+// Syntax  = [<delay>] [<rep>] <extkey>|<additional key parsing string>
 // delay = '[' d1 [',' d2 [ ',' d3 ] ] ']' in decimal ms.
 //          vkey only : d1 = key down delay, d2 = key up delay
 //          shift+vkey : d1 = key down delay, d2 = shift delay, d3 = key up delay
@@ -30,21 +42,11 @@ using static ObjectExtensionsStrings;
 //          ^vkey : d1 = key up/down delay
 //          ^shift : d1 = key up/down delay
 //          ^shift+vkey : d1 = key up/down delay, d2 = shift key up/down delay
-//
 // rep = '#' + decimal number - repeat the sequence N times, >1
-//
-// prefix = one of '^' '<' : up only   
-// prefix = one of '!' '>' : down only. No prefix indicates press (down then up)
-//
-// shifters = '' | 'Shift' | 'Shift+Alt' | 'Shift+Alt+Ctrl' | 'Alt' | 'Alt+Ctrl' | 'Ctrl'
-// add = '' or '+' when both shifters and vkey is present
-//
-// seq = vkey | shortlist. Multiple sequences can be given, space seperated, inside the ()
-// vkey = Vkey name, See KeyObjectExtensions.ToVkey.  NumEnter is principle addition, D0-9 are just 0-9.
-// shortlist = '0'-'9' | 'A'-'Z' | 'a'-'z'.  List of Vkeys in this range.
 //
 // Examples : Shift+Ctrl, Shift, Alt, Alt+A, Shift+Alt+A, Shift+(ABC), Shift+(F1 BC), ^Shift+(F1 BC)
 // [100,20]Shift+A
+// Additional key parsing strings can be [50,50]#2{UI_Left} where UI_Left could be "!LControlKey !LShiftKey A ^LShiftKey ^LControlKey"
 
 namespace BaseUtils
 {
@@ -52,7 +54,7 @@ namespace BaseUtils
     {
         public interface IAdditionalKeyParser
         {
-            Tuple<string, int, string> Parse(string s, bool beforeprefix);      // return replace key string, or null if not recognised.  int is parse length, Any errors signal in second string or null
+            Tuple<string,string> Parse(ref string s);      // return null no subsitution, or remove ID from s, and return in Item1 the new text.  Any errors in Item2
         }
 
         public class SKEvent
@@ -78,7 +80,7 @@ namespace BaseUtils
 
             public override string ToString()
             {
-                return "Queue " + wm + " : " + ((Keys)vkey).VKeyToString() + " " + sc + " " + extkey + " " + delay + "ms";
+                return "Event " + (wm==256?"Down":"Up") + " " + ((Keys)vkey).VKeyToString() + " " + sc + " " + extkey + " " + delay + "ms";
             }
         }
 
@@ -93,7 +95,8 @@ namespace BaseUtils
 
         enum KMode { press, up, down };
 
-        public static string ParseKeys(Queue<SKEvent> events, string s, int defdelay, int defshiftdelay, int defupdelay, IAdditionalKeyParser additionalkeyparser = null)
+        public static string ParseKeys(Queue<SKEvent> events, string s, int defdelay, int defshiftdelay, int defupdelay, IAdditionalKeyParser additionalkeyparser = null, 
+                                        int d1 = -1, int d2 = -1, int d3 = -1, bool resetdvalues = true )
         {
             //debugevents = null;
             s = s.Trim();
@@ -101,21 +104,6 @@ namespace BaseUtils
 
             while (s.Length > 0)
             {
-                if (additionalkeyparser != null)                               // See if key needs translating out - moved to here to allow for control sequences before this key
-                {
-                    Tuple<string, int, string> t = additionalkeyparser.Parse(s,true);      // Allow the parser to sniff the string, tell it its a pre prefix event
-
-                    if (t.Item3 != null)                                        // error condition here, such as no matching key binding
-                        return t.Item3;
-
-                    if (t.Item1 != null)                                      // if replace.. (and the parser can return multiple keys)
-                    {
-                        s = t.Item1 + " " + s.Substring(t.Item2);               // its the replace string, followed by the cut out current string
-                    }
-                }
-
-                int d1 = -1, d2 = -1, d3 = -1;
-
                 if (s.Length >= 1 && s[0] == '[')
                 {
                     if (!s.Contains(']'))
@@ -158,69 +146,6 @@ namespace BaseUtils
                     s = s.TrimStart();
                     repeat = r.Value;
                 }
-                    
-                KMode kmd = KMode.press;
-
-                if (s.Length == 0)
-                    return "Invalid no characters after delay";
-
-                if (s[0] == '^' || s[0] == '<')
-                {
-                    kmd = KMode.up;
-                    s = s.Substring(1);
-                }
-                else if (s[0] == '!' || s[0] == '>')
-                {
-                    kmd = KMode.down;
-                    s = s.Substring(1);
-                }
-
-                if (additionalkeyparser != null)                               // Also see here if key needs translating out after the prefixes
-                {
-                    Tuple<string, int, string> t = additionalkeyparser.Parse(s,false);      // Allow the parser to sniff the string
-
-                    if (t.Item3 != null)                                        // error condition here, such as no matching key binding
-                        return t.Item3;
-
-                    if (t.Item1 != null)                                      // if replace.. (and the parser can return multiple keys)
-                    {
-                        s = t.Item1 + " " + s.Substring(t.Item2);               // its the replace string, followed by the cut out current string
-                    }
-                }
-
-                Keys shift = KeyObjectExtensions.IsShiftPrefix(ref s);
-                Keys ctrl = Keys.None;
-                Keys alt = Keys.None;
-                if (shift == Keys.None || s.StartsWith("+"))
-                {
-                    s = s.Skip("+");
-
-                    alt = KeyObjectExtensions.IsAltPrefix(ref s);
-
-                    if (alt == Keys.None || s.StartsWith("+"))
-                    {
-                        s = s.Skip("+");
-
-                        ctrl = KeyObjectExtensions.IsCtrlPrefix(ref s);
-
-                        if (ctrl != Keys.None)
-                            s = s.Skip("+");
-                    }
-                }
-
-                bool vkeyspresent = s.Length > 0 && s[0] != ' ';
-                bool shiftpresent = shift != Keys.None || ctrl != Keys.None || alt != Keys.None;
-
-                // keydown is d1 or def
-                int keydowndelay = (d1 != -1) ? d1 : defdelay;
-
-                // if mainpart present, its d2 or defshift.  If no main part, its d1 or def shift
-                int shiftdelay = (vkeyspresent) ? (d2 != -1 ? d2 : defshiftdelay) : (d1 != -1 ? d1 : defshiftdelay);
-
-                // if in up/down mode, its d1 or def up.   If its got shift and vkeys, its d3/defup.  else its d2/defup
-                int keyupdelay = (kmd == KMode.up || kmd == KMode.down) ? (d1 != -1 ? d1 : defupdelay) : ((shiftpresent && vkeyspresent)? (d3 != -1 ? d3 : defupdelay) : (d2 != -1 ? d2 : defupdelay));
-
-               // System.Diagnostics.Debug.WriteLine("--" + Environment.NewLine+ $"Key down {keydowndelay} shiftdelay {shiftdelay} keyup {keyupdelay}");
 
                 string repeatarea = s;      // keep it pristine for repeats
 
@@ -228,82 +153,155 @@ namespace BaseUtils
                 {
                     s = repeatarea;
 
-                    //System.Diagnostics.Debug.WriteLine(string.Format("{0} {1} {2} {3} {4} {5} ", d1, d2, d3, keydowndelay, shiftdelay, keyupdelay));
+                    var replace = additionalkeyparser?.Parse(ref s) ?? null;
 
-                    if (shift != Keys.None)         // we already run shift keys here. If we are doing UP, we send a up, else we are doing down/press
-                        events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.KEYUP : BaseUtils.Win32Constants.WM.KEYDOWN, shift, shiftdelay));
-
-                    if (ctrl != Keys.None)
-                        events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.KEYUP : BaseUtils.Win32Constants.WM.KEYDOWN, ctrl, shiftdelay));
-
-                    if (alt != Keys.None)
-                        events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.SYSKEYUP : BaseUtils.Win32Constants.WM.SYSKEYDOWN, alt, shiftdelay));
-
-                    if (vkeyspresent)
+                    if (replace != null)
                     {
-                        if (s.Length == 0)
-                            return "Invalid no characters after shifters";
+                        if (replace.Item2.HasChars())           // report errors
+                            return replace.Item2;
 
-                        bool brackets = ObjectExtensionsStrings.IsPrefix(ref s, "(");
-
-                        while (s.Length > 0)
-                        {
-                            string word = ObjectExtensionsStrings.FirstWord(ref s, new char[] { ' ', ')' });
-
-                            Keys key = word.ToVkey();
-
-                            if (key != Keys.None)
-                            {
-                                AddMsgsForVK(events, key, alt != Keys.None && ctrl == Keys.None, keydowndelay, keyupdelay, kmd);
-                                //System.Diagnostics.Debug.WriteLine(shift + " " + alt + " " + ctrl + "  press " + key.VKeyToString());
-                            }
-                            else
-                            {
-                                while (word.Length > 0)
-                                {
-                                    string ch = new string(word[0], 1);
-                                    key = ch.ToVkey();
-
-                                    if (key.IsSingleCharName())
-                                    {
-                                        AddMsgsForVK(events, key, alt != Keys.None && ctrl == Keys.None, keydowndelay, keyupdelay, kmd);
-                                        //System.Diagnostics.Debug.WriteLine(shift + " " + alt + " " + ctrl + "  press " + key.VKeyToString());
-                                        word = word.Substring(1);
-                                    }
-                                    else
-                                        return "Invalid key " + word;
-                                }
-                            }
-
-                            if (!brackets)
-                                break;
-                            else if (s.Length > 0 && s[0] == ')')
-                            {
-                                s = s.Substring(1);
-                                break;
-                            }
-                        }
+                        // recurse in. note no additionalparser so no recursion below, and don't reset the d values
+                        string res = ParseKeys(events, replace.Item1, defdelay, defshiftdelay, defupdelay, null, d1, d2, d3, false);     
+                        if (res.HasChars())
+                            return res;
                     }
-
-                    if (kmd == KMode.press)     // only on a press do we release here
+                    else
                     {
-                        if (alt != Keys.None)
-                            events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.SYSKEYUP, alt, keyupdelay));
-
-                        if (ctrl != Keys.None)
-                            events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.KEYUP, ctrl, keyupdelay));
-
-                        if (shift != Keys.None)
-                            events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.KEYUP, shift, keyupdelay));
+                        string res = KeyCore(events, ref s, defdelay, defshiftdelay, defupdelay, d1, d2, d3);
+                        if (res.HasChars())
+                            return res;
                     }
+                }
 
-                    s = s.Trim();
-                    if (s.Length > 0 && s[0] == ',')        // comma can be used between key groups
-                        s = s.Substring(1).TrimStart();
+                if (resetdvalues)
+                {
+                    d1 = d2 = d3 = -1;      // reset these
                 }
             }
 
             //foreach (BaseUtils.EnhancedSendKeysParser.SKEvent x in events) System.Diagnostics.Debug.WriteLine($"Event {x.wm} {x.sc} {x.vkey} {x.delay}");
+
+            return "";
+        }
+
+        // fullkey above maker - understand ^/! Shifters vkey sequence. Update ref string
+        public static string KeyCore(Queue<SKEvent> events, ref string s, int defdelay, int defshiftdelay, int defupdelay, int d1,int d2, int d3)
+        {
+            KMode kmd = KMode.press;
+
+            if (s[0] == '^' || s[0] == '<')
+            {
+                kmd = KMode.up;
+                s = s.Substring(1);
+            }
+            else if (s[0] == '!' || s[0] == '>')
+            {
+                kmd = KMode.down;
+                s = s.Substring(1);
+            }
+
+            Keys shift = KeyObjectExtensions.IsShiftPrefix(ref s);
+            Keys ctrl = Keys.None;
+            Keys alt = Keys.None;
+            if (shift == Keys.None || s.StartsWith("+"))
+            {
+                s = s.Skip("+");
+
+                alt = KeyObjectExtensions.IsAltPrefix(ref s);
+
+                if (alt == Keys.None || s.StartsWith("+"))
+                {
+                    s = s.Skip("+");
+
+                    ctrl = KeyObjectExtensions.IsCtrlPrefix(ref s);
+
+                    if (ctrl != Keys.None)
+                        s = s.Skip("+");
+                }
+            }
+
+            bool vkeyspresent = s.Length > 0 && s[0] != ' ';
+            bool shiftpresent = shift != Keys.None || ctrl != Keys.None || alt != Keys.None;
+
+            // keydown is d1 or def
+            int keydowndelay = (d1 != -1) ? d1 : defdelay;
+
+            // if mainpart present, its d2 or defshift.  If no main part, its d1 or def shift
+            int shiftdelay = (vkeyspresent) ? (d2 != -1 ? d2 : defshiftdelay) : (d1 != -1 ? d1 : defshiftdelay);
+
+            // if in up/down mode, its d1 or def up.   If its got shift and vkeys, its d3/defup.  else its d2/defup
+            int keyupdelay = (kmd == KMode.up || kmd == KMode.down) ? (d1 != -1 ? d1 : defupdelay) : ((shiftpresent && vkeyspresent) ? (d3 != -1 ? d3 : defupdelay) : (d2 != -1 ? d2 : defupdelay));
+
+            if (shift != Keys.None)         // we already run shift keys here. If we are doing UP, we send a up, else we are doing down/press
+                events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.KEYUP : BaseUtils.Win32Constants.WM.KEYDOWN, shift, shiftdelay));
+
+            if (ctrl != Keys.None)
+                events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.KEYUP : BaseUtils.Win32Constants.WM.KEYDOWN, ctrl, shiftdelay));
+
+            if (alt != Keys.None)
+                events.Enqueue(new SKEvent(kmd == KMode.up ? BaseUtils.Win32Constants.WM.SYSKEYUP : BaseUtils.Win32Constants.WM.SYSKEYDOWN, alt, shiftdelay));
+
+            if (vkeyspresent)
+            {
+                if (s.Length == 0)
+                    return "Invalid no characters after shifters";
+
+                bool brackets = ObjectExtensionsStrings.IsPrefix(ref s, "(");
+
+                while (s.Length > 0)
+                {
+                    string word = ObjectExtensionsStrings.FirstWord(ref s, new char[] { ' ', ')' });
+
+                    Keys key = word.ToVkey();
+
+                    if (key != Keys.None)
+                    {
+                        AddMsgsForVK(events, key, alt != Keys.None && ctrl == Keys.None, keydowndelay, keyupdelay, kmd);
+                        //System.Diagnostics.Debug.WriteLine(shift + " " + alt + " " + ctrl + "  press " + key.VKeyToString());
+                    }
+                    else
+                    {
+                        while (word.Length > 0)
+                        {
+                            string ch = new string(word[0], 1);
+                            key = ch.ToVkey();
+
+                            if (key.IsSingleCharName())
+                            {
+                                AddMsgsForVK(events, key, alt != Keys.None && ctrl == Keys.None, keydowndelay, keyupdelay, kmd);
+                                //System.Diagnostics.Debug.WriteLine(shift + " " + alt + " " + ctrl + "  press " + key.VKeyToString());
+                                word = word.Substring(1);
+                            }
+                            else
+                                return "Invalid key " + word;
+                        }
+                    }
+
+                    if (!brackets)
+                        break;
+                    else if (s.Length > 0 && s[0] == ')')
+                    {
+                        s = s.Substring(1);
+                        break;
+                    }
+                }
+            }
+
+            if (kmd == KMode.press)     // only on a press do we release here
+            {
+                if (alt != Keys.None)
+                    events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.SYSKEYUP, alt, keyupdelay));
+
+                if (ctrl != Keys.None)
+                    events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.KEYUP, ctrl, keyupdelay));
+
+                if (shift != Keys.None)
+                    events.Enqueue(new SKEvent(BaseUtils.Win32Constants.WM.KEYUP, shift, keyupdelay));
+            }
+
+            s = s.Trim();
+            if (s.Length > 0 && s[0] == ',')        // comma can be used between key groups
+                s = s.Substring(1).TrimStart();
 
             return "";
         }

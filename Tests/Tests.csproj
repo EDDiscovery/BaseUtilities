@@ -99,10 +99,12 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConditionTests.cs" />
     <Compile Include="CSVTest.cs" />
+    <Compile Include="KeyParser.cs" />
     <Compile Include="Threads.cs" />
     <Compile Include="StringTests.cs" />
     <Compile Include="CollectionTests.cs" />
