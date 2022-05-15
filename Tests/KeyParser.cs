@@ -32,10 +32,15 @@ namespace EDDiscoveryTests
         {
             public Tuple<string, string> Parse(ref string s)
             {
-                if ( s.StartsWith("{one}"))
+                if (s.StartsWith("{one}"))
                 {
                     s = s.Substring(5);
                     return new Tuple<string, string>("!LControlKey !LShiftKey A ^LShiftKey ^LControlKey", null);
+                }
+                if (s.StartsWith("{UI_Up}"))
+                {
+                    s = s.Substring(7);
+                    return new Tuple<string, string>("Up", null);
                 }
 
                 return null;
@@ -133,6 +138,26 @@ namespace EDDiscoveryTests
                 CheckKey(events, System.Windows.Forms.Keys.A, 257, 60);
                 CheckKey(events, System.Windows.Forms.Keys.LShiftKey, 257, 50);
                 CheckKey(events, System.Windows.Forms.Keys.LControlKey, 257, 50);
+            }
+            {
+                var additionalkeyparser = new Bindings();
+                Queue<EnhancedSendKeysParser.SKEvent> events = new Queue<EnhancedSendKeysParser.SKEvent>();
+                string res = BaseUtils.EnhancedSendKeysParser.ParseKeys(events, "#2{UI_Up}", 100, 120, 140, additionalkeyparser);
+                Check.That(res).IsEmpty();
+                Check.That(events.Count).Equals(4);
+                CheckKey(events, System.Windows.Forms.Keys.Up, 256, 100);
+                CheckKey(events, System.Windows.Forms.Keys.Up, 257, 140);
+                CheckKey(events, System.Windows.Forms.Keys.Up, 256, 100);
+                CheckKey(events, System.Windows.Forms.Keys.Up, 257, 140);
+            }
+
+            {
+                var additionalkeyparser = new Bindings();
+                Queue<EnhancedSendKeysParser.SKEvent> events = new Queue<EnhancedSendKeysParser.SKEvent>();
+                string res = BaseUtils.EnhancedSendKeysParser.ParseKeys(events, "!{UI_Up}", 100, 120, 140, additionalkeyparser);
+                Check.That(res).IsEmpty();
+                Check.That(events.Count).Equals(1);
+                CheckKey(events, System.Windows.Forms.Keys.Up, 256, 100);
             }
 
         }
