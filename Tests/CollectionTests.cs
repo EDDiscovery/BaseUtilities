@@ -121,7 +121,7 @@ namespace EDDiscoveryTests
             for (uint g = 0; g < generations; g++)
             {
                 var dict = gd.Get(g + 1);
-              //  System.Diagnostics.Debug.WriteLine("At gen {0} get {1} {2}", g + 1, dict.Count, string.Join(",",dict.Values));
+                //  System.Diagnostics.Debug.WriteLine("At gen {0} get {1} {2}", g + 1, dict.Count, string.Join(",",dict.Values));
                 for (int i = 0; i < depth; i++)
                 {
                     bool present = g % genskip[i] == modulo;
@@ -156,6 +156,35 @@ namespace EDDiscoveryTests
             }
 
             //1004x10000 = release 3035
+
+        }
+
+        [Test]
+        public void GenerationalDictionary2()
+        {
+            GenerationalDictionary<string, string > gd = new GenerationalDictionary<string,string>();
+
+            gd["one"] = "g0-one";
+            gd["two"] = "g0-two";
+            gd.NextGeneration();
+            gd["two"] = "g1-two";
+            gd.NextGeneration();
+            gd["one"] = "g2-one";
+            gd.NextGeneration();
+            gd["three"] = "g3-three";
+
+            var onekey = gd.GetHistoryOfKey("one");
+            Check.That(onekey.Count).Equals(2);
+            var twokey = gd.GetHistoryOfKey("two");
+            Check.That(twokey.Count).Equals(2);
+            var oneg2 = gd.GetHistoryOfKey(2, "one");
+            Check.That(oneg2.Count).Equals(2);
+            var oneg1 = gd.GetHistoryOfKey(1, "one");
+            Check.That(oneg1.Count).Equals(1);
+            var threeg1 = gd.GetHistoryOfKey(1, "three");
+            Check.That(threeg1.Count).Equals(0);
+            var threeg10 = gd.GetHistoryOfKey(10, "three");
+            Check.That(threeg10.Count).Equals(1);
 
         }
     }

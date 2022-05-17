@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BaseUtils
 {
@@ -180,6 +181,27 @@ namespace BaseUtils
 
             }
             return ret;
+        }
+
+        // vertical slice of a keys history
+        public DictionaryWithFirstLastKey<uint, TValue> GetHistoryOfKey(TKey key)
+        {
+            if (dictionary.TryGetValue(key, out DictionaryWithFirstLastKey<uint, TValue> res))
+                return res;
+            else
+                return null;
+        }
+
+        // vertical slide of a key, generation picks end point
+        public Dictionary<uint, TValue> GetHistoryOfKey(uint generation, TKey key)
+        {
+            if (dictionary.TryGetValue(key, out DictionaryWithFirstLastKey<uint, TValue> allres))
+            {
+                Dictionary<uint, TValue> res = allres.Where(x => x.Key <= generation).ToDictionary(k => k.Key, k => k.Value);
+                return res;
+            }
+            else
+                return null;
         }
 
         public List<TKey> GetKeys()
