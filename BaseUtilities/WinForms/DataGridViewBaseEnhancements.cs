@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020 EDDiscovery development team
+ * Copyright © 2020-2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace BaseUtils
@@ -28,6 +29,8 @@ namespace BaseUtils
 
     // fix the #1487 issue for all inheritors, https://stackoverflow.com/questions/34344499/invalidoperationexception-this-operation-cannot-be-performed-while-an-auto-fill
     // by making sure the top left header cell is present
+
+    // also add in a ColumnFillWeight change event
 
     public class DataGridViewBaseEnhancements : DataGridView
     {
@@ -47,6 +50,9 @@ namespace BaseUtils
         public int RightClickRow { get { return RowSelect && HitButton == MouseButtons.Right ? HitIndex : -1; } }
         public bool LeftClickRowValid { get { return LeftClickRow >= 0; } }
         public int LeftClickRow { get { return RowSelect && HitButton == MouseButtons.Left ? HitIndex : -1; } }
+
+        public Action<object, DataGridViewColumnEventArgs, bool> ColumnFillWeightChanged = null;   // add missing ColumnFillWeight change (bool = first time)
+
 
         private ContextMenuStrip defaultstrip = null;
         private bool cmschangingoverride = false;
@@ -140,7 +146,17 @@ namespace BaseUtils
             return base.ProcessDialogKey(keyData);
         }
 
+        private Dictionary<DataGridViewColumn, float> FillWeight = new Dictionary<DataGridViewColumn, float>();
+        protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
+        {
+            base.OnColumnWidthChanged(e);
 
+            bool there = FillWeight.TryGetValue(e.Column, out float fillw);
+            bool fire = !there || fillw != e.Column.FillWeight;
 
+            FillWeight[e.Column] = e.Column.FillWeight;
+            if (fire && ColumnFillWeightChanged != null)
+                ColumnFillWeightChanged(this, e, !there);
+        }
     }
 }

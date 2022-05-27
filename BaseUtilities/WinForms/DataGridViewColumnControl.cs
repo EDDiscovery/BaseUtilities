@@ -14,7 +14,6 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
-using System;
 using System.Windows.Forms;
 
 namespace BaseUtils
@@ -37,7 +36,7 @@ namespace BaseUtils
         private void ColumnContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // if we have dragged, and not onto the HitIndex, which was the initial click point, we have a move column
-            if (ColumnReorder && dragto >= 0 && dragto != HitIndex)    
+            if (ColumnReorder && dragto >= 0 && dragto != HitIndex)
             {
                 e.Cancel = true;        // cancel the menu
                 Columns[HitIndex].DisplayIndex = Columns[dragto].DisplayIndex;      // move the display index
@@ -80,7 +79,7 @@ namespace BaseUtils
             base.OnMouseMove(e);
 
             // if allowed to reorder, and we are right clicked 
-            if (ColumnReorder && e.Button == MouseButtons.Right)   
+            if (ColumnReorder && e.Button == MouseButtons.Right)
             {
                 var ht = HitTest(e.X, e.Y);
                 if (ht.Type == DataGridViewHitTestType.ColumnHeader)    // on a column header, remember the dragto position
@@ -99,3 +98,4 @@ namespace BaseUtils
         private System.Windows.Forms.ContextMenuStrip columnContextMenu;
     }
 }
+
