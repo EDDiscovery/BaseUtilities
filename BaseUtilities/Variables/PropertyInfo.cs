@@ -29,6 +29,7 @@ namespace BaseUtils
             public PropertyNameAttribute(string text) { Text = text; }
         }
 
+        [System.Diagnostics.DebuggerDisplay("PNI {Name} {Help} {Comment} {DefaultCondition}")]
         public class PropertyNameInfo
         {
             public string Name;
@@ -48,7 +49,8 @@ namespace BaseUtils
         // note, this corresponds to how Variables AddPropertiesFieldsOfClass works, thus it belongs with it. Namespace is historical
 
         static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
-                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null , Type[] propexcluded = null, bool excludearrayslist = false, int depth = 5 )       // give a list of properties for a given name
+                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null , Type[] propexcluded = null, 
+                                    bool excludearrayslist = false, int depth = 5 )       // give a list of properties for a given name
         {
             if (depth < 0)
                 return null;
@@ -131,7 +133,7 @@ namespace BaseUtils
             }
         }
 
-        static public PropertyNameInfo PNI( string name, Type t , int ll, string comment, string help)
+        static public PropertyNameInfo PNI( string name, Type t , int linelen, string comment, string help)
         {
             string pname = t.FullName;
             if (typeof(System.Collections.IDictionary).IsAssignableFrom(t))
@@ -142,7 +144,7 @@ namespace BaseUtils
             else if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
-                help = ("Enumeration:" + enums.FormatIntoLines(ll)).AppendPrePad(help, Environment.NewLine);
+                help = ("Enumeration:" + enums.FormatIntoLines(linelen)).AppendPrePad(help, Environment.NewLine);
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Equals, comment);
             }
             else if (pname.Contains("System.Double"))

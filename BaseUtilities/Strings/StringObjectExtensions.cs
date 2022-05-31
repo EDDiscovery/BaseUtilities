@@ -314,6 +314,36 @@ public static partial class ObjectExtensionsStrings
         return normal;
     }
 
+    public static bool IsLetterOrUnderscore(this char v)
+    {
+        return char.IsLetter(v) || v == '_';
+    }
+    public static bool IsLetterOrDigitOrUnderscore(this char v)
+    {
+        return char.IsLetterOrDigit(v) || v == '_';
+    }
+
+    public static bool IsLetterOrDigitOrUnderscoreOrMember(this char v)
+    {
+        return char.IsLetterOrDigit(v) || v == '_' || v == '.';
+    }
+
+    public static bool IsVariable(this string varname, bool member = false)
+    {
+        if (varname.HasChars() && varname[0].IsLetterOrUnderscore())
+        {
+            for (int i = 1; i < varname.Length; i++)
+            {
+                if (member ? !varname[i].IsLetterOrDigitOrUnderscoreOrMember() : !varname[i].IsLetterOrDigitOrUnderscore())
+                    return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public static bool EqualsAlphaNumOnlyNoCase(this string left, string right)
     {
         left = left.Replace("_", "").Replace(" ", "").ToLowerInvariant();        // remove _, spaces and lower

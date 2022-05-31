@@ -65,6 +65,7 @@
     <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Conditions\Condition.cs" />
     <Compile Include="Conditions\ConditionEntry.cs" />
+    <Compile Include="Conditions\ConditionListsCheck.cs" />
     <Compile Include="DDE\DDEServer.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />
