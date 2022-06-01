@@ -53,7 +53,8 @@ namespace BaseUtils
         public bool AllowFP { get; set; } = false;              // Allow floating point values
         public bool AllowStrings { get; set; } = false;         // Allow strings
         public bool UnaryEntry { get; set; } = false;           // enter at unary level, requires () to do other operators
-        public bool IgnoreCase { get; set; } = false;           // ignore case
+        public bool IgnoreCase { get; set; } = false;           // ignore case on string checks
+        public bool AllowArrayMemberSymbols { get; set; } = false;    // allow Rings[0].member syntax on symbols
         public System.Globalization.CultureInfo Culture { get; set; } = System.Globalization.CultureInfo.InvariantCulture;
 
         public StringParser Parser { get { return sp; } }       // get parser, can use after use to get rest of string
@@ -252,7 +253,7 @@ namespace BaseUtils
             }
             else
             {
-                value = sp.ConvertNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape);
+                value = sp.ConvertNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape, AllowArrayMemberSymbols);
 
                 if (value is StringParser.ConvertSymbol)    // symbol must resolve to a value or Error
                 {

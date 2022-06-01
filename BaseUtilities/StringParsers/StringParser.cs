@@ -734,7 +734,7 @@ namespace BaseUtils
         // Reads number, "string", symbol, char 'c' or fp. 
         // returns long, string, double, Error or Symbol.  never null
 
-        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, Func<Object> Top = null)
+        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowarraymembersymbols = false)
         {
             if (IsCharMoveOn('\'', skipspace: false))    // cannot be spaced..
             {
@@ -766,7 +766,13 @@ namespace BaseUtils
             }
             else if (IsLetterUnderscore())
             {
-                string s = NextWord((c) => { return char.IsLetterOrDigit(c) || c=='_'; });
+                string s;
+                
+                if ( allowarraymembersymbols )
+                    s = NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_' || c == '[' || c == ']' || c == '.'; });
+                else 
+                    s = NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_'; });
+
 
                 if (s != null && s.Length > 0)
                 {
@@ -787,10 +793,10 @@ namespace BaseUtils
             }
         }
 
-        static public Object ConvertNumberStringSymbolChar(string s, int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, Func<Object> Top = null)
+        static public Object ConvertNumberStringSymbolChar(string s, int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowarraymembersymbols = false)
         {
             StringParser sp = new StringParser(s);
-            return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape, Top);
+            return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape,allowarraymembersymbols);
         }
 
 #endregion

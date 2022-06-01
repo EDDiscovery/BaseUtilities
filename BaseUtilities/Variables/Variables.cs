@@ -552,42 +552,8 @@ namespace BaseUtils
 
         #endregion
 
-        public string Qualify(string instr)     // look for [N] and expand..
+        public string Qualify(string instr)     // Variables are passed thru this in case we want to do some syntax nerfing, but for now, its just pass back
         {
-            // Code is not ready for this.. i need to rewrite the function parser to know more about parameters first during the parse..
-            // which is a big deal.  when its done, it can know if its dealing with a var name or not
-            // for now, null out the function.
-
-            //while(true)
-            //{
-            //    int bracket = instr.IndexOf("[");
-            //    if (bracket >= 0)
-            //    {
-            //        int endbracket = instr.IndexOf("]", bracket + 1);
-            //        if (endbracket >= 0)
-            //        {
-            //            string innerpart = instr.Substring(bracket + 1, endbracket - bracket - 1);
-            //            string endpart = instr.Substring(endbracket + 1);
-
-            //            StringBuilder b = new StringBuilder(128);
-            //            b.Append(instr.Substring(0, bracket) + "_");
-            //            b.Append(values.ContainsKey(innerpart) ? values[innerpart] : innerpart);
-            //            if (endpart.Length > 0)
-            //            {
-            //                b.Append('_');
-            //                b.Append(endpart);
-            //            }
-
-            //            instr = b.ToNullSafeString();
-            //        }
-            //        else
-            //            break;
-            //    }
-            //    else
-            //        break;
-            //}
-
-            //System.Diagnostics.Debug.WriteLine("Qualify " + instr);
             return instr;
         }
     }

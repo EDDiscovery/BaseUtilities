@@ -409,13 +409,13 @@ namespace BaseUtils
             }
         }
 
-        // member function
+        // this one uses an evaluate engine allowing complex expressions on both sides.
         // check all conditions against these values, one by one.  Outercondition of each Condition determines if this is an OR or AND etc operation
         // shortcircuit stop
-        // no functions
-        // left side is always a variable
-        // right side is constant or a variable name or a "quoted escaped string"
-        public bool? CheckAgainstVariables(Variables values, out string errlist, out ErrorClass errclass)            // Check all conditions..
+        // no functions/macro expand
+        // Variable can be in complex format Rings[0].member
+        // right side can be a bare string unquoted if it does not evaluate and the comparision is date/string
+        public bool? CheckEval(Variables values, out string errlist, out ErrorClass errclass)            // Check all conditions..
         {
             if (conditionlist.Count == 0)            // no filters match, null
             {
@@ -424,7 +424,7 @@ namespace BaseUtils
                 return null;
             }
 
-            var res = CheckConditions(conditionlist, values, out errlist, out errclass, shortcircuitouter: true, variablesonright: true, allowmembersyntaxonright: true);
+            var res = CheckConditions(conditionlist, values, out errlist, out errclass, shortcircuitouter: true, useeval:true);
             //  if (errlist.HasChars()) System.Diagnostics.Debug.WriteLine($"Note {errclass} {errlist}");
             return res;
         }

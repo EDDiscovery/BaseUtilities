@@ -64,16 +64,14 @@ namespace BaseUtils
         // values are the set of values to use for variable lookups
         // pass back errlist, errclass
         // optionally pass back conditions which passed
-        // optional use functions
+        // optional use the function/macro expander on both sides
         // optionally shortcircuit on outer AND condition
         // obeys disabled
-        // left side is either a variable (looked up in values), or if functions expander is used it can be a expanded string
-        // right side is constant text (if all else fails), or if functions expander is used it can be an expanded string,
-        //   or if variablesonright it can be a variable from values or a quoted string "escaped string"
+        // optionally use the eval engine on both sides
 
         static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, 
-                                            List<Condition> passedresults = null, Functions cf = null, bool shortcircuitouter = false, 
-                                            bool variablesonright = false, bool allowmembersyntaxonright = false)
+                                            List<Condition> passedresults = null, Functions functionmacroexpander = null, bool shortcircuitouter = false,
+                                            bool useeval = false)
         {
             errlist = null;
             errclass = ErrorClass.None;
@@ -92,9 +90,11 @@ namespace BaseUtils
                 {
                     bool matched = false;
 
+                    //System.Diagnostics.Debug.WriteLine($"CE `{f.ItemName}`  {f.MatchCondition} `{f.MatchString}`");
+
                     if (f.MatchCondition == ConditionEntry.MatchType.AlwaysTrue || f.MatchCondition == ConditionEntry.MatchType.AlwaysFalse)
                     {
-                        if (f.ItemName.Length == 0 || f.ItemName.Equals("Condition", StringComparison.InvariantCultureIgnoreCase))     // empty (legacy) or 
+                        if (f.ItemName.Length == 0 || f.ItemName.Equals("Condition", StringComparison.InvariantCultureIgnoreCase))     // empty (legacy) or Condition
                         {
                             if (f.MatchCondition == ConditionEntry.MatchType.AlwaysTrue)
                                 matched = true;         // matched, else if false, leave as false.
@@ -112,9 +112,9 @@ namespace BaseUtils
                         string leftside = null;
                         Functions.ExpandResult leftexpansionresult= Functions.ExpandResult.NoExpansion;
 
-                        if (cf != null)     // if we have a string expander, try the left side
+                        if (functionmacroexpander != null)     // if we have a string expander, try the left side
                         {
-                            leftexpansionresult = cf.ExpandString(f.ItemName, out leftside);
+                            leftexpansionresult = functionmacroexpander.ExpandString(f.ItemName, out leftside);
 
                             if (leftexpansionresult == Functions.ExpandResult.Failed)        // stop on error
                             {
@@ -142,26 +142,41 @@ namespace BaseUtils
                         }
                         else
                         {
-                            if (leftexpansionresult == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
+                            if (leftexpansionresult == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name or an eval 
                             {
-                                string qualname = values.Qualify(f.ItemName);
-                                leftside = values.Exists(qualname) ? values[qualname] : null;   // then lookup.. lookup may also be null if its a pre-def
-
-                                if (leftside == null)
+                                if (useeval)        // if using eval, perform it
                                 {
-                                    errlist += "Variable '" + qualname + "' does not exist" + Environment.NewLine;
-                                    errclass = ErrorClass.LeftSideVarUndefined;
-                                    innerres = false;
-                                    break;                       // stop the loop, its a false
+                                    leftside = PerformEval(values, f.ItemName, null);       // don't allow bare strings
+
+                                    if ( leftside == null )
+                                    {
+                                        errlist += "Left side did not evaluate" + Environment.NewLine;
+                                        errclass = ErrorClass.LeftSideVarUndefined;
+                                        innerres = false;
+                                        break;                       // stop the loop, its a false
+                                    }
+                                }
+                                else
+                                {
+                                    string qualname = values.Qualify(f.ItemName);
+                                    leftside = values.Exists(qualname) ? values[qualname] : null;   // then lookup.. lookup may also be null if its a pre-def
+
+                                    if (leftside == null)
+                                    {
+                                        errlist += "Variable '" + qualname + "' does not exist" + Environment.NewLine;
+                                        errclass = ErrorClass.LeftSideVarUndefined;
+                                        innerres = false;
+                                        break;                       // stop the loop, its a false
+                                    }
                                 }
                             }
 
                             string rightside = null;
                             Functions.ExpandResult rightexpansionresult = Functions.ExpandResult.NoExpansion;
 
-                            if (cf != null)         // if we have a string expander, pass it thru
+                            if (functionmacroexpander != null)         // if we have a string expander, pass it thru
                             {
-                                rightexpansionresult = cf.ExpandString(f.MatchString, out rightside);
+                                rightexpansionresult = functionmacroexpander.ExpandString(f.MatchString, out rightside);
 
                                 if (rightexpansionresult == Functions.ExpandResult.Failed)        //  if error, abort
                                 {
@@ -170,31 +185,23 @@ namespace BaseUtils
                                     break;
                                 }
                             }
-                            else if (variablesonright)
-                            {
-                                if ( f.MatchString.StartsWith("\"") && f.MatchString.EndsWith("\""))
-                                {
-                                    rightside = f.MatchString.Substring(1, f.MatchString.Length - 2);
-                                    rightside = rightside.EscapeControlCharsFull();
-                                }
-                                else if (f.MatchString.IsVariable(allowmembersyntaxonright))
-                                {
-                                    string qualname = values.Qualify(f.MatchString);
-                                    rightside = values.Exists(qualname) ? values[qualname] : null;   // then lookup.. lookup may also be null if its a pre-def
 
-                                    if (rightside == null)
-                                    {
-                                        errlist += "Variable '" + qualname + "' does not exist" + Environment.NewLine;
-                                        errclass = ErrorClass.RightSideVarUndefined;
-                                        innerres = false;
-                                        break;                       // stop the loop, its a false
-                                    }
+                            if ( rightexpansionresult == Functions.ExpandResult.NoExpansion && useeval )    // if no expansion, and we are evaluating
+                            {
+                                rightside = PerformEval(values, f.MatchString, ConditionEntry.Classify(f.MatchCondition));  // allow bare strings if its a string/date
+
+                                if ( rightside == null)
+                                {
+                                    errlist += "Right side did not evaluate" + Environment.NewLine;
+                                    errclass = ErrorClass.RightSideVarUndefined;
+                                    innerres = false;
+                                    break;                       // stop the loop, its a false
                                 }
-                                else
-                                    rightside = f.MatchString;
                             }
                             else
-                                rightside = f.MatchString;
+                                rightside = f.MatchString;      // no eval, we just use the string
+
+                            //System.Diagnostics.Debug.WriteLine($"Compare {leftside} vs {rightside}");
 
                             if (f.MatchCondition == ConditionEntry.MatchType.DateBefore || f.MatchCondition == ConditionEntry.MatchType.DateAfter)
                             {
@@ -467,6 +474,51 @@ namespace BaseUtils
             }
 
             return outerres;
+        }
+
+        // perform an eval on values/inputstr, with optional bare string mode
+
+        static private string PerformEval(Variables values, string inputstr, ConditionEntry.Classification? ctype)
+        {
+            Eval evl = new Eval(true, true, true);  // check end, allow fp, allow strings
+            evl.AllowArrayMemberSymbols = true;     // we allow complex Rings[0].member syntax for symbols
+
+            evl.ReturnSymbolValue += (str) =>       // on symbol lookup
+            {
+                string qualname = values.Qualify(str);
+
+                if (values.Exists(qualname))        //  if we have a variable
+                {
+                    string text = values[qualname];
+                    if (long.TryParse(text, out long v))    // if its a number, return number
+                        return v;
+                    else if (double.TryParse(text, out double d))
+                        return d;
+                    else
+                        return text;    // else its a string
+                }
+                else
+                    return new StringParser.ConvertError("Unknown symbol " + qualname);
+            };
+
+            var res = evl.Evaluate(inputstr);
+
+            string resultstr = null;
+
+            if (res is string)
+                resultstr = (string)res;
+            else if (res is double)
+                resultstr = ((double)res).ToStringInvariant();
+            else if (res is long)
+                resultstr = ((long)res).ToStringInvariant();
+
+            // if its a string/date check, we can accept the string directly, if it failed to convert above, as its an unquoted string
+            else if (ctype == ConditionEntry.Classification.String || ctype == ConditionEntry.Classification.Date)
+                resultstr = inputstr;
+            else
+                return null;
+
+            return resultstr;
         }
 
         #endregion

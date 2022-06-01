@@ -31,6 +31,82 @@ namespace EDDiscoveryTests
         public void Conditions()
         {
             {
+                Variables vars = new Variables();
+                vars["V10"] = "10";
+                vars["V202"] = "20.2";
+                vars["Vstr1"] = "string1";
+                vars["Vstr4"] = "string4";
+                vars["Rings[0].outerrad"] = "20";
+
+                Variables actionv = new Variables(new string[] { "o1", "1", "o2", "2" });
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("V10*10", ConditionEntry.MatchType.NumericEquals, "V10*10"));        // multiplication on both sides
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "string1"));           // var vs bare string
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "Vstr1"));         // var string vs var string
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var right side
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(err).Equals(ConditionLists.ErrorClass.RightSideVarUndefined);
+                    Check.That(check.Value).Equals(false);
+                }
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("wRings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var left side
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(err).Equals(ConditionLists.ErrorClass.LeftSideVarUndefined);
+                    Check.That(check.Value).Equals(false);
+                }
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Rings[0].outerrad", ConditionEntry.MatchType.IsPresent, ""));         // var present
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
+
+            }
+
+            {
                 List<ConditionEntry> lfields = new List<ConditionEntry>();
                 lfields.Add(new ConditionEntry("V1", ConditionEntry.MatchType.Equals, "A1"));
                 lfields.Add(new ConditionEntry("V2", ConditionEntry.MatchType.Equals, "A2"));
@@ -226,7 +302,6 @@ namespace EDDiscoveryTests
                     bool? check = ConditionLists.CheckConditions(cl.List, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
                     Check.That(check.Value).Equals(false);
                 }
-
             }
 
         }
