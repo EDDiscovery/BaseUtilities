@@ -155,24 +155,13 @@ namespace BaseUtils
         // list into CV the variables needed for the condition entry list
         public void IndicateValuesNeeded(ref Variables vr)
         {
-            foreach (ConditionEntry fd in Fields)
+            if (!Disabled)
             {
-                if (!ConditionEntry.IsNullOperation(fd.MatchCondition) && !fd.ItemName.Contains("%"))     // nulls need no data..  nor does anything with expand in
-                    vr[fd.ItemName] = null;
-            }
-        }
-
-        // Hashset of variable names in conditions.. optional include matchstrings, optional allow member.syntax
-        // fields must conform to variable name rules (A_ A0_..)
-        public void VariableNamesUsed(HashSet<string> str, bool matchstrings = false, bool allowmembersyntax = false)
-        {
-            foreach (ConditionEntry fd in Fields)
-            {
-                if ( fd.ItemName.IsVariable(allowmembersyntax))
-                    str.Add(fd.ItemName);
-
-                if (matchstrings && fd.MatchString.IsVariable(allowmembersyntax))
-                    str.Add(fd.MatchString);
+                foreach (ConditionEntry fd in Fields)
+                {
+                    if (!ConditionEntry.IsNullOperation(fd.MatchCondition) && !fd.ItemName.Contains("%"))     // nulls need no data..  nor does anything with expand in
+                        vr[fd.ItemName] = null;
+                }
             }
         }
 
