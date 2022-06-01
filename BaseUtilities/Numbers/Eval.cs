@@ -55,6 +55,8 @@ namespace BaseUtils
         public bool UnaryEntry { get; set; } = false;           // enter at unary level, requires () to do other operators
         public bool IgnoreCase { get; set; } = false;           // ignore case on string checks
         public bool AllowArrayMemberSymbols { get; set; } = false;    // allow Rings[0].member syntax on symbols
+        public bool Fake { get; set; } = false;                 // set to do a Fake eval - all data is set to 1L. Errors are ignored. Useful for extracting symbols used by hooking into ReturnSymbolValue
+
         public System.Globalization.CultureInfo Culture { get; set; } = System.Globalization.CultureInfo.InvariantCulture;
 
         public StringParser Parser { get { return sp; } }       // get parser, can use after use to get rest of string
@@ -292,6 +294,9 @@ namespace BaseUtils
                 else
                     value = new StringParser.ConvertError("Unary +/- not allowed in front of string");
             }
+
+            if (Fake)       // if we are faking the eval, return 1L long as the default output.
+                value = 1L;
         }
 
         private void Level1Not()

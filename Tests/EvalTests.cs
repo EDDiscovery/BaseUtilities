@@ -29,169 +29,179 @@ namespace EDDiscoveryTests
         public void EvalTestsFunc()
         {
 
-            Check.That(StringParser.ConvertNumber("0x") == null).IsTrue();
+            {
+                Eval e = new Eval(true, true, true);
+                e.Fake = true;
+                e.AllowArrayMemberSymbols = true;
+                e.ReturnSymbolValue += (s) => { System.Diagnostics.Debug.WriteLine($"Symbol {s}"); return 1L; };
+                var ret = e.Evaluate("Level[0].Rings*2/fred+jim");
+            }
 
-            Object t2 = StringParser.ConvertNumber("0x1a");
-            Check.That(t2 != null && (long)t2 == 0x1a).IsTrue();
-            Check.That((long)StringParser.ConvertNumber("0xFa1") == 0xfa1).IsTrue();
-            Check.That((long)StringParser.ConvertNumber("%0101") == 5).IsTrue();
-            Check.That((long)StringParser.ConvertNumber("%01011") == 11).IsTrue();
-            Check.That((long)StringParser.ConvertNumber("`1091") == 1091).IsTrue();
-            Check.That((long)StringParser.ConvertNumber("012") == 8 * 1 + 2).IsTrue();
+            {
+                Check.That(StringParser.ConvertNumber("0x") == null).IsTrue();
 
-            StringParser sp2 = new StringParser("10U20UL30 40LU 50");
-            Check.That((long)sp2.ConvertNumber() == 10).IsTrue();
-            Check.That((long)sp2.ConvertNumber() == 20).IsTrue();
-            Check.That((long)sp2.ConvertNumber() == 30).IsTrue();
-            Check.That((long)sp2.ConvertNumber() == 40).IsTrue();
-            Check.That((long)sp2.ConvertNumber() == 50).IsTrue();
-            Check.That(sp2.IsEOL == true).IsTrue();
+                Object t2 = StringParser.ConvertNumber("0x1a");
+                Check.That(t2 != null && (long)t2 == 0x1a).IsTrue();
+                Check.That((long)StringParser.ConvertNumber("0xFa1") == 0xfa1).IsTrue();
+                Check.That((long)StringParser.ConvertNumber("%0101") == 5).IsTrue();
+                Check.That((long)StringParser.ConvertNumber("%01011") == 11).IsTrue();
+                Check.That((long)StringParser.ConvertNumber("`1091") == 1091).IsTrue();
+                Check.That((long)StringParser.ConvertNumber("012") == 8 * 1 + 2).IsTrue();
 
-            Check.That((double)StringParser.ConvertNumber("1.1", allowfp: true) == 1.1).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1.932", allowfp: true) == 1.932).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1.292A", allowfp: true) == 1.292).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("123.456", allowfp: true) == 123.456).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("0.456", allowfp: true) == 0.456).IsTrue();
-            Check.That((double)StringParser.ConvertNumber(".456", allowfp: true) == 0.456).IsTrue();
-            Check.That((double)StringParser.ConvertNumber(".456E2", allowfp: true) == 45.6).IsTrue();
-            Check.That(StringParser.ConvertNumber(".456E", allowfp: true) == null).IsTrue();
-            Check.That(StringParser.ConvertNumber(".E23", allowfp: true) == null).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1e20", allowfp: true) == 1e20).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1E20", allowfp: true) == 1e20).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1E-20", allowfp: true) == 1e-20).IsTrue();
-            Check.That((double)StringParser.ConvertNumber("1E-20.2", allowfp: true) == 1e-20).IsTrue();
+                StringParser sp2 = new StringParser("10U20UL30 40LU 50");
+                Check.That((long)sp2.ConvertNumber() == 10).IsTrue();
+                Check.That((long)sp2.ConvertNumber() == 20).IsTrue();
+                Check.That((long)sp2.ConvertNumber() == 30).IsTrue();
+                Check.That((long)sp2.ConvertNumber() == 40).IsTrue();
+                Check.That((long)sp2.ConvertNumber() == 50).IsTrue();
+                Check.That(sp2.IsEOL == true).IsTrue();
 
-
-
-            Check.That((string)StringParser.ConvertNumberStringSymbolChar("\"Hello there\"", allowstrings: true) == "Hello there").IsTrue();
-            Check.That(((StringParser.ConvertSymbol)StringParser.ConvertNumberStringSymbolChar("_fred", allowstrings: true)).SymbolValue == "_fred").IsTrue();
-            Check.That(((StringParser.ConvertSymbol)StringParser.ConvertNumberStringSymbolChar("Fr_ed", allowstrings: true)).SymbolValue == "Fr_ed").IsTrue();
-
-            Check.That((long)StringParser.ConvertNumberStringSymbolChar("1234") == 1234).IsTrue();
-
-
-            Object t1 = StringParser.ConvertNumberStringSymbolChar("'a'");
-            Check.That(t1 != null && (long)t1 == 97).IsTrue();
-            Check.That(((StringParser.ConvertError)StringParser.ConvertNumberStringSymbolChar("'a")).ErrorValue == "Incorrectly formatted 'c' expression").IsTrue();
-            Check.That(((StringParser.ConvertError)StringParser.ConvertNumberStringSymbolChar("'")).ErrorValue == "Incorrectly formatted 'c' expression").IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1.1", allowfp: true) == 1.1).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1.932", allowfp: true) == 1.932).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1.292A", allowfp: true) == 1.292).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("123.456", allowfp: true) == 123.456).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("0.456", allowfp: true) == 0.456).IsTrue();
+                Check.That((double)StringParser.ConvertNumber(".456", allowfp: true) == 0.456).IsTrue();
+                Check.That((double)StringParser.ConvertNumber(".456E2", allowfp: true) == 45.6).IsTrue();
+                Check.That(StringParser.ConvertNumber(".456E", allowfp: true) == null).IsTrue();
+                Check.That(StringParser.ConvertNumber(".E23", allowfp: true) == null).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1e20", allowfp: true) == 1e20).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1E20", allowfp: true) == 1e20).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1E-20", allowfp: true) == 1e-20).IsTrue();
+                Check.That((double)StringParser.ConvertNumber("1E-20.2", allowfp: true) == 1e-20).IsTrue();
 
 
-            // 0
-            Check.That((long)Eval.Expr("-1234") == -1234).IsTrue();
-            Check.That((double)Eval.Expr("-1234.23", allowfp: true) == -1234.23).IsTrue();
-            Check.That((long)Eval.Expr("10") == 10).IsTrue();
-            Check.That((long)Eval.Expr("-10") == -10).IsTrue();
-            Check.That((double)Eval.Expr("-10.23") == -10.23).IsTrue();
 
-            // 1
-            Check.That((long)Eval.Expr("!10") == 0).IsTrue();
-            Check.That((long)Eval.Expr("!0") == 1).IsTrue();
-            Check.That((long)Eval.Expr("~10") == ~10).IsTrue();
-            Check.That((long)Eval.Expr("~0") == ~0).IsTrue();
+                Check.That((string)StringParser.ConvertNumberStringSymbolChar("\"Hello there\"", allowstrings: true) == "Hello there").IsTrue();
+                Check.That(((StringParser.ConvertSymbol)StringParser.ConvertNumberStringSymbolChar("_fred", allowstrings: true)).SymbolValue == "_fred").IsTrue();
+                Check.That(((StringParser.ConvertSymbol)StringParser.ConvertNumberStringSymbolChar("Fr_ed", allowstrings: true)).SymbolValue == "Fr_ed").IsTrue();
 
-            //2
-            Check.That((long)Eval.Expr(" 10 * 20") == 200).IsTrue();
-            Check.That((long)Eval.Expr(" -10 * -20") == 200).IsTrue();
-            Check.That((long)Eval.Expr(" 10 * -20") == -200).IsTrue();
-            Check.That((long)Eval.Expr(" 10 * -20") == -200).IsTrue();
-            Check.That((long)Eval.Expr(" 10 * -20 * 50") == -200 * 50).IsTrue();
-            Check.That((long)Eval.Expr(" 10/20") == 0).IsTrue();
-            Check.That((double)Eval.Expr(" 10.0/20") == 0.5).IsTrue();
-            Check.That((double)Eval.Expr(" -10.0 / 20") == -0.5).IsTrue();
-            Check.That((double)Eval.Expr(" -10.0 / 0.01") == -10/0.01).IsTrue();
-            Check.That((long)Eval.Expr(" 10 % 20") == 10 % 20).IsTrue();
-            Check.That((long)Eval.Expr(" 50 % 20") == 50 % 20).IsTrue();
+                Check.That((long)StringParser.ConvertNumberStringSymbolChar("1234") == 1234).IsTrue();
 
-            //3
-            Check.That((long)Eval.Expr(" 10 + 20") == 10 + 20).IsTrue();
-            Check.That((long)Eval.Expr(" 10 - 20 - 30") == 10-20-30).IsTrue();
-            Check.That((long)Eval.Expr(" 10 - -20") == 30).IsTrue();
-            Check.That((double)Eval.Expr(" 10.2 + 20") == 30.2).IsTrue();
-            Check.That((double)Eval.Expr(" 10.2 - 10.2") == 0).IsTrue();
-            Check.That((double)Eval.Expr(" 5 - 50.5") == 5 - 50.5).IsTrue();
-            Check.That((string)Eval.Expr(" \"Hello\" + \"Goodbye\" ") == "HelloGoodbye").IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" \"Hello\" - \"Goodbye\" ")).ErrorValue.Equals("- is not supported with strings")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 20 + \"Goodbye\" ")).ErrorValue.Equals("Cannot mix string and number types")).IsTrue();
 
-            //4
-            Check.That((long)Eval.Expr(" 10 << 2") == 10 << 2).IsTrue();
-            Check.That((long)Eval.Expr(" 1000 >> 2") == 1000 >> 2).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 << 20")).ErrorValue.Equals("<< and >> requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 << 20.2")).ErrorValue.Equals("<< and >> requires integer on right side")).IsTrue();
-            Check.That((long)Eval.Expr(" 10 - -20") == 30).IsTrue();
+                Object t1 = StringParser.ConvertNumberStringSymbolChar("'a'");
+                Check.That(t1 != null && (long)t1 == 97).IsTrue();
+                Check.That(((StringParser.ConvertError)StringParser.ConvertNumberStringSymbolChar("'a")).ErrorValue == "Incorrectly formatted 'c' expression").IsTrue();
+                Check.That(((StringParser.ConvertError)StringParser.ConvertNumberStringSymbolChar("'")).ErrorValue == "Incorrectly formatted 'c' expression").IsTrue();
 
-            //5
-            Check.That((long)Eval.Expr(" 1 > 2 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 1 < 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 1 >= 2 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 1 <= 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 2 >= 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 3 >= 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 1.0 > 2 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 1.0 < 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 1.0 >= 2 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 1.0 <= 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 2 >= 2.0 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 3 >= 2.0 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"ABC\" > \"AAA\"") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"AAA\" < \"ABC\"") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"AAA\" >= \"ABC\"") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" \"ABC\" >= \"ABC\"") == 1).IsTrue();
 
-            //6
-            Check.That((long)Eval.Expr(" 1 == 2 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 2 == 1") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 1 == 1 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 1.0 == 1") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 1 == 1.0 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"ABC\" == \"AAA\"") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" \"AAA\" != \"ABC\"") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"AAA\" == \"AAA\"") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" \"ABC\" != \"ABC\"") == 0).IsTrue();
+                // 0
+                Check.That((long)Eval.Expr("-1234") == -1234).IsTrue();
+                Check.That((double)Eval.Expr("-1234.23", allowfp: true) == -1234.23).IsTrue();
+                Check.That((long)Eval.Expr("10") == 10).IsTrue();
+                Check.That((long)Eval.Expr("-10") == -10).IsTrue();
+                Check.That((double)Eval.Expr("-10.23") == -10.23).IsTrue();
 
-            //7
-            Check.That((long)Eval.Expr(" 1 & 2 ") == (long)(1 & 2)).IsTrue();
-            Check.That((long)Eval.Expr(" 100 & 200 ") == (long)(100 & 200)).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 & 20")).ErrorValue.Equals("& requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 & 20.2")).ErrorValue.Equals("& requires integer on right side")).IsTrue();
+                // 1
+                Check.That((long)Eval.Expr("!10") == 0).IsTrue();
+                Check.That((long)Eval.Expr("!0") == 1).IsTrue();
+                Check.That((long)Eval.Expr("~10") == ~10).IsTrue();
+                Check.That((long)Eval.Expr("~0") == ~0).IsTrue();
 
-            //8
-            Check.That((long)Eval.Expr(" 1 ^ 2 ") == (long)(1 ^ 2)).IsTrue();
-            Check.That((long)Eval.Expr(" 100 ^ 200 ") == (long)(100 ^ 200)).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 ^ 20")).ErrorValue.Equals("^ requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 ^ 20.2")).ErrorValue.Equals("^ requires integer on right side")).IsTrue();
+                //2
+                Check.That((long)Eval.Expr(" 10 * 20") == 200).IsTrue();
+                Check.That((long)Eval.Expr(" -10 * -20") == 200).IsTrue();
+                Check.That((long)Eval.Expr(" 10 * -20") == -200).IsTrue();
+                Check.That((long)Eval.Expr(" 10 * -20") == -200).IsTrue();
+                Check.That((long)Eval.Expr(" 10 * -20 * 50") == -200 * 50).IsTrue();
+                Check.That((long)Eval.Expr(" 10/20") == 0).IsTrue();
+                Check.That((double)Eval.Expr(" 10.0/20") == 0.5).IsTrue();
+                Check.That((double)Eval.Expr(" -10.0 / 20") == -0.5).IsTrue();
+                Check.That((double)Eval.Expr(" -10.0 / 0.01") == -10 / 0.01).IsTrue();
+                Check.That((long)Eval.Expr(" 10 % 20") == 10 % 20).IsTrue();
+                Check.That((long)Eval.Expr(" 50 % 20") == 50 % 20).IsTrue();
 
-            //9
-            Check.That((long)Eval.Expr(" 1 | 2 ") == (long)(1 | 2)).IsTrue();
-            Check.That((long)Eval.Expr(" 100 | 200 ") == (long)(100 | 200)).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 | 20")).ErrorValue.Equals("| requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 | 20.2")).ErrorValue.Equals("| requires integer on right side")).IsTrue();
+                //3
+                Check.That((long)Eval.Expr(" 10 + 20") == 10 + 20).IsTrue();
+                Check.That((long)Eval.Expr(" 10 - 20 - 30") == 10 - 20 - 30).IsTrue();
+                Check.That((long)Eval.Expr(" 10 - -20") == 30).IsTrue();
+                Check.That((double)Eval.Expr(" 10.2 + 20") == 30.2).IsTrue();
+                Check.That((double)Eval.Expr(" 10.2 - 10.2") == 0).IsTrue();
+                Check.That((double)Eval.Expr(" 5 - 50.5") == 5 - 50.5).IsTrue();
+                Check.That((string)Eval.Expr(" \"Hello\" + \"Goodbye\" ") == "HelloGoodbye").IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" \"Hello\" - \"Goodbye\" ")).ErrorValue.Equals("- is not supported with strings")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 20 + \"Goodbye\" ")).ErrorValue.Equals("Cannot mix string and number types")).IsTrue();
 
-            //10
+                //4
+                Check.That((long)Eval.Expr(" 10 << 2") == 10 << 2).IsTrue();
+                Check.That((long)Eval.Expr(" 1000 >> 2") == 1000 >> 2).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 << 20")).ErrorValue.Equals("<< and >> requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 << 20.2")).ErrorValue.Equals("<< and >> requires integer on right side")).IsTrue();
+                Check.That((long)Eval.Expr(" 10 - -20") == 30).IsTrue();
 
-            Check.That((long)Eval.Expr(" 1 && 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 0 && 1 ") == 0).IsTrue();
-            Check.That((long)Eval.Expr(" 0 && 0 ") == 0).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.0 && 2")).ErrorValue.Equals("&& requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 && 20.0")).ErrorValue.Equals("&& requires integer on right side")).IsTrue();
+                //5
+                Check.That((long)Eval.Expr(" 1 > 2 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 1 < 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 1 >= 2 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 1 <= 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 2 >= 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 3 >= 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 1.0 > 2 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 1.0 < 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 1.0 >= 2 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 1.0 <= 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 2 >= 2.0 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 3 >= 2.0 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"ABC\" > \"AAA\"") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"AAA\" < \"ABC\"") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"AAA\" >= \"ABC\"") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" \"ABC\" >= \"ABC\"") == 1).IsTrue();
 
-            //11
+                //6
+                Check.That((long)Eval.Expr(" 1 == 2 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 2 == 1") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 1 == 1 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 1.0 == 1") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 1 == 1.0 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"ABC\" == \"AAA\"") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" \"AAA\" != \"ABC\"") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"AAA\" == \"AAA\"") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" \"ABC\" != \"ABC\"") == 0).IsTrue();
 
-            Check.That((long)Eval.Expr(" 1 || 2 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 0 || 1 ") == 1).IsTrue();
-            Check.That((long)Eval.Expr(" 0 || 0 ") == 0).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10.0 || 2")).ErrorValue.Equals("|| requires integer on left side")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 || 20.0")).ErrorValue.Equals("|| requires integer on right side")).IsTrue();
+                //7
+                Check.That((long)Eval.Expr(" 1 & 2 ") == (long)(1 & 2)).IsTrue();
+                Check.That((long)Eval.Expr(" 100 & 200 ") == (long)(100 & 200)).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 & 20")).ErrorValue.Equals("& requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 & 20.2")).ErrorValue.Equals("& requires integer on right side")).IsTrue();
 
-            // Misc
+                //8
+                Check.That((long)Eval.Expr(" 1 ^ 2 ") == (long)(1 ^ 2)).IsTrue();
+                Check.That((long)Eval.Expr(" 100 ^ 200 ") == (long)(100 ^ 200)).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 ^ 20")).ErrorValue.Equals("^ requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 ^ 20.2")).ErrorValue.Equals("^ requires integer on right side")).IsTrue();
 
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 1 !| 2")).ErrorValue.Equals("Extra characters after expression: !| 2")).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" \"string\"", allowstrings:false)).ErrorValue.Equals("Strings not supported")).IsTrue();
+                //9
+                Check.That((long)Eval.Expr(" 1 | 2 ") == (long)(1 | 2)).IsTrue();
+                Check.That((long)Eval.Expr(" 100 | 200 ") == (long)(100 | 200)).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.2 | 20")).ErrorValue.Equals("| requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 | 20.2")).ErrorValue.Equals("| requires integer on right side")).IsTrue();
 
-            // Brackets
+                //10
 
-            Check.That((long)Eval.Expr(" 10 * ( 2 + 3 ) ") == 10 * (2 + 3)).IsTrue();
-            Check.That(((StringParser.ConvertError)Eval.Expr(" 10 * (2 + 3")).ErrorValue.Equals("Missing ) at end of expression")).IsTrue();
+                Check.That((long)Eval.Expr(" 1 && 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 0 && 1 ") == 0).IsTrue();
+                Check.That((long)Eval.Expr(" 0 && 0 ") == 0).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.0 && 2")).ErrorValue.Equals("&& requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 && 20.0")).ErrorValue.Equals("&& requires integer on right side")).IsTrue();
+
+                //11
+
+                Check.That((long)Eval.Expr(" 1 || 2 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 0 || 1 ") == 1).IsTrue();
+                Check.That((long)Eval.Expr(" 0 || 0 ") == 0).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10.0 || 2")).ErrorValue.Equals("|| requires integer on left side")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 || 20.0")).ErrorValue.Equals("|| requires integer on right side")).IsTrue();
+
+                // Misc
+
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 1 !| 2")).ErrorValue.Equals("Extra characters after expression: !| 2")).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" \"string\"", allowstrings: false)).ErrorValue.Equals("Strings not supported")).IsTrue();
+
+                // Brackets
+
+                Check.That((long)Eval.Expr(" 10 * ( 2 + 3 ) ") == 10 * (2 + 3)).IsTrue();
+                Check.That(((StringParser.ConvertError)Eval.Expr(" 10 * (2 + 3")).ErrorValue.Equals("Missing ) at end of expression")).IsTrue();
+            }
 
             {
                 // Symbols..
