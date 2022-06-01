@@ -90,7 +90,9 @@ namespace BaseUtils
                 {
                     bool matched = false;
 
-                    //System.Diagnostics.Debug.WriteLine($"CE `{f.ItemName}`  {f.MatchCondition} `{f.MatchString}`");
+                 //   System.Diagnostics.Debug.WriteLine($"CE `{f.ItemName}`  {f.MatchCondition} `{f.MatchString}`");
+
+                    // these require no left or right
 
                     if (f.MatchCondition == ConditionEntry.MatchType.AlwaysTrue || f.MatchCondition == ConditionEntry.MatchType.AlwaysFalse)
                     {
@@ -101,16 +103,16 @@ namespace BaseUtils
                         }
                         else
                         {
-                            errlist += "AlwaysFalse/True does not have on the left side the word 'Condition'";
+                            errlist += "AlwaysFalse/True does not have on the left side the word 'Condition'" + Environment.NewLine;
                             errclass = ErrorClass.ExprFormatError;
                             innerres = false;
                             break;
                         }
                     }
                     else
-                    {
+                    {   // at least a left side
                         string leftside = null;
-                        Functions.ExpandResult leftexpansionresult= Functions.ExpandResult.NoExpansion;
+                        Functions.ExpandResult leftexpansionresult = Functions.ExpandResult.NoExpansion;
 
                         if (functionmacroexpander != null)     // if we have a string expander, try the left side
                         {
@@ -124,7 +126,9 @@ namespace BaseUtils
                             }
                         }
 
-                        if (f.MatchCondition == ConditionEntry.MatchType.IsPresent)         // these use f.itemname without any expansion
+                        // variable names
+
+                        if (f.MatchCondition == ConditionEntry.MatchType.IsPresent)         
                         {
                             if (leftside == null || leftexpansionresult == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name
                                 leftside = values.Qualify(f.ItemName);                 // its a straight variable name, allow any special formatting
@@ -141,16 +145,18 @@ namespace BaseUtils
                                 matched = true;
                         }
                         else
-                        {
-                            if (leftexpansionresult == Functions.ExpandResult.NoExpansion)     // no expansion, must be a variable name or an eval 
+                        {   
+                            // pass thru the eval engine now or from a variable
+
+                            if (leftexpansionresult == Functions.ExpandResult.NoExpansion)     
                             {
                                 if (useeval)        // if using eval, perform it
                                 {
                                     leftside = PerformEval(values, f.ItemName, null);       // don't allow bare strings
 
-                                    if ( leftside == null )
+                                    if (leftside == null)
                                     {
-                                        errlist += "Left side did not evaluate" + Environment.NewLine;
+                                        errlist += "Left side did not evaluate: " + f.ItemName + Environment.NewLine;
                                         errclass = ErrorClass.LeftSideVarUndefined;
                                         innerres = false;
                                         break;                       // stop the loop, its a false
@@ -171,145 +177,11 @@ namespace BaseUtils
                                 }
                             }
 
-                            string rightside = null;
-                            Functions.ExpandResult rightexpansionresult = Functions.ExpandResult.NoExpansion;
+                         //   System.Diagnostics.Debug.WriteLine($".. left side {leftside}");
 
-                            if (functionmacroexpander != null)         // if we have a string expander, pass it thru
-                            {
-                                rightexpansionresult = functionmacroexpander.ExpandString(f.MatchString, out rightside);
+                            // left side only
 
-                                if (rightexpansionresult == Functions.ExpandResult.Failed)        //  if error, abort
-                                {
-                                    errlist += rightside;     // add on errors..
-                                    innerres = false;   // stop loop, false
-                                    break;
-                                }
-                            }
-
-                            if ( rightexpansionresult == Functions.ExpandResult.NoExpansion && useeval )    // if no expansion, and we are evaluating
-                            {
-                                rightside = PerformEval(values, f.MatchString, ConditionEntry.Classify(f.MatchCondition));  // allow bare strings if its a string/date
-
-                                if ( rightside == null)
-                                {
-                                    errlist += "Right side did not evaluate" + Environment.NewLine;
-                                    errclass = ErrorClass.RightSideVarUndefined;
-                                    innerres = false;
-                                    break;                       // stop the loop, its a false
-                                }
-                            }
-                            else
-                                rightside = f.MatchString;      // no eval, we just use the string
-
-                            //System.Diagnostics.Debug.WriteLine($"Compare {leftside} vs {rightside}");
-
-                            if (f.MatchCondition == ConditionEntry.MatchType.DateBefore || f.MatchCondition == ConditionEntry.MatchType.DateAfter)
-                            {
-                                DateTime tmevalue, tmecontent;
-                                if (!DateTime.TryParse(leftside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmevalue))
-                                {
-                                    errlist += "Date time not in correct format on left side" + Environment.NewLine;
-                                    errclass = ErrorClass.LeftSideBadFormat;
-                                    innerres = false;
-                                    break;
-
-                                }
-                                else if (!DateTime.TryParse(rightside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmecontent))
-                                {
-                                    errlist += "Date time not in correct format on right side" + Environment.NewLine;
-                                    errclass = ErrorClass.RightSideBadFormat;
-                                    innerres = false;
-                                    break;
-                                }
-                                else
-                                {
-                                    if (f.MatchCondition == ConditionEntry.MatchType.DateBefore)
-                                        matched = tmevalue.CompareTo(tmecontent) < 0;
-                                    else
-                                        matched = tmevalue.CompareTo(tmecontent) >= 0;
-                                }
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.Equals)
-                                matched = leftside.Equals(rightside, StringComparison.InvariantCultureIgnoreCase);
-                            else if (f.MatchCondition == ConditionEntry.MatchType.EqualsCaseSensitive)
-                                matched = leftside.Equals(rightside);
-
-                            else if (f.MatchCondition == ConditionEntry.MatchType.NotEqual)
-                                matched = !leftside.Equals(rightside, StringComparison.InvariantCultureIgnoreCase);
-                            else if (f.MatchCondition == ConditionEntry.MatchType.NotEqualCaseSensitive)
-                                matched = !leftside.Equals(rightside);
-
-                            else if (f.MatchCondition == ConditionEntry.MatchType.Contains)
-                                matched = leftside.IndexOf(rightside, StringComparison.InvariantCultureIgnoreCase) >= 0;
-                            else if (f.MatchCondition == ConditionEntry.MatchType.ContainsCaseSensitive)
-                                matched = leftside.Contains(rightside);
-
-                            else if (f.MatchCondition == ConditionEntry.MatchType.DoesNotContain)
-                                matched = leftside.IndexOf(rightside, StringComparison.InvariantCultureIgnoreCase) < 0;
-                            else if (f.MatchCondition == ConditionEntry.MatchType.DoesNotContainCaseSensitive)
-                                matched = !leftside.Contains(rightside);
-                            else if (f.MatchCondition == ConditionEntry.MatchType.IsOneOf)
-                            {
-                                StringParser p = new StringParser(rightside);
-                                List<string> ret = p.NextQuotedWordList();
-
-                                if (ret == null)
-                                {
-                                    errlist += "IsOneOf value list is not in a optionally quoted comma separated form" + Environment.NewLine;
-                                    errclass = ErrorClass.RightSideBadFormat;
-                                    innerres = false;
-                                    break;                       // stop the loop, its a false
-                                }
-                                else
-                                {
-                                    matched = ret.Contains(leftside, StringComparer.InvariantCultureIgnoreCase);
-                                }
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.MatchSemicolon)
-                            {
-                                string[] list = rightside.Split(';').Select(x => x.Trim()).ToArray();     // split and trim
-                                matched = list.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.MatchCommaList)
-                            {
-                                StringCombinations sc = new StringCombinations(',');
-                                sc.ParseString(rightside);      // parse, give all combinations
-                                matched = sc.Permutations.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.MatchSemicolonList)
-                            {
-                                StringCombinations sc = new StringCombinations(';');
-                                sc.ParseString(rightside);      // parse, give all combinations
-                                matched = sc.Permutations.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.AnyOfAny)
-                            {
-                                StringParser l = new StringParser(leftside);
-                                List<string> ll = l.NextQuotedWordList();
-
-                                StringParser r = new StringParser(rightside);
-                                List<string> rl = r.NextQuotedWordList();
-
-                                if (ll == null || rl == null)
-                                {
-                                    errlist += "AnyOfAny value list is not in a optionally quoted comma separated form on both sides" + Environment.NewLine;
-                                    errclass = ErrorClass.RightSideBadFormat;
-                                    innerres = false;
-                                    break;                       // stop the loop, its a false
-                                }
-                                else
-                                {
-                                    foreach (string s in ll)        // for all left strings
-                                    {
-                                        if (rl.Contains(s, StringComparer.InvariantCultureIgnoreCase))  // if right has it..
-                                        {
-                                            matched = true;     // matched and break
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            else if (f.MatchCondition == ConditionEntry.MatchType.IsEmpty)
+                            if (f.MatchCondition == ConditionEntry.MatchType.IsEmpty)
                             {
                                 matched = leftside.Length == 0;
                             }
@@ -333,43 +205,186 @@ namespace BaseUtils
                             }
                             else
                             {
-                                double fnum = 0, num = 0;
+                                // require a right side
 
-                                if (!leftside.InvariantParse(out num))
+                                string rightside = null;
+                                Functions.ExpandResult rightexpansionresult = Functions.ExpandResult.NoExpansion;
+
+                                if (functionmacroexpander != null)         // if we have a string expander, pass it thru
                                 {
-                                    errlist += "Number not in correct format on left side" + Environment.NewLine;
-                                    errclass = ErrorClass.LeftSideBadFormat;
-                                    innerres = false;
-                                    break;
+                                    rightexpansionresult = functionmacroexpander.ExpandString(f.MatchString, out rightside);
+
+                                    if (rightexpansionresult == Functions.ExpandResult.Failed)        //  if error, abort
+                                    {
+                                        errlist += rightside;     // add on errors..
+                                        innerres = false;   // stop loop, false
+                                        break;
+                                    }
                                 }
-                                else if (!rightside.InvariantParse(out fnum))
+
+                                if (rightexpansionresult == Functions.ExpandResult.NoExpansion && useeval)    // if no expansion, and we are evaluating
                                 {
-                                    errlist += "Number not in correct format on right side" + Environment.NewLine;
-                                    errclass = ErrorClass.RightSideBadFormat;
-                                    innerres = false;
-                                    break;
+                                    rightside = PerformEval(values, f.MatchString, ConditionEntry.Classify(f.MatchCondition));  // allow bare strings if its a string/date
+
+                                    if (rightside == null)
+                                    {
+                                        errlist += "Right side did not evaluate: " + f.MatchString + Environment.NewLine;
+                                        errclass = ErrorClass.RightSideVarUndefined;
+                                        innerres = false;
+                                        break;                       // stop the loop, its a false
+                                    }
+                                }
+                                else
+                                    rightside = f.MatchString;      // no eval, we just use the string
+
+                                System.Diagnostics.Debug.WriteLine($"Condition {leftside} vs {rightside}");
+
+                                if (f.MatchCondition == ConditionEntry.MatchType.DateBefore || f.MatchCondition == ConditionEntry.MatchType.DateAfter)
+                                {
+                                    DateTime tmevalue, tmecontent;
+                                    if (!DateTime.TryParse(leftside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmevalue))
+                                    {
+                                        errlist += "Date time not in correct format on left side: " + leftside +  Environment.NewLine;
+                                        errclass = ErrorClass.LeftSideBadFormat;
+                                        innerres = false;
+                                        break;
+
+                                    }
+                                    else if (!DateTime.TryParse(rightside, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmecontent))
+                                    {
+                                        errlist += "Date time not in correct format on right side: " + rightside + Environment.NewLine;
+                                        errclass = ErrorClass.RightSideBadFormat;
+                                        innerres = false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        if (f.MatchCondition == ConditionEntry.MatchType.DateBefore)
+                                            matched = tmevalue.CompareTo(tmecontent) < 0;
+                                        else
+                                            matched = tmevalue.CompareTo(tmecontent) >= 0;
+                                    }
+                                }
+                                else if (f.MatchCondition == ConditionEntry.MatchType.Equals)
+                                    matched = leftside.Equals(rightside, StringComparison.InvariantCultureIgnoreCase);
+                                else if (f.MatchCondition == ConditionEntry.MatchType.EqualsCaseSensitive)
+                                    matched = leftside.Equals(rightside);
+
+                                else if (f.MatchCondition == ConditionEntry.MatchType.NotEqual)
+                                    matched = !leftside.Equals(rightside, StringComparison.InvariantCultureIgnoreCase);
+                                else if (f.MatchCondition == ConditionEntry.MatchType.NotEqualCaseSensitive)
+                                    matched = !leftside.Equals(rightside);
+
+                                else if (f.MatchCondition == ConditionEntry.MatchType.Contains)
+                                    matched = leftside.IndexOf(rightside, StringComparison.InvariantCultureIgnoreCase) >= 0;
+                                else if (f.MatchCondition == ConditionEntry.MatchType.ContainsCaseSensitive)
+                                    matched = leftside.Contains(rightside);
+
+                                else if (f.MatchCondition == ConditionEntry.MatchType.DoesNotContain)
+                                    matched = leftside.IndexOf(rightside, StringComparison.InvariantCultureIgnoreCase) < 0;
+                                else if (f.MatchCondition == ConditionEntry.MatchType.DoesNotContainCaseSensitive)
+                                    matched = !leftside.Contains(rightside);
+                                else if (f.MatchCondition == ConditionEntry.MatchType.IsOneOf)
+                                {
+                                    StringParser p = new StringParser(rightside);
+                                    List<string> ret = p.NextQuotedWordList();
+
+                                    if (ret == null)
+                                    {
+                                        errlist += "IsOneOf value list is not in a optionally quoted comma separated form" + Environment.NewLine;
+                                        errclass = ErrorClass.RightSideBadFormat;
+                                        innerres = false;
+                                        break;                       // stop the loop, its a false
+                                    }
+                                    else
+                                    {
+                                        matched = ret.Contains(leftside, StringComparer.InvariantCultureIgnoreCase);
+                                    }
+                                }
+                                else if (f.MatchCondition == ConditionEntry.MatchType.MatchSemicolon)
+                                {
+                                    string[] list = rightside.Split(';').Select(x => x.Trim()).ToArray();     // split and trim
+                                    matched = list.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                }
+                                else if (f.MatchCondition == ConditionEntry.MatchType.MatchCommaList)
+                                {
+                                    StringCombinations sc = new StringCombinations(',');
+                                    sc.ParseString(rightside);      // parse, give all combinations
+                                    matched = sc.Permutations.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                }
+                                else if (f.MatchCondition == ConditionEntry.MatchType.MatchSemicolonList)
+                                {
+                                    StringCombinations sc = new StringCombinations(';');
+                                    sc.ParseString(rightside);      // parse, give all combinations
+                                    matched = sc.Permutations.Contains(leftside.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                }
+                                else if (f.MatchCondition == ConditionEntry.MatchType.AnyOfAny)
+                                {
+                                    StringParser l = new StringParser(leftside);
+                                    List<string> ll = l.NextQuotedWordList();
+
+                                    StringParser r = new StringParser(rightside);
+                                    List<string> rl = r.NextQuotedWordList();
+
+                                    if (ll == null || rl == null)
+                                    {
+                                        errlist += "AnyOfAny value list is not in a optionally quoted comma separated form on both sides" + Environment.NewLine;
+                                        errclass = ErrorClass.RightSideBadFormat;
+                                        innerres = false;
+                                        break;                       // stop the loop, its a false
+                                    }
+                                    else
+                                    {
+                                        foreach (string s in ll)        // for all left strings
+                                        {
+                                            if (rl.Contains(s, StringComparer.InvariantCultureIgnoreCase))  // if right has it..
+                                            {
+                                                matched = true;     // matched and break
+                                                break;
+                                            }
+                                        }
+                                    }
                                 }
                                 else
                                 {
-                                    if (f.MatchCondition == ConditionEntry.MatchType.NumericEquals)
-                                        matched = Math.Abs(num - fnum) < 0.0000000001;  // allow for rounding
+                                    double fnum = 0, num = 0;
 
-                                    else if (f.MatchCondition == ConditionEntry.MatchType.NumericNotEquals)
-                                        matched = Math.Abs(num - fnum) >= 0.0000000001;
-
-                                    else if (f.MatchCondition == ConditionEntry.MatchType.NumericGreater)
-                                        matched = num > fnum;
-
-                                    else if (f.MatchCondition == ConditionEntry.MatchType.NumericGreaterEqual)
-                                        matched = num >= fnum;
-
-                                    else if (f.MatchCondition == ConditionEntry.MatchType.NumericLessThan)
-                                        matched = num < fnum;
-
-                                    else if (f.MatchCondition == ConditionEntry.MatchType.NumericLessThanEqual)
-                                        matched = num <= fnum;
+                                    if (!leftside.InvariantParse(out num))
+                                    {
+                                        errlist += "Number not in correct format on left side: " + leftside + Environment.NewLine;
+                                        errclass = ErrorClass.LeftSideBadFormat;
+                                        innerres = false;
+                                        break;
+                                    }
+                                    else if (!rightside.InvariantParse(out fnum))
+                                    {
+                                        errlist += "Number not in correct format on right side: " + rightside + Environment.NewLine;
+                                        errclass = ErrorClass.RightSideBadFormat;
+                                        innerres = false;
+                                        break;
+                                    }
                                     else
-                                        System.Diagnostics.Debug.Assert(false);
+                                    {
+                                        if (f.MatchCondition == ConditionEntry.MatchType.NumericEquals)
+                                            matched = Math.Abs(num - fnum) < 0.0000000001;  // allow for rounding
+
+                                        else if (f.MatchCondition == ConditionEntry.MatchType.NumericNotEquals)
+                                            matched = Math.Abs(num - fnum) >= 0.0000000001;
+
+                                        else if (f.MatchCondition == ConditionEntry.MatchType.NumericGreater)
+                                            matched = num > fnum;
+
+                                        else if (f.MatchCondition == ConditionEntry.MatchType.NumericGreaterEqual)
+                                            matched = num >= fnum;
+
+                                        else if (f.MatchCondition == ConditionEntry.MatchType.NumericLessThan)
+                                            matched = num < fnum;
+
+                                        else if (f.MatchCondition == ConditionEntry.MatchType.NumericLessThanEqual)
+                                            matched = num <= fnum;
+                                        else
+                                            System.Diagnostics.Debug.Assert(false);
+                                    }
                                 }
                             }
                         }
