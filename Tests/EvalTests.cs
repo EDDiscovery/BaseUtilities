@@ -76,14 +76,13 @@ namespace EDDiscoveryTests
             }
 
             { 
-                Eval ev = new Eval(true, true, true);           // test Fakes
+                Eval ev = new Eval(true, true, true, true, true);           // test Fakes
                 ev.Fake = true;
-                ev.AllowMemberSymbol = true;
-                ev.AllowArrays = true;
                 ev.ReturnSymbolValue += (s) => {
-                    System.Diagnostics.Debug.WriteLine($"Symbol {s}");
+                    System.Diagnostics.Debug.WriteLine($"Fake Symbol {s}");
                     return 1L; };
                 var ret = ev.Evaluate("Level[0].Rings*2/fred+jim");
+                Check.That(ret).Equals(2);
             }
 
             {

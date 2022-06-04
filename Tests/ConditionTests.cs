@@ -31,6 +31,10 @@ namespace EDDiscoveryTests
         public void Conditions()
         {
             {
+
+            }
+
+            {
                 Variables vars = new Variables();
                 vars["V10"] = "10";
                 vars["V202"] = "20.2";
@@ -39,6 +43,35 @@ namespace EDDiscoveryTests
                 vars["Rings[0].outerrad"] = "20";
 
                 Variables actionv = new Variables(new string[] { "o1", "1", "o2", "2" });
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Rings[0].outerrad*2*V10", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(cd);
+
+                    var hashset = cl.EvalVariablesUsed(false);
+                    Check.That(hashset.Count).Equals(2);
+                    Check.That(hashset.Contains("Rings[1].outerrad")).IsTrue();
+                    Check.That(hashset.Contains("V10")).IsTrue();
+
+                    var hashset2 = cl.EvalVariablesUsed(true);
+                    Check.That(hashset2.Count).Equals(2);
+                    Check.That(hashset2.Contains("Rings")).IsTrue();
+                    Check.That(hashset2.Contains("V10")).IsTrue();
+                }
+
+
+                {
+                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
+                    ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
+                    Check.That(check.Value).Equals(true);
+                }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
@@ -67,14 +100,6 @@ namespace EDDiscoveryTests
                     Check.That(check.Value).Equals(true);
                 }
 
-                {
-                    List<ConditionEntry> ce1 = new List<ConditionEntry>();
-                    ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
-
-                    bool? check = ConditionLists.CheckConditions(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true, useeval: true);
-                    Check.That(check.Value).Equals(true);
-                }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();

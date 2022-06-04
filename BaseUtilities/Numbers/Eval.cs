@@ -291,7 +291,10 @@ namespace BaseUtils
                             if (value is long)
                                 symname += $"[{((long)value).ToStringInvariant()}]";
                             else if (value is double)
-                                symname += $"[{((double)value).ToStringInvariant()}]";
+                            {
+                                value = new StringParser.ConvertError("Cannot use floating point value as array index");
+                                break;
+                            }
                             else
                                 symname += $"[{((string)value).AlwaysQuoteString()}]";
 

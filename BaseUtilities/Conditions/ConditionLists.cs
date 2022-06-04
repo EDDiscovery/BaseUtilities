@@ -109,7 +109,8 @@ namespace BaseUtils
             Eval evl = new Eval(true, true, true);
             evl.Fake = true;
             evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
-            evl.AllowArrayMemberSymbols = true;
+            evl.AllowMemberSymbol = true;
+            evl.AllowArrays = true;
             evl.ReturnSymbolValue += (string s) =>
             {
                 if (removearray && s.IndexOf('[') >= 0)
