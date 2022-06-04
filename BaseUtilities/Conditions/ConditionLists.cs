@@ -103,11 +103,34 @@ namespace BaseUtils
         }
 
         // Find all variable names, optionally including matchstrings if they conform to variable format (_A plus _A0 following)
-        public HashSet<string> VariablesUsed(bool matchstrings = false, bool allowmembers = false)
+        public HashSet<string> EvalVariablesUsed(bool removearray)
         {
             HashSet<string> str = new HashSet<string>();
+            Eval evl = new Eval(true, true, true);
+            evl.Fake = true;
+            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
+            evl.AllowArrayMemberSymbols = true;
+            evl.ReturnSymbolValue += (string s) =>
+            {
+                if (removearray && s.IndexOf('[') >= 0)
+                    s = s.Substring(0, s.IndexOf('['));
+
+                str.Add(s);
+                System.Diagnostics.Debug.WriteLine($"Sym {s}");
+                return 1L;
+            };
+
             foreach (Condition c in conditionlist)
-                c.VariableNamesUsed(str, matchstrings, allowmembers);
+            {
+                if (!c.Disabled)
+                {
+                    foreach (ConditionEntry ce in c.Fields)
+                    {
+                        evl.Evaluate(ce.ItemName);
+                        evl.Evaluate(ce.MatchString);
+                    }
+                }
+            }
             return str;
         }
 
@@ -415,7 +438,7 @@ namespace BaseUtils
         // no functions/macro expand
         // Variable can be in complex format Rings[0].member
         // right side can be a bare string unquoted if it does not evaluate and the comparision is date/string
-        public bool? CheckEval(Variables values, out string errlist, out ErrorClass errclass)            // Check all conditions..
+        public bool? CheckEval(Variables values, out string errlist, out ErrorClass errclass, bool debugit = false)            // Check all conditions..
         {
             if (conditionlist.Count == 0)            // no filters match, null
             {
@@ -424,7 +447,7 @@ namespace BaseUtils
                 return null;
             }
 
-            var res = CheckConditions(conditionlist, values, out errlist, out errclass, shortcircuitouter: true, useeval:true);
+            var res = CheckConditions(conditionlist, values, out errlist, out errclass, shortcircuitouter: true, useeval:true, debugit:debugit);
             //  if (errlist.HasChars()) System.Diagnostics.Debug.WriteLine($"Note {errclass} {errlist}");
             return res;
         }

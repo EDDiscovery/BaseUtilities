@@ -40,8 +40,7 @@ namespace BaseUtils
 
             foreach (Condition fe in fel)        // find all values needed
             {
-                if (!fe.Disabled)
-                    fe.IndicateValuesNeeded(ref valuesneeded);
+                fe.IndicateValuesNeeded(ref valuesneeded);
             }
 
             try
@@ -71,7 +70,7 @@ namespace BaseUtils
 
         static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, 
                                             List<Condition> passedresults = null, Functions functionmacroexpander = null, bool shortcircuitouter = false,
-                                            bool useeval = false)
+                                            bool useeval = false, bool debugit = false)
         {
             errlist = null;
             errclass = ErrorClass.None;
@@ -90,7 +89,8 @@ namespace BaseUtils
                 {
                     bool matched = false;
 
-                 //   System.Diagnostics.Debug.WriteLine($"CE `{f.ItemName}`  {f.MatchCondition} `{f.MatchString}`");
+                    if (debugit)
+                        System.Diagnostics.Debug.WriteLine($"CE `{f.ItemName}`  {f.MatchCondition} `{f.MatchString}`");
 
                     // these require no left or right
 
@@ -237,7 +237,8 @@ namespace BaseUtils
                                 else
                                     rightside = f.MatchString;      // no eval, we just use the string
 
-                                System.Diagnostics.Debug.WriteLine($"Condition {leftside} vs {rightside}");
+                                if (debugit)
+                                    System.Diagnostics.Debug.WriteLine($"Condition `{leftside}` {f.MatchCondition} `{rightside}`");
 
                                 if (f.MatchCondition == ConditionEntry.MatchType.DateBefore || f.MatchCondition == ConditionEntry.MatchType.DateAfter)
                                 {
