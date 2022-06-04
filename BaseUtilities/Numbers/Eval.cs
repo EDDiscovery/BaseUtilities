@@ -22,20 +22,22 @@ namespace BaseUtils
 {
     public class Eval : IEval
     {
-        public Eval(bool checkend = false, bool allowfp = false, bool allowstrings = false)
+        public Eval(bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false)
         {
             sp = null;
             CheckEnd = checkend;
             AllowFP = allowfp;
             AllowStrings = allowstrings;
+            AllowMemberSymbol = allowmembers;
+            AllowArrays = allowarrays;
         }
 
-        public Eval(string s, bool checkend = false, bool allowfp = false, bool allowstrings = false) : this(checkend, allowfp, allowstrings)
+        public Eval(string s, bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false) : this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
         {
             sp = new StringParser(s);
         }
 
-        public Eval(StringParser parse, bool checkend = false, bool allowfp = false, bool allowstrings = false) : this(checkend, allowfp, allowstrings)
+        public Eval(StringParser parse, bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false) : this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
         {
             sp = parse;
         }
@@ -54,7 +56,8 @@ namespace BaseUtils
         public bool AllowStrings { get; set; } = false;         // Allow strings
         public bool UnaryEntry { get; set; } = false;           // enter at unary level, requires () to do other operators
         public bool IgnoreCase { get; set; } = false;           // ignore case on string checks
-        public bool AllowArrayMemberSymbols { get; set; } = false;    // allow Rings[0].member syntax on symbols
+        public bool AllowMemberSymbol { get; set; } = false;    // allow Rings.member syntax on symbols
+        public bool AllowArrays { get; set; } = false;     // allow Rings[n] syntax on symbols
         public bool Fake { get; set; } = false;                 // set to do a Fake eval - all data is set to 1L. Errors are ignored. Useful for extracting symbols used by hooking into ReturnSymbolValue
 
         public System.Globalization.CultureInfo Culture { get; set; } = System.Globalization.CultureInfo.InvariantCulture;
@@ -255,7 +258,7 @@ namespace BaseUtils
             }
             else
             {
-                value = sp.ConvertNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape, AllowArrayMemberSymbols);
+                value = sp.ConvertNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape, AllowMemberSymbol);
 
                 if (value is StringParser.ConvertSymbol)    // symbol must resolve to a value or Error
                 {
@@ -263,7 +266,7 @@ namespace BaseUtils
 
                     if (sp.IsCharMoveOn('('))
                     {
-                        if ( ReturnFunctionValue != null)
+                        if (ReturnFunctionValue != null)
                         {
                             value = ReturnFunctionValue(symname, this);
 
@@ -273,13 +276,50 @@ namespace BaseUtils
                         else
                             value = new StringParser.ConvertError("Functions not supported");
                     }
-                    else if ( ReturnSymbolValue != null )
+                    else if (ReturnSymbolValue == null)
                     {
-                        lvaluename = (sign == 0) ? symname : null;               // pass back symbol name found, only if not signed.
-                        value = ReturnSymbolValue(symname);                     // could be Error with symbol value in it.
-                    }
-                    else
                         value = new StringParser.ConvertError("Symbols not supported");
+                    }
+                    else 
+                    {
+                        while (AllowArrays && sp.IsCharMoveOn('['))            // is it an array symbol..
+                        {
+                            value = Evaluate(false, false);     // get [] expression
+
+                            if (value is StringParser.ConvertError)     // see what we have back and generate array
+                                break;
+                            if (value is long)
+                                symname += $"[{((long)value).ToStringInvariant()}]";
+                            else if (value is double)
+                                symname += $"[{((double)value).ToStringInvariant()}]";
+                            else
+                                symname += $"[{((string)value).AlwaysQuoteString()}]";
+
+                            if (!sp.IsCharMoveOn(']', false))         // must be ] terminated
+                            {
+                                value = new StringParser.ConvertError("Array not terminated with ]");
+                                break;
+                            }
+
+                            if (!sp.IsLetterDigitUnderscoreMember())        // if no following chars, we are done 
+                                break;
+
+                            string moresym;         // more symbol text beyond it
+
+                            if (AllowMemberSymbol)
+                                moresym = sp.NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_' || c == '.'; });
+                            else
+                                moresym = sp.NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_'; });
+
+                            symname += moresym;     // add on
+                        }
+
+                        if (!(value is StringParser.ConvertError))      // if not in error, see if symbols is there
+                        {
+                            lvaluename = (sign == 0) ? symname : null;              // pass back symbol name found, only if not signed.
+                            value = ReturnSymbolValue(symname);                     // could be Error with symbol value in it.
+                        }
+                    }
                 }
             }
 

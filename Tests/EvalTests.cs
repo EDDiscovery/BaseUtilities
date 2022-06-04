@@ -29,12 +29,61 @@ namespace EDDiscoveryTests
         public void EvalTestsFunc()
         {
 
-            {
-                Eval e = new Eval(true, true, true);
-                e.Fake = true;
-                e.AllowArrayMemberSymbols = true;
-                e.ReturnSymbolValue += (s) => { System.Diagnostics.Debug.WriteLine($"Symbol {s}"); return 1L; };
-                var ret = e.Evaluate("Level[0].Rings*2/fred+jim");
+
+            {       // new June 22 array syntaxer
+
+                Dictionary<string, Object> symbols = new Dictionary<string, object>();
+
+                Eval ev = new Eval(true, true, true, true, true);
+
+                ev.ReturnSymbolValue = (s) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Symbol {s}");
+                    if (symbols.ContainsKey(s))
+                        return symbols[s];
+                    else
+                        return new StringParser.ConvertError("No such symbol '" + s + "'");
+                };
+
+                symbols.Add("Level[0].Rings", 20L);
+                symbols.Add("Level[1].Rings", 100L);
+                symbols.Add("Value[1]", 1L);
+                symbols.Add("index", 1L);
+
+                Object ret = null;
+
+                ret = ev.Evaluate("Level[index].Rings*2");
+                Check.That(ret).IsNotNull();
+                Check.That(ret).Equals(200);
+
+                ret = ev.Evaluate("Level[0].Rings*2");
+                Check.That(ret).IsNotNull();
+                Check.That(ret).Equals(40);
+
+                ret = ev.Evaluate("Level[1].Rings*2");
+                Check.That(ret).IsNotNull();
+                Check.That(ret).Equals(200);
+
+                
+                ret = ev.Evaluate("Level[index-1].Rings*2");
+                Check.That(ret).IsNotNull();
+                Check.That(ret).Equals(40);
+
+                ret = ev.Evaluate("Level[Value[1]].Rings*2");
+                Check.That(ret).IsNotNull();
+                Check.That(ret).Equals(200);
+
+            }
+
+            { 
+                Eval ev = new Eval(true, true, true);           // test Fakes
+                ev.Fake = true;
+                ev.AllowMemberSymbol = true;
+                ev.AllowArrays = true;
+                ev.ReturnSymbolValue += (s) => {
+                    System.Diagnostics.Debug.WriteLine($"Symbol {s}");
+                    return 1L; };
+                var ret = ev.Evaluate("Level[0].Rings*2/fred+jim");
             }
 
             {

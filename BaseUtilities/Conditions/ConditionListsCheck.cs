@@ -496,7 +496,7 @@ namespace BaseUtils
         static private string PerformEval(Variables values, string inputstr, ConditionEntry.Classification? ctype)
         {
             Eval evl = new Eval(true, true, true);  // check end, allow fp, allow strings
-            evl.AllowArrayMemberSymbols = true;     // we allow complex Rings[0].member syntax for symbols
+            evl.AllowMemberSymbol = true;     // we allow complex Rings[0].member syntax for symbols
 
             evl.ReturnSymbolValue += (str) =>       // on symbol lookup
             {

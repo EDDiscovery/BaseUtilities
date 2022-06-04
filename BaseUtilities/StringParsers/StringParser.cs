@@ -111,6 +111,14 @@ namespace BaseUtils
         {
             return pos < line.Length && (char.IsLetter(line[pos]) || line[pos] == '_');
         }
+        public bool IsLetterDigitUnderscore()
+        {
+            return pos < line.Length && (char.IsLetterOrDigit(line[pos]) || line[pos] == '_');
+        }
+        public bool IsLetterDigitUnderscoreMember()
+        {
+            return pos < line.Length && (char.IsLetterOrDigit(line[pos]) || line[pos] == '_' || line[pos] == '.');
+        }
 
         public bool IsDigit()
         {
@@ -734,7 +742,7 @@ namespace BaseUtils
         // Reads number, "string", symbol, char 'c' or fp. 
         // returns long, string, double, Error or Symbol.  never null
 
-        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowarraymembersymbols = false)
+        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowmembersymbol = false)
         {
             if (IsCharMoveOn('\'', skipspace: false))    // cannot be spaced..
             {
@@ -768,8 +776,8 @@ namespace BaseUtils
             {
                 string s;
                 
-                if ( allowarraymembersymbols )
-                    s = NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_' || c == '[' || c == ']' || c == '.'; });
+                if ( allowmembersymbol )
+                    s = NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_' || c == '.'; });
                 else 
                     s = NextWord((c) => { return char.IsLetterOrDigit(c) || c == '_'; });
 
