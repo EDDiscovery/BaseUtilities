@@ -498,6 +498,8 @@ namespace BaseUtils
         {
             Eval evl = new Eval(true, true, true, true, true);  // check end, allow fp, allow strings, allow members, allow arrays
 
+            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
+
             evl.ReturnSymbolValue += (str) =>       // on symbol lookup
             {
                 string qualname = values.Qualify(str);
