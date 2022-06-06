@@ -18,6 +18,7 @@ using System;
 
 namespace BaseUtils
 {
+    [System.Diagnostics.DebuggerDisplay("{ItemName} {MatchCondition} {MatchString}")]
     public class ConditionEntry
     {
         public enum MatchType

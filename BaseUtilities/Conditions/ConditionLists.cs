@@ -103,7 +103,8 @@ namespace BaseUtils
         }
 
         // Find all variable names, optionally including matchstrings if they conform to variable format (_A plus _A0 following)
-        public HashSet<string> EvalVariablesUsed(bool removearray)
+        // either in all conditions, or in only this CE
+        public HashSet<string> EvalVariablesUsed(bool removearray, ConditionEntry onlyce = null)
         {
             HashSet<string> str = new HashSet<string>();
             Eval evl = new Eval(true, true, true);
@@ -117,18 +118,26 @@ namespace BaseUtils
                     s = s.Substring(0, s.IndexOf('['));
 
                 str.Add(s);
-                System.Diagnostics.Debug.WriteLine($"Sym {s}");
+                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
                 return 1L;
             };
 
-            foreach (Condition c in conditionlist)
+            if (onlyce != null)
             {
-                if (!c.Disabled)
+                evl.Evaluate(onlyce.ItemName);
+                evl.Evaluate(onlyce.MatchString);
+            }
+            else
+            {
+                foreach (Condition c in conditionlist)
                 {
-                    foreach (ConditionEntry ce in c.Fields)
+                    if (!c.Disabled)
                     {
-                        evl.Evaluate(ce.ItemName);
-                        evl.Evaluate(ce.MatchString);
+                        foreach (ConditionEntry ce in c.Fields)
+                        {
+                            evl.Evaluate(ce.ItemName);
+                            evl.Evaluate(ce.MatchString);
+                        }
                     }
                 }
             }
@@ -408,20 +417,20 @@ namespace BaseUtils
         #region Check conditions public functions
 
         // TRUE if filter is True and has value
-        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist, List<Condition> passed)      // if none, true, if false, true.. 
+        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist)      // if none, true, if false, true.. 
         {                                                                                         // only if the filter passes do we get a false..
-            bool? v = CheckConditionWithObjectData(conditionlist, cls, othervars, out errlist, out ErrorClass errclassunused, passed);
+            bool? v = CheckConditionWithObjectData(conditionlist, cls, othervars, out errlist, out ErrorClass errclassunusedd);
             return (v.HasValue && v.Value);     // true IF we have a positive result
         }
 
         // Filter OUT if condition matches..
-        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist , List<Condition> passed)      // if none, true, if false, true.. 
+        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist)      // if none, true, if false, true.. 
         {
             List<Condition> fel = GetConditionListByEventName(eventname);       // first find conditions applicable, filtered by eventname
 
             if (fel != null)        // if we have matching filters..
             {
-                bool? v = CheckConditionWithObjectData(fel, cls, othervars, out errlist, out ErrorClass errclassunused, passed);  // true means filter matched
+                bool? v = CheckConditionWithObjectData(fel, cls, othervars, out errlist, out ErrorClass errclassunused);  // true means filter matched
                 bool res = !v.HasValue || v.Value == false;
                 //System.Diagnostics.Debug.WriteLine("Event " + eventname + " res " + res + " v " + v + " v.hv " + v.HasValue);
                 return res; // no value, true .. false did not match, thus true
@@ -431,26 +440,6 @@ namespace BaseUtils
                 errlist = null;
                 return true;
             }
-        }
-
-        // this one uses an evaluate engine allowing complex expressions on both sides.
-        // check all conditions against these values, one by one.  Outercondition of each Condition determines if this is an OR or AND etc operation
-        // shortcircuit stop
-        // no functions/macro expand
-        // Variable can be in complex format Rings[0].member
-        // right side can be a bare string unquoted if it does not evaluate and the comparision is date/string
-        public bool? CheckEval(Variables values, out string errlist, out ErrorClass errclass, bool debugit = false)            // Check all conditions..
-        {
-            if (conditionlist.Count == 0)            // no filters match, null
-            {
-                errlist = null;
-                errclass = ErrorClass.None;
-                return null;
-            }
-
-            var res = CheckConditions(conditionlist, values, out errlist, out errclass, shortcircuitouter: true, useeval:true, debugit:debugit);
-            //  if (errlist.HasChars()) System.Diagnostics.Debug.WriteLine($"Note {errclass} {errlist}");
-            return res;
         }
 
         // member function for statements like IF, with functions

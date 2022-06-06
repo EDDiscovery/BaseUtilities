@@ -39,13 +39,14 @@ namespace BaseUtils
             ActionVars = new Variables();
         }
 
-        public Condition(string e, string a, Variables ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition i = ConditionEntry.LogicalCondition.Or , ConditionEntry.LogicalCondition o = ConditionEntry.LogicalCondition.Or)
+        public Condition(string e, string a, Variables ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition inner = ConditionEntry.LogicalCondition.Or , 
+                            ConditionEntry.LogicalCondition outer = ConditionEntry.LogicalCondition.Or)
         {
             EventName = e;
             Action = a;
             ActionVars = new Variables(ad);
-            InnerCondition = i;
-            OuterCondition = o;
+            InnerCondition = inner;
+            OuterCondition = outer;
             Fields = f;
         }
 
