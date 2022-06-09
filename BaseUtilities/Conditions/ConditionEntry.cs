@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 - 2021 EDDiscovery development team
+ * Copyright © 2017 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -115,6 +115,52 @@ namespace BaseUtils
             return MatchTypeFromString(matchname, out mt) && IsUnaryOperation(mt);
         }
 
+        public enum LogicalCondition
+        {
+            Or,     // any true     (DEFAULT)
+            And,    // all true
+            Nor,    // any true produces a false
+            Nand,   // any not true produces a true
+            NA,     // not applicable - use for outer condition on first entry
+        }
+
+        public string ItemName { get; set; }
+        public MatchType MatchCondition { get; set; }
+        public string MatchString { get; set; }
+
+        public ConditionEntry()
+        {
+            ItemName = MatchString = "";
+        }
+
+        public ConditionEntry(string itemname, MatchType matchcondition, string matchstring)
+        {
+            ItemName = itemname;
+            MatchCondition = matchcondition;
+            MatchString = matchstring;
+        }
+
+        public ConditionEntry(ConditionEntry other)
+        {
+            ItemName = other.ItemName;
+            MatchCondition = other.MatchCondition;
+            MatchString = other.MatchString;
+        }
+
+        public bool Create(string itemname, string matchcondition, string matchstring)     // ms can have spaces inserted into enum
+        {
+            if (MatchTypeFromString(matchcondition, out MatchType matchtypev))
+            {
+                ItemName = itemname;
+                MatchString = matchstring;
+                MatchCondition = matchtypev;
+
+                return true;
+            }
+            else
+                return false;
+        }
+
         static public bool MatchTypeFromString(string s, out MatchType mt)
         {
             int indexof = Array.FindIndex(MatchNames, x => x.Equals(s, StringComparison.InvariantCultureIgnoreCase));
@@ -136,37 +182,6 @@ namespace BaseUtils
             }
         }
 
-
-
-        public enum LogicalCondition
-        {
-            Or,     // any true     (DEFAULT)
-            And,    // all true
-            Nor,    // any true produces a false
-            Nand,   // any not true produces a true
-            NA,     // not applicable - use for outer condition on first entry
-        }
-
-        public ConditionEntry()
-        {
-            ItemName = MatchString = "";
-        }
-
-        public ConditionEntry(string i, MatchType m, string s)
-        {
-            ItemName = i;
-            MatchCondition = m;
-            MatchString = s;
-        }
-
-        public ConditionEntry(ConditionEntry other)
-        {
-            ItemName = other.ItemName;
-            MatchCondition = other.MatchCondition;
-            MatchString = other.MatchString;
-        }
-
-
         static public string GetLogicalCondition(BaseUtils.StringParser sp, string delimchars, out LogicalCondition value)
         {
             value = LogicalCondition.Or;
@@ -182,24 +197,6 @@ namespace BaseUtils
                 return "";
             else
                 return "Condition operator " + condi + " is not recognised";
-        }
-
-        public string ItemName { get; set; }
-        public MatchType MatchCondition { get; set; }               
-        public string MatchString { get; set; }                     
-
-        public bool Create(string i, string ms, string v)     // ms can have spaces inserted into enum
-        {
-            if (MatchTypeFromString(ms, out MatchType matchtypev))
-            {
-                ItemName = i;
-                MatchString = v;
-                MatchCondition = matchtypev;
-
-                return true;
-            }
-            else
-                return false;
         }
 
     };

@@ -24,7 +24,7 @@ namespace BaseUtils
     {
         // take conditions and Class Variables, find out which variables are needed, expand them, decode it, execute..
         // null if error, else true/false
-        static private bool? CheckConditionWithObjectData(List<Condition> fel,
+        static public bool? CheckConditionWithObjectData(List<Condition> fel,
                                         Object cls, // object with data in it
                                         Variables[] othervars,   // any other variables to present to the condition, in addition to the class variables
                                         out string errlist,     // null if okay..
@@ -64,10 +64,9 @@ namespace BaseUtils
         // optional use the function/macro expander on both sides
         // optionally shortcircuit on outer AND condition
         // obeys disabled
-        // optionally use the eval engine on both sides
 
         static public bool? CheckConditions(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, 
-                                            List<Tuple<ConditionEntry,bool>> results = null, 
+                                            List<Condition> passed = null, 
                                             Functions functionmacroexpander = null, 
                                             bool shortcircuitouter = false,
                                             bool debugit = false)
@@ -363,8 +362,6 @@ namespace BaseUtils
                         }
                     }
 
-                    results?.Add(new Tuple<ConditionEntry, bool>(ce, matched));
-
                     //  System.Diagnostics.Debug.WriteLine(fe.eventname + ":Compare " + f.matchtype + " '" + f.contentmatch + "' with '" + vr.value + "' res " + matched + " IC " + fe.innercondition);
 
                     if (cond.InnerCondition == ConditionEntry.LogicalCondition.And)       // Short cut, if AND, all must pass, and it did not
@@ -413,6 +410,10 @@ namespace BaseUtils
                         innerres = true;
                     else                                            // NAND none did matched producing a true, so therefore NAND must be false
                         innerres = false;
+                }
+                else if ( innerres == true)
+                {
+                   passed?.Add(cond);
                 }
 
                 if (!outerres.HasValue)                             // if first time, its just the value

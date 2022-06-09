@@ -144,7 +144,7 @@ namespace BaseUtils
             else if (t.IsEnum)
             {
                 string[] enums = Enum.GetNames(t);
-                help = ("Enumeration:" + enums.FormatIntoLines(linelen)).AppendPrePad(help, Environment.NewLine);
+                help = ("Enumeration: " + enums.FormatIntoLines(linelen)).AppendPrePad(help, Environment.NewLine);
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Equals, comment);
             }
             else if (pname.Contains("System.Double"))

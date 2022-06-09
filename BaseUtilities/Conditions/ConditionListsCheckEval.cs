@@ -22,27 +22,25 @@ namespace BaseUtils
 {
     public partial class ConditionLists
     {
-
         // this one uses an evaluate engine allowing complex expressions on both sides.
         // check all conditions against these values, one by one.  Outercondition of each Condition determines if this is an OR or AND etc operation
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
         // Supports Rings[Iter1].value[Iter2] - Iter1/2 should be predefined if present to 1, and function iterates it until it fails with a missing symbol
-        public bool? CheckEval(Variables values, out string errlist, out ErrorClass errclass, bool debugit = false)            // Check all conditions..
+        static public bool? CheckConditionsEvalIterate(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, bool debugit = false)            // Check all conditions..
         {
-            if (conditionlist.Count == 0)            // no filters match, null
+            if (fel.Count == 0)            // no filters match, null
             {
                 errlist = null;
                 errclass = ErrorClass.None;
                 return null;
             }
-            System.Diagnostics.Debug.WriteLine($"--------------");
 
             while (true)
             {
                 var tests = new List<ConditionEntry>();
 
-                var res = CheckConditionsEval(conditionlist, values, out errlist, out errclass, tests:tests, shortcircuitouter: true, debugit: debugit);
+                var res = CheckConditionsEval(fel, values, out errlist, out errclass, tests:tests, debugit: debugit);
 
                 if (debugit)
                 {
@@ -57,8 +55,8 @@ namespace BaseUtils
 
                 if (res == false && tests.Count >= 1)        // if not true, and with tests just in case
                 {
-                    var lastce = tests[tests.Count - 1];        // last test..
-                    var varsinlast = EvalVariablesUsed(false, lastce);    // what vars are in the last test..
+                    List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };
+                    var varsinlast = Condition.EvalVariablesUsed(cll);    // what vars are in the last test..
 
                     if ( varsinlast.Contains("Iter1") )     // iteration..
                     { 
@@ -99,12 +97,11 @@ namespace BaseUtils
         // Use the eval engine to assemble arguments. Keep arguments as original types (long,double,strings)
         // values are the set of values to use for variable lookups
         // pass back errlist, errclass
-        // optionally pass back conditions which passed
-        // optionally shortcircuit on outer AND condition
+        // optionally pass back test executed in order
+        // shortcircuit on outer AND condition
         // obeys disabled
         static public bool? CheckConditionsEval(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, 
                                             List<ConditionEntry> tests = null, 
-                                            bool shortcircuitouter = false,
                                             bool debugit = false)
         {
             errlist = null;
@@ -502,7 +499,7 @@ namespace BaseUtils
                 {
                     outerres = innerres.Value;
 
-                    if (shortcircuitouter && oc < fel.Count - 1)       // check short circuits on NEXT ONE! if we have a next one..
+                    if (oc < fel.Count - 1)       // check short circuits on NEXT ONE! if we have a next one..
                     {
                         // if NEXT outer condition is an OR, and we are true
                         // if NEXT outer condition is an AND, and we are false
@@ -519,7 +516,7 @@ namespace BaseUtils
                 {
                     outerres |= innerres.Value;
 
-                    if (shortcircuitouter && outerres.Value == true)      // no point continuing, first one true wins
+                    if (outerres.Value == true)      // no point continuing, first one true wins
                     {
                         //System.Diagnostics.Debug.WriteLine("Short circuit second on {0} cur {1}", fe.OuterCondition, outerres);
                         break;
@@ -529,7 +526,7 @@ namespace BaseUtils
                 {
                     outerres &= innerres.Value;
 
-                    if (shortcircuitouter && outerres.Value == false)      // no point continuing, first one false wins
+                    if (outerres.Value == false)      // no point continuing, first one false wins
                     {
                         //System.Diagnostics.Debug.WriteLine("Short circuit second on {0} cur {1}", fe.OuterCondition, outerres);
                         break;

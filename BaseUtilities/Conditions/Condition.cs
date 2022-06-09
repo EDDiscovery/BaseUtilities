@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2021 EDDiscovery development team
+ * Copyright © 2017-2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -39,15 +39,21 @@ namespace BaseUtils
             ActionVars = new Variables();
         }
 
-        public Condition(string e, string a, Variables ad, List<ConditionEntry> f, ConditionEntry.LogicalCondition inner = ConditionEntry.LogicalCondition.Or , 
+        public Condition(string eventname, string action, Variables actionvars, List<ConditionEntry> conditions, 
+                            ConditionEntry.LogicalCondition inner = ConditionEntry.LogicalCondition.Or , 
                             ConditionEntry.LogicalCondition outer = ConditionEntry.LogicalCondition.Or)
         {
-            EventName = e;
-            Action = a;
-            ActionVars = new Variables(ad);
+            EventName = eventname;
+            Action = action;
+            ActionVars = new Variables(actionvars);
             InnerCondition = inner;
             OuterCondition = outer;
-            Fields = f;
+            Fields = conditions;
+        }
+
+        public Condition(ConditionEntry ce)
+        {
+            Fields = new List<ConditionEntry>() { ce };
         }
 
         public Condition(Condition other)   // full clone
@@ -68,15 +74,16 @@ namespace BaseUtils
             Tag = other.Tag;
         }
 
-        public bool Create(string e, string a, string d, string i, string o)   // i,o can have spaces inserted into enum
+        // Create from string. i,o can have spaces inserted into enum
+        public bool Create(string eventname, string innercondition, string outercondition)   
         {
             try
             {
-                EventName = e;
-                Action = a;
-                ActionVars = new Variables(a, Variables.FromMode.MultiEntryComma);
-                InnerCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), i.Replace(" ", ""), true);       // must work, exception otherwise
-                OuterCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), o.Replace(" ", ""), true);       // must work, exception otherwise
+                EventName = eventname;
+                Action = "";
+                ActionVars = new Variables();
+                InnerCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), innercondition.Replace(" ", ""), true);       // must work, exception otherwise
+                OuterCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), outercondition.Replace(" ", ""), true);       // must work, exception otherwise
                 return true;
             }
             catch { }
@@ -165,6 +172,39 @@ namespace BaseUtils
                 }
             }
         }
+
+        // using the Eval engine
+        // Find all variable names
+        static public HashSet<string> EvalVariablesUsed(List<Condition> fel)
+        {
+            HashSet<string> str = new HashSet<string>();
+            Eval evl = new Eval(true, true, true);
+            evl.Fake = true;
+            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
+            evl.AllowMemberSymbol = true;
+            evl.AllowArrays = true;
+            evl.ReturnSymbolValue += (string s) =>
+            {
+                str.Add(s);
+                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
+                return 1L;
+            };
+
+            foreach (Condition c in fel)
+            {
+                if (!c.Disabled)
+                {
+                    foreach (ConditionEntry ce in c.Fields)
+                    {
+                        evl.Evaluate(ce.ItemName);
+                        evl.Evaluate(ce.MatchString);
+                    }
+                }
+            }
+            return str;
+        }
+
+
 
         #endregion
 

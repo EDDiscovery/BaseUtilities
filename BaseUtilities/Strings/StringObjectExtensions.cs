@@ -117,9 +117,16 @@ public static partial class ObjectExtensionsStrings
     }
 
     //extend for case
-    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)        
+    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)
     {
         return data.IndexOf(comparision, c) >= 0;
+    }
+
+    //Return index of (plus an offset) or length
+    public static int IndexOfOrLength(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture, int offset = 0)
+    {
+        var i = data.IndexOf(comparision, c);
+        return i == -1 ? data.Length : Math.Min(data.Length,i+offset);
     }
 
     public static string Alt(this string obj, string alt)

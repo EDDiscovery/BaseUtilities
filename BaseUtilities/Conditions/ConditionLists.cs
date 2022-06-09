@@ -46,6 +46,12 @@ namespace BaseUtils
             foreach (Condition c in other.conditionlist)
                 conditionlist.Add(new Condition(c));        //copy, not reference
         }
+        public ConditionLists(ConditionEntry ce)
+        {
+            Condition c = new Condition();
+            c.Add(ce);
+            Add(c);
+        }
 
         public ConditionLists(string condtext)
         {
@@ -100,48 +106,6 @@ namespace BaseUtils
         public string GetJSON()
         {
             return GetJSONObject().ToString();
-        }
-
-        // Find all variable names, optionally including matchstrings if they conform to variable format (_A plus _A0 following)
-        // either in all conditions, or in only this CE
-        public HashSet<string> EvalVariablesUsed(bool removearray, ConditionEntry onlyce = null)
-        {
-            HashSet<string> str = new HashSet<string>();
-            Eval evl = new Eval(true, true, true);
-            evl.Fake = true;
-            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
-            evl.AllowMemberSymbol = true;
-            evl.AllowArrays = true;
-            evl.ReturnSymbolValue += (string s) =>
-            {
-                if (removearray && s.IndexOf('[') >= 0)
-                    s = s.Substring(0, s.IndexOf('['));
-
-                str.Add(s);
-                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
-                return 1L;
-            };
-
-            if (onlyce != null)
-            {
-                evl.Evaluate(onlyce.ItemName);
-                evl.Evaluate(onlyce.MatchString);
-            }
-            else
-            {
-                foreach (Condition c in conditionlist)
-                {
-                    if (!c.Disabled)
-                    {
-                        foreach (ConditionEntry ce in c.Fields)
-                        {
-                            evl.Evaluate(ce.ItemName);
-                            evl.Evaluate(ce.MatchString);
-                        }
-                    }
-                }
-            }
-            return str;
         }
 
         // verified 31/7/2020 with QuickJSON 
@@ -388,6 +352,19 @@ namespace BaseUtils
             return (fel.Count == 0) ? null : fel;
         }
 
+        public Dictionary<string, List<Condition>> GetConditionListDictionaryByEventName()
+        {
+            var dict = new Dictionary<string, List<Condition>>();
+            foreach (var v in conditionlist)
+            {
+                if (!dict.ContainsKey(v.EventName))
+                    dict[v.EventName] = new List<Condition>();
+                dict[v.EventName].Add(v);
+            }
+
+            return dict;
+        }
+
         // give back all conditions which match itemname and have a compatible matchtype.. used for key presses/voice input to compile a list of condition data to check for
         // obeys disabled flag
         public List<Tuple<string,ConditionEntry>> ReturnSpecificConditions(string eventname, string itemname, List<ConditionEntry.MatchType> matchtypes)      // given itemname, give me a list of values it is matched against
@@ -414,33 +391,7 @@ namespace BaseUtils
 
         #endregion
 
-        #region Check conditions public functions
-
-        // TRUE if filter is True and has value
-        public bool CheckFilterTrue(Object cls, Variables[] othervars, out string errlist)      // if none, true, if false, true.. 
-        {                                                                                         // only if the filter passes do we get a false..
-            bool? v = CheckConditionWithObjectData(conditionlist, cls, othervars, out errlist, out ErrorClass errclassunusedd);
-            return (v.HasValue && v.Value);     // true IF we have a positive result
-        }
-
-        // Filter OUT if condition matches..
-        public bool CheckFilterFalse(Object cls, string eventname, Variables[] othervars, out string errlist)      // if none, true, if false, true.. 
-        {
-            List<Condition> fel = GetConditionListByEventName(eventname);       // first find conditions applicable, filtered by eventname
-
-            if (fel != null)        // if we have matching filters..
-            {
-                bool? v = CheckConditionWithObjectData(fel, cls, othervars, out errlist, out ErrorClass errclassunused);  // true means filter matched
-                bool res = !v.HasValue || v.Value == false;
-                //System.Diagnostics.Debug.WriteLine("Event " + eventname + " res " + res + " v " + v + " v.hv " + v.HasValue);
-                return res; // no value, true .. false did not match, thus true
-            }
-            else
-            {
-                errlist = null;
-                return true;
-            }
-        }
+        #region Check conditions Member func
 
         // member function for statements like IF, with functions
         // Check conditions against variables
