@@ -184,8 +184,24 @@ namespace BaseUtils
                                 matched = true;
                         }
                         else
-                        {   
-                            Object leftside = evl.Evaluate(ce.ItemName);            // evaluate left side
+                        {
+                            Object leftside;
+                            
+                            if ( values.Contains(ce.ItemName))
+                            {
+                                string text = values[ce.ItemName];
+                                if (double.TryParse(text, out double d))    // if a double..
+                                {
+                                    if (long.TryParse(text, out long v))    // if its a number, return number
+                                        leftside = v;
+                                    else
+                                        leftside = d;
+                                }
+                                else
+                                    leftside = text;    // else its a string
+                            }
+                            else
+                                leftside = evl.EvaluateQuickCheck(ce.ItemName);            // evaluate left side
 
                             if (evl.InError)
                             {
@@ -245,7 +261,7 @@ namespace BaseUtils
                             {
                                 // require a right side
 
-                                Object rightside = evl.Evaluate(ce.MatchString);
+                                Object rightside = evl.EvaluateQuickCheck(ce.MatchString);
 
                                 if (evl.InError)
                                 {

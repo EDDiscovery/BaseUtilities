@@ -75,7 +75,20 @@ namespace BaseUtils
         public Object Evaluate(string s)     // return StringParser.ConvertError, string, double, long
         {
             sp = new StringParser(s);
-            return Evaluate(UnaryEntry,CheckEnd);
+            return Evaluate(UnaryEntry, CheckEnd);
+        }
+
+        public Object EvaluateQuickCheck(string s)     // return StringParser.ConvertError, string, double, long
+        {
+            if (double.TryParse(s, out double resd))
+            {
+                if (long.TryParse(s, out long resl))
+                    return resl;
+                else
+                    return resd;
+            }
+            sp = new StringParser(s);
+            return Evaluate(UnaryEntry, CheckEnd);
         }
 
         public Object Evaluate()     // return StringParser.ConvertError, string, double, long
