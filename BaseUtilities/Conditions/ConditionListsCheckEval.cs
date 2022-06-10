@@ -27,33 +27,15 @@ namespace BaseUtils
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
         // Supports Rings[Iter1].value[Iter2] - Iter1/2 should be predefined if present to 1, and function iterates it until it fails with a missing symbol
-        static public bool? CheckConditionsEvalIterate(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, bool debugit = false)            // Check all conditions..
-        {
-            if (fel.Count == 0)            // no filters match, null
-            {
-                errlist = null;
-                errclass = ErrorClass.None;
-                return null;
-            }
-
+        static public bool? CheckConditionsEvalIterate(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, bool iterators, bool debugit = false)            // Check all conditions..
+        { 
             while (true)
             {
                 var tests = new List<ConditionEntry>();
 
                 var res = CheckConditionsEval(fel, values, out errlist, out errclass, tests:tests, debugit: debugit);
 
-                if (debugit)
-                {
-                    System.Diagnostics.Debug.WriteLine(values.ToString(separ: Environment.NewLine));
-
-                    if (errlist.HasChars())
-                        System.Diagnostics.Debug.WriteLine($"CheckEval Error {errclass} {errlist}");
-
-                    foreach (var p in tests)
-                        System.Diagnostics.Debug.WriteLine($"Test {p.ItemName} {p.MatchCondition} {p.MatchString}");
-                }
-
-                if (res == false && tests.Count >= 1)        // if not true, and with tests just in case
+                if (iterators && res == false && tests.Count >= 1)        // if not true, and with tests just in case
                 {
                     List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };
                     var varsinlast = Condition.EvalVariablesUsed(cll);    // what vars are in the last test..
