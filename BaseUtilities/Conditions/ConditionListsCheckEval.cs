@@ -100,10 +100,13 @@ namespace BaseUtils
                 if (values.Exists(qualname))        //  if we have a variable
                 {
                     string text = values[qualname];
-                    if (long.TryParse(text, out long v))    // if its a number, return number
-                        return v;
-                    else if (double.TryParse(text, out double d))
-                        return d;
+                    if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))
+                    {
+                        if (long.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number
+                            return v;
+                        else
+                            return d;
+                    }
                     else
                         return text;    // else its a string
                 }
@@ -172,15 +175,17 @@ namespace BaseUtils
                             if ( values.Contains(ce.ItemName))
                             {
                                 string text = values[ce.ItemName];
-                                if (double.TryParse(text, out double d))    // if a double..
+                                if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))    // if a double..
                                 {
-                                    if (long.TryParse(text, out long v))    // if its a number, return number
+                                    if (long.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number
                                         leftside = v;
                                     else
                                         leftside = d;
                                 }
                                 else
+                                {
                                     leftside = text;    // else its a string
+                                }
                             }
                             else
                                 leftside = evl.EvaluateQuickCheck(ce.ItemName);            // evaluate left side

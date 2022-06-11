@@ -80,9 +80,9 @@ namespace BaseUtils
 
         public Object EvaluateQuickCheck(string s)     // return StringParser.ConvertError, string, double, long
         {
-            if (double.TryParse(s, out double resd))
+            if ( double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double resd))
             {
-                if (long.TryParse(s, out long resl))
+                if (long.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long resl))
                     return resl;
                 else
                     return resd;
