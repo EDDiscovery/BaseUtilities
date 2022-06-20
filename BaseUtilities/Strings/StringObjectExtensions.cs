@@ -126,7 +126,19 @@ public static partial class ObjectExtensionsStrings
     public static int IndexOfOrLength(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture, int offset = 0)
     {
         var i = data.IndexOf(comparision, c);
-        return i == -1 ? data.Length : Math.Min(data.Length,i+offset);
+        return i == -1 ? data.Length : Math.Min(data.Length, i + offset);
+    }
+    public static int IndexOfOrLength(this string data, string[] comparision, StringComparison c = StringComparison.CurrentCulture, int offset = 0)
+    {
+        int min = int.MaxValue;
+        foreach( var text in comparision)
+        {
+            int v = data.IndexOf(text,c);
+            if (v >= 0 && v < min)
+                min = v;
+        }
+
+        return min == int.MaxValue ? data.Length : Math.Min(data.Length, min + offset);
     }
 
     public static string Alt(this string obj, string alt)
