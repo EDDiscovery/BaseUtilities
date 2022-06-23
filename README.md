@@ -7,14 +7,14 @@ This module is the base module - it includes no other modules.
 
 It includes the following projects:
 
-* BaseUtilities - requiring package Newtonsoft.json
+* BaseUtilities
 * Audio (for audio control) - requiring package CSCore, project BaseUtilities (relative ref)
 * DirectInput (for joystick/keyboard control) - requiring package SharpDX, project BaseUtilities (relative ref)
 * OpenTK (Utilities for 3G) - require package OpenTK, OpenTK.GLControl, project BaseUtilities (relative ref)
 
 * Tests - harness for NUnit tests, require package Nfluent and NUnit, and the projects its testing (relative ref)
 
-Check this out and you can use the test harness via the visual studio test explorer.  The harness is not extensive.  
+Check this out and you can use the test harness via the visual studio test explorer.  The harness is not extensive.
 
 The vsproj has had its Packages/HintPath manually changed to use $(SolutionDir) as the base folder.  WARNING! if you NUGET them to the latest VS will replace the path back to a relative path.. which will work in here but not if its included as a submodule in another project. Manually change them back to $(SolutionDir)
 
