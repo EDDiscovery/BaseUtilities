@@ -76,6 +76,24 @@ public static class ObjectExtensionsNumbersBool
         else
             return null;
     }
+    static public int? InvariantParseIntNullIgnoreTextAfter(this string s)     // s can be null. s can have other chars after last digit at start
+    {
+        int i;
+        if (s != null)
+        {
+            for (int p = 0; p < s.Length; p++)
+            {
+                bool atend = p == s.Length - 1;
+                if (!char.IsDigit(s[p]) || atend)       // if not on digit or at end
+                {
+                    if (int.TryParse(s.Substring(0, p + (atend?1:0)), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out i))
+                        return i;
+                }
+            }
+        }
+ 
+        return null;
+    }
     static public int? ParseIntNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)     // s can be null
     {
         int i;

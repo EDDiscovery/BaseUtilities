@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2016 EDDiscovery development team
+ * Copyright © 2015 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
+using System;
 using System.Collections.Generic;
 
 public static class CollectionStaticHelpers
@@ -53,5 +54,41 @@ public static class CollectionStaticHelpers
     }
 
     public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T> source) => source != null ? source : System.Linq.Enumerable.Empty<T>();
+
+    public class BasicLengthBasedNumberComparitor<TKey> : IComparer<string> where TKey : IComparable   
+    {
+        public int Compare(string x, string y)
+        {
+            if (x.Length > 0 && Char.IsDigit(x[0]))      // numbers..
+            {
+                if (x.Length < y.Length)                // if different length numbers, select, else the ascii comparitor will work
+                    return -1;
+                else if (x.Length > y.Length)
+                    return 1;
+
+            }
+
+            return StringComparer.InvariantCultureIgnoreCase.Compare(x, y);
+        }
+    }
+
+    public class IntNumberComparitorAllowingExtraText<TKey> : IComparer<string> where TKey : IComparable     
+    {
+        public int Compare(string x, string y)
+        {
+            int? xv = x.InvariantParseIntNullIgnoreTextAfter();
+            int? yv = y.InvariantParseIntNullIgnoreTextAfter();
+
+            if (xv.HasValue && yv.HasValue)
+            {
+                int r = xv.Value.CompareTo(yv.Value);
+                if ( r!=0)  // if compare is different, return it, else just use ASCII compare
+                    return r;
+            }
+
+            return StringComparer.InvariantCultureIgnoreCase.Compare(x, y);
+        }
+    }
+
 }
 
