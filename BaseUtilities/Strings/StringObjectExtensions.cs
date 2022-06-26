@@ -607,6 +607,15 @@ public static partial class ObjectExtensionsStrings
         return -1;
     }
 
+    static public string StripDigits(this string s, ref int i)
+    {
+        int start = i;
+        while (i < s.Length && char.IsDigit(s[i]))
+            i++;
+
+        return s.Substring(start, i - start);
+    }
+
     // mimics Split('s') if emptyendifmarkersatend is true
 
     static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase, 

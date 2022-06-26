@@ -72,7 +72,7 @@ public static class CollectionStaticHelpers
         }
     }
 
-    public class IntNumberComparitorAllowingExtraText<TKey> : IComparer<string> where TKey : IComparable     
+    public class IntNumberComparitorAllowingExtraText<TKey> : IComparer<string> where TKey : IComparable
     {
         public int Compare(string x, string y)
         {
@@ -82,11 +82,19 @@ public static class CollectionStaticHelpers
             if (xv.HasValue && yv.HasValue)
             {
                 int r = xv.Value.CompareTo(yv.Value);
-                if ( r!=0)  // if compare is different, return it, else just use ASCII compare
+                if (r != 0)  // if compare is different, return it, else just use ASCII compare
                     return r;
             }
 
             return StringComparer.InvariantCultureIgnoreCase.Compare(x, y);
+        }
+    }
+
+    public class AlphaIntCompare<TKey> : IComparer<string> where TKey : IComparable
+    {
+        public int Compare(string x, string y)
+        {
+            return ObjectExtensionsStringsCompare.CompareAlphaInt(x, y);
         }
     }
 
