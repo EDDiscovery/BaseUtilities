@@ -52,6 +52,21 @@ namespace EDDiscoveryTests
         }
 
         [Test]
+        public void StringCompareTest()
+        {
+            Check.That("Sol 4 a".CompareAlphaInt("Sol 4 a")).IsEqualTo(0);
+            Check.That("Sol 4 a".CompareAlphaInt("Sol 4 b")).IsEqualTo(-1);
+            Check.That("Sol 4 c".CompareAlphaInt("Sol 4 b")).IsEqualTo(1);
+            Check.That("aaaaa".CompareAlphaInt("aaaab")).IsEqualTo(-1);
+            Check.That("aaaac".CompareAlphaInt("aaaab")).IsEqualTo(1);
+            Check.That("S 10 c".CompareAlphaInt("S 10 c")).IsEqualTo(0);
+            Check.That("S 10c".CompareAlphaInt("S 10c")).IsEqualTo(0);
+            Check.That("S 10c".CompareAlphaInt("S 2c")).IsEqualTo(1);
+            Check.That("S 1 c".CompareAlphaInt("S 10 c")).IsEqualTo(-1);
+            Check.That("S 112 c".CompareAlphaInt("S 10 c")).IsEqualTo(1);
+        }
+
+        [Test]
         public void Escape()
         {
             CheckStr("A\tA\nA\rA\bA\fA\"A");
@@ -193,5 +208,6 @@ namespace EDDiscoveryTests
                 Check.That(ss.Terms[2]).IsEqualTo("jim");
             }
         }
+
     }
 }

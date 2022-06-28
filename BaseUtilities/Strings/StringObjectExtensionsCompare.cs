@@ -56,7 +56,7 @@ public static class ObjectExtensionsStringsCompare
             return datal.Item1.CompareTo(datar.Item1);
     }
 
-    static public int CompareAlphaInt(string x, string y)
+    static public int CompareAlphaInt(this string x, string y)
     {
         for (int i = 0; i < x.Length; i++)
         {
@@ -70,7 +70,10 @@ public static class ObjectExtensionsStringsCompare
                 string ys = y.StripDigits(ref yp);
                 if (xp != i && yp != i)     // if got digits
                 {
-                    int v = xs.InvariantParseInt(0).CompareTo(ys.InvariantParseInt(0));
+                    int xv = xs.InvariantParseInt(0);
+                    int yv = ys.InvariantParseInt(0);
+                    int v = xv.CompareTo(yv);
+                 //   System.Diagnostics.Debug.WriteLine($"CAIn {xv} vs {yv} = {v}");
                     if (v != 0)
                         return v;
                     i = xp;     // they must be the same numbers.
@@ -81,6 +84,7 @@ public static class ObjectExtensionsStringsCompare
             else
             {
                 int v = x[i].CompareTo(y[i]);       // alpha compare
+            //    System.Diagnostics.Debug.WriteLine($"CAIa {x[i]} vs {y[i]} = {v}");
                 if (v != 0)
                     return v;
             }

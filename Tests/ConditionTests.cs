@@ -73,7 +73,7 @@ namespace EDDiscoveryTests
                     Variables vcopy = new Variables(vars);
                     vcopy["Iter1"] = "1";
 
-                    var ev = cl.CheckEval(vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
                     Check.That(ev).Equals(true);
                     Check.That(errlist).Equals(null);
                 }
@@ -104,7 +104,7 @@ namespace EDDiscoveryTests
                     vcopy["Iter1"] = "1";
                     vcopy["Iter2"] = "1";
 
-                    var ev = cl.CheckEval(vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);        // should execute Iter1=1 false, 2= false, 3 = fail..
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
                     Check.That(ev).Equals(true);
                 }
 
@@ -132,7 +132,7 @@ namespace EDDiscoveryTests
                     Variables vcopy = new Variables(vars);
                     vcopy["Iter1"] = "1";
 
-                    var ev = cl.CheckEval(vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);        // should execute Iter1=1 false, 2= false, 3 = fail..
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
                     Check.That(ev).Equals(false);
                     Check.That(errlist).Equals("Left side did not evaluate: Other[Iter1].outerrad\r\n");
                 }
@@ -162,7 +162,7 @@ namespace EDDiscoveryTests
                         ));
 
 
-                    var ev = cl.CheckEval(vars, out string errlist, out ConditionLists.ErrorClass ec, true);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
                     Check.That(ev).Equals(true);
                     Check.That(errlist).Equals(null);
                 }
@@ -190,7 +190,7 @@ namespace EDDiscoveryTests
                         ));
 
 
-                    var ev = cl.CheckEval(vars, out string errlist, out ConditionLists.ErrorClass ec, true);        // fail on IsSmall
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
                     Check.That(ev).Equals(false);
                     Check.That(errlist).Equals(null);
                 }
@@ -218,7 +218,7 @@ namespace EDDiscoveryTests
                         ));
 
 
-                    var ev = cl.CheckEval(vars, out string errlist, out ConditionLists.ErrorClass ec, true);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
                     Check.That(ev).Equals(false);
                     Check.That(errlist).Equals("Left side did not evaluate: Rings[1].outerrad\r\n");
                 }
@@ -247,7 +247,7 @@ namespace EDDiscoveryTests
 
                     vars["Rings[1].outerrad"] = "40";
 
-                    var ev = cl.CheckEval(vars, out string errlist, out ConditionLists.ErrorClass ec, true);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
                     Check.That(ev).Equals(true);
                     Check.That(errlist).Equals(null);
                 }
@@ -256,20 +256,15 @@ namespace EDDiscoveryTests
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2*V10", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
+   
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
-
                     ConditionLists cl = new ConditionLists();
                     cl.Add(cd);
 
-                    var hashset = cl.EvalVariablesUsed(false);
+                    var hashset = BaseUtils.Condition.EvalVariablesUsed(cl.List);
                     Check.That(hashset.Count).Equals(2);
                     Check.That(hashset.Contains("Rings[1].outerrad")).IsTrue();
                     Check.That(hashset.Contains("V10")).IsTrue();
-
-                    var hashset2 = cl.EvalVariablesUsed(true);
-                    Check.That(hashset2.Count).Equals(2);
-                    Check.That(hashset2.Contains("Rings")).IsTrue();
-                    Check.That(hashset2.Contains("V10")).IsTrue();
                 }
 
 
@@ -278,7 +273,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
                 {
@@ -286,7 +281,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2.1", ConditionEntry.MatchType.NumericEquals, "42"));         // complex symbol with mult vs number double
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -295,7 +290,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("V10*10", ConditionEntry.MatchType.NumericEquals, "V10*10"));        // multiplication on both sides
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -304,7 +299,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "string1"));           // var vs bare string
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -313,7 +308,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "Vstr1"));         // var string vs var string
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -322,7 +317,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "string1"));         // var string vs bare
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -331,7 +326,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "\"string1\""));         // var string vs quoted string
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -340,7 +335,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "V10"));         // var string vs number, should produce an error
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(false);
                     Check.That(errlist).Equals("Right side is not a string: Vstr1\r\n");
                 }
@@ -351,7 +346,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var right side
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(err).Equals(ConditionLists.ErrorClass.RightSideVarUndefined);
                     Check.That(check.Value).Equals(false);
                 }
@@ -360,7 +355,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("wRings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var left side
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(err).Equals(ConditionLists.ErrorClass.LeftSideVarUndefined);
                     Check.That(check.Value).Equals(false);
                 }
@@ -370,7 +365,7 @@ namespace EDDiscoveryTests
                     ce1.Add(new ConditionEntry("Rings[0].outerrad", ConditionEntry.MatchType.IsPresent, ""));         // var present
                     Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err, shortcircuitouter: true);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
                     Check.That(check.Value).Equals(true);
                 }
 
