@@ -249,7 +249,7 @@ namespace BaseUtils
                 if (s.Length == 0)
                     return "Invalid no characters after shifters";
 
-                bool brackets = ObjectExtensionsStrings.IsPrefix(ref s, "(");
+                bool brackets = ObjectExtensionsStrings.IsPrefixRemove(ref s, "(");
 
                 while (s.Length > 0)
                 {

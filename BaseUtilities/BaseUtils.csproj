@@ -79,7 +79,12 @@
     <Compile Include="IconSet\IIconSet.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
+    <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
+    <Compile Include="Strings\StringObjectExtensionsClassification.cs" />
+    <Compile Include="Strings\StringObjectExtensionsReplacing.cs" />
+    <Compile Include="Strings\StringObjectExtensionsSlicing.cs" />
     <Compile Include="Strings\StringObjectExtensionsArray.cs" />
+    <Compile Include="Strings\StringObjectExtensionsWords.cs" />
     <Compile Include="Strings\StringObjectSearchTerms.cs" />
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
     <Compile Include="Strings\StringObjectExtensionsCompare.cs" />

@@ -108,5 +108,57 @@ public static class ObjectExtensionsStringsEscape
         else
             return s;
     }
+
+    public static string SafeVariableString(this string normal)
+    {
+        string ret = "";
+        foreach (char c in normal)
+        {
+            if (char.IsLetterOrDigit(c) || c == '_')
+                ret += c;
+            else
+                ret += "_";
+        }
+        return ret;
+    }
+
+    public static string SafeFileString(this string normal)
+    {
+        normal = normal.Replace("*", "_star");      // common ones rename
+        normal = normal.Replace("/", "_slash");
+        normal = normal.Replace("\\", "_slash");
+        normal = normal.Replace(":", "_colon");
+        normal = normal.Replace("?", "_qmark");
+
+        char[] invalid = System.IO.Path.GetInvalidFileNameChars();
+        foreach (char c in invalid)
+            normal = normal.Replace(c, '_'); // all others _
+
+        return normal;
+    }
+
+    // find first alpha text and quote it.. strange function
+    public static string QuoteFirstAlphaDigit(this string obj, char quotemark = '\'')
+    {
+        if (obj == null)
+            return null;
+        else
+        {
+            int i = 0;
+            while (i < obj.Length && !char.IsLetter(obj[i]))
+                i++;
+
+            int s = i;
+
+            while (i < obj.Length && (char.IsLetterOrDigit(obj[i]) || char.IsWhiteSpace(obj[i])))
+                i++;
+
+            string ret = obj.Substring(0, s) + quotemark + obj.Substring(s, i - s) + quotemark + obj.Mid(i);
+            return ret;
+        }
+    }
+
+
+
 }
 

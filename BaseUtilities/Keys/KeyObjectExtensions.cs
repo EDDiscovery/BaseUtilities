@@ -192,9 +192,9 @@ public static class KeyObjectExtensions
 
     public static Keys IsShiftPrefix(ref string s)      // look for prefix, remove, return what the prefix is
     {
-        if (ObjectExtensionsStrings.IsPrefix(ref s, "Shift", StringComparison.InvariantCultureIgnoreCase))
+        if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "Shift", StringComparison.InvariantCultureIgnoreCase))
             return Keys.ShiftKey;
-        else if (ObjectExtensionsStrings.IsPrefix(ref s, "RShift", StringComparison.InvariantCultureIgnoreCase))
+        else if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "RShift", StringComparison.InvariantCultureIgnoreCase))
             return Keys.RShiftKey;
         else
             return Keys.None;
@@ -202,9 +202,9 @@ public static class KeyObjectExtensions
 
     public static Keys IsCtrlPrefix(ref string s)
     {
-        if (ObjectExtensionsStrings.IsPrefix(ref s, "Ctrl", StringComparison.InvariantCultureIgnoreCase))
+        if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "Ctrl", StringComparison.InvariantCultureIgnoreCase))
             return Keys.ControlKey;
-        else if (ObjectExtensionsStrings.IsPrefix(ref s, "RCtrl", StringComparison.InvariantCultureIgnoreCase))
+        else if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "RCtrl", StringComparison.InvariantCultureIgnoreCase))
             return Keys.RControlKey;
         else
             return Keys.None;
@@ -212,9 +212,9 @@ public static class KeyObjectExtensions
 
     public static Keys IsAltPrefix(ref string s)
     {
-        if (ObjectExtensionsStrings.IsPrefix(ref s, "Alt", StringComparison.InvariantCultureIgnoreCase))
+        if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "Alt", StringComparison.InvariantCultureIgnoreCase))
             return Keys.Menu;
-        else if (ObjectExtensionsStrings.IsPrefix(ref s, "RAlt", StringComparison.InvariantCultureIgnoreCase))
+        else if (ObjectExtensionsStrings.IsPrefixRemove(ref s, "RAlt", StringComparison.InvariantCultureIgnoreCase))
             return Keys.RMenu;
         else
             return Keys.None;

@@ -73,10 +73,11 @@ public static class ObjectExtensionsStringsCompare
                     int xv = xs.InvariantParseInt(0);
                     int yv = ys.InvariantParseInt(0);
                     int v = xv.CompareTo(yv);
-                 //   System.Diagnostics.Debug.WriteLine($"CAIn {xv} vs {yv} = {v}");
-                    if (v != 0)
+               //     System.Diagnostics.Debug.WriteLine($"CAIn {xv} vs {yv} = {v}");
+                    if (v != 0)     // if we have a result, stop
                         return v;
-                    i = xp;     // they must be the same numbers.
+
+                    i = xp-1;     // they must be the same numbers set i to one less end char due to i++ above
                 }
                 else
                     return -1;
@@ -90,7 +91,9 @@ public static class ObjectExtensionsStringsCompare
             }
         }
 
-        return 0;
+        int ev = x.Length < y.Length ? -1 : 0;        // if we stopped because x is shorter than y, then x is smaller. Else same length, all equal
+      //  System.Diagnostics.Debug.WriteLine($"CAIend {x.Length} {y.Length} = {ev}");
+        return ev;
     }
 
 
