@@ -166,6 +166,28 @@ public static class DataGridViewControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    static public void SortDataGridViewColumnAlphaInt(this DataGridViewSortCompareEventArgs e, bool usecelltag = false)
+    {
+        if (usecelltag)
+        {
+            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
+            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
+
+            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
+            var right = tagr != null ? tagr : e.CellValue2?.ToString();
+
+            e.SortResult = left.CompareAlphaInt(right);
+        }
+        else
+        {
+            string left = e.CellValue1?.ToString();
+            string right = e.CellValue2?.ToString();
+            e.SortResult = left.CompareAlphaInt(right);
+        }
+
+        e.Handled = true;
+    }
+
     // Find text in coloun
 
     static public int FindRowWithValue(this DataGridView grid, int coln, string text, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
