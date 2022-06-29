@@ -75,6 +75,18 @@ namespace BaseUtils
             else
                 return false;
         }
+        public static bool TryWriteToFile(string filename, string content)
+        {
+            try
+            {
+                File.WriteAllText(filename, content);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         // if erroriftoobig = false, returns top folder if above is too big for directory depth
         public static DirectoryInfo GetDirectoryAbove( this DirectoryInfo di, int above, bool errorifpastroot = false )        
