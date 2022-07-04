@@ -97,11 +97,12 @@ namespace BaseUtils
 
                 Type arraytype = pt.GetElementType();
 
-                ret.Add(new PropertyNameInfo(name + "Count", "Integer Index"));
+                var pni = PNI(name + "_Count", typeof(int), 0, "Array Count", "Count of items. Use <name>[index, 1..N]_itemname for particular item");
+                ret.Add(pni);
 
-                var pni = GetPropertyFieldNames(arraytype, name + "[]_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1);
-                if (pni != null)
-                    ret.AddRange(pni);
+                var pnis = GetPropertyFieldNames(arraytype, name + "[]_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1);
+                if (pnis != null)
+                    ret.AddRange(pnis);
 
             }
             else if ((typeof(System.Collections.IDictionary).IsAssignableFrom(pt)))
@@ -113,7 +114,7 @@ namespace BaseUtils
                 if (excludearrayslist)
                     return;
 
-                var pni = PNI(name + "Count", typeof(int), 0, "List Count", "Count of items. Use <name>[index, 1..N]_itemname for particular item");
+                var pni = PNI(name + "_Count", typeof(int), 0, "List Count", "Count of items. Use <name>[index, 1..N]_itemname for particular item");
                 ret.Add(pni);
                 var subclasslist = GetPropertyFieldNames(pt.GenericTypeArguments[0], name + "[]_", bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1);
                 if (subclasslist != null)

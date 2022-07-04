@@ -427,7 +427,7 @@ namespace BaseUtils
                     {
                         var data = (System.Collections.IDictionary)o;           // lovely to work out
 
-                        values[name + "Count"] = data.Count.ToString(ct);       // purposely not putting a _ to distinguish it from the entries
+                        values[name + "Count"] = data.Count.ToString(ct);       // purposely not putting a _ to distinguish it from the entries for dictionaries
 
                         foreach (Object k in data.Keys)
                         {
@@ -439,40 +439,28 @@ namespace BaseUtils
                         }
                     }
                 }
-                else if (typeof(System.Collections.IList).IsAssignableFrom(rettype))
+                else if (typeof(System.Collections.IList).IsAssignableFrom(rettype))        // this includes Arrays
                 {
-                    if (o == null)
-                        values[name + "Count"] = "0";                           // we always get a NameCount so we can tell..
-                    else
+                    int count = 0;
+                    if (o != null)
                     {
                         var data = (System.Collections.IList)o;           // lovely to work out
 
-                        values[name + "Count"] = data.Count.ToString(ct);       // purposely not putting a _ to distinguish it from the entries
+                        count = data.Count;
 
                         for (int i = 0; i < data.Count; i++)
-                        { 
-                            AddDataOfType(data[i], data[i].GetType(), name + "[" + (i + 1).ToString(ct) + "]" , depth-1, classtypeexcluded);
-                        }
-                    }
-                }
-                else if (rettype.IsArray)
-                {
-                    if (o == null)
-                        values[name + "_Length"] = "0";                         // always get a length
-                    else
-                    {
-                        Array b = o as Array;
-                        if (b != null)  // should not fail but just in case..
                         {
-                            values[name + "_Length"] = b.Length.ToString(ct);
+                            string subname = name + "[" + (i + 1).ToString(ct) + "]";
+                            if (data[i] != null)        // if may be null, double check or crash!
+                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded);
+                            else
+                                values[subname] = "";
 
-                            for (int i = 0; i < b.Length; i++)
-                            {
-                                object oa = b.GetValue(i);
-                                AddDataOfType(oa, oa.GetType(), name + "[" + i.ToString(ct) + "]", depth - 1, classtypeexcluded);
-                            }
                         }
                     }
+
+                    values[name + "Count"] = count.ToString(ct);        // backwards compat but troublesome for parsers as you don't know where the array/list name ends
+                    values[name + "_Count"] = count.ToString(ct);       // Better form to make it more compatible. PNI reports this.
                 }
                 else if (o == null)
                 {
