@@ -27,7 +27,7 @@ namespace BaseUtils
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
         // Supports Rings[Iter1].value[Iter2] - Iter1/2 should be predefined if present to 1, and function iterates it until it fails with a missing symbol
-        static public bool? CheckConditionsEvalIterate(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, bool iterators, bool debugit = false)            // Check all conditions..
+        static public Tuple<bool?, List<ConditionEntry>> CheckConditionsEvalIterate(List<Condition> fel, Variables values, out string errlist, out ErrorClass errclass, bool iterators, bool debugit = false)            // Check all conditions..
         { 
             while (true)
             {
@@ -70,7 +70,7 @@ namespace BaseUtils
                     }
                 }
 
-                return res;
+                return new Tuple<bool?,List<ConditionEntry>>(res,tests);
             }
         }
 
