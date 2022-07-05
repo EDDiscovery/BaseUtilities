@@ -83,9 +83,15 @@ namespace BaseUtils
             if ( double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double resd))
             {
                 if (long.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long resl))
+                {
+                    value = resl;       // remember to update value in case its used, and to make sure any previous error is cancelled.
                     return resl;
+                }
                 else
+                {
+                    value = resd;
                     return resd;
+                }
             }
             sp = new StringParser(s);
             return Evaluate(UnaryEntry, CheckEnd);
