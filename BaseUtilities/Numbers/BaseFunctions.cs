@@ -162,9 +162,9 @@ namespace BaseUtils
                 if (list != null)
                     return (long)(list[0] is long ? Math.Sign((long)list[0]) : Math.Sign((double)list[0]));
             }
-            else if (name == "Fp")
+            else if (name == "Fp" || name == "double" || name == "float")
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Number });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Number });        // gather a single number 
 
                 if (list != null)
                     return list[0];

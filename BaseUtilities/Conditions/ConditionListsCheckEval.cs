@@ -171,8 +171,8 @@ namespace BaseUtils
                         else
                         {
                             Object leftside;
-                            
-                            if ( values.Contains(ce.ItemName))
+
+                            if (values.Contains(ce.ItemName))
                             {
                                 string text = values[ce.ItemName];
                                 if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))    // if a double..
@@ -188,14 +188,19 @@ namespace BaseUtils
                                 }
                             }
                             else
+                            {
                                 leftside = evl.EvaluateQuickCheck(ce.ItemName);            // evaluate left side
 
-                            if (evl.InError)
-                            {
-                                errlist += "Left side did not evaluate: " + ce.ItemName + Environment.NewLine;
-                                errclass = ErrorClass.LeftSideVarUndefined;
-                                innerres = false;
-                                break;                       // stop the loop, its a false
+                                if (evl.InError)
+                                {
+                                    if (debugit)
+                                        System.Diagnostics.Debug.WriteLine($" .. Left side in error ${((StringParser.ConvertError)leftside).ErrorValue}");
+
+                                    errlist += "Left side did not evaluate: " + ce.ItemName + Environment.NewLine;
+                                    errclass = ErrorClass.LeftSideVarUndefined;
+                                    innerres = false;
+                                    break;                       // stop the loop, its a false
+                                }
                             }
 
                             var clf = ConditionEntry.Classify(ce.MatchCondition);
@@ -206,6 +211,8 @@ namespace BaseUtils
                             {
                                 if (lstring == null)
                                 {
+                                    if (debugit)
+                                        System.Diagnostics.Debug.WriteLine(" .. Left side not string");
                                     errlist += "Left side is not a string: " + ce.ItemName + Environment.NewLine;
                                     errclass = ErrorClass.LeftSideBadFormat;
                                     innerres = false;
@@ -214,6 +221,8 @@ namespace BaseUtils
                             }
                             else if (!(leftside is double || leftside is long))     // must be long or double
                             {
+                                if (debugit)
+                                    System.Diagnostics.Debug.WriteLine(" .. Left side not number");
                                 errlist += "Left side is not a number: " + ce.ItemName + Environment.NewLine;
                                 errclass = ErrorClass.LeftSideBadFormat;
                                 innerres = false;
@@ -238,6 +247,8 @@ namespace BaseUtils
                                     matched = (ce.MatchCondition == ConditionEntry.MatchType.IsTrue) ? ((double)leftside != 0) : ((double)leftside == 0);
                                 else
                                 {
+                                    if (debugit)
+                                        System.Diagnostics.Debug.WriteLine(" .. True/False left side not number");
                                     errlist += "True/False value is not an integer/double on left side" + Environment.NewLine;
                                     errclass = ErrorClass.LeftSideBadFormat;
                                     innerres = false;
@@ -286,7 +297,7 @@ namespace BaseUtils
                                 }
 
                                 if (debugit)
-                                    System.Diagnostics.Debug.WriteLine($"Condition `{leftside}` {ce.MatchCondition} `{rightside}`");
+                                    System.Diagnostics.Debug.WriteLine($" .. `{leftside}` {ce.MatchCondition} `{rightside}`");
 
                                 if (ce.MatchCondition == ConditionEntry.MatchType.DateBefore || ce.MatchCondition == ConditionEntry.MatchType.DateAfter)
                                 {
@@ -447,6 +458,9 @@ namespace BaseUtils
                             }
                         }
                     }
+
+                    if (debugit)
+                        System.Diagnostics.Debug.WriteLine($" .. match result {matched}");
 
                     //  System.Diagnostics.Debug.WriteLine(fe.eventname + ":Compare " + f.matchtype + " '" + f.contentmatch + "' with '" + vr.value + "' res " + matched + " IC " + fe.innercondition);
 

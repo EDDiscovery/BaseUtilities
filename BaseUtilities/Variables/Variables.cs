@@ -367,8 +367,13 @@ namespace BaseUtils
         }
 
         // of a class, enumerate and store values in variables
+        // prefix is used on all variables created
+        // propexcluded knocks out types selected
+        // maxdepth of recursion
+        // onlyenumerate means pick only top level fields/properties of name
+        // ensuredoublerep means a double will always have a . in it, to make sure the reader knows its a double
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null )      
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false)      
         {
             Type jtype = o.GetType();
 
@@ -381,7 +386,7 @@ namespace BaseUtils
                     {
                         string name = prefix + pi.Name;
                         System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded);
+                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded, ensuredoublerep);
                     }
                 }
             }
@@ -394,13 +399,13 @@ namespace BaseUtils
                     if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
                     {
                         string name = prefix + fi.Name;
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded, ensuredoublerep);
                     }
                 }
             }
         }
 
-        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null )
+        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false)
         {
             if (depth < 0)      // 0, list, class, object, .. limit depth
                 return;
@@ -434,7 +439,7 @@ namespace BaseUtils
                             if (k is string)
                             {
                                 Object v = data[k as string];
-                                AddDataOfType(v, v.GetType(), name + "_" + (string)k, depth-1, classtypeexcluded);
+                                AddDataOfType(v, v.GetType(), name + "_" + (string)k, depth-1, classtypeexcluded, ensuredoublerep);
                             }
                         }
                     }
@@ -452,7 +457,7 @@ namespace BaseUtils
                         {
                             string subname = name + "[" + (i + 1).ToString(ct) + "]";
                             if (data[i] != null)        // if may be null, double check or crash!
-                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded);
+                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded, ensuredoublerep);
                             else
                                 values[subname] = "";
 
@@ -477,13 +482,13 @@ namespace BaseUtils
                         if (pi.GetIndexParameters().GetLength(0) == 0 && pi.PropertyType.IsPublic )      // only properties with zero parameters are called
                         {
                             System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + "_" + pi.Name , depth-1, classtypeexcluded);
+                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + "_" + pi.Name , depth-1, classtypeexcluded, ensuredoublerep);
                         }
                     }
 
                     foreach (System.Reflection.FieldInfo fi in rettype.GetFields())
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1 , classtypeexcluded);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep);
                     }
                 }
                 else if (rettype.IsPrimitive || rettype == typeof(DateTime))
@@ -491,7 +496,10 @@ namespace BaseUtils
                     var v = Convert.ChangeType(o, rettype);
 
                     if (v is double)
-                        values[name] = ((double)v).ToString(ct);
+                    {
+                        string vt = ensuredoublerep ? ((double)v).ToStringG17InvariantWithDot() : ((double)v).ToString(ct);
+                        values[name] = vt;
+                    }
                     else if (v is int)
                         values[name] = ((int)v).ToString(ct);
                     else if (v is long)

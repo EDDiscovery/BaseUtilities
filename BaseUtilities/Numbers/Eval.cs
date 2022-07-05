@@ -145,36 +145,36 @@ namespace BaseUtils
         }
 
         // for supporting functions..  given a list of types of parameters, collect them, comma separ.
-        public List<Object> Parameters(string name, int min, IEvalParaListType [] ptypes)
+        public List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType [] paratypes)
         {
             List<Object> list = new List<object>();
 
-            for (int n = 0; n < ptypes.Length; n++)
+            for (int n = 0; n < paratypes.Length; n++)
             {
                 Object evres = Evaluate(false, false);
                 if (InError)
                     return null;
 
-                if ((ptypes[n] == IEvalParaListType.String && (evres is string)) ||
-                    (ptypes[n] == IEvalParaListType.Number && (evres is double || evres is long)) ||
-                    (ptypes[n] == IEvalParaListType.NumberOrInteger && (evres is double || evres is long)) ||
-                    (ptypes[n] == IEvalParaListType.Integer && (evres is long)) ||
-                    (ptypes[n] == IEvalParaListType.IntegerOrString && (evres is string || evres is long)) ||
-                    (ptypes[n] == IEvalParaListType.All)
+                if ((paratypes[n] == IEvalParaListType.String && (evres is string)) ||
+                    (paratypes[n] == IEvalParaListType.Number && (evres is double || evres is long)) ||
+                    (paratypes[n] == IEvalParaListType.NumberOrInteger && (evres is double || evres is long)) ||
+                    (paratypes[n] == IEvalParaListType.Integer && (evres is long)) ||
+                    (paratypes[n] == IEvalParaListType.IntegerOrString && (evres is string || evres is long)) ||
+                    (paratypes[n] == IEvalParaListType.All)
                     )
                 {
-                    if (ptypes[n] is IEvalParaListType.Number && evres is long)
+                    if (paratypes[n] is IEvalParaListType.Number && evres is long)
                         evres = (double)(long)evres;
 
                     list.Add(evres);
 
-                    if (n < ptypes.Length - 1)    // if not maximum point
+                    if (n < paratypes.Length - 1)    // if not maximum point
                     {
                         if (!sp.IsCharMoveOn(','))  // and not comma..
                         {
-                            if (list.Count() < min) // ensure minimum
+                            if (list.Count() < minparas) // ensure minimum
                             {
-                                value = new StringParser.ConvertError(name + "() requires " + min + " parameters minimum");
+                                value = new StringParser.ConvertError(nameforerrorreport + "() requires " + minparas + " parameters minimum");
                                 return null;
                             }
                             else
@@ -184,14 +184,14 @@ namespace BaseUtils
                 }
                 else
                 {
-                    value = new StringParser.ConvertError(name + "() type mismatch in parameter " + (n + 1) + " wanted " + ptypes[n].ToString().SplitCapsWord());
+                    value = new StringParser.ConvertError(nameforerrorreport + "() type mismatch in parameter " + (n + 1) + " wanted " + paratypes[n].ToString().SplitCapsWord());
                     return null;
                 }
             }
 
             if (sp.IsChar(','))     // if at max, can't have another
             {
-                value = new StringParser.ConvertError(name + "() takes " + ptypes.Length + " parameters maximum");
+                value = new StringParser.ConvertError(nameforerrorreport + "() takes " + paratypes.Length + " parameters maximum");
                 return null;
             }
 

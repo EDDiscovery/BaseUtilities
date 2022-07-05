@@ -20,14 +20,21 @@ using System.Linq;
 
 namespace BaseUtils
 {
-    public enum IEvalParaListType { Number, NumberOrInteger, Integer, String, IntegerOrString, All };
+    public enum IEvalParaListType { 
+        Number,                 // a double
+        NumberOrInteger,        // a double or an integer
+        Integer,                // integer
+        String,                 // string
+        IntegerOrString,        // integer or string
+        All                     // any
+    };
 
     public interface IEval
     {
         Object Evaluate(bool unary, bool checkend);
         Object EvaluateDouble(bool unary, bool checkend);
         Object EvaluateLong(bool unary, bool checkend);
-        List<Object> Parameters(string name, int min, IEvalParaListType[] paras);
+        List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType[] paratypes);       // gather parameters comma separ
         bool InError { get; }
         Object Value { get; }
         StringParser Parser { get; }

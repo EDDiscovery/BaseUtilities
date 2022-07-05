@@ -69,6 +69,16 @@ public static class ObjectExtensionsStringsNumbers
     {
         return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
+    public static string ToStringG17InvariantWithDot(this double v)     // G17 is roundtripable, and ensure we have a E or a dot
+    {
+        string vt = v.ToString("G17", System.Globalization.CultureInfo.InvariantCulture);
+        if (vt.IndexOf("E", StringComparison.InvariantCultureIgnoreCase) < 0 && vt.IndexOf('.') < 0)
+            vt += ".0";
+        else
+        { }
+        return vt;
+    }
+
     public static string ToStringInvariant(this float v, string format)
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
