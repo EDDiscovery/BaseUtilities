@@ -54,7 +54,7 @@ public static class ObjectExtensionsLineStrings
         return s;
     }
 
-    static public string LineNumbering(this string s, int start, string fmt = "N", string newline = null)   
+    static public string LineNumbering(this string s, int start, string fmt = "N", string newline = null)
     {
         if (newline == null)
             newline = Environment.NewLine;
@@ -72,7 +72,34 @@ public static class ObjectExtensionsLineStrings
         }
 
         if (position < s.Length)
+        {
+            sb.Append(start.ToStringInvariant(fmt));
+            sb.Append(':');
             sb.Append(s.Substring(position));
+        }
+
+        return sb.ToNullSafeString();
+    }
+    static public string LineIndentation(this string s, string indenttext, string newline = null)
+    {
+        if (newline == null)
+            newline = Environment.NewLine;
+
+        StringBuilder sb = new StringBuilder();
+        int position = 0, positions = 0;
+        while ((positions = s.IndexOf(newline, position)) != -1)
+        {
+            sb.Append(indenttext);
+            sb.Append(s.Substring(position, positions - position));
+            sb.Append(newline);
+            position = positions + newline.Length;
+        }
+
+        if (position < s.Length)
+        {
+            sb.Append(indenttext);
+            sb.Append(s.Substring(position));
+        }
 
         return sb.ToNullSafeString();
     }
