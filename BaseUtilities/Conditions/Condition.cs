@@ -22,14 +22,22 @@ namespace BaseUtils
     public class Condition
     {
         public List<ConditionEntry> Fields { get; set; }             // its condition fields
-        public ConditionEntry.LogicalCondition InnerCondition { get; set; }         // condition between fields
-        public ConditionEntry.LogicalCondition OuterCondition { get; set; }         // condition between this set of Condition a nd the next set of Condition
+        public LogicalCondition InnerCondition { get; set; }         // condition between fields
+        public LogicalCondition OuterCondition { get; set; }         // condition between this set of Condition a nd the next set of Condition
         public string EventName { get; set; }                        // logical event its associated with (definition is up to user)
         public string Action { get; set; }                           // action associated with a pass (definition is up to user)
         public Variables ActionVars { get; set; }                    // any variables associated with the action (definition is up to user)
         public bool Disabled { get; set; }                           // if condition is currently disabled for consideration
         public string GroupName { get; set; }                        // group its assocated with. Can be null. (definition is up to user)
         public object Tag { get; set; }                              // User tag data
+
+        public enum LogicalCondition
+        {
+            Or,     // any true     (DEFAULT)
+            And,    // all true
+            Nor,    // any true produces a false
+            Nand,   // any not true produces a true
+        }
 
         #region Init
 
@@ -40,8 +48,8 @@ namespace BaseUtils
         }
 
         public Condition(string eventname, string action, Variables actionvars, List<ConditionEntry> conditions, 
-                            ConditionEntry.LogicalCondition inner = ConditionEntry.LogicalCondition.Or , 
-                            ConditionEntry.LogicalCondition outer = ConditionEntry.LogicalCondition.Or)
+                            LogicalCondition inner = LogicalCondition.Or , 
+                            LogicalCondition outer = LogicalCondition.Or)
         {
             EventName = eventname;
             Action = action;
@@ -82,8 +90,8 @@ namespace BaseUtils
                 EventName = eventname;
                 Action = "";
                 ActionVars = new Variables();
-                InnerCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), innercondition.Replace(" ", ""), true);       // must work, exception otherwise
-                OuterCondition = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), outercondition.Replace(" ", ""), true);       // must work, exception otherwise
+                InnerCondition = (LogicalCondition)Enum.Parse(typeof(LogicalCondition), innercondition.Replace(" ", ""), true);       // must work, exception otherwise
+                OuterCondition = (LogicalCondition)Enum.Parse(typeof(LogicalCondition), outercondition.Replace(" ", ""), true);       // must work, exception otherwise
                 return true;
             }
             catch { }
@@ -205,6 +213,22 @@ namespace BaseUtils
         }
 
 
+        static public string GetLogicalCondition(BaseUtils.StringParser sp, string delimchars, out LogicalCondition value)
+        {
+            value = LogicalCondition.Or;
+
+            string condi = sp.NextQuotedWord(delimchars);       // next is the inner condition..
+
+            if (condi == null)
+                return "Condition operator missing";
+
+            condi = condi.Replace(" ", "");
+
+            if (Enum.TryParse<LogicalCondition>(condi.Replace(" ", ""), true, out value))
+                return "";
+            else
+                return "Condition operator " + condi + " is not recognised";
+        }
 
         #endregion
 
@@ -294,7 +318,7 @@ namespace BaseUtils
         public string Read(BaseUtils.StringParser sp, bool includeevent = false, string delimchars = " ") 
         {                                                                                           
             Fields = new List<ConditionEntry>();
-            InnerCondition = OuterCondition = ConditionEntry.LogicalCondition.Or;
+            InnerCondition = OuterCondition = LogicalCondition.Or;
             EventName = ""; Action = "";
             ActionVars = new Variables();
 
@@ -312,7 +336,7 @@ namespace BaseUtils
                     ActionVars = new Variables(actionvarsstr, Variables.FromMode.MultiEntryComma); 
             }
 
-            ConditionEntry.LogicalCondition? ic = null;
+            LogicalCondition? ic = null;
 
             while (true)
             {
@@ -348,13 +372,13 @@ namespace BaseUtils
 
                 if (sp.IsEOL || sp.PeekChar() == ')')           // end is either ) or EOL
                 {
-                    InnerCondition = (ic == null) ? ConditionEntry.LogicalCondition.Or : ic.Value;
+                    InnerCondition = (ic == null) ? LogicalCondition.Or : ic.Value;
                     return "";
                 }
                 else
                 {
-                    ConditionEntry.LogicalCondition nic;
-                    string err = ConditionEntry.GetLogicalCondition(sp, delimchars, out nic);
+                    LogicalCondition nic;
+                    string err = GetLogicalCondition(sp, delimchars, out nic);
                     if (err.Length > 0)
                         return err + " for inner condition";
 

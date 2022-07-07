@@ -119,9 +119,9 @@ namespace BaseUtils
             {
                 JObject j1 = new JObject();
                 j1["EventName"] = f.EventName;
-                if (f.InnerCondition != ConditionEntry.LogicalCondition.Or)
+                if (f.InnerCondition != Condition.LogicalCondition.Or)
                     j1["ICond"] = f.InnerCondition.ToString();
-                if (f.OuterCondition != ConditionEntry.LogicalCondition.Or)
+                if (f.OuterCondition != Condition.LogicalCondition.Or)
                     j1["OCond"] = f.OuterCondition.ToString();
                 if (f.Action.Length > 0)
                     j1["Actions"] = f.Action;
@@ -177,8 +177,8 @@ namespace BaseUtils
                 {
                     // verified 31/7/2020 with QuickJSON   If object not present, returns JNotPresent and Str() returns default
                     string evname = (string)j["EventName"];
-                    ConditionEntry.LogicalCondition ftinner = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["ICond"].Str("Or"));
-                    ConditionEntry.LogicalCondition ftouter = (ConditionEntry.LogicalCondition)Enum.Parse(typeof(ConditionEntry.LogicalCondition), j["OCond"].Str("Or"));
+                    Condition.LogicalCondition ftinner = (Condition.LogicalCondition)Enum.Parse(typeof(Condition.LogicalCondition), j["ICond"].Str("Or"));
+                    Condition.LogicalCondition ftouter = (Condition.LogicalCondition)Enum.Parse(typeof(Condition.LogicalCondition), j["OCond"].Str("Or"));
                     string act = j["Actions"].Str();
                     string actd = j["ActionData"].Str();
 
@@ -260,7 +260,7 @@ namespace BaseUtils
 
             List<Condition> cllist = new List<Condition>();
 
-            ConditionEntry.LogicalCondition outercond = ConditionEntry.LogicalCondition.Or;         // first outer condition is ignored in a list.  Or is the default.
+            Condition.LogicalCondition outercond = Condition.LogicalCondition.Or;         // first outer condition is ignored in a list.  Or is the default.
 
             while (true)
             {
@@ -286,7 +286,7 @@ namespace BaseUtils
                     }
                     else
                     {
-                        err = ConditionEntry.GetLogicalCondition(sp, delimchars, out outercond);
+                        err = Condition.GetLogicalCondition(sp, delimchars, out outercond);
                         if (err.Length > 0)
                             return err + " for outer condition";
 

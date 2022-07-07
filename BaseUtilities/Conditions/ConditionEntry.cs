@@ -115,15 +115,6 @@ namespace BaseUtils
             return MatchTypeFromString(matchname, out mt) && IsUnaryOperation(mt);
         }
 
-        public enum LogicalCondition
-        {
-            Or,     // any true     (DEFAULT)
-            And,    // all true
-            Nor,    // any true produces a false
-            Nand,   // any not true produces a true
-            NA,     // not applicable - use for outer condition on first entry
-        }
-
         public string ItemName { get; set; }
         public MatchType MatchCondition { get; set; }
         public string MatchString { get; set; }
@@ -181,24 +172,6 @@ namespace BaseUtils
                 return false;
             }
         }
-
-        static public string GetLogicalCondition(BaseUtils.StringParser sp, string delimchars, out LogicalCondition value)
-        {
-            value = LogicalCondition.Or;
-
-            string condi = sp.NextQuotedWord(delimchars);       // next is the inner condition..
-
-            if (condi == null)
-                return "Condition operator missing";
-
-            condi = condi.Replace(" ", "");
-
-            if (Enum.TryParse<ConditionEntry.LogicalCondition>(condi.Replace(" ", ""),true, out value))
-                return "";
-            else
-                return "Condition operator " + condi + " is not recognised";
-        }
-
     };
 
 }

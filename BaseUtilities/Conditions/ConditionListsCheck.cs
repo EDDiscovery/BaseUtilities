@@ -364,7 +364,7 @@ namespace BaseUtils
 
                     //  System.Diagnostics.Debug.WriteLine(fe.eventname + ":Compare " + f.matchtype + " '" + f.contentmatch + "' with '" + vr.value + "' res " + matched + " IC " + fe.innercondition);
 
-                    if (cond.InnerCondition == ConditionEntry.LogicalCondition.And)       // Short cut, if AND, all must pass, and it did not
+                    if (cond.InnerCondition == Condition.LogicalCondition.And)       // Short cut, if AND, all must pass, and it did not
                     {
                         if (!matched)
                         {
@@ -372,7 +372,7 @@ namespace BaseUtils
                             break;
                         }
                     }
-                    else if (cond.InnerCondition == ConditionEntry.LogicalCondition.Nand)  // Short cut, if NAND, and not matched
+                    else if (cond.InnerCondition == Condition.LogicalCondition.Nand)  // Short cut, if NAND, and not matched
                     {
                         if (!matched)
                         {
@@ -380,7 +380,7 @@ namespace BaseUtils
                             break;
                         }
                     }
-                    else if (cond.InnerCondition == ConditionEntry.LogicalCondition.Or)    // Short cut, if OR, and matched
+                    else if (cond.InnerCondition == Condition.LogicalCondition.Or)    // Short cut, if OR, and matched
                     {
                         if (matched)
                         {
@@ -402,11 +402,11 @@ namespace BaseUtils
 
                 if (!innerres.HasValue)                             // if does not have a value
                 {
-                    if (cond.InnerCondition == ConditionEntry.LogicalCondition.And)        // none did not matched producing a false, so therefore AND is true
+                    if (cond.InnerCondition == Condition.LogicalCondition.And)        // none did not matched producing a false, so therefore AND is true
                         innerres = true;
-                    else if (cond.InnerCondition == ConditionEntry.LogicalCondition.Or)    // none did matched producing a true, so therefore OR must be false
+                    else if (cond.InnerCondition == Condition.LogicalCondition.Or)    // none did matched producing a true, so therefore OR must be false
                         innerres = false;
-                    else if (cond.InnerCondition == ConditionEntry.LogicalCondition.Nor)   // none did matched producing a false, so therefore NOR must be true
+                    else if (cond.InnerCondition == Condition.LogicalCondition.Nor)   // none did matched producing a false, so therefore NOR must be true
                         innerres = true;
                     else                                            // NAND none did matched producing a true, so therefore NAND must be false
                         innerres = false;
@@ -425,15 +425,15 @@ namespace BaseUtils
                         // if NEXT outer condition is an OR, and we are true
                         // if NEXT outer condition is an AND, and we are false
 
-                        if ((fel[oc + 1].OuterCondition == ConditionEntry.LogicalCondition.Or && outerres == true) ||
-                            (fel[oc + 1].OuterCondition == ConditionEntry.LogicalCondition.And && outerres == false))
+                        if ((fel[oc + 1].OuterCondition == Condition.LogicalCondition.Or && outerres == true) ||
+                            (fel[oc + 1].OuterCondition == Condition.LogicalCondition.And && outerres == false))
                         {
                            // System.Diagnostics.Debug.WriteLine("Short circuit on {0} cur {1}", fel[oc + 1].OuterCondition, outerres);
                             break;
                         }
                     }
                 }
-                else if (cond.OuterCondition == ConditionEntry.LogicalCondition.Or)
+                else if (cond.OuterCondition == Condition.LogicalCondition.Or)
                 {
                     outerres |= innerres.Value;
 
@@ -443,7 +443,7 @@ namespace BaseUtils
                         break;
                     }
                 }
-                else if (cond.OuterCondition == ConditionEntry.LogicalCondition.And)
+                else if (cond.OuterCondition == Condition.LogicalCondition.And)
                 {
                     outerres &= innerres.Value;
 
@@ -453,9 +453,9 @@ namespace BaseUtils
                         break;
                     }
                 }
-                else if (cond.OuterCondition == ConditionEntry.LogicalCondition.Nor)
+                else if (cond.OuterCondition == Condition.LogicalCondition.Nor)
                     outerres = !(outerres | innerres.Value);
-                else if (cond.OuterCondition == ConditionEntry.LogicalCondition.Nand)
+                else if (cond.OuterCondition == Condition.LogicalCondition.Nand)
                     outerres = !(outerres & innerres.Value);
                 else
                     System.Diagnostics.Debug.Assert(false, "Bad outer condition");
