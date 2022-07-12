@@ -373,7 +373,7 @@ namespace BaseUtils
         // onlyenumerate means pick only top level fields/properties of name
         // ensuredoublerep means a double will always have a . in it, to make sure the reader knows its a double
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false)      
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false, string classsepar = "_")      
         {
             Type jtype = o.GetType();
 
@@ -386,7 +386,7 @@ namespace BaseUtils
                     {
                         string name = prefix + pi.Name;
                         System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded, ensuredoublerep);
+                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded, ensuredoublerep, classsepar);
                     }
                 }
             }
@@ -399,13 +399,13 @@ namespace BaseUtils
                     if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
                     {
                         string name = prefix + fi.Name;
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded, ensuredoublerep);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded, ensuredoublerep, classsepar);
                     }
                 }
             }
         }
 
-        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false)
+        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false, string classsepar = "_")
         {
             if (depth < 0)      // 0, list, class, object, .. limit depth
                 return;
@@ -426,23 +426,24 @@ namespace BaseUtils
             {
                 if (typeof(System.Collections.IDictionary).IsAssignableFrom(rettype))
                 {
-                    if (o == null)
-                        values[name + "Count"] = "0";                           // we always get a NameCount so we can tell..
-                    else
+                    int count = 0;
+                    if (o != null)
                     {
                         var data = (System.Collections.IDictionary)o;           // lovely to work out
 
-                        values[name + "Count"] = data.Count.ToString(ct);       // purposely not putting a _ to distinguish it from the entries for dictionaries
+                        count = data.Count;
 
                         foreach (Object k in data.Keys)
                         {
                             if (k is string)
                             {
                                 Object v = data[k as string];
-                                AddDataOfType(v, v.GetType(), name + "_" + (string)k, depth-1, classtypeexcluded, ensuredoublerep);
+                                AddDataOfType(v, v.GetType(), name + classsepar + (string)k, depth - 1, classtypeexcluded, ensuredoublerep, classsepar);
                             }
                         }
                     }
+
+                    values[name + classsepar + "Count"] = values[name + "Count"] = count.ToString(ct);                           // older style for scripts
                 }
                 else if (typeof(System.Collections.IList).IsAssignableFrom(rettype))        // this includes Arrays
                 {
@@ -457,15 +458,14 @@ namespace BaseUtils
                         {
                             string subname = name + "[" + (i + 1).ToString(ct) + "]";
                             if (data[i] != null)        // if may be null, double check or crash!
-                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded, ensuredoublerep);
+                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded, ensuredoublerep, classsepar);
                             else
                                 values[subname] = "";
 
                         }
                     }
 
-                    values[name + "Count"] = count.ToString(ct);        // backwards compat but troublesome for parsers as you don't know where the array/list name ends
-                    values[name + "_Count"] = count.ToString(ct);       // Better form to make it more compatible. PNI reports this.
+                    values[name + "Count"] = values[name + classsepar + "Count"] = count.ToString(ct);       // Better form to make it more compatible. PNI reports this.
                 }
                 else if (o == null)
                 {
@@ -482,13 +482,13 @@ namespace BaseUtils
                         if (pi.GetIndexParameters().GetLength(0) == 0 && pi.PropertyType.IsPublic )      // only properties with zero parameters are called
                         {
                             System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + "_" + pi.Name , depth-1, classtypeexcluded, ensuredoublerep);
+                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + classsepar + pi.Name , depth-1, classtypeexcluded, ensuredoublerep, classsepar);
                         }
                     }
 
                     foreach (System.Reflection.FieldInfo fi in rettype.GetFields())
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + "_" + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + classsepar + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep, classsepar);
                     }
                 }
                 else if (rettype.IsPrimitive || rettype == typeof(DateTime))

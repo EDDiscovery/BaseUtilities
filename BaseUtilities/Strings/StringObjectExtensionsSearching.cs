@@ -22,23 +22,23 @@ using System.Text;
 public static partial class ObjectExtensionsStrings
 {
     //extend for case
-    public static bool Contains(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture)
+    public static bool Contains(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture)
     {
-        return data.IndexOf(comparision, c) >= 0;
+        return data.IndexOf(comparision, culture) >= 0;
     }
 
     //Return index of (plus an offset) or length
-    public static int IndexOfOrLength(this string data, string comparision, StringComparison c = StringComparison.CurrentCulture, int offset = 0)
+    public static int IndexOfOrLength(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture, int startindex = 0, int offset = 0)
     {
-        var i = data.IndexOf(comparision, c);
+        var i = data.IndexOf(comparision, startindex, culture);
         return i == -1 ? data.Length : Math.Min(data.Length, i + offset);
     }
-    public static int IndexOfOrLength(this string data, string[] comparision, StringComparison c = StringComparison.CurrentCulture, int offset = 0)
+    public static int IndexOfOrLength(this string data, string[] comparision, StringComparison culture = StringComparison.CurrentCulture, int startindex = 0, int offset = 0)
     {
         int min = int.MaxValue;
         foreach (var text in comparision)
         {
-            int v = data.IndexOf(text, c);
+            int v = data.IndexOf(text, startindex, culture);
             if (v >= 0 && v < min)
                 min = v;
         }
