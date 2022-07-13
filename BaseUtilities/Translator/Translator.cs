@@ -77,6 +77,7 @@ namespace BaseUtils
         {
         }
 
+        public bool CompareTranslatedToCode { get; set; } = false;      // if set, will moan if the translate does not match the code
         public bool Translating { get { return translations != null; } }
 
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
@@ -356,6 +357,14 @@ namespace BaseUtils
                 {
                     if (inuse != null)
                         inuse[key] = true;
+
+                    
+                    if (CompareTranslatedToCode && originalenglish[key] != english)
+                    {
+                        var orgeng = originalenglish[key];
+                        logger?.WriteLine($"Difference Key {key} code `{english}` translation `{orgeng}`");
+                    }
+
 #if DEBUG
                     return translations[key] ?? english.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
