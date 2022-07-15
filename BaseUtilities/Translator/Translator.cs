@@ -269,14 +269,17 @@ namespace BaseUtils
                                         }
                                         else
                                         {
-                                            logger?.WriteLine(string.Format("*** Translator Repeat {0}", id));
-                                            System.Diagnostics.Debug.WriteLine(string.Format("*** Translator Repeat {0}", id));
+                                            string errt = string.Format($"Translator Repeat {tlffile}:{lr.CurrentLine} '{id}");
+                                            logger?.WriteLine(errt);
+                                            System.Diagnostics.Debug.WriteLine(errt);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    logger?.WriteLine(string.Format($"Line misformat '{line}"));
+                                    string errt = string.Format($"Line misformat {tlffile}:{lr.CurrentLine} '{line}");
+                                    logger?.WriteLine(errt);
+                                    System.Diagnostics.Debug.WriteLine(errt);
                                 }
                             }
                         }
