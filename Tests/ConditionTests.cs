@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 
 namespace EDDiscoveryTests
 {
@@ -54,11 +55,30 @@ namespace EDDiscoveryTests
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
+                                new ConditionEntry("IsPlanet*x",ConditionEntry.MatchType.NumericEquals,"20+20"),      // causes an error
+                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // but this passes, and since its an OR..
+                            },
+                            Condition.LogicalCondition.Or,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true);
+                    Check.That(ev.Item1).Equals(true);
+                    Check.That(ev.Item3[0]).Contains("Left side did not evaluate: IsPlanet*x");
+                    Check.That(ev.Item3[1]).IsNull();
+
+                }
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
                                 new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
                                 new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
@@ -66,16 +86,16 @@ namespace EDDiscoveryTests
                             {
                                 new ConditionEntry("Other[Iter1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // does pass on Other[2]
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
                     Variables vcopy = new Variables(vars);
                     vcopy["Iter1"] = "1";
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
-                    Check.That(ev).Equals(true);
-                    Check.That(errlist).Equals(null);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true);
+                    Check.That(ev.Item1).Equals(true);
+
                 }
 
 
@@ -87,8 +107,8 @@ namespace EDDiscoveryTests
                                 new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
                                 new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
@@ -96,16 +116,16 @@ namespace EDDiscoveryTests
                             {
                                 new ConditionEntry("Mult[Iter1].Var[Iter2]",ConditionEntry.MatchType.NumericEquals,"40"),
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
                     Variables vcopy = new Variables(vars);
                     vcopy["Iter1"] = "1";
                     vcopy["Iter2"] = "1";
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
-                    Check.That(ev).Equals(true);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true);
+                    Check.That(ev.Item1).Equals(true);
                 }
 
                 {
@@ -116,8 +136,8 @@ namespace EDDiscoveryTests
                                 new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
                                 new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
@@ -125,16 +145,16 @@ namespace EDDiscoveryTests
                             {
                                 new ConditionEntry("Other[Iter1].outerrad",ConditionEntry.MatchType.NumericEquals,"41"),        // does not pass anything
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
                     Variables vcopy = new Variables(vars);
                     vcopy["Iter1"] = "1";
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, out string errlist, out ConditionLists.ErrorClass ec, true);
-                    Check.That(ev).Equals(false);
-                    Check.That(errlist).Equals("Left side did not evaluate: Other[Iter1].outerrad\r\n");
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true);
+                    Check.That(ev.Item1).Equals(false);
+                    Check.That(ev.Item3[2]).Equals("Left side did not evaluate: Other[Iter1].outerrad");
                 }
 
 
@@ -147,8 +167,8 @@ namespace EDDiscoveryTests
                                 new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),
                                 new ConditionEntry("IsBig",ConditionEntry.MatchType.IsTrue,""), // both passes
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
@@ -157,14 +177,14 @@ namespace EDDiscoveryTests
                                 new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"20"),    // passes, and passes this set due to OR
                                 new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // does not exist, should not make a difference due to Or
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
-                    Check.That(ev).Equals(true);
-                    Check.That(errlist).Equals(null);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, false);
+                    Check.That(ev.Item1).Equals(true);
+                    Check.That(ev.Item3.Where(x => x != null).Count()).Equals(0);
                 }
 
                 {
@@ -172,27 +192,27 @@ namespace EDDiscoveryTests
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),
-                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsTrue,""),       // fails
+                                        new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),
+                                        new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsTrue,""),       // fails
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"20"),        // should not get to this
-                                new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),
+                                        new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"20"),        // should not get to this
+                                        new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
-                    Check.That(ev).Equals(false);
-                    Check.That(errlist).Equals(null);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, false);
+                    Check.That(ev.Item1).Equals(false);
+                    Check.That(ev.Item3.Where(x => x != null).Count()).Equals(0);
                 }
 
                 {
@@ -200,27 +220,27 @@ namespace EDDiscoveryTests
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""), // both passes
-                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
+                                        new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""), // both passes
+                                        new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"22"),        // does not pass
-                                new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // does not exist, check error returned
+                                        new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"22"),        // does not pass
+                                        new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // does not exist, check error returned
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
-                    Check.That(ev).Equals(false);
-                    Check.That(errlist).Equals("Left side did not evaluate: Rings[1].outerrad\r\n");
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, false);
+                    Check.That(ev.Item1).Equals(false);
+                    Check.That(ev.Item3[3].Contains("Left side did not evaluate: Rings[1].outerrad")).IsTrue();
                 }
 
                 {
@@ -228,36 +248,36 @@ namespace EDDiscoveryTests
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
-                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
+                                        new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
+                                        new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
                             },
-                            ConditionEntry.LogicalCondition.And,    // inner
-                            ConditionEntry.LogicalCondition.Or
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
                         ));
 
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"22"),        // does not pass
-                                new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // now exists, passes
+                                        new ConditionEntry("Rings[0].outerrad",ConditionEntry.MatchType.NumericEquals,"22"),        // does not pass
+                                        new ConditionEntry("Rings[1].outerrad",ConditionEntry.MatchType.NumericEquals,"40"),        // now exists, passes
                             },
-                            ConditionEntry.LogicalCondition.Or,
-                            ConditionEntry.LogicalCondition.And
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
                         ));
 
                     vars["Rings[1].outerrad"] = "40";
 
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, out string errlist, out ConditionLists.ErrorClass ec, false);
-                    Check.That(ev).Equals(true);
-                    Check.That(errlist).Equals(null);
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, false);
+                    Check.That(ev.Item1).Equals(true);
+                    Check.That(ev.Item3.Where(x => x != null).Count()).Equals(0);
                 }
 
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2*V10", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
-   
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
                     ConditionLists cl = new ConditionLists();
                     cl.Add(cd);
 
@@ -271,101 +291,105 @@ namespace EDDiscoveryTests
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "40"));         // complex symbol with mult vs number
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2.1", ConditionEntry.MatchType.NumericEquals, "42"));         // complex symbol with mult vs number double
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("V10*10", ConditionEntry.MatchType.NumericEquals, "V10*10"));        // multiplication on both sides
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "string1"));           // var vs bare string
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "Vstr1"));         // var string vs var string
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "string1"));         // var string vs bare
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "\"string1\""));         // var string vs quoted string
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Vstr1", ConditionEntry.MatchType.Equals, "V10"));         // var string vs number, should produce an error
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    var testerrors = new List<string>();
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, testerrors:testerrors);
                     Check.That(check.Value).Equals(false);
-                    Check.That(errlist).Equals("Right side is not a string: Vstr1\r\n");
+                    Check.That(testerrors[0].Contains("Right side is not a string: Vstr1")).IsTrue();
                 }
 
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var right side
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
-                    Check.That(err).Equals(ConditionLists.ErrorClass.RightSideVarUndefined);
+                    var testerrors = new List<string>();
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, testerrors: testerrors);
                     Check.That(check.Value).Equals(false);
+                    Check.That(testerrors[0].Contains("Right side did not evaluate")).IsTrue();
                 }
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("wRings[0].outerrad*2", ConditionEntry.MatchType.NumericEquals, "s40"));         // unknown var left side
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
-                    Check.That(err).Equals(ConditionLists.ErrorClass.LeftSideVarUndefined);
+                    var testerrors = new List<string>();
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, testerrors: testerrors);
                     Check.That(check.Value).Equals(false);
+                    Check.That(testerrors[0].Contains("Left side did not evaluate: wRings[0].outerrad*2")).IsTrue();
+                    
                 }
 
                 {
                     List<ConditionEntry> ce1 = new List<ConditionEntry>();
                     ce1.Add(new ConditionEntry("Rings[0].outerrad", ConditionEntry.MatchType.IsPresent, ""));         // var present
-                    Condition cd = new Condition("e1", "f1", actionv, ce1, ConditionEntry.LogicalCondition.And);
+                    Condition cd = new Condition("e1", "f1", actionv, ce1, Condition.LogicalCondition.And);
 
-                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars, out string errlist, out ConditionLists.ErrorClass err);
+                    bool? check = ConditionLists.CheckConditionsEval(new List<Condition> { cd }, vars);
                     Check.That(check.Value).Equals(true);
                 }
 
@@ -376,13 +400,13 @@ namespace EDDiscoveryTests
                 lfields.Add(new ConditionEntry("V1", ConditionEntry.MatchType.Equals, "A1"));
                 lfields.Add(new ConditionEntry("V2", ConditionEntry.MatchType.Equals, "A2"));
 
-                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, ConditionEntry.LogicalCondition.Or, ConditionEntry.LogicalCondition.NA);
+                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, Condition.LogicalCondition.Or, Condition.LogicalCondition.Or);
 
                 List<ConditionEntry> rfields = new List<ConditionEntry>();
                 rfields.Add(new ConditionEntry("V3", ConditionEntry.MatchType.Equals, "A3"));
                 rfields.Add(new ConditionEntry("V4", ConditionEntry.MatchType.Equals, "A4"));
 
-                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, ConditionEntry.LogicalCondition.Or, ConditionEntry.LogicalCondition.And);
+                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, Condition.LogicalCondition.Or, Condition.LogicalCondition.And);
 
                 ConditionLists cl = new ConditionLists();
                 cl.Add(left);
@@ -443,13 +467,13 @@ namespace EDDiscoveryTests
                 lfields.Add(new ConditionEntry("V1", ConditionEntry.MatchType.Equals, "A1"));
                 lfields.Add(new ConditionEntry("V2", ConditionEntry.MatchType.Equals, "A2"));
 
-                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, ConditionEntry.LogicalCondition.And, ConditionEntry.LogicalCondition.NA);
+                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, Condition.LogicalCondition.And, Condition.LogicalCondition.Or);
 
                 List<ConditionEntry> rfields = new List<ConditionEntry>();
                 rfields.Add(new ConditionEntry("V3", ConditionEntry.MatchType.Equals, "A3"));
                 rfields.Add(new ConditionEntry("V4", ConditionEntry.MatchType.Equals, "A4"));
 
-                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, ConditionEntry.LogicalCondition.Or, ConditionEntry.LogicalCondition.And);
+                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, Condition.LogicalCondition.Or, Condition.LogicalCondition.And);
 
                 ConditionLists cl = new ConditionLists();
                 cl.Add(left);
@@ -509,13 +533,13 @@ namespace EDDiscoveryTests
                 lfields.Add(new ConditionEntry("V1", ConditionEntry.MatchType.Equals, "A1"));
                 lfields.Add(new ConditionEntry("V2", ConditionEntry.MatchType.Equals, "A2"));
 
-                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, ConditionEntry.LogicalCondition.Or, ConditionEntry.LogicalCondition.NA);
+                Condition left = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), lfields, Condition.LogicalCondition.Or, Condition.LogicalCondition.Or);
 
                 List<ConditionEntry> rfields = new List<ConditionEntry>();
                 rfields.Add(new ConditionEntry("V3", ConditionEntry.MatchType.Equals, "A3"));
                 rfields.Add(new ConditionEntry("V4", ConditionEntry.MatchType.Equals, "A4"));
 
-                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, ConditionEntry.LogicalCondition.And, ConditionEntry.LogicalCondition.And);
+                Condition right = new Condition("E1", "A1", new Variables(new string[] { "o1", "1", "o2", "2" }), rfields, Condition.LogicalCondition.And, Condition.LogicalCondition.And);
 
                 ConditionLists cl = new ConditionLists();
                 cl.Add(left);
