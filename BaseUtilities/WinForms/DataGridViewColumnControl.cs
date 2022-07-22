@@ -21,6 +21,7 @@ namespace BaseUtils
     public class DataGridViewColumnControl : DataGridViewBaseEnhancements
     {
         public bool ColumnReorder { get; set; } = true;                     // default is to allow column reordering via right click dragging
+        public bool PerColumnWordWrapControl { get; set; } = true;                     // default is to allow column reordering via right click dragging
 
         public DataGridViewColumnControl()
         {
@@ -31,6 +32,16 @@ namespace BaseUtils
 
             var dummy = new System.Windows.Forms.ToolStripMenuItem();       // need to have this, otherwise it won't work
             columnContextMenu.Items.Add(dummy);
+        }
+
+        public void SetWordWrap(bool state)
+        {
+            SuspendLayout();
+            foreach (DataGridViewColumn c in Columns)
+                c.DefaultCellStyle.WrapMode = DataGridViewTriState.NotSet;
+
+            DefaultCellStyle.WrapMode = state ? DataGridViewTriState.True : DataGridViewTriState.False;
+            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
         }
 
         private void ColumnContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
@@ -58,6 +69,20 @@ namespace BaseUtils
                     tsitem.Click += Tsitem_Click;
                     columnContextMenu.Items.Add(tsitem);
                 }
+
+                if (PerColumnWordWrapControl)
+                {
+                    var tsww = new System.Windows.Forms.ToolStripMenuItem();
+                    tsww.Checked = true;
+                    var globalwrapmode = this.DefaultCellStyle.WrapMode;
+                    tsww.CheckState = Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
+                                                        Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
+                    tsww.Text = "Column Word Wrap (Override)".TxID("DataGridView", "WordWrap");
+                    tsww.Tag = Columns[HitIndex];
+                    tsww.Size = new System.Drawing.Size(178, 22);
+                    tsww.Click += Tsww_Click;
+                    columnContextMenu.Items.Add(tsww);
+                }
             }
         }
 
@@ -70,6 +95,30 @@ namespace BaseUtils
 
             if (colshidden < ColumnCount - 1 || t.Checked)        // not at last column, or its turning on, action, can't remove last one
                 c.Visible = t.Checked;
+        }
+
+        private void Tsww_Click(object sender, System.EventArgs e)
+        {
+            var t = sender as ToolStripMenuItem;
+            var c = t.Tag as DataGridViewColumn;
+
+            var globalwrapmode = this.DefaultCellStyle.WrapMode;
+
+            if (t.CheckState == CheckState.Indeterminate)
+            {
+                c.DefaultCellStyle.WrapMode = globalwrapmode == DataGridViewTriState.True ? DataGridViewTriState.False : DataGridViewTriState.True;
+            }
+            else if (t.CheckState == CheckState.Checked)
+            {
+                c.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+            }
+            else
+            {
+                c.DefaultCellStyle.WrapMode = DataGridViewTriState.NotSet;
+            }
+
+            t.CheckState = c.DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
+                                                            c.DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
         }
 
         private int dragto = -1;
