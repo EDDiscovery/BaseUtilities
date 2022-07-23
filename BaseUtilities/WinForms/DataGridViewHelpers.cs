@@ -562,8 +562,9 @@ public static class DataGridViewControlHelpersStaticFunc
         saveint(root + "HW", dgv.RowHeadersWidth);
     }
 
-    // gets return MinValue if not there.
-    public static void LoadColumnSettings(this DataGridView dgv, string root, Func<string, int> getint, Func<string, double> getdouble)
+    // Set column fill weight and visibility from getdouble, and set header width from getint.
+    // Return MinValue in getdouble to say you don't have a value
+    public static bool LoadColumnSettings(this DataGridView dgv, string root, Func<string, int> getint, Func<string, double> getdouble)
     {
         int hw = getint(root + "HW");
         if (hw >= 0)
@@ -594,20 +595,25 @@ public static class DataGridViewControlHelpersStaticFunc
                 }
             }
 
-            if ( dicount == dgv.ColumnCount)
+            if (dicount == dgv.ColumnCount)
             {
                 // when you change the display index, the others shuffle around. So need to set them it seems in display index increasing order.
                 // hence the array, and we set in this order.
-                for (int d = 0; d < dgv.ColumnCount; d++)     
+                for (int d = 0; d < dgv.ColumnCount; d++)
                 {
                     //System.Diagnostics.Debug.WriteLine($"DGV {root} {displayindexes[d]} => di {d}");
                     dgv.Columns[displayindexes[d]].DisplayIndex = d;
                 }
             }
 
-           // for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
+            // for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
 
             dgv.ResumeLayout();
+
+            return true;
         }
+        else
+            return false;
+
     }
 }

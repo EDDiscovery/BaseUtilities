@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
+using System;
 using System.Windows.Forms;
 
 namespace BaseUtils
@@ -22,6 +23,10 @@ namespace BaseUtils
     {
         public bool ColumnReorder { get; set; } = true;                     // default is to allow column reordering via right click dragging
         public bool PerColumnWordWrapControl { get; set; } = true;                     // default is to allow column reordering via right click dragging
+
+        public Action<int> UserChangedColumnVisibility { get; set; } = null;
+        public Action<int> UserChangedColumnWordWrap { get; set; } = null;
+        public Action<int,int> UserChangedColumnOrder { get; set; } = null;
 
         public DataGridViewColumnControl()
         {
@@ -51,7 +56,7 @@ namespace BaseUtils
             {
                 e.Cancel = true;        // cancel the menu
                 Columns[HitIndex].DisplayIndex = Columns[dragto].DisplayIndex;      // move the display index
-                dragto = -1;    // cancel the drag
+                UserChangedColumnOrder?.Invoke(HitIndex,dragto);
             }
             else
             {
@@ -77,13 +82,15 @@ namespace BaseUtils
                     var globalwrapmode = this.DefaultCellStyle.WrapMode;
                     tsww.CheckState = Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
                                                         Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
-                    tsww.Text = "Column Word Wrap (Override)".TxID("DataGridView", "WordWrap");
+                    tsww.Text = Columns[HitIndex].HeaderText + " " + "Word Wrap (Override)".TxID("DataGridView", "WordWrap");
                     tsww.Tag = Columns[HitIndex];
                     tsww.Size = new System.Drawing.Size(178, 22);
                     tsww.Click += Tsww_Click;
                     columnContextMenu.Items.Add(tsww);
                 }
             }
+
+            dragto = -1;    // cancel the drag
         }
 
         private void Tsitem_Click(object sender, System.EventArgs e)
@@ -94,7 +101,10 @@ namespace BaseUtils
             int colshidden = this.ColumnsHidden();
 
             if (colshidden < ColumnCount - 1 || t.Checked)        // not at last column, or its turning on, action, can't remove last one
+            {
                 c.Visible = t.Checked;
+                UserChangedColumnVisibility?.Invoke(c.Index);
+            }
         }
 
         private void Tsww_Click(object sender, System.EventArgs e)
@@ -119,6 +129,7 @@ namespace BaseUtils
 
             t.CheckState = c.DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
                                                             c.DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
+            UserChangedColumnWordWrap?.Invoke(c.Index);
         }
 
         private int dragto = -1;
