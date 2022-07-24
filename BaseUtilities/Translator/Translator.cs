@@ -362,7 +362,7 @@ namespace BaseUtils
                         inuse[key] = true;
 
                     
-                    if (CompareTranslatedToCode && originalenglish[key] != english)
+                    if (CompareTranslatedToCode && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
                         var orgeng = originalenglish[key];
                         logger?.WriteLine($"Difference Key {key} code `{english}` translation `{orgeng}`");

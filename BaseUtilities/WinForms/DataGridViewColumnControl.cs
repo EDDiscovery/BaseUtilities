@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace BaseUtils
@@ -22,10 +23,15 @@ namespace BaseUtils
     public class DataGridViewColumnControl : DataGridViewBaseEnhancements
     {
         public bool ColumnReorder { get; set; } = true;                     // default is to allow column reordering via right click dragging
-        public bool PerColumnWordWrapControl { get; set; } = true;                     // default is to allow column reordering via right click dragging
-
+        public bool PerColumnWordWrapControl { get; set; } = true;          // default is to allow per column word wrap control
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]   // lets not clutter up the designer with these action call backs
         public Action<int> UserChangedColumnVisibility { get; set; } = null;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<int> UserChangedColumnWordWrap { get; set; } = null;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<int,int> UserChangedColumnOrder { get; set; } = null;
 
         public DataGridViewColumnControl()
