@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2021 EDDiscovery development team
+ * Copyright © 2017-2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -23,10 +23,10 @@ namespace BaseUtils
 {
     public static partial class TypeHelpers
     {
-        public sealed class PropertyNameAttribute : Attribute // applicable to FromObject and ToObject, don't serialise this
+        public sealed class PropertyNameAttribute : Attribute 
         {
             public string Text { get; set; }
-            public PropertyNameAttribute(string text) { Text = text; }
+            public PropertyNameAttribute(string text) { Text = text; }      // set to Null to stop GetPropertyFieldNames listing this property
         }
 
         [System.Diagnostics.DebuggerDisplay("PNI {Name} {Help} {Comment} {DefaultCondition}")]
@@ -90,6 +90,11 @@ namespace BaseUtils
         static public void AddToPNI(List<PropertyNameInfo> ret, Type pt, string name, object [] ca, BindingFlags bf, bool fields, int linelen, string comment, 
                                                                     Type excludedeclaretype, Type[] propexcluded,bool excludearrayslist, int depth, string classsepar)
         {
+            string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
+
+            if (help == null)       // this cancels help if present
+                return;
+            
             if (pt.IsArray)
             {
                 if (excludearrayslist)
@@ -97,25 +102,29 @@ namespace BaseUtils
 
                 Type arraytype = pt.GetElementType();
 
-                var pni = PNI(name + classsepar + "Count", typeof(int), 0, "Array Count", "Count of items. Use <name>[index, 1..N]" + classsepar + "itemname for particular item");
+                var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>[1..N]" + classsepar + "itemname for " + help);
                 ret.Add(pni);
 
-                var pnis = GetPropertyFieldNames(arraytype, name + "[]" + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1, classsepar);
-                if (pnis != null)
-                    ret.AddRange(pnis);
+                if (arraytype != typeof(string))        // don't do strings..
+                {
+                    var pnis = GetPropertyFieldNames(arraytype, name + "[]" + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1, classsepar);
+                    if (pnis != null)
+                        ret.AddRange(pnis);
+                }
 
             }
             else if ((typeof(System.Collections.IDictionary).IsAssignableFrom(pt)))
             {
-                var pni = PNI(name + classsepar + "Count", typeof(int), 0, "Dictionary Count", "Count of items. Use <name>" + classsepar + "itemname for particular item");
+                var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>" + classsepar + "itemname for " + help);
             }
             else if (typeof(System.Collections.IList).IsAssignableFrom(pt))
             {
                 if (excludearrayslist)
                     return;
 
-                var pni = PNI(name + classsepar + "Count", typeof(int), 0, "List Count", "Count of items. Use <name>[index, 1..N]" + classsepar + "itemname for particular item");
+                var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>[1..N]" + classsepar + "itemname for " + help);
                 ret.Add(pni);
+
                 var subclasslist = GetPropertyFieldNames(pt.GenericTypeArguments[0], name + "[]" + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslist, depth - 1, classsepar);
                 if (subclasslist != null)
                     ret.AddRange(subclasslist);
@@ -128,7 +137,6 @@ namespace BaseUtils
             }
             else
             {
-                string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
                 PropertyNameInfo pni = PNI(name, pt, linelen, comment, help);
                 ret.Add(pni);
             }
@@ -137,9 +145,10 @@ namespace BaseUtils
         static public PropertyNameInfo PNI( string name, Type t , int linelen, string comment, string help)
         {
             string pname = t.FullName;
+
             if (typeof(System.Collections.IDictionary).IsAssignableFrom(t))
             {
-                help = ("Dictionary Class (" + t.GenericTypeArguments[0].Name + "," + t.GenericTypeArguments[1].Name + ")").AppendPrePad(help, " : ");
+                help = ("Dictionary class (" + t.GenericTypeArguments[0].Name + "," + t.GenericTypeArguments[1].Name + ")").AppendPrePad(help, " : ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericGreaterEqual, comment);
             }
             else if (t.IsEnum)
@@ -150,27 +159,27 @@ namespace BaseUtils
             }
             else if (pname.Contains("System.Double"))
             {
-                help = "Floating point value".AppendPrePad(help, " : ");
+                help = "Floating point value".AppendPrePad(help, ": ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericGreaterEqual, comment);
             }
             else if (pname.Contains("System.Boolean"))
             {
-                help = "Boolean value, 1 = true, 0 = false".AppendPrePad(help, " : ");
+                help = "Boolean value: 1 = true, 0 = false".AppendPrePad(help, ": ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.IsTrue, comment);
             }
             else if (pname.Contains("System.Int"))
             {
-                help = "Integer value".AppendPrePad(help, " : ");
+                help = "Integer value".AppendPrePad(help, ": ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.NumericEquals, comment);
             }
             else if (pname.Contains("System.DateTime"))
             {
-                help = "Date Time Value, US format".AppendPrePad(help, " : ");
+                help = "Date time value, US format".AppendPrePad(help, ": ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.DateAfter, comment);
             }
             else
             {
-                help = "String value".AppendPrePad(help, " : ");
+                help = "String value".AppendPrePad(help, ": ");
                 return new PropertyNameInfo(name, help, ConditionEntry.MatchType.Contains, comment);
             }
         }
