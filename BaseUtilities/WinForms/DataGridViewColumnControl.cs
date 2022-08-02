@@ -53,6 +53,7 @@ namespace BaseUtils
 
             DefaultCellStyle.WrapMode = state ? DataGridViewTriState.True : DataGridViewTriState.False;
             AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+            ResumeLayout();
         }
 
         private void ColumnContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
