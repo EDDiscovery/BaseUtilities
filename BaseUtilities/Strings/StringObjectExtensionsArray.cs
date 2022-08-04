@@ -49,5 +49,15 @@ public static partial class ObjectExtensionsStrings
 
         return -1;
     }
+
+    static public string Join(this string[] array, char text)
+    {
+        return string.Join(new string(new char[] { text }), array);
+    }
+    static public string Join(this string[] array, string text)
+    {
+        return string.Join(text, array);
+    }
+
 }
 
