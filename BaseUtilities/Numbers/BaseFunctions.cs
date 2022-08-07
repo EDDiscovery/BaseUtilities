@@ -202,6 +202,34 @@ namespace BaseUtils
                 if (list != null)
                     return (string)char.ToString((char)(long)list[0]);
             }
+            else if (name == "Compare")
+            {
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.All, IEvalParaListType.All });
+
+                if (list != null && list.Count == 2 && (((list[0] is long || list[0] is double) && (list[1] is long || list[1] is double)) || ((list[0] is string) && (list[1] is string))))
+                {
+                    if ( list[0] is double || list[1] is double)        // either is double
+                    {
+                        double left = (list[0] is double) ? (double)list[0] : (double)(long)list[0];        // need to go thru long before double
+                        double right = (list[1] is double) ? (double)list[1] : (double)(long)list[1];
+                        return (long)(left.CompareTo(right));   
+                    }
+                    else if ( list[0] is long)
+                    {
+                        long left = (long)list[0];
+                        long right = (long)list[1];
+                        return (long)(left.CompareTo(right));
+                    }
+                    else
+                    {
+                        string left = (string)list[0];
+                        string right = (string)list[1];
+                        return (long)(left.CompareTo(right));
+                    }
+                }
+                else
+                    return new StringParser.ConvertError(name + "Compare requires two parameters of same basic type (number or string)");
+            }
             else
                 return new StringParser.ConvertError(name + "() not recognised");
 

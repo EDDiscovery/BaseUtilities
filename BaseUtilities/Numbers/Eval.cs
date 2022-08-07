@@ -825,6 +825,26 @@ namespace BaseUtils
                 return false;
         }
 
-           #endregion
+        // set up the evaluator for checking vars
+        public static HashSet<string> VarsInUse(Action<Eval> check, bool checkend = true, bool allowfp = true, bool allowstrings = true, 
+                                                bool allowmembers = true, bool allowarrays = true)
+        {
+            HashSet<string> str = new HashSet<string>();
+            Eval evl = new Eval(checkend,allowfp,allowstrings,allowmembers,allowarrays);
+            evl.Fake = true;
+            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
+            evl.ReturnSymbolValue += (string s) =>
+            {
+                str.Add(s);
+                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
+                return 1L;
+            };
+
+            check.Invoke(evl);
+
+            return str;
+        }
+
+        #endregion
     }
 }

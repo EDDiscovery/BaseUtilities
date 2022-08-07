@@ -86,30 +86,7 @@ namespace BaseUtils
                                             List<ConditionEntry> tests = null, List<string> testerrors = null,
                                             bool debugit = false)
         {
-            Eval evl = new Eval(true, true, true, true, true);  // check end, allow fp, allow strings, allow members, allow arrays
-
-            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;       // allow functions
-        
-            evl.ReturnSymbolValue += (str) =>       // on symbol lookup
-            {
-                string qualname = values.Qualify(str);
-
-                if (values.Exists(qualname))        //  if we have a variable
-                {
-                    string text = values[qualname];
-                    if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))
-                    {
-                        if (long.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number
-                            return v;
-                        else
-                            return d;
-                    }
-                    else
-                        return text;    // else its a string
-                }
-                else
-                    return new StringParser.ConvertError("Unknown symbol " + qualname);
-            };
+            EvalVariables evl = new EvalVariables(var:values);
 
             bool? outerres = null;
 

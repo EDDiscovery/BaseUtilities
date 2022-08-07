@@ -185,31 +185,20 @@ namespace BaseUtils
         // Find all variable names
         static public HashSet<string> EvalVariablesUsed(List<Condition> fel)
         {
-            HashSet<string> str = new HashSet<string>();
-            Eval evl = new Eval(true, true, true);
-            evl.Fake = true;
-            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
-            evl.AllowMemberSymbol = true;
-            evl.AllowArrays = true;
-            evl.ReturnSymbolValue += (string s) =>
-            {
-                str.Add(s);
-                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
-                return 1L;
-            };
+            return Eval.VarsInUse((evl) => {
 
-            foreach (Condition c in fel)
-            {
-                if (!c.Disabled)
+                foreach (Condition c in fel)
                 {
-                    foreach (ConditionEntry ce in c.Fields)
+                    if (!c.Disabled)
                     {
-                        evl.Evaluate(ce.ItemName);
-                        evl.Evaluate(ce.MatchString);
+                        foreach (ConditionEntry ce in c.Fields)
+                        {
+                            evl.Evaluate(ce.ItemName);
+                            evl.Evaluate(ce.MatchString);
+                        }
                     }
                 }
-            }
-            return str;
+            });
         }
 
 
