@@ -340,6 +340,24 @@ namespace EDDiscoveryTests
                 Check.That((string)ev.Evaluate(" ToUpper(\"Hello\")") == "HELLO").IsTrue();
                 Check.That((string)ev.Evaluate(" Unicode(65)") == "A").IsTrue();
                 Check.That((string)ev.Evaluate(" Unicode(329)") == "ŉ").IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(1,2)") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2,1)") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2,2)") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(1.0,2)") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2.0,1)") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2.0,2)") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(1,2.0)") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2,1.0)") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(2,2.0)") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ab\")") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ac\")") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" Compare(\"ab\",\"aa\")") == 1).IsTrue();
+
+                {
+                    var ret = ev.Evaluate(" Compare(20.2,\"aa\")");
+                    Check.That(ret is StringParser.ConvertError).IsTrue();
+                    Check.That((ret as StringParser.ConvertError).ErrorValue).IsEqualTo("Compare() requires two parameters of same basic type (number or string)");
+                }
 
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" fred ( 20 )")).ErrorValue.Equals("fred() not recognised")).IsTrue();
             }

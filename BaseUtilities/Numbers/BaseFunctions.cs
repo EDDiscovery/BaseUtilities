@@ -228,7 +228,7 @@ namespace BaseUtils
                     }
                 }
                 else
-                    return new StringParser.ConvertError(name + "Compare requires two parameters of same basic type (number or string)");
+                    return new StringParser.ConvertError(name + "() requires two parameters of same basic type (number or string)");
             }
             else
                 return new StringParser.ConvertError(name + "() not recognised");
