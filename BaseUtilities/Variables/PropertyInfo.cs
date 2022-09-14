@@ -72,7 +72,7 @@ namespace BaseUtils
 
                 if (fields)
                 {
-                    foreach (FieldInfo fi in jtype.GetFields())
+                    foreach (FieldInfo fi in jtype.GetFields(bf))
                     {
                         if ((excludedeclaretype == null || fi.DeclaringType != excludedeclaretype) && (propexcluded == null || !propexcluded.Contains(fi.FieldType)))
                         {

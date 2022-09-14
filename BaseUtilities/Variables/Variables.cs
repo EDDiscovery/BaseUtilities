@@ -373,39 +373,42 @@ namespace BaseUtils
         // onlyenumerate means pick only top level fields/properties of name
         // ensuredoublerep means a double will always have a . in it, to make sure the reader knows its a double
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false, string classsepar = "_")      
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , 
+                                                int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false, string classsepar = "_",
+                                                System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)      
         {
             Type jtype = o.GetType();
 
-            foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties())
+            foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties(bf))
             {
                 if (onlyenumerate == null || onlyenumerate.Contains(pi.Name))
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Prop {pi.Name}");
+                   // System.Diagnostics.Debug.WriteLine($"Prop {pi.Name}");
                     if (pi.GetIndexParameters().GetLength(0) == 0 && (propexcluded == null || !propexcluded.Contains(pi.PropertyType)))      // only properties with zero parameters are called
                     {
                         string name = prefix + pi.Name;
                         System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded, ensuredoublerep, classsepar);
+                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name, maxdepth, propexcluded, ensuredoublerep, classsepar, bf);
                     }
                 }
             }
 
-            foreach (System.Reflection.FieldInfo fi in jtype.GetFields())
+            foreach (System.Reflection.FieldInfo fi in jtype.GetFields(bf))
             {
                 if (onlyenumerate == null || onlyenumerate.Contains(fi.Name))
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Field {fi.Name}");
+                   // System.Diagnostics.Debug.WriteLine($"Field {fi.Name}");
                     if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
                     {
                         string name = prefix + fi.Name;
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded, ensuredoublerep, classsepar);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name, maxdepth, propexcluded, ensuredoublerep, classsepar, bf);
                     }
                 }
             }
         }
 
-        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false, string classsepar = "_")
+        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false, string classsepar = "_",
+                                    System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
         {
             if (depth < 0)      // 0, list, class, object, .. limit depth
                 return;
@@ -418,7 +421,7 @@ namespace BaseUtils
                 rettype = rettype.GetGenericArguments()[0];
             }
 
-            //System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
+           // System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
 
             System.Globalization.CultureInfo ct = System.Globalization.CultureInfo.InvariantCulture;
 
@@ -438,7 +441,7 @@ namespace BaseUtils
                             if (k is string)
                             {
                                 Object v = data[k as string];
-                                AddDataOfType(v, v.GetType(), name + classsepar + (string)k, depth - 1, classtypeexcluded, ensuredoublerep, classsepar);
+                                AddDataOfType(v, v.GetType(), name + classsepar + (string)k, depth - 1, classtypeexcluded, ensuredoublerep, classsepar, bf);
                             }
                         }
                     }
@@ -458,7 +461,7 @@ namespace BaseUtils
                         {
                             string subname = name + "[" + (i + 1).ToString(ct) + "]";
                             if (data[i] != null)        // if may be null, double check or crash!
-                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded, ensuredoublerep, classsepar);
+                                AddDataOfType(data[i], data[i].GetType(), subname, depth - 1, classtypeexcluded, ensuredoublerep, classsepar, bf);
                             else
                                 values[subname] = "";
 
@@ -477,18 +480,21 @@ namespace BaseUtils
                 }
                 else if (rettype.IsClass)
                 {
-                    foreach (System.Reflection.PropertyInfo pi in rettype.GetProperties())
+                    foreach (System.Reflection.PropertyInfo pi in rettype.GetProperties(bf))
                     {
-                        if (pi.GetIndexParameters().GetLength(0) == 0 && pi.PropertyType.IsPublic )      // only properties with zero parameters are called
+                        //  System.Diagnostics.Debug.WriteLine($" Member {pi.Name} pub {pi.PropertyType.IsPublic} npub {pi.PropertyType.IsNestedPublic}");
+
+                        // only properties with zero parameters are called and with public or nested public access
+                        if (pi.GetIndexParameters().GetLength(0) == 0 )      
                         {
                             System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + classsepar + pi.Name , depth-1, classtypeexcluded, ensuredoublerep, classsepar);
+                            AddDataOfType(getter.Invoke(o, null), pi.PropertyType, name + classsepar + pi.Name , depth-1, classtypeexcluded, ensuredoublerep, classsepar, bf);
                         }
                     }
 
-                    foreach (System.Reflection.FieldInfo fi in rettype.GetFields())
+                    foreach (System.Reflection.FieldInfo fi in rettype.GetFields(bf))
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + classsepar + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep, classsepar);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, name + classsepar + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep, classsepar, bf);
                     }
                 }
                 else if (rettype.IsPrimitive || rettype == typeof(DateTime))
