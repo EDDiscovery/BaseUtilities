@@ -346,7 +346,7 @@ namespace BaseUtils
 
         public string Translate(string english, string id)
         {
-            if (translations != null && !english.Equals("<code>") )
+            if (translations != null && !english.StartsWith("<code") )
             {
                 string key = id;
                 if (OutputIDs)
@@ -416,7 +416,7 @@ namespace BaseUtils
             {
                 // if text is valid, not a single char, has letters, and not <code>, try
 
-                if (ctrl.Text != null && ctrl.Text.Length > 1 && ctrl.Text.HasLetterChars() && ctrl.Text != "<code>")
+                if (ctrl.Text != null && ctrl.Text.Length > 1 && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
                 {
                     // if embedded id, try and translate the ID
 
@@ -515,7 +515,7 @@ namespace BaseUtils
 
             string s = tt.GetToolTip(ctrl);
             //System.Diagnostics.Debug.WriteLine($"Tooltip {ctrl.Name} = {s}");
-            if (s != null && s.Length > 1 && s.HasLetterChars() && s != "<code>")
+            if (s != null && s.Length > 1 && s.HasLetterChars() && !s.StartsWith("<code"))
             {
                 string id = subname.AppendPrePad("ToolTip", ".");
 
@@ -574,7 +574,7 @@ namespace BaseUtils
 
             string itemname = msi.Name;
 
-            if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && msi.Text != "<code>")
+            if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && !msi.Text.StartsWith("<code"))
             {
                 string id = subname.AppendPrePad(itemname, ".");
 

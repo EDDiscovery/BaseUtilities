@@ -39,6 +39,8 @@ namespace BaseUtils
         public string NextEmpty() { return (pos < args.Length) ? args[pos++] : ""; }
         public int Int() { return (pos < args.Length) ? args[pos++].InvariantParseInt(0) : 0; }
         public int? IntNull() { return (pos < args.Length) ? args[pos++].InvariantParseIntNull() : null; }
+        public long Long() { return (pos < args.Length) ? args[pos++].InvariantParseLong(0) : 0; }
+        public long? LongNull() { return (pos < args.Length) ? args[pos++].InvariantParseLongNull() : null; }
         public double Double() { return (pos < args.Length) ? args[pos++].InvariantParseDouble(0) : 0.0; }
         public double? DoubleNull() { return (pos < args.Length) ? args[pos++].InvariantParseDoubleNull() :null; }
         public string Rest(string sep = " ") { return string.Join(sep, args, pos, args.Length - pos); }

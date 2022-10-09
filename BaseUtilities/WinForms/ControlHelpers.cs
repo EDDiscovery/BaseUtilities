@@ -229,6 +229,17 @@ public static partial class ControlHelpersStaticFunc
         return str;
     }
 
+    public static int XCenter(this Control c)
+    {
+        return (c.Right + c.Left) / 2;
+    }
+
+    public static int YCenter(this Control c)
+    {
+        return (c.Top + c.Bottom) / 2;
+    }
+
+
     #endregion
 
     #region Content Align
