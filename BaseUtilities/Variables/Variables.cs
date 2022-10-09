@@ -357,15 +357,21 @@ namespace BaseUtils
                 System.Reflection.PropertyInfo pi = jtype.GetProperty(rootname);        // check property for root name, public only
                 if ( pi != null )
                 {
-                    System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, rootname, maxdepth, propexcluded);
+                    if (propexcluded == null || !propexcluded.Contains(pi.PropertyType))
+                    {
+                        System.Reflection.MethodInfo getter = pi.GetGetMethod();
+                        AddDataOfType(getter.Invoke(o, null), pi.PropertyType, rootname, maxdepth, propexcluded);
+                    }
                 }
                 else
                 {
                     System.Reflection.FieldInfo fi = jtype.GetField(rootname);          // check field for root name, public only
                     if ( fi != null )
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, rootname, maxdepth, propexcluded);
+                        if (propexcluded == null || !propexcluded.Contains(fi.FieldType))
+                        {
+                            AddDataOfType(fi.GetValue(o), fi.FieldType, rootname, maxdepth, propexcluded);
+                        }
                     }
                 }
             }
