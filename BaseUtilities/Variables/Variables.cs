@@ -341,29 +341,34 @@ namespace BaseUtils
 
         #region Object values to this class
 
-        public bool GetValuesIndicated(Object o)                                            // For all in the Values list, fill in data given from fields in O
+        // For all in the Values list, fill in data given from fields in O if possible
+        // stoptext allows you to isolate the root part. Normally ["_","["]
+
+        public void GetValuesIndicated(Object o, Type[] propexcluded, int maxdepth, string[] stoptext)
         {
             Type jtype = o.GetType();
 
-            foreach ( string k in values.Keys.ToList())
+            foreach ( string keyname in values.Keys.ToList())
             {
-                System.Reflection.PropertyInfo pi = jtype.GetProperty(k);
+                string rootname = keyname.Substring(0, keyname.IndexOfOrLength(stoptext));        // cut off the [ and class stuff to get to the root name
+
+                //System.Diagnostics.Debug.WriteLine($"Indicated value {keyname} rootname {rootname}");
+
+                System.Reflection.PropertyInfo pi = jtype.GetProperty(rootname);        // check property for root name, public only
                 if ( pi != null )
                 {
                     System.Reflection.MethodInfo getter = pi.GetGetMethod();
-                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, k, 0);
+                    AddDataOfType(getter.Invoke(o, null), pi.PropertyType, rootname, maxdepth, propexcluded);
                 }
                 else
                 {
-                    System.Reflection.FieldInfo fi = jtype.GetField(k);
+                    System.Reflection.FieldInfo fi = jtype.GetField(rootname);          // check field for root name, public only
                     if ( fi != null )
                     {
-                        AddDataOfType(fi.GetValue(o), fi.FieldType, k, 0);
+                        AddDataOfType(fi.GetValue(o), fi.FieldType, rootname, maxdepth, propexcluded);
                     }
                 }
             }
-
-            return true;
         }
 
         // of a class, enumerate and store values in variables
@@ -373,7 +378,7 @@ namespace BaseUtils
         // onlyenumerate means pick only top level fields/properties of name
         // ensuredoublerep means a double will always have a . in it, to make sure the reader knows its a double
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded , 
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded, 
                                                 int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false, string classsepar = "_",
                                                 System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)      
         {

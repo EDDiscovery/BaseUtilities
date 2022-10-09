@@ -43,7 +43,7 @@ namespace BaseUtils
 
             try
             {
-                valuesneeded.GetValuesIndicated(cls);       // given the class data, and the list of values needed, add it
+                valuesneeded.GetValuesIndicated(cls, null, 5, new string[] { "[", "_" });       // given the class data, and the list of values needed, add it. the stop text is the classic [ and _ for expansion of arrays/classes
                 valuesneeded.Add(othervars);
                 return CheckConditions(fel, valuesneeded, out errlist, out errclass);    // and check, passing in the values collected against the conditions to test.
             }

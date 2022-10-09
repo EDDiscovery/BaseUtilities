@@ -102,6 +102,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VariablesTests.cs" />
     <Compile Include="ConditionTests.cs" />
     <Compile Include="CSVTest.cs" />
     <Compile Include="KeyParser.cs" />

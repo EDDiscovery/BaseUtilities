@@ -25,12 +25,54 @@ using System.Linq;
 
 namespace EDDiscoveryTests
 {
+    class ConditionTestFixtureSub
+    {
+        public int V20 { get; set; } = 20;
+    }
+    class ConditionTestFixture
+    {
+        public int V10 { get; set; } = 10;
+        public int[] VA { get; set; } = new int[2] { 100, 200 };
+        public ConditionTestFixtureSub vsub { get; set; } = new ConditionTestFixtureSub();
+    }
+
     [TestFixture(TestOf = typeof(Eval))]
     public class ConditionTests
     {
         [Test]
         public void Conditions()
         {
+            {
+                var cond = new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("V10",ConditionEntry.MatchType.NumericEquals,"10"),
+                                new ConditionEntry("vsub_V20",ConditionEntry.MatchType.NumericEquals,"20"),
+                                new ConditionEntry("VA[1]",ConditionEntry.MatchType.NumericEquals,"100"),
+                            },
+                            Condition.LogicalCondition.Or,    // inner
+                            Condition.LogicalCondition.Or
+                        );
+
+                Variables indicated = new Variables();
+                cond.IndicateValuesNeeded(ref indicated);
+                Check.That(indicated.Count).Equals(3);
+                Check.That(indicated.Exists("V10")).IsTrue();
+
+                ConditionTestFixture ctf = new ConditionTestFixture();
+
+                Variables expanded = new Variables();
+                expanded.AddPropertiesFieldsOfClass(ctf, "", null, 5);
+                Check.That(expanded.Exists("vsub_V20")).IsTrue();
+
+                indicated.GetValuesIndicated(ctf, null, 5, new string[] { "[", "_" });
+                Check.That(indicated.Exists("V10")).IsTrue();
+                Check.That(indicated.GetInt("V10")).IsEqualTo(10);
+                Check.That(indicated.GetInt("vsub_V20")).IsEqualTo(20);
+                Check.That(indicated.GetInt("VA[1]")).IsEqualTo(100);
+
+            }
+
             {
                 Variables vars = new Variables();
                 vars["IsPlanet"] = "1";

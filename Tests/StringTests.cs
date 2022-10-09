@@ -64,6 +64,19 @@ namespace EDDiscoveryTests
             Check.That("S 10c".CompareAlphaInt("S 2c")).IsEqualTo(1);
             Check.That("S 1 c".CompareAlphaInt("S 10 c")).IsEqualTo(-1);
             Check.That("S 112 c".CompareAlphaInt("S 10 c")).IsEqualTo(1);
+
+            {
+                string root = "Arietis Sector DB-W b2-6";
+                List<string> sort1 = new List<string>() { root, root + " B 1", root + " A 1", root + " A 2", root + " B 2", root + " A", root + " B", };
+                sort1.Sort(delegate (string left, string right) { return left.CompareAlphaInt(right); });
+                Check.That(sort1[0]).IsEqualTo(root);
+                Check.That(sort1[1]).IsEqualTo(root + " A");
+                Check.That(sort1[2]).IsEqualTo(root + " A 1");
+                Check.That(sort1[3]).IsEqualTo(root + " A 2");
+                Check.That(sort1[4]).IsEqualTo(root + " B");
+                Check.That(sort1[5]).IsEqualTo(root + " B 1");
+
+            }
         }
 
         [Test]
