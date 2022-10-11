@@ -146,31 +146,62 @@ namespace BaseUtils
         // accepts maxsize having an element <1, if so, returns a 1 pixel image in that direction
 
         public static Bitmap DrawTextIntoFixedSizeBitmapC(string text, Size size, Font dp, Color c, Color b,
-                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null)
+                                                    float backscale = 1.0F, StringFormat frmt = null, Point? pos = null)
         {
             Bitmap img = new Bitmap(Math.Max(1, size.Width), Math.Max(1, size.Height)); // ensure we have a bitmap #2842
             Color? back = null;
-            if (!b.IsFullyTransparent() && text.Length>0)       // transparent means no paint, or text length = 0 means no background paint, for this version
+            if (!b.IsFullyTransparent() && text.Length > 0)       // transparent means no paint, or text length = 0 means no background paint, for this version
                 back = b;
-            return DrawTextIntoFixedSizeBitmap(ref img, text, dp, c, back, backscale, centertext, frmt);
+            return DrawTextIntoBitmap(img, new Rectangle(0, 0, img.Width, img.Height), text, dp, c, back, backscale, frmt);
         }
 
-        public static Bitmap DrawTextIntoFixedSizeBitmap(ref Bitmap img, string text,Font dp, Color c, Color? b,
-                                                    float backscale = 1.0F, bool centertext = false, StringFormat frmt = null, int angleback = 90)
-        { 
+        // draw into bitmap at position. If back colour is set, back fill area is sized to text used area.
+
+        public static Bitmap DrawTextIntoBitmap(Bitmap img, Point pos, Size maxsize, string text, Font dp, Color c, Color? back,
+                                                float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
+        {
+            if (back == null || back.Value.IsFullyTransparent())
+            {
+                return DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, 30000,30000), text, dp, c, back, backscale, frmt);
+            }
+            else
+            {
+                Bitmap t = new Bitmap(1, 1);
+
+                using (Graphics bgr = Graphics.FromImage(t))
+                {
+                    SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
+
+                    return DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, (int)(sizef.Width + 1), (int)(sizef.Height + 1)), text, dp, c, back, backscale, frmt);
+                }
+            }
+        }
+
+        // draw into bitmap at position. If back colour is set, back fill area is sized to the whole area
+        public static Bitmap DrawTextIntoBitmap(Bitmap img, Rectangle area, string text, Font dp, Color c, Color? b,
+                                                float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
+        {
             using (Graphics dgr = Graphics.FromImage(img))
             {
-                if (b != null)           
+                if (b != null)
                 {
+                    System.Diagnostics.Debug.WriteLine($"Draw back into {area}");
+
                     if (b.Value.IsFullyTransparent())       // if transparent colour to paint in, need to fill clear it completely
                     {
-                        dgr.Clear(Color.Transparent);
+                        if (area.Size != img.Size || area.Left != 0 || area.Top != 0 )      // if not the whole bitmap
+                        {
+                            dgr.SetClip(area);
+                            dgr.Clear(Color.Transparent);       // seems to be the only way to set transparent pixels
+                            dgr.ResetClip();
+                        }
+                        else
+                            dgr.Clear(Color.Transparent);       // clear the lot
                     }
                     else
                     {
-                        Rectangle backarea = new Rectangle(0, 0, img.Width, img.Height);
-                        using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(backarea, b.Value, b.Value.Multiply(backscale), angleback))
-                            dgr.FillRectangle(bb, backarea);
+                        using (Brush bb = new System.Drawing.Drawing2D.LinearGradientBrush(area, b.Value, b.Value.Multiply(backscale), angleback))
+                            dgr.FillRectangle(bb, area);
                     }
 
                     dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; // only if filled
@@ -178,17 +209,10 @@ namespace BaseUtils
 
                 using (Brush textb = new SolidBrush(c))
                 {
-                    if (centertext)
-                    {
-                        SizeF sizef = dgr.MeasureString(text, dp);
-                        int w = (int)(sizef.Width + 1);
-                        int h = (int)(sizef.Height + 1);
-                        dgr.DrawString(text, dp, textb, img.Width / 2 - w / 2, img.Height / 2 - h / 2);
-                    }
-                    else if (frmt != null)
-                        dgr.DrawString(text, dp, textb, new Rectangle(0, 0, img.Width, img.Height), frmt);
+                    if (frmt != null)
+                        dgr.DrawString(text, dp, textb, area, frmt);
                     else
-                        dgr.DrawString(text, dp, textb, 0, 0);
+                        dgr.DrawString(text, dp, textb, area.X, area.Y);
                 }
 
                 dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
@@ -196,6 +220,7 @@ namespace BaseUtils
                 return img;
             }
         }
+
 
         public static void FillBitmap(Bitmap img, Color c, float backscale = 1.0F)
         {
