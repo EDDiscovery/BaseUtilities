@@ -177,7 +177,7 @@ namespace BaseUtils
             }
         }
 
-        // draw into bitmap at position. If back colour is set, back fill area is sized to the whole area
+        // draw into bitmap at position. If back colour is set, back fill area is sized to the whole area. Set b = null to stop it drawing the back area.
         public static Bitmap DrawTextIntoBitmap(Bitmap img, Rectangle area, string text, Font dp, Color c, Color? b,
                                                 float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
         {
@@ -185,7 +185,7 @@ namespace BaseUtils
             {
                 if (b != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Draw back into {area}");
+                    //System.Diagnostics.Debug.WriteLine($"Draw back into {area}");
 
                     if (b.Value.IsFullyTransparent())       // if transparent colour to paint in, need to fill clear it completely
                     {
