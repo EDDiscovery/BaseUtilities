@@ -152,40 +152,58 @@ namespace BaseUtils
             Color? back = null;
             if (!b.IsFullyTransparent() && text.Length > 0)       // transparent means no paint, or text length = 0 means no background paint, for this version
                 back = b;
-            return DrawTextIntoBitmap(img, new Rectangle(0, 0, img.Width, img.Height), text, dp, c, back, backscale, frmt);
+            DrawTextIntoBitmap(img, new Rectangle(0, 0, img.Width, img.Height), text, dp, c, back, backscale, frmt);
+            return img;
         }
 
-        // draw into bitmap at position. If back colour is set, back fill area is sized to text used area.
-
-        public static Bitmap DrawTextIntoBitmap(Bitmap img, Point pos, Size maxsize, string text, Font dp, Color c, Color? back,
-                                                float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
+        // measure string by font and format.  if maxsize=null, its given all the space it needs.  If maxsize != null, limit it to this size (wordwrap, centre etc)
+        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt = null, Size? maxsize = null)
         {
-            if (back == null || back.Value.IsFullyTransparent())
+            using (Bitmap t = new Bitmap(1, 1))
             {
-                return DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, 30000,30000), text, dp, c, back, backscale, frmt);
-            }
-            else
-            {
-                Bitmap t = new Bitmap(1, 1);
-
-                using (Graphics bgr = Graphics.FromImage(t))
+                using (Graphics g = Graphics.FromImage(t))
                 {
-                    SizeF sizef = (frmt != null) ? bgr.MeasureString(text, dp, maxsize, frmt) : bgr.MeasureString(text, dp);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;      // recommendation from https://docs.microsoft.com/en-us/dotnet/api/system.drawing.graphics.measurestring?view=dotnet-plat-ext-5.0
 
-                    return DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, (int)(sizef.Width + 1), (int)(sizef.Height + 1)), text, dp, c, back, backscale, frmt);
+                    if (maxsize == null)
+                        maxsize = new Size(30000, 30000);
+
+                    SizeF size = fmt != null ? g.MeasureString(text, f, maxsize.Value, fmt) : g.MeasureString(text, f, maxsize.Value);
+                    return size;
                 }
             }
         }
 
-        // draw into bitmap at position. If back colour is set, back fill area is sized to the whole area. Set b = null to stop it drawing the back area.
-        public static Bitmap DrawTextIntoBitmap(Bitmap img, Rectangle area, string text, Font dp, Color c, Color? b,
+        // draw into bitmap at position.
+        // If back colour is set, back fill area is sized to text used area (limited to maxsize).  This includes transparent back colour painting. Return SizeF
+        // if back colour is null, then draw into box with pos and maxsize. Whole back area is coloured.  Return empty sizef
+
+        public static SizeF DrawTextIntoBitmap(Bitmap img, Point pos, Size maxsize, string text, Font dp, Color c, Color? back,
+                                                float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
+        {
+            if (back == null )
+            {
+                DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, maxsize.Width, maxsize.Height), text, dp, c, back, backscale, frmt);
+                return SizeF.Empty;
+            }
+            else
+            {
+                SizeF sizef = MeasureStringInBitmap(text, dp, frmt, maxsize);
+                DrawTextIntoBitmap(img, new Rectangle(pos.X, pos.Y, (int)(sizef.Width + 1), (int)(sizef.Height + 1)), text, dp, c, back, backscale, frmt);
+                return sizef;
+            }
+        }
+
+        // draw into bitmap into rectangle
+        // If back colour is set, back fill is the whole rectangle
+        public static void DrawTextIntoBitmap(Bitmap img, Rectangle area, string text, Font dp, Color c, Color? b,
                                                 float backscale = 1.0F, StringFormat frmt = null, int angleback = 90)
         {
             using (Graphics dgr = Graphics.FromImage(img))
             {
                 if (b != null)
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Draw back into {area}");
+                    System.Diagnostics.Debug.WriteLine($"Draw back into {area}");
 
                     if (b.Value.IsFullyTransparent())       // if transparent colour to paint in, need to fill clear it completely
                     {
@@ -216,8 +234,6 @@ namespace BaseUtils
                 }
 
                 dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
-
-                return img;
             }
         }
 
@@ -398,20 +414,6 @@ namespace BaseUtils
             return newbmp;
         }
 
-        public static SizeF MeasureStringInBitmap(string text, Font f, StringFormat fmt = null)
-        {
-            using (Bitmap t = new Bitmap(1, 1))
-            {
-                using (Graphics g = Graphics.FromImage(t))
-                {
-                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;      // recommendation from https://docs.microsoft.com/en-us/dotnet/api/system.drawing.graphics.measurestring?view=dotnet-plat-ext-5.0
-                    if (fmt != null)
-                        return g.MeasureString(text, f, new Size(10000, 10000), fmt);
-                    else
-                        return g.MeasureString(text, f, new Size(10000, 10000));
-                }
-            }
-        }
 
         // average,Brightness or maximum over area of bitmap
         public static Tuple<float, float, float, float> Function(this Bitmap bmp, BitmapFunction mode, int x, int y, int width, int height )
