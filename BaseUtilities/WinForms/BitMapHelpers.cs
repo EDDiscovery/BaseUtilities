@@ -230,7 +230,7 @@ namespace BaseUtils
                     if (frmt != null)
                         dgr.DrawString(text, dp, textb, area, frmt);
                     else
-                        dgr.DrawString(text, dp, textb, area.X, area.Y);
+                        dgr.DrawString(text, dp, textb, area);
                 }
 
                 dgr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
