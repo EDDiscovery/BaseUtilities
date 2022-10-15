@@ -125,6 +125,7 @@ public static class ObjectExtensionsNumbersBool
         return null;
     }
 
+    // given a character, return hex value (case insensitive) or null
     static public int? ToHex(this char c)
     {
         if (char.IsDigit(c))
@@ -135,6 +136,35 @@ public static class ObjectExtensionsNumbersBool
             return c - 'a' + 10;
         else
             return null;
+    }
+
+    // given a string, at position p, return hex double byte value ("...A1....") or null if not hex
+    static public int? ToHex(this string s, int p)
+    {
+        if (s.Length > p + 1)
+        {
+            int? top = ToHex(s[p]);
+            int? bot = ToHex(s[p + 1]);
+            if (top.HasValue && bot.HasValue)
+                return (top << 4) | bot;
+        }
+        return null;
+    }
+
+    // given a string, containing hex only double byte values ("A109A4"), convert.
+    static public string FromHexString(this string ascii)
+    {
+        string s = "";
+        for (int i = 0; i < ascii.Length; i += 2)
+        {
+            int? v = ascii.ToHex(i);
+            if (v.HasValue)
+                s += Convert.ToChar(v.Value);
+            else
+                return null;
+        }
+
+        return s;
     }
 
     static public int? ReadDecimalInt(ref string s)
