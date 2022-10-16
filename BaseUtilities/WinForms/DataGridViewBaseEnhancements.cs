@@ -32,6 +32,8 @@ namespace BaseUtils
 
     // also add in a ColumnFillWeight change event
 
+    // Add in autosort by column name option
+
     public class DataGridViewBaseEnhancements : DataGridView
     {
         public ContextMenuStrip ColumnHeaderMenuStrip { get; set; } = null;
@@ -53,6 +55,7 @@ namespace BaseUtils
 
         public Action<object, DataGridViewColumnEventArgs, bool> ColumnFillWeightChanged = null;   // add missing ColumnFillWeight change (bool = first time)
 
+        public bool AutoSortByColumnName { get; set; } = false; // if set, columns name selects sort : Numeric, Date, AlphaInt, etc
 
         private ContextMenuStrip defaultstrip = null;
         private bool cmschangingoverride = false;
@@ -158,5 +161,20 @@ namespace BaseUtils
             if (fire && ColumnFillWeightChanged != null)
                 ColumnFillWeightChanged(this, e, !there);
         }
+
+        protected override void OnSortCompare(DataGridViewSortCompareEventArgs e)
+        {
+            if ( !AutoSortByColumnName)
+                base.OnSortCompare(e);
+            else if (e.Column.Name.Contains("Numeric"))
+                e.SortDataGridViewColumnNumeric();
+            else if (e.Column.Name.Contains("Date"))
+                e.SortDataGridViewColumnDate();
+            else if (e.Column.Name.Contains("AlphaInt"))
+                e.SortDataGridViewColumnAlphaInt();
+            else
+                base.OnSortCompare(e);
+        }
+
     }
 }
