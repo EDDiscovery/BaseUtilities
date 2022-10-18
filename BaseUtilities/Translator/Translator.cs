@@ -400,7 +400,10 @@ namespace BaseUtils
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
             var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
             if (errlist.HasChars())
-                System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist}}};");
+            {
+                System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist.Replace(",",", ").WordWrap(160)}}};");
+                System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",\n").Replace("EDTx.", "    ")};");
+            }
             if (enumset != null)
             {
                 System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
@@ -420,7 +423,7 @@ namespace BaseUtils
                 {
                     // if embedded id, try and translate the ID
 
-                    if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
+                    if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))                                                                                       
                     {
                         string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
                         ctrl.Text = Translate(id, id);
@@ -501,10 +504,14 @@ namespace BaseUtils
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
             var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name);
             if (errlist.HasChars())
-                System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist}}};");
+            {
+                System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
+                System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",'\n'").Replace("EDTx.", "    ")};");
+            }
+
             if (enumset != null)
             {
-                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist.WordWrap(80));
                 System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
@@ -555,15 +562,18 @@ namespace BaseUtils
 
             foreach (ToolStripItem msi in ctrl.Items)
             {
-                errlist = errlist.AppendPrePad( Tx(msi, elist, subname) , ", ");
+                errlist = errlist.AppendPrePad(Tx(msi, elist, subname), ", ");
             }
 
             if (errlist.HasChars())
-                System.Diagnostics.Debug.WriteLine($"        var enumlistcms = new Enum[] {{{errlist}}};");
+            {
+                System.Diagnostics.Debug.WriteLine($"        var enumlistcms = new Enum[] {{{errlist.WordWrap(160)}}};");
+                System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join("\n,").Replace("EDTx.", "    ")};");
+            }
 
             if (enumset != null)
             {
-                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist);
+                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist.WordWrap(80));
                 System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
