@@ -196,13 +196,37 @@ public static class ObjectExtensionsDates
         return ret;
     }
 
+    static public bool IsStartOfDay(this DateTime tme)    
+    {
+        return tme.Hour == 0 && tme.Minute == 0 && tme.Second == 0 && tme.Millisecond == 0;
+    }
+    static public bool IsEndOfDay(this DateTime tme)      
+    {
+        return tme.Hour == 23 && tme.Minute == 59 && tme.Second == 59;      // don't worry about milliseconds here
+    }
+    static public DateTime StartOfDay(this DateTime tme)      // start of day, 0:0:0
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, 0, 0, 0, tme.Kind);
+    }
     static public DateTime EndOfDay(this DateTime tme)      // end of date, 23:59.59
     {
         return new DateTime(tme.Year, tme.Month, tme.Day, 23, 59, 59, tme.Kind);
     }
-    static public DateTime StartOfDay(this DateTime tme)      // start of day, 0:0:0
+    static public DateTime StartOfWeek(this DateTime tme)      // start of week (sunday morning), 0:0:0
     {
-        return new DateTime(tme.Year, tme.Month, tme.Day, 0,0,0, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, tme.Day-(int)tme.DayOfWeek, 0, 0, 0, tme.Kind);
+    }
+    static public DateTime EndOfWeek(this DateTime tme)      // end of week (sat night), 23:59.59
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day + 6 - (int)tme.DayOfWeek, 23, 59, 59, tme.Kind);
+    }
+    static public DateTime StartOfMonth(this DateTime tme)      // Start of month
+    {
+        return new DateTime(tme.Year, tme.Month, 1, 0, 0, 0, tme.Kind);
+    }
+    static public DateTime EndOfMonth(this DateTime tme)      // End of month
+    {
+        return new DateTime(tme.Year, tme.Month, DateTime.DaysInMonth(tme.Year,tme.Month), 23, 59, 59, tme.Kind);
     }
 
     // left and right can be null or not dates..

@@ -56,6 +56,7 @@ namespace SQLLiteExtensions
             }
         }
 
+        // Date times return them in UTC Kind
         public T GetSetting<T>(string key, T defaultvalue)
         {
             Type tt = typeof(T);
