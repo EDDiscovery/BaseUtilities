@@ -229,6 +229,15 @@ public static class ObjectExtensionsDates
         return new DateTime(tme.Year, tme.Month, DateTime.DaysInMonth(tme.Year,tme.Month), 23, 59, 59, tme.Kind);
     }
 
+    static public DateTime MinValueUTC()
+    {
+        return new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc);        //Minvalue in utc mode
+    }
+    static public DateTime MaxValueUTC()
+    {
+        return new DateTime(3155378975999999999,DateTimeKind.Utc);
+    }
+
     // left and right can be null or not dates..
 
     static public int CompareDate(this string left, string right)
