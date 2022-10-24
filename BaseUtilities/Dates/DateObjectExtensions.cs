@@ -210,7 +210,7 @@ public static class ObjectExtensionsDates
     }
     static public DateTime EndOfDay(this DateTime tme)      // end of date, 23:59.59
     {
-        return new DateTime(tme.Year, tme.Month, tme.Day, 23, 59, 59, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, tme.Day, 23, 59, 59, 999, tme.Kind);
     }
     static public DateTime StartOfWeek(this DateTime tme)      // start of week (sunday morning), 0:0:0
     {
@@ -218,7 +218,7 @@ public static class ObjectExtensionsDates
     }
     static public DateTime EndOfWeek(this DateTime tme)      // end of week (sat night), 23:59.59
     {
-        return new DateTime(tme.Year, tme.Month, tme.Day + 6 - (int)tme.DayOfWeek, 23, 59, 59, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, tme.Day + 6 - (int)tme.DayOfWeek, 23, 59, 59, 999, tme.Kind);
     }
     static public DateTime StartOfMonth(this DateTime tme)      // Start of month
     {
@@ -226,7 +226,16 @@ public static class ObjectExtensionsDates
     }
     static public DateTime EndOfMonth(this DateTime tme)      // End of month
     {
-        return new DateTime(tme.Year, tme.Month, DateTime.DaysInMonth(tme.Year,tme.Month), 23, 59, 59, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, DateTime.DaysInMonth(tme.Year, tme.Month), 23, 59, 59, 999, tme.Kind);
+    }
+
+    static public DateTime StartOfYear(this DateTime tme)      // Start of month
+    {
+        return new DateTime(tme.Year, 1, 1, 0, 0, 0, tme.Kind);
+    }
+    static public DateTime EndOfYear(this DateTime tme)      // End of month
+    {
+        return new DateTime(tme.Year, 12, 31, 23, 59, 59, 999, tme.Kind);
     }
 
     static public DateTime MinValueUTC()
