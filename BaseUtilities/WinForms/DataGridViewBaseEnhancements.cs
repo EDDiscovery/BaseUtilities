@@ -57,6 +57,13 @@ namespace BaseUtils
 
         public bool AutoSortByColumnName { get; set; } = false; // if set, columns name selects sort : Numeric, Date, AlphaInt, etc
 
+        public int CalculateGridHeightByContents(DataGridViewElementStates vs = DataGridViewElementStates.Visible)
+        {
+            int gridheight = this.Rows.GetRowsHeight(vs);
+            gridheight += 1 * this.RowCount + this.ColumnHeadersHeight + 2;
+            return gridheight;
+        }
+
         private ContextMenuStrip defaultstrip = null;
         private bool cmschangingoverride = false;
 
@@ -164,16 +171,20 @@ namespace BaseUtils
 
         protected override void OnSortCompare(DataGridViewSortCompareEventArgs e)
         {
-            if ( !AutoSortByColumnName)
+            if (!AutoSortByColumnName)
                 base.OnSortCompare(e);
-            else if (e.Column.Name.Contains("Numeric"))
-                e.SortDataGridViewColumnNumeric();
-            else if (e.Column.Name.Contains("Date"))
-                e.SortDataGridViewColumnDate();
-            else if (e.Column.Name.Contains("AlphaInt"))
-                e.SortDataGridViewColumnAlphaInt();
             else
-                base.OnSortCompare(e);
+            {
+              //  System.Diagnostics.Debug.WriteLine($"Autosort {Name} col {e.Column.Index} on {e.Column.Name}");
+                if (e.Column.Name.Contains("Numeric"))
+                    e.SortDataGridViewColumnNumeric();
+                else if (e.Column.Name.Contains("Date"))
+                    e.SortDataGridViewColumnDate();
+                else if (e.Column.Name.Contains("AlphaInt"))
+                    e.SortDataGridViewColumnAlphaInt();
+                else
+                    base.OnSortCompare(e);
+            }
         }
 
     }
