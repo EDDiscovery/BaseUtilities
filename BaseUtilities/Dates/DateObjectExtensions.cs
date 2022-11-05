@@ -247,13 +247,22 @@ public static class ObjectExtensionsDates
         return new DateTime(3155378975999999999,DateTimeKind.Utc);
     }
 
+    static public bool CompareWithinMs( this DateTime left, DateTime right, long withinms)
+    {
+        // A single tick represents one hundred nanoseconds or one ten-millionth of a second.
+        // There are 10,000 ticks in a millisecond (see TicksPerMillisecond) and 10 million ticks in a second.
+
+        var absdelta = Math.Abs(left.Ticks - right.Ticks);
+        return absdelta < (withinms * TimeSpan.TicksPerMillisecond);  
+    }
+
     // left and right can be null or not dates..
 
-    static public int CompareDate(this string left, string right)
+    static public int CompareDateCurrentCulture(this string left, string right)
     {
         DateTime v1 = DateTime.MinValue, v2 = DateTime.MinValue;
 
-        bool v1hasval = left != null && DateTime.TryParse(left, out v1);
+        bool v1hasval = left != null && DateTime.TryParse(left, out v1);         
         bool v2hasval = right != null && DateTime.TryParse(right, out v2);
 
         if (!v1hasval)

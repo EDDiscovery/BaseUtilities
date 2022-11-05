@@ -88,13 +88,13 @@ public static class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left.CompareDate(right);
+            e.SortResult = left.CompareDateCurrentCulture(right);
         }
         else
         {
             string left = e.CellValue1?.ToString();
             string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareDate(right);
+            e.SortResult = left.CompareDateCurrentCulture(right);
         }
 
         if (e.SortResult == 0 && userowtagtodistinguish)
@@ -213,6 +213,27 @@ public static class DataGridViewControlHelpersStaticFunc
         }
 
         return -1;
+    }
+
+    // Somewhere in the row or cell data or the row is a date time- the getdate function returns this
+    // try and find nearest row to time within withinms span.
+    // -1 if none found.  Rows not presumed ordered
+    static public int FindRowWithDateTagWithin(this DataGridView grid, Func<DataGridViewRow, DateTime> getdate, DateTime time, long withinms)
+    {
+        int bestrow = -1;
+        long bestdelta = long.MaxValue;
+        foreach (DataGridViewRow row in grid.Rows)
+        {
+            DateTime rowdt = getdate(row);                      // get date from row
+            var delta = Math.Abs(rowdt.Ticks - time.Ticks);     // find delta
+            if ( delta < withinms && delta < bestdelta)         // if within, and is best
+            {
+                bestrow = row.Index;                            // this is the row!
+                bestdelta = delta;
+            }
+        }
+
+        return bestrow;
     }
 
     // try and force this row to centre or top
