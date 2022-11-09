@@ -1,6 +1,5 @@
-﻿
-/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+﻿/*
+ * Copyright © 2016 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 
@@ -496,14 +493,15 @@ public static partial class ControlHelpersStaticFunc
 
     #region Misc
 
+    // this scales the font down only to fit into textarea given a graphic and text.  Used in Paint
     public static Font GetFontToFitRectangle(this Graphics g, string text, Font fnt, Rectangle textarea, StringFormat fmt)
     {
         bool ownfont = false;
         while (true)
         {
-            SizeF drawnsize = g.MeasureString(text, fnt, new Point(0,0), fmt);
+            SizeF drawnsize = g.MeasureString(text, fnt, new Point(0, 0), fmt);
 
-            if ((int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height)
+            if (fnt.Size < 2 || ((int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height))
                 return fnt;
 
             if (ownfont)
@@ -513,6 +511,44 @@ public static partial class ControlHelpersStaticFunc
             ownfont = true;
         }
     }
+
+    // this scales the font up or down to fit window
+    // fnt itself is not deallocated.
+    public static Font GetFontToFitRectangle(string text, Font fnt, Rectangle textarea, StringFormat fmt)
+    {
+        SizeF drawnsize = BaseUtils.BitMapHelpers.MeasureStringInBitmap(text, fnt, fmt);
+
+        bool smallerthanbox = (int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height;
+        float dir = smallerthanbox ? 0.5f : -0.5f;
+
+        bool ownfont = false;
+
+        while (true)
+        {
+            Font fnt2 = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size + dir, fnt.Style);
+
+            drawnsize = BaseUtils.BitMapHelpers.MeasureStringInBitmap(text, fnt2, fmt);
+            smallerthanbox = (int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height;
+            System.Diagnostics.Debug.WriteLine($"Autofont {fnt2} {smallerthanbox} dir {dir}");
+
+            // conditions to stop, betting too big, betting small enough, too small font
+            if ((dir > 0 && !smallerthanbox) || (dir < 0 && smallerthanbox) || (dir < 0 && fnt.Size < 2))
+            {
+                fnt2.Dispose();
+                return fnt;
+            }
+            else
+            {
+                if (ownfont)
+                    fnt.Dispose();
+                fnt = fnt2;
+                ownfont = true;
+            }
+        }
+    }
+
+
+
 
     public static Size MeasureItems(this Graphics g, Font fnt , string[] array, StringFormat fmt)
     {

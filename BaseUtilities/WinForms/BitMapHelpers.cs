@@ -174,7 +174,7 @@ namespace BaseUtils
             }
         }
 
-        // draw into bitmap at position.
+         // draw into bitmap at position.
         // If back colour is set, back fill area is sized to text used area (limited to maxsize).  This includes transparent back colour painting. Return SizeF
         // if back colour is null, then draw into box with pos and maxsize. Whole back area is coloured.  Return empty sizef
 
