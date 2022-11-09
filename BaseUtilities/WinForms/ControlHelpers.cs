@@ -529,7 +529,7 @@ public static partial class ControlHelpersStaticFunc
 
             drawnsize = BaseUtils.BitMapHelpers.MeasureStringInBitmap(text, fnt2, fmt);
             smallerthanbox = (int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height;
-            System.Diagnostics.Debug.WriteLine($"Autofont {fnt2} {smallerthanbox} dir {dir}");
+            //System.Diagnostics.Debug.WriteLine($"Autofont {fnt2} {smallerthanbox} dir {dir}");
 
             // conditions to stop, betting too big, betting small enough, too small font
             if ((dir > 0 && !smallerthanbox) || (dir < 0 && smallerthanbox) || (dir < 0 && fnt.Size < 2))
