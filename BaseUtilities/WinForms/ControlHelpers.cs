@@ -494,8 +494,12 @@ public static partial class ControlHelpersStaticFunc
     #region Misc
 
     // this scales the font down only to fit into textarea given a graphic and text.  Used in Paint
-    public static Font GetFontToFitRectangle(this Graphics g, string text, Font fnt, Rectangle textarea, StringFormat fmt)
+    // fnt itself is not deallocated.
+    public static Font GetFontToFit(this Graphics g, string text, Font fnt, Size textarea, StringFormat fmt)
     {
+        if (!text.HasChars())       // can't tell
+            return fnt;
+
         bool ownfont = false;
         while (true)
         {
@@ -512,24 +516,32 @@ public static partial class ControlHelpersStaticFunc
         }
     }
 
-    // this scales the font up or down to fit window
+    // this scales the font up or down to fit width and height.  Text is not allowed to wrap, its unformatted
     // fnt itself is not deallocated.
-    public static Font GetFontToFitRectangle(string text, Font fnt, Rectangle textarea, StringFormat fmt)
+    public static Font GetFontToFit(string text, Font fnt, Size areasize)
     {
-        SizeF drawnsize = BaseUtils.BitMapHelpers.MeasureStringInBitmap(text, fnt, fmt);
+        if (!text.HasChars())       // can't tell
+            return fnt;
 
-        bool smallerthanbox = (int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height;
+        SizeF drawnsize = BaseUtils.BitMapHelpers.MeasureStringUnformattedLengthInBitmap(text, fnt);
+
+        bool smallerthanbox = Math.Ceiling(drawnsize.Width) <= areasize.Width && Math.Ceiling(drawnsize.Height) < areasize.Height;
         float dir = smallerthanbox ? 0.5f : -0.5f;
+        float fontsize = fnt.Size;
+        System.Diagnostics.Debug.WriteLine($"Autofont {fnt.Name} {fnt.Size} fit {areasize} = {drawnsize} {smallerthanbox} dir {dir}");
 
         bool ownfont = false;
 
         while (true)
         {
-            Font fnt2 = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size + dir, fnt.Style);
+            fontsize += dir;
 
-            drawnsize = BaseUtils.BitMapHelpers.MeasureStringInBitmap(text, fnt2, fmt);
-            smallerthanbox = (int)(drawnsize.Width + 0.99f) <= textarea.Width && (int)(drawnsize.Height + 0.99f) <= textarea.Height;
-            //System.Diagnostics.Debug.WriteLine($"Autofont {fnt2} {smallerthanbox} dir {dir}");
+            Font fnt2 = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fontsize, fnt.Style);
+
+            drawnsize = BaseUtils.BitMapHelpers.MeasureStringUnformattedLengthInBitmap(text, fnt2);
+            smallerthanbox = Math.Ceiling(drawnsize.Width) <= areasize.Width && Math.Ceiling(drawnsize.Height) < areasize.Height;
+
+            System.Diagnostics.Debug.WriteLine($"Autofontnext  {fnt2.Name} {fnt2.Size} fit {areasize} = {drawnsize} {smallerthanbox} dir {dir}");
 
             // conditions to stop, betting too big, betting small enough, too small font
             if ((dir > 0 && !smallerthanbox) || (dir < 0 && smallerthanbox) || (dir < 0 && fnt.Size < 2))

@@ -174,7 +174,21 @@ namespace BaseUtils
             }
         }
 
-         // draw into bitmap at position.
+        // measure how long a string would be unformatted.
+        public static SizeF MeasureStringUnformattedLengthInBitmap(string text, Font f)
+        {
+            using (Bitmap t = new Bitmap(1, 1))
+            {
+                using (Graphics g = Graphics.FromImage(t))
+                {
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;      // recommendation from https://docs.microsoft.com/en-us/dotnet/api/system.drawing.graphics.measurestring?view=dotnet-plat-ext-5.0
+                    SizeF size = g.MeasureString(text, f);
+                    return size;
+                }
+            }
+        }
+
+        // draw into bitmap at position.
         // If back colour is set, back fill area is sized to text used area (limited to maxsize).  This includes transparent back colour painting. Return SizeF
         // if back colour is null, then draw into box with pos and maxsize. Whole back area is coloured.  Return empty sizef
 
