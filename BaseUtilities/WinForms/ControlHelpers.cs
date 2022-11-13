@@ -351,16 +351,29 @@ public static partial class ControlHelpersStaticFunc
         return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
     }
 
+    static public Rectangle ScreenRectangleAvailable(this Point p)
+    {
+        Screen scr = Screen.FromPoint(p);
+        return new Rectangle(p.X, p.Y, scr.Bounds.Width - (p.X-scr.Bounds.X), scr.Bounds.Height - (p.Y-scr.Bounds.Y));
+    }
+
     public enum VerticalAlignment { Top, Middle, Bottom };
 
     // the Location has been set to the initial pos, then rework to make sure it shows on screen. Locky means try to keep to Y position unless its too small
-    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY, 
+    static public void PositionSizeWithinScreen(this Control p, int wantedwidth, int wantedheight, bool lockY,
                                                     Size margin, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
-        Screen scr = Screen.FromPoint(p.Location);
+        var rect = p.Location.CalculateRectangleWithinScreen(wantedwidth, wantedheight, lockY, margin, halign, vertalign, scrollbarallowwidth);
+        p.Bounds = rect;
+    }
+
+    static public Rectangle CalculateRectangleWithinScreen(this Point position, int wantedwidth, int wantedheight, bool lockY,
+                                                Size margin, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
+    {
+        Screen scr = Screen.FromPoint(position);
         Rectangle scrb = scr.Bounds;
 
-        int left = p.Left;
+        int left = position.X;
         int width = Math.Min(wantedwidth, scrb.Width - margin.Width * 2);         // ensure within screen limits taking off margins
 
         if (halign == HorizontalAlignment.Right)
@@ -376,7 +389,7 @@ public static partial class ControlHelpersStaticFunc
             left = scr.Bounds.Left + margin.Width;
         }
 
-        int top = p.Top;
+        int top = position.Y;
         int height = Math.Min(wantedheight, scrb.Height - margin.Height * 2);        // ensure within screen
 
         if (vertalign == VerticalAlignment.Bottom )
@@ -421,10 +434,7 @@ public static partial class ControlHelpersStaticFunc
             left = scr.Bounds.Left + margin.Width;
         }
 
-
-        //  System.Diagnostics.Debug.WriteLine("Pos " + new Point(left, top) + " size " + new Size(width,height));
-        p.Location = new Point(left, top);
-        p.Size = new Size(width, height);
+        return new Rectangle(left, top, width, height);
     }
 
     static public Point PositionWithinRectangle(this Point p, Size ps, Rectangle other)      // clamp to within client rectangle of another
