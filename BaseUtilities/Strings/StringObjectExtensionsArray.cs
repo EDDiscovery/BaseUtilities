@@ -21,6 +21,17 @@ using System.Text;
 
 public static partial class ObjectExtensionsStrings
 {
+    static public int ContainsIn(this string[] array, string s, StringComparison compare = StringComparison.CurrentCulture)
+    {
+        for (int av = 0; av < array.Length; av++)
+        {
+            if (array[av].Contains(s, compare))
+                return av;
+        }
+
+        return -1;
+    }
+
     // in array, find first occurance of any of the array[n] terms in s, return -1 not found, or set arrayindex to the one found and return the position in s where found
     static public int IndexOf(this string s, string[] array, out int arrayindex)   
     {
