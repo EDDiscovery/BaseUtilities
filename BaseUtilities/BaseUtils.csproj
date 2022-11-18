@@ -68,6 +68,7 @@
     <Compile Include="Conditions\ConditionListsCheckEval.cs" />
     <Compile Include="Conditions\ConditionListsCheck.cs" />
     <Compile Include="DDE\DDEServer.cs" />
+    <Compile Include="Drawing\DrawingHelpers.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />
     <Compile Include="Functions\FunctionsBasic.cs" />
@@ -145,7 +146,8 @@
     <Compile Include="Process\Processes.cs" />
     <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
     <Compile Include="Misc\SHA.cs" />
-    <Compile Include="WinForms\BitMapHelpers.cs" />
+    <Compile Include="Drawing\BitMapHelpers.cs" />
+    <Compile Include="WinForms\ControlDragger.cs" />
     <Compile Include="WinForms\ControlSplitter.cs" />
     <Compile Include="WinForms\DataGridViewColumnControl.cs">
       <SubType>Component</SubType>
@@ -153,8 +155,8 @@
     <Compile Include="WinForms\DataGridViewBaseEnhancements.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="WinForms\HotSpotMap.cs" />
-    <Compile Include="WinForms\ColorObjectExtensions.cs" />
+    <Compile Include="Drawing\HotSpotMap.cs" />
+    <Compile Include="Drawing\ColorObjectExtensions.cs" />
     <Compile Include="Numbers\DistanceParser.cs" />
     <Compile Include="Numbers\LineStore.cs" />
     <Compile Include="Numbers\NumberObjectExtensions.cs" />
@@ -173,7 +175,7 @@
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
-    <Compile Include="WinForms\FontLoader.cs" />
+    <Compile Include="Drawing\FontLoader.cs" />
     <Compile Include="XML\xml.cs" />
   </ItemGroup>
   <ItemGroup>
