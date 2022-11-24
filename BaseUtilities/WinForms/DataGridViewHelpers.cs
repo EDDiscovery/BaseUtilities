@@ -226,7 +226,7 @@ public static class DataGridViewControlHelpersStaticFunc
         {
             DateTime rowdt = getdate(row);                      // get date from row
             var delta = Math.Abs(rowdt.Ticks - time.Ticks);     // find delta
-            if ( delta < withinms && delta < bestdelta)         // if within, and is best
+            if (delta < withinms && delta < bestdelta)         // if within, and is best
             {
                 bestrow = row.Index;                            // this is the row!
                 bestdelta = delta;
@@ -235,6 +235,24 @@ public static class DataGridViewControlHelpersStaticFunc
 
         return bestrow;
     }
+
+    static public int GetLastRowWithValue(this DataGridView grid)
+    {
+        for (int i = grid.RowCount - 1; i >= 0; i--)
+        {
+            var row = grid.Rows[i];
+            if (row.Cells.Count > 0)
+            {
+                foreach (DataGridViewCell c in row.Cells)
+                {
+                    if (c.Value != null && (!(c.Value is string) || ((string)c.Value).HasChars()))
+                        return i;
+                }
+            }
+        }
+        return -1;
+    }
+
 
     // try and force this row to centre or top
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
