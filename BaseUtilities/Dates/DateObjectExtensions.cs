@@ -238,6 +238,15 @@ public static class ObjectExtensionsDates
         return new DateTime(tme.Year, 12, 31, 23, 59, 59, 999, tme.Kind);
     }
 
+    static public DateTime ToLocalKind(this DateTime t)
+    {
+        return new DateTime(t.Ticks, DateTimeKind.Local);
+    }
+    static public DateTime ToUniversalKind(this DateTime t)
+    {
+        return new DateTime(t.Ticks, DateTimeKind.Utc);
+    }
+
     static public DateTime MinValueUTC()
     {
         return new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc);        //Minvalue in utc mode
