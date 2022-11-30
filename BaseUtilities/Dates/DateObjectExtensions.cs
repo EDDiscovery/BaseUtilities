@@ -214,11 +214,11 @@ public static class ObjectExtensionsDates
     }
     static public DateTime StartOfWeek(this DateTime tme)      // start of week (sunday morning), 0:0:0
     {
-        return new DateTime(tme.Year, tme.Month, tme.Day-(int)tme.DayOfWeek, 0, 0, 0, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, tme.Day, 0, 0, 0, tme.Kind).AddDays(-(int)tme.DayOfWeek);
     }
     static public DateTime EndOfWeek(this DateTime tme)      // end of week (sat night), 23:59.59
     {
-        return new DateTime(tme.Year, tme.Month, tme.Day + 6 - (int)tme.DayOfWeek, 23, 59, 59, 999, tme.Kind);
+        return new DateTime(tme.Year, tme.Month, tme.Day, 23, 59, 59, 999, tme.Kind).AddDays(-(int)tme.DayOfWeek).AddDays(6);
     }
     static public DateTime StartOfMonth(this DateTime tme)      // Start of month
     {
