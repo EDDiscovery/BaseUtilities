@@ -69,7 +69,7 @@ namespace BaseUtils
         {
             if (httpserveraddress == null || httpserveraddress.Length == 0)           // for debugging, set _serveraddress empty
             {
-                System.Diagnostics.Trace.WriteLine(method + endpoint);
+                System.Diagnostics.Trace.WriteLine(method + RemoveApiKey(endpoint));
                 return new ResponseData(HttpStatusCode.Unauthorized);
             }
 
@@ -99,16 +99,18 @@ namespace BaseUtils
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    System.Diagnostics.Trace.WriteLine("HTTP" + method + " TO " + (httpserveraddress + RemoveApiKey(endpoint)) + " Thread" + System.Threading.Thread.CurrentThread.Name);
-                    WriteLog(method + " " + request.RequestUri, postData);
+                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread {System.Threading.Thread.CurrentThread.Name}";
+                    System.Diagnostics.Trace.WriteLine(d1);
+                    WriteLog(d1, postData);
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                     var data = getResponseData(response);
                     response.Close();
 
-                    System.Diagnostics.Trace.WriteLine("..HTTP" + method + " Response " + data.StatusCode);
-                    WriteLog("Response", data.Body.Left(512));
+                    string d2 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Response {data.StatusCode}";
+                    System.Diagnostics.Trace.WriteLine(d2);
+                    WriteLog(d2, data.Body.Left(1024));
 
                     return data;
                 }
