@@ -496,7 +496,7 @@ namespace BaseUtils
             return errlist;
         }
 
-        // translate tooltips.  Does not support %id%.  <code> is ignored.
+        // translate tooltips.  Does not support %id%.  <code> is ignored.  No check for duplicates due to tooltip replication on some controls (nov 22)
         public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
@@ -507,12 +507,6 @@ namespace BaseUtils
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
                 System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",'\n'").Replace("EDTx.", "    ")};");
-            }
-
-            if (enumset != null)
-            {
-                System.Diagnostics.Debug.Assert(errlist.IsEmpty(), "Missing enumerations: " + errlist.WordWrap(80));
-                System.Diagnostics.Debug.Assert(elist.Count == 0, "Enum set contains extra Enums: " + string.Join(",", elist));
             }
         }
 
@@ -528,10 +522,11 @@ namespace BaseUtils
 
                 string enumid = id.Replace(".", "_");
 
+                // if we do have it, unlike controls, we dont remove the enum to double detect, because some controls (Exttextbox, extcombobox) copy
+                // down their tooltips to their subcontrols and they end up being present multiple times
+
                 if (enumset == null || !enumset.Contains(enumid))
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
-                else
-                    enumset.Remove(enumid);
 
                 tt.SetToolTip(ctrl, Translate(s, id));
             }
