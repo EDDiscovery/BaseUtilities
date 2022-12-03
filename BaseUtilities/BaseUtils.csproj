@@ -61,6 +61,7 @@
     <Compile Include="Collections\DictionaryOfDictionaries.cs" />
     <Compile Include="Collections\DisposableDictionary.cs" />
     <Compile Include="Collections\RangeLists.cs" />
+    <Compile Include="Collections\SortedDictionaryDuplicates.cs" />
     <Compile Include="Collections\SortedListDuplicates.cs" />
     <Compile Include="Collections\StackOfDictionaries.cs" />
     <Compile Include="Conditions\Condition.cs" />
