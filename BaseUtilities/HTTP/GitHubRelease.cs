@@ -34,9 +34,9 @@ namespace BaseUtils
             get
             {
                 string str = jo["tag_name"].Str();
-                int indexof = str.IndexOfAny("0123456789".ToCharArray());
+                int indexof = str.IndexOfAny("0123456789".ToCharArray());       // find first number
                 if (indexof >= 0)
-                    return str.Substring(indexof);
+                    return str.Substring(indexof).Replace("_",".");     // added in case using _ for separators
                 else
                     return "";
             }
