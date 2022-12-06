@@ -35,15 +35,15 @@ namespace BaseUtils
             IsEmpty,            // string
             IsNotEmpty,         // string
 
-            IsTrue,             // numeric !=0
-            IsFalse,            // numeric == 0
+            IsTrue,             // Logical numeric !=0
+            IsFalse,            // Logical numeric == 0
 
-            NumericEquals,      // numeric =
-            NumericNotEquals,   // numeric !=
-            NumericGreater,            // numeric >
-            NumericGreaterEqual,       // numeric >=
-            NumericLessThan,           // numeric <
-            NumericLessThanEqual,      // numeric <=
+            NumericEquals,              // numeric =
+            NumericNotEquals,           // numeric !=
+            NumericGreater,             // numeric >
+            NumericGreaterEqual,        // numeric >=
+            NumericLessThan,            // numeric <
+            NumericLessThanEqual,       // numeric <=
 
             DateAfter,          // Date compare
             DateBefore,         // Date compare.
@@ -56,9 +56,14 @@ namespace BaseUtils
             MatchSemicolon,     // left, is it one of the semicolon list on right
             MatchCommaList,     // left, is it one of the comma list on right
             MatchSemicolonList, // left, is it one of the semicolon list on right, use OR
+            NotOneOf,           // ! left, is it one of a quoted comma list on right
+            NotAnyOfAny,        // ! is any in a comma separ on left, one of a quoted comma list on right
+            NotMatchSemicolon,     // ! left, is it one of the semicolon list on right
+            NotMatchCommaList,     // ! left, is it one of the comma list on right
+            NotMatchSemicolonList, // ! left, is it one of the semicolon list on right, use OR
 
-            AlwaysTrue,         // Always true
-            AlwaysFalse,          // never true
+            AlwaysTrue,         // Logical Always true
+            AlwaysFalse,        // Logical never true
         };
 
         static public string[] MatchNames = {       // used for display
@@ -69,6 +74,7 @@ namespace BaseUtils
             ">= (Date)", "< (Date)",
             "Is Present", "Not Present",
             "Is One Of", "Any Of Any",  "Match Semicolon",  "Match Comma List",  "Match Semicolon List",
+            "Not One Of", "Not Any Of Any",  "Not Match Semicolon",  "Not Match Comma List",  "Not Match Semicolon List",
             "Always True/Enable", "Always False/Disable"
         };
 
@@ -80,6 +86,7 @@ namespace BaseUtils
             "D>=","D<",
             "IsPresent","NotPresent",
             "IsOneOf","AnyOfAny","MatchSemicolon","MatchCommaList","MatchSemicolonList",
+            "NotOneOf","NotAnyOfAny","NotMatchSemicolon","NotMatchCommaList","NotMatchSemicolonList",
             "AlwaysTrue","AlwaysFalse"
          };
 

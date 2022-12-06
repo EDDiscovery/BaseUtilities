@@ -314,7 +314,7 @@ namespace BaseUtils
                                             matched = lstring.IndexOf(rstring, StringComparison.InvariantCultureIgnoreCase) < 0;
                                         else if (ce.MatchCondition == ConditionEntry.MatchType.DoesNotContainCaseSensitive)
                                             matched = !lstring.Contains(rstring);
-                                        else if (ce.MatchCondition == ConditionEntry.MatchType.IsOneOf)
+                                        else if (ce.MatchCondition == ConditionEntry.MatchType.IsOneOf || ce.MatchCondition == ConditionEntry.MatchType.NotOneOf)
                                         {
                                             StringParser p = new StringParser(rstring);
                                             List<string> ret = p.NextQuotedWordList();
@@ -329,26 +329,34 @@ namespace BaseUtils
                                             else
                                             {
                                                 matched = ret.Contains(lstring, StringComparer.InvariantCultureIgnoreCase);
+                                                if (ce.MatchCondition == ConditionEntry.MatchType.NotOneOf)
+                                                    matched = !matched;
                                             }
                                         }
-                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchSemicolon)
+                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchSemicolon || ce.MatchCondition == ConditionEntry.MatchType.NotMatchSemicolon)
                                         {
                                             string[] list = rstring.Split(';').Select(x => x.Trim()).ToArray();     // split and trim
                                             matched = list.Contains(lstring.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                            if (ce.MatchCondition == ConditionEntry.MatchType.NotMatchSemicolon)
+                                                matched = !matched;
                                         }
-                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchCommaList)
+                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchCommaList || ce.MatchCondition == ConditionEntry.MatchType.NotMatchCommaList)
                                         {
                                             StringCombinations sc = new StringCombinations(',');
                                             sc.ParseString(rstring);      // parse, give all combinations
                                             matched = sc.Permutations.Contains(lstring.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                            if (ce.MatchCondition == ConditionEntry.MatchType.NotMatchCommaList)
+                                                matched = !matched;
                                         }
-                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchSemicolonList)
+                                        else if (ce.MatchCondition == ConditionEntry.MatchType.MatchSemicolonList || ce.MatchCondition == ConditionEntry.MatchType.NotMatchSemicolonList)
                                         {
                                             StringCombinations sc = new StringCombinations(';');
                                             sc.ParseString(rstring);      // parse, give all combinations
                                             matched = sc.Permutations.Contains(lstring.Trim(), StringComparer.InvariantCultureIgnoreCase); // compare, trimmed, case insensitive
+                                            if (ce.MatchCondition == ConditionEntry.MatchType.NotMatchSemicolonList)
+                                                matched = !matched;
                                         }
-                                        else if (ce.MatchCondition == ConditionEntry.MatchType.AnyOfAny)
+                                        else if (ce.MatchCondition == ConditionEntry.MatchType.AnyOfAny || ce.MatchCondition == ConditionEntry.MatchType.NotAnyOfAny)
                                         {
                                             StringParser l = new StringParser(lstring);
                                             List<string> ll = l.NextQuotedWordList();
@@ -373,6 +381,9 @@ namespace BaseUtils
                                                         break;
                                                     }
                                                 }
+
+                                                if (ce.MatchCondition == ConditionEntry.MatchType.NotAnyOfAny)
+                                                    matched = !matched;
                                             }
                                         }
                                         else
