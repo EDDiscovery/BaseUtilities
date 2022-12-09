@@ -96,22 +96,23 @@ public static class ObjectExtensionsStringsCompare
         return ev;
     }
 
+    // these accept s = null without barfing
 
     public static bool ContainsIIC(this string s, string other)
     {
-        return s.Contains(other, StringComparison.InvariantCultureIgnoreCase);
+        return s != null && s.Contains(other, StringComparison.InvariantCultureIgnoreCase);
     }
     public static bool EqualsIIC(this string s, string other)
     {
-        return s.Equals(other, StringComparison.InvariantCultureIgnoreCase);
+        return s != null && s.Equals(other, StringComparison.InvariantCultureIgnoreCase);
     }
     public static bool StartsWithIIC(this string s, string other)
     {
-        return s.StartsWith(other, StringComparison.InvariantCultureIgnoreCase);
+        return s!= null && s.StartsWith(other, StringComparison.InvariantCultureIgnoreCase);
     }
     public static bool EndWithIIC(this string s, string other)
     {
-        return s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
+        return s != null && s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
     }
 
 }
