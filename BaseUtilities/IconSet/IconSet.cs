@@ -35,6 +35,7 @@ namespace BaseUtils.Icons
         }
 
         public string[] Names() { return Icons.Keys.ToArray(); }        // all of the names available
+        public bool DontReportMissingErrors { get; set; } = false;
 
         public IconSet() { }
 
@@ -214,7 +215,7 @@ namespace BaseUtils.Icons
 
             if (!Icons.TryGetValue(name, out object o))            // if not found, must return someting, so default
             {
-                System.Diagnostics.Debug.WriteLine("*** MISSING ICON " + name);
+                System.Diagnostics.Debug.WriteLineIf(!DontReportMissingErrors,"*** MISSING ICON " + name);
                 if (!Icons.TryGetValue("Default", out o))            // if not found, must return someting, so default
                     return new Bitmap(1, 1);
             }
