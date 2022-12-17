@@ -119,8 +119,9 @@ public static partial class ObjectExtensionsStrings
         return str;
     }
 
-
-    // mimics Split('s') if emptyendifmarkersatend is true
+    // Split by string instead of character.
+    // emptyendifmarkeratend leaves, like split, a empty end position if the marker is right at the end
+    // emptyarrayifempty gives an empty array if nothing is in the string, like split
     static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase,
                                     bool emptyendifmarkeratend = false, bool emptyarrayifempty = false)
     {
@@ -168,6 +169,18 @@ public static partial class ObjectExtensionsStrings
         }
     }
 
+    // split into a two dimensional array by line, and then on each line by cell.  Options apply to cell split
+    static public string[][] Split(this string s, string splitlinechars, string splitcellchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase,
+                                    bool emptyendifmarkeratendonline = false, bool emptyarrayifemptyonline = false)
+    {
+        string[] lines = Split(s, splitlinechars, cmp, false, false);           // split into lines, with no empties
+        string[][] res = new string[lines.Length][];
+        for (int i = 0; i < lines.Length; i++)
+            res[i] = Split(lines[i], splitcellchars, cmp, emptyarrayifemptyonline, emptyarrayifemptyonline);
+        return res;
+    }
+
+    // split by character removing empty ends/finish
     static public string[] SplitNoEmptyStartFinish(this string s, char splitchar)
     {
         string[] array = s.Split(splitchar);
@@ -177,6 +190,7 @@ public static partial class ObjectExtensionsStrings
         return length == array.Length ? array : array.RangeSubset(start, length);
     }
 
+    // split removing empty strings
     static public List<string> SplitNoEmptyStrings(this string s, char splitchar)
     {
         string[] array = s.Split(splitchar);
@@ -189,6 +203,7 @@ public static partial class ObjectExtensionsStrings
 
         return entries;
     }
+
 
 
 
