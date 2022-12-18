@@ -79,6 +79,7 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
+    <Compile Include="Notifications\Notifications.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
