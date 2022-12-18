@@ -1,6 +1,5 @@
-﻿
-/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+﻿/*
+ * Copyright © 2016 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,14 +10,10 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- *
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -586,6 +581,41 @@ public static class DataGridViewControlHelpersStaticFunc
         }
     }
 
+    // returns an array of selected rows, in order given. Taken from row collection, or from selected cell area
+    public static int[] SelectedRows(this DataGridView grid, bool ascending, bool usecellsifnorowselection)
+    {
+        var rows = grid.SelectedRows.OfType<DataGridViewRow>().       // pick out rows
+                            Where(c => c.Index != grid.NewRowIndex).    // not this pesky one
+                            Select(c => c.Index).Distinct();
+
+        if ( rows.Count() == 0 && usecellsifnorowselection)
+        {
+            rows = grid.SelectedCells.OfType<DataGridViewCell>().Select(x=>x.RowIndex).Distinct();
+        }
+
+        var selectedrows = ascending ? rows.OrderBy(x => x).ToArray() : rows.OrderByDescending(x => x).ToArray();
+
+        //foreach (var x in selectedrows) System.Diagnostics.Debug.WriteLine($"DGV Row selected {x}");
+
+        return selectedrows;
+    }
+
+
+    // first selectedrows entry, with a default, and with new row nerf
+    public static Tuple<int,int> SelectedRowAndCount(this DataGridView grid, bool ascending, bool usecellsifnorowselection, 
+                                              int defaultnoselection = 0, bool nonewrow = true)
+    {
+        var rows = SelectedRows(grid,ascending,usecellsifnorowselection);
+        int rowno = rows.Length > 0 ? rows[0] : defaultnoselection;
+        int count = Math.Max(1, rows.Length);
+        // if no new row, use one before, if possible
+        if (nonewrow && rowno > 0 && rowno == grid.NewRowIndex)
+            rowno--;
+        //System.Diagnostics.Debug.WriteLine($"DGV Selected row or current {rowno} len {count}");
+        return new Tuple<int,int>(rowno,count);
+    }
+
+    // write out to the savers info on column settings, visibility, fill weight, header column width
     public static void SaveColumnSettings(this DataGridView dgv, string root, Action<string, int> saveint, Action<string, double> savedouble)
     {
         for (int i = 0; i < dgv.Columns.Count; i++)
