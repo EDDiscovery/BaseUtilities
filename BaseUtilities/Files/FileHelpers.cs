@@ -171,5 +171,20 @@ namespace BaseUtils
         {
             return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(file), System.IO.Path.GetFileNameWithoutExtension(file) + suffix) + System.IO.Path.GetExtension(file);
         }
+
+        // is file not open for unshared read access - may be because it does not exist note
+        public static bool IsFileAvailable(string file)
+        {
+            try
+            {
+                FileStream f = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None);
+                f.Close();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
