@@ -422,7 +422,8 @@ namespace BaseUtils
                     else                                            // NAND none did matched producing a true, so therefore NAND must be false
                         innerres = false;
                 }
-                else if ( innerres == true)
+                
+                if ( innerres == true)
                 {
                    passed?.Add(cond);
                 }
