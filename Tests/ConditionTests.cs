@@ -74,6 +74,48 @@ namespace EDDiscoveryTests
             }
 
             {
+                Variables varsc1 = new Variables();
+                varsc1["Device"] = "Keyboard";
+                varsc1["EventName"] = "RControlKey";
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Device",ConditionEntry.MatchType.Equals,"Keyboard"),      
+                                new ConditionEntry("EventName",ConditionEntry.MatchType.Equals,"RControlKey"),     
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    List<Condition> passed = new List<Condition>();
+                    var ev = ConditionLists.CheckConditions(cl.List, varsc1, out string errlist, out ConditionLists.ErrorClass errclass, passed);
+                    Check.That(ev).Equals(true);
+                    Check.That(passed.Count).Equals(1);
+                }
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Device",ConditionEntry.MatchType.Equals,"Keyboard1"),    
+                                new ConditionEntry("EventName",ConditionEntry.MatchType.Equals,"RControlKey"),    
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    List<Condition> passed = new List<Condition>();
+                    var ev = ConditionLists.CheckConditions(cl.List, varsc1, out string errlist, out ConditionLists.ErrorClass errclass, passed);
+                    Check.That(ev).Equals(false);
+                    Check.That(passed.Count).Equals(0);
+                }
+            }
+
+
+            {
                 Variables vars = new Variables();
                 vars["IsPlanet"] = "1";
                 vars["IsBig"] = "1";
