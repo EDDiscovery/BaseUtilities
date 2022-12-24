@@ -73,6 +73,7 @@ namespace EDDiscoveryTests
 
             }
 
+            // test the passed condition - this one bit my bum 23/12/22
             {
                 Variables varsc1 = new Variables();
                 varsc1["Device"] = "Keyboard";
@@ -100,8 +101,25 @@ namespace EDDiscoveryTests
                     cl.Add(new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
-                                new ConditionEntry("Device",ConditionEntry.MatchType.Equals,"Keyboard1"),    
-                                new ConditionEntry("EventName",ConditionEntry.MatchType.Equals,"RControlKey"),    
+                                new ConditionEntry("Device",ConditionEntry.MatchType.Equals,"Keyboard1"),
+                                new ConditionEntry("EventName",ConditionEntry.MatchType.Equals,"RControlKey"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    List<Condition> passed = new List<Condition>();
+                    var ev = ConditionLists.CheckConditions(cl.List, varsc1, out string errlist, out ConditionLists.ErrorClass errclass, passed);
+                    Check.That(ev).Equals(false);
+                    Check.That(passed.Count).Equals(0);
+                }
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Device",ConditionEntry.MatchType.Equals,"Keyboard"),
+                                new ConditionEntry("EventName",ConditionEntry.MatchType.Equals,"RControlKey1"),
                             },
                             Condition.LogicalCondition.And,    // inner
                             Condition.LogicalCondition.Or
