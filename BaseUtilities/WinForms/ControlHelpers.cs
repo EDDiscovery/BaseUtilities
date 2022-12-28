@@ -243,7 +243,7 @@ public static partial class ControlHelpersStaticFunc
     static public Size SizeWithinScreen(this Control p, Size size, int wmargin = 128, int hmargin = 128)
     {
         Screen scr = Screen.FromPoint(p.Location);
-        Rectangle scrb = scr.Bounds;
+        Rectangle scrb = scr.WorkingArea;
         //System.Diagnostics.Debug.WriteLine("Screen is " + scrb);
         return new Size(Math.Min(size.Width, scrb.Width - wmargin), Math.Min(size.Height, scrb.Height - hmargin));
     }
@@ -251,7 +251,7 @@ public static partial class ControlHelpersStaticFunc
     static public Rectangle ScreenRectangleAvailable(this Point p)
     {
         Screen scr = Screen.FromPoint(p);
-        return new Rectangle(p.X, p.Y, scr.Bounds.Width - (p.X-scr.Bounds.X), scr.Bounds.Height - (p.Y-scr.Bounds.Y));
+        return new Rectangle(p.X, p.Y, scr.WorkingArea.Width - (p.X-scr.WorkingArea.X), scr.WorkingArea.Height - (p.Y-scr.WorkingArea.Y));
     }
 
     public enum VerticalAlignment { Top, Middle, Bottom };
@@ -268,67 +268,67 @@ public static partial class ControlHelpersStaticFunc
                                                 Size margin, HorizontalAlignment? halign = null, VerticalAlignment? vertalign = null, int scrollbarallowwidth = 0)
     {
         Screen scr = Screen.FromPoint(position);
-        Rectangle scrb = scr.Bounds;
+        Rectangle wa = scr.WorkingArea;
 
         int left = position.X;
-        int width = Math.Min(wantedwidth, scrb.Width - margin.Width * 2);         // ensure within screen limits taking off margins
+        int width = Math.Min(wantedwidth, wa.Width - margin.Width * 2);         // ensure within screen limits taking off margins
 
         if (halign == HorizontalAlignment.Right)
         {
-            left = scr.Bounds.Left + Math.Max(scrb.Width-margin.Width-width, margin.Width);               
+            left = wa.Left + Math.Max(wa.Width-margin.Width-width, margin.Width);               
         }
         else if (halign == HorizontalAlignment.Center)
         {
-            left = scr.Bounds.Left + scrb.Width / 2 - width / 2;
+            left = wa.Left + wa.Width / 2 - width / 2;
         }
         else if (halign == HorizontalAlignment.Left)
         {
-            left = scr.Bounds.Left + margin.Width;
+            left = wa.Left + margin.Width;
         }
 
         int top = position.Y;
-        int height = Math.Min(wantedheight, scrb.Height - margin.Height * 2);        // ensure within screen
+        int height = Math.Min(wantedheight, wa.Height - margin.Height * 2);        // ensure within screen
 
         if (vertalign == VerticalAlignment.Bottom )
         {
-            top = scr.Bounds.Top + Math.Max(scrb.Height - margin.Height - height, margin.Height);
+            top = wa.Top + Math.Max(wa.Height - margin.Height - height, margin.Height);
         }
         else if (vertalign == VerticalAlignment.Middle)
         {
-            top = scr.Bounds.Top + scrb.Height / 2 - height / 2;
+            top = wa.Top + wa.Height / 2 - height / 2;
         }
         else if (vertalign == VerticalAlignment.Top)
         {
-            top = scr.Bounds.Top + margin.Height;
+            top = wa.Top + margin.Height;
         }
 
-        int botscreen = scr.Bounds.Bottom;
+        int botscreen = wa.Bottom;
 
         int availableh = botscreen - top - margin.Height;                        // available height from top to bottom less margin
 
         if (height > availableh)                                            // if not enough height available
         {
-            if (lockY && availableh >= scrb.Height / 4)                     // if locky and available is reasonable
+            if (lockY && availableh >= wa.Height / 4)                     // if locky and available is reasonable
             {
                 height = availableh;                                        // lock height to it, keep y
             }
             else
             {
-                top = scr.Bounds.Top + Math.Max(margin.Height, scrb.Height - margin.Height - height);      // at least margin, or at least height-margin-wantedheight
-                height = Math.Min(scrb.Height - margin.Height * 2, height);        // and limit to margin*2
+                top = wa.Top + Math.Max(margin.Height, wa.Height - margin.Height - height);      // at least margin, or at least height-margin-wantedheight
+                height = Math.Min(wa.Height - margin.Height * 2, height);        // and limit to margin*2
             }
 
             width += scrollbarallowwidth;                                   // need a scroll bar
         }
 
-        if (left + width >= scr.Bounds.Right - margin.Width)                      // too far right
+        if (left + width >= wa.Right - margin.Width)                      // too far right
         {
-            left = scr.Bounds.Right - margin.Width - width;
+            left = wa.Right - margin.Width - width;
         }
 
-        if (left < scr.Bounds.Left + margin.Width)                                // too far left
+        if (left < wa.Left + margin.Width)                                // too far left
         {
-            left = scr.Bounds.Left + margin.Width;
+            left = wa.Left + margin.Width;
         }
 
         return new Rectangle(left, top, width, height);

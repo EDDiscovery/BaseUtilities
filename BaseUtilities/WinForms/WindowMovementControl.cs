@@ -71,8 +71,8 @@ namespace BaseUtils
                 centresize = new Size(scr.WorkingArea.Width * 6 / 8, scr.WorkingArea.Height * 6 / 8);
             }
 
-            ctrl.Location = new Point( scr.Bounds.Left + Math.Min(centreloc.X,scr.WorkingArea.Width-64) , 
-                                       scr.Bounds.Top + Math.Min(centreloc.Y,scr.WorkingArea.Height-64));
+            ctrl.Location = new Point( scr.WorkingArea.Left + Math.Min(centreloc.X,scr.WorkingArea.Width-64) , 
+                                       scr.WorkingArea.Top + Math.Min(centreloc.Y,scr.WorkingArea.Height-64));
             ctrl.Size = centresize;
         }
 
@@ -85,7 +85,7 @@ namespace BaseUtils
         {
             if (centreloc.X == int.MinValue)
             {
-                centreloc = new Point(ctrl.Left - scr.Bounds.Left, ctrl.Top - scr.Bounds.Top);
+                centreloc = new Point(ctrl.Left - scr.WorkingArea.Left, ctrl.Top - scr.WorkingArea.Top);
                 centresize = ctrl.Size;
                 System.Diagnostics.Debug.WriteLine("Rec " + centreloc + " " + centresize);
             }
