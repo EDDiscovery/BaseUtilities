@@ -511,6 +511,30 @@ namespace BaseUtils.Win32
         [DllImport("user32", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
+        // from knownfolders.h in windows kits\ver\include\ver\um
+
+        // {4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4}
+        public static Guid Win32FolderId_SavedGames = new Guid("4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4");
+        // {374DE290-123F-4565-9164-39C4925E467B}
+        public static Guid Win32FolderId_Downloads = new Guid("374DE290-123F-4565-9164-39C4925E467B");
+        // {B4BFCC3A-DB2C-424C-B029-7FE99A87C641}
+        public static Guid Win32FolderId_Desktop = new Guid(0xB4BFCC3A, 0xDB2C, 0x424C, 0xB0, 0x29, 0x7F, 0xE9, 0x9A, 0x87, 0xC6, 0x41);
+        // {B97D20BB-F46A-4C97-BA10-5E3608430854}
+        public static Guid Win32FolderId_Startup = new Guid(0xB97D20BB, 0xF46A, 0x4C97, 0xBA, 0x10, 0x5E, 0x36, 0x08, 0x43, 0x08, 0x54);
+        // {A77F5D77-2E2B-44C3-A6A2-ABA601054A51}
+        public static Guid Win32FolderId_Programs = new Guid(0xA77F5D77, 0x2E2B, 0x44C3, 0xA6, 0xA2, 0xAB, 0xA6, 0x01, 0x05, 0x4A, 0x51);
+        // {625B53C3-AB48-4EC1-BA1F-A1EF4146FC19}
+        public static Guid Win32FolderId_StartMenu  = new Guid(0x625B53C3, 0xAB48, 0x4EC1, 0xBA, 0x1F, 0xA1, 0xEF, 0x41, 0x46, 0xFC, 0x19);
+        // {AE50C081-EBD2-438A-8655-8A092E34987A}
+        public static Guid Win32FolderId_Recent = new Guid(0xAE50C081, 0xEBD2, 0x438A, 0x86, 0x55, 0x8A, 0x09, 0x2E, 0x34, 0x98, 0x7A);
+        // {8983036C-27C0-404B-8F08-102D10DCFD74}
+        public static Guid Win32FolderId_SendTo = new Guid(0x8983036C, 0x27C0, 0x404B, 0x8F, 0x08, 0x10, 0x2D, 0x10, 0xDC, 0xFD, 0x74);
+        // {FDD39AD0-238F-46AF-ADB4-6C85480369C7}
+        public static Guid Win32FolderId_Documents = new Guid(0xFDD39AD0, 0x238F, 0x46AF, 0xAD, 0xB4, 0x6C, 0x85, 0x48, 0x03, 0x69, 0xC7);
+        // {1777F761-68AD-4D8A-87BD-30B759FA33DD}
+        public static Guid Win32FolderId_Favorites = new Guid(0x1777F761, 0x68AD, 0x4D8A, 0x87, 0xBD, 0x30, 0xB7, 0x59, 0xFA, 0x33, 0xDD);
+
+
         [DllImport("Shell32.dll")]
         public static extern uint SHGetKnownFolderPath(
             [MarshalAs(UnmanagedType.LPStruct)] Guid rfid,
@@ -518,6 +542,19 @@ namespace BaseUtils.Win32
             IntPtr hToken,
             out IntPtr pszPath  // API uses CoTaskMemAlloc
         );
+
+        public static string KnownFolderPath(Guid guid)
+        {
+            IntPtr pszPath;
+            if (SHGetKnownFolderPath(guid, 0, IntPtr.Zero, out pszPath) == 0)
+            {
+                string path = Marshal.PtrToStringUni(pszPath);
+                Marshal.FreeCoTaskMem(pszPath);
+                return path;
+            }
+            else
+                return null;
+        }
 
         [Flags]
         public enum AssocF

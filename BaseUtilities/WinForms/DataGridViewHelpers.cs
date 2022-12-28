@@ -1,6 +1,5 @@
-﻿
-/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+﻿/*
+ * Copyright © 2016 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,252 +10,20 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- *
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
-
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
-public static class DataGridViewControlHelpersStaticFunc
+public static partial class DataGridViewControlHelpersStaticFunc
 {
-    // 
-    static public void SortDataGridViewColumnNumericThenAlpha(this DataGridViewSortCompareEventArgs e, string removetext = null)
-    {
-        string left = e.CellValue1?.ToString();
-        string right = e.CellValue2?.ToString();
-        var datal = ObjectExtensionsStringsCompare.ReadNumeric(left, removetext);
-        var datar = ObjectExtensionsStringsCompare.ReadNumeric(right, removetext);
-
-        if (datal.Item2 == false && datar.Item2 == false)
-        {
-            if (left == null)
-                e.SortResult = 1;
-            else if (right == null)
-                e.SortResult = -1;
-            else
-                e.SortResult = left.CompareTo(right);
-        }
-        else if (datal.Item2 == false)
-            e.SortResult = 1;
-        else if (datar.Item2 == false)
-            e.SortResult = -1;
-        else
-            e.SortResult = datal.Item1.CompareTo(datar.Item1);
-        e.Handled = true;
-    }
-
-    // sort using number. Removetext will remove text suggested
-    // usetag means use cell tag as subsititute text
-
-    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null, bool usecelltag = false)
-    {
-        if (usecelltag)
-        {
-            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-
-            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
-            var right = tagr != null ? tagr : e.CellValue2?.ToString();
-
-            e.SortResult = left.CompareNumeric(right, removetext);
-        }
-        else
-        {
-            string left = e.CellValue1?.ToString();
-            string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareNumeric(right, removetext);
-        }
-
-        e.Handled = true;
-    }
-
-    // sort using date. userowtagtodistinquish = true use .row as long tag
-    // usetag means use cell tag as subsititute text
-
-    static public void SortDataGridViewColumnDate(this DataGridViewSortCompareEventArgs e, bool userowtagtodistinguish = false, bool usecelltag = false)
-    {
-        if (usecelltag)
-        {
-            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-
-            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
-            var right = tagr != null ? tagr : e.CellValue2?.ToString();
-
-            e.SortResult = left.CompareDateCurrentCulture(right);
-        }
-        else
-        {
-            string left = e.CellValue1?.ToString();
-            string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareDateCurrentCulture(right);
-        }
-
-        if (e.SortResult == 0 && userowtagtodistinguish)
-        {
-            var lefttag = e.Column.DataGridView.Rows[e.RowIndex1].Tag;
-            var righttag = e.Column.DataGridView.Rows[e.RowIndex2].Tag;
-            if (lefttag != null && righttag != null)
-            {
-                long lleft = (long)lefttag;
-                long lright = (long)righttag;
-                e.SortResult = lleft.CompareTo(lright);
-            }
-        }
-
-        e.Handled = true;
-    }
-
-    // sort using alpha culture/case sensitive
-    // usetag means use cell tag as subsititute text
-
-    static public void SortDataGridViewColumnAlpha(this DataGridViewSortCompareEventArgs e, bool usecelltag = false)
-    {
-        if (usecelltag)
-        {
-            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-
-            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
-            var right = tagr != null ? tagr : e.CellValue2?.ToString();
-
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
-        }
-        else
-        {
-            string left = e.CellValue1?.ToString();
-            string right = e.CellValue2?.ToString();
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
-        }
-
-        e.Handled = true;
-    }
-
-    // sort using alpha, from a List<string> held in the tag of column
-    // usetag means use cell tag as subsititute text
-
-    static public void SortDataGridViewColumnTagsAsStringsLists(this DataGridViewSortCompareEventArgs e, int column)
-    {
-        DataGridView dataGridView = e.Column.DataGridView;
-        DataGridViewCell leftcell = dataGridView.Rows[e.RowIndex1].Cells[column];
-        DataGridViewCell rightcell = dataGridView.Rows[e.RowIndex2].Cells[column];
-
-        var lleft = leftcell.Tag as List<string>;
-        var lright = rightcell.Tag as List<string>;
-
-        if (lleft != null)
-        {
-            if (lright != null)
-            {
-                string sleft = string.Join(";", leftcell.Tag as List<string>);
-                string sright = string.Join(";", rightcell.Tag as List<string>);
-                e.SortResult = sleft.CompareTo(sright);
-            }
-            else
-                e.SortResult = 1;       // left exists, right doesn't, its bigger (null is smaller)
-        }
-        else
-            e.SortResult = lright != null ? -1 : 0;
-
-        e.Handled = true;
-    }
-
-    static public void SortDataGridViewColumnAlphaInt(this DataGridViewSortCompareEventArgs e, bool usecelltag = false)
-    {
-        if (usecelltag)
-        {
-            var tagl = e.Column.DataGridView.Rows[e.RowIndex1].Cells[e.Column.Index].Tag as string;
-            var tagr = e.Column.DataGridView.Rows[e.RowIndex2].Cells[e.Column.Index].Tag as string;
-
-            var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
-            var right = tagr != null ? tagr : e.CellValue2?.ToString();
-
-            e.SortResult = left.CompareAlphaInt(right);
-        }
-        else
-        {
-            string left = e.CellValue1?.ToString();
-            string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareAlphaInt(right);
-        }
-
-        e.Handled = true;
-    }
-
-    // Find text in coloun
-
-    static public int FindRowWithValue(this DataGridView grid, int coln, string text, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
-    {
-        foreach (DataGridViewRow row in grid.Rows)
-        {
-            if (row.Cells[coln].Value.ToString().Equals(text, sc))
-            {
-                return row.Index;
-            }
-        }
-
-        return -1;
-    }
-    static public int FindRowWithTag(this DataGridView grid, object tag)
-    {
-        foreach (DataGridViewRow row in grid.Rows)
-        {
-            if (row.Tag == tag)
-            {
-                return row.Index;
-            }
-        }
-
-        return -1;
-    }
-
-    // Somewhere in the row or cell data or the row is a date time- the getdate function returns this
-    // try and find nearest row to time within withinms span.
-    // -1 if none found.  Rows not presumed ordered
-    static public int FindRowWithDateTagWithin(this DataGridView grid, Func<DataGridViewRow, DateTime> getdate, DateTime time, long withinms)
-    {
-        int bestrow = -1;
-        long bestdelta = long.MaxValue;
-        foreach (DataGridViewRow row in grid.Rows)
-        {
-            DateTime rowdt = getdate(row);                      // get date from row
-            var delta = Math.Abs(rowdt.Ticks - time.Ticks);     // find delta
-            if (delta < withinms && delta < bestdelta)         // if within, and is best
-            {
-                bestrow = row.Index;                            // this is the row!
-                bestdelta = delta;
-            }
-        }
-
-        return bestrow;
-    }
-
-    static public int GetLastRowWithValue(this DataGridView grid)
-    {
-        for (int i = grid.RowCount - 1; i >= 0; i--)
-        {
-            var row = grid.Rows[i];
-            if (row.Cells.Count > 0)
-            {
-                foreach (DataGridViewCell c in row.Cells)
-                {
-                    if (c.Value != null && (!(c.Value is string) || ((string)c.Value).HasChars()))
-                        return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-
-    // try and force this row to centre or top
+    // try and force this row to centre or top so its displayed - using Current is not good enough to ensure its on screen
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
     {
+        grid.Update();  // force update so we get an updated display property - this seems to lag
+
         int drows = centre ? grid.DisplayedRowCount(false) : 0;
 
         while (!grid.Rows[rown].Displayed && drows >= 0)
@@ -267,83 +34,6 @@ public static class DataGridViewControlHelpersStaticFunc
             grid.Update();      //FORCE the update so we get an idea if its displayed
             drows--;
         }
-    }
-
-    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
-    {
-        vw.SuspendLayout();
-        vw.Enabled = false;
-
-        bool[] visible = new bool[vw.RowCount];
-        bool visibleChanged = false;
-
-        foreach (DataGridViewRow row in vw.Rows.OfType<DataGridViewRow>())
-        {
-            bool found = false;
-
-            if (searchstr.Length < 1)
-                found = true;
-            else
-            {
-                foreach (DataGridViewCell cell in row.Cells)
-                {
-                    if (cell.Value != null)
-                    {
-                        if (cell.Value.ToString().IndexOf(searchstr, 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (checktags)
-                    {
-                        List<string> slist = cell.Tag as List<string>;
-                        if (slist != null)
-                        {
-                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        string str = cell.Tag as string;
-                        if (str != null)
-                        {
-                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            visible[row.Index] = found;
-            visibleChanged |= found != row.Visible;
-        }
-
-        if (visibleChanged)
-        {
-            var selectedrow = vw.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
-            DataGridViewRow[] rows = vw.Rows.OfType<DataGridViewRow>().ToArray();
-            vw.Rows.Clear();
-
-            for (int i = 0; i < rows.Length; i++)
-            {
-                rows[i].Visible = visible[i];
-            }
-
-            vw.Rows.Clear();
-            vw.Rows.AddRange(rows.ToArray());
-
-            vw.Rows[selectedrow].Selected = true;
-        }
-
-        vw.Enabled = true;
-        vw.ResumeLayout();
     }
 
     public static bool IsNullOrEmpty(this DataGridViewCell cell)
@@ -362,6 +52,8 @@ public static class DataGridViewControlHelpersStaticFunc
         return visible;
     }
 
+    // use instead of direct access for Mono compatibility
+
     public static int SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv)
     {
         if (Environment.OSVersion.Platform != PlatformID.Win32NT)
@@ -373,6 +65,8 @@ public static class DataGridViewControlHelpersStaticFunc
             return dgv.FirstDisplayedScrollingRowIndex;
         }
     }
+
+    // use instead of direct access for Mono compatibility and protection against exception
 
     public static void SafeFirstDisplayedScrollingRowIndex(this DataGridView dgv, int rowno)
     {
@@ -437,7 +131,7 @@ public static class DataGridViewControlHelpersStaticFunc
         return count;
     }
 
-    // tries to set row, preferredcolumn, else tries another one on same row
+    // tries to set row and preferredcolumn, else tries another one on same row
     public static bool SetCurrentSelOnRow(this DataGridView dgv, int row, int preferredcolumn)
     {
         if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
@@ -492,6 +186,7 @@ public static class DataGridViewControlHelpersStaticFunc
                 }
             }
 
+            //System.Diagnostics.Debug.WriteLine($"Current cell {dgv.CurrentCell.RowIndex}, {dgv.CurrentCell.ColumnIndex} disp {dgv.CurrentCell.Displayed}");
             return true;
         }
 
@@ -586,73 +281,116 @@ public static class DataGridViewControlHelpersStaticFunc
         }
     }
 
-    public static void SaveColumnSettings(this DataGridView dgv, string root, Action<string, int> saveint, Action<string, double> savedouble)
+    // returns an array of selected rows, in order given. Taken from row collection, or from selected cell area
+    public static int[] SelectedRows(this DataGridView grid, bool ascending, bool usecellsifnorowselection)
     {
-        for (int i = 0; i < dgv.Columns.Count; i++)
+        var rows = grid.SelectedRows.OfType<DataGridViewRow>().       // pick out rows
+                            Where(c => c.Index != grid.NewRowIndex).    // not this pesky one
+                            Select(c => c.Index).Distinct();
+
+        if ( rows.Count() == 0 && usecellsifnorowselection)
         {
-            string k = root + (i + 1).ToString();
-            double fillw = dgv.Columns[i].Visible ? dgv.Columns[i].FillWeight : -dgv.Columns[i].FillWeight;
-            savedouble(k, fillw);
-            k += "_DI";
-            saveint(k, dgv.Columns[i].DisplayIndex);
-         //   System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
+            rows = grid.SelectedCells.OfType<DataGridViewCell>().Select(x=>x.RowIndex).Distinct();
         }
 
-        saveint(root + "HW", dgv.RowHeadersWidth);
+        var selectedrows = ascending ? rows.OrderBy(x => x).ToArray() : rows.OrderByDescending(x => x).ToArray();
+
+        //foreach (var x in selectedrows) System.Diagnostics.Debug.WriteLine($"DGV Row selected {x}");
+
+        return selectedrows;
     }
 
-    // Set column fill weight and visibility from getdouble, and set header width from getint.
-    // Return MinValue in getdouble to say you don't have a value
-    public static bool LoadColumnSettings(this DataGridView dgv, string root, Func<string, int> getint, Func<string, double> getdouble)
+
+    // first selectedrows entry, with a default, and with new row nerf
+    public static Tuple<int,int> SelectedRowAndCount(this DataGridView grid, bool ascending, bool usecellsifnorowselection, 
+                                              int defaultnoselection = 0, bool nonewrow = true)
     {
-        int hw = getint(root + "HW");
-        if (hw >= 0)
+        var rows = SelectedRows(grid,ascending,usecellsifnorowselection);
+        int rowno = rows.Length > 0 ? rows[0] : defaultnoselection;
+        int count = Math.Max(1, rows.Length);
+        // if no new row, use one before, if possible
+        if (nonewrow && rowno > 0 && rowno == grid.NewRowIndex)
+            rowno--;
+        //System.Diagnostics.Debug.WriteLine($"DGV Selected row or current {rowno} len {count}");
+        return new Tuple<int,int>(rowno,count);
+    }
+
+    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
+    {
+        vw.SuspendLayout();
+        vw.Enabled = false;
+
+        bool[] visible = new bool[vw.RowCount];
+        bool visibleChanged = false;
+
+        foreach (DataGridViewRow row in vw.Rows.OfType<DataGridViewRow>())
         {
-            dgv.SuspendLayout();
+            bool found = false;
 
-            dgv.RowHeadersWidth = hw;
-
-            int[] displayindexes = new int[dgv.ColumnCount];
-            int dicount = 0;
-
-            for (int i = 0; i < dgv.Columns.Count; i++)
+            if (searchstr.Length < 1)
+                found = true;
+            else
             {
-                string k = root + (i + 1).ToString();
-                double fillw = getdouble(k);
-                if (fillw > double.MinValue)
+                foreach (DataGridViewCell cell in row.Cells)
                 {
-                    dgv.Columns[i].Visible = fillw > 0;
-                    dgv.Columns[i].FillWeight = (float)Math.Abs(fillw);
-
-                    k += "_DI";
-                    int di = getint(k);
-                    if (di >= 0 && di < dgv.ColumnCount)
+                    if (cell.Value != null)
                     {
-                        displayindexes[di] = i;
-                        dicount++;
+                        if (cell.Value.ToString().IndexOf(searchstr, 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (checktags)
+                    {
+                        List<string> slist = cell.Tag as List<string>;
+                        if (slist != null)
+                        {
+                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        string str = cell.Tag as string;
+                        if (str != null)
+                        {
+                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
 
-            if (dicount == dgv.ColumnCount)
+            visible[row.Index] = found;
+            visibleChanged |= found != row.Visible;
+        }
+
+        if (visibleChanged)
+        {
+            var selectedrow = vw.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
+            DataGridViewRow[] rows = vw.Rows.OfType<DataGridViewRow>().ToArray();
+            vw.Rows.Clear();
+
+            for (int i = 0; i < rows.Length; i++)
             {
-                // when you change the display index, the others shuffle around. So need to set them it seems in display index increasing order.
-                // hence the array, and we set in this order.
-                for (int d = 0; d < dgv.ColumnCount; d++)
-                {
-                    //System.Diagnostics.Debug.WriteLine($"DGV {root} {displayindexes[d]} => di {d}");
-                    dgv.Columns[displayindexes[d]].DisplayIndex = d;
-                }
+                rows[i].Visible = visible[i];
             }
 
-            // for (int i = 0; i < dgv.ColumnCount; i++)  System.Diagnostics.Debug.WriteLine($"DGV {root} {i} with v {dgv.Columns[i].Visible} w {dgv.Columns[i].FillWeight} di {dgv.Columns[i].DisplayIndex}");
+            vw.Rows.Clear();
+            vw.Rows.AddRange(rows.ToArray());
 
-            dgv.ResumeLayout();
-
-            return true;
+            vw.Rows[selectedrow].Selected = true;
         }
-        else
-            return false;
 
+        vw.Enabled = true;
+        vw.ResumeLayout();
     }
+
+
 }

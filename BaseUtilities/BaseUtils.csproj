@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="QuickJSON, Version=0.9.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\RJKJSoft.QuickJSON.0.9.5\lib\net48\QuickJSON.dll</HintPath>
+    <Reference Include="QuickJSON, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.1.0.1\lib\net48\QuickJSON.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -79,8 +79,10 @@
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
+    <Compile Include="Notifications\Notifications.cs" />
     <Compile Include="Numbers\Matrix.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
+    <Compile Include="Singletons\SingleInstance.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
     <Compile Include="Strings\StringObjectExtensionsClassification.cs" />
     <Compile Include="Strings\StringObjectExtensionsReplacing.cs" />
@@ -173,6 +175,9 @@
     <Compile Include="StringParsers\StringParser.cs" />
     <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
     <Compile Include="Win32\Win32Constants.cs" />
+    <Compile Include="WinForms\DataGridViewHelpersColumnSettings.cs" />
+    <Compile Include="WinForms\DataGridViewHelpersFind.cs" />
+    <Compile Include="WinForms\DataGridViewHelpersSort.cs" />
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />

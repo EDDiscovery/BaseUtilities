@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+ * Copyright © 2016 - 2022 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,13 +10,10 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 public static class ObjectExtensionsStringsLists
 {
@@ -162,59 +159,38 @@ public static class ObjectExtensionsStringsLists
         return r;
     }
 
-    public static string ToString(this int[] a, string separ)
+    // default invariant culture
+    public static string ToString(this int[] a, string separ, System.Globalization.CultureInfo ci = null)
     {
+        if (ci == null)
+            ci = System.Globalization.CultureInfo.InvariantCulture;
         string outstr = "";
         if (a.Length > 0)
         {
-            outstr = a[0].ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outstr = a[0].ToString(ci);
 
             for (int i = 1; i < a.Length; i++)
-                outstr += separ + a[i].ToString(System.Globalization.CultureInfo.InvariantCulture);
+                outstr += separ + a[i].ToString(ci);
         }
 
         return outstr;
     }
 
-    public static string ToString(this List<int> a, string separ)       // ensure invariant
+    // default invariant culture
+    public static string ToString(this List<int> a, string separ, System.Globalization.CultureInfo ci = null)
     {
+        if (ci == null)
+            ci = System.Globalization.CultureInfo.InvariantCulture;
         string outstr = "";
         if (a.Count > 0)
         {
-            outstr = a[0].ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outstr = a[0].ToString(ci);
 
             for (int i = 1; i < a.Count; i++)
-                outstr += separ + a[i].ToString(System.Globalization.CultureInfo.InvariantCulture);
+                outstr += separ + a[i].ToString(ci);
         }
 
         return outstr;
     }
-
-    static public string[] SplitNoEmptyStartFinish(this string s, char splitchar)
-  {
-        string[] array = s.Split(splitchar);
-        int start = array[0].Length > 0 ? 0 : 1;
-        int end = array.Last().Length > 0 ? array.Length - 1 : array.Length - 2;
-        int length = end - start + 1;
-        return length == array.Length ? array : array.RangeSubset(start, length);
-    }
-
-    static public List<string> SplitNoEmptyStrings(this string s, char splitchar)
-    {
-        string[] array = s.Split(splitchar);
-        List<string> entries = new List<string>();
-        for (int i = 0; i < array.Length; i++)
-        {
-            if (array[i].Length > 0)
-                entries.Add(array[i]);
-        }
-
-        return entries;
-    }
-
-
-
-
-
 }
 

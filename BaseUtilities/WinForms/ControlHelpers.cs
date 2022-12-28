@@ -82,28 +82,17 @@ public static partial class ControlHelpersStaticFunc
         return total;
     }
 
-    // DO a refresh after this. presumes you have sorted the order of controls added in the designer file
-    // from C, offset either up/down dependent on on.  Remember in tag of c direction you shifted.  Don't shift if in same direction
-    // useful for autolayout forms
-    static public void ShiftControls(this Control.ControlCollection coll, Control c, int offset, bool on)
+    // move all controls after startcontrol by shift in Y
+    static public void ShiftControls(this Control.ControlCollection coll, Control startcontrol ,Point offset)
     {
-        bool enabled = false;
-        bool prevon = false;
-        foreach (Control ctrl in coll)
+        bool active = false;
+        foreach(Control c in coll)
         {
-            if (ctrl == c)
-            {
-                prevon = (ctrl.Tag == null) ? true : (bool)ctrl.Tag;
-                ctrl.Tag = on;
-                enabled = prevon != on;
-                //System.Diagnostics.Debug.WriteLine("Decided for enable " + enabled + " to " + on);
-            }
-
-            if (enabled)
-            {
-                ctrl.Location = new Point(ctrl.Left, ctrl.Top + ((on) ? offset : -offset));
-                //System.Diagnostics.Debug.WriteLine("Control " + ctrl.Name + " to " + ctrl.Location + " offset " + offset + " on " + on);
-            }
+            System.Diagnostics.Debug.WriteLine($"Control {c.Name} at {c.Location} {c.Size}");
+            if (c == startcontrol)
+                active = true;
+            else if (active)
+                c.Location = new Point(c.Location.X + offset.X, c.Location.Y + offset.Y);
         }
     }
 

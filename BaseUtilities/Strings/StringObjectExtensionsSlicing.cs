@@ -10,11 +10,11 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public static partial class ObjectExtensionsStrings
 {
@@ -119,10 +119,11 @@ public static partial class ObjectExtensionsStrings
         return str;
     }
 
-
-    // mimics Split('s') if emptyendifmarkersatend is true
+    // Split by string instead of character.
+    // emptyendifmarkeratend leaves, like split, a empty end position if the marker is right at the end
+    // emptyarrayifempty gives an empty array if nothing is in the string, like split
     static public string[] Split(this string s, string splitchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase,
-                                    bool emptyendifmarkeratend = false)
+                                    bool emptyendifmarkeratend = false, bool emptyarrayifempty = false)
     {
         if (s == null)
             return null;
@@ -156,7 +157,9 @@ public static partial class ObjectExtensionsStrings
         }
 
         if (sections == 0)
-            return new string[] { "" };     // mimic "".split('') behaviour
+        {
+            return emptyarrayifempty ? new string[] { } : new string[] { "" };     // mimic "".split('') behaviour or empty array
+        }
         else
         {
             string[] ret = new string[sections];
@@ -165,6 +168,44 @@ public static partial class ObjectExtensionsStrings
             return ret;
         }
     }
+
+    // split into a two dimensional array by line, and then on each line by cell.  Options apply to cell split
+    static public string[][] Split(this string s, string splitlinechars, string splitcellchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase,
+                                    bool emptyendifmarkeratendonline = false, bool emptyarrayifemptyonline = false)
+    {
+        string[] lines = Split(s, splitlinechars, cmp, false, false);           // split into lines, with no empties
+        string[][] res = new string[lines.Length][];
+        for (int i = 0; i < lines.Length; i++)
+            res[i] = Split(lines[i], splitcellchars, cmp, emptyarrayifemptyonline, emptyarrayifemptyonline);
+        return res;
+    }
+
+    // split by character removing empty ends/finish
+    static public string[] SplitNoEmptyStartFinish(this string s, char splitchar)
+    {
+        string[] array = s.Split(splitchar);
+        int start = array[0].Length > 0 ? 0 : 1;
+        int end = array.Last().Length > 0 ? array.Length - 1 : array.Length - 2;
+        int length = end - start + 1;
+        return length == array.Length ? array : array.RangeSubset(start, length);
+    }
+
+    // split removing empty strings
+    static public List<string> SplitNoEmptyStrings(this string s, char splitchar)
+    {
+        string[] array = s.Split(splitchar);
+        List<string> entries = new List<string>();
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i].Length > 0)
+                entries.Add(array[i]);
+        }
+
+        return entries;
+    }
+
+
+
 
 }
 
