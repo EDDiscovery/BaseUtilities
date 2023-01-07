@@ -193,10 +193,23 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return false;
     }
 
+    // if row selected, return (rowindex,-1), else if cells selected, return (cell row,cell col), else null
+    static public Tuple<int, int> GetSelectedRowOrCellPosition(this DataGridView dgv)
+    {
+        if (dgv.SelectedRows.Count > 0)
+            return new Tuple<int, int>(dgv.SelectedRows[0].Index, -1);
+        else if (dgv.SelectedCells.Count > 0)
+            return new Tuple<int, int>(dgv.SelectedCells[0].RowIndex, dgv.SelectedCells[0].ColumnIndex);
+        else
+            return null;
+    }
+
     // index is some key and a DGV row. Move to it, try and display it, return true if we moved.
+    // pos.Item1 is -1 if no idea
+    // pos.Item2 is changed to -2 if moved.
     // force means we must move somewhere.
 
-    public static bool MoveToSelection(this DataGridView dgv, Dictionary<long, DataGridViewRow> index, ref Tuple<long, int> pos, bool force)
+    public static bool SelectAndMove(this DataGridView dgv, Dictionary<long, DataGridViewRow> index, ref Tuple<long, int> pos, bool force)
     {
         if (pos.Item1 == -2)          // if done, ignore
         {
@@ -208,11 +221,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
                 int rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
 
                 dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
-
-                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
-                    dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
-
-                //System.Diagnostics.Debug.WriteLine("No Default Select " + rowno);
+                dgv.DisplayRow(rowno, true);
                 pos = new Tuple<long, int>(-2, 0);      // done
                 return true;        // moved
             }
@@ -226,18 +235,21 @@ public static partial class DataGridViewControlHelpersStaticFunc
         else
         {
             int rowno = FindGridPosByID(index, pos.Item1, true);     // find row.. must be visible..  -1 if not found/not visible
+
             //System.Diagnostics.Debug.WriteLine("Tried to find " + pos.Item1 + " " + rowno);
 
             if (rowno >= 0)     // found..
             {
-                //System.Diagnostics.Debug.WriteLine("Found Select " + pos.Item1 + " row " + rowno);
                 dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
 
-                dgv.SetCurrentSelOnRow(rowno, pos.Item2);
+                dgv.ClearSelection();
 
-                if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
-                    dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
+                if (pos.Item2 < 0)
+                    dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
+                else
+                    dgv.SetCurrentSelOnRow(rowno, pos.Item2);
 
+                dgv.DisplayRow(rowno, true);
                 pos = new Tuple<long, int>(-2, 0);    // cancel next find
                 return true;
             }
@@ -248,11 +260,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
                     rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
 
                     dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
-
-                    if (dgv.DefaultCellStyle.WrapMode == DataGridViewTriState.True) // TBD currentcell does not work with variable lines..
-                        dgv.SafeFirstDisplayedScrollingRowIndex(rowno);
-
-                    //System.Diagnostics.Debug.WriteLine("Force Default Select " + rowno);
+                    dgv.DisplayRow(rowno, true); 
                 }
 
                 pos = new Tuple<long, int>(-2, 0);      // done

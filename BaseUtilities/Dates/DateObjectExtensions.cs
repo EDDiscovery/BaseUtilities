@@ -204,6 +204,30 @@ public static class ObjectExtensionsDates
     {
         return tme.Hour == 23 && tme.Minute == 59 && tme.Second == 59;      // don't worry about milliseconds here
     }
+    static public DateTime StartOfSecond(this DateTime tme)      // start of day, 0:0:0
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, tme.Minute, tme.Second, tme.Kind);
+    }
+    static public DateTime EndOfSecond(this DateTime tme)      // end of second
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, tme.Minute, tme.Second, 999, tme.Kind);
+    }
+    static public DateTime StartOfMinute(this DateTime tme)
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, tme.Minute, 0, tme.Kind);
+    }
+    static public DateTime EndOfMinute(this DateTime tme)
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, tme.Minute, 59, 999, tme.Kind);
+    }
+    static public DateTime StartOfHour(this DateTime tme)
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, 0, 0, tme.Kind);
+    }
+    static public DateTime EndOfHour(this DateTime tme)
+    {
+        return new DateTime(tme.Year, tme.Month, tme.Day, tme.Hour, 59, 59, 999, tme.Kind);
+    }
     static public DateTime StartOfDay(this DateTime tme)      // start of day, 0:0:0
     {
         return new DateTime(tme.Year, tme.Month, tme.Day, 0, 0, 0, tme.Kind);
