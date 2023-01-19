@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2022 EDDiscovery development team
+ * Copyright © 2016 - 2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -31,11 +31,12 @@ public static partial class DataGridViewControlHelpersStaticFunc
         }
 
         saveint(root + "HW", dgv.RowHeadersWidth);
+        saveint(root + "HWVisible", dgv.RowHeadersVisible?1:0);
     }
 
     // Set column fill weight and visibility from getdouble, and set header width from getint.
     // Return MinValue in getdouble to say you don't have a value
-    public static bool LoadColumnSettings(this DataGridView dgv, string root, Func<string, int> getint, Func<string, double> getdouble)
+    public static bool LoadColumnSettings(this DataGridView dgv, string root, bool rowheadersel , Func<string, int> getint, Func<string, double> getdouble)
     {
         int hw = getint(root + "HW");
         if (hw >= 0)
@@ -43,6 +44,12 @@ public static partial class DataGridViewControlHelpersStaticFunc
             dgv.SuspendLayout();
 
             dgv.RowHeadersWidth = hw;
+
+            if (rowheadersel)       // if we allowing row header visiblity to be set..
+            {
+                int sv = getint(root + "HWVisible");
+                dgv.RowHeadersVisible = sv != 0;        // on if not zero, so default (MinInt) will have it on
+            }
 
             int[] displayindexes = new int[dgv.ColumnCount];
             int dicount = 0;

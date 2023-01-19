@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2021 EDDiscovery development team
+ * Copyright © 2020-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -24,6 +22,7 @@ namespace BaseUtils
     {
         public bool ColumnReorder { get; set; } = true;                     // default is to allow column reordering via right click dragging
         public bool PerColumnWordWrapControl { get; set; } = true;          // default is to allow per column word wrap control
+        public bool AllowRowHeaderVisibleSelection { get; set; } = false;        // default is not to allow row headers to be turned on/off
         
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]   // lets not clutter up the designer with these action call backs
         public Action<int> UserChangedColumnVisibility { get; set; } = null;
@@ -69,11 +68,19 @@ namespace BaseUtils
             {
                 columnContextMenu.Items.Clear();
 
+                if (AllowRowHeaderVisibleSelection)
+                {
+                    var tsitem = new System.Windows.Forms.ToolStripMenuItem();
+                    tsitem.Checked = RowHeadersVisible;
+                    tsitem.Text = "Header".TxID("DataGridView", "Header");
+                    tsitem.Size = new System.Drawing.Size(178, 22);
+                    tsitem.Click += Tsheader_Click;
+                    columnContextMenu.Items.Add(tsitem);
+                }
+
                 foreach (DataGridViewColumn c in this.Columns)      // add in ticks for all columns
                 {
                     var tsitem = new System.Windows.Forms.ToolStripMenuItem();
-                    tsitem.Checked = true;
-                    tsitem.CheckOnClick = true;
                     tsitem.CheckState = c.Visible ? CheckState.Checked : CheckState.Unchecked;
                     tsitem.Text = c.HeaderText.HasChars() ? c.HeaderText : ("C" + (c.Index + 1).ToString());
                     tsitem.Tag = c;
@@ -82,10 +89,9 @@ namespace BaseUtils
                     columnContextMenu.Items.Add(tsitem);
                 }
 
-                if (PerColumnWordWrapControl)
+                if (PerColumnWordWrapControl && HitIndex>=0)        // bug #3376 check hitindex
                 {
                     var tsww = new System.Windows.Forms.ToolStripMenuItem();
-                    tsww.Checked = true;
                     var globalwrapmode = this.DefaultCellStyle.WrapMode;
                     tsww.CheckState = Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
                                                         Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
@@ -100,6 +106,11 @@ namespace BaseUtils
             dragto = -1;    // cancel the drag
         }
 
+        private void Tsheader_Click(object sender, System.EventArgs e)
+        {
+            RowHeadersVisible = !RowHeadersVisible;
+        }
+
         private void Tsitem_Click(object sender, System.EventArgs e)
         {
             var t = sender as ToolStripMenuItem;
@@ -107,9 +118,9 @@ namespace BaseUtils
 
             int colshidden = this.ColumnsHidden();
 
-            if (colshidden < ColumnCount - 1 || t.Checked)        // not at last column, or its turning on, action, can't remove last one
+            if (colshidden < ColumnCount - 1 || !c.Visible)        // not at last column, or its turning on, action, can't remove last one
             {
-                c.Visible = t.Checked;
+                c.Visible = !c.Visible;
                 UserChangedColumnVisibility?.Invoke(c.Index);
             }
         }
