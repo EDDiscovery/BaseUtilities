@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016-2020 EDDiscovery development team
+ * Copyright © 2016-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -37,20 +35,21 @@ namespace BaseUtils
 
         // Multi Header/Line data interface - allow for multiple more header/tables. the count of GetSetsData controls how many sets. 
 
-        public List<Func<int, int, Object[]>> GetSetsHeader; // Return empty array, null (stop) or data
-        public List<Func<int, int, Object[]>> GetSetsData;
-        public List<Func<int, int, Object[]>> GetSetsFooter;
+        public List<Func<int, int, Object[]>> GetSetsHeader = new List<Func<int, int, object[]>>(); // Return empty array, null (stop) or data
+        public List<Func<int, int, Object[]>> GetSetsData = new List<Func<int, int, object[]>>();
+        public List<Func<int, int, Object[]>> GetSetsFooter = new List<Func<int, int, object[]>>();
         public Func<int, int, Object[]> GetSetsPad;     // padding between sets, only used if >1 set
 
         // after above, post header
 
         public Func<int, Object[]> GetPostHeader;// optional, return post header items, return empty array for blank line, return null to stop pre-header
 
-        public CSVWriteGrid()
+        public CSVWriteGrid() : base()
         {
-            GetSetsHeader = new List<Func<int, int, object[]>>();
-            GetSetsFooter = new List<Func<int, int, object[]>>();
-            GetSetsData = new List<Func<int, int, object[]>>();
+        }
+
+        public CSVWriteGrid(string delimiter) : base(delimiter)
+        {
         }
 
         public bool WriteCSV(string filename)

@@ -547,11 +547,14 @@ namespace BaseUtils
         // translate toolstrips.  Does not support %id%.  <code> is ignored.
         public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, Control parent)
         {
+            TranslateToolstrip(ctrl, enumset, parent.GetType().Name);
+        }
+
+        public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, string subname)
+        {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-
-            string subname = parent.GetType().Name;
 
             string errlist = "";
 

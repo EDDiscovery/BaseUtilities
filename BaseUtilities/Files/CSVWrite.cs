@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,38 +10,32 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data.SqlTypes;
 
 namespace BaseUtils
 {
     public class CSVWrite
     {
-        public string Delimiter { get; private set; }  = ",";
+        public string Delimiter { get; private set; } = ",";
+        public System.Globalization.CultureInfo FormatCulture { get; set; } = new System.Globalization.CultureInfo("en-US");
 
-        private System.Globalization.CultureInfo formatculture = new System.Globalization.CultureInfo("en-US");
-
-        public void SetCSVDelimiter( bool usecomma)
+        public CSVWrite() {}
+        public CSVWrite(string delimiter) 
         {
-            if (usecomma)
-            {
-                Delimiter = ",";
-                formatculture = new System.Globalization.CultureInfo("en-US");
-            }
-            else
-            {
-                Delimiter = ";";
-                formatculture = new System.Globalization.CultureInfo("sv");
-            }
+            SetDelimiter(delimiter); 
         }
 
+        public void SetDelimiter(string delimiter)
+        {
+            Delimiter = delimiter;
+            if (Delimiter != ";")
+                FormatCulture = new System.Globalization.CultureInfo("en-US");
+            else
+                FormatCulture = new System.Globalization.CultureInfo("sv");
+        }
 
         public string Double(double value, bool delimit = true, int decplaces = 2)
         {
@@ -69,19 +63,19 @@ namespace BaseUtils
                 else
                 {
                     if (defformat == null)
-                        output = Convert.ToString(value, formatculture);
+                        output = Convert.ToString(value, FormatCulture);
                     else if (value is double)
-                        output = ((double)value).ToString(defformat, formatculture);
+                        output = ((double)value).ToString(defformat, FormatCulture);
                     else if (value is double?)
-                        output = ((double?)value).Value.ToString(defformat, formatculture);
+                        output = ((double?)value).Value.ToString(defformat, FormatCulture);
                     else if (value is int)
-                        output = ((int)value).ToString(defformat, formatculture);
+                        output = ((int)value).ToString(defformat, FormatCulture);
                     else if (value is uint)
-                        output = ((uint)value).ToString(defformat, formatculture);
+                        output = ((uint)value).ToString(defformat, FormatCulture);
                     else if (value is long)
-                        output = ((long)value).ToString(defformat, formatculture);
+                        output = ((long)value).ToString(defformat, FormatCulture);
                     else if (value is ulong)
-                        output = ((ulong)value).ToString(defformat, formatculture);
+                        output = ((ulong)value).ToString(defformat, FormatCulture);
                     else
                         System.Diagnostics.Debug.Assert(false, "defformat does not support this type");
 

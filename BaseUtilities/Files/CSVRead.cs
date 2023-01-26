@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,47 +10,32 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseUtils
 {
     public class CSVRead
     {
-        public string Delimiter { get; private set; } = ",";
-
-        private TextReader indata;
+        public string Delimiter { get; set; } = ",";        // only a single char supported
 
         public CSVRead(TextReader s)
         {
             indata = s;
         }
 
-        public void SetCSVDelimiter(bool usecomma)
-        {
-            Delimiter = usecomma ? "," : ";";
-        }
-
         public enum State { EOF, Item, ItemEOL, Error };
 
-        public State Next(out string s)
+        public void ReadString(int c, out string s)        // read string part, on quote
         {
             s = "";
 
-            int c = indata.Peek();
-
-            if (c == -1)
-                return State.EOF;
-            else if (c == '"')
+            if (c == '"')
             {
-                indata.Read();
+                indata.Read();  // read off quote
 
                 while ((c = indata.Read()) != -1 && (c != '"' || indata.Peek() == '"'))
                 {
@@ -60,7 +45,13 @@ namespace BaseUtils
                         indata.Read();
                         s += (char)c;
                     }
-                    else if (c == '\r')
+                    else if (c == '\r')         // \r\n
+                    {
+                        if ( indata.Peek() == '\n')
+                            indata.Read();
+                        s += "\r\n";
+                    }
+                    else if (c == '\n')
                     {
                         s += "\r\n";
                     }
@@ -72,36 +63,86 @@ namespace BaseUtils
             }
             else
             {
-                while ((c = indata.Peek()) != -1 && c != Delimiter[0] && c != '\r')
+                while ((c = indata.Peek()) != -1 && c != Delimiter[0] && c!= '\r' && c !='\n')  // if not eof, not delimiter, not \r or \n
                 {
                     //System.Diagnostics.Debug.WriteLine("NChar " + c);
+                    c = indata.Read();
                     s += (char)c;
-                    indata.Read();
                 }
             }
+        }
 
-            while(true)
+        public State ReadDelimiter(char delimit, out int lastch)
+        {
+            while (true)
             {
-                int e = indata.Read();       // after terminator
-                if (e == '\r')
+                lastch = indata.Read();       // after terminator
+               // System.Diagnostics.Debug.WriteLine($".. Delimit {(int)lastch}");
+
+                if ( lastch == '\n')
                 {
-                    e = indata.Read();      // crlf
+                    return State.ItemEOL;       
+                }
+                else if (lastch == '\r' )       // presuming \r\n
+                {
+                    if ( indata.Peek() == '\n') 
+                        indata.Read();      // read off \n
+
                     return State.ItemEOL;
                 }
-                else if (e == -1 || e == Delimiter[0])  // if eof, or delimiter, its fine for this item, return
+                else if (lastch == -1 || lastch == delimit || delimit == '!')  // if eof, or delimiter, or special delimit of space mean accept anything, its fine for this item, return
+                {
                     return State.Item;
-                else if (char.IsWhiteSpace((char)e))    // if whitespace, skip
+                }
+                else if (char.IsWhiteSpace((char)lastch))    // if whitespace, skip
+                {
                     continue;
+                }
                 else
                     return State.Error;
             }
         }
 
-        void RemoveSpaces()
+        public State Next(out string s)
         {
-            while ((char)indata.Peek() == ' ')
-                indata.Read();
+            s = "";
+
+            int c = indata.Peek();
+
+            if (c == -1)
+                return State.EOF;
+
+            ReadString(c, out s);
+            //System.Diagnostics.Debug.WriteLine($"String {s}");
+
+            return ReadDelimiter(Delimiter[0], out int unused);
         }
+
+        public static char FindDelimiter(string input)
+        {
+            int comma = input.IndexOf(',');
+            int semicolon = input.IndexOf(';');
+            int quote = input.IndexOf('"');
+            int tab = input.IndexOf('\t');
+
+            if (quote > 0)
+            {
+                CSVRead csv = new CSVRead(new StringReader(input.Substring(quote+1)));        // goto quote
+                csv.ReadString('"',out string unusedstr); // read it to find delimiter
+                var state = csv.ReadDelimiter('!', out int delimit);
+                if (state == State.Item && (delimit == ',' || delimit == ';' || delimit == '\t'))        // return it - if at eol, won't have an delimit, so impossible to tell
+                    return (char)delimit;
+            }
+
+            if (tab != -1)
+                return '\t';
+            else if ((comma == -1 && semicolon >= 0) || (comma>=0 && semicolon>=0 && semicolon<comma))
+                return ';';
+            else
+                return ',';
+        }
+
+        private TextReader indata;
     }
 
     [System.Diagnostics.DebuggerDisplay("CSV File Rows {Rows.Count}")]
@@ -228,7 +269,7 @@ namespace BaseUtils
             }
         }
 
-        public List<Row> Rows;
+        public List<Row> Rows { get; set; }
 
         public List<Row> RowsExcludingHeaderRow { get { return (Rows != null && Rows.Count > 1) ? Rows.GetRange(1, Rows.Count - 1) : null; } }
 
@@ -241,21 +282,49 @@ namespace BaseUtils
         }
 
         public string Delimiter { get; private set; }  = ",";
+        public System.Globalization.CultureInfo FormatCulture { get; set; } = new System.Globalization.CultureInfo("en-US");
+        public System.Globalization.NumberStyles NumberStyle { get; set; } = System.Globalization.NumberStyles.None;
 
+        public CSVFile() { }
+        public CSVFile(string delimiter) 
+        {
+            SetDelimiter(delimiter);
+        }
 
-        public bool Read(string file, FileShare fs = FileShare.None, bool commadelimit = true, Action<int, Row> rowoutput = null,
-                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
-                            string noncommacountry = "sv"               // for finwen, space is the default thousands.
-            )
+        public void SetDelimiter(string delimiter)
+        {
+            Delimiter = delimiter;
+            if (Delimiter != ";")
+                FormatCulture = new System.Globalization.CultureInfo("en-US");
+            else
+                FormatCulture = new System.Globalization.CultureInfo("sv");
+        }
+
+        public bool Read(string file, FileShare fs = FileShare.ReadWrite, Action<int, Row> rowoutput = null)
         {
             if (!File.Exists(file))
                 return false;
 
             try
             {
+                //using (Stream s = File.Open(file, FileMode.Open, FileAccess.Read, fs))
+                //{
+                //    using (StreamReader sr = new StreamReader(s))
+                //    {
+                //        while (true)
+                //        {
+                //            int v = sr.Read();
+                //            System.Diagnostics.Debug.WriteLine($"{v} {(char)v}");
+
+                //            if (v == -1)
+                //                break;
+                //        }
+                //    }
+                //}
+
                 using (Stream s = File.Open(file, FileMode.Open, FileAccess.Read, fs))
                 {
-                    return Read(s, commadelimit, rowoutput, ns, noncommacountry);
+                    return Read(s, rowoutput);
                 }
             }
             catch
@@ -264,39 +333,41 @@ namespace BaseUtils
             }
         }
 
-        public bool Read(Stream s, bool commadelimit = true, Action<int, Row> rowoutput = null,
-                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
-                            string noncommacountry = "sv"               // space is the default thousands.
-            )
+        public bool ReadString(string str, Action<int, Row> rowoutput = null)
         {
-            using (StreamReader sr = new StreamReader(s))
+            //foreach (var s in str) System.Diagnostics.Debug.WriteLine($"{(int)s} {s}");
+
+            using (StringReader sr = new StringReader(str))
             {
-                return Read(sr, commadelimit, rowoutput, ns, noncommacountry);
+                return Read(sr, rowoutput);
             }
         }
 
-        // read from TR with comma/semi selection
+        public bool Read(Stream s, Action<int, Row> rowoutput = null)
+        {
+            using (StreamReader sr = new StreamReader(s))
+            {
+                return Read(sr, rowoutput);
+            }
+        }
+
+        // read from TR with delimiter, format culture. If format culture = null, use it based on delimiter (semicomma = sv, else en-US)
         // optionally send rows to rowoutput instead of storing
-        public bool Read(TextReader tr, 
-                            bool commadelimit = true,       // true means us/uk dot and comma, else its the noncommacountry to select the format.
-                            Action<int,Row> rowoutput = null ,
-                            System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None,  // if to allow thousands seperator etc
-                            string noncommacountry = "sv"               // space is the default thousands.
-            )
+        public bool Read(TextReader tr, Action<int,Row> rowoutput = null)
         {
             Rows = new List<Row>();
 
-            System.Globalization.CultureInfo formatculture = new System.Globalization.CultureInfo(commadelimit ? "en-US" : noncommacountry);   // select format culture based on comma
-
             CSVRead csv = new CSVRead(tr);
-            csv.SetCSVDelimiter(commadelimit);
+            csv.Delimiter = Delimiter;
 
-            Row l = new Row(formatculture,ns);
+            Row l = new Row(FormatCulture,NumberStyle);
             int r = 0;
 
             while (true)
             {
                 var state = csv.Next(out string str);
+                //System.Diagnostics.Debug.WriteLine($"CVS Item {state} {str}");
+
                 if (state == CSVRead.State.Item)
                 {
                     l.Cells.Add(str);
@@ -310,7 +381,7 @@ namespace BaseUtils
                     else
                         Rows.Add(l);
 
-                    l = new Row(formatculture,ns);
+                    l = new Row(FormatCulture,NumberStyle);
                 }
                 else if (state == CSVRead.State.EOF)
                 {
