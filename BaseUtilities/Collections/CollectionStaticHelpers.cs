@@ -98,5 +98,20 @@ public static class CollectionStaticHelpers
         }
     }
 
+    static public bool ReferenceEquals(this List<object> left, List<object> right)
+    {
+        if (left.Count == right.Count)
+        {
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!Object.ReferenceEquals(left[i], right[i]))
+                    return false;
+            }
+
+            return true;
+        }
+        else
+            return false;
+    }
 }
 
