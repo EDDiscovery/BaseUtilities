@@ -162,14 +162,10 @@ namespace AudioExtensions
         {
             if (aout != null)
             {
-                int t = Environment.TickCount;
-
                 IWaveSource current = o.data as IWaveSource;
-                //System.Diagnostics.Debug.WriteLine((Environment.TickCount - t).ToString("00000") + "Driver Init done");
                 aout.Initialize(current);
                 aout.Volume = (float)(vol) / 100;
                 aout.Play();
-                //System.Diagnostics.Debug.WriteLine((Environment.TickCount - t).ToString("00000") + "Driver Play done");
             }
         }
 
