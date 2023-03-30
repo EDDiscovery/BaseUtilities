@@ -5,13 +5,16 @@ namespace TestSQL2
 {
     public class SQLiteThread : SQLAdvProcessingThread<SQLiteConnectionSystem>
     {
-        public SQLiteThread()
+        public string DBFile;
+
+        public SQLiteThread(string file)
         {
+            DBFile = file;
         }
 
         protected override SQLiteConnectionSystem CreateConnection()
         {
-            return new SQLiteConnectionSystem(@"c:\code\edsm\edsm.sql", false);
+            return new SQLiteConnectionSystem(DBFile, false);
         }
     }
 }

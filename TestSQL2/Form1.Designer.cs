@@ -46,7 +46,7 @@ namespace TestSQL2
             this.buttonSimple.TabIndex = 0;
             this.buttonSimple.Text = "DirectQuery";
             this.buttonSimple.UseVisualStyleBackColor = true;
-            this.buttonSimple.Click += new System.EventHandler(this.buttonSimple_Click);
+            this.buttonSimple.Click += new System.EventHandler(this.buttonDirectQuery);
             // 
             // buttonThread
             // 

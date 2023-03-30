@@ -14,11 +14,12 @@ namespace TestSQL2
 {
     public partial class Form1 : Form
     {
+        string DBFile = @"c:\users\rk\appdata\local\a1\EDDSystem.sqlite";
         SQLiteThread procthread;
+
         public Form1()
         {
             InitializeComponent();
-
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -40,11 +41,11 @@ namespace TestSQL2
             richTextBox.ScrollToCaret();
         }
 
-        private void buttonSimple_Click(object sender, EventArgs e)
+        private void buttonDirectQuery(object sender, EventArgs e)
         {
             SQLiteConnectionSystem connection;
 
-            connection = new SQLiteConnectionSystem(@"c:\code\edsm\edsm.sql", false);
+            connection = new SQLiteConnectionSystem(DBFile, false);
 
             var query1 = connection.CreateSelect("Sectors", "*",limit:20);
 
@@ -65,7 +66,7 @@ namespace TestSQL2
         {
             if (procthread == null)
             {
-                procthread = new SQLiteThread();
+                procthread = new SQLiteThread(DBFile);
                 WriteLine("Started");
             }
         }
@@ -154,15 +155,12 @@ namespace TestSQL2
 
         private void MQ1(Object o)
         {
-
             int threadno = (int)o;
             System.Diagnostics.Debug.WriteLine($"Query Start {threadno}");
             var res = Query(40, "-Q" + threadno , threadno == 10);
             System.Diagnostics.Debug.Assert(res.Count == 40);
-
-
-            Thread.Sleep(1000);
             System.Diagnostics.Debug.WriteLine($"Query Stop {threadno}");
+            Thread.Sleep(250);
 
         }
     }
