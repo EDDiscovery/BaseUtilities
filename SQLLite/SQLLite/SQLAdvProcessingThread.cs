@@ -151,31 +151,57 @@ namespace SQLLiteExtensions
                                             }
                                             else if (job.write)
                                             {
-                                                rwLock.AcquireWriterLock(Timeout.Infinite);
-                                                int active = Interlocked.Increment(ref checkRWLock);
-                                                System.Diagnostics.Debug.Assert(active == 1);      
-                                                //System.Diagnostics.Debug.WriteLine($"SQL I{Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
-                                                
-                                                job.Exec();
-                                                
-                                                active = Interlocked.Decrement(ref checkRWLock);
-                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
-                                                rwLock.ReleaseWriterLock();
+                                                while (true)
+                                                {
+                                                    try
+                                                    {
+                                                        rwLock.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
+
+                                                        int active = Interlocked.Increment(ref checkRWLock);
+                                                        System.Diagnostics.Debug.Assert(active == 1);
+                                                        //System.Diagnostics.Debug.WriteLine($"SQL I{Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
+
+                                                        job.Exec();
+
+                                                        active = Interlocked.Decrement(ref checkRWLock);
+                                                        //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
+
+                                                        rwLock.ReleaseWriterLock();
+                                                        break;
+                                                    }
+                                                    catch
+                                                    {
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} from {job.jobname} write failed to gain lock, retrying");
+                                                    }
+                                                }
                                             }
                                             else
                                             {
-                                                rwLock.AcquireReaderLock(Timeout.Infinite);
-                                                int active = Interlocked.Increment(ref checkRWLock);
-                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
-                                                
-                                                job.Exec();
-                                                
-                                                active = Interlocked.Decrement(ref checkRWLock);
-                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
-                                                rwLock.ReleaseReaderLock();
+                                                while (true)
+                                                {
+                                                    try
+                                                    {
+                                                        rwLock.AcquireReaderLock(30 * 1000);
+
+                                                        int active = Interlocked.Increment(ref checkRWLock);
+                                                        //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
+
+                                                        job.Exec();
+
+                                                        active = Interlocked.Decrement(ref checkRWLock);
+                                                        //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
+
+                                                        rwLock.ReleaseReaderLock();
+                                                        break;
+                                                    }
+                                                    catch
+                                                    {
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} from {job.jobname} read failed to gain lock, retrying");
+                                                    }
+                                                }
                                             }
-                                            //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + "Execute Job");
-                                            recursiondepth--;
+
+                                            recursiondepth--;       // decrease recursion depth
                                         }
                                     }
                                 }
