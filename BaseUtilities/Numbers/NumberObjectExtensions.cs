@@ -218,10 +218,19 @@ public static class ObjectExtensionsNumbersBool
     static public double? ParseDoubleNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
     {
         double i;
-        if (s != null && double.TryParse(s, System.Globalization.NumberStyles.Float |ns, culture, out i))
+        if (s != null && double.TryParse(s, System.Globalization.NumberStyles.Float | ns, culture, out i))
             return i;
         else
             return null;
+    }
+
+    static public double ParseDouble(this string s, double def, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        double i;
+        if (s != null && double.TryParse(s, System.Globalization.NumberStyles.Float | ns, culture, out i))
+            return i;
+        else
+            return def;
     }
 
     #endregion
@@ -243,13 +252,21 @@ public static class ObjectExtensionsNumbersBool
             return null;
     }
 
-    static public double? ParseFloatNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    static public float? ParseFloatNull(this string s, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
     {
         float i;
         if (s != null && float.TryParse(s, System.Globalization.NumberStyles.Float | ns, culture, out i))
             return i;
         else
             return null;
+    }
+    static public float ParseFloat(this string s, float def, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns = System.Globalization.NumberStyles.None)
+    {
+        float i;
+        if (s != null && float.TryParse(s, System.Globalization.NumberStyles.Float | ns, culture, out i))
+            return i;
+        else
+            return def;
     }
 
     #endregion
