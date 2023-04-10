@@ -671,6 +671,69 @@ public static class ObjectExtensionsNumbersBool
         return Math.Sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy));
     }
 
+
+    // from lat/long to lat/long, return bearing 0-360
+    static public double CalculateBearing(double latitude, double longitude, double targetLat, double targetLong)
+    {
+        // turn degrees to radians
+        double long1 = longitude.Radians();
+        double lat1 = latitude.Radians(); 
+        double long2 = targetLong.Radians();
+        double lat2 = targetLat.Radians();
+
+        double y = Math.Sin(long2 - long1) * Math.Cos(lat2);
+        double x = Math.Cos(lat1) * Math.Sin(lat2) -
+                    Math.Sin(lat1) * Math.Cos(lat2) * Math.Cos(long2 - long1);
+
+        // back to degrees again
+        double bearing = Math.Atan2(y, x) / Math.PI * 180;
+
+        //bearing in 0-360, not -180 to 180
+        return bearing > 0 ? bearing : 360 + bearing;
+    }
+
+    static public double CalculateDistance(double latitude, double longitude, double targetLat, double targetLong, double radius)
+    {
+        // example: https://www.movable-type.co.uk/scripts/latlong.html
+
+        double lat1 = latitude.Radians();
+        double lat2 = targetLat.Radians();
+        double deltaLong = (targetLong - longitude).Radians();
+        double deltaLat = (targetLat - latitude).Radians();
+
+        double a = (Math.Sin(deltaLat / 2) * Math.Sin(deltaLat / 2)) + Math.Cos(lat1) * Math.Cos(lat2) * (Math.Sin(deltaLong / 2) * Math.Sin(deltaLong / 2));
+        double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+        return radius * c;
+    }
+
+    static public double CalculateDistance(double latitude, double longitude, double alitiude, double targetLat, double targetLong, double targetalt, double radius)
+    {
+        // https://www.mathworks.com/matlabcentral/answers/403262-calculate-distance-between-two-coordinates-with-depth
+
+        double flatdistance = CalculateDistance(latitude, longitude, targetLat, targetLong, radius);
+        double altdiff = (alitiude - targetalt);
+        return Math.Sqrt(flatdistance * flatdistance + altdiff * altdiff);
+    }
+
+    // return slope and back facing result (>=0 means facing backwards)
+    static public Tuple<double,double> CalculateGlideslope(double distance, double altitude, double radius)
+    {
+        double theta = distance / radius;
+        double rad = 1 + altitude / radius;
+        double dist2 = 1 + rad * rad - 2 * rad * Math.Cos(theta);
+
+        // a = radius, b = distance, c = altitude + radius
+        // c^2 = a^2 + b^2 - 2.a.b.cos(C) -> cos(C) = (a^2 + b^2 - c^2) / (2.a.b)
+    
+        double sintgtslope = (1 + dist2 - rad * rad) / (2 * Math.Sqrt(dist2));
+
+        // a = altitude + radius, b = distance, c = radius
+        double slope = -Math.Asin((rad * rad + dist2 - 1) / (2 * rad * Math.Sqrt(dist2))) * 180 / Math.PI;
+
+        return new Tuple<double, double>(slope, sintgtslope);
+    }
+
     #endregion
 }
 
