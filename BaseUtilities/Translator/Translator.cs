@@ -506,7 +506,7 @@ namespace BaseUtils
             if (errlist.HasChars())
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
-                System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",'\n'").Replace("EDTx.", "    ")};");
+                System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",\n").Replace("EDTx.", "    ")};");
             }
         }
 
