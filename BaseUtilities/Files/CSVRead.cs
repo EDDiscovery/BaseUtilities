@@ -273,6 +273,21 @@ namespace BaseUtils
 
         public List<Row> RowsExcludingHeaderRow { get { return (Rows != null && Rows.Count > 1) ? Rows.GetRange(1, Rows.Count - 1) : null; } }
 
+        public int CellNumberOfHeaderItem(string[] names)
+        {
+            if ( Rows!=null && Rows.Count>1)
+            {
+                for(int i = 0; i < Rows[0].Cells.Count; i++)
+                {
+                    if (names.ComparisionContains(Rows[0].Cells[i], StringComparison.InvariantCultureIgnoreCase, true) >= 0)
+                    { 
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
         public Row this[int row]
         {
             get
