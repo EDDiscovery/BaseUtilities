@@ -14,105 +14,16 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using System;
+using System.Collections.Generic;
 
 namespace EliteDangerousCore
-{
-    public enum EDGovernment
-    {
-        Unknown = 0,
-        Anarchy = 1,
-        Communism = 2,
-        Confederacy = 3,
-        Corporate = 4,
-        Cooperative = 5,
-        Democracy = 6,
-        Dictatorship,
-        Feudal,
-        Imperial,
-        Patronage,
-        Colony,
-        Prison_Colony,
-        Theocracy,
-        None,
-
-    }
-
-    public enum EDAllegiance
-    {
-        Unknown = 0,
-        Alliance = 1,
-        Anarchy = 2,
-        Empire = 3,
-        Federation = 4,
-        Independent = 5,
-        None = 6,
-    }
-
-    public enum EDState
-    {
-        Unknown = 0,
-        None = 1,
-        Boom,
-        Bust,
-        Civil_Unrest,
-        Civil_War,
-        Expansion,
-        Lockdown,
-        Outbreak,
-        War,
-        Famine,
-        Election,
-        Retreat,
-        Investment,
-    }
-
-    public enum EDSecurity
-    {
-        Unknown = 0,
-        Low,
-        Medium,
-        High,
-        Anarchy,
-        Lawless,
-    }
-
-    public enum EDStationType
-    {
-        Unknown = 0,
-        Civilian_Outpost = 1,
-        Commercial_Outpost = 2,
-        Coriolis_Starport = 3,
-        Industrial_Outpost = 4,
-        Military_Outpost = 5,
-        Mining_Outpost = 6,
-        Ocellus_Starport = 7,
-        Orbis_Starport = 8,
-        Scientific_Outpost = 9,
-        Unsanctioned_Outpost = 10,
-        Unknown_Outpost = 11,
-        Unknown_Starport = 12,
-    }
-
-    public enum EDEconomy
-    {
-        Unknown = 0,
-        Agriculture = 1,
-        Extraction = 2,
-        High_Tech = 3,
-        Industrial = 4,
-        Military = 5,
-        Refinery = 6,
-        Service = 7,
-        Terraforming = 8,
-        Tourism = 9,
-        None = 10,
-    }
-
+{ 
     public enum SystemSource                // Who made the information?
     {
         Synthesised,
-        FromEDSM,
+        FromDB,
         FromJournal,
+        FromEDSM,
     }
 
     public interface ISystemBase : IEquatable<ISystemBase>
@@ -127,8 +38,7 @@ namespace EliteDangerousCore
         bool HasCoordinate { get; }
         int GridID { get; set; }
         long? SystemAddress { get; set; }
-
-        Tuple<string, long?> NameSystemAddress { get; }
+        long? EDSMID { get; set; }      // if sourced from EDSM DB or web
 
         double Distance(ISystemBase other);
         double Distance(double x, double y, double z);
@@ -137,27 +47,25 @@ namespace EliteDangerousCore
         bool Cuboid(ISystemBase other, double min, double max);
     }
 
-    public interface ISystemSystemInfo
+    public interface ISystem : ISystemBase
     {
-        string Faction { get; set; }
-        long Population { get; set; }
-        EDGovernment Government { get; set; }
-        EDAllegiance Allegiance { get; set; }
-        EDState State { get; set; }
-        EDSecurity Security { get; set; }
-        EDEconomy PrimaryEconomy { get; set; }
-        string Power { get; set; }
-        string PowerState { get; set; }
-        int NeedsPermit { get; set; }
-        bool HasSystemStateInfo { get; }
-    }
-
-    public interface ISystem : ISystemBase, ISystemSystemInfo
-    {
-        long EDSMID { get; set; }
         SystemSource Source { get; set; }        // Who made this entry, where did the info come from?
+        EDStar MainStarType { get; set; }        // some DB hold main star type..  will be EDStar.Unknown if not known
 
         string ToString();
-        string ToStringVerbose();
+    }
+
+    // useful to pass for isystem comparision of name only
+    public class ISystemNameCompareCaseInsensitiveInvariantCulture : IEqualityComparer<ISystem>
+    {
+        public bool Equals(ISystem x, ISystem y)
+        {
+            return x.Name.Equals(y.Name, StringComparison.InvariantCulture);
+        }
+
+        public int GetHashCode(ISystem obj)
+        {
+            return obj.Name.GetHashCode();
+        }
     }
 }

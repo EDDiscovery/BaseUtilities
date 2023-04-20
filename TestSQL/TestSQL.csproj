@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;TESTHARNESS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -56,19 +56,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CoreReplace.cs" />
+    <Compile Include="EliteDangerous\Bodies.cs" />
+    <Compile Include="EliteDangerous\EliteReleaseDates.cs" />
+    <Compile Include="EliteDangerous\GalacticMapObject.cs" />
+    <Compile Include="EliteDangerous\GalacticMapping.cs" />
+    <Compile Include="EliteDangerous\GalacticMapSystem.cs" />
+    <Compile Include="EliteDangerous\GalMapType.cs" />
     <Compile Include="EliteDangerous\ISystem.cs" />
     <Compile Include="EliteDangerous\SystemClass.cs" />
+    <Compile Include="SystemDB\EliteNameClassifier.cs" />
+    <Compile Include="SystemDB\SQLiteConnectionSystem.cs" />
     <Compile Include="SystemDB\SystemCache.cs" />
+    <Compile Include="SystemDB\SystemGridID.cs" />
     <Compile Include="SystemDB\SystemsDatabase.cs" />
-    <Compile Include="SystemDB\SystemsDBEDSMSystemAliases.cs" />
-    <Compile Include="SystemDB\SystemsDBEDSMRemove.cs" />
-    <Compile Include="SystemDB\SystemsDBGetByGrid.cs" />
     <Compile Include="SystemDB\SystemsDBGetByDistance.cs" />
     <Compile Include="SystemDB\SystemsDBGetLists.cs" />
     <Compile Include="SystemDB\SystemsDBGetStars.cs" />
-    <Compile Include="SystemDB\SystemGridID.cs" />
-    <Compile Include="SystemDB\EliteNameClassifier.cs" />
-    <Compile Include="SystemDB\SystemsDBEDSMStore.cs" />
+    <Compile Include="SystemDB\SystemsDBRemove.cs" />
+    <Compile Include="SystemDB\SystemsDBStore.cs" />
     <Compile Include="TestSQLForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -77,7 +82,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SystemDB\SQLiteConnectionSystem.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -88,6 +92,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="TestSQLForm.resx">
+      <DependentUpon>TestSQLForm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

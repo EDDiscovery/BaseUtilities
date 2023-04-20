@@ -1,7 +1,10 @@
 ﻿using EliteDangerousCore;
 using EliteDangerousCore.DB;
 using EMK.LightGeometry;
+using QuickJSON;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Windows.Forms;
 
@@ -13,29 +16,40 @@ namespace TestSQL
         {
             InitializeComponent();
 
-
-            string edsminfile = @"c:\code\edsm\edsmsystems.10e6.json";
-            bool deletedb = false;
-            bool reloadjson = false;
-
-            bool printstars = false;
-            bool testdelete = false;
-            bool loadaliases = false;
-
-            if ( deletedb )
-                BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
-
             SystemsDatabase.Instance.MaxThreads = 8;
             SystemsDatabase.Instance.MinThreads = 2;
             SystemsDatabase.Instance.MultiThreaded = true;
             SystemsDatabase.Instance.Initialize();
-//            SQLiteConnectionSystem.UpgradeSystemTableFrom102TypeDB(() => { return false; }, (s) => System.Diagnostics.Debug.WriteLine(s),false);
+        }
 
-            if (reloadjson)
-            {
-                SystemsDatabase.Instance.UpgradeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
-            }
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            SystemsDatabase.Instance.Stop();
+        }
 
+        private void buttonLoadEDSM_Click(object sender, System.EventArgs e)
+        {
+            SystemsDatabase.Instance.Stop();
+
+            BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
+
+            SystemsDatabase.Reset();
+            SystemsDatabase.Instance.MaxThreads = 8;
+            SystemsDatabase.Instance.MinThreads = 2;
+            SystemsDatabase.Instance.MultiThreaded = true;
+            SystemsDatabase.Instance.Initialize();
+
+            string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
+
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            AddText("EDSM DB Made");
+        }
+
+        private void buttonTestEDSM_Click(object sender, System.EventArgs argse)
+        {
+            bool printstars = false;
+            bool testdelete = false;
 
             if (printstars)
             {
@@ -43,7 +57,7 @@ namespace TestSQL
                 {
                     SystemsDB.ListStars(orderby: "s.sectorid,s.edsmid", starreport: (s) =>
                     {
-                        wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + ", EDSM:" + s.EDSMID + " Grid:" + s.GridID);
+                        wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + " Grid:" + s.GridID);
                     });
                 }
             }
@@ -56,38 +70,14 @@ namespace TestSQL
                 {
                     SystemsDB.ListStars(orderby: "s.sectorid,s.edsmid", starreport: (s) =>
                     {
-                        wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + ", EDSM:" + s.EDSMID + " Grid:" + s.GridID);
+                        wr.WriteLine(s.Name + " " + s.Xi + "," + s.Yi + "," + s.Zi + " Grid:" + s.GridID);
                     });
                 }
-            }
-
-            if ( loadaliases )
-            {
-                string infile = @"c:\code\edsm\hiddensystems.jsonl";
-                BaseUtils.AppTicks.TickCountLap();
-                long updated = SystemsDB.ParseAliasFile(infile);
-                System.Diagnostics.Debug.WriteLine("Alias Load: " + BaseUtils.AppTicks.TickCountLap() + " updated " + updated);
-                BaseUtils.AppTicks.TickCountLap();
-                string infile2 = @"c:\code\edsm\hiddensystems2.jsonl";
-                updated = SystemsDB.ParseAliasFile(infile2);
-                System.Diagnostics.Debug.WriteLine("Alias Load: " + BaseUtils.AppTicks.TickCountLap() + " updated " + updated);
             }
 
             // ********************************************
             // TESTS BASED on the 10e6 json file
             // ********************************************
-
-            {
-                long aliasn;
-                aliasn = SystemsDB.FindAlias(-1, "CM Draco");
-                System.Diagnostics.Debug.Assert(aliasn == 19700);
-                aliasn = SystemsDB.FindAlias(1, null);
-                System.Diagnostics.Debug.Assert(aliasn == 19700);
-                aliasn = SystemsDB.FindAlias(-1, "CM qwkqkq");
-                System.Diagnostics.Debug.Assert(aliasn == -1);
-                List<ISystem> aliaslist = SystemsDB.FindAliasWildcard("Horsehead");
-                System.Diagnostics.Debug.Assert(aliaslist.Count>10);
-            }
 
             {
                 BaseUtils.AppTicks.TickCountLap();
@@ -99,7 +89,7 @@ namespace TestSQL
                     System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("HIP 112535"));
                 }
 
-                System.Diagnostics.Debug.WriteLine("FindStar HIP x for X: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("FindStar HIP x for X: " + BaseUtils.AppTicks.TickCountLap());
             }
 
 
@@ -108,14 +98,14 @@ namespace TestSQL
 
                 BaseUtils.AppTicks.TickCountLap();
                 string star = "HIP 101456";
-                for (int I = 0; I < 50; I++)        
+                for (int I = 0; I < 50; I++)
                 {
                     s = SystemsDB.FindStar(star);       // This one is at the back of the DB
                     System.Diagnostics.Debug.Assert(s != null && s.Name.Equals(star));
-                    //   System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
+                    //   AddText("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Standard for X: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Standard for X: " + BaseUtils.AppTicks.TickCountLap());
             }
 
             {
@@ -126,23 +116,10 @@ namespace TestSQL
                 for (int I = 0; I < 50; I++)        // 6/4/18 50 @ 26ms (No need for system index)
                 {
                     s = SystemsDB.FindStar("kanur");
-                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412 );
+                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Kanur for X: " + BaseUtils.AppTicks.TickCountLap());
-            }
-
-            { // 16/4/18 100 @ 52ms  (48 no system tables)
-                ISystem s;
-                BaseUtils.AppTicks.TickCountLap();
-
-                for (int I = 0; I < 100; I++)
-                {
-                    s = SystemsDB.FindStar(2836547);
-                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Tucanae Sector SP-N b7-6") && s.Xi == 10844 && s.Yi == -18100 && s.Zi == 28036 && s.EDSMID == 2836547);
-                }
-
-                System.Diagnostics.Debug.WriteLine("Find EDSMID for 100: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Kanur for X: " + BaseUtils.AppTicks.TickCountLap());
             }
 
             {
@@ -154,13 +131,12 @@ namespace TestSQL
                 s = SystemsDB.FindStar("BD+18 711");
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("BD+18 711") && s.Xi == 1700 && s.Yi == -68224 && s.Zi == -225284);
                 s = SystemsDB.FindStar("Chamaeleon Sector FG-W b2-3");
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Chamaeleon Sector FG-W b2-3") && s.Xi == 71440 && s.Yi == -12288 && s.Zi == 35092);
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Chamaeleon Sector FG-W b2-3") && s.Xi == 71440 && s.Yi == -12288 && s.Zi == 35092 && s.MainStarType == EDStar.Unknown && s.SystemAddress == null);
             }
 
 
-
             { // No system indexes = 4179  xz=10 @21, xz=100 @ 176,  x= 100 @ 1375, xz 100 @ 92 xz vacummed 76.
-                System.Diagnostics.Debug.WriteLine("Begin Find Pos for 100" );
+                AddText("Begin Find Pos for 100");
                 ISystem s;
                 BaseUtils.AppTicks.TickCountLap();
 
@@ -172,17 +148,17 @@ namespace TestSQL
                         System.Diagnostics.Debug.Assert(s != null && s.Name == "Col 285 Sector IZ-B b15-2");
                     });
 
-                  //  System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
+                    //  AddText("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Pos for 100: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Pos for 100: " + BaseUtils.AppTicks.TickCountLap());
             }
 
 
             {
                 ISystem s;
                 s = SystemCache.FindSystem("hip 91507");
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("HIP 91507") );
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("HIP 91507"));
                 s = SystemCache.FindSystem("hip 91507");
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("HIP 91507"));
                 s = SystemCache.FindSystem("Byua Eurk GL-Y d107");
@@ -193,10 +169,6 @@ namespace TestSQL
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Chamaeleon Sector FG-W b2-3") && s.Xi == 71440 && s.Yi == -12288 && s.Zi == 35092);
                 s = SystemCache.FindSystem("kanur");
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
-                //s = SystemCache.FindSystem(s.EDSMID);
-                //System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Kanur") && s.Xi == -2832 && s.Yi == -3188 && s.Zi == 12412);
-                s = SystemCache.FindSystem("CM DRACO");     // this is an alias system
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("CM Draconis") && s.EDSMID == 19700);
             }
 
             {
@@ -208,14 +180,14 @@ namespace TestSQL
                 {
                     slist = SystemsDB.FindStarWildcard("Tucanae Sector CQ-Y");
                     System.Diagnostics.Debug.Assert(slist != null && slist.Count > 20);
-                    //System.Diagnostics.Debug.WriteLine("Lap : " + BaseUtils.AppTicks.TickCountLap());
+                    //AddText("Lap : " + BaseUtils.AppTicks.TickCountLap());
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Wildcard Standard trunced: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Wildcard Standard trunced: " + BaseUtils.AppTicks.TickCountLap());
             }
 
 
-            { 
+            {
                 BaseUtils.AppTicks.TickCountLap();
                 List<ISystem> slist;
                 for (int I = 0; I < 10; I++)
@@ -226,10 +198,10 @@ namespace TestSQL
                         System.Diagnostics.Debug.Assert(e.Name.StartsWith("HIP 6"));
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Wildcard HIP 6: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Wildcard HIP 6: " + BaseUtils.AppTicks.TickCountLap());
             }
 
-            { 
+            {
                 BaseUtils.AppTicks.TickCountLap();
                 List<ISystem> slist;
                 for (int I = 0; I < 10; I++)
@@ -240,7 +212,7 @@ namespace TestSQL
                         System.Diagnostics.Debug.Assert(e.Name.StartsWith("USNO-A2.0"));
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Wildcard USNo: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Wildcard USNo: " + BaseUtils.AppTicks.TickCountLap());
             }
 
             {
@@ -253,7 +225,7 @@ namespace TestSQL
                     System.Diagnostics.Debug.Assert(slist != null && slist.Count > 48);
                 }
 
-                System.Diagnostics.Debug.WriteLine("Find Wildcard HIP: " + BaseUtils.AppTicks.TickCountLap());
+                AddText("Find Wildcard HIP: " + BaseUtils.AppTicks.TickCountLap());
 
             }
             {
@@ -290,12 +262,11 @@ namespace TestSQL
 
                 SystemsDatabase.Instance.DBRead(db =>
                 {
-                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 20, true, db);
-                    System.Diagnostics.Debug.WriteLine("Stars Near Sol: " + BaseUtils.AppTicks.TickCountLap());
+                    SystemsDB.GetSystemListBySqDistancesFrom(x, y, z, 20000, 0.5, 20, true, db, (dist, sys) => { list.Add(dist, sys); });
                     System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
                 });
 
-                //foreach (var k in list)   System.Diagnostics.Debug.WriteLine(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
+                //foreach (var k in list)   AddText(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
             }
 
             { // xz index = 185ms
@@ -306,66 +277,88 @@ namespace TestSQL
 
                 SystemsDatabase.Instance.DBRead(db =>
                 {
-                    SystemsDB.GetSystemListBySqDistancesFrom(list, x, y, z, 20000, 0.5, 50, true, db); //should span 2 grids 810/811
-                    System.Diagnostics.Debug.WriteLine("Stars Near x490: " + BaseUtils.AppTicks.TickCountLap());
+                    SystemsDB.GetSystemListBySqDistancesFrom(x, y, z, 20000, 0.5, 50, true, db, (dist, sys) => { list.Add(dist, sys); }); //should span 2 grids 810/811
                     System.Diagnostics.Debug.Assert(list != null && list.Count >= 20);
                 });
 
-                //foreach (var k in list) System.Diagnostics.Debug.WriteLine(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
+                //foreach (var k in list) AddText(Math.Sqrt(k.Key).ToString("N1") + " Star " + k.Value.ToStringVerbose());
             }
 
             { // 142ms with xz and no sector lookup
-                SystemsDatabase.Instance.DBRead(db =>
-                {
-                    BaseUtils.AppTicks.TickCountLap();
-                    ISystem s;
-                    s = SystemsDB.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemsDB.SystemsNearestMetric.IterativeWaypointDevHalf,db);
-                    System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Alpha Centauri"));
-                    System.Diagnostics.Debug.WriteLine("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
-                });
-
+                BaseUtils.AppTicks.TickCountLap();
+                ISystem s;
+                s = SystemCache.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemCache.SystemsNearestMetric.IterativeWaypointDevHalf, 1);
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Alpha Centauri"));
+                AddText("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
             }
 
             {
                 SystemCache.AddToAutoCompleteList(new List<string>() { "galone", "galtwo", "sol2" });
-                List<string> sys;
-                sys = SystemCache.ReturnSystemAutoCompleteList("Sol", null);
+                SortedSet<string> sys = new SortedSet<string>();
+                SystemCache.ReturnSystemAutoCompleteList("Sol", null, sys);
                 System.Diagnostics.Debug.Assert(sys != null && sys.Contains("Solati") && sys.Count >= 4);
             }
 
 
             {
-                uint[] colours = null;
-                Vector3[] vertices = null;
-                uint[] colours2 = null;
-                Vector3[] vertices2 = null;
-
-                BaseUtils.AppTicks.TickCountLap();
-                SystemsDB.GetSystemVector(5, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.Assert(vertices.Length > 1000);
-                System.Diagnostics.Debug.WriteLine("5 load : " + BaseUtils.AppTicks.TickCountLap());
-
-                BaseUtils.AppTicks.TickCountLap();
-                SystemsDB.GetSystemVector(810, ref vertices, ref colours, 100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.WriteLine("810 load 100 : " + BaseUtils.AppTicks.TickCountLap());
-
-
-                BaseUtils.AppTicks.TickCountLap();
-                SystemsDB.GetSystemVector(810, ref vertices2, ref colours2, 50, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.Assert(vertices.Length >= vertices2.Length * 2);
-                System.Diagnostics.Debug.WriteLine("810 load 50 : " + BaseUtils.AppTicks.TickCountLap());
-
-
-            }
-
-
-
-
-            {
                 var v = SystemsDB.GetStarPositions(5, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
-                System.Diagnostics.Debug.Assert(v.Count>450000);
+                System.Diagnostics.Debug.Assert(v.Count > 450000);
                 //       var v2 = SystemClassDB.GetStarPositions(100, (x, y, z) => { return new Vector3((float)x / 128.0f, (float)y / 128.0f, (float)z / 128.0f); });
             }
+
+            AddText($"EDSM Test Complete");
         }
+
+        void AddText(string s)
+        {
+            richTextBox1.Text += s;
+            richTextBox1.Text += Environment.NewLine;
+            richTextBox1.ScrollToCaret();
+        }
+
+        private void buttonReloadSpansh_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.Stop();
+
+            BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
+
+            SystemsDatabase.Reset();
+            SystemsDatabase.Instance.MaxThreads = 8;
+            SystemsDatabase.Instance.MinThreads = 2;
+            SystemsDatabase.Instance.MultiThreaded = true;
+            SystemsDatabase.Instance.Initialize();
+
+            string edsminfile = @"c:\code\examples\edsm\systems_1week.json";
+
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            AddText("Spansh DB Made");
+        }
+
+        private void buttonTestSpansh_Click(object sender, EventArgs e)
+        {
+            {
+                // this tests DBGetStars both types of constructor at the bottom of the file
+
+                ISystem s;
+                s = SystemsDB.FindStar("Herschel 36");
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Herschel 36") && s.MainStarType == EDStar.O);
+                s = SystemsDB.FindStar("Piscium Sector GS-J a9-1"); // "id64":22954989341528
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Piscium Sector GS-J a9-1") && s.X == -36.25 && s.Y == -44.78125 && s.Z == 5.4375 && s.SystemAddress == 22954989341528 && s.MainStarType == EDStar.Unknown);
+                s = SystemsDB.FindStar("Ogairy ET-X c28-537"); //"id64":147694161044218
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Ogairy ET-X c28-537") && s.X == 526.5625 && s.Y == 70.03125 && s.Z == 20687.625 && s.SystemAddress == 147694161044218);
+                s = SystemsDB.FindStar("S171 15");
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("S171 15") && s.SystemAddress == 61177999 && s.MainStarType == EDStar.O);
+                s = SystemsDB.FindStar("44 Iota Orionis");
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("44 Iota Orionis") && s.SystemAddress == 2587791 && s.X == 1094.0625 && s.Y == -759.53125 && s.Z == -1911.5 && s.MainStarType == EDStar.O);
+                s = SystemsDB.FindStar("Pleiades Sector XP-O b6-3");
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Pleiades Sector XP-O b6-3") && s.SystemAddress == 7266949997873 && s.MainStarType == EDStar.M);
+
+                
+            }
+
+            AddText($"Spansh Test Complete");
+        }
+
+
     }
 }
