@@ -82,9 +82,9 @@ namespace BaseUtils
 
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
-        public string GetOriginalEnglish(string fullid) => originalenglish[fullid];         // ensure its there first!
-        public string GetOriginalFile(string fullid) => originalfile[fullid];         // ensure its there first!
-        public int GetOriginalLine(string fullid) => originalline[fullid];         // ensure its there first!
+        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid]??"?";         // ensure its there first!
+        public string GetOriginalFile(string fullid) => originalfile?[fullid]??"?";         // ensure its there first!
+        public int GetOriginalLine(string fullid) => originalline?[fullid]??-1;         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
         public List<string> NotUsed()                                               // if track use on, whats not used
         {
@@ -158,9 +158,13 @@ namespace BaseUtils
                 if (lr.Open(tlffile))
                 {
                     translations = new Dictionary<string, string>();
-                    originalenglish = new Dictionary<string, string>();
-                    originalfile = new Dictionary<string, string>();
-                    originalline = new Dictionary<string, int>();
+                    if (loadorgenglish)
+                        originalenglish = new Dictionary<string, string>();
+                    if (loadfile)
+                    {
+                        originalfile = new Dictionary<string, string>();
+                        originalline = new Dictionary<string, int>();
+                    }
                     if (trackinuse)
                         inuse = new Dictionary<string, bool>();
 
@@ -362,7 +366,7 @@ namespace BaseUtils
                         inuse[key] = true;
 
                     
-                    if (CompareTranslatedToCode && originalenglish.ContainsKey(key) && originalenglish[key] != english)
+                    if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
                         var orgeng = originalenglish[key];
                         logger?.WriteLine($"Difference Key {key} code `{english}` translation `{orgeng}`");
@@ -428,7 +432,7 @@ namespace BaseUtils
                         string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
                         ctrl.Text = Translate(id, id);
                         if (debugit)
-                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
+                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
                     }
                     else 
                     {
@@ -447,7 +451,7 @@ namespace BaseUtils
                         ctrl.Text = Translate(ctrl.Text, id);
 
                         if (debugit)
-                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text}");
+                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
                     }
                 }
 
@@ -497,12 +501,12 @@ namespace BaseUtils
         }
 
         // translate tooltips.  Does not support %id%.  <code> is ignored.  No check for duplicates due to tooltip replication on some controls (nov 22)
-        public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null)
+        public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null, bool debugit = false)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-            var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name);
+            var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name, debugit);
             if (errlist.HasChars())
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
@@ -510,7 +514,7 @@ namespace BaseUtils
             }
         }
 
-        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, string subname)
+        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, string subname, bool debugit)
         {
             string errlist = "";
 
@@ -529,6 +533,9 @@ namespace BaseUtils
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
 
                 tt.SetToolTip(ctrl, Translate(s, id));
+
+                if (debugit)
+                    System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
             }
 
             foreach (Control c in ctrl.Controls)
@@ -538,7 +545,7 @@ namespace BaseUtils
                 if (InsertName(c))      // containers don't send thru 
                     id = id.AppendPrePad(c.Name, ".");
 
-                errlist = errlist.AppendPrePad( Tx(tt, c, enumset, id), ", ");
+                errlist = errlist.AppendPrePad( Tx(tt, c, enumset, id, debugit), ", ");
             }
 
             return errlist;
