@@ -57,14 +57,14 @@ public static partial class ObjectExtensionsStrings
             return obj;
     }
 
-    // trim, then if it ends with this, trim it
+    // trim, then if it ends with this, trim it, then trim again
     public static string TrimReplaceEnd(this string obj, char endreplace)
     {
         obj = obj.Trim();
-        int ep = obj.Length - 1;
+        int ep = obj.Length - 1;        
         while (ep >= 0 && obj[ep] == endreplace)
             ep--;
-        return obj.Substring(0, ep + 1);
+        return obj.Substring(0, ep + 1).Trim();
     }
 
 
