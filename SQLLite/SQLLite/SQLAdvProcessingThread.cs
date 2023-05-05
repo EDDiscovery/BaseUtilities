@@ -118,7 +118,7 @@ namespace SQLLiteExtensions
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} Start thread {Thread.CurrentThread.Name}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} Start thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
                 using (connection.Value = CreateConnection())   // hold connection over whole period.
                 {
@@ -171,7 +171,7 @@ namespace SQLLiteExtensions
                                                     }
                                                     catch
                                                     {
-                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} from {job.jobname} write failed to gain lock, retrying");
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.jobname} write failed to gain lock, retrying");
                                                     }
                                                 }
                                             }
@@ -196,7 +196,7 @@ namespace SQLLiteExtensions
                                                     }
                                                     catch
                                                     {
-                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} from {job.jobname} read failed to gain lock, retrying");
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.jobname} read failed to gain lock, retrying");
                                                     }
                                                 }
                                             }
@@ -219,7 +219,7 @@ namespace SQLLiteExtensions
             }
             finally
             {
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} stop thread {Thread.CurrentThread.Name}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} stop thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
                 Interlocked.Decrement(ref runningThreadsAvailable);            // stopping threads.. decr count, if 0, say all stopped
 
@@ -237,7 +237,7 @@ namespace SQLLiteExtensions
 
         protected T Execute<T>(Func<T> func, bool write, uint warnthreshold, string jobname)  // in caller thread, queue to job queue, wait for complete
         {
-            using (var job = new Job<T>(func, write, Thread.CurrentThread.Name + jobname))       // make a new job
+            using (var job = new Job<T>(func, write, Thread.CurrentThread.Name + "-" + Thread.CurrentThread.ManagedThreadId.ToStringInvariant() + "-" + jobname))       // make a new job
             {
                 if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith(Name))            // we should not be calling this from a thread made by us
                 { 
@@ -274,7 +274,7 @@ namespace SQLLiteExtensions
 
                     if ( job.executiontime >= warnthreshold)
                     {
-                        System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job exceeded warning threshold {warnthreshold} time {job.executiontime}\r\n... {new System.Diagnostics.StackTrace(2, true)}");
+                        System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job {job.jobname} exceeded warning threshold {warnthreshold} time {job.executiontime}\r\n... {new System.Diagnostics.StackTrace(2, true)}");
                     }
 
                     job.Dispose();
@@ -312,7 +312,7 @@ namespace SQLLiteExtensions
             var thread = new Thread(SqlThreadProc);
             thread.Name = $"{Name}-" + tno;
             thread.IsBackground = true;
-            System.Diagnostics.Debug.WriteLine($"SQL {Name} Create Thread {thread.Name} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
+            System.Diagnostics.Debug.WriteLine($"SQL {Name} Create Thread {thread.Name}-{thread.ManagedThreadId} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
             thread.Start();
         }
 
