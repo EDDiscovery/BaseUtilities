@@ -72,7 +72,8 @@ namespace EliteDangerousCore.DB
 
         // this deletes the current DB data, reloads from the file, and recreates the indexes etc
 
-        public long MakeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress, string debugoutputfile = null)
+        public long MakeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress, 
+                                            string debugoutputfile = null, bool oldmethod = false)
         {
             DBWrite( action: conn =>
             {
@@ -80,8 +81,19 @@ namespace EliteDangerousCore.DB
                 conn.CreateStarTables(TempTablePostfix);     // and make new temp tables
             });
 
-            DateTime maxdate = DateTime.MinValue;
-            long updates = SystemsDB.ParseJSONFile(filename, gridids, ref maxdate, cancelRequested, reportProgress, TempTablePostfix, true, debugoutputfile);
+            long updates = 0;
+            if ( oldmethod )
+            {
+                DateTime maxdate = DateTime.MinValue;
+                updates = SystemsDB.ParseJSONFile(filename, gridids, 500000, ref maxdate, cancelRequested, reportProgress, TempTablePostfix, true, debugoutputfile);
+                SetLastRecordTimeUTC(maxdate);          // record last data stored in database
+            }
+            else
+            {
+                SystemsDB.Loader loader = new SystemsDB.Loader(TempTablePostfix, 500000, gridids, true, debugoutputfile);   // overlap write
+                updates = loader.ParseJSONFile(filename, cancelRequested, reportProgress);
+                loader.Finish();
+            }
 
             if (updates > 0)
             {
@@ -89,29 +101,28 @@ namespace EliteDangerousCore.DB
                 {
                     RebuildRunning = true;
 
-                    System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} Removing old data");
+                    System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Removing old data");
                     reportProgress?.Invoke("Remove old data");
                     conn.DropStarTables();     // drop the main ones - this also kills the indexes
 
-                    System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} Renaming tables");
+                    System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Renaming tables");
 
                     conn.RenameStarTables(TempTablePostfix, "");     // rename the temp to main ones
 
-                    System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} Shrinking DB");
+                    System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Shrinking DB");
                     reportProgress?.Invoke("Shrinking database");
                     conn.Vacuum();
 
-                    System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} Creating indexes");
+                    System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Creating indexes");
                     reportProgress?.Invoke("Creating indexes");
                     conn.CreateSystemDBTableIndexes();
 
                     RebuildRunning = false;
                 });
 
+                System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB Made");
                 ClearDownRestart();             // tables have changed, clear all connections down
 
-                System.Diagnostics.Debug.WriteLine($"Full download done, last date {maxdate}");
-                SetLastRecordTimeUTC(maxdate);          // record last data stored in database
 
                 return updates;
             }
@@ -244,7 +255,7 @@ namespace EliteDangerousCore.DB
         {
             bool res = DBRead(db => {
                     var tlist = db.Tables();
-                    return tlist.Contains("Systems") && tlist.Contains("Names") && tlist.Contains("Systems") && tlist.Contains("Aliases") && tlist.Contains("Register");
+                    return tlist.Contains("SystemTable") && tlist.Contains("Names") && tlist.Contains("Sectors") && tlist.Contains("Register");
                 });
 
             return res;

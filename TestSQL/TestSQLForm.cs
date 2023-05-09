@@ -5,13 +5,21 @@ using QuickJSON;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace TestSQL
 {
     public partial class TestSQLForm : Form
     {
+        string spanshsmallfile = @"c:\code\examples\edsm\systems_1week.json";        // from 8/5/23
+        string spanshbigfile = @"c:\code\examples\edsm\systems_1month.json";        // from 8/5/23
+        string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
+
         public TestSQLForm()
         {
             InitializeComponent();
@@ -28,23 +36,33 @@ namespace TestSQL
             SystemsDatabase.Instance.Stop();
         }
 
-        private void buttonLoadEDSM_Click(object sender, System.EventArgs e)
+        private void buttonClearDB_Click(object sender, EventArgs e)
         {
             SystemsDatabase.Instance.Stop();
+            System.Diagnostics.Debug.Assert(SystemsDatabase.ccount == 0);
 
-            BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
+            File.Delete(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
 
             SystemsDatabase.Reset();
             SystemsDatabase.Instance.MaxThreads = 8;
             SystemsDatabase.Instance.MinThreads = 2;
             SystemsDatabase.Instance.MultiThreaded = true;
             SystemsDatabase.Instance.Initialize();
-
-            string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
-
-            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
-            AddText("EDSM DB Made");
         }
+
+
+        private void buttonMakeEDSMOld_Click(object sender, System.EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod:true);
+            AddText($"EDSM DB Made OLD {SystemsDB.GetTotalSystems()}");
+        }
+
+        private void buttonMakeEDSMNew_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            AddText($"EDSM DB Made NEW {SystemsDB.GetTotalSystems()}");
+        }
+
 
         private void buttonTestEDSM_Click(object sender, System.EventArgs argse)
         {
@@ -315,23 +333,47 @@ namespace TestSQL
             richTextBox1.Text += Environment.NewLine;
             richTextBox1.ScrollToCaret();
         }
-
-        private void buttonReloadSpansh_Click(object sender, EventArgs e)
+        private void buttonloadSpanshOld_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.Stop();
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod: true);
+            AddText($"Spansh DB Made OLD {SystemsDB.GetTotalSystems()}");
+        }
 
-            BaseUtils.FileHelpers.DeleteFileNoError(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
+        private void buttonMakeSpanshNew_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod: false);
+            AddText($"Spansh DB Made New {SystemsDB.GetTotalSystems()}");
+        }
 
-            SystemsDatabase.Reset();
-            SystemsDatabase.Instance.MaxThreads = 8;
-            SystemsDatabase.Instance.MinThreads = 2;
-            SystemsDatabase.Instance.MultiThreaded = true;
-            SystemsDatabase.Instance.Initialize();
+        private void buttonReadSpanshNew_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.DBWrite(db => {
+                db.DropStarTables();
+                db.CreateStarTables("");
+            });
 
-            string edsminfile = @"c:\code\examples\edsm\systems_1week.json";
+            SystemsDB.Loader loader = new SystemsDB.Loader("", 50000, null, false, @"c:\code\spanshmake.log");
+            loader.ParseJSONFile(spanshsmallfile, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            loader.Finish();
+            AddText("Spansh DB Read New");
+        }
 
-            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
-            AddText("Spansh DB Made");
+        private void buttonReadSpanshOld_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.DBWrite(db => {
+                db.DropStarTables();
+                db.CreateStarTables("");
+            });
+
+            DateTime dts = DateTime.MinValue;
+            SystemsDB.ParseJSONFile(spanshsmallfile, null, 50000, ref dts, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), "", debugoutputfile: @"c:\code\spanshmake.log");
+
+        }
+
+        private void Check(string sys, double x, double y, double z, long sysa, EDStar ty)
+        {
+            var s = SystemsDB.FindStar(sys); // "id64":22954989341528
+            System.Diagnostics.Debug.Assert(s != null && s.Name == sys && s.X == x && s.Y == y && s.Z == z && s.SystemAddress == sysa && s.MainStarType == ty);
         }
 
         private void buttonTestSpansh_Click(object sender, EventArgs e)
@@ -344,21 +386,13 @@ namespace TestSQL
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Herschel 36") && s.MainStarType == EDStar.O);
                 s = SystemsDB.FindStar("Piscium Sector GS-J a9-1"); // "id64":22954989341528
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Piscium Sector GS-J a9-1") && s.X == -36.25 && s.Y == -44.78125 && s.Z == 5.4375 && s.SystemAddress == 22954989341528 && s.MainStarType == EDStar.Unknown);
-                s = SystemsDB.FindStar("Ogairy ET-X c28-537"); //"id64":147694161044218
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Ogairy ET-X c28-537") && s.X == 526.5625 && s.Y == 70.03125 && s.Z == 20687.625 && s.SystemAddress == 147694161044218);
-                s = SystemsDB.FindStar("S171 15");
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("S171 15") && s.SystemAddress == 61177999 && s.MainStarType == EDStar.O);
-                s = SystemsDB.FindStar("44 Iota Orionis");
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("44 Iota Orionis") && s.SystemAddress == 2587791 && s.X == 1094.0625 && s.Y == -759.53125 && s.Z == -1911.5 && s.MainStarType == EDStar.O);
-                s = SystemsDB.FindStar("Pleiades Sector XP-O b6-3");
-                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Pleiades Sector XP-O b6-3") && s.SystemAddress == 7266949997873 && s.MainStarType == EDStar.M);
-
-                
+                Check("Screakou AJ-O c20-1515", -6367.375, 219.34375, 21591.625, 416513211442098, EDStar.K);
+                Check("Sol", 0, 0, 0, 10477373803, EDStar.G);
+                Check("HIP 82393", -17.40625, 132.6875, 463.53125, 10477390235, EDStar.G);
             }
 
             AddText($"Spansh Test Complete");
         }
-
 
     }
 }
