@@ -167,7 +167,9 @@ namespace EliteDangerousCore
             SectorName = StarName = null;
         }
 
-        public void Classify(string starname)   // classify a string
+        // classify a string
+        // starname is case sensitive and case preserving
+        public void Classify(string starname)   
         {
             EntryType = NameType.NotSet;
 

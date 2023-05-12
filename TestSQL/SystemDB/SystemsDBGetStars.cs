@@ -22,12 +22,16 @@ namespace EliteDangerousCore.DB
     {
         ///////////////////////////////////////// By Name
 
-        internal static ISystem FindStar(string name)
+   
+        // return list of stars matching name, case insensitive
+        internal static List<ISystem> FindStars(string name)
         {
-            return SystemsDatabase.Instance.DBRead(cn => FindStar(name, cn));
+            return SystemsDatabase.Instance.DBRead(cn => FindStars(name, cn));
         }
 
-        internal static ISystem FindStar(string name, SQLiteConnectionSystem cn)
+        // return list of stars matching name, case insensitive
+        // always returns a list, may be empty.
+        internal static List<ISystem> FindStars(string name, SQLiteConnectionSystem cn)
         {
             EliteNameClassifier ec = new EliteNameClassifier(name);
 
@@ -44,10 +48,13 @@ namespace EliteDangerousCore.DB
 
                     using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
-                        if (reader.Read())
+                        List<ISystem> systems = new List<ISystem>();
+                        while (reader.Read())
                         {
-                            return MakeSystem(reader);        // read back and make name from db info due to case problems.
+                            systems.Add(MakeSystem(reader));        // read back and make name from db info due to case problems.
                         }
+
+                        return systems;
                     }
                 }
 
@@ -66,26 +73,32 @@ namespace EliteDangerousCore.DB
 
                     using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
-                        if (reader.Read())
+                        List<ISystem> systems = new List<ISystem>();
+                        while (reader.Read())
                         {
-                            return MakeSystem(reader, ec.ID); // read back .. sector name is taken from DB for case reasons
+                            systems.Add(MakeSystem(reader, ec.ID)); // read back .. sector name is taken from DB for case reasons
                         }
-                    }
 
+                        return systems;
+                    }
                 }
             }
-
-            return null;
         }
 
         ///////////////////////////////////////// By Wildcard
 
-        internal static List<ISystem> FindStarWildcard(string name, int limit = int.MaxValue)
+        internal static List<ISystem> FindStarsWildcard(string name, int limit = int.MaxValue)
         {
-            return SystemsDatabase.Instance.DBRead(cn => FindStarWildcard(name, cn, limit), 2000);
+            return SystemsDatabase.Instance.DBRead(cn => FindStarsWildcard(name, cn, limit), 2000);
         }
 
-        internal static List<ISystem> FindStarWildcard(string name, SQLiteConnectionSystem cn, int limit = int.MaxValue)
+
+        // find stars using a star pattern
+        // if its a standard pattern Euk PRoc qc-l d2-3 you can drop certain parts
+        // wildcard pattern uses SQL % operator
+        // always returns a system list, may be empty
+
+        internal static List<ISystem> FindStarsWildcard(string name, SQLiteConnectionSystem cn, int limit = int.MaxValue)
         {
             EliteNameClassifier ec = new EliteNameClassifier(name);
 
@@ -263,46 +276,6 @@ namespace EliteDangerousCore.DB
 
             return ret;
         }
-
-        public static void DebugListNamedSectorStars()
-        {
-            SystemsDatabase.Instance.DBRead(cn =>
-            {
-                using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
-                                                "s.nameid < 10000000",
-                                                joinlist: MakeSystemQueryNamedJoinList))
-                {
-                    //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
-
-                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
-                    {
-                        Dictionary<string, int> prefixes = new Dictionary<string, int>();
-                        while (reader.Read())
-                        {
-                            SystemClass sc = MakeSystem(reader);
-                            int spc = sc.Name.IndexOf(' ');
-                            if (spc >= 0)
-                            {
-                                string p = sc.Name.Substring(0, spc);
-                                if (!prefixes.ContainsKey(p))
-                                    prefixes[p] = 1;
-                                else
-                                    prefixes[p] = prefixes[p] + 1;
-                            }
-                        }
-
-                        foreach (var kvp in prefixes)
-                        {
-                            if (kvp.Value > 1)
-                                System.Diagnostics.Debug.WriteLine($"Prefix {kvp.Key} = {kvp.Value}");
-                        }
-
-                    }
-                }
-            });
-
-        }
-
 
 
         #region Helpers for getting stars

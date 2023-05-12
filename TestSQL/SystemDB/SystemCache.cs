@@ -127,7 +127,12 @@ namespace EliteDangerousCore.DB
                 ISystem dbfound = null;
 
                 if (findnameok)            // if not found but has a good name
-                    dbfound = DB.SystemsDB.FindStar(find.Name,cn);   // find by name, no wildcards
+                {
+                    var list = DB.SystemsDB.FindStars(find.Name, cn);   // find all by name, case insensitive
+
+                    if (list.Count == 1 || (list.Count>0 && !find.HasCoordinate))     // if we have 1 match only, or we have many matches, but no coord
+                        dbfound = list[0];      // take the first entry
+                }
 
                 if (dbfound == null && find.HasCoordinate)        // finally, not found, but we have a co-ord, find it from the db  by distance
                     dbfound = DB.SystemsDB.GetSystemByPosition(find.X, find.Y, find.Z, cn);
@@ -232,7 +237,7 @@ namespace EliteDangerousCore.DB
             {
                 SystemsDatabase.Instance.DBRead(cn =>
                 {
-                    var list = DB.SystemsDB.FindStarWildcard(name, cn, limit);
+                    var list = DB.SystemsDB.FindStarsWildcard(name, cn, limit);
                     if (list != null)
                         systems.AddRange(list);
                 });
@@ -484,7 +489,7 @@ namespace EliteDangerousCore.DB
             {
                 if (!SystemsDatabase.Instance.RebuildRunning)           // DB okay, go and use it to find stars
                 {
-                    List<ISystem> systems = DB.SystemsDB.FindStarWildcard(input, MaximumStars);
+                    List<ISystem> systems = DB.SystemsDB.FindStarsWildcard(input, MaximumStars);
                     foreach (var i in systems)
                     {
                         AddToCache(i);

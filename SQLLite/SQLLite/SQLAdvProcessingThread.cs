@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2021 robbyxp1 @ github.com & EDDiscovery Team
+ * Copyright © 2021-2023 robbyxp1 @ github.com & EDDiscovery Team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -205,11 +203,13 @@ namespace SQLLiteExtensions
                                                         int active = Interlocked.Increment(ref checkRWLock);
                                                         System.Diagnostics.Debug.Assert(active == 1);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
+                                                       // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
 
                                                         job.Exec();
 
                                                         active = Interlocked.Decrement(ref checkRWLock);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
+                                                       // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
 
                                                         rwLock.ReleaseWriterLock();
                                                         break;
@@ -229,12 +229,12 @@ namespace SQLLiteExtensions
                                                         rwLock.AcquireReaderLock(30 * 1000);
 
                                                         int active = Interlocked.Increment(ref checkRWLock);
-                                                        //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
 
                                                         job.Exec();
 
                                                         active = Interlocked.Decrement(ref checkRWLock);
-                                                        //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
 
                                                         rwLock.ReleaseReaderLock();
                                                         break;

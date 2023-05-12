@@ -113,143 +113,151 @@ namespace EliteDangerousCore.DB
 
                 System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS", true)} System DB store start");
 
-                var parser = new QuickJSON.Utils.StringParserQuickTextReader(textreader, 32768);
-                var enumerator = JToken.ParseToken(parser, JToken.ParseOptions.None).GetEnumerator();       // Parser may throw note
+                WriteBlock prevwb = null;           // if one is in flight, its recorded here
 
-                int wbno = 0;
-                WriteBlock curwb = new WriteBlock(++wbno);
-                WriteBlock prevwb = null;
-
-                int recordstostore = 0;
-
-                bool stop = false;
-
-                while (!stop)
+                try
                 {
-                    if (cancelRequested() || !enumerator.MoveNext())        // get next token, if not, stop eof
-                        stop = true;
+                    var parser = new QuickJSON.Utils.StringParserQuickTextReader(textreader, 32768);
+                    var enumerator = JToken.ParseToken(parser, JToken.ParseOptions.None).GetEnumerator();       // these throw if they are upset, as the only way of complaining
 
-                    if (stop == false)      // if not stopping, try for next record
+                    int recordstostore = 0;
+
+                    int wbno = 0;
+                    WriteBlock curwb = new WriteBlock(++wbno);
+
+                    bool stop = false;
+
+                    while (!stop)
                     {
-                        JToken token = enumerator.Current;
+                        if (cancelRequested() || !enumerator.MoveNext())        // get next token, if not, stop eof
+                            stop = true;
 
-                        if (token.IsObject)                   // if start of object..
+                        if (stop == false)      // if not stopping, try for next record
                         {
-                            StarFileEntry d = new StarFileEntry();
+                            JToken token = enumerator.Current;                  // may throw
 
-                            // if we have a valid record
-                            if (d.Deserialize(enumerator))
+                            if (token.IsObject)                   // if start of object..
                             {
-                                int gridid = GridId.Id128(d.x, d.z);
+                                StarFileEntry d = new StarFileEntry();
 
-                                if (grididallowed == null || (grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
+                                // if we have a valid record
+                                if (d.Deserialize(enumerator))
                                 {
-                                    if (d.date > maxdate)                                   // for all, record last recorded date processed
-                                        maxdate = d.date;
+                                    int gridid = GridId.Id128(d.x, d.z);
 
-                                    var classifier = new EliteNameClassifier(d.name);
-
-                                    var skey = new Tuple<long, string>(gridid, classifier.SectorName);
-
-                                    System.Diagnostics.Debug.Assert(curwb.wbno == wbno);
-
-                                    if (!sectorcache.TryGetValue(skey, out long sectorid))     // if we dont have a sector with this grid id/name pair
+                                    if (grididallowed == null || (grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
                                     {
-                                       // System.Diagnostics.Debug.WriteLine($"In {wb.wbno} write sector {wb.sectorinsertcmd}");
-                                        if (curwb.sectorinsertcmd.Length > 0)
+                                        if (d.date > maxdate)                                   // for all, record last recorded date processed
+                                            maxdate = d.date;
+
+                                        var classifier = new EliteNameClassifier(d.name);
+
+                                        var skey = new Tuple<long, string>(gridid, classifier.SectorName);
+
+                                        if (!sectorcache.TryGetValue(skey, out long sectorid))     // if we dont have a sector with this grid id/name pair
+                                        {
+                                            // System.Diagnostics.Debug.WriteLine($"In {wb.wbno} write sector {wb.sectorinsertcmd}");
+                                            if (curwb.sectorinsertcmd.Length > 0)
+                                                curwb.sectorinsertcmd.Append(',');
+
+                                            sectorid = nextsectorid++;
+                                            curwb.sectorinsertcmd.Append('(');                            // add (id,gridid,name) to sector insert string
+                                            curwb.sectorinsertcmd.Append(sectorid.ToStringInvariant());
                                             curwb.sectorinsertcmd.Append(',');
+                                            curwb.sectorinsertcmd.Append(gridid.ToStringInvariant());
+                                            curwb.sectorinsertcmd.Append(",'");
+                                            curwb.sectorinsertcmd.Append(classifier.SectorName.Replace("'", "''"));
+                                            curwb.sectorinsertcmd.Append("') ");
 
-                                        sectorid = nextsectorid++;
-                                        curwb.sectorinsertcmd.Append('(');                            // add (id,gridid,name) to sector insert string
-                                        curwb.sectorinsertcmd.Append(sectorid.ToStringInvariant());
-                                        curwb.sectorinsertcmd.Append(',');
-                                        curwb.sectorinsertcmd.Append(gridid.ToStringInvariant());
-                                        curwb.sectorinsertcmd.Append(",'");
-                                        curwb.sectorinsertcmd.Append(classifier.SectorName.Replace("'", "''"));
-                                        curwb.sectorinsertcmd.Append("') ");
+                                            sectorcache.Add(skey, sectorid);        // add to sector cache
+                                        }
 
-                                        sectorcache.Add(skey, sectorid);        // add to sector cache
-                                    }
+                                        if (classifier.IsNamed)
+                                        {
+                                            if (curwb.nameinsertcmd.Length > 0)
+                                                curwb.nameinsertcmd.Append(',');
 
-                                    if (classifier.IsNamed)
-                                    {
-                                        if (curwb.nameinsertcmd.Length > 0)
-                                            curwb.nameinsertcmd.Append(',');
+                                            curwb.nameinsertcmd.Append('(');                            // add (id,name) to names insert string
+                                            curwb.nameinsertcmd.Append(d.id.ToStringInvariant());
+                                            curwb.nameinsertcmd.Append(",'");
+                                            curwb.nameinsertcmd.Append(classifier.StarName.Replace("'", "''"));
+                                            curwb.nameinsertcmd.Append("') ");
+                                            classifier.NameIdNumeric = d.id;                        // the name becomes the id of the entry
+                                        }
 
-                                        curwb.nameinsertcmd.Append('(');                            // add (id,name) to names insert string
-                                        curwb.nameinsertcmd.Append(d.id.ToStringInvariant());
-                                        curwb.nameinsertcmd.Append(",'");
-                                        curwb.nameinsertcmd.Append(classifier.StarName.Replace("'", "''"));
-                                        curwb.nameinsertcmd.Append("') ");
-                                        classifier.NameIdNumeric = d.id;                        // the name becomes the id of the entry
-                                    }
+                                        if (curwb.systeminsertcmd.Length > 0)
+                                            curwb.systeminsertcmd.Append(',');
 
-                                    if (curwb.systeminsertcmd.Length > 0)
+                                        curwb.systeminsertcmd.Append('(');                            // add (id,sectorid,nameid,x,y,z,info) to systems insert string
+                                        curwb.systeminsertcmd.Append(d.id.ToStringInvariant());
                                         curwb.systeminsertcmd.Append(',');
+                                        curwb.systeminsertcmd.Append(sectorid.ToStringInvariant());
+                                        curwb.systeminsertcmd.Append(',');
+                                        curwb.systeminsertcmd.Append(classifier.ID.ToStringInvariant());
+                                        curwb.systeminsertcmd.Append(',');
+                                        curwb.systeminsertcmd.Append(d.x);
+                                        curwb.systeminsertcmd.Append(',');
+                                        curwb.systeminsertcmd.Append(d.y);
+                                        curwb.systeminsertcmd.Append(',');
+                                        curwb.systeminsertcmd.Append(d.z);
+                                        curwb.systeminsertcmd.Append(",");
+                                        if (d.startype != null)
+                                            curwb.systeminsertcmd.Append((int)d.startype);
+                                        else
+                                            curwb.systeminsertcmd.Append("NULL");
+                                        curwb.systeminsertcmd.Append(") ");
 
-                                    curwb.systeminsertcmd.Append('(');                            // add (id,sectorid,nameid,x,y,z,info) to systems insert string
-                                    curwb.systeminsertcmd.Append(d.id.ToStringInvariant());
-                                    curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(sectorid.ToStringInvariant());
-                                    curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(classifier.ID.ToStringInvariant());
-                                    curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(d.x);
-                                    curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(d.y);
-                                    curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(d.z);
-                                    curwb.systeminsertcmd.Append(",");
-                                    if (d.startype != null)
-                                        curwb.systeminsertcmd.Append((int)d.startype);
-                                    else
-                                        curwb.systeminsertcmd.Append("NULL");
-                                    curwb.systeminsertcmd.Append(") ");
+                                        if (debugfile != null)
+                                            debugfile.WriteLine(d.name + " " + d.x + "," + d.y + "," + d.z + ", ID:" + d.id + " SEC " + sectorid + " Grid " + gridid);
 
-                                    if (debugfile != null)
-                                        debugfile.WriteLine(d.name + " " + d.x + "," + d.y + "," + d.z + ", ID:" + d.id + " SEC " + sectorid + " Grid " + gridid);
-
-                                    recordstostore++;
+                                        recordstostore++;
+                                    }
                                 }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"JSON System DB not in good form");
+                                }
+                            }
+                        }
+
+                        if (recordstostore >= maxblocksize || stop)     // if too many, or we are stopping
+                        {
+                            System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Block read complete");
+
+                            if (prevwb != null)     // if we have a pending one, we wait for it to finish, as we don't overlap them 
+                            {
+                                SystemsDatabase.Instance.DBWait(prevwb.sqlop, 5000);
+                                prevwb.sqlop = null;
+                            }
+
+                            System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Begin write block {recordstostore} {updates} block {curwb.wbno}");
+
+                            Write(curwb);       // creat a no wait db write - need to do this in a function because we are about to change curwb
+
+                            if (overlapped)
+                            {
+                                prevwb = curwb;         // set previous and we will check next time to see if we need to pend
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"JSON System DB not in good form");
+                                SystemsDatabase.Instance.DBWait(curwb.sqlop, 5000);    // else not overlapped, finish it now
                             }
+
+                            curwb = new WriteBlock(++wbno); // make a new one
+
+                            updates += recordstostore;
+                            reportProgress?.Invoke($"Star database updated {recordstostore:N0} total so far {(updates):N0}");
+                            recordstostore = 0;
                         }
                     }
 
-                    if (recordstostore >= maxblocksize || stop)     // if too many, or we are stopping
-                    {
-                        if (prevwb != null)     // if we have a pending one, we wait for it to finish, as we don't overlap them 
-                        {
-                            System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Wait for previous write {prevwb.wbno} to complete");
-                            SystemsDatabase.Instance.DBWait(prevwb.sqlop, 5000);
-                            System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} previous block {prevwb.wbno} complete");
-                            prevwb.sqlop = null;
-                        }
-
-                        System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Begin write next block {recordstostore} {updates} block {curwb.wbno}");
-                      
-                        Write(curwb);       // creat a no wait db write - need to do this in a function because we are about to change curwb
-
-                        if ( overlapped )
-                        {
-                            prevwb = curwb;         // set previous and we will check next time to see if we need to pend
-                        }
-                        else
-                        {
-                            SystemsDatabase.Instance.DBWait(curwb.sqlop, 5000);    // else not overlapped, finish it now
-                        }
-
-                        curwb = new WriteBlock(++wbno); // make a new one
-
-                        updates += recordstostore;
-                        reportProgress?.Invoke($"Star database updated {recordstostore:N0} total so far {(updates):N0}");
-                        recordstostore = 0;
-                    }
+                    reportProgress?.Invoke($"Star database updated {updates:N0}");
                 }
-                    
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine($"DB System Loader exception {ex}");
+                }
+
                 if (prevwb != null)     // if we have an outstanding one
                 {
                     System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Wait for last write {prevwb.wbno} to complete");
@@ -259,8 +267,6 @@ namespace EliteDangerousCore.DB
                 }
 
                 System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB store end");
-
-                reportProgress?.Invoke($"Star database updated {updates:N0}");
 
                 return updates;
             }
