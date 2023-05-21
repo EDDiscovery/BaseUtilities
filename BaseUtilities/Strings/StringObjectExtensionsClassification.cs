@@ -50,6 +50,10 @@ public static partial class ObjectExtensionsStrings
     {
         return char.IsLetterOrDigit(v) || v == '_';
     }
+    public static bool IsDigitOrDotOrNegSign(this char v)
+    {
+        return char.IsDigit(v) || v == '.' || v == '-';
+    }
 
     public static bool IsLetterOrDigitOrUnderscoreOrMember(this char v)
     {

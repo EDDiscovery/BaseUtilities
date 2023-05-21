@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Chars\CharObjectExtensions.cs" />
     <Compile Include="CHash\ObjectActivator.cs" />
     <Compile Include="CHash\ResourceHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
@@ -93,7 +94,6 @@
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
     <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
-    <Compile Include="StringParsers\IStringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="Ticks\MSticks.cs" />

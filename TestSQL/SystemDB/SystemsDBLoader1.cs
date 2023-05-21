@@ -29,13 +29,13 @@ namespace EliteDangerousCore.DB
     {
         // Star system loader
 
-        public class Loader
+        public class Loader1
         {
             // create - postfix allows a different table set to be created
             // maxblocksize - write back when reached this
             // gridids - null or array of allowed gridid
             // debugoutputfile - write file of loaded systems
-            public Loader(string ptablepostfix, int pmaxblocksize, bool[] gridids, bool poverlapped, string debugoutputfile = null)
+            public Loader1(string ptablepostfix, int pmaxblocksize, bool[] gridids, bool poverlapped, string debugoutputfile = null)
             {
                 tablepostfix = ptablepostfix;
                 maxblocksize = pmaxblocksize;
@@ -111,13 +111,15 @@ namespace EliteDangerousCore.DB
             {
                 long updates = 0;
 
-                System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS", true)} System DB store start");
+                System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS", true)} System DB L1 store start");
 
                 WriteBlock prevwb = null;           // if one is in flight, its recorded here
 
                 try
                 {
-                    var parser = new QuickJSON.Utils.StringParserQuickTextReader(textreader, 32768);
+                    // block size makes no difference..
+
+                    var parser = new QuickJSON.Utils.StringParserQuickTextReader(textreader, 512000);
                     var enumerator = JToken.ParseToken(parser, JToken.ParseOptions.None).GetEnumerator();       // these throw if they are upset, as the only way of complaining
 
                     int recordstostore = 0;
@@ -126,6 +128,8 @@ namespace EliteDangerousCore.DB
                     WriteBlock curwb = new WriteBlock(++wbno);
 
                     bool stop = false;
+
+                    //string checkculture = $"{10.232:N2}";
 
                     while (!stop)
                     {
@@ -143,74 +147,78 @@ namespace EliteDangerousCore.DB
                                 // if we have a valid record
                                 if (d.Deserialize(enumerator))
                                 {
-                                    int gridid = GridId.Id128(d.x, d.z);
+                                    if ( true )
+                                    { 
+                                        int gridid = GridId.Id128(d.x, d.z);
 
-                                    if (grididallowed == null || (grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
-                                    {
-                                        if (d.date > maxdate)                                   // for all, record last recorded date processed
-                                            maxdate = d.date;
-
-                                        var classifier = new EliteNameClassifier(d.name);
-
-                                        var skey = new Tuple<long, string>(gridid, classifier.SectorName);
-
-                                        if (!sectorcache.TryGetValue(skey, out long sectorid))     // if we dont have a sector with this grid id/name pair
+                                        if (grididallowed == null || (grididallowed.Length > gridid && grididallowed[gridid]))    // allows a null or small grid
                                         {
-                                            // System.Diagnostics.Debug.WriteLine($"In {wb.wbno} write sector {wb.sectorinsertcmd}");
-                                            if (curwb.sectorinsertcmd.Length > 0)
+                                            if (d.date > maxdate)                                   // for all, record last recorded date processed
+                                                maxdate = d.date;
+
+                                            var classifier = new EliteNameClassifier(d.name);
+
+                                            var skey = new Tuple<long, string>(gridid, classifier.SectorName);
+
+                                            if (!sectorcache.TryGetValue(skey, out long sectorid))     // if we dont have a sector with this grid id/name pair
+                                            {
+                                                // System.Diagnostics.Debug.WriteLine($"In {wb.wbno} write sector {wb.sectorinsertcmd}");
+                                                if (curwb.sectorinsertcmd.Length > 0)
+                                                    curwb.sectorinsertcmd.Append(',');
+
+                                                sectorid = nextsectorid++;
+                                                curwb.sectorinsertcmd.Append('(');                            // add (id,gridid,name) to sector insert string
+                                                curwb.sectorinsertcmd.Append(sectorid.ToStringInvariant());
                                                 curwb.sectorinsertcmd.Append(',');
+                                                curwb.sectorinsertcmd.Append(gridid.ToStringInvariant());
+                                                curwb.sectorinsertcmd.Append(",'");
+                                                curwb.sectorinsertcmd.Append(classifier.SectorName.Replace("'", "''"));
+                                                curwb.sectorinsertcmd.Append("') ");
 
-                                            sectorid = nextsectorid++;
-                                            curwb.sectorinsertcmd.Append('(');                            // add (id,gridid,name) to sector insert string
-                                            curwb.sectorinsertcmd.Append(sectorid.ToStringInvariant());
-                                            curwb.sectorinsertcmd.Append(',');
-                                            curwb.sectorinsertcmd.Append(gridid.ToStringInvariant());
-                                            curwb.sectorinsertcmd.Append(",'");
-                                            curwb.sectorinsertcmd.Append(classifier.SectorName.Replace("'", "''"));
-                                            curwb.sectorinsertcmd.Append("') ");
+                                                sectorcache.Add(skey, sectorid);        // add to sector cache
+                                            }
 
-                                            sectorcache.Add(skey, sectorid);        // add to sector cache
-                                        }
+                                            if (classifier.IsNamed)
+                                            {
+                                                if (curwb.nameinsertcmd.Length > 0)
+                                                    curwb.nameinsertcmd.Append(',');
 
-                                        if (classifier.IsNamed)
-                                        {
-                                            if (curwb.nameinsertcmd.Length > 0)
-                                                curwb.nameinsertcmd.Append(',');
+                                                curwb.nameinsertcmd.Append('(');                            // add (id,name) to names insert string
+                                                curwb.nameinsertcmd.Append(d.id.ToStringInvariant());
+                                                curwb.nameinsertcmd.Append(",'");
+                                                curwb.nameinsertcmd.Append(classifier.StarName.Replace("'", "''"));
+                                                curwb.nameinsertcmd.Append("') ");
+                                                classifier.NameIdNumeric = d.id;                        // the name becomes the id of the entry
+                                            }
 
-                                            curwb.nameinsertcmd.Append('(');                            // add (id,name) to names insert string
-                                            curwb.nameinsertcmd.Append(d.id.ToStringInvariant());
-                                            curwb.nameinsertcmd.Append(",'");
-                                            curwb.nameinsertcmd.Append(classifier.StarName.Replace("'", "''"));
-                                            curwb.nameinsertcmd.Append("') ");
-                                            classifier.NameIdNumeric = d.id;                        // the name becomes the id of the entry
-                                        }
+                                            if (curwb.systeminsertcmd.Length > 0)
+                                                curwb.systeminsertcmd.Append(",");
 
-                                        if (curwb.systeminsertcmd.Length > 0)
+                                            curwb.systeminsertcmd.Append('(');                            // add (id,sectorid,nameid,x,y,z,info) to systems insert string
+                                            curwb.systeminsertcmd.Append(d.id);         // locale independent, because its just a decimal with no N formatting
                                             curwb.systeminsertcmd.Append(',');
+                                            curwb.systeminsertcmd.Append(sectorid);
+                                            curwb.systeminsertcmd.Append(',');
+                                            curwb.systeminsertcmd.Append(classifier.ID);
+                                            curwb.systeminsertcmd.Append(',');
+                                            curwb.systeminsertcmd.Append(d.x);
+                                            curwb.systeminsertcmd.Append(',');
+                                            curwb.systeminsertcmd.Append(d.y);
+                                            curwb.systeminsertcmd.Append(',');
+                                            curwb.systeminsertcmd.Append(d.z);
+                                            curwb.systeminsertcmd.Append(",");
+                                            if (d.startype != null)
+                                                curwb.systeminsertcmd.Append((int)d.startype);
+                                            else
+                                                curwb.systeminsertcmd.Append("NULL");
 
-                                        curwb.systeminsertcmd.Append('(');                            // add (id,sectorid,nameid,x,y,z,info) to systems insert string
-                                        curwb.systeminsertcmd.Append(d.id.ToStringInvariant());
-                                        curwb.systeminsertcmd.Append(',');
-                                        curwb.systeminsertcmd.Append(sectorid.ToStringInvariant());
-                                        curwb.systeminsertcmd.Append(',');
-                                        curwb.systeminsertcmd.Append(classifier.ID.ToStringInvariant());
-                                        curwb.systeminsertcmd.Append(',');
-                                        curwb.systeminsertcmd.Append(d.x);
-                                        curwb.systeminsertcmd.Append(',');
-                                        curwb.systeminsertcmd.Append(d.y);
-                                        curwb.systeminsertcmd.Append(',');
-                                        curwb.systeminsertcmd.Append(d.z);
-                                        curwb.systeminsertcmd.Append(",");
-                                        if (d.startype != null)
-                                            curwb.systeminsertcmd.Append((int)d.startype);
-                                        else
-                                            curwb.systeminsertcmd.Append("NULL");
-                                        curwb.systeminsertcmd.Append(") ");
+                                            curwb.systeminsertcmd.Append(")");
 
-                                        if (debugfile != null)
-                                            debugfile.WriteLine(d.name + " " + d.x + "," + d.y + "," + d.z + ", ID:" + d.id + " SEC " + sectorid + " Grid " + gridid);
+                                            if (debugfile != null)
+                                                debugfile.WriteLine(d.name + " " + d.x + "," + d.y + "," + d.z + ", ID:" + d.id + " SEC " + sectorid + " Grid " + gridid);
 
-                                        recordstostore++;
+                                            recordstostore++;
+                                        }
                                     }
                                 }
                                 else
@@ -250,8 +258,6 @@ namespace EliteDangerousCore.DB
                             recordstostore = 0;
                         }
                     }
-
-                    reportProgress?.Invoke($"Star database updated {updates:N0}");
                 }
                 catch (Exception ex)
                 {
@@ -266,7 +272,8 @@ namespace EliteDangerousCore.DB
                     prevwb.sqlop = null;
                 }
 
-                System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB store end");
+                reportProgress?.Invoke($"Star database updated {updates:N0}");
+                System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB L1 finish {updates}");
 
                 return updates;
             }
@@ -319,6 +326,9 @@ namespace EliteDangerousCore.DB
                         {
                             // experimented with using (var cmd = db.CreateCommand("INSERT INTO SystemTable" + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString() + " ON CONFLICT(edsmid) DO UPDATE SET sectorid=excluded.sectorid,nameid=excluded.nameid,x=excluded.x,y=excluded.y,z=excluded.z,info=excluded.info", txn))
                             // no difference in speed
+
+                            //System.Diagnostics.Debug.Assert(!systeminsertcmd.ToString().Contains("."));
+
                             using (var cmd = db.CreateCommand("INSERT OR REPLACE INTO SystemTable" + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString(), txn))
                             {
                                 cmd.ExecuteNonQuery();

@@ -74,28 +74,31 @@ namespace SQLLiteExtensions
         {
             Job<T> jo = job as Job<T>;
             T ret = jo.Wait();
-            if (jo.executiontime >= warnthreshold)
+            if (jo.ExecutionTime >= warnthreshold)
             {
                 var trace = new System.Diagnostics.StackTrace(2, true).ToString().LineLimit(4, Environment.NewLine);
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} job {jo.jobname} exceeded warning threshold {warnthreshold} time {jo.executiontime}\r\n... {trace}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} job {jo.Jobname} exceeded warning threshold {warnthreshold} time {jo.ExecutionTime}\r\n... {trace}");
             }
 
             jo.Dispose();
             return ret;
         }
 
-        // Wait until write SQL for job completes without return
-        public void DBWait(Object job, uint warnthreshold = 500)
+        // Wait until write SQL for job completes without data return
+        // return metrics on job
+        public Tuple<uint,uint> DBWait(Object job, uint warnthreshold = 500)
         {
             Job<object> jo = job as Job<object>;
             jo.Wait();
-            if (jo.executiontime >= warnthreshold)
+            if (jo.ExecutionTime >= warnthreshold)
             {
                 var trace = new System.Diagnostics.StackTrace(2, true).ToString().LineLimit(4, Environment.NewLine);
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} job {jo.jobname} exceeded warning threshold {warnthreshold} time {jo.executiontime}\r\n... {trace}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} job {jo.Jobname} exceeded warning threshold {warnthreshold} time {jo.ExecutionTime}\r\n... {trace}");
             }
 
+            var ret = new Tuple<uint, uint>(jo.StartTime, jo.EndTime);        // return metrics
             jo.Dispose();
+            return ret;
         }
 
         // clear connections, and restart minimum number of connections
@@ -192,7 +195,7 @@ namespace SQLLiteExtensions
                                                 job.Exec();
                                                 //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} non mt finish job from {job.jobname} write {job.write}");
                                             }
-                                            else if (job.write)
+                                            else if (job.Write)
                                             {
                                                 while (true)
                                                 {
@@ -209,14 +212,14 @@ namespace SQLLiteExtensions
 
                                                         active = Interlocked.Decrement(ref checkRWLock);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
-                                                       // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
+                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.Jobname} active {active}");
 
                                                         rwLock.ReleaseWriterLock();
                                                         break;
                                                     }
                                                     catch
                                                     {
-                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.jobname} write failed to gain lock, retrying");
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.Jobname} write failed to gain lock, retrying");
                                                     }
                                                 }
                                             }
@@ -241,7 +244,7 @@ namespace SQLLiteExtensions
                                                     }
                                                     catch
                                                     {
-                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.jobname} read failed to gain lock, retrying");
+                                                        System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} from {job.Jobname} read failed to gain lock, retrying");
                                                     }
                                                 }
                                             }
@@ -361,10 +364,10 @@ namespace SQLLiteExtensions
 
                     T ret = job.Wait();     // must be infinite - can't release the caller thread until the job finished. 
 
-                    if ( job.executiontime >= warnthreshold)
+                    if ( job.ExecutionTime >= warnthreshold)
                     {
                         var trace = new System.Diagnostics.StackTrace(2, true).ToString().LineLimit(4,Environment.NewLine);
-                        System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job {job.jobname} exceeded warning threshold {warnthreshold} time {job.executiontime}\r\n... {trace}");
+                        System.Diagnostics.Debug.WriteLine($"SQL {Name} {(write ? "Write" : "Read")} job {job.Jobname} exceeded warning threshold {warnthreshold} time {job.ExecutionTime}\r\n... {trace}");
                     }
 
                     job.Dispose();
@@ -423,14 +426,16 @@ namespace SQLLiteExtensions
     internal interface Job
     {
         void Exec();
-        string jobname { get; set; }
-        bool write { get; set; }
+        string Jobname { get; set; }
+        bool Write { get; set; }
     }
     internal class Job<T> : Job, IDisposable
     {
-        public string jobname { get; set; }
-        public bool write { get; set; }
-        public uint executiontime { get; set; }   // set after wait for the amount of time between creation and finish execution
+        public string Jobname { get; set; }
+        public bool Write { get; set; }
+        public uint StartTime { get; set; }   
+        public uint EndTime { get; set; }   
+        public uint ExecutionTime { get { return EndTime - StartTime; } }
 
         private Func<T> func;           // this is the code to call to execute the job
         private T result;               // passed back result of the job
@@ -440,10 +445,10 @@ namespace SQLLiteExtensions
         public Job(Func<T> func, bool write, string jobname)       // in calller thread, set the job up
         {
             this.func = func;
-            this.write = write;
-            this.jobname = jobname;
+            this.Write = write;
+            this.Jobname = jobname;
             this.waithandle = new ManualResetEvent(false);
-            this.executiontime = (uint)Environment.TickCount;
+            this.StartTime = (uint)Environment.TickCount;
         }
 
         public void Exec()     // in SQL thread, do the job
@@ -458,7 +463,7 @@ namespace SQLLiteExtensions
             }
             finally
             {
-                executiontime = (uint)Environment.TickCount - executiontime;        // we use tickcount for this, accurate enough, low overhead
+                this.EndTime = (uint)Environment.TickCount;
                 waithandle.Set();
             }
         }

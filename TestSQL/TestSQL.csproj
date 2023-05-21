@@ -36,9 +36,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="QuickJSON, Version=0.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="QuickJSON, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\QuickJSON\QuickJSON\bin\Debug\net48\QuickJSON.dll</HintPath>
+      <HintPath>..\..\QuickJSON\QuickJSON\bin\Release\net48\QuickJSON.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -73,8 +73,10 @@
     <Compile Include="SystemDB\SystemsDBGetByDistance.cs" />
     <Compile Include="SystemDB\SystemsDBGetLists.cs" />
     <Compile Include="SystemDB\SystemsDBGetStars.cs" />
+    <Compile Include="SystemDB\SystemsDBLoader3.cs" />
+    <Compile Include="SystemDB\SystemsDBLoader2.cs" />
     <Compile Include="SystemDB\SystemsDBRemove.cs" />
-    <Compile Include="SystemDB\SystemsDBLoader.cs" />
+    <Compile Include="SystemDB\SystemsDBLoader1.cs" />
     <Compile Include="SystemDB\SystemsDBStarFileEntry.cs" />
     <Compile Include="SystemDB\SystemsDBStore.cs" />
     <Compile Include="TestSQLForm.cs">

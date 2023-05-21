@@ -18,12 +18,16 @@ namespace TestSQL
 {
     public partial class TestSQLForm : Form
     {
-        string spanshsmallfile = @"c:\code\examples\edsm\systems_1week.json";        // from 8/5/23
-        string spanshbigfile = @"c:\code\examples\edsm\systems_1month.json";        // from 8/5/23
+        string spanshsmallfile = @"c:\code\examples\edsm\systems_1week.json";      
+        string spanshbigfile = @"c:\code\examples\edsm\systems_1month.json";       
+        string spansh6mfile = @"c:\code\examples\edsm\systems_6months.json";        
         string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
+        string testfile = @"c:\code\test.json";
 
         public TestSQLForm()
         {
+          //  System.Globalization.CultureInfo.CurrentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("de-de");
+
             InitializeComponent();
 
             SystemsDatabase.Instance.MaxThreads = 8;
@@ -99,8 +103,7 @@ namespace TestSQL
                                     invoke(() => WriteLog(err));
                                 }
 
-                                if (c == 99999)
-                                    break;
+                                //if (c == 99999)                           break;
                             }
                         }
                     }
@@ -133,19 +136,19 @@ namespace TestSQL
 
         private void buttonMakeEDSMOld_Click(object sender, System.EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod:true);
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, 500000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method:0);
             WriteLog($"EDSM DB Made OLD {SystemsDB.GetTotalSystems()}");
         }
 
         private void buttonMakeEDSMNew_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method:2);
             WriteLog($"EDSM DB Made NEW {SystemsDB.GetTotalSystems()}");
         }
 
         private void buttonCheckEDSMMadeStars_Click(object sender, EventArgs e)
         {
-
+            System.Threading.Tasks.Task.Run(() => { CheckDB(edsminfile, false, (k) => BeginInvoke(k)); });
         }
 
 
@@ -414,46 +417,74 @@ namespace TestSQL
 
         private void buttonloadSpanshOld_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod: true);
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spansh6mfile, null, 150000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 0);
+            Thread.Sleep(5000);
             WriteLog($"Spansh DB Made OLD {SystemsDB.GetTotalSystems()}");
         }
 
-        private void buttonMakeSpanshNew_Click(object sender, EventArgs e)
+        private void buttonMakeSpanshL1_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), oldmethod: false);
-            WriteLog($"Spansh DB Made New {SystemsDB.GetTotalSystems()}");
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spansh6mfile, null, 150000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 1);
+            Thread.Sleep(1000);
+            WriteLog($"Spansh DB Made l1 {SystemsDB.GetTotalSystems()}");
+        }
+
+        private void buttonMakeSpanshL2_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 2);
+            Thread.Sleep(1000);
+            WriteLog($"Spansh DB Made L2 {SystemsDB.GetTotalSystems()}");
+        }
+
+        private void buttonMakeSpanshL3_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 3);
+            Thread.Sleep(1000);
+            WriteLog($"Spansh DB Made L3 {SystemsDB.GetTotalSystems()}");
+
         }
 
         private void buttonCheckMadeSpanshStars_Click(object sender, EventArgs e)
         {
-            System.Threading.Tasks.Task.Run(() => { CheckDB(spanshbigfile, true, (k) => BeginInvoke(k)); });
-            
+            System.Threading.Tasks.Task.Run(() => { CheckDB(spansh6mfile, true, (k) => BeginInvoke(k)); });
+
         }
 
+        const int spanshreadblocksize = 100000;
 
-        private void buttonReadSpanshNew_Click(object sender, EventArgs e)
+        private void buttonReadSpanshL1_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.DBWrite(db => {
-                db.DropStarTables();
-                db.CreateStarTables("");
-            });
 
-            SystemsDB.Loader loader = new SystemsDB.Loader("", 50000, null, false, @"c:\code\spanshmake.log");
+            SystemsDB.Loader1 loader = new SystemsDB.Loader1("", spanshreadblocksize, null, false);
             loader.ParseJSONFile(spanshsmallfile, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
             loader.Finish();
-            WriteLog("Spansh DB Read New");
+
+            Thread.Sleep(5000);
+            WriteLog($"Spansh DB Read New {SystemsDB.GetTotalSystems()}");
+        }
+
+        private void buttonReadSpanshL2_Click(object sender, EventArgs e)
+        {
+        //  spanshsmallfile = @"c:\code\test.json";
+            SystemsDB.Loader2 loader2 = new SystemsDB.Loader2("", spanshreadblocksize, null, false);
+            loader2.ParseJSONFile(spanshsmallfile, () => false, (s) => System.Diagnostics.Debug.WriteLine(s));
+            loader2.Finish();
+            Thread.Sleep(5000);
+            WriteLog($"Spansh DB Read New {SystemsDB.GetTotalSystems()}");
         }
 
         private void buttonReadSpanshOld_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.DBWrite(db => {
-                db.DropStarTables();
-                db.CreateStarTables("");
-            });
+        //    SystemsDatabase.Instance.DBWrite(db => {
+        //        db.DropStarTables();
+        //        db.CreateStarTables("");
+        //    });
 
             DateTime dts = DateTime.MinValue;
-            SystemsDB.ParseJSONFile(spanshsmallfile, null, 50000, ref dts, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), "", debugoutputfile: @"c:\code\spanshmake.log");
+            SystemsDB.ParseJSONFile(spanshsmallfile, null, spanshreadblocksize, ref dts, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), "");
 
+            Thread.Sleep(1000);
+            WriteLog($"Spansh DB Read New {SystemsDB.GetTotalSystems()}");
         }
 
         private void Check(string sys, double x, double y, double z, long sysa, EDStar ty)

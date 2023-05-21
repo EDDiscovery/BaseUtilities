@@ -72,8 +72,8 @@ namespace EliteDangerousCore.DB
 
         // this deletes the current DB data, reloads from the file, and recreates the indexes etc
 
-        public long MakeSystemTableFromFile(string filename, bool[] gridids, Func<bool> cancelRequested, Action<string> reportProgress, 
-                                            string debugoutputfile = null, bool oldmethod = false)
+        public long MakeSystemTableFromFile(string filename, bool[] gridids, int blocksize, Func<bool> cancelRequested, Action<string> reportProgress, 
+                                            string debugoutputfile = null, int method = 0)
         {
             DBWrite( action: conn =>
             {
@@ -82,18 +82,32 @@ namespace EliteDangerousCore.DB
             });
 
             long updates = 0;
-            if ( oldmethod )
+            if (method == 0)
             {
                 DateTime maxdate = DateTime.MinValue;
-                updates = SystemsDB.ParseJSONFile(filename, gridids, 500000, ref maxdate, cancelRequested, reportProgress, TempTablePostfix, true, debugoutputfile);
+                updates = SystemsDB.ParseJSONFile(filename, gridids, blocksize, ref maxdate, cancelRequested, reportProgress, TempTablePostfix, true, debugoutputfile);
                 SetLastRecordTimeUTC(maxdate);          // record last data stored in database
             }
-            else
+            else if (method == 1)
             {
-                SystemsDB.Loader loader = new SystemsDB.Loader(TempTablePostfix, 500000, gridids, true, debugoutputfile);   // overlap write
+                SystemsDB.Loader1 loader = new SystemsDB.Loader1(TempTablePostfix, blocksize, gridids, true, debugoutputfile);   // overlap write
                 updates = loader.ParseJSONFile(filename, cancelRequested, reportProgress);
                 loader.Finish();
             }
+            else if (method == 2)
+            {
+                SystemsDB.Loader2 loader = new SystemsDB.Loader2(TempTablePostfix, blocksize, gridids, true, debugoutputfile);   // overlap write
+                updates = loader.ParseJSONFile(filename, cancelRequested, reportProgress);
+                loader.Finish();
+            }
+            else if (method == 3)
+            {
+                SystemsDB.Loader3 loader = new SystemsDB.Loader3(TempTablePostfix, blocksize, gridids, true, debugoutputfile);   // overlap write
+                updates = loader.ParseJSONFile(filename, cancelRequested, reportProgress);
+                loader.Finish();
+            }
+            else
+                System.Diagnostics.Debug.Assert(false);
 
             if (updates > 0)
             {
