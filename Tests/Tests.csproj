@@ -120,10 +120,6 @@
       <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
       <Name>BaseUtils</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OpenTKUtils\OpenTKUtils.csproj">
-      <Project>{4cfa37d5-4182-4cae-afc3-7563a13b44ee}</Project>
-      <Name>OpenTKUtils</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
