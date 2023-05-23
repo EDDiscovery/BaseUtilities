@@ -140,10 +140,15 @@ namespace TestSQL
             WriteLog($"EDSM DB Made OLD {SystemsDB.GetTotalSystems()}");
         }
 
-        private void buttonMakeEDSMNew_Click(object sender, EventArgs e)
+        private void buttonMakeEDSML2_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method:2);
-            WriteLog($"EDSM DB Made NEW {SystemsDB.GetTotalSystems()}");
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 2);
+            WriteLog($"EDSM DB Made L2 {SystemsDB.GetTotalSystems()}");
+        }
+        private void buttonMakeEDSML3_Click(object sender, EventArgs e)
+        {
+            SystemsDatabase.Instance.MakeSystemTableFromFile(edsminfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 3);
+            WriteLog($"EDSM DB Made L3 {SystemsDB.GetTotalSystems()}");
         }
 
         private void buttonCheckEDSMMadeStars_Click(object sender, EventArgs e)

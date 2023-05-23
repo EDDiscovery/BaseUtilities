@@ -37,12 +37,13 @@
             this.buttonReadSpanshNew = new System.Windows.Forms.Button();
             this.buttonReadSpanshOld = new System.Windows.Forms.Button();
             this.buttonMakeSpanshL1 = new System.Windows.Forms.Button();
-            this.buttonMakeEDSMNew = new System.Windows.Forms.Button();
+            this.buttonMakeEDSML2 = new System.Windows.Forms.Button();
             this.buttonCheckMadeSpanshStars = new System.Windows.Forms.Button();
             this.buttonCheckEDSMMadeStars = new System.Windows.Forms.Button();
             this.buttonReadSpanshL2 = new System.Windows.Forms.Button();
             this.buttonMakeSpanshL2 = new System.Windows.Forms.Button();
             this.buttonMakeSpanshL3 = new System.Windows.Forms.Button();
+            this.buttonMakeEDSML3 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // buttonMakeEDSMOld
@@ -133,15 +134,15 @@
             this.buttonMakeSpanshL1.UseVisualStyleBackColor = true;
             this.buttonMakeSpanshL1.Click += new System.EventHandler(this.buttonMakeSpanshL1_Click);
             // 
-            // buttonMakeEDSMNew
+            // buttonMakeEDSML2
             // 
-            this.buttonMakeEDSMNew.Location = new System.Drawing.Point(12, 70);
-            this.buttonMakeEDSMNew.Name = "buttonMakeEDSMNew";
-            this.buttonMakeEDSMNew.Size = new System.Drawing.Size(113, 23);
-            this.buttonMakeEDSMNew.TabIndex = 0;
-            this.buttonMakeEDSMNew.Text = "Make EDSM New";
-            this.buttonMakeEDSMNew.UseVisualStyleBackColor = true;
-            this.buttonMakeEDSMNew.Click += new System.EventHandler(this.buttonMakeEDSMNew_Click);
+            this.buttonMakeEDSML2.Location = new System.Drawing.Point(12, 70);
+            this.buttonMakeEDSML2.Name = "buttonMakeEDSML2";
+            this.buttonMakeEDSML2.Size = new System.Drawing.Size(113, 23);
+            this.buttonMakeEDSML2.TabIndex = 0;
+            this.buttonMakeEDSML2.Text = "Make EDSM L2";
+            this.buttonMakeEDSML2.UseVisualStyleBackColor = true;
+            this.buttonMakeEDSML2.Click += new System.EventHandler(this.buttonMakeEDSML2_Click);
             // 
             // buttonCheckMadeSpanshStars
             // 
@@ -155,7 +156,7 @@
             // 
             // buttonCheckEDSMMadeStars
             // 
-            this.buttonCheckEDSMMadeStars.Location = new System.Drawing.Point(12, 99);
+            this.buttonCheckEDSMMadeStars.Location = new System.Drawing.Point(168, 70);
             this.buttonCheckEDSMMadeStars.Name = "buttonCheckEDSMMadeStars";
             this.buttonCheckEDSMMadeStars.Size = new System.Drawing.Size(172, 23);
             this.buttonCheckEDSMMadeStars.TabIndex = 3;
@@ -193,6 +194,16 @@
             this.buttonMakeSpanshL3.UseVisualStyleBackColor = true;
             this.buttonMakeSpanshL3.Click += new System.EventHandler(this.buttonMakeSpanshL3_Click);
             // 
+            // buttonMakeEDSML3
+            // 
+            this.buttonMakeEDSML3.Location = new System.Drawing.Point(12, 99);
+            this.buttonMakeEDSML3.Name = "buttonMakeEDSML3";
+            this.buttonMakeEDSML3.Size = new System.Drawing.Size(113, 23);
+            this.buttonMakeEDSML3.TabIndex = 0;
+            this.buttonMakeEDSML3.Text = "Make EDSM L3";
+            this.buttonMakeEDSML3.UseVisualStyleBackColor = true;
+            this.buttonMakeEDSML3.Click += new System.EventHandler(this.buttonMakeEDSML3_Click);
+            // 
             // TestSQLForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -211,7 +222,8 @@
             this.Controls.Add(this.buttonMakeSpanshL1);
             this.Controls.Add(this.buttonMakeSpanshOld);
             this.Controls.Add(this.buttonTestEDSM);
-            this.Controls.Add(this.buttonMakeEDSMNew);
+            this.Controls.Add(this.buttonMakeEDSML3);
+            this.Controls.Add(this.buttonMakeEDSML2);
             this.Controls.Add(this.buttonMakeEDSMOld);
             this.Name = "TestSQLForm";
             this.Text = "Form1";
@@ -230,12 +242,13 @@
         private System.Windows.Forms.Button buttonReadSpanshNew;
         private System.Windows.Forms.Button buttonReadSpanshOld;
         private System.Windows.Forms.Button buttonMakeSpanshL1;
-        private System.Windows.Forms.Button buttonMakeEDSMNew;
+        private System.Windows.Forms.Button buttonMakeEDSML2;
         private System.Windows.Forms.Button buttonCheckMadeSpanshStars;
         private System.Windows.Forms.Button buttonCheckEDSMMadeStars;
         private System.Windows.Forms.Button buttonReadSpanshL2;
         private System.Windows.Forms.Button buttonMakeSpanshL2;
         private System.Windows.Forms.Button buttonMakeSpanshL3;
+        private System.Windows.Forms.Button buttonMakeEDSML3;
     }
 }
 
