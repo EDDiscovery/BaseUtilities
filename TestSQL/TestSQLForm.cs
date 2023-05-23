@@ -446,7 +446,7 @@ namespace TestSQL
 
         private void buttonCheckMadeSpanshStars_Click(object sender, EventArgs e)
         {
-            System.Threading.Tasks.Task.Run(() => { CheckDB(spansh6mfile, true, (k) => BeginInvoke(k)); });
+            System.Threading.Tasks.Task.Run(() => { CheckDB(spanshbigfile, true, (k) => BeginInvoke(k)); });
 
         }
 

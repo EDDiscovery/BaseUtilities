@@ -72,8 +72,9 @@ namespace SQLLiteExtensions
                     return true;
                 }
             }
-            catch
+            catch( Exception ex)
             {
+                System.Diagnostics.Trace.WriteLine($"No SQLite interop.dll {ex}");
             }
 
             return false;
