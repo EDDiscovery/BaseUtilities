@@ -44,14 +44,13 @@ namespace EDDiscoveryTests
             string chks1 = "Helllo,There";
             string chks2 = "Helllo;There";
             CSVWriteGrid wr = new CSVWriteGrid();
-            wr.SetCSVDelimiter(comma);
             wr.GetPreHeader += (o) => { if (o == 0) return new object[] { "Pre header" }; else return null; };
             wr.GetLineHeader += (o) => { if (o == 0) return new object[] { "CA", "CB", "CC" }; else return null; };
             wr.GetLine += (i) => { if (i < 10) return new object[] { i.ToStringInvariant(), decimalvalue, (i + 2).ToStringInvariant(), chks1, chks2 }; else return null; };
             wr.WriteCSV(Path.Combine(workingfolder, "comma.csv"));
 
             CSVFile rd = new CSVFile();
-            if (rd.Read(Path.Combine(workingfolder, "comma.csv"), FileShare.ReadWrite, comma, ns:System.Globalization.NumberStyles.AllowThousands))
+            if (rd.Read(Path.Combine(workingfolder, "comma.csv"), FileShare.ReadWrite))
             {
                 CSVFile.Row r0 = rd[0];
                 Check.That(r0[0].Equals("Pre header")).IsTrue();

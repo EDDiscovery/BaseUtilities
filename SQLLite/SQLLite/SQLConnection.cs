@@ -15,9 +15,11 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace SQLLiteExtensions
@@ -116,6 +118,142 @@ namespace SQLLiteExtensions
         {
             using (DbCommand command = CreateCommand(query))
                 command.ExecuteNonQuery();
+        }
+
+        public enum JournalModes { DELETE, TRUNCATE, PERSIST, MEMORY, WAL, OFF };
+        public void SQLJournalMode(JournalModes jm)
+        {
+            using (DbCommand cmd = CreateCommand("PRAGMA journal_mode = " + jm.ToString()))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+        public JournalModes GetSQLJournalMode()
+        {
+            using (DbCommand cmd = CreateCommand("PRAGMA journal_mode;"))
+            {
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if ( Enum.TryParse<JournalModes>((string)reader[0], true, out JournalModes jm))
+                        {
+                            return jm;
+                        }
+                    }
+
+                    return JournalModes.DELETE;
+                }
+            }
+        }
+
+        public void Vacuum()
+        {
+            using (DbCommand cmd = CreateCommand("VACUUM"))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public struct TableInfo
+        {
+            public string Name;
+            public string TableName;
+            public string SQL;
+        };
+
+        public List<TableInfo> SQLMasterQuery(string type)
+        {
+            List<TableInfo> tables = new List<TableInfo>();
+
+            using (DbCommand cmd = CreateCommand("select name,tbl_name,sql From sqlite_master Where type='" + type + "'"))
+            {
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        tables.Add(new TableInfo() { Name = (string)reader[0], TableName = (string)reader[1], SQL = (string)reader[2] });
+                }
+            }
+
+            return tables;
+        }
+
+        public List<string> Tables()
+        {
+            var tl = SQLMasterQuery("table");
+            return (from x in tl select x.TableName).ToList();
+        }
+
+        public string SQLIntegrity()
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
+            using (DbCommand cmd = CreateCommand("pragma Integrity_Check"))
+            {
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string ret = (string)reader[0];
+                        System.Diagnostics.Debug.WriteLine($"Integrity check {ToString()} {ret} in {sw.ElapsedMilliseconds}ms");
+                        return ret;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // either give a fully formed cmd to it, or give cmdexplain=null and it will create one for you using cmdtextoptional (but with no variable variables allowed)
+        public List<string> ExplainQueryPlan(DbCommand cmdexplain = null, string cmdtextoptional = null)
+        {
+            if (cmdexplain == null)
+            {
+                System.Diagnostics.Debug.Assert(cmdtextoptional != null);
+                cmdexplain = CreateCommand(cmdtextoptional);
+            }
+
+            List<string> ret = new List<string>();
+
+            using (DbCommand cmd = CreateCommand("Explain Query Plan " + cmdexplain.CommandText))
+            {
+                foreach (System.Data.SQLite.SQLiteParameter p in cmdexplain.Parameters)
+                    cmd.Parameters.Add(p);
+
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string detail = (string)reader[3];
+                        int order = (int)(long)reader[1];
+                        int from = (int)(long)reader[2];
+                        int selectid = (int)(long)reader[0];
+                        ret.Add("Select ID " + selectid + " Order " + order + " From " + from + ": " + detail);
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+
+
+        public string ExplainQueryPlanString(DbCommand cmdexplain, bool listparas = true)
+        {
+            var ret = ExplainQueryPlan(cmdexplain);
+            string s = "SQL Query:" + Environment.NewLine + cmdexplain.CommandText + Environment.NewLine;
+
+            if (listparas && cmdexplain.Parameters.Count > 0)
+            {
+                foreach (System.Data.SQLite.SQLiteParameter p in cmdexplain.Parameters)
+                {
+                    s += p.Value + " ";
+                }
+
+                s += Environment.NewLine;
+            }
+
+            return s + "Plan:" + Environment.NewLine + string.Join(Environment.NewLine, ret);
         }
 
         public Type GetConnectionType()

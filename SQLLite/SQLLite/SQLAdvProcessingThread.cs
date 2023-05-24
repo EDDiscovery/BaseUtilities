@@ -27,6 +27,8 @@ namespace SQLLiteExtensions
         public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
+        public bool WALMode { get { return rwLock == null; } set { ClearDown(); rwLock = value ? null : new ReaderWriterLock(); } }
+
         public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
         public bool MultiThreaded { get { return multithreaded; } set { SetMultithreaded(value); } }    // default is not
@@ -140,7 +142,7 @@ namespace SQLLiteExtensions
         private ManualResetEvent stopRequestedEvent = new ManualResetEvent(false);      // manual reset, multiple threads can be waiting on this one
         private ManualResetEvent stoppedAllThreads = new ManualResetEvent(true);        // Set to true as there are no running ones, cleared on thread start
 
-        private ReaderWriterLock rwLock = new ReaderWriterLock();       // used to prevent writes when readers are running in MT scenarios
+        private ReaderWriterLock rwLock = new ReaderWriterLock();     // used to prevent writes when readers are running in MT scenarios without WAL mode. Default is normal mode, not WAL mode.
 
         private bool multithreaded = false;             // if MT
         private bool stopCreatingNewThreads = false;    // halt thread creation during stop
@@ -201,7 +203,7 @@ namespace SQLLiteExtensions
                                                 {
                                                     try
                                                     {
-                                                        rwLock.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
+                                                        rwLock?.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
 
                                                         int active = Interlocked.Increment(ref checkRWLock);
                                                         System.Diagnostics.Debug.Assert(active == 1);
@@ -214,7 +216,7 @@ namespace SQLLiteExtensions
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
                                                         System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.Jobname} active {active}");
 
-                                                        rwLock.ReleaseWriterLock();
+                                                        rwLock?.ReleaseWriterLock();
                                                         break;
                                                     }
                                                     catch
@@ -229,7 +231,7 @@ namespace SQLLiteExtensions
                                                 {
                                                     try
                                                     {
-                                                        rwLock.AcquireReaderLock(30 * 1000);
+                                                        rwLock?.AcquireReaderLock(30 * 1000);
 
                                                         int active = Interlocked.Increment(ref checkRWLock);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
@@ -239,7 +241,7 @@ namespace SQLLiteExtensions
                                                         active = Interlocked.Decrement(ref checkRWLock);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
 
-                                                        rwLock.ReleaseReaderLock();
+                                                        rwLock?.ReleaseReaderLock();
                                                         break;
                                                     }
                                                     catch
