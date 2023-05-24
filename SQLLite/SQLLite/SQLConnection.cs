@@ -146,6 +146,28 @@ namespace SQLLiteExtensions
                 }
             }
         }
+        public void SQLWALPageSize(int value)
+        {
+            using (DbCommand cmd = CreateCommand("PRAGMA wal_autocheckpoint = " + value.ToStringInvariant() + ";"))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+        public int GetSQLWALPageSize()
+        {
+            using (DbCommand cmd = CreateCommand("PRAGMA wal_autocheckpoint;"))
+            {
+                using (DbDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        return (int)(long)reader[0];
+                    }
+                }
+
+                return 0;
+            }
+        }
 
         public void Vacuum()
         {
