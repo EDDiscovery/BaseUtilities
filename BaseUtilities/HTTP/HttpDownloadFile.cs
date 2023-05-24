@@ -78,10 +78,26 @@ namespace BaseUtils
                         var tmpFilename = filename + ".tmp";        // copy thru tmp
                         using (var destFileStream = File.Open(tmpFilename, FileMode.Create, FileAccess.Write))
                         {
+                            System.Diagnostics.Trace.WriteLine($"HTTP Begin download to {tmpFilename}");
+
+                            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                            long lastreportime = 0;
+
                             byte[] buffer = new byte[64 * 1024];
+                            long count = 0;
                             do
                             {
-                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks, so a long download can be cancelled
+                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks
+
+                                count += numread;
+
+                                var tme = sw.ElapsedMilliseconds;
+
+                                if ( numread == 0 || tme - lastreportime >= 1000)       // if at end, or over a second..
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {count:N0} at {count / (tme / 1000.0):N2} b/s");
+                                    lastreportime = (tme / 1000) * 1000;
+                                }
 
                                 if (numread > 0)
                                 {
