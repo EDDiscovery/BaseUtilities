@@ -22,7 +22,7 @@ namespace TestSQL
         string spanshbigfile = @"c:\code\examples\edsm\systems_1month.json";       
         string spansh6mfile = @"c:\code\examples\edsm\systems_6months.json";        
         string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
-        string testfile = @"c:\code\test.json";
+        //string testfile = @"c:\code\test.json";
 
         public TestSQLForm()
         {

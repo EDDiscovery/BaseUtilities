@@ -23,7 +23,7 @@ namespace EliteDangerousCore.DB
     {
         private SystemsDatabase()
         {
-            WALMode = false;
+            RWLocks = false;
         }
 
         public static SystemsDatabase Instance { get; private set; } = new SystemsDatabase();        //STATIC constructor, make once at start of program
@@ -39,7 +39,7 @@ namespace EliteDangerousCore.DB
         {
             DBWrite(cn =>
             {
-                cn.SQLJournalMode(WALMode ? SQLExtConnection.JournalModes.WAL : SQLExtConnection.JournalModes.DELETE);
+                cn.SQLJournalMode(RWLocks ? SQLExtConnection.JournalModes.WAL : SQLExtConnection.JournalModes.DELETE);
             }
             );
 

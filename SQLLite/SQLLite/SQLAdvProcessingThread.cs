@@ -18,8 +18,7 @@ using System.Threading;
 
 namespace SQLLiteExtensions
 {
-    // allows multithreaded access to a SQL database, sequencing the reads/writes
- 
+    // allows multithreaded access to a SQL database, sequencing the reads/writes, allowing RWLocking if not in WAL mode.
     public abstract class SQLAdvProcessingThread<ConnectionType> where ConnectionType : IDisposable
     {
         #region Public control 
@@ -27,7 +26,7 @@ namespace SQLLiteExtensions
         public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
-        public bool WALMode { get { return rwLock == null; } set { ClearDown(); rwLock = value ? null : new ReaderWriterLock(); } }
+        public bool RWLocks { get { return rwLock == null; } set { ClearDown(); rwLock = value ? null : new ReaderWriterLock(); } }
 
         public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
@@ -35,26 +34,28 @@ namespace SQLLiteExtensions
 
         protected abstract ConnectionType CreateConnection();           // override in derived class to make the connection
 
+        const int defaultwarnlimit = 2000;  //ms
+
         // Execute read SQL with the database in a thread. wait for finish. Return value
-        public T DBRead<T>(Func<ConnectionType, T> func, uint warnthreshold = 500, string jobname = "")
+        public T DBRead<T>(Func<ConnectionType, T> func, uint warnthreshold = defaultwarnlimit, string jobname = "")
         {
             return ExecuteAndWait(() => func.Invoke(connection.Value), false, warnthreshold, jobname);
         }
 
         // Execute read SQL with the database in a thread. wait for finish. 
-        public void DBRead(Action<ConnectionType> action, uint warnthreshold = 500, string jobname = "")
+        public void DBRead(Action<ConnectionType> action, uint warnthreshold = defaultwarnlimit, string jobname = "")
         {
             ExecuteAndWait<object>(() => { action.Invoke(connection.Value); return null; }, false, warnthreshold, jobname);
         }
 
         // Execute write SQL with the database in a thread. wait for finish. 
-        public void DBWrite(Action<ConnectionType> action, uint warnthreshold = 500, string jobname = "")
+        public void DBWrite(Action<ConnectionType> action, uint warnthreshold = defaultwarnlimit, string jobname = "")
         {
             ExecuteAndWait<object>(() => { action.Invoke(connection.Value); return null; }, true, warnthreshold, jobname);
         }
 
         // Execute write SQL with the database in a thread. wait for finish. Return value
-        public T DBWrite<T>(Func<ConnectionType, T> func, uint warnthreshold = 500, string jobname = "")
+        public T DBWrite<T>(Func<ConnectionType, T> func, uint warnthreshold = defaultwarnlimit, string jobname = "")
         {
             return ExecuteAndWait(() => func.Invoke(connection.Value), true, warnthreshold, jobname);
         }
@@ -72,7 +73,7 @@ namespace SQLLiteExtensions
         }
 
         // Wait until SQL for job completes and return value from job.
-        public T DBWait<T>(Object job, uint warnthreshold = 500)
+        public T DBWait<T>(Object job, uint warnthreshold = defaultwarnlimit)
         {
             Job<T> jo = job as Job<T>;
             T ret = jo.Wait();
@@ -88,7 +89,7 @@ namespace SQLLiteExtensions
 
         // Wait until write SQL for job completes without data return
         // return metrics on job
-        public Tuple<uint,uint> DBWait(Object job, uint warnthreshold = 500)
+        public Tuple<uint,uint> DBWait(Object job, uint warnthreshold = defaultwarnlimit)
         {
             Job<object> jo = job as Job<object>;
             jo.Wait();
@@ -149,8 +150,6 @@ namespace SQLLiteExtensions
 
         private object locker = new object();  // used to lock the MT change
 
-        private int checkRWLock = 0;        // used to double check reader/writer lock and to provide debug output for number of active items
-
         #endregion
 
         public static int ccount = 0;
@@ -193,9 +192,9 @@ namespace SQLLiteExtensions
                                             
                                             if ( !MultiThreaded )       // if not multithreaded mode, we can just execute
                                             {
-                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} non mt execute job from {job.jobname} write {job.write}");
+                                                System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute non mt job from {job.Jobname}");
                                                 job.Exec();
-                                                //System.Diagnostics.Debug.WriteLine($"SQL {Name} On thread {Thread.CurrentThread.Name} non mt finish job from {job.jobname} write {job.write}");
+                                                System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish non mt job from {job.Jobname}");
                                             }
                                             else if (job.Write)
                                             {
@@ -205,16 +204,13 @@ namespace SQLLiteExtensions
                                                     {
                                                         rwLock?.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
 
-                                                        int active = Interlocked.Increment(ref checkRWLock);
-                                                        System.Diagnostics.Debug.Assert(active == 1);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
-                                                       // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
+                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute write job from {job.Jobname}");
 
                                                         job.Exec();
 
-                                                        active = Interlocked.Decrement(ref checkRWLock);
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
-                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.Jobname} active {active}");
+                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish write job from {job.Jobname}");
 
                                                         rwLock?.ReleaseWriterLock();
                                                         break;
@@ -233,13 +229,11 @@ namespace SQLLiteExtensions
                                                     {
                                                         rwLock?.AcquireReaderLock(30 * 1000);
 
-                                                        int active = Interlocked.Increment(ref checkRWLock);
-                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute read job from {job.jobname} active {active}");
+                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute read job from {job.Jobname}");
 
                                                         job.Exec();
 
-                                                        active = Interlocked.Decrement(ref checkRWLock);
-                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish read job from {job.jobname} active {active}");
+                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish read job from {job.Jobname}");
 
                                                         rwLock?.ReleaseReaderLock();
                                                         break;

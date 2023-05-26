@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2019-2021 EDDiscovery development team
+ * Copyright © 2019-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,33 +10,37 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
 namespace SQLLiteExtensions
 {
-    // A connection
+    // A connection, protecting itself against cross threading
 
     public class SQLExtConnection : IDisposable             
     {
         public enum AccessMode { Reader, Writer, ReaderWriter };
         public string DBFile { get; private set; }    // the File name
 
-        protected SQLExtConnection(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter )
+        public enum JournalModes { DELETE, TRUNCATE, PERSIST, MEMORY, WAL, OFF };
+
+        protected SQLExtConnection(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter, 
+                                    JournalModes journalmode = JournalModes.DELETE, bool disallow_xthread = true )
         {
             try
             {
                 DBFile = dbfile;
+                this.disallow_xthread = disallow_xthread;
+
                 connection = SQLDbProvider.DbProvider().CreateConnection();
+                //connection = new SQLiteConnection();
 
                 // Use the database selected by maindb as the 'main' database
                 connection.ConnectionString = "Data Source=" + DBFile.Replace("\\", "\\\\") + ";Pooling=true;";
@@ -44,16 +48,18 @@ namespace SQLLiteExtensions
                 if (utctimeindicator)   // indicate treat dates as UTC.
                     connection.ConnectionString += "DateTimeKind=Utc;";
 
+                connection.ConnectionString += $"journal mode={journalmode};";
+
                 if (mode == AccessMode.Reader)
                 {
                     connection.ConnectionString += "Read Only=True;";
                 }
 
-                System.Diagnostics.Debug.WriteLine($"SQLExtConnection created connection {connection.ConnectionString} on {Thread.CurrentThread.Name}");
-
                 connection.Open();
 
                 owningThread = Thread.CurrentThread;
+
+                System.Diagnostics.Debug.WriteLine($"SQLExtConnection created connection {connection.ConnectionString} on {Thread.CurrentThread.Name} in Journal Mode {journalmode}");
             }
             catch
             {
@@ -82,6 +88,7 @@ namespace SQLLiteExtensions
             AssertThreadOwner();
             return connection.BeginTransaction(isolevel);
         }
+
         public virtual void Dispose()
         {
             Dispose(true);
@@ -120,7 +127,6 @@ namespace SQLLiteExtensions
                 command.ExecuteNonQuery();
         }
 
-        public enum JournalModes { DELETE, TRUNCATE, PERSIST, MEMORY, WAL, OFF };
         public void SQLJournalMode(JournalModes jm)
         {
             using (DbCommand cmd = CreateCommand("PRAGMA journal_mode = " + jm.ToString()))
@@ -283,6 +289,17 @@ namespace SQLLiteExtensions
             return connection.GetType();
         }
 
+        private Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
+
+        [ConditionalAttribute("DEBUG")]
+        protected void AssertThreadOwner()
+        {
+            if (disallow_xthread && Thread.CurrentThread != owningThread)
+            {
+                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {owningThread.Name} ({owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
+            }
+        }
+
 #if DEBUG
         //since finalisers impose a penalty, we shall check only in debug mode
         private bool hasbeendisposed = false;
@@ -296,16 +313,7 @@ namespace SQLLiteExtensions
         }
 #endif
 
-        protected void AssertThreadOwner()
-        {
-            if (Thread.CurrentThread != owningThread)
-            {
-                throw new InvalidOperationException($"DB connection was passed between threads.  Owning thread: {owningThread.Name} ({owningThread.ManagedThreadId}); this thread: {Thread.CurrentThread.Name} ({Thread.CurrentThread.ManagedThreadId})");
-            }
-        }
-
-        protected DbConnection connection;      // the connection, available to inheritors
-
-        private Thread owningThread;          // tracing who owns the thread to prevent cross thread ops
+        private bool disallow_xthread = true;
+        private DbConnection connection;      // the connection, available to inheritors
     }
 }

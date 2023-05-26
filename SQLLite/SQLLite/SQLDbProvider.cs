@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2021-2021 EDDiscovery development team
+ * Copyright © 2021-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -39,96 +37,48 @@ namespace SQLLiteExtensions
 
         private static DbProviderFactory GetSqliteProvider()
         {
-            if (WindowsSqliteProviderWorks())
-            {
-                return GetWindowsSqliteProviderFactory();
-            }
-
-            var factory = GetMonoSqliteProviderFactory();
-
-            if (DbFactoryWorks(factory))
-            {
-                return factory;
-            }
-
-            throw new InvalidOperationException("Unable to get a working Sqlite driver");
-        }
-
-        private static bool WindowsSqliteProviderWorks()
-        {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-            {
-                return false;
-            }
-
-            try
-            {
-                // This will throw an exception if the SQLite.Interop.dll can't be loaded.
-                string sqliteversion = SQLiteConnection.SQLiteVersion;
-
-                if (!String.IsNullOrEmpty(sqliteversion))
-                {
-                    System.Diagnostics.Trace.WriteLine($"SQLite Version {sqliteversion}");
-                    return true;
-                }
-            }
-            catch( Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine($"No SQLite interop.dll {ex}");
-            }
-
-            return false;
-        }
-
-        private static DbProviderFactory GetMonoSqliteProviderFactory()
-        {
-            try
-            {
-                // Disable CS0618 warning for LoadWithPartialName
-#pragma warning disable 618
-                var asm = System.Reflection.Assembly.LoadWithPartialName("Mono.Data.Sqlite");
-#pragma warning restore 618
-                var factorytype = asm.GetType("Mono.Data.Sqlite.SqliteFactory");
-                return (DbProviderFactory)factorytype.GetConstructor(new Type[0]).Invoke(new object[0]);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static bool DbFactoryWorks(DbProviderFactory factory)
-        {
-            if (factory != null)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 try
                 {
+                    string sqliteversion = SQLiteConnection.SQLiteVersion;
+
+                    if (!String.IsNullOrEmpty(sqliteversion))
+                    {
+                        System.Diagnostics.Trace.WriteLine($"SQLite Version {sqliteversion}");
+                        return new System.Data.SQLite.SQLiteFactory();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine($"No windows DB provider -check interop DLL etc {ex}");
+                }
+            }
+            else
+            {
+                try
+                {
+                    // Disable CS0618 warning for LoadWithPartialName
+#pragma warning disable 618
+                    var asm = System.Reflection.Assembly.LoadWithPartialName("Mono.Data.Sqlite");
+#pragma warning restore 618
+                    var factorytype = asm.GetType("Mono.Data.Sqlite.SqliteFactory");
+                    var factory = (DbProviderFactory)factorytype.GetConstructor(new Type[0]).Invoke(new object[0]);
+
                     using (var conn = factory.CreateConnection())
                     {
                         conn.ConnectionString = "Data Source=:memory:;Pooling=true;";
                         conn.Open();
-                        return true;
+                        return factory;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Trace.WriteLine($"No MONO DB provider -check interop DLL etc {ex}");
                 }
             }
 
-            return false;
+            return null;
         }
-
-        private static DbProviderFactory GetWindowsSqliteProviderFactory()
-        {
-            try
-            {
-                return new System.Data.SQLite.SQLiteFactory();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
     }
 }
