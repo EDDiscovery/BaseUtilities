@@ -123,6 +123,18 @@ public static partial class DrawingHelpersStaticFunc
         return gr;
     }
 
+    static public Rectangle Add(this Rectangle r, Rectangle next)
+    {
+        if (r.Width == 0 || r.Height == 0)      // if no size on r, then its next
+            return next;
+        else
+        {
+            var left = Math.Min(r.Left, next.Left);
+            var top = Math.Min(r.Top, next.Top);
+            return new Rectangle(left, top, Math.Max(r.Right, next.Right) - left, Math.Max(r.Bottom, next.Bottom) - top);
+        }
+    }
+
     #endregion
 
     #region Misc
