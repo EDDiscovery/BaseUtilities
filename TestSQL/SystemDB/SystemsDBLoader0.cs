@@ -30,49 +30,7 @@ namespace EliteDangerousCore.DB
     {
         #region Table Update from JSON FILE
 
-        // store systems to DB.  Data is checked against the mode. Verified april 23 with a load against an empty db in spansh and edsm mode
-        public static long StoreSystems(IEnumerable<ISystem> systems)
-        {
-            JArray jlist = new JArray();
-
-            string currentdb = SystemsDatabase.Instance.GetDBSource();
-            bool spansh = currentdb.Equals("SPANSH");
-
-            foreach (var sys in systems)
-            {
-                // so we need coords, and if edsm db, we need an edsm id, or for spansh we need a system address
-                if (sys.HasCoordinate && ((!spansh && sys.EDSMID.HasValue) || (spansh && sys.SystemAddress.HasValue)))  
-                {
-                    JObject jo = new JObject
-                    {
-                        ["name"] = sys.Name,
-                        ["coords"] = new JObject { ["x"] = sys.X, ["y"] = sys.Y, ["z"] = sys.Z }
-                    };
-
-                    if ( spansh )       // we format either for a spansh DB or an EDSM db
-                    {
-                        jo["id64"] = sys.SystemAddress.Value;
-                        jo["updateTime"] = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        jo["id"] = sys.EDSMID.Value;
-                        jo["date"] = DateTime.UtcNow;
-                    }
-
-                    jlist.Add(jo);
-                }
-            }
-
-            if ( jlist.Count>0)
-            { 
-                DateTime unusedate = DateTime.UtcNow;
-                return SystemsDB.ParseJSONString(jlist.ToString(), null, 10000, ref unusedate, () => false, (t) => { }, "");
-            }
-
-            return 0;
-        }
-
+        
         public static long ParseJSONFile(string filename, bool[] grididallow, int maxblocksize, ref DateTime date, 
                                              Func<bool> cancelRequested, Action<string> reportProgress, 
                                              string tableposfix, bool presumeempty = false, string debugoutputfile = null)

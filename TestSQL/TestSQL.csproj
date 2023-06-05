@@ -78,7 +78,8 @@
     <Compile Include="SystemDB\SystemsDBRemove.cs" />
     <Compile Include="SystemDB\SystemsDBLoader1.cs" />
     <Compile Include="SystemDB\SystemsDBStarFileEntry.cs" />
-    <Compile Include="SystemDB\SystemsDBStore.cs" />
+    <Compile Include="SystemDB\SystemsDBLoader0.cs" />
+    <Compile Include="SystemDB\SystemsDBStoreSystems.cs" />
     <Compile Include="TestSQLForm.cs">
       <SubType>Form</SubType>
     </Compile>
