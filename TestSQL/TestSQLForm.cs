@@ -19,7 +19,7 @@ namespace TestSQL
     public partial class TestSQLForm : Form
     {
         string spanshsmallfile = @"c:\code\examples\edsm\systems_1week.json";      
-        string spanshbigfile = @"c:\code\examples\edsm\systems_1month.json";       
+        string spansh1mfile = @"c:\code\examples\edsm\systems_1month.json";       
         string spansh6mfile = @"c:\code\examples\edsm\systems_6months.json";        
         string edsminfile = @"c:\code\examples\edsm\edsmsystems.10e6.json";
         //string testfile = @"c:\code\test.json";
@@ -436,14 +436,14 @@ namespace TestSQL
 
         private void buttonMakeSpanshL2_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 2);
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spansh6mfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 2);
             Thread.Sleep(1000);
             WriteLog($"Spansh DB Made L2 {SystemsDB.GetTotalSystems()}");
         }
 
         private void buttonMakeSpanshL3_Click(object sender, EventArgs e)
         {
-            SystemsDatabase.Instance.MakeSystemTableFromFile(spanshbigfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 3);
+            SystemsDatabase.Instance.MakeSystemTableFromFile(spansh6mfile, null, 200000, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), method: 3);
             Thread.Sleep(1000);
             WriteLog($"Spansh DB Made L3 {SystemsDB.GetTotalSystems()}");
 
@@ -451,7 +451,7 @@ namespace TestSQL
 
         private void buttonCheckMadeSpanshStars_Click(object sender, EventArgs e)
         {
-            System.Threading.Tasks.Task.Run(() => { CheckDB(spanshbigfile, true, (k) => BeginInvoke(k)); });
+            System.Threading.Tasks.Task.Run(() => { CheckDB(spansh6mfile, true, (k) => BeginInvoke(k)); });
 
         }
 
@@ -480,11 +480,6 @@ namespace TestSQL
 
         private void buttonReadSpanshOld_Click(object sender, EventArgs e)
         {
-        //    SystemsDatabase.Instance.DBWrite(db => {
-        //        db.DropStarTables();
-        //        db.CreateStarTables("");
-        //    });
-
             DateTime dts = DateTime.MinValue;
             SystemsDB.ParseJSONFile(spanshsmallfile, null, spanshreadblocksize, ref dts, () => false, (s) => System.Diagnostics.Debug.WriteLine(s), "");
 

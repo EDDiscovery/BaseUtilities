@@ -26,7 +26,7 @@ namespace SQLLiteExtensions
         public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
-        public bool RWLocks { get { return rwLock == null; } set { ClearDown(); rwLock = value ? null : new ReaderWriterLock(); } }
+        public bool RWLocks { get { return rwLock == null; } set { ClearDown(); rwLock = value ? new ReaderWriterLock() : null; } }
 
         public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
@@ -192,9 +192,9 @@ namespace SQLLiteExtensions
                                             
                                             if ( !MultiThreaded )       // if not multithreaded mode, we can just execute
                                             {
-                                                System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute non mt job from {job.Jobname}");
+                                                //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute non mt job from {job.Jobname}");
                                                 job.Exec();
-                                                System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish non mt job from {job.Jobname}");
+                                                //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish non mt job from {job.Jobname}");
                                             }
                                             else if (job.Write)
                                             {
@@ -204,13 +204,11 @@ namespace SQLLiteExtensions
                                                     {
                                                         rwLock?.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
 
-                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} execute write job from {job.jobname} active {active}");
-                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute write job from {job.Jobname}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute write job from {job.Jobname}");
 
                                                         job.Exec();
 
-                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name} finish write job from {job.jobname} active {active}");
-                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish write job from {job.Jobname}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish write job from {job.Jobname}");
 
                                                         rwLock?.ReleaseWriterLock();
                                                         break;
@@ -229,11 +227,11 @@ namespace SQLLiteExtensions
                                                     {
                                                         rwLock?.AcquireReaderLock(30 * 1000);
 
-                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute read job from {job.Jobname}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute read job from {job.Jobname}");
 
                                                         job.Exec();
 
-                                                        System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish read job from {job.Jobname}");
+                                                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish read job from {job.Jobname}");
 
                                                         rwLock?.ReleaseReaderLock();
                                                         break;

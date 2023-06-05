@@ -37,12 +37,6 @@ namespace EliteDangerousCore.DB
         // will throw on error, cope with it.
         public void Initialize()
         {
-            DBWrite(cn =>
-            {
-                cn.SQLJournalMode(RWLocks ? SQLExtConnection.JournalModes.WAL : SQLExtConnection.JournalModes.DELETE);
-            }
-            );
-
             bool registrycreated = false;
             DBWrite(cn => { registrycreated = cn.CreateRegistry(); });
 

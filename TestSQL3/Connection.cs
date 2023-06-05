@@ -50,6 +50,7 @@ namespace TestSQL2
         public string DBFile;
         public SQLiteDBAPT(string file)
         {
+            RWLocks = false;
             DBFile = file;
         }
 
