@@ -21,7 +21,8 @@ namespace SQLLiteExtensions
         public SQLExtRegister RegisterClass;
 
         public SQLExtConnectionRegister(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter, 
-                                        JournalModes journalmode = JournalModes.DELETE, bool disallow_xthread = true) : base(dbfile,utctimeindicator, mode, journalmode, disallow_xthread)
+                                        JournalModes journalmode = JournalModes.DELETE, bool disallow_xthreading = true) : 
+                                                base(dbfile,utctimeindicator, mode, journalmode, disallow_xthreading)
         {
             RegisterClass = new SQLExtRegister(this);
         }
@@ -29,7 +30,9 @@ namespace SQLLiteExtensions
         // return true if created
         public bool CreateRegistry()
         {
+            System.Diagnostics.Debug.WriteLine($"SQL Create Registry");
             var tables = this.Tables();
+            System.Diagnostics.Debug.WriteLine($"SQL Tables {string.Join(",",tables)}");
             if (!tables.Contains("Register"))
             {
                 ExecuteNonQuery("CREATE TABLE Register (ID TEXT PRIMARY KEY NOT NULL, ValueInt INTEGER, ValueDouble DOUBLE, ValueString TEXT, ValueBlob BLOB)");

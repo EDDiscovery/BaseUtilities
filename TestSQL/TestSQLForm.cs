@@ -29,9 +29,9 @@ namespace TestSQL
           //  System.Globalization.CultureInfo.CurrentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("de-de");
 
             InitializeComponent();
-
-            SystemsDatabase.Instance.MaxThreads = 8;
+            SystemsDatabase.WALMode = false;
             SystemsDatabase.Instance.MinThreads = 2;
+            SystemsDatabase.Instance.MaxThreads = 8;
             SystemsDatabase.Instance.MultiThreaded = true;
             SystemsDatabase.Instance.Initialize();
         }
@@ -117,7 +117,6 @@ namespace TestSQL
         private void buttonClearDB_Click(object sender, EventArgs e)
         {
             SystemsDatabase.Instance.Stop();
-            System.Diagnostics.Debug.Assert(SystemsDatabase.ccount == 0);
 
             File.Delete(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath);
 

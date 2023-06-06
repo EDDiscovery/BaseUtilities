@@ -19,7 +19,7 @@ namespace EliteDangerousCore.DB
 {
     public class SQLiteConnectionSystem : SQLExtConnectionRegister
     {
-        public SQLiteConnectionSystem() : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true)
+        public SQLiteConnectionSystem(JournalModes journalmode) : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true,journalmode:journalmode)
         {
         }
 

@@ -32,12 +32,12 @@ namespace SQLLiteExtensions
         public enum JournalModes { DELETE, TRUNCATE, PERSIST, MEMORY, WAL, OFF };
 
         protected SQLExtConnection(string dbfile, bool utctimeindicator, AccessMode mode = AccessMode.ReaderWriter, 
-                                    JournalModes journalmode = JournalModes.DELETE, bool disallow_xthread = true )
+                                    JournalModes journalmode = JournalModes.DELETE, bool disallow_xthreading = true )
         {
             try
             {
                 DBFile = dbfile;
-                this.disallow_xthread = disallow_xthread;
+                this.disallow_xthread = disallow_xthreading;
 
                 connection = SQLDbProvider.DbProvider().CreateConnection();
                 //connection = new SQLiteConnection();

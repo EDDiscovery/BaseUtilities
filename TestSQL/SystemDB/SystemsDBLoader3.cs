@@ -32,6 +32,9 @@ namespace EliteDangerousCore.DB
 
         public class Loader3
         {
+            public DateTime LastDate { get; set; }
+
+
             // create - postfix allows a different table set to be created
             // maxblocksize - write back when reached this
             // gridids - null or array of allowed gridid
@@ -44,7 +47,7 @@ namespace EliteDangerousCore.DB
                 overlapped = poverlapped;
 
                 nextsectorid = SystemsDatabase.Instance.GetSectorIDNext();
-                maxdate = SystemsDatabase.Instance.GetLastRecordTimeUTC();
+                LastDate = SystemsDatabase.Instance.GetLastRecordTimeUTC();
 
                 if (debugoutputfile != null)
                     debugfile = new StreamWriter(debugoutputfile);
@@ -75,7 +78,7 @@ namespace EliteDangerousCore.DB
                     debugfile.Close();
 
                 SystemsDatabase.Instance.SetSectorIDNext(nextsectorid);
-                SystemsDatabase.Instance.SetLastRecordTimeUTC(maxdate);
+                SystemsDatabase.Instance.SetLastRecordTimeUTC(LastDate);
             }
 
             public long ParseJSONFile(string filename, Func<bool> cancelRequested, Action<string> reportProgress)
@@ -415,7 +418,8 @@ namespace EliteDangerousCore.DB
                 System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB L3 finish {updates}");
 
                 // update max date - from string
-                System.DateTime.TryParse(maxdatetimestr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out maxdate);
+                if (System.DateTime.TryParse(maxdatetimestr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ld))
+                    LastDate = ld;
 
                 return updates;
             }
@@ -488,7 +492,6 @@ namespace EliteDangerousCore.DB
             private int maxblocksize;
             private bool overlapped;
             private bool[] grididallowed;
-            private DateTime maxdate;
             private StreamWriter debugfile = null;
 
             // from https://spansh.co.uk/api/bodies/field_values/subtype

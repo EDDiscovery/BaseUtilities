@@ -21,17 +21,31 @@ namespace EliteDangerousCore.DB
 {
     public class SystemsDatabase : SQLAdvProcessingThread<SQLiteConnectionSystem>
     {
-        private SystemsDatabase()
+        private SystemsDatabase(bool walmode)
         {
-            RWLocks = false;
+            RWLocks = (walmode == false);       // if walmode is off, we need reader/writer locks
+            System.Diagnostics.Debug.WriteLine($"Make new system DB RWLocks = {RWLocks}");
         }
 
-        public static SystemsDatabase Instance { get; private set; } = new SystemsDatabase();        //STATIC constructor, make once at start of program
+        public static bool WALMode { get; set; } = false;
+        
+        public static SystemsDatabase Instance { get {
+                if (instance == null)
+                    instance = new SystemsDatabase(WALMode);
+                return instance;
+            } }
+
+        private static SystemsDatabase instance;
+
+        protected override SQLiteConnectionSystem CreateConnection()
+        {
+            return new SQLiteConnectionSystem(RWLocks==true ? SQLExtConnection.JournalModes.DELETE : SQLExtConnection.JournalModes.WAL);
+        }
 
         public static void Reset()
         {
             Instance?.Stop();
-            Instance = new SystemsDatabase();
+            instance = new SystemsDatabase(WALMode);
         }
 
         // will throw on error, cope with it.
@@ -66,10 +80,6 @@ namespace EliteDangerousCore.DB
 
         public bool RebuildRunning { get; private set; } = true;                // we are rebuilding until we have the system db table in there
 
-        protected override SQLiteConnectionSystem CreateConnection()
-        {
-            return new SQLiteConnectionSystem();
-        }
 
         // this deletes the current DB data, reloads from the file, and recreates the indexes etc
 

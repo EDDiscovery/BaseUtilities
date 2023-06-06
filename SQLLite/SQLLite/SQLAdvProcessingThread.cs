@@ -19,14 +19,15 @@ using System.Threading;
 namespace SQLLiteExtensions
 {
     // allows multithreaded access to a SQL database, sequencing the reads/writes, allowing RWLocking if not in WAL mode.
-    public abstract class SQLAdvProcessingThread<ConnectionType> where ConnectionType : IDisposable
+    public abstract class SQLAdvProcessingThread<ConnectionType> where ConnectionType : SQLExtConnection
     {
         #region Public control 
         public int Threads { get { return runningThreads; } }
         public int MaxThreads { get; set; } = 8;                       // maximum to create when MultiThreaded = true, 1 or more
         public int MinThreads { get; set; } = 3;                       // maximum to create when MultiThreaded = true, 1 or more
 
-        public bool RWLocks { get { return rwLock == null; } set { ClearDown(); rwLock = value ? new ReaderWriterLock() : null; } }
+        // are we doing Reader Writer locks between threads.. used in journal mode DELETE.
+        public bool RWLocks { get { return rwLock != null; } set { ClearDown(); rwLock = value ? new ReaderWriterLock() : null; } }
 
         public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
@@ -152,8 +153,6 @@ namespace SQLLiteExtensions
 
         #endregion
 
-        public static int ccount = 0;
-
         #region Processing Thread
         private void SqlThreadProc()    // SQL process thread
         {
@@ -165,10 +164,12 @@ namespace SQLLiteExtensions
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} C {++ccount} Start thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} Thread create connection {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
                 using (connection.Value = CreateConnection())   // hold connection over whole period.
                 {
+                    System.Diagnostics.Debug.WriteLine($"SQL {Name} Connection made {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
+
                     while (true)
                     {
                         // multiple threads can be waiting on this.. 
@@ -261,8 +262,7 @@ namespace SQLLiteExtensions
             }
             finally
             {
-                System.Diagnostics.Debug.WriteLine($"SQL {Name} {ccount} stop thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
-                ccount--;
+                System.Diagnostics.Debug.WriteLine($"SQL {Name} stop thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
                 Interlocked.Decrement(ref runningThreadsAvailable);            // stopping threads.. decr count, if 0, say all stopped
 
@@ -394,7 +394,7 @@ namespace SQLLiteExtensions
             var thread = new Thread(SqlThreadProc);
             thread.Name = $"{Name}-" + tno;
             thread.IsBackground = true;
-            System.Diagnostics.Debug.WriteLine($"SQL {Name} Create Thread {thread.Name}-{thread.ManagedThreadId} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
+            System.Diagnostics.Debug.WriteLine($"SQL {Name} Start Thread {thread.Name}-{thread.ManagedThreadId} ta {runningThreadsAvailable} rt {runningThreads} ct {createdThreads} mt {MultiThreaded}");
             thread.Start();
         }
 
