@@ -139,9 +139,13 @@ namespace EliteDangerousCore.DB
                     reportProgress?.Invoke("Shrinking database");
                     conn.Vacuum();
 
+                    conn.WALCheckPoint(SQLExtConnection.CheckpointType.TRUNCATE);        // perform a WAL checkpoint to clean up the WAL file as the vacuum will have done stuff
+
                     System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} Creating indexes");
                     reportProgress?.Invoke("Creating indexes");
                     conn.CreateSystemDBTableIndexes();
+
+                    conn.WALCheckPoint(SQLExtConnection.CheckpointType.TRUNCATE);        // perform a WAL checkpoint to clean up the WAL file
 
                     RebuildRunning = false;
                 });
@@ -201,6 +205,11 @@ namespace EliteDangerousCore.DB
                     RebuildRunning = false;
                 });
             }
+        }
+
+        public void WALCheckPoint()                // full commit if in WAL mode, NOP if not https://www.sqlite.org/pragma.html
+        {
+            DBWrite((cn) => cn.WALCheckPoint(SQLLiteExtensions.SQLExtConnection.CheckpointType.TRUNCATE));
         }
 
         public string GetGridIDs()

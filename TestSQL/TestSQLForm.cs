@@ -29,7 +29,7 @@ namespace TestSQL
           //  System.Globalization.CultureInfo.CurrentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("de-de");
 
             InitializeComponent();
-            SystemsDatabase.WALMode = false;
+            SystemsDatabase.WALMode = true;
             SystemsDatabase.Instance.MinThreads = 2;
             SystemsDatabase.Instance.MaxThreads = 8;
             SystemsDatabase.Instance.MultiThreaded = true;

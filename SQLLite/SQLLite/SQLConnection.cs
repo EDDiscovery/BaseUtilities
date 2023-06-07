@@ -127,14 +127,14 @@ namespace SQLLiteExtensions
                 command.ExecuteNonQuery();
         }
 
-        public void SQLJournalMode(JournalModes jm)
+        public void SetJournalMode(JournalModes jm)
         {
             using (DbCommand cmd = CreateCommand("PRAGMA journal_mode = " + jm.ToString()))
             {
                 cmd.ExecuteNonQuery();
             }
         }
-        public JournalModes GetSQLJournalMode()
+        public JournalModes GetJournalMode()
         {
             using (DbCommand cmd = CreateCommand("PRAGMA journal_mode;"))
             {
@@ -152,14 +152,14 @@ namespace SQLLiteExtensions
                 }
             }
         }
-        public void SQLWALPageSize(int value)
+        public void WALPageSize(int value)
         {
             using (DbCommand cmd = CreateCommand("PRAGMA wal_autocheckpoint = " + value.ToStringInvariant() + ";"))
             {
                 cmd.ExecuteNonQuery();
             }
         }
-        public int GetSQLWALPageSize()
+        public int GetWALPageSize()
         {
             using (DbCommand cmd = CreateCommand("PRAGMA wal_autocheckpoint;"))
             {
@@ -175,6 +175,14 @@ namespace SQLLiteExtensions
             }
         }
 
+        public enum CheckpointType { PASSIVE, FULL, RESTART, TRUNCATE };
+        public void WALCheckPoint(CheckpointType chty)
+        {
+            using (DbCommand cmd = CreateCommand("PRAGMA wal_checkpoint(" + chty.ToString() + ");"))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
         public void Vacuum()
         {
             using (DbCommand cmd = CreateCommand("VACUUM"))

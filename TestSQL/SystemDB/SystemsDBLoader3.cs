@@ -421,6 +421,9 @@ namespace EliteDangerousCore.DB
                 if (System.DateTime.TryParse(maxdatetimestr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ld))
                     LastDate = ld;
 
+                SystemsDatabase.Instance.WALCheckPoint();      
+
+
                 return updates;
             }
 
