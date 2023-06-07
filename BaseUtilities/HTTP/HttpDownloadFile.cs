@@ -30,7 +30,8 @@ namespace BaseUtils
                                         bool alwaysnewfile,                             // if true, etag is not used, always downloaded 
                                         out bool newfile,                               // returns if new file if storing file
                                         Action<bool, Stream> externalprocessor = null,  // processor, gets newfile and the stream. 
-                                        Func<bool> cancelRequested = null)              // cancel requestor
+                                        Func<bool> cancelRequested = null,              // cancel requestor
+                                        Action<long,double> reportProgress = null)      // report of count and b/s
         {
             newfile = false;
 
@@ -95,7 +96,9 @@ namespace BaseUtils
 
                                 if ( numread == 0 || tme - lastreportime >= 1000)       // if at end, or over a second..
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {count:N0} at {count / (tme / 1000.0):N2} b/s");
+                                    double rate = count / (tme / 1000.0);
+                                    reportProgress?.Invoke(count, rate);
+                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {count:N0} at {rate:N2} b/s");
                                     lastreportime = (tme / 1000) * 1000;
                                 }
 

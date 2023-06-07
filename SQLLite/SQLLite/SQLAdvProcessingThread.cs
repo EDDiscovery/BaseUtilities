@@ -454,6 +454,7 @@ namespace SQLLiteExtensions
             catch (Exception ex)
             {
                 this.exception = ex;
+                System.Diagnostics.Trace.WriteLine($"SQL Embedded function exception {ex}");
             }
             finally
             {
