@@ -273,7 +273,7 @@ namespace BaseUtils
                                         }
                                         else
                                         {
-                                            string errt = string.Format($"Translator Repeat {tlffile}:{lr.CurrentLine} '{id}");
+                                            string errt = $"Translator Repeat {lr.CurrentFile}:{lr.CurrentLine} '{id}";
                                             logger?.WriteLine(errt);
                                             System.Diagnostics.Debug.WriteLine(errt);
                                         }
@@ -281,7 +281,7 @@ namespace BaseUtils
                                 }
                                 else
                                 {
-                                    string errt = string.Format($"Line misformat {tlffile}:{lr.CurrentLine} '{line}");
+                                    string errt = $"Line misformat {lr.CurrentFile}:{lr.CurrentLine} '{line}";
                                     logger?.WriteLine(errt);
                                     System.Diagnostics.Debug.WriteLine(errt);
                                 }
