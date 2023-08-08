@@ -240,6 +240,14 @@ namespace BaseUtils
                 string v = this[cellname];
                 return v != null ? v.ParseDoubleNull(formatculture, numberstyles) : null;
             }
+            public DateTime? GetDateTime(int cell, System.Globalization.DateTimeStyles dts = System.Globalization.DateTimeStyles.AssumeUniversal)
+            {
+                string v = this[cell];
+                if (v != null && DateTime.TryParse(v, formatculture, dts, out DateTime timeutc))
+                    return timeutc;
+                else
+                    return null;
+            }
 
             public void SetPosition(int cell)           // set position to N
             {
@@ -297,7 +305,7 @@ namespace BaseUtils
         }
 
         public string Delimiter { get; private set; }  = ",";
-        public System.Globalization.CultureInfo FormatCulture { get; set; } = new System.Globalization.CultureInfo("en-US");
+        public System.Globalization.CultureInfo FormatCulture { get; set; } = new System.Globalization.CultureInfo("en-gb");
         public System.Globalization.NumberStyles NumberStyle { get; set; } = System.Globalization.NumberStyles.None;
 
         public CSVFile() { }
@@ -310,7 +318,7 @@ namespace BaseUtils
         {
             Delimiter = delimiter;
             if (Delimiter != ";")
-                FormatCulture = new System.Globalization.CultureInfo("en-US");
+                FormatCulture = new System.Globalization.CultureInfo("en-gb");
             else
                 FormatCulture = new System.Globalization.CultureInfo("sv");
         }
@@ -366,7 +374,7 @@ namespace BaseUtils
             }
         }
 
-        // read from TR with delimiter, format culture. If format culture = null, use it based on delimiter (semicomma = sv, else en-US)
+        // read from TR with delimiter, format culture. If format culture = null, use it based on delimiter (semicomma = sv, else en-gb)
         // optionally send rows to rowoutput instead of storing
         public bool Read(TextReader tr, Action<int,Row> rowoutput = null)
         {
