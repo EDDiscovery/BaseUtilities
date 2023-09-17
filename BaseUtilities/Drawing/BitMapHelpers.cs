@@ -338,6 +338,27 @@ namespace BaseUtils
             return image.Clone(croparea, System.Drawing.Imaging.PixelFormat.DontCare);
         }
 
+        /// <summary>
+        /// Crop bitmap by area - percentages (0-100)
+        /// </summary>
+        /// <param name="image">Bitmap</param>
+        /// <param name="croparea">crop area in percentages</param>
+        /// <returns>new Bitmap</returns>
+        public static Bitmap CropImage(this Bitmap image, RectangleF croparea)
+        {
+            int left = (int)(image.Width * croparea.X / 100.0F);
+            int top = (int)(image.Height * croparea.Y / 100.0F);
+            int width = (int)(image.Width * croparea.Width / 100.0F);
+            int height = (int)(image.Height * croparea.Height / 100.0F);
+            left = Math.Max(0, left);
+            top = Math.Max(0, top);
+            width = Math.Min(width, image.Width - left);
+            height = Math.Min(height, image.Height - top);
+
+            return image.Clone(new Rectangle(left, top, width, height), System.Drawing.Imaging.PixelFormat.DontCare);
+        }
+
+
 
         // not the quickest way in the world, but not supposed to do this at run time
         // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
