@@ -104,7 +104,10 @@ public static class SQLiteCommandExtensions
     public static long MaxIdOf(this SQLExtConnection r, string table, string idfield)
     {
         using (DbCommand queryNameCmd = r.CreateCommand("SELECT Max(" + idfield + ") as " + idfield + " FROM " + table))
-            return (long)queryNameCmd.ExecuteScalar();
+        {
+            var value = queryNameCmd.ExecuteScalar();
+            return value is System.DBNull ? 0 : (long)value;
+        }
     }
 
     public static long CountOf(this SQLExtConnection r, string table, string idfield, string where = null)
