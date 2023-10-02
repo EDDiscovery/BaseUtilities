@@ -205,8 +205,26 @@ public static partial class DrawingHelpersStaticFunc
         }
     }
 
-
-
+    public static StringFormat StringFormatFromName(this string textrep, StringFormat fmt = null)
+    {
+        if (fmt == null)
+            fmt = new StringFormat();
+        if (textrep.Contains("centre", StringComparison.InvariantCultureIgnoreCase) || textrep.Contains("center", StringComparison.InvariantCultureIgnoreCase))
+            fmt.Alignment = StringAlignment.Center;
+        if (textrep.Contains("right", StringComparison.InvariantCultureIgnoreCase))
+            fmt.Alignment = StringAlignment.Far;
+        if (textrep.Contains("left", StringComparison.InvariantCultureIgnoreCase))
+            fmt.Alignment = StringAlignment.Near;
+        if (textrep.Contains("top", StringComparison.InvariantCultureIgnoreCase))
+            fmt.LineAlignment = StringAlignment.Near;
+        if (textrep.Contains("bottom", StringComparison.InvariantCultureIgnoreCase))
+            fmt.LineAlignment = StringAlignment.Near;
+        if (textrep.Contains("middle", StringComparison.InvariantCultureIgnoreCase))
+            fmt.LineAlignment = StringAlignment.Center;
+        if (textrep.Contains("nowrap", StringComparison.InvariantCultureIgnoreCase))
+            fmt.FormatFlags |= StringFormatFlags.NoWrap;
+        return fmt;
+    }
 
     public static Size MeasureItems(this Graphics g, Font fnt, string[] array, StringFormat fmt)
     {
