@@ -93,7 +93,7 @@ namespace BaseUtils
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"xml parse failed {ex}");
+               // System.Diagnostics.Debug.WriteLine($"xml parse failed {ex}");
                 return null;
             }
 
