@@ -115,7 +115,6 @@
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
-    <Compile Include="DebugTraceAndLogs\LogClean.cs" />
     <Compile Include="EMK\Point3D.cs" />
     <Compile Include="EMK\Vector3D.cs" />
     <Compile Include="Files\AssociateExe.cs" />

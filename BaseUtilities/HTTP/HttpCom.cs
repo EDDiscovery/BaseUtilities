@@ -99,8 +99,8 @@ namespace BaseUtils
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'{(method!="GET"?": "+postData:"")}";
-                    System.Diagnostics.Trace.WriteLine(d1);
+                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
+                    System.Diagnostics.Trace.WriteLine(d1 + (method != "GET" ? ": " + postData : ""));
                     WriteLog(d1, postData);
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
