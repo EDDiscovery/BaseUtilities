@@ -350,15 +350,17 @@ namespace BaseUtils
             {
                 if (pname.Equals(CurrentWindow, StringComparison.InvariantCultureIgnoreCase))
                     SendInput();
-                else
+                else if ( pname.HasChars() )
                 {
                     IntPtr window = UnsafeNativeMethods.GetForegroundWindowOf(pname);
 
                     if (window != (IntPtr)0)
                         SendInputToWindow(window);
                     else
-                        return "Process " + pname + " is not running";
+                        return "Process `" + pname + "` is not running";
                 }
+                else
+                    return "Process is not named";
             }
 
             return ret;
