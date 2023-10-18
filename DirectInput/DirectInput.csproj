@@ -55,11 +55,11 @@
     <Compile Include="InputDeviceList.cs" />
     <Compile Include="InputDeviceMouse.cs" />
     <Compile Include="InputDevicesInterface.cs" />
-    <Compile Include="MapDialog.cs">
+    <Compile Include="InputMapDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MapDialog.Designer.cs">
-      <DependentUpon>MapDialog.cs</DependentUpon>
+    <Compile Include="InputMapDialog.Designer.cs">
+      <DependentUpon>InputMapDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -76,8 +76,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="MapDialog.resx">
-      <DependentUpon>MapDialog.cs</DependentUpon>
+    <EmbeddedResource Include="InputMapDialog.resx">
+      <DependentUpon>InputMapDialog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

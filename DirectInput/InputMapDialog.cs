@@ -18,16 +18,17 @@ using System.Windows.Forms;
 
 namespace DirectInputDevices
 {
-    public partial class MapDialog : Form
+    public partial class InputMapDialog : Form
     {
         public string DeviceName { get { return textBoxDevice.Text; } }
         public string ButtonName { get { return textBoxName.Text; } }
         public bool Press { get { return radioButtonPressed.Checked; } }
 
         private InputDeviceList inputdevices;
-        private Timer clickwaittimer = new Timer();
-        private InputDeviceEvent waitingevent;
-        public MapDialog()
+
+        Timer timer = new Timer();
+
+        public InputMapDialog()
         {
             InitializeComponent();
             inputdevices = new InputDeviceList((s) => { BeginInvoke(s); });
@@ -39,31 +40,55 @@ namespace DirectInputDevices
 
             inputdevices.Start();
 
-            clickwaittimer.Interval = 200;
-            clickwaittimer.Tick += Clickwaittimer_Tick;
-
+            timer.Interval = 500;
+            timer.Tick += Timer_Tick;
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            base.OnClosing(e);
+            waitingevent = null;
+            timer.Stop();
             inputdevices.Stop();
+            base.OnClosing(e);
         }
+
+        DirectInputDevices.InputDeviceEvent waitingevent;
+        bool allowmouse = false;
 
         //we wait until accepting it due to mouse down on ok
-        private void Inputdevices_OnNewEvent(List<InputDeviceEvent> list)   
+        private void Inputdevices_OnNewEvent(List<InputDeviceEvent> list)
         {
-            waitingevent = list[0];
-            System.Diagnostics.Debug.WriteLine($"Event {waitingevent.ToString()}");
-            clickwaittimer.Start();
+            if (waitingevent == null)       // nothing in queue
+            {
+                waitingevent = list[0];
+                //System.Diagnostics.Debug.WriteLine($"waiting event {waitingevent.Device.Name()}");
+                timer.Start();
+            }
+            else
+            {
+               // System.Diagnostics.Debug.WriteLine($"reject waiting event {waitingevent.Device.Name()}");
+            }
+
         }
 
-        private void Clickwaittimer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object sender, EventArgs e)
         {
-            clickwaittimer.Stop();
-            textBoxDevice.Text = waitingevent.Device.Name();
-            textBoxName.Text = waitingevent.EventName();
+            if (waitingevent != null)
+            {
+                if (waitingevent.Device.Name() != "Mouse" || allowmouse)
+                {
+                    //System.Diagnostics.Debug.WriteLine($"Event {waitingevent.ToString()}");
+                    textBoxDevice.Text = waitingevent.Device.Name();
+                    textBoxName.Text = waitingevent.EventName();
+                }
+                allowmouse = false;
+                waitingevent = null;
+            }
         }
 
+        private void buttonMouseClick_MouseDown(object sender, MouseEventArgs e)
+        {
+            allowmouse = true;
+        }
     }
 }

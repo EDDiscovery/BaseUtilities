@@ -22,24 +22,29 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static ObjectExtensionsStrings;
 
-// vkey = Vkey name, See KeyObjectExtensions.ToVkey.  NumEnter is principle addition, D0-9 are just 0-9.
-//
-// seq = vkey | shortlist | '(' <keyseq> [' ']')'       -- place this in a subroutine
-// shortlist = '0'-'9' | 'A'-'Z' | 'a'-'z'.  List of Vkeys in this range.
-// add = '' or '+' when both shifters and vkey is present
-// shifters = '' | 'Shift' | 'Shift+Alt' | 'Shift+Alt+Ctrl' | 'Alt' | 'Alt+Ctrl' | 'Ctrl'
-// keycore = [<shifters>] [<add>] <seq>
+// Input = [<keyseq> [' ']]..
+// keyseq = [<delay>][<repeat>][<keymode>] <keycore> | <additionalkeys>
 //
 // delay = '[' d1 [',' d2 [ ',' d3 ] ] ']' in decimal ms.
 //          vkey only : d1 = key down delay, d2 = key up delay
-//          shift+vkey : d1 = key down delay, d2 = shift delay, d3 = key up delay
-//          shift : d1 = key down delay, d2 = shift up delay
+//          shifttype+vkey : d1 = key down delay, d2 = shift delay, d3 = key up delay
+//          shifttype : d1 = key down delay, d2 = shift up delay
 //          ^vkey : d1 = key up/down delay
-//          ^shift : d1 = key up/down delay
-//          ^shift+vkey : d1 = key up/down delay, d2 = shift key up/down delay
+//          ^shifttype : d1 = key up/down delay
+//          ^shifttype+vkey : d1 = key up/down delay, d2 = shift key up/down delay
+//
 // repeat = '#' + decimal number - repeat the sequence N times, >1
+//
 // keymode = '^' | '<' | '!' | '>' (first two up, second two down) | '&' (press)
-// parsekeys = [<delay>][<repeat>][<keymode>] <keycore> | <additionalkeys>
+//
+// keycore = [<shifters>] [<add>] <seq>
+// 
+// shifters = '' | 'Shift' | 'Shift+Alt' | 'Shift+Alt+Ctrl' | 'Alt' | 'Alt+Ctrl' | 'Ctrl'
+// add = '' or '+' when both shifters and vkey is present
+//
+// seq = vkey | shortlist | '(' <keyseq> [' ']')'       -- place this in a subroutine
+// shortlist = '0'-'9' | 'A'-'Z' | 'a'-'z'.  List of Vkeys in this range.
+// vkey = Vkey name, See KeyObjectExtensions.ToVkey.  NumEnter is principle addition, D0-9 are just 0-9.
 //
 // Examples : Shift+Ctrl, Shift, Alt, Alt+A, Shift+Alt+A, Shift+(ABC), Shift+(F1 BC), ^Shift+(F1 BC)
 // [100,20]Shift+A
