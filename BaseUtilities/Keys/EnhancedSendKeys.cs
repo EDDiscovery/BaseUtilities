@@ -359,6 +359,7 @@ namespace BaseUtils
                 {
                     IntPtr window = UnsafeNativeMethods.GetForegroundWindowOf(pname);
 
+                    //System.Diagnostics.Debug.WriteLine($"Window {window} operating");
                     if (window != (IntPtr)0)
                         SendInputToWindow(window);
                     else
@@ -394,11 +395,11 @@ namespace BaseUtils
 
             if ( currentfore != ip )        // if not selected..
             {
-                System.Diagnostics.Debug.WriteLine("Selecting fore");
+                //System.Diagnostics.Debug.WriteLine("SendKeys Selecting fore window");
                 Win32.UnsafeNativeMethods.SetForegroundWindow(ip);
                 System.Threading.Thread.Sleep(60);      // 50 works, 20 does not.. seems to need a pause.. lets be cautious
 
-                System.Diagnostics.Debug.WriteLine("Go");
+                //System.Diagnostics.Debug.WriteLine("SendKeys selecting fore window - Go");
             }
             else
                 currentfore = (IntPtr)0;       // forget it, we don't need to swap back
@@ -407,7 +408,7 @@ namespace BaseUtils
 
             if (currentfore != (IntPtr)0)
             {
-                System.Diagnostics.Debug.WriteLine("Reselecting prev");
+                //System.Diagnostics.Debug.WriteLine("SendKeys Reselecting prev");
                 BaseUtils.Win32.UnsafeNativeMethods.SetForegroundWindow(currentfore);
             }
         }
@@ -464,11 +465,12 @@ namespace BaseUtils
 
                         currentInput[0].inputUnion.ki.wVk = (short)skEvent.vkey;
 
-                        //System.Diagnostics.Debug.WriteLine(AppTicks.MSd + " Send " + skEvent.vkey.VKeyToString() + " " + currentInput[0].inputUnion.ki.wScan.ToString("2X") + " " + currentInput[0].inputUnion.ki.dwFlags);
+                        //System.Diagnostics.Debug.WriteLine($"{AppTicks.MSd} SendKeys {skEvent.vkey.VKeyToString()} sc {currentInput[0].inputUnion.ki.wScan.ToString("x")} {currentInput[0].inputUnion.ki.dwFlags} delay {skEvent.delay}");
+
                         // send only currentInput[0]
                         UnsafeNativeMethods.SendInput(1, currentInput, INPUTSize);
 
-                        System.Threading.Thread.Sleep(skEvent.delay > 0 ? skEvent.delay : 1);
+                        System.Threading.Thread.Sleep(skEvent.delay > 0 ? skEvent.delay: 1);
                     }
                 }
                 finally
