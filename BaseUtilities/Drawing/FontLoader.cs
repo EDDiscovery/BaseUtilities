@@ -56,5 +56,22 @@ namespace BaseUtils
 
             return new Font(name, size, style);
         }
+
+        // does not check size, since it can be rounded down
+        public static bool IsFontAvailable(string name, float size, FontStyle fs)
+        {
+            try
+            {
+                Font fnt = GetFont(name, size, fs);
+                bool res = fnt.Name == name && fnt.Style == fs;
+                fnt.Dispose();
+                return res;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }
