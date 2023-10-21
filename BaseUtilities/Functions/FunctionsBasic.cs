@@ -1,18 +1,17 @@
 ﻿/*
- * Copyright © 2017-2022 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using QuickJSON;
 using System;
 using System.Collections.Generic;
@@ -36,6 +35,7 @@ namespace BaseUtils
                 functions.Add("expandarray", new FuncEntry(ExpandArray, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("expandvars", new FuncEntry(ExpandVars, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS));   // var 1 is text root/string, not var, not string, var 2 can be var or string, var 3/4 is integers or variables, checked in function
                 functions.Add("findarray", new FuncEntry(FindArray, 2, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
+                functions.Add("findinarray", new FuncEntry(FindInArray, 5, FuncEntry.PT.M, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS));
                 functions.Add("indirect", new FuncEntry(Indirect, 1, 20, FuncEntry.PT.ME));   // check var
                 functions.Add("i", new FuncEntry(IndirectI, FuncEntry.PT.ME, FuncEntry.PT.LS));   // first is a macro name, second is literal or string
                 functions.Add("ispresent", new FuncEntry(Ispresent, 2, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE)); // 1 may not be there, 2 either a macro or can be string. 3 is optional and a var or literal
@@ -241,7 +241,7 @@ namespace BaseUtils
         {
             output = "";
 
-            foreach (Parameter p in paras)          // output been expanded by ME.. 
+            foreach (Parameter p in paras)          // output been expanded by ME..
             {
                 //System.Diagnostics.Debug.WriteLine($"Indirect {p.Value}");
 
@@ -916,6 +916,7 @@ namespace BaseUtils
             string lastsepar = paras.Count >= 7 ? paras[6].Value : separ;
             string postname = paras.Count >= 6 ? paras[5].Value : "";
             bool splitcaps = paras.Count >= 5 && paras[4].Value.IndexOf("splitcaps", StringComparison.InvariantCultureIgnoreCase) >= 0;
+            bool ignoremissing = paras.Count >= 5 && paras[4].Value.IndexOf("ignoremissing", StringComparison.InvariantCultureIgnoreCase) >= 0;
             int start = paras[2].Int;
             int length = paras[3].Int;
 
@@ -924,6 +925,7 @@ namespace BaseUtils
             for (int i = start; i < start + length; i++)
             {
                 string aname = paras[0].Value + "[" + i.ToString(ct) + "]" + postname;
+                //System.Diagnostics.Debug.WriteLine($"FindInArray check {aname}");
 
                 if (vars.Exists(aname))
                 {
@@ -932,13 +934,13 @@ namespace BaseUtils
                     else
                         entries.Add(vars[aname]);
                 }
-                else
+                else if ( !ignoremissing )
                     break;
             }
 
             output = "";
 
-            for( int i = 0; i < entries.Count; i++)
+            for (int i = 0; i < entries.Count; i++)
             {
                 if (i != 0)
                     output += (i < entries.Count - 1) ? separ : lastsepar;
@@ -946,6 +948,38 @@ namespace BaseUtils
                 output += entries[i];
             }
 
+            return true;
+        }
+        protected bool FindInArray(out string output)
+        {
+            string findstring = paras[2].Value;
+            int start = paras[3].Int;
+            int length = paras[4].Int;
+            string options = paras.Count >= 6 ? paras[5].Value.ToLowerInvariant() : "";
+            StringComparison comparetype = options.Contains("casesensitive") ? StringComparison.InvariantCulture: StringComparison.InvariantCultureIgnoreCase;
+            bool startswith = options.Contains("startswith");
+            bool contains = options.Contains("contains");
+            bool ignoremissing = options.Contains("ignoremissing");
+
+            for (int i = start; i < start + length; i++)
+            {
+                string aname = paras[0].Value + "[" + i.ToString(ct) + "]" + paras[1].Value;
+                //System.Diagnostics.Debug.WriteLine($"FindInArray check {aname}");
+
+                if (vars.Exists(aname))
+                {
+                    if ( startswith ? vars[aname].StartsWith(findstring, comparetype) : 
+                         contains ? vars[aname].Contains(findstring, comparetype) : vars[aname].Equals(findstring, comparetype))
+                    {
+                        output = i.ToStringInvariant();
+                        return true;
+                    }
+                }
+                else if ( !ignoremissing )
+                    break;
+            }
+
+            output = "-1";
             return true;
         }
 
@@ -1205,7 +1239,7 @@ namespace BaseUtils
                     return true;
                 }
             }
-        
+
 
             output = "1";
             return true;
@@ -1499,10 +1533,10 @@ namespace BaseUtils
         #endregion
 
         #region Dates
-        
+
         protected bool Date(out string output)
         {
-            DateTime? cnv = paras[0].Value.ParseUSDateTimeNull(paras[1].Value);   
+            DateTime? cnv = paras[0].Value.ParseUSDateTimeNull(paras[1].Value);
 
             if (cnv != null)
             {

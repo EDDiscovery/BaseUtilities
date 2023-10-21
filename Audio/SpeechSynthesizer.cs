@@ -55,11 +55,11 @@ namespace AudioExtensions
         {
             tq.Enqueue(()=> 
             {
-                //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task run " + say);
+                //System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} SpeechSynth In task run {say}");
                 var audio = speechengine.Speak(say, culture, voice, 100, rate);     // samples are always generated at 100 volume
-               // System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task got audio ");
+                //System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} SpeechSynth audio complete {say}");
                 callback(audio);
-               // System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000) + " In task callback done");
+                //System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} SpeechSynth callback done {say}");
             });
         }
     }
