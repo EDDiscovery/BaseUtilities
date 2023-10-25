@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2021 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using System;
 
@@ -22,7 +20,7 @@ namespace BaseUtils
         // first object = format string
         // second object = data value
         //
-        //      if data value null or empty, not printed
+        //      if data value null, or string is empty (unless showblanks is used) : field is removed and not shown
         //
         //      if data value is string, format = prefix;postfix
         //      if data value is bool, format = false text;true text
@@ -43,15 +41,20 @@ namespace BaseUtils
 
         static public string Build(params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, ", ", values);
+            return Build(System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
         }
 
         static public string BuildSetPad(string padchars, params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, values);
+            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
         }
 
-        static public string Build(System.Globalization.CultureInfo ct, string padchars, params System.Object[] values)
+        static public string BuildSetPadShowBlanks(string padchars, bool showblanks, params System.Object[] values)
+        {
+            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
+        }
+
+        static private string Build(System.Globalization.CultureInfo ct, string padchars, bool showblanks, params System.Object[] values)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder(64);
 
@@ -193,7 +196,7 @@ namespace BaseUtils
                             }
 
                             // if printed something, text must be non null and of length, and it returns true.  Only adds on prefix and prepad if required
-                            if (sb.AppendPrePad(output, fieldnames[0], (overrideprefix.Length > 0) ? overrideprefix : pad))
+                            if (sb.AppendPrePad(output, fieldnames[0], (overrideprefix.Length > 0) ? overrideprefix : pad, showblanks))
                             {                                                                   // prefix with fieldnames[0], and prefix with newline if defined, or pad
                                 if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
                                     sb.Append(fieldnames[1]);
