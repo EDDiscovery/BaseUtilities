@@ -235,6 +235,31 @@ namespace BaseUtils
             return data;
         }
 
+        public static string MakeQuery(params System.Object[] values)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int i = 0; i < values.Length;)
+            {
+                string name = values[i] as string;
+                object value = values[i + 1];
+                i += 2;
+                if (value != null)
+                {
+                    if (sb.Length > 0)
+                        sb.Append('&');
+                    if (value is string)
+                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(value as string));
+                    else if (value is bool)
+                        sb.Append(name + "=" + (((bool)value) ? "1" : "0"));
+                    else
+                        sb.Append(name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+
+            return sb.ToString();
+        }
+
+
         protected string httpserveraddress { get; set; }
     }
 }
