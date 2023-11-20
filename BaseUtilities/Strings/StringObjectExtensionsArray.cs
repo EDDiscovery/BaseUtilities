@@ -21,11 +21,26 @@ using System.Text;
 
 public static partial class ObjectExtensionsStrings
 {
+    // is string s in any of the array elements
+    // return index
     static public int ContainsIn(this string[] array, string s, StringComparison compare = StringComparison.CurrentCulture)
     {
         for (int av = 0; av < array.Length; av++)
         {
             if (array[av].Contains(s, compare))
+                return av;
+        }
+
+        return -1;
+    }
+
+    // does any array element contain s with case control (missing from c#)
+    // return index.
+    static public int Contains(this string[] array, string s, StringComparison compare)
+    {
+        for (int av = 0; av < array.Length; av++)
+        {
+            if (s.Contains(array[av], compare))
                 return av;
         }
 
