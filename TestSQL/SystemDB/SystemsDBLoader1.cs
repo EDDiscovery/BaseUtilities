@@ -42,7 +42,7 @@ namespace EliteDangerousCore.DB
                 grididallowed = gridids;
                 overlapped = poverlapped;
 
-                nextsectorid = SystemsDatabase.Instance.GetSectorIDNext();
+                nextsectorid = SystemsDatabase.Instance.GetMaxSectorID()+1;
                 maxdate = SystemsDatabase.Instance.GetLastRecordTimeUTC();
 
                 if (debugoutputfile != null)
@@ -73,7 +73,6 @@ namespace EliteDangerousCore.DB
                 if (debugfile != null)
                     debugfile.Close();
 
-                SystemsDatabase.Instance.SetSectorIDNext(nextsectorid);
                 SystemsDatabase.Instance.SetLastRecordTimeUTC(maxdate);
             }
 

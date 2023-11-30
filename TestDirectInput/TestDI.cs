@@ -35,12 +35,14 @@ namespace TestDirectInput
 
         private void button1_Click(object sender, EventArgs e)
         {
-            MapDialog mp = new MapDialog();
-            if ( mp.ShowDialog(this) == DialogResult.OK )
-            {
-                System.Diagnostics.Debug.WriteLine($"Device {mp.DeviceName} {mp.ButtonName} {mp.Press}");
-            }
-            return;
+            // tbd
+
+            //MapDialog mp = new MapDialog();
+            //if ( mp.ShowDialog(this) == DialogResult.OK )
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"Device {mp.DeviceName} {mp.ButtonName} {mp.Press}");
+            //}
+            //return;
 
             inputdevices = new InputDeviceList((s) => { BeginInvoke(s); } );
             inputdevices.OnNewEvent += Inputdevices_OnNewEvent;
@@ -49,7 +51,7 @@ namespace TestDirectInput
             DirectInputDevices.InputDeviceKeyboard.CreateKeyboard(inputdevices);              // Created.. not started..
             DirectInputDevices.InputDeviceMouse.CreateMouse(inputdevices);
 
-            foreach( var id in inputdevices)
+            foreach (var id in inputdevices)
             {
                 Print("Device " + id.ToString());
                 Print("Buttons: " + string.Join(",", id.EventButtonNames()));

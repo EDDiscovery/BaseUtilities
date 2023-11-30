@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2015 - 2022 EDDiscovery development team
+ * Copyright © 2015 - 2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -44,6 +44,8 @@ namespace EliteDangerousCore
         public long? SystemAddress { get; set; }
         public long? EDSMID { get; set; }
 
+        public object Tag { get; set; }
+
         public SystemClassBase()
         {
             Xi = int.MinValue;
@@ -71,6 +73,7 @@ namespace EliteDangerousCore
             this.Zi = sys.Zi;
             this.GridID = sys.GridID;
             this.SystemAddress = sys.SystemAddress;
+            this.EDSMID = sys.EDSMID;
         }
 
         public bool Equals(ISystemBase other)
@@ -132,7 +135,7 @@ namespace EliteDangerousCore
         }
     }
 
-    [DebuggerDisplay("System {Name} ({X,nq},{Y,nq},{Z,nq}) {SystemAddress} {Source}")]
+    [DebuggerDisplay("System {Name} ({X,nq},{Y,nq},{Z,nq}) {SystemAddress} {MainStarType} {Source}")]
     public class SystemClass : SystemClassBase, ISystem
     {
         public SystemClass() : base()
@@ -142,6 +145,7 @@ namespace EliteDangerousCore
         public SystemClass(ISystem sys) : base(sys)
         {
             this.Source = sys.Source;
+            this.MainStarType = sys.MainStarType;
         }
 
         public SystemClass(string name) : base()
@@ -154,12 +158,15 @@ namespace EliteDangerousCore
         {
             Name = name;
             SystemAddress = systemaddress;
+            Source = src;
         }
 
         // with co-ords
-        public SystemClass(string name, long? systemaddress, double vx, double vy, double vz, SystemSource src = SystemSource.Synthesised) : base(name, vx, vy, vz)
+        public SystemClass(string name, long? systemaddress, double vx, double vy, double vz, SystemSource src = SystemSource.Synthesised, EDStar starclass = EDStar.Unknown) : base(name, vx, vy, vz)
         {
             SystemAddress = systemaddress;
+            Source = src;
+            MainStarType = starclass;
         }
 
         // used by EDSMClass
@@ -188,12 +195,36 @@ namespace EliteDangerousCore
             Source = src;
         }
 
+        // added oct 23 since edsm has faulty data
+        public bool Triage()
+        {
+            if (Xi == 0 && Name == "Sol")
+                return true;
+
+            if (Math.Abs(Xi) < 3 * XYZScalar && Math.Abs(Yi) < 3 * XYZScalar && Math.Abs(Zi) < 3 * XYZScalar)
+                return false;
+
+            return true;
+        }
+
+        static public bool Triage(string name, double x, double y, double z)
+        {
+            if (x == 0 && name == "Sol")
+                return true;
+
+            if (Math.Abs(x) < 3 && Math.Abs(y) < 3 && Math.Abs(z) < 3)
+                return false;
+
+            return true;
+
+        }
+
         public SystemSource Source { get; set; }        // default source is Sythesised
         public EDStar MainStarType { get; set; }
 
         public override string ToString()
         {
-            return string.Format("{0} @ {1:N1},{2:N1},{3:N1}: {4}, {5}", Name, X, Y, Z, EDSMID, SystemAddress);
+            return string.Format("{0} @ {1:N3},{2:N3},{3:N3}: {4}, {5}", Name, X, Y, Z, EDSMID, SystemAddress);
         }
 
     }

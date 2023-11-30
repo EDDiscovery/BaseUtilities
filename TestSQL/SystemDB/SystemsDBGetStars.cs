@@ -22,7 +22,7 @@ namespace EliteDangerousCore.DB
     {
         ///////////////////////////////////////// By Name
 
-   
+
         // return list of stars matching name, case insensitive
         internal static List<ISystem> FindStars(string name)
         {
@@ -69,7 +69,7 @@ namespace EliteDangerousCore.DB
                                                     new Object[] { ec.ID, ec.SectorName },
                                                     joinlist: MakeSysStdNumericQueryJoinList))
                 {
-                  //  System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
+                    //  System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
 
                     using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
@@ -104,14 +104,22 @@ namespace EliteDangerousCore.DB
 
             List<ISystem> ret = new List<ISystem>();
 
+           // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW",true)} Find {name}");
+
             if (ec.IsStandardParts)     // normal Euk PRoc qc-l d2-3
             {
                 // needs index on Systems(sectorid, Nameid)
+                //Select ID 6 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
+                //Select ID 10 Order 0 From 0: LIST SUBQUERY 1
+                //Select ID 12 Order 10 From 0: SEARCH c USING COVERING INDEX SectorName(name=?)
+                //Select ID 28 Order 0 From 0: SEARCH s USING INDEX SystemsSectorName(sectorid =? AND nameid >? AND nameid <?)
+                //Select ID 40 Order 0 From 0: REUSE LIST SUBQUERY 1
+                //Select ID 47 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
 
                 using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
                                                     "s.nameid >= @p1 AND s.nameid <= @p2 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p3)",
                                                     new Object[] { ec.ID, ec.IDHigh, ec.SectorName },
-                                                    limit:limit,
+                                                    limit: limit,
                                                     joinlist: MakeSystemQueryNamedJoinList))
                 {
                     //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
@@ -130,13 +138,19 @@ namespace EliteDangerousCore.DB
             {
                 // checked select *,s.nameid & 0x3fffffffff , cast((s.nameid & 0x3fffffffff) as text) From Systems  s where (s.nameid & (1<<46)!=0) and s.sectorid=15568 USNO entries
                 // beware, 1<<46 works, 0x40 0000 0000 does not.. 
-                // needs index on Systems(sectorid, Nameid)
+                // needs index on Systems(sectorid, Nameid) just using sectorid
+                //Select ID 6 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
+                //Select ID 10 Order 0 From 0: LIST SUBQUERY 1
+                //Select ID 12 Order 10 From 0: SEARCH c USING COVERING INDEX SectorName(name=?)
+                //Select ID 28 Order 0 From 0: SEARCH s USING INDEX SystemsSectorName(sectorid =?)
+                //Select ID 42 Order 0 From 0: REUSE LIST SUBQUERY 1
+                //Select ID 49 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
 
                 using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
                                                     "(s.nameid & (1<<46) != 0) AND cast((s.nameid & 0x3fffffffff) as text) LIKE @p1 AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
                                                     new Object[] { ec.NameIdNumeric.ToStringInvariant() + "%", ec.SectorName },
-                                                    limit:limit,
-                                                    joinlist: MakeSystemQueryNamedJoinList))  
+                                                    limit: limit,
+                                                    joinlist: MakeSystemQueryNamedJoinList))
                 {
 
                     //System.Diagnostics.Debug.WriteLine( cn.ExplainQueryPlanString(selectSysCmd));
@@ -162,9 +176,17 @@ namespace EliteDangerousCore.DB
                     {
                         if (ec.StarName.Length > 0) // and we have a star name (of any length as its been split)
                         {
-                           // System.Diagnostics.Debug.WriteLine($"******************** {BaseUtils.AppTicks.TickCountLap("SS1", true)} Search sector-name {ec.SectorName} {ec.StarName}");
+                            //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW")} Sector name given search {name}");
 
                             // needs index on Systems(sectorid, Nameid)
+                            //Select ID 6 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
+                            //Select ID 10 Order 0 From 0: LIST SUBQUERY 2
+                            //Select ID 12 Order 10 From 0: SEARCH c USING COVERING INDEX SectorName(name=?)
+                            //Select ID 28 Order 0 From 0: SEARCH s USING INDEX SystemsSectorName(sectorid =? AND nameid =?)
+                            //Select ID 33 Order 0 From 0: LIST SUBQUERY 1
+                            //Select ID 36 Order 33 From 0: SEARCH Names USING COVERING INDEX NamesName(Name>? AND Name <?)
+                            //Select ID 62 Order 0 From 0: REUSE LIST SUBQUERY 2
+                            //Select ID 69 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
 
                             using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
                                                                 "s.nameid IN (Select id FROM Names WHERE name LIKE @p1) AND s.sectorid IN (Select id FROM Sectors c WHERE c.name=@p2)",
@@ -182,7 +204,7 @@ namespace EliteDangerousCore.DB
                                         ret.Add(sc);
                                     }
 
-                                   // System.Diagnostics.Debug.WriteLine($"************** {BaseUtils.AppTicks.TickCountLap("SS1")} Search sector-name result {ret.Count}");
+                                    // System.Diagnostics.Debug.WriteLine($"************** {BaseUtils.AppTicks.TickCountLap("SS1")} Search sector-name result {ret.Count}");
 
                                     limit -= ret.Count;
                                 }
@@ -191,8 +213,14 @@ namespace EliteDangerousCore.DB
                         else
                         {
                             //System.Diagnostics.Debug.WriteLine($"Sector sector - noname {ec.SectorName}");
+                            //Select ID 6 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
+                            //Select ID 10 Order 0 From 0: LIST SUBQUERY 1
+                            //Select ID 13 Order 10 From 0: SEARCH c USING COVERING INDEX SectorName(name>? AND name <?)
+                            //Select ID 34 Order 0 From 0: SEARCH s USING INDEX SystemsSectorName(sectorid =?)
+                            //Select ID 40 Order 0 From 0: REUSE LIST SUBQUERY 1
+                            //Select ID 47 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
 
-                          //  System.Diagnostics.Debug.WriteLine($"******************** {BaseUtils.AppTicks.TickCountLap("SS1", true)} Search sector-noname {ec.SectorName} {ec.StarName}");
+                            //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW")} Sector no-name search {name}");
 
                             using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
                                                                 "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @p1)",
@@ -210,7 +238,7 @@ namespace EliteDangerousCore.DB
                                         ret.Add(sc);
                                     }
 
-                              //      System.Diagnostics.Debug.WriteLine($"************** {BaseUtils.AppTicks.TickCountLap("SS1")} Search sector-noname result {ret.Count}");
+                                    //      System.Diagnostics.Debug.WriteLine($"************** {BaseUtils.AppTicks.TickCountLap("SS1")} Search sector-noname result {ret.Count}");
                                 }
                             }
                         }
@@ -220,15 +248,21 @@ namespace EliteDangerousCore.DB
                 {
                     if (ec.StarName.Length >= 2)     // min 2 chars for name
                     {
-                       // System.Diagnostics.Debug.WriteLine($"************** {BaseUtils.AppTicks.TickCountLap("SS1", true)} Search-NoSector-name, check names {ec.StarName}");
+                        //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW")} Name search {name}");
 
                         using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
-                                                            "s.nameid IN (Select id FROM Names WHERE name LIKE @p1) ",
+                                                            "s.edsmid IN (Select id FROM Names WHERE name LIKE @p1) ",      // BUG here 4/10/23 should be edsmid so it uses primary index!
                                                             new Object[] { ec.StarName + "%" },
                                                             limit: limit,
                                                             joinlist: MakeSystemQueryNamedJoinList))
                         {
                             //System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(selectSysCmd));
+
+                            //Select ID 5 Order 0 From 0: SEARCH s USING INTEGER PRIMARY KEY(rowid=?)
+                            //Select ID 9 Order 0 From 0: LIST SUBQUERY 1
+                            //Select ID 12 Order 9 From 0: SEARCH Names USING COVERING INDEX NamesName(Name>? AND Name <?)
+                            //Select ID 33 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
+                            //Select ID 38 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
 
                             using (DbDataReader reader = selectSysCmd.ExecuteReader())
                             {
@@ -238,17 +272,23 @@ namespace EliteDangerousCore.DB
                                     ret.Add(sc);
                                 }
 
-                          //      System.Diagnostics.Debug.WriteLine($"**************** {BaseUtils.AppTicks.TickCountLap("SS1")}Search-NoSector-name, check names {ret.Count}");
+                                //System.Diagnostics.Debug.WriteLine($"**************** {BaseUtils.AppTicks.TickCountLap("SS1")}Search-NoSector-name, check names {ret.Count}");
 
                                 limit -= ret.Count;
                             }
                         }
 
-
-
                         if (limit > 0)
                         {
-                           // System.Diagnostics.Debug.WriteLine($"****************** {BaseUtils.AppTicks.TickCountLap("SS2", true)} Search-nosector-name, check sectors {ec.StarName}");
+                            //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW")} Sector search {name}");
+
+                            //Select ID 6 Order 0 From 0: SEARCH c USING INTEGER PRIMARY KEY(rowid=?)
+                            //Select ID 10 Order 0 From 0: LIST SUBQUERY 1
+                            //Select ID 13 Order 10 From 0: SEARCH c USING COVERING INDEX SectorName(name>? AND name <?)
+                            //Select ID 34 Order 0 From 0: SEARCH s USING INDEX SystemsSectorName(sectorid =?)
+                            //Select ID 40 Order 0 From 0: REUSE LIST SUBQUERY 1
+                            //Select ID 47 Order 0 From 0: SEARCH n USING INTEGER PRIMARY KEY(rowid=?) LEFT - JOIN
+
                             using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed,
                                                                 "s.sectorid IN (Select id FROM Sectors c WHERE c.name LIKE @p1)",
                                                                 new Object[] { ec.StarName + "%" },
@@ -265,7 +305,7 @@ namespace EliteDangerousCore.DB
                                         ret.Add(sc);
                                     }
 
-                                 //   System.Diagnostics.Debug.WriteLine($"**************** {BaseUtils.AppTicks.TickCountLap("SS2")} Search-NoSector-name, check sectors {ret.Count}");
+                                    //   System.Diagnostics.Debug.WriteLine($"**************** {BaseUtils.AppTicks.TickCountLap("SS2")} Search-NoSector-name, check sectors {ret.Count}");
 
                                 }
                             }
@@ -274,6 +314,7 @@ namespace EliteDangerousCore.DB
                 }
             }
 
+           // System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("FSW")} Finish {name}");
             return ret;
         }
 
@@ -291,7 +332,7 @@ namespace EliteDangerousCore.DB
 
             bool isspansh = !reader.IsDBNull(6);
 
-            return new SystemClass(ec.ToString(), 
+            return new SystemClass(ec.ToString(),
                                         reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2),         // xyz
                                         isspansh ? reader.GetInt64(3) : default(long?),     // for spansh carries in s.edsmid the system address
                                         isspansh ? default(long?) : reader.GetInt64(3),     // for edsm carriers in s.edsmid the edsmid
@@ -314,7 +355,7 @@ namespace EliteDangerousCore.DB
 
             bool isspansh = !reader.IsDBNull(8);
 
-            return new SystemClass(ec.ToString(), 
+            return new SystemClass(ec.ToString(),
                                         reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2),     // xyz
                                         isspansh ? reader.GetInt64(3) : default(long?),     // for spansh carries in s.edsmid the system address
                                         isspansh ? default(long?) : reader.GetInt64(3),     // for edsm carriers in s.edsmid the edsmid

@@ -392,7 +392,7 @@ namespace TestSQL
             { // 142ms with xz and no sector lookup
                 BaseUtils.AppTicks.TickCountLap();
                 ISystem s;
-                s = SystemCache.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemCache.SystemsNearestMetric.IterativeWaypointDevHalf, 1);
+                s = SystemCache.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(1, 0, 0), 110, 20, SystemCache.SystemsNearestMetric.IterativeWaypointDevHalf, 1,null);
                 System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Alpha Centauri"));
                 WriteLog("Find Nearest Star: " + BaseUtils.AppTicks.TickCountLap());
             }
@@ -520,6 +520,15 @@ namespace TestSQL
                 System.Diagnostics.Debug.Assert(slnames.Contains("I Carinae"));
                 System.Diagnostics.Debug.Assert(slnames.Contains("I Puppis"));
             }
+
+
+            { // 142ms with xz and no sector lookup
+                ISystem s;
+                s = SystemCache.GetSystemNearestTo(new Point3D(100, 0, 0), new Point3D(4, 0, 0), 110, 20, SystemCache.SystemsNearestMetric.IterativeWaypointDevHalf, 1, null);
+                System.Diagnostics.Debug.Assert(s != null && s.Name.Equals("Luhman 16"));
+            }
+
+
             WriteLog($"Spansh Test Complete");
         }
 

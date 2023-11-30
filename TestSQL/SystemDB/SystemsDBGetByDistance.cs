@@ -61,7 +61,7 @@ namespace EliteDangerousCore.DB
                 cmd.AddParameterWithValue("@max", maxitems + 1);     // 1 more, because if we are on a System, that will be returned
                 cmd.AddParameterWithValue("@maxdist", SystemClass.DoubleToInt(maxdist));
 
-               // System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
+                // System.Diagnostics.Debug.WriteLine(cn.ExplainQueryPlanString(cmd));
 
                 int xi = SystemClass.DoubleToInt(x);
                 int yi = SystemClass.DoubleToInt(y);
@@ -70,7 +70,7 @@ namespace EliteDangerousCore.DB
 
                 using (DbDataReader reader = cmd.ExecuteReader())
                 {
-                  //  System.Diagnostics.Debug.WriteLine("Time1.5 " + BaseUtils.AppTicks.TickCountLap("SDC"));
+                    //  System.Diagnostics.Debug.WriteLine("Time1.5 " + BaseUtils.AppTicks.TickCountLap("SDC"));
 
                     while (reader.Read())      // already sorted, and already limited to max items
                     {
@@ -88,7 +88,7 @@ namespace EliteDangerousCore.DB
                         }
                     }
 
-                  //  System.Diagnostics.Debug.WriteLine("Time2 " + BaseUtils.AppTicks.TickCountLap("SDC") + "  count " + count);
+                    //  System.Diagnostics.Debug.WriteLine("Time2 " + BaseUtils.AppTicks.TickCountLap("SDC") + "  count " + count);
                 }
             }
         }
@@ -97,25 +97,20 @@ namespace EliteDangerousCore.DB
         internal static ISystem GetSystemByPosition(double x, double y, double z, SQLiteConnectionSystem cn, double maxdist = 0.125)
         {
             BaseUtils.SortedListDoubleDuplicate<ISystem> distlist = new BaseUtils.SortedListDoubleDuplicate<ISystem>();
-            GetSystemListBySqDistancesFrom(x, y, z, 1, 0, maxdist, true, cn, (d,s)=> { distlist.Add(d, s); }); // return 1 item, min dist 0, maxdist
+            GetSystemListBySqDistancesFrom(x, y, z, 1, 0, maxdist, true, cn, (d, s) => { distlist.Add(d, s); }); // return 1 item, min dist 0, maxdist
             return (distlist.Count > 0) ? distlist.First().Value : null;
         }
 
-        /////////////////////////////////////////////// Nearest to a point determined by a metric
+        // nearest system to wantedpos with max from currentpos
 
-        // either use CallBack or List
-        internal static void GetSystemNearestTo(
-                                                  Point3D currentpos,
+        internal static void GetSystemNearestTo(  Point3D currentpos,
                                                   Point3D wantedpos,
                                                   double maxfromcurpos,
                                                   double maxfromwanted,
                                                   int limitto,
                                                   SQLiteConnectionSystem cn,
-                                                  Action<ISystem> CallBack = null,
-                                                  List<ISystem> list = null)
+                                                  Action<ISystem> CallBack)
         {
-            System.Diagnostics.Debug.Assert(CallBack != null || list != null);
-
             using (DbCommand cmd = cn.CreateSelect("SystemTable s",
                         MakeSystemQueryNamed,
                         where:
@@ -151,15 +146,11 @@ namespace EliteDangerousCore.DB
                     while (reader.Read())
                     {
                         var sys = MakeSystem(reader);
-                        if (CallBack!=null)
-                            CallBack(sys);
-                        else
-                            list.Add(sys);
+                        CallBack(sys);
                     }
                 }
             }
         }
-
     }
 }
 

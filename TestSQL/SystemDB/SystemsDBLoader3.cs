@@ -38,15 +38,18 @@ namespace EliteDangerousCore.DB
             // create - postfix allows a different table set to be created
             // maxblocksize - write back when reached this
             // gridids - null or array of allowed gridid
+            // poverlapped - allow overlapped reading/db writing
+            // dontoverwrite - do INSERT OR IGNORE
             // debugoutputfile - write file of loaded systems
-            public Loader3(string ptablepostfix, int pmaxblocksize, bool[] gridids, bool poverlapped, string debugoutputfile = null)
+            public Loader3(string ptablepostfix, int pmaxblocksize, bool[] gridids, bool poverlapped, bool pdontoverwrite, string debugoutputfile = null)
             {
                 tablepostfix = ptablepostfix;
                 maxblocksize = pmaxblocksize;
                 grididallowed = gridids;
                 overlapped = poverlapped;
+                dontoverwrite = pdontoverwrite;
 
-                nextsectorid = SystemsDatabase.Instance.GetSectorIDNext();
+                nextsectorid = SystemsDatabase.Instance.GetMaxSectorID() + 1;       // this is the next value to use
                 LastDate = SystemsDatabase.Instance.GetLastRecordTimeUTC();
 
                 if (debugoutputfile != null)
@@ -77,8 +80,10 @@ namespace EliteDangerousCore.DB
                 if (debugfile != null)
                     debugfile.Close();
 
-                SystemsDatabase.Instance.SetSectorIDNext(nextsectorid);
                 SystemsDatabase.Instance.SetLastRecordTimeUTC(LastDate);
+
+                SystemsDatabase.Instance.WALCheckPoint();       // just make sure we don't leave behind a big WAL file
+
             }
 
             public long ParseJSONFile(string filename, Func<bool> cancelRequested, Action<string> reportProgress)
@@ -135,6 +140,7 @@ namespace EliteDangerousCore.DB
                 uint datev = QuickJSON.Utils.Extensions.Checksum("date");
                 uint updatetimev = QuickJSON.Utils.Extensions.Checksum("updateTime");
                 uint coordsv = QuickJSON.Utils.Extensions.Checksum("coords");
+                uint coordsLockedv = QuickJSON.Utils.Extensions.Checksum("coordsLocked");
                 uint mainstarv = QuickJSON.Utils.Extensions.Checksum("mainStar");
                 uint needspermitv = QuickJSON.Utils.Extensions.Checksum("needsPermit");
 
@@ -149,32 +155,33 @@ namespace EliteDangerousCore.DB
                         ulong? id = null, systemaddress = null;
                         int? startype = null;
                         bool spansh = false;
+                        bool permitsystem = false;
 
                         // skip to next non white, do not remove anything after, while not at EOL
                         while ((nextchar = parser.GetNextNonSpaceChar(false)) != char.MinValue)
                         {
                             if (nextchar == '"')            // property name
                             {
-                                uint sc = parser.ChecksumCharBlock((xv) => xv != '"', skipafter: true); 
+                                uint sc = parser.ChecksumCharBlock((xv) => xv != '"', skipafter: true);
                                 int textfieldlen;
 
                                 // next char must be a colon, then skip further
-                                if (parser.IsCharMoveOn('"',true) && parser.IsCharMoveOn(':',true))
+                                if (parser.IsCharMoveOn('"', true) && parser.IsCharMoveOn(':', true))
                                 {
-                                    if (sc==namev)
+                                    if (sc == namev)
                                     {
                                         starname = parser.JNextValue(charbuf, false).StrNull();
                                     }
-                                    else if (sc==idv)     // edsm name
+                                    else if (sc == idv)     // edsm name
                                     {
                                         id = parser.JNextValue(charbuf, false).ULongNull();
                                         spansh = false;
                                     }
-                                    else if (sc==id64v)   // edsm and spansh name
+                                    else if (sc == id64v)   // edsm and spansh name
                                     {
                                         systemaddress = parser.JNextValue(charbuf, false).ULongNull();
                                     }
-                                    else if (sc==datev)   // edsm name
+                                    else if (sc == datev)   // edsm name
                                     {
                                         string dt = parser.JNextValue(charbuf, false).StrNull();
                                         if (dt != null)
@@ -184,7 +191,7 @@ namespace EliteDangerousCore.DB
                                             spansh = false;
                                         }
                                     }
-                                    else if (sc==updatetimev) // spansh name
+                                    else if (sc == updatetimev) // spansh name
                                     {
                                         string dt = parser.JNextValue(charbuf, false).StrNull();
                                         if (dt != null)
@@ -194,7 +201,7 @@ namespace EliteDangerousCore.DB
                                             spansh = true;
                                         }
                                     }
-                                    else if (sc==coordsv) // both
+                                    else if (sc == coordsv) // both
                                     {
                                         if (parser.IsCharMoveOn('{', true))       // must have {, and move on
                                         {
@@ -227,24 +234,28 @@ namespace EliteDangerousCore.DB
                                         else
                                             break;
                                     }
-                                    else if (sc==mainstarv) // spansh
+                                    else if (sc == mainstarv) // spansh
                                     {
                                         string sname = parser.JNextValue(charbuf, false).StrNull();
                                         if (sname != null)
                                         {
-                                            if (spanshtoedstar.TryGetValue(sname, out EDStar value))
+                                            var edstar = Spansh.SpanshClass.SpanshStarNameToEDStar(sname);
+                                            if (edstar != null)
                                             {
-                                                startype = (int)value;
+                                                startype = (int)edstar;
                                                 spansh = true;
                                             }
                                             else
                                                 System.Diagnostics.Debug.WriteLine($"DB read of spansh unknown star type {sname}");
                                         }
                                     }
-                                    else if (sc==needspermitv) // spansh
+                                    else if (sc == needspermitv) // spansh
                                     {
-                                        // we don't store this
-                                        bool _ = parser.IsStringMoveOn("true") ? true : !parser.IsStringMoveOn("false");    
+                                        permitsystem = parser.IsStringMoveOn("true") ? true : !parser.IsStringMoveOn("false");
+                                    }
+                                    else if ( sc == coordsLockedv ) //EDSM
+                                    { 
+                                        var token = parser.JNextValue(charbuf, false);      // just remove true
                                     }
                                     else
                                     {
@@ -280,9 +291,9 @@ namespace EliteDangerousCore.DB
 
                         if (starname != null && x.HasValue && y.HasValue && z.HasValue && id.HasValue)
                         {
-                        //    System.Diagnostics.Debug.WriteLine($"Read {systemaddress} {id} {starname} {x} {y} {z}");
+                            //    System.Diagnostics.Debug.WriteLine($"Read {systemaddress} {id} {starname} {x} {y} {z}");
 
-                            if (true)
+                            if ( SystemClass.Triage(starname,x.Value, y.Value,z.Value))      // triage because bad tools are leaking systems on 0/0/0 oct 23
                             {
                                 int xi = (int)(x * SystemClass.XYZScalar);
                                 int yi = (int)(y * SystemClass.XYZScalar);
@@ -308,7 +319,7 @@ namespace EliteDangerousCore.DB
                                         curwb.sectorinsertcmd.Append(gridid.ToStringInvariant());
                                         curwb.sectorinsertcmd.Append(",'");
                                         curwb.sectorinsertcmd.Append(classifier.SectorName.Replace("'", "''"));
-                                        curwb.sectorinsertcmd.Append("') ");
+                                        curwb.sectorinsertcmd.Append("')");
 
                                         sectorcache.Add(skey, sectorid);        // add to sector cache
                                     }
@@ -319,31 +330,42 @@ namespace EliteDangerousCore.DB
                                             curwb.nameinsertcmd.Append(',');
 
                                         curwb.nameinsertcmd.Append('(');                            // add (id,name) to names insert string
-                                        curwb.nameinsertcmd.Append(id);
+                                        curwb.nameinsertcmd.Append(id.Value.ToStringInvariant());
                                         curwb.nameinsertcmd.Append(",'");
                                         curwb.nameinsertcmd.Append(classifier.StarName.Replace("'", "''"));
                                         curwb.nameinsertcmd.Append("') ");
                                         classifier.NameIdNumeric = id.Value;                      // the name becomes the id of the entry
                                     }
 
+                                    if (permitsystem)
+                                    {
+                                        //System.Diagnostics.Debug.WriteLine($"Permit system {starname} {id}");
+                                        if (curwb.permitsystemsinsertcmd.Length > 0)
+                                            curwb.permitsystemsinsertcmd.Append(',');
+
+                                        curwb.permitsystemsinsertcmd.Append('(');                 // add (id) to permit system insert string
+                                        curwb.permitsystemsinsertcmd.Append(id.Value.ToStringInvariant());
+                                        curwb.permitsystemsinsertcmd.Append(")");
+                                    }
+
                                     if (curwb.systeminsertcmd.Length > 0)
                                         curwb.systeminsertcmd.Append(",");
 
                                     curwb.systeminsertcmd.Append('(');                            // add (id,sectorid,nameid,x,y,z,info) to systems insert string
-                                    curwb.systeminsertcmd.Append(id);                           // locale independent, because its just a decimal with no N formatting
+                                    curwb.systeminsertcmd.Append(id.Value.ToStringInvariant());                           // locale independent, because its just a decimal with no N formatting
                                     curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(sectorid);
+                                    curwb.systeminsertcmd.Append(sectorid.ToStringInvariant());
                                     curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(classifier.ID);
+                                    curwb.systeminsertcmd.Append(classifier.ID.ToStringInvariant());
                                     curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(xi);
+                                    curwb.systeminsertcmd.Append(xi.ToStringInvariant());
                                     curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(yi);
+                                    curwb.systeminsertcmd.Append(yi.ToStringInvariant());
                                     curwb.systeminsertcmd.Append(',');
-                                    curwb.systeminsertcmd.Append(zi);
+                                    curwb.systeminsertcmd.Append(zi.ToStringInvariant());
                                     curwb.systeminsertcmd.Append(",");
                                     if (startype.HasValue)
-                                        curwb.systeminsertcmd.Append(startype);
+                                        curwb.systeminsertcmd.Append(startype.Value.ToStringInvariant());
                                     else
                                         curwb.systeminsertcmd.Append("NULL");
 
@@ -354,6 +376,10 @@ namespace EliteDangerousCore.DB
 
                                     recordstostore++;
                                 }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Rejected {starname} {x} {y} {z}");
                             }
                         }
                         else
@@ -371,13 +397,14 @@ namespace EliteDangerousCore.DB
                             System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} ready with next block");
 
                             uint readyforblocktime = (uint)Environment.TickCount;
-                            
+
                             var metric = SystemsDatabase.Instance.DBWait(prevwb.sqlop, 5000);        // wait for job, and get its metrics
 
                             uint waitfortime = readyforblocktime - metric.Item2;                    // if job completed before read of json, it will be positive
                             int dbfinishedbeforeread = (int)waitfortime;                            // experiments with changing block size, but it does not really work well.
-        
-                            prevwb.sqlop = null;
+
+                            prevwb.sqlop = null;                                                    // we are abandoning this work block
+                            prevwb = null;
 
                             System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} ready jobfinished {metric.Item2} delta {dbfinishedbeforeread}  ************ next BS {maxblocksize}");
                         }
@@ -401,7 +428,7 @@ namespace EliteDangerousCore.DB
                         curwb = new WriteBlock(++wbno); // make a new one
 
                         updates += recordstostore;
-                    //    reportProgress?.Invoke($"Star database updated {recordstostore:N0} total so far {(updates):N0}");
+                        reportProgress?.Invoke($"Star database updated {recordstostore:N0} total so far {updates:N0}");
                         recordstostore = 0;
                     }
                 }
@@ -412,17 +439,16 @@ namespace EliteDangerousCore.DB
                     SystemsDatabase.Instance.DBWait(prevwb.sqlop, 5000);
                     System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} last block {prevwb.wbno} complete");
                     prevwb.sqlop = null;
+                    prevwb = null;
                 }
 
-                reportProgress?.Invoke($"Star database updated {updates:N0}");
+                reportProgress?.Invoke($"Star database updated complete {updates:N0}");
+
                 System.Diagnostics.Trace.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB L3 finish {updates}");
 
                 // update max date - from string
                 if (System.DateTime.TryParse(maxdatetimestr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime ld))
                     LastDate = ld;
-
-                SystemsDatabase.Instance.WALCheckPoint();      
-
 
                 return updates;
             }
@@ -430,23 +456,24 @@ namespace EliteDangerousCore.DB
             // we need this in a func. The function executes the c.Write in a thread, so we can't let c change
             void Write(WriteBlock c)
             {
-                c.sqlop = SystemsDatabase.Instance.DBWriteNoWait(db => c.Write(db, tablepostfix), jobname: "SystemDBLoad");
+                c.sqlop = SystemsDatabase.Instance.DBWriteNoWait(db => c.Write(db, tablepostfix, dontoverwrite), jobname: "SystemDBLoad");
             }
 
             private class WriteBlock
             {
-                public Object sqlop;
-                public int wbno;
+                public Object sqlop;    // id of write job
+                public int wbno;        // write block number
                 public StringBuilder sectorinsertcmd = new StringBuilder(100000);
                 public StringBuilder nameinsertcmd = new StringBuilder(300000);
                 public StringBuilder systeminsertcmd = new StringBuilder(32000000);
+                public StringBuilder permitsystemsinsertcmd = new StringBuilder(10000);
 
                 public WriteBlock(int n)
                 {
                     wbno = n;
                 }
 
-                public void Write(SQLiteConnectionSystem db, string tablepostfix)
+                public void Write(SQLiteConnectionSystem db, string tablepostfix, bool dontoverwrite)
                 {
                     using (var txn = db.BeginTransaction())
                     {
@@ -478,7 +505,17 @@ namespace EliteDangerousCore.DB
 
                             //System.Diagnostics.Debug.Assert(!systeminsertcmd.ToString().Contains("."));
 
-                            using (var cmd = db.CreateCommand("INSERT OR REPLACE INTO SystemTable" + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString(), txn))
+                            using (var cmd = db.CreateCommand(
+                                (dontoverwrite ? "INSERT OR IGNORE INTO SystemTable" : "INSERT OR REPLACE INTO SystemTable") + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString(), txn))
+                            {
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        if (permitsystemsinsertcmd.Length > 0)    
+                        {
+                            using (var cmd = db.CreateCommand(
+                                (dontoverwrite ? "INSERT OR IGNORE INTO PermitSystems" : "INSERT OR REPLACE INTO PermitSystems") + tablepostfix + " (edsmid) VALUES " + permitsystemsinsertcmd.ToString(), txn))
                             {
                                 cmd.ExecuteNonQuery();
                             }
@@ -494,71 +531,9 @@ namespace EliteDangerousCore.DB
             private int nextsectorid;
             private int maxblocksize;
             private bool overlapped;
+            private bool dontoverwrite;
             private bool[] grididallowed;
             private StreamWriter debugfile = null;
-
-            // from https://spansh.co.uk/api/bodies/field_values/subtype
-            static private Dictionary<string, EDStar> spanshtoedstar = new Dictionary<string, EDStar>
-            {
-                { "O (Blue-White) Star", EDStar.O },
-                { "B (Blue-White) Star", EDStar.B },
-                { "A (Blue-White) Star", EDStar.A },
-                { "F (White) Star", EDStar.F },
-                { "G (White-Yellow) Star", EDStar.G },
-                { "K (Yellow-Orange) Star", EDStar.K },
-                { "M (Red dwarf) Star", EDStar.M },
-
-                { "L (Brown dwarf) Star", EDStar.L },
-                { "T (Brown dwarf) Star", EDStar.T },
-                { "Y (Brown dwarf) Star", EDStar.Y },
-
-                { "Herbig Ae Be Star", EDStar.AeBe },
-                { "T Tauri Star", EDStar.TTS },
-
-                { "Wolf-Rayet Star", EDStar.W },
-                { "Wolf-Rayet N Star", EDStar.WN },
-                { "Wolf-Rayet NC Star", EDStar.WNC },
-                { "Wolf-Rayet C Star", EDStar.WC },
-                { "Wolf-Rayet O Star", EDStar.WO },
-
-                // missing CS
-                { "C Star", EDStar.C },
-                { "CN Star", EDStar.CN },
-                { "CJ Star", EDStar.CJ },
-                // missing CHd
-
-                { "MS-type Star", EDStar.MS },
-                { "S-type Star", EDStar.S },
-
-                { "White Dwarf (D) Star", EDStar.D },
-                { "White Dwarf (DA) Star", EDStar.DA },
-                { "White Dwarf (DAB) Star", EDStar.DAB },
-                // missing DAO
-                { "White Dwarf (DAZ) Star", EDStar.DAZ },
-                { "White Dwarf (DAV) Star", EDStar.DAV },
-                { "White Dwarf (DB) Star", EDStar.DB },
-                { "White Dwarf (DBZ) Star", EDStar.DBZ },
-                { "White Dwarf (DBV) Star", EDStar.DBV },
-                // missing DO,DOV
-                { "White Dwarf (DQ) Star", EDStar.DQ },
-                { "White Dwarf (DC) Star", EDStar.DC },
-                { "White Dwarf (DCV) Star", EDStar.DCV },
-                // missing DX
-                { "Neutron Star", EDStar.N },
-                { "Black Hole", EDStar.H },
-                // missing X but not confirmed with actual journal data
-
-
-                { "A (Blue-White super giant) Star", EDStar.A_BlueWhiteSuperGiant },
-                { "F (White super giant) Star", EDStar.F_WhiteSuperGiant },
-                { "M (Red super giant) Star", EDStar.M_RedSuperGiant },
-                { "M (Red giant) Star", EDStar.M_RedGiant},
-                { "K (Yellow-Orange giant) Star", EDStar.K_OrangeGiant },
-                // missing rogueplanet, nebula, stellarremanant
-                { "Supermassive Black Hole", EDStar.SuperMassiveBlackHole },
-                { "B (Blue-White super giant) Star", EDStar.B_BlueWhiteSuperGiant },
-                { "G (White-Yellow super giant) Star", EDStar.G_WhiteSuperGiant },
-            };
 
         }
     }

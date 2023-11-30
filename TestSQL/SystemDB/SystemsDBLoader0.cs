@@ -142,8 +142,6 @@ namespace EliteDangerousCore.DB
             System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} System DB End {updates} maxdate {maxdate} maxsec {nextsectorid}");
             reportProgress?.Invoke("Star database updated " + updates);
 
-            PutNextSectorID(nextsectorid);    // and store back
-
             return updates;
         }
 
@@ -545,8 +543,7 @@ namespace EliteDangerousCore.DB
 
         #region Internal Vars and Classes
 
-        private static int GetNextSectorID() { return SystemsDatabase.Instance.GetSectorIDNext(); }
-        private static void PutNextSectorID(int v) { SystemsDatabase.Instance.SetSectorIDNext(v); }  
+        private static int GetNextSectorID() { return SystemsDatabase.Instance.GetMaxSectorID()+1; }
 
         private class SectorCache
         {
