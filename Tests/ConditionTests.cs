@@ -43,6 +43,225 @@ namespace EDDiscoveryTests
         public void Conditions()
         {
             {
+                Variables vars = new Variables();
+                vars["Bodies[1].StarTypeID"] = "F";
+                vars["Bodies[2].StarTypeID"] = "G";
+                vars["Bodies[1].PlanetTypeID"] = "Gas";
+                vars["Bodies[2].PlanetTypeID"] = "Fred";
+                vars["Bodies[1].BodyID"] = "10";
+                vars["Bodies[2].BodyID"] = "20";
+                vars["Bodies[1].Mass"] = "10";
+                vars["Bodies[2].Mass"] = "15";
+                vars["Bodies[3].Mass"] = "20";
+
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter3].BodyID",ConditionEntry.MatchType.NumericEquals,"20"),
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    vars["Iter3"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(true);
+                }
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter3].BodyID",ConditionEntry.MatchType.NumericEquals,"22"),
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    vars["Iter3"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(false);
+                }
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter4].Mass",ConditionEntry.MatchType.NumericEquals,"20"),
+                                new ConditionEntry("Bodies[Iter3].BodyID",ConditionEntry.MatchType.NumericEquals,"20"),
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    vars["Iter3"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(true);
+                    Check.That(vars["Iter1"]).Equals("2");
+                    Check.That(vars["Iter2"]).Equals("2");
+                    Check.That(vars["Iter3"]).Equals("2");
+                    Check.That(vars["Iter4"]).Equals("3");
+                }
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter4].Mass",ConditionEntry.MatchType.NumericEquals,"20"),       // mix the order
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                                new ConditionEntry("Bodies[Iter3].BodyID",ConditionEntry.MatchType.NumericEquals,"20"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    vars["Iter3"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(true);
+                    Check.That(vars["Iter1"]).Equals("2");
+                    Check.That(vars["Iter2"]).Equals("2");
+                    Check.That(vars["Iter3"]).Equals("2");
+                    Check.That(vars["Iter4"]).Equals("3");
+                }
+
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(true);
+                }
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Bodies[Iter2].PlanetTypeID",ConditionEntry.MatchType.Equals,"Fred"),
+                                new ConditionEntry("Bodies[Iter1].StarTypeID",ConditionEntry.MatchType.Equals,"G"),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    vars["Iter1"] = "1";
+                    vars["Iter2"] = "1";
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vars, true, true);  // should not find it.
+
+                    Check.That(ev.Item1).Equals(true);
+                }
+            }
+
+
+            {
+                Variables vars = new Variables();
+                vars["IsPlanet"] = "1";
+                vars["IsBig"] = "1";
+                vars["IsSmall"] = "0";
+                vars["Mult[1].Var[1]"] = "10";
+                vars["Mult[1].Var[2]"] = "20";
+                vars["Mult[2].Var[1]"] = "30";
+                vars["Mult[2].Var[2]"] = "40";
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
+                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Mult[Iter1].Var[Iter2]",ConditionEntry.MatchType.NumericEquals,"40"),
+                            },
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
+                        ));
+
+                    Variables vcopy = new Variables(vars);
+                    vcopy["Iter1"] = "1";
+                    vcopy["Iter2"] = "1";
+
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true, true);
+                    Check.That(ev.Item1).Equals(true);
+                }
+
+                {
+                    ConditionLists cl = new ConditionLists();
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
+                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
+                            },
+                            Condition.LogicalCondition.And,    // inner
+                            Condition.LogicalCondition.Or
+                        ));
+
+                    cl.Add(new Condition("e", "f", new Variables(),
+                            new List<ConditionEntry>
+                            {
+                                new ConditionEntry("Mult[Iter1].Var[Iter2]",ConditionEntry.MatchType.NumericEquals,"24"),
+                            },
+                            Condition.LogicalCondition.Or,
+                            Condition.LogicalCondition.And
+                        ));
+
+                    Variables vcopy = new Variables(vars);
+                    vcopy["Iter1"] = "1";
+                    vcopy["Iter2"] = "1";
+
+                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true, true);
+                    Check.That(ev.Item1).Equals(false);
+                }
+            }
+
+
+
+
+            {
                 var cond = new Condition("e", "f", new Variables(),
                             new List<ConditionEntry>
                             {
@@ -145,10 +364,6 @@ namespace EDDiscoveryTests
                 vars["Rings[0].outerrad"] = "20";
                 vars["Other[1].outerrad"] = "20";
                 vars["Other[2].outerrad"] = "40";
-                vars["Mult[1].Var[1]"] = "10";
-                vars["Mult[1].Var[2]"] = "20";
-                vars["Mult[2].Var[1]"] = "30";
-                vars["Mult[2].Var[2]"] = "40";
 
                 Variables actionv = new Variables(new string[] { "o1", "1", "o2", "2" });
 
@@ -201,34 +416,6 @@ namespace EDDiscoveryTests
                 }
 
 
-                {
-                    ConditionLists cl = new ConditionLists();
-                    cl.Add(new Condition("e", "f", new Variables(),
-                            new List<ConditionEntry>
-                            {
-                                new ConditionEntry("IsPlanet",ConditionEntry.MatchType.IsTrue,""),      // both passes
-                                new ConditionEntry("IsSmall",ConditionEntry.MatchType.IsFalse,""),
-                            },
-                            Condition.LogicalCondition.And,    // inner
-                            Condition.LogicalCondition.Or
-                        ));
-
-                    cl.Add(new Condition("e", "f", new Variables(),
-                            new List<ConditionEntry>
-                            {
-                                new ConditionEntry("Mult[Iter1].Var[Iter2]",ConditionEntry.MatchType.NumericEquals,"40"),
-                            },
-                            Condition.LogicalCondition.Or,
-                            Condition.LogicalCondition.And
-                        ));
-
-                    Variables vcopy = new Variables(vars);
-                    vcopy["Iter1"] = "1";
-                    vcopy["Iter2"] = "1";
-
-                    var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true);
-                    Check.That(ev.Item1).Equals(true);
-                }
 
                 {
                     ConditionLists cl = new ConditionLists();
@@ -256,7 +443,6 @@ namespace EDDiscoveryTests
 
                     var ev = ConditionLists.CheckConditionsEvalIterate(cl.List, vcopy, true);
                     Check.That(ev.Item1).Equals(false);
-                    Check.That(ev.Item3[2]).Equals("Left side did not evaluate: Other[Iter1].outerrad");
                 }
 
 

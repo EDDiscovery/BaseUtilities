@@ -417,7 +417,7 @@ namespace EliteDangerousCore
             {
                 SystemsDatabase.Instance.DBRead(cn =>
                 {
-3                    DB.SystemsDB.GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, limitto, cn, (s) =>
+                    DB.SystemsDB.GetSystemNearestTo(currentpos, wantedpos, maxfromcurpos, maxfromwanted, limitto, cn, (s) =>
                     {
                         AddToCache(s);
                         if (discard == null || (s.EDSMID.HasValue ? !discard.Contains(s.EDSMID.Value) : !discard.Contains(s.SystemAddress ?? 0)))
