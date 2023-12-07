@@ -24,9 +24,15 @@ namespace BaseUtils
         // check all conditions against these values, one by one.  Outercondition of each Condition determines if this is an OR or AND etc operation
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
-        // Supports Iter1/2/3/4 should be predefined if present to 1, and function iterates it until it fails with a missing symbol
-        static public Tuple<bool?, List<ConditionEntry>,List<string>> CheckConditionsEvalIterate(List<Condition> fel, Variables values, bool iterators, bool debugit = false)            // Check all conditions..
+        // Supports Iter1-N 
+        static public Tuple<bool?, List<ConditionEntry>,List<string>> CheckConditionsEvalIterate(List<Condition> fel, Variables values, int iterators, bool debugit = false)            // Check all conditions..
         {
+            if ( iterators>0)
+            {
+                for (int i = 1; i <= iterators; i++)
+                    values["Iter" + i] = "1";
+            }
+
             if ( debugit) System.Diagnostics.Debug.WriteLine($"\n*** Check {ConditionLists.ToString(fel)}");
             while (true)
             {
@@ -37,53 +43,33 @@ namespace BaseUtils
 
                 var res = CheckConditionsEval(fel, values, tests,testres, debugit: debugit);
 
-                if (iterators && res == false && tests.Count >= 1)        // if not true, and with tests just in case
+                if (iterators>0 && res == false && tests.Count >= 1)        // if not true, and with tests just in case
                 {
                     List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };    // get the last test which failed
                     var varsinlast = Condition.EvalVariablesUsed(cll);    // what vars are in the last test..
 
-                    if (varsinlast.Contains("Iter4"))           // if it contains iter, lets try the next iter, and check condition
+                    bool cont = false;
+                    for (int i = iterators; i >= 1; i--)
                     {
-                        values["Iter4"] = (values.GetInt("Iter4", -1) + 1).ToStringInvariant();      // set to next value and retry
-                        var testres2 = new List<string>();
-                        CheckConditionsEval(cll, values, null, testres2, debugit);  // check it and see if it errored on any variables
-                        if (testres2[0] == null)                            // did not error, so go with this
-                            continue;
+                        string name = "Iter" + i;
+
+                        if (varsinlast.Contains(name))           // if it contains iter, lets try the next iter, and check condition
+                        {
+                            values[name] = (values.GetInt(name, -1) + 1).ToStringInvariant();      // set to next value and retry
+                            var testres2 = new List<string>();
+                            CheckConditionsEval(cll, values, null, testres2, debugit);  // check it and see if it errored on any variables
+                            if (testres2[0] == null)                            // did not error, so go with this
+                            {
+                                cont = true;
+                                break;
+                            }
+                        }
+
+                        values[name] = "1";            // reset iterator
                     }
 
-                    values["Iter4"] = "1";                                  // set to 1
-
-                    if (varsinlast.Contains("Iter3"))           // if it contains iter, lets try the next iter, and check condition
-                    {
-                        values["Iter3"] = (values.GetInt("Iter3", -1) + 1).ToStringInvariant();      // set to next value and retry
-                        var testres2 = new List<string>();
-                        CheckConditionsEval(cll, values, null, testres2, false);  // check it and see if it errored on any variables
-                        if (testres2[0] == null)                            // did not error, so go with this
-                            continue;
-                    }
-
-                    values["Iter3"] = "1";                                  // set to 1
-
-                    if (varsinlast.Contains("Iter2"))           // if it contains iter2, lets try the next iter2, and check condition
-                    {
-                        values["Iter2"] = (values.GetInt("Iter2", -1) + 1).ToStringInvariant();      // set to next value and retry
-                        var testres2 = new List<string>();
-                        CheckConditionsEval(cll, values, null, testres2, false);  // check it and see if it errored on any variables
-                        if (testres2[0] == null)                            // did not error, so go with this
-                            continue;
-                    }
-
-                    values["Iter2"] = "1";                                  // set to 1
-
-                    if (varsinlast.Contains("Iter1"))
-                    {
-                        values["Iter1"] = (values.GetInt("Iter1", -1) + 1).ToStringInvariant();  // set to next value
-                        var testres2 = new List<string>();
-                        CheckConditionsEval(cll, values, null, testres2, false);
-                        if (testres2[0] == null)                            // did not error, so go with this
-                            continue;
-                    }
-
+                    if (cont)
+                        continue;
                 }
 
                 return new Tuple<bool?,List<ConditionEntry>,List<string>>(res,tests,testres);
