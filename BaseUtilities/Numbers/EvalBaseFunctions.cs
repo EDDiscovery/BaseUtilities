@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2018 EDDiscovery development team
+ * Copyright 2018-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,67 +10,17 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace BaseUtils
 {
-    static public class BaseFunctionsForEval                                            // Basic functions from c# for evaluator
+    public class BaseFunctionsForEval : IEvalFunctionHandler
     {
-        static public Object MathFunc(string name, Type mathclass, Object evres)        // runs a function name on a class
-        {
-            if (evres is StringParser.ConvertError)
-                return evres;
-            else if (evres is string)
-                return new StringParser.ConvertError(name + "() supports numbers only");
-            else
-            {
-                MemberInfo[] memberlist = mathclass.GetMember(name);
 
-                if (evres is long)
-                {
-                    var longmethod = Array.Find(memberlist, (z) => ((MethodInfo)z).ReturnType == typeof(long) && ((MethodInfo)z).GetParameters().Count() == 1);     // find the long version
-
-                    if (longmethod != null)
-                        return ((MethodInfo)longmethod).Invoke(null, new Object[] { evres });
-                    else
-                        evres = (double)(long)evres;        // else convert result to double for next try
-                }
-
-                var doublemethod = Array.Find(memberlist, (z) => ((MethodInfo)z).ReturnType == typeof(double) && ((MethodInfo)z).GetParameters().Count() == 1);     // find the double version..
-
-                if (doublemethod != null)
-                    return ((MethodInfo)doublemethod).Invoke(null, new Object[] { evres });
-                else
-                    return new StringParser.ConvertError(name + "() Internal coding error - no supporting function");
-            }
-        }
-
-        static double? AsDouble(Object d)
-        {
-            if (d is double)
-                return (double)d;
-            else if (d is long)
-                return (double)(long)d;
-            else
-                return null;
-        }
-
-        static double[] ToDouble(List<Object> list)
-        {
-            double[] array = new double[list.Count];
-            for (int n = 0; n < list.Count; n++)
-                array[n] = (list[n] is long) ? (double)(long)list[n] : (double)list[n];
-            return array;
-        }
-
-        static public Object BaseFunctions(string name, IEval evaluator)
+        public virtual object Execute(string name, IEval evaluator, bool noop)
         {
             string[] maths = { "Abs", "Acos" , "Asin", "Atan", "Ceiling", "Cos", "Cosh" ,
                               "Exp","Floor", "Log", "Log10" , "Sin", "Sinh", "Sqrt", "Tan" , "Tanh" , "Truncate" };
@@ -82,7 +32,7 @@ namespace BaseUtils
                 List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.NumberOrInteger });
 
                 if (list != null)
-                    return MathFunc(name, typeof(Math), list[0]);
+                    return BaseUtils.MathFunc.Math(name, typeof(Math), list[0]);
                 else
                     return evaluator.Value;
             }
@@ -136,7 +86,7 @@ namespace BaseUtils
                         return name == "Max" ? Math.Max((long)list[0], (long)list[1]) : Math.Min((long)list[0], (long)list[1]);
                     else
                     {
-                        double[] array = ToDouble(list);
+                        double[] array = MathFunc.ToDouble(list);
                         return name == "Max" ? Math.Max(array[0], array[1]) : Math.Min(array[0], array[1]);
                     }
                 }
@@ -235,5 +185,6 @@ namespace BaseUtils
 
             return evaluator.Value;
         }
+
     }
 }

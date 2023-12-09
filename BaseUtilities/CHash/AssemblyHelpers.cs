@@ -67,6 +67,20 @@ namespace BaseUtils
                    SingleOrDefault(assembly => assembly.GetName().Name == name);
         }
 
+        // as an Int Array
+        static public int[] GetAssemblyVersionValues(this Assembly aw)
+        {
+            AssemblyName an = new AssemblyName(aw.FullName);            // offical way to split it
+            return new int[4] { an.Version.Major, an.Version.Minor, an.Version.Build, an.Version.Revision };
+        }
+
+        static public string GetAssemblyVersionString(this Assembly aw)
+        {
+            AssemblyName an = new AssemblyName(aw.FullName);
+            return an.Version.Major.ToStringInvariant() + "." + an.Version.Minor.ToStringInvariant() + "." + an.Version.Build.ToStringInvariant() + "." + an.Version.Revision.ToStringInvariant();
+        }
+
+
         public static string GetResourceAsString(this Assembly ass, string resourcename)        // resourcename should be the whole thing - OpenTk.name
         {
             try

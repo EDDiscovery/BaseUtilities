@@ -182,23 +182,23 @@ namespace BaseUtils
         }
 
         // using the Eval engine
-        // Find all variable names
-        static public HashSet<string> EvalVariablesUsed(List<Condition> fel)
+        // Find all funcs/symbols. 
+        static public void InUse(List<Condition> fel, Eval exp, out HashSet<string> symnames, out HashSet<string> funcnames)
         {
-            return Eval.VarsInUse((evl) => {
+            symnames = new HashSet<string>();
+            funcnames = new HashSet<string>();
 
-                foreach (Condition c in fel)
+            foreach (Condition c in fel)
+            {
+                if (!c.Disabled)
                 {
-                    if (!c.Disabled)
+                    foreach (ConditionEntry ce in c.Fields)
                     {
-                        foreach (ConditionEntry ce in c.Fields)
-                        {
-                            evl.Evaluate(ce.ItemName);
-                            evl.Evaluate(ce.MatchString);
-                        }
+                        exp.SymbolsFuncsInExpression(ce.ItemName, symnames, funcnames);
+                        exp.SymbolsFuncsInExpression(ce.MatchString, symnames, funcnames);
                     }
                 }
-            });
+            }
         }
 
 

@@ -55,7 +55,7 @@
   <ItemGroup>
     <Compile Include="Chars\CharObjectExtensions.cs" />
     <Compile Include="CHash\ObjectActivator.cs" />
-    <Compile Include="CHash\ResourceHelpers.cs" />
+    <Compile Include="CHash\AssemblyHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\DictionaryWithFirstLastKey.cs" />
     <Compile Include="Collections\GenerationalDictionary.cs" />
@@ -82,6 +82,7 @@
     <Compile Include="IconSet\IIconSet.cs" />
     <Compile Include="Notifications\Notifications.cs" />
     <Compile Include="Numbers\Matrix.cs" />
+    <Compile Include="Numbers\MathFunc.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Singletons\SingleInstance.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
@@ -98,7 +99,6 @@
     <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="Ticks\MSticks.cs" />
     <Compile Include="Variables\PropertyInfo.cs" />
-    <Compile Include="Variables\EvalVariables.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
@@ -140,10 +140,10 @@
     <Compile Include="Files\FileHandles.cs" />
     <Compile Include="Keys\KeyObjectExtensions.cs" />
     <Compile Include="Misc\Maps2d.cs" />
-    <Compile Include="Numbers\BaseFunctions.cs" />
+    <Compile Include="Numbers\EvalBaseFunctions.cs" />
     <Compile Include="Numbers\Eval.cs" />
     <Compile Include="Numbers\IEval.cs" />
-    <Compile Include="Numbers\UserDefinedFunctions.cs" />
+    <Compile Include="Numbers\EvalUserDefinedFunctions.cs" />
     <Compile Include="Translator\Translator.cs" />
     <Compile Include="Win32\NativeMethods.cs" />
     <Compile Include="Process\Processes.cs" />

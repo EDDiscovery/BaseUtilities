@@ -25,28 +25,32 @@ namespace BaseUtils
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
         // Supports Iter1-N 
-        static public Tuple<bool?, List<ConditionEntry>,List<string>> CheckConditionsEvalIterate(List<Condition> fel, Variables values, int iterators, bool debugit = false)            // Check all conditions..
+        static public Tuple<bool?, List<ConditionEntry>, List<string>> CheckConditionsEvalIterate(Eval evl, Variables vars, List<Condition> fel, int iterators, bool debugit = false)            // Check all conditions..
         {
             if ( iterators>0)
             {
                 for (int i = 1; i <= iterators; i++)
-                    values["Iter" + i] = "1";
+                    vars["Iter" + i] = "1";
             }
 
             if ( debugit) System.Diagnostics.Debug.WriteLine($"\n*** Check {ConditionLists.ToString(fel)}");
+
             while (true)
             {
                 var tests = new List<ConditionEntry>();
                 var testres = new List<string>();
 
-                if (debugit) System.Diagnostics.Debug.WriteLine($"\nCheck Iter {values.GetInt("Iter1", -1)} {values.GetInt("Iter2", -1)} {values.GetInt("Iter3", -1)} {values.GetInt("Iter4", -1)}");
+                if (debugit) System.Diagnostics.Debug.WriteLine($"\nCheck Iter {vars.GetInt("Iter1", -1)} {vars.GetInt("Iter2", -1)} {vars.GetInt("Iter3", -1)} {vars.GetInt("Iter4", -1)}");
 
-                var res = CheckConditionsEval(fel, values, tests,testres, debugit: debugit);
+                var res = CheckConditionsEval(evl, vars, fel, tests,testres, debugit: debugit);
 
                 if (iterators>0 && res == false && tests.Count >= 1)        // if not true, and with tests just in case
                 {
                     List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };    // get the last test which failed
-                    var varsinlast = Condition.EvalVariablesUsed(cll);    // what vars are in the last test..
+
+                    HashSet<string> symbols = new HashSet<string>();
+
+                    Condition.InUse(cll, evl, out HashSet<string> varsinlast, out HashSet<string> _);    // what vars are in the last test..
 
                     bool cont = false;
                     for (int i = iterators; i >= 1; i--)
@@ -55,9 +59,9 @@ namespace BaseUtils
 
                         if (varsinlast.Contains(name))           // if it contains iter, lets try the next iter, and check condition
                         {
-                            values[name] = (values.GetInt(name, -1) + 1).ToStringInvariant();      // set to next value and retry
+                            vars[name] = (vars.GetInt(name, -1) + 1).ToStringInvariant();      // set to next value and retry
                             var testres2 = new List<string>();
-                            CheckConditionsEval(cll, values, null, testres2, debugit);  // check it and see if it errored on any variables
+                            CheckConditionsEval(evl, vars, cll, null, testres2, debugit);  // check it and see if it errored on any variables
                             if (testres2[0] == null)                            // did not error, so go with this
                             {
                                 cont = true;
@@ -65,7 +69,7 @@ namespace BaseUtils
                             }
                         }
 
-                        values[name] = "1";            // reset iterator
+                        vars[name] = "1";            // reset iterator
                     }
 
                     if (cont)
@@ -83,12 +87,10 @@ namespace BaseUtils
         // optionally pass back test executed in order
         // shortcircuit on outer AND condition
         // obeys disabled
-        static public bool? CheckConditionsEval(List<Condition> fel, Variables values, 
+        static public bool? CheckConditionsEval(Eval evl, Variables vars, List<Condition> fel,
                                             List<ConditionEntry> testconditions = null, List<string> testerrors = null,
                                             bool debugit = false)
         {
-            EvalVariables evl = new EvalVariables(var:values);
-
             bool? outerres = null;
 
             for( int oc = 0; oc < fel.Count; oc++)
@@ -131,25 +133,25 @@ namespace BaseUtils
 
                         if (ce.MatchCondition == ConditionEntry.MatchType.IsPresent)         
                         {
-                            string name = values.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
+                            string name = vars.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
 
-                            if (values.Exists(name) && values[name] != null)
+                            if (vars.Exists(name) && vars[name] != null)
                                 matched = true;
                         }
                         else if (ce.MatchCondition == ConditionEntry.MatchType.IsNotPresent)
                         {
-                            string name = values.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
+                            string name = vars.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
 
-                            if (!values.Exists(name) || values[name] == null)
+                            if (!vars.Exists(name) || vars[name] == null)
                                 matched = true;
                         }
                         else
                         {
                             Object leftside;
 
-                            if (values.Contains(ce.ItemName))
+                            if (vars.Contains(ce.ItemName))
                             {
-                                string text = values[ce.ItemName];
+                                string text = vars[ce.ItemName];
                                 if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))    // if a double..
                                 {
                                     if (long.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number

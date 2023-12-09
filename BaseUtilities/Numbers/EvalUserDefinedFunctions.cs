@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2018 EDDiscovery development team
+ * Copyright © 2018-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,20 +10,18 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace BaseUtils
 {
-    public class UserDefinedFunctions                               // user defined functions
+    // user defined functions with a backup of BaseFunctions
+    public class UserDefinedFunctions : IEvalFunctionHandler                              
     {
-        public Func<string, IEval, Object> BaseFunctions { get; set; } = null;      // set to call a base function operator before user defined functions are considered.
+        public IEvalFunctionHandler BaseFunctions { get; set; } = null;
 
         private class FuncDef
         {
@@ -46,10 +44,9 @@ namespace BaseUtils
         {
             functions[name] = new FuncDef(name, plist, f);
         }
-
-        public Object Functions(string name, IEval evaluator)
+        public object Execute(string name, IEval evaluator, bool noop)
         {
-            Object ret = BaseFunctions != null ? BaseFunctions(name, evaluator) : new StringParser.ConvertError("() not recognised");
+            Object ret = BaseFunctions != null ? BaseFunctions.Execute(name, evaluator, noop) : new StringParser.ConvertError("() not recognised");
 
             StringParser.ConvertError ce = ret as StringParser.ConvertError;
 
@@ -90,5 +87,6 @@ namespace BaseUtils
 
             return ret;
         }
+
     }
 }

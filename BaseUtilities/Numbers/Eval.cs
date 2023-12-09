@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2018 EDDiscovery development team
+ * Copyright 2018-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -20,6 +18,7 @@ using System.Linq;
 
 namespace BaseUtils
 {
+
     public class Eval : IEval
     {
         public Eval(bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false)
@@ -32,11 +31,31 @@ namespace BaseUtils
             AllowArrays = allowarrays;
         }
 
+        // these allow you to set up symbol and func handlers with all options set true by default
+        public Eval(IEvalSymbolHandler symh, bool checkend = true, bool allowfp = true, bool allowstrings = true, bool allowmembers = true, bool allowarrays = true) :
+                        this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
+        {
+            ReturnSymbolValue = symh;
+        }
+        public Eval(IEvalFunctionHandler funch, bool checkend = true, bool allowfp = true, bool allowstrings = true, bool allowmembers = true, bool allowarrays = true) :
+                        this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
+        {
+            ReturnFunctionValue = funch;
+        }
+        public Eval(IEvalSymbolHandler symh, IEvalFunctionHandler funch, bool checkend = true, bool allowfp = true, bool allowstrings = true, bool allowmembers = true, bool allowarrays = true) :
+                        this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
+        {
+            ReturnSymbolValue = symh;
+            ReturnFunctionValue = funch;
+        }
+
+        // With a string
         public Eval(string s, bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false) : this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
         {
             sp = new StringParser(s);
         }
 
+        // With a string parser
         public Eval(StringParser parse, bool checkend = false, bool allowfp = false, bool allowstrings = false, bool allowmembers = false, bool allowarrays = false) : this(checkend, allowfp, allowstrings, allowmembers, allowarrays)
         {
             sp = parse;
@@ -45,8 +64,14 @@ namespace BaseUtils
         public IEval Clone()     // clone with options, but without parser..
         {
             return new Eval(CheckEnd, AllowFP, AllowStrings)
-            { DefaultBase = this.DefaultBase, ReplaceEscape = this.ReplaceEscape, IgnoreCase = this.IgnoreCase, Culture = this.Culture,
-                ReturnSymbolValue = this.ReturnSymbolValue, SetSymbolValue = this.SetSymbolValue, ReturnFunctionValue = this.ReturnFunctionValue };
+            {
+                DefaultBase = this.DefaultBase,
+                ReplaceEscape = this.ReplaceEscape,
+                IgnoreCase = this.IgnoreCase,
+                Culture = this.Culture,
+                ReturnSymbolValue = this.ReturnSymbolValue,
+                ReturnFunctionValue = this.ReturnFunctionValue
+            };
         }
 
         public int DefaultBase { get; set; } = 10;              // default base value
@@ -58,29 +83,28 @@ namespace BaseUtils
         public bool IgnoreCase { get; set; } = false;           // ignore case on string checks
         public bool AllowMemberSymbol { get; set; } = false;    // allow Rings.member syntax on symbols
         public bool AllowArrays { get; set; } = false;     // allow Rings[n] syntax on symbols
-        public bool Fake { get; set; } = false;                 // set to do a Fake eval - all data is set to 1L. Errors are ignored. Useful for extracting symbols used by hooking into ReturnSymbolValue
 
         public System.Globalization.CultureInfo Culture { get; set; } = System.Globalization.CultureInfo.InvariantCulture;
 
         public StringParser Parser { get { return sp; } }       // get parser, can use after use to get rest of string
         public bool InError { get { return value is StringParser.ConvertError; } }  // if in error
         public Object Value { get { return value; } }           // current value
-
-        public Func<string, Object> ReturnSymbolValue;          // if set, evaluate and return value, or return ConvertError
-        public Func<string, Object, Object> SetSymbolValue;     // if set, set symbol value, return value, or return ConvertError 
-        public Func<string, IEval, Object> ReturnFunctionValue; // if set, evaluate and return value, or return ConvertError
+        public IEvalFunctionHandler ReturnFunctionValue { get; set; }         // if not null, handler for functions
+        public IEvalSymbolHandler ReturnSymbolValue { get; set; }             // if not null, handler for symbols
 
         #region Public IF
 
-        public Object Evaluate(string s)     // return StringParser.ConvertError, string, double, long
+        // return StringParser.ConvertError, string, double, long
+        public Object Evaluate(string s)     
         {
             sp = new StringParser(s);
             return Evaluate(UnaryEntry, CheckEnd);
         }
 
-        public Object EvaluateQuickCheck(string s)     // return StringParser.ConvertError, string, double, long
+        // return StringParser.ConvertError, string, double, long.  Quick check for double/long
+        public Object EvaluateQuickCheck(string s)     
         {
-            if ( double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double resd))
+            if (double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double resd))
             {
                 if (long.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long resl))
                 {
@@ -97,25 +121,28 @@ namespace BaseUtils
             return Evaluate(UnaryEntry, CheckEnd);
         }
 
-        public Object Evaluate()     // return StringParser.ConvertError, string, double, long
+        // return StringParser.ConvertError, string, double, long
+        public Object Evaluate()     
         {
             Evaluate(UnaryEntry, CheckEnd);
             return value;
         }
 
-        public Object Evaluate(string s, bool unary, bool checkend)     // return StringParser.ConvertError, string, double, long
+        // return StringParser.ConvertError, string, double, long
+        public Object Evaluate(string s, bool unary, bool checkend)     
         {
             sp = new StringParser(s);
-            return Evaluate(unary,checkend);
+            return Evaluate(unary, checkend);
         }
 
-        public Object Evaluate(bool unary, bool checkend)          // Allow control of unary entry and check end on a case by case basis
+        // Allow control of unary entry and check end on a case by case basis
+        public Object Evaluate(bool unary, bool checkend)          
         {
             System.Diagnostics.Debug.Assert(sp != null);
 
             unaryentrytimes = 0;
 
-            if ( unary )
+            if (unary)
                 Level0Unary();
             else
                 Level12Assign();
@@ -127,7 +154,8 @@ namespace BaseUtils
             return value;
         }
 
-        public Object EvaluateDouble(bool unary, bool checkend)          // Allow control of unary entry and check end on a case by case basis
+        // Allow control of unary entry and check end on a case by case basis and return double or ConvertError
+        public Object EvaluateDouble(bool unary, bool checkend)          
         {
             Evaluate(unary, checkend);
 
@@ -140,6 +168,7 @@ namespace BaseUtils
                 return new StringParser.ConvertError("Expression must evaluate to a number");
         }
 
+        // Allow control of unary entry and check end on a case by case basis and return Long or ConvertError
         public Object EvaluateLong(bool unary, bool checkend)          // Allow control of unary entry and check end on a case by case basis
         {
             Evaluate(unary, checkend);
@@ -151,7 +180,7 @@ namespace BaseUtils
         }
 
         // for supporting functions..  given a list of types of parameters, collect them, comma separ.
-        public List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType [] paratypes)
+        public List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType[] paratypes)
         {
             List<Object> list = new List<object>();
 
@@ -241,7 +270,7 @@ namespace BaseUtils
         #region Static Helpers
 
         // return StringParser.ConvertError, string, double, long
-        static public Object Expr(string s, bool checkend = true, bool allowfp = true, bool allowstrings = true) 
+        static public Object Expr(string s, bool checkend = true, bool allowfp = true, bool allowstrings = true)
         {
             Eval v = new Eval(s);
             v.CheckEnd = checkend;
@@ -287,7 +316,8 @@ namespace BaseUtils
                     {
                         if (ReturnFunctionValue != null)
                         {
-                            value = ReturnFunctionValue(symname, this);
+                            functionNames?.Add(symname);
+                            value = ReturnFunctionValue.Execute(symname, this, functionNames!=null);        // indicate no-op if collecting func names
 
                             if (!(value is StringParser.ConvertError) && !sp.IsCharMoveOn(')'))         // must be ) terminated
                                 value = new StringParser.ConvertError("Function not terminated with )");
@@ -295,11 +325,11 @@ namespace BaseUtils
                         else
                             value = new StringParser.ConvertError("Functions not supported");
                     }
-                    else if (ReturnSymbolValue == null)
+                    else if (ReturnSymbolValue == null && symbolNames == null)
                     {
                         value = new StringParser.ConvertError("Symbols not supported");
                     }
-                    else 
+                    else
                     {
                         while (AllowArrays && sp.IsCharMoveOn('['))            // is it an array symbol..
                         {
@@ -339,7 +369,11 @@ namespace BaseUtils
                         if (!(value is StringParser.ConvertError))      // if not in error, see if symbols is there
                         {
                             lvaluename = (sign == 0) ? symname : null;              // pass back symbol name found, only if not signed.
-                            value = ReturnSymbolValue(symname);                     // could be Error with symbol value in it.
+
+                            if (symbolNames != null)
+                                symbolNames.Add(symname);
+                            else
+                                value = ReturnSymbolValue.Get(symname);             // could be Error
                         }
                     }
                 }
@@ -357,7 +391,7 @@ namespace BaseUtils
                     value = new StringParser.ConvertError("Unary +/- not allowed in front of string");
             }
 
-            if (Fake)       // if we are faking the eval, return 1L long as the default output.
+            if (symbolNames!=null || functionNames != null)       // if we are collecting names, not executing, remove any error and just return 1
                 value = 1L;
         }
 
@@ -409,7 +443,7 @@ namespace BaseUtils
 
                 if (InError)
                     return;
-                else if ( !IsNumeric )
+                else if (!IsNumeric)
                 {
                     value = new StringParser.ConvertError("*/% only valid with numbers");
                     return;
@@ -567,7 +601,7 @@ namespace BaseUtils
 
                 if (leftside is string || value is string)
                 {
-                    if ( !(leftside is string ) || !(value is string))
+                    if (!(leftside is string) || !(value is string))
                     {
                         value = new StringParser.ConvertError("Cannot mix string and number types in comparisions");
                         return;
@@ -612,7 +646,7 @@ namespace BaseUtils
 
             bool equals = false;
 
-            while (!InError && ((equals = sp.IsString("==")) || sp.IsString("!="))) 
+            while (!InError && ((equals = sp.IsString("==")) || sp.IsString("!=")))
             {
                 sp.MoveOn(2);
 
@@ -771,11 +805,7 @@ namespace BaseUtils
 
             if (sp.IsCharMoveOn('='))
             {
-                if (SetSymbolValue == null)
-                {
-                    value = new StringParser.ConvertError("= operator not supported");
-                }
-                else
+                if (ReturnSymbolValue?.EvalSupportSet ?? false == true)     // if the return sysbol system supports set
                 {
                     StringParser.ConvertError err = value as StringParser.ConvertError;
 
@@ -792,13 +822,40 @@ namespace BaseUtils
                     Evaluate(false, false);                             // get next expression
 
                     if (!InError)
-                        value = SetSymbolValue(symbolname, value);
+                        value = ReturnSymbolValue.Set(symbolname, value);
+                }
+                else
+                {
+                    value = new StringParser.ConvertError("= operator not supported");
                 }
             }
         }
 
         #endregion
 
+        #region Vars Funcs
+
+        // need to have a function handler attatched to get funcnames. Both may be null if you don't want collection of one or the other
+        public void SymbolsFuncsInExpression(string expr, HashSet<string> symnames = null, HashSet<string> funcnames = null)
+        {
+            symbolNames = new HashSet<string>();        // define these indicates collecting data only
+            functionNames = new HashSet<string>();
+            Evaluate(expr);
+            symnames?.AddRange(symbolNames);
+            funcnames?.AddRange(functionNames);
+            symbolNames = null;
+            functionNames = null;
+        }
+
+        // symnames/funcsnames are cleared
+        public void SymbolsFuncsInExpression(string expr, out HashSet<string> symnames, out HashSet<string> funcnames)
+        {
+            symnames = new HashSet<string>();
+            funcnames = new HashSet<string>();
+            SymbolsFuncsInExpression(expr, symnames, funcnames);
+        }
+
+        #endregion
 
         #region Helpers and privates
 
@@ -806,6 +863,8 @@ namespace BaseUtils
         private string lvaluename;      // symbol saw at unary level..
         private int unaryentrytimes;        // no of times at unary
         private Object value = null;        // this can be Error class, double, long, string
+        private HashSet<string> symbolNames;    // when set, collecting symbol names
+        private HashSet<string> functionNames;      // when set, collecting func names and nop
 
         private bool IsNumeric { get { return value is double || value is long; } }
         private bool IsLong { get { return value is long; } }
@@ -823,26 +882,6 @@ namespace BaseUtils
             }
             else
                 return false;
-        }
-
-        // set up the evaluator for checking vars
-        public static HashSet<string> VarsInUse(Action<Eval> check, bool checkend = true, bool allowfp = true, bool allowstrings = true, 
-                                                bool allowmembers = true, bool allowarrays = true)
-        {
-            HashSet<string> str = new HashSet<string>();
-            Eval evl = new Eval(checkend,allowfp,allowstrings,allowmembers,allowarrays);
-            evl.Fake = true;
-            evl.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
-            evl.ReturnSymbolValue += (string s) =>
-            {
-                str.Add(s);
-                //System.Diagnostics.Debug.WriteLine($"Sym {s}");
-                return 1L;
-            };
-
-            check.Invoke(evl);
-
-            return str;
         }
 
         #endregion
