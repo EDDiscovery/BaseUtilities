@@ -28,6 +28,32 @@ namespace EDDiscoveryTests
         [Test]
         public void EvalTestsFunc()
         {
+            {
+                string intexpr = "(fred+20)/2";
+                StringParser sp = new StringParser($"Abs( {intexpr}  )/2+3");
+                sp.Remove(4);       // move pointer to 10
+                Eval evl = new Eval(sp);
+                evl.ReturnFunctionValue = new BaseFunctionsForEval();           // test Fakes
+
+                string res = evl.GetExpressionText();
+                Check.That(res).Equals(intexpr);
+                Check.That(sp.LineLeft).Equals(")/2+3");
+
+            }
+
+            {
+                string expr = "func((fred+20)/2,jim/2+(10+20))";
+                StringParser sp = new StringParser(expr);
+                sp.Remove(5);       // move pointer to first para
+                Eval evl = new Eval(sp);
+                evl.ReturnFunctionValue = new BaseFunctionsForEval();           // test Fakes
+
+                List<object> results = evl.Parameters("Test", 1, new IEvalParaListType[] { IEvalParaListType.CollectAsString, IEvalParaListType.CollectAsString });
+                Check.That(results.Count).Equals(2);
+                Check.That(results[0] as string).Equals("(fred+20)/2");
+                Check.That(results[1] as string).Equals("jim/2+(10+20)");
+
+            }
 
             {
                 Eval evl = new Eval(new BaseFunctionsForEval());           // test Fakes
@@ -44,6 +70,7 @@ namespace EDDiscoveryTests
                 Check.That(vars.Count).Equals(3);
                 Check.That(funcs.Count).Equals(0);
             }
+
 
             {       // new June 22 array syntaxer
 

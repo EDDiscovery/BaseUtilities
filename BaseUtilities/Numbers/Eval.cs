@@ -155,52 +155,96 @@ namespace BaseUtils
         }
 
         // Allow control of unary entry and check end on a case by case basis and return double or ConvertError
-        public Object EvaluateDouble(bool unary, bool checkend)          
+        public bool TryEvaluateDouble(bool unary, bool checkend, out double dvalue)          
         {
             Evaluate(unary, checkend);
 
             if (value is long)
                 value = (double)(long)value;
 
-            if (InError || value is double)
-                return value;
+            if ( value is double )
+            {
+                dvalue = (double)value;
+                return true;
+            }
             else
-                return new StringParser.ConvertError("Expression must evaluate to a number");
+            {
+                dvalue = 0;
+                return false;
+            }
         }
 
         // Allow control of unary entry and check end on a case by case basis and return Long or ConvertError
-        public Object EvaluateLong(bool unary, bool checkend)          // Allow control of unary entry and check end on a case by case basis
+        public bool TryEvaluateLong(bool unary, bool checkend, out long lvalue)          // Allow control of unary entry and check end on a case by case basis
         {
             Evaluate(unary, checkend);
 
-            if (InError || value is long)
-                return value;
+            if (value is long)
+            {
+                lvalue = (long)value;
+                return true;
+            }
             else
-                return new StringParser.ConvertError("Expression must evaluate to an integer");
+            {
+                lvalue = 0;
+                return false;
+            }
         }
 
-        // for supporting functions..  given a list of types of parameters, collect them, comma separ.
+        // At the current string parse  point, get the next expression as a string.. do not evaluate it, dummy it. Leave position after expression (space removed)
+        // used for eval like functionality in functions
+        public string GetExpressionText()
+        {
+            sp.SkipSpace();
+            int startpos = sp.Position;
+            if (symbolNames != null && functionNames != null)   // we could be recursed into 
+            {
+                Evaluate(false, false);
+            }
+            else
+            {
+                symbolNames = new HashSet<string>();        // define these indicates collecting data only
+                functionNames = new HashSet<string>();
+                Evaluate(false, false);
+                symbolNames = null;
+                functionNames = null;
+            }
+            return sp.Line.Substring(startpos, sp.Position - startpos).Trim();
+        }
+
+        // for supporting functions..  given a list of types of parameters, evaluate or collect them, comma separ.
         public List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType[] paratypes)
         {
             List<Object> list = new List<object>();
 
             for (int n = 0; n < paratypes.Length; n++)
             {
-                Object evres = Evaluate(false, false);
+                Object evres;
+                bool ok = true;
+
+                if (paratypes[n] == IEvalParaListType.CollectAsString)
+                {
+                    evres = GetExpressionText();
+                }
+                else
+                {
+                    evres = Evaluate(false, false);
+                    ok = (paratypes[n] == IEvalParaListType.String && (evres is string)) ||
+                        (paratypes[n] == IEvalParaListType.Number && (evres is double || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.NumberOrInteger && (evres is double || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.Integer && (evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.IntegerOrString && (evres is string || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.All);
+
+                    if (ok && paratypes[n] is IEvalParaListType.Number && evres is long)
+                        evres = (double)(long)evres;
+                }
+
                 if (InError)
                     return null;
 
-                if ((paratypes[n] == IEvalParaListType.String && (evres is string)) ||
-                    (paratypes[n] == IEvalParaListType.Number && (evres is double || evres is long)) ||
-                    (paratypes[n] == IEvalParaListType.NumberOrInteger && (evres is double || evres is long)) ||
-                    (paratypes[n] == IEvalParaListType.Integer && (evres is long)) ||
-                    (paratypes[n] == IEvalParaListType.IntegerOrString && (evres is string || evres is long)) ||
-                    (paratypes[n] == IEvalParaListType.All)
-                    )
+                if (ok)
                 {
-                    if (paratypes[n] is IEvalParaListType.Number && evres is long)
-                        evres = (double)(long)evres;
-
                     list.Add(evres);
 
                     if (n < paratypes.Length - 1)    // if not maximum point
@@ -263,6 +307,36 @@ namespace BaseUtils
                 ret = (string)value;
                 return true;
             }
+        }
+
+        #endregion
+
+        #region Vars Funcs
+
+        // need to have a function handler attatched to get funcnames. Both may be null if you don't want collection of one or the other
+        // do not use 
+        public void SymbolsFuncsInExpression(string expr, HashSet<string> symnames = null, HashSet<string> funcnames = null)
+        {
+            if (symbolNames != null && functionNames != null)
+            {
+                Evaluate(expr);         // recursion
+            }
+            else
+            {
+                symbolNames = symnames;     // point to hash set
+                functionNames = funcnames;
+                Evaluate(expr);
+                symbolNames = null;
+                functionNames = null;
+            }
+        }
+
+        // symnames/funcsnames are cleared
+        public void SymbolsFuncsInExpression(string expr, out HashSet<string> symnames, out HashSet<string> funcnames)
+        {
+            symnames = new HashSet<string>();
+            funcnames = new HashSet<string>();
+            SymbolsFuncsInExpression(expr, symnames, funcnames);
         }
 
         #endregion
@@ -833,29 +907,6 @@ namespace BaseUtils
 
         #endregion
 
-        #region Vars Funcs
-
-        // need to have a function handler attatched to get funcnames. Both may be null if you don't want collection of one or the other
-        public void SymbolsFuncsInExpression(string expr, HashSet<string> symnames = null, HashSet<string> funcnames = null)
-        {
-            symbolNames = new HashSet<string>();        // define these indicates collecting data only
-            functionNames = new HashSet<string>();
-            Evaluate(expr);
-            symnames?.AddRange(symbolNames);
-            funcnames?.AddRange(functionNames);
-            symbolNames = null;
-            functionNames = null;
-        }
-
-        // symnames/funcsnames are cleared
-        public void SymbolsFuncsInExpression(string expr, out HashSet<string> symnames, out HashSet<string> funcnames)
-        {
-            symnames = new HashSet<string>();
-            funcnames = new HashSet<string>();
-            SymbolsFuncsInExpression(expr, symnames, funcnames);
-        }
-
-        #endregion
 
         #region Helpers and privates
 

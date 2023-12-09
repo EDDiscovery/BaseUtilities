@@ -24,21 +24,29 @@ namespace BaseUtils
         Integer,                // integer
         String,                 // string
         IntegerOrString,        // integer or string
-        All                     // any
+        All,                    // any
+        CollectAsString,        // collect as string don't evaluate
     };
 
     public interface IEval
     {
+        // return StringParser.ConvertError, string, double, long
+        Object Evaluate(string s);
+        // return StringParser.ConvertError, string, double, long
         Object Evaluate(bool unary, bool checkend);
-        Object EvaluateDouble(bool unary, bool checkend);
-        Object EvaluateLong(bool unary, bool checkend);
-        List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType[] paratypes);       // gather parameters comma separ
+        bool TryEvaluateDouble(bool unary, bool checkend, out double value);
+        bool TryEvaluateLong(bool unary, bool checkend, out long value);
+        List<Object> Parameters(string nameforerrorreport, int minparas, IEvalParaListType[] paratypes);       
+        void SymbolsFuncsInExpression(string expr, HashSet<string> symnames = null, HashSet<string> funcnames = null);
+        void SymbolsFuncsInExpression(string expr, out HashSet<string> symnames, out HashSet<string> funcnames);
         bool InError { get; }
         Object Value { get; }
         StringParser Parser { get; }
         bool IgnoreCase { get; }
         System.Globalization.CultureInfo Culture { get; }
         IEval Clone();
+        IEvalFunctionHandler ReturnFunctionValue { get; set; }         // if not null, handler for functions
+        IEvalSymbolHandler ReturnSymbolValue { get; set; }             // if not null, handler for symbols
     }
     public interface IEvalFunctionHandler
     {

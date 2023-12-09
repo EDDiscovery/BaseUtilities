@@ -578,6 +578,7 @@ namespace BaseUtils
 
             if (Exists(qualname))        //  if we have a variable
             {
+                //System.Diagnostics.Debug.WriteLine($"Variables Get {qualname} {values[qualname]}");
                 string text = this[qualname];
                 if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))
                 {
