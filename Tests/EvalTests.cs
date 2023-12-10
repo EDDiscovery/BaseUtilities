@@ -321,7 +321,7 @@ namespace EDDiscoveryTests
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" Pow ( 2,3,4 )")).ErrorValue.Equals("Pow() takes 2 parameters maximum")).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.1 ) ") - 1) < 1E-4).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.9 ) ") - 2) < 1E-4).IsTrue();
-                Check.That(((StringParser.ConvertError)ev.Evaluate(" Round (1.23456, 3.4)")).ErrorValue.Equals("Round() type mismatch in parameter 2 wanted Integer")).IsTrue();
+                Check.That(((StringParser.ConvertError)ev.Evaluate(" Round (1.23456, 3.4)")).ErrorValue.Equals("Round() type mismatch in parameter 2 wanted Long")).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.123456, 2 ) ") - 1.12) < 1E-4).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.123456, 4 ) ") - 1.1234) < 1E-4).IsTrue();
                 Check.That(Math.Abs((long)ev.Evaluate(" Sign ( 1.123456 ) ") - 1) < 1E-4).IsTrue();
@@ -362,6 +362,19 @@ namespace EDDiscoveryTests
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ab\")") == 0).IsTrue();
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ac\")") == -1).IsTrue();
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"aa\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"helLo there\",\"Lo\",\"InvariantCulture\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"helLo there\",\"lo\",\"InvariantCulture\")") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"hello there\",\"lo\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"hello there\",\"xx\")") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\")") == 6).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"xhere\")") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",4)") == 6).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",50)") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",-1)") == -1).IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",4,3)") == "o t").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",400,3)") == "").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",-1,3)") == "").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",6,100)") == "there").IsTrue();
 
                 {
                     var ret = ev.Evaluate(" Compare(20.2,\"aa\")");

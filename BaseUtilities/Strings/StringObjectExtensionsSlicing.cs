@@ -52,9 +52,9 @@ public static partial class ObjectExtensionsStrings
     {
         if (obj != null)
         {
-            if (start < obj.Length)        // if in range
+            if (start >=0 && start < obj.Length)    // if starts is in range
             {
-                int left = obj.Length - start;      // what is left..
+                int left = obj.Length - start;      // what is left.. must be >=0 because we screen out start > length
                 return obj.Substring(start, Math.Min(left, length));    // min of left, length
             }
         }

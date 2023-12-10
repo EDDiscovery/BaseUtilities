@@ -29,7 +29,7 @@ namespace BaseUtils
 
             if (mathsindex >= 0)
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.NumberOrInteger });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.DoubleOrLong });
 
                 if (list != null)
                     return BaseUtils.MathFunc.Math(name, typeof(Math), list[0]);
@@ -43,7 +43,7 @@ namespace BaseUtils
 
             if (charsindex >= 0)
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { (name == "ToLower" || name == "ToUpper") ? IEvalParaListType.IntegerOrString : IEvalParaListType.Integer });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { (name == "ToLower" || name == "ToUpper") ? IEvalParaListType.LongOrString : IEvalParaListType.Long });
 
                 if (list != null)
                 {
@@ -78,7 +78,7 @@ namespace BaseUtils
 
             if (name == "Max" || name == "Min")
             {
-                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.NumberOrInteger, IEvalParaListType.NumberOrInteger });
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.DoubleOrLong, IEvalParaListType.DoubleOrLong });
 
                 if (list != null)
                 {
@@ -93,28 +93,28 @@ namespace BaseUtils
             }
             else if (name == "Pow")
             {
-                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.Number, IEvalParaListType.Number });
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.Double, IEvalParaListType.Double });
 
                 if (list != null)
                     return Math.Pow((double)list[0], (double)list[1]);
             }
             else if (name == "Round")
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Number, IEvalParaListType.Integer });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Double, IEvalParaListType.Long });
 
                 if (list != null)
                     return (list.Count == 1) ? Math.Round((double)list[0]) : Math.Round((double)list[0], (int)(long)list[1]);
             }
             else if (name == "Sign")
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.NumberOrInteger });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.DoubleOrLong });
 
                 if (list != null)
                     return (long)(list[0] is long ? Math.Sign((long)list[0]) : Math.Sign((double)list[0]));
             }
             else if (name == "Fp" || name == "double" || name == "float")
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Number });        // gather a single number 
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Double });        // gather a single number 
 
                 if (list != null)
                     return list[0];
@@ -131,7 +131,7 @@ namespace BaseUtils
             }
             else if (name == "ToString")
             {
-                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.NumberOrInteger, IEvalParaListType.String });
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.DoubleOrLong, IEvalParaListType.String });
 
                 if (list != null)
                 {
@@ -147,10 +147,50 @@ namespace BaseUtils
             }
             else if (name == "Unicode")
             {
-                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Integer });
+                List<Object> list = evaluator.Parameters(name, 1, new IEvalParaListType[] { IEvalParaListType.Long });
 
                 if (list != null)
                     return (string)char.ToString((char)(long)list[0]);
+            }
+            else if (name == "Contains")
+            {
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.String, IEvalParaListType.String, IEvalParaListType.String });
+
+                if (list != null)
+                {
+                    var culture = StringComparison.InvariantCultureIgnoreCase;
+                    if (list.Count == 3)
+                        culture = TypeHelpers.SafeParseEnum<StringComparison>(list[2] as string);
+
+                    return ((string)list[0]).Contains((string)list[1], culture) ? 1L : 0L;
+                }
+            }
+            else if (name == "IndexOf")
+            {
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.String, IEvalParaListType.String, IEvalParaListType.Long, IEvalParaListType.String });
+
+                if (list != null)
+                {
+                    int index = 0;
+                    var culture = StringComparison.InvariantCultureIgnoreCase;
+                    if (list.Count == 3)
+                        index = (int)(long)list[2];
+                    if (list.Count == 4)
+                        culture = TypeHelpers.SafeParseEnum<StringComparison>(list[2] as string);
+
+                    string str = (string)list[0];
+
+                    return (long)str.SafeIndexOf((string)list[1], index, culture);
+                }
+            }
+            else if (name == "Substring")
+            {
+                List<Object> list = evaluator.Parameters(name, 2, new IEvalParaListType[] { IEvalParaListType.String, IEvalParaListType.Long, IEvalParaListType.Long });
+
+                if (list != null)
+                {
+                    return ((string)list[0]).Mid((int)(long)list[1], (int)(long)list[2]);
+                }
             }
             else if (name == "Compare")
             {

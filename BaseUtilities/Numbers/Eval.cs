@@ -230,13 +230,13 @@ namespace BaseUtils
                 {
                     evres = Evaluate(false, false);
                     ok = (paratypes[n] == IEvalParaListType.String && (evres is string)) ||
-                        (paratypes[n] == IEvalParaListType.Number && (evres is double || evres is long)) ||
-                        (paratypes[n] == IEvalParaListType.NumberOrInteger && (evres is double || evres is long)) ||
-                        (paratypes[n] == IEvalParaListType.Integer && (evres is long)) ||
-                        (paratypes[n] == IEvalParaListType.IntegerOrString && (evres is string || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.Double && (evres is double || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.DoubleOrLong && (evres is double || evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.Long && (evres is long)) ||
+                        (paratypes[n] == IEvalParaListType.LongOrString && (evres is string || evres is long)) ||
                         (paratypes[n] == IEvalParaListType.All);
 
-                    if (ok && paratypes[n] is IEvalParaListType.Number && evres is long)
+                    if (ok && paratypes[n] is IEvalParaListType.Double && evres is long)
                         evres = (double)(long)evres;
                 }
 

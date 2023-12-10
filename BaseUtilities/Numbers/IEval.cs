@@ -19,11 +19,11 @@ using System.Linq;
 namespace BaseUtils
 {
     public enum IEvalParaListType { 
-        Number,                 // a double
-        NumberOrInteger,        // a double or an integer
-        Integer,                // integer
+        Double,                 // a double (integer is converted to double)
+        DoubleOrLong,           // a double or an integer
+        Long,                   // integer
         String,                 // string
-        IntegerOrString,        // integer or string
+        LongOrString,           // integer or string
         All,                    // any
         CollectAsString,        // collect as string don't evaluate
     };

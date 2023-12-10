@@ -50,6 +50,18 @@ namespace BaseUtils
             return (T)Enum.Parse(typeof(T), value, true);
         }
 
+        static public T SafeParseEnum<T>(this string value)
+        {
+            try
+            {
+                return (T)Enum.Parse(typeof(T), value, true);
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
+
         static public Type FieldPropertyType(this MemberInfo mi)        // from member info for properties/fields return type
         {
             if (mi.MemberType == System.Reflection.MemberTypes.Property)
