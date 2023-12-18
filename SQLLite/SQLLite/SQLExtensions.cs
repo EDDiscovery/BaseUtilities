@@ -118,7 +118,7 @@ public static class SQLiteCommandExtensions
 
     // for these, types are optional if paras given as name:type strings
 
-    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null, 
+    public static DbCommand CreateInsert(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, 
                                          bool insertorreplace = false, bool insertorignore = false)
     {
         string plist = "";
@@ -132,22 +132,22 @@ public static class SQLiteCommandExtensions
 
         string cmdtext = "INSERT " + (insertorreplace ? "OR REPLACE " : "") + (insertorignore ? "OR IGNORE " : "") + "INTO " + table + " (" + plist + ") VALUES (" + atlist + ")";
 
-        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        DbCommand cmd = r.CreateCommand(cmdtext);
         cmd.CreateParams(paras, types);
         return cmd;
     }
 
-    public static DbCommand CreateReplace(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null)
+    public static DbCommand CreateReplace(this SQLExtConnection r, string table, string[] paras, DbType[] types = null)
     {
-        return CreateInsert(r, table, paras, types, tx, insertorreplace: true);
+        return CreateInsert(r, table, paras, types, insertorreplace: true);
     }
 
-    public static DbCommand CreateInsertOrIgnore(this SQLExtConnection r, string table, string[] paras, DbType[] types = null, DbTransaction tx = null)
+    public static DbCommand CreateInsertOrIgnore(this SQLExtConnection r, string table, string[] paras, DbType[] types = null)
     {
-        return CreateInsert(r, table, paras, types, tx, insertorignore: true);
+        return CreateInsert(r, table, paras, types, insertorignore: true);
     }
 
-    public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string where, string[] paras, DbType[] types,  DbTransaction tx = null)
+    public static DbCommand CreateUpdate(this SQLExtConnection r, string table, string where, string[] paras, DbType[] types)
     {
         string plist = "";
         foreach (string s in paras)
@@ -155,7 +155,7 @@ public static class SQLiteCommandExtensions
 
         string cmdtext = "UPDATE " + table + " SET " + plist + " " + where;
 
-        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        DbCommand cmd = r.CreateCommand(cmdtext);
         cmd.CreateParams(paras, types);
         return cmd;
     }
@@ -164,7 +164,7 @@ public static class SQLiteCommandExtensions
 
     public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where = null, string orderby = "",
                                             string[] inparas = null, DbType[] intypes = null,
-                                            string[] joinlist = null, object limit = null, DbTransaction tx = null)
+                                            string[] joinlist = null, object limit = null)
     {
         string lmt = "";
         if (limit != null)
@@ -172,7 +172,7 @@ public static class SQLiteCommandExtensions
 
         string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist != null ? string.Join(" ", joinlist) : "") +
                                         (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") + lmt;
-        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        DbCommand cmd = r.CreateCommand(cmdtext);
         cmd.CreateParams(inparas, intypes);
         return cmd;
     }
@@ -180,7 +180,7 @@ public static class SQLiteCommandExtensions
     // immediate paras, called p1,p2,p3 etc. 
 
     public static DbCommand CreateSelect(this SQLExtConnection r, string table, string outparas, string where, Object[] paras , 
-                                            string orderby = "", string[] joinlist = null, object limit = null, DbTransaction tx = null)
+                                            string orderby = "", string[] joinlist = null, object limit = null)
     {
         string lmt = "";
         if (limit != null)
@@ -189,7 +189,7 @@ public static class SQLiteCommandExtensions
         string cmdtext = "SELECT " + outparas + " FROM " + table + " " + (joinlist != null ? string.Join(" ", joinlist) : "") +
                                         (where.HasChars() ? (" WHERE " + where) : "") + (orderby.HasChars() ? (" ORDER BY " + orderby) : "") + lmt;
                                         
-        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        DbCommand cmd = r.CreateCommand(cmdtext);
         int pname = 1;
         foreach( var o in paras)
         {
@@ -201,10 +201,10 @@ public static class SQLiteCommandExtensions
         return cmd;
     }
 
-    public static DbCommand CreateDelete(this SQLExtConnection r, string table, string where , string[] paras = null, DbType[] types = null, DbTransaction tx = null)
+    public static DbCommand CreateDelete(this SQLExtConnection r, string table, string where , string[] paras = null, DbType[] types = null)
     {
         string cmdtext = "DELETE FROM " + table + " WHERE " + where;
-        DbCommand cmd = r.CreateCommand(cmdtext, tx);
+        DbCommand cmd = r.CreateCommand(cmdtext);
         cmd.CreateParams(paras, types);
         return cmd;
     }

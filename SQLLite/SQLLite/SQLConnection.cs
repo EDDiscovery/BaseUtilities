@@ -67,7 +67,7 @@ namespace SQLLiteExtensions
             }
         }
 
-        public virtual DbCommand CreateCommand(string query, DbTransaction tn = null)
+        public virtual DbCommand CreateCommand(string query)
         {
             AssertThreadOwner();
             DbCommand cmd = connection.CreateCommand();

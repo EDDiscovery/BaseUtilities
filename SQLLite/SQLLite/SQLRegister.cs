@@ -22,22 +22,15 @@ namespace SQLLiteExtensions
     public class SQLExtRegister
     {
         SQLExtConnection cn;
-        DbTransaction txn;
 
         public SQLExtRegister(SQLExtConnection cn)
         {
             this.cn = cn;
         }
 
-        public SQLExtRegister(SQLExtConnection cn, DbTransaction txn)
-        {
-            this.cn = cn;
-            this.txn = txn;
-        }
-
         public bool keyExists(string sKey)
         {
-            using (DbCommand cmd = cn.CreateCommand("select ID from Register WHERE ID=@key", txn))
+            using (DbCommand cmd = cn.CreateCommand("select ID from Register WHERE ID=@key"))
             {
                 cmd.AddParameterWithValue("@key", sKey);
                 return cmd.ExecuteScalar() != null;
@@ -46,7 +39,7 @@ namespace SQLLiteExtensions
 
         public bool DeleteKey(string sKey)        // SQL wildcards
         {
-            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key", txn))
+            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key"))
             {
                 cmd.AddParameterWithValue("@key", sKey);
                 return cmd.ExecuteScalar() != null;
@@ -120,7 +113,7 @@ namespace SQLLiteExtensions
 
         private Object GetSetting(string key, string sqlname)
         {
-            using (DbCommand cmd = cn.CreateCommand("SELECT " + sqlname + " from Register WHERE ID = @ID", txn))
+            using (DbCommand cmd = cn.CreateCommand("SELECT " + sqlname + " from Register WHERE ID = @ID"))
             {
                 cmd.AddParameterWithValue("@ID", key);
                 var ret = cmd.ExecuteScalar();
@@ -130,7 +123,7 @@ namespace SQLLiteExtensions
 
         private bool PutSetting(string key, string sqlname, object value)
         {
-            using (DbCommand cmd = cn.CreateCommand("INSERT OR REPLACE INTO Register (ID," + sqlname + ") VALUES (@ID,@Value)", txn))
+            using (DbCommand cmd = cn.CreateCommand("INSERT OR REPLACE INTO Register (ID," + sqlname + ") VALUES (@ID,@Value)"))
             {
                 //System.Diagnostics.Debug.WriteLine("DB Write " + key + ": " + value + " " + cmd.CommandText);
                 cmd.AddParameterWithValue("@ID", key);

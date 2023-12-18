@@ -105,7 +105,7 @@
     <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />
     <Compile Include="WebServer\WebServer.cs" />
     <Compile Include="HTTP\HttpDownloadFile.cs" />
-    <Compile Include="Misc\TemplateObjectExtensions.cs" />
+    <Compile Include="CHash\TemplateObjectExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
     <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
     <Compile Include="Strings\StringObjectExtensionsQuotes.cs" />
