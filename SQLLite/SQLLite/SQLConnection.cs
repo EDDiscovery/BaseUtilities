@@ -63,6 +63,7 @@ namespace SQLLiteExtensions
             }
             catch
             {
+                Dispose();
                 throw;
             }
         }

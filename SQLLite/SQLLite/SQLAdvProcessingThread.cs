@@ -124,7 +124,7 @@ namespace SQLLiteExtensions
         // stop dead for good - no recovery
         public void Stop()
         {
-            StopAllThreads();   
+            StopAllThreads();
             System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
         }
 
@@ -152,6 +152,28 @@ namespace SQLLiteExtensions
         private object locker = new object();  // used to lock the MT change
 
         #endregion
+
+        #region Check
+
+        public string CheckConnection()
+        {
+            try
+            {
+                using (connection.Value = CreateConnection())   // hold connection over whole period.
+                {
+                    System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
+                    return "";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Data.SQLite.SQLiteConnection.ClearAllPools();        // SQLite caches connections, so if we want to clean up completely, we need to clear pools
+                return ex.Message;
+            }
+        }
+
+        #endregion
+
 
         #region Processing Thread
         private void SqlThreadProc()    // SQL process thread
