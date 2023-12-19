@@ -45,12 +45,28 @@ namespace BaseUtils
             }
         }
 
-        // bf default is DefaultLookup in the .net code for GetProperties()
-        // note, this corresponds to how Variables AddPropertiesFieldsOfClass works, thus it belongs with it. Namespace is historical
 
-        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bf = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
-                                    bool fields = false, int linelen = 80, string comment = null, Type excludedeclaretype = null , Type[] propexcluded = null, 
-                                    bool excludearrayslistdict = false, int depth = 5, string classsepar = "_" )       // give a list of properties for a given name
+        /// <summary>
+        /// given a type, iterate to thru members to collect property type info
+        /// note, this corresponds to how Variables AddPropertiesFieldsOfClass works, thus it belongs with it. Namespace is historical
+        /// </summary>
+        /// <param name="jtype">type to iterate</param>
+        /// <param name="prefix">Prefix to put in front of name</param>
+        /// <param name="bindingflags">What members to iterate</param>
+        /// <param name="fields">if to include fields in any iteration</param>
+        /// <param name="linelen">max linelen before wrap</param>
+        /// <param name="comment">comment to add at end</param>
+        /// <param name="excludedeclaretypes">exclude these declaring type</param>
+        /// <param name="excludepropertytypes">exclude these types</param>
+        /// <param name="excludearrayslistdict">exclude lists or dictionaries</param>
+        /// <param name="depth">recursion depth, <0 stop</param>
+        /// <param name="classsepar">class seperator string</param>
+        /// <returns></returns>
+
+        static public List<PropertyNameInfo> GetPropertyFieldNames(Type jtype, string prefix = "", BindingFlags bindingflags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public, 
+                                    bool fields = false, int linelen = 80, string comment = null, 
+                                    Type[] excludedeclaretypes = null , Type[] excludepropertytypes = null, bool excludearrayslistdict = false,
+                                    int depth = 5, string classsepar = "_")       // give a list of properties for a given name
         {
             if (depth < 0)
                 return null;
@@ -59,24 +75,25 @@ namespace BaseUtils
             {
                 List<PropertyNameInfo> ret = new List<PropertyNameInfo>();
 
-                foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties(bf))
+                foreach (System.Reflection.PropertyInfo pi in jtype.GetProperties(bindingflags))
                 {
-                    if ((excludedeclaretype == null || pi.DeclaringType != excludedeclaretype) && (propexcluded == null || !propexcluded.Contains(pi.PropertyType)))
+                    if ((excludedeclaretypes == null || !excludedeclaretypes.Contains(pi.DeclaringType)) && (excludepropertytypes == null || !excludepropertytypes.Contains(pi.PropertyType)))
                     {
                         if (pi.GetIndexParameters().GetLength(0) == 0)      // only properties with zero parameters are called
                         {
-                            AddToPNI(ret, pi.PropertyType, prefix + pi.Name, pi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslistdict, depth - 1, classsepar);
+                            AddToPNI(ret, pi.PropertyType, prefix + pi.Name, pi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bindingflags, fields, linelen, 
+                                    comment, excludedeclaretypes, excludepropertytypes, excludearrayslistdict, depth - 1, classsepar);
                         }
                     }
                 }
 
                 if (fields)
                 {
-                    foreach (FieldInfo fi in jtype.GetFields(bf))
+                    foreach (FieldInfo fi in jtype.GetFields(bindingflags))
                     {
-                        if ((excludedeclaretype == null || fi.DeclaringType != excludedeclaretype) && (propexcluded == null || !propexcluded.Contains(fi.FieldType)))
+                        if ((excludedeclaretypes == null || !excludedeclaretypes.Contains(fi.DeclaringType)) && (excludepropertytypes == null || !excludepropertytypes.Contains(fi.FieldType)))
                         {
-                            AddToPNI(ret, fi.FieldType, prefix + fi.Name, fi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslistdict, depth - 1, classsepar);
+                            AddToPNI(ret, fi.FieldType, prefix + fi.Name, fi.GetCustomAttributes(typeof(PropertyNameAttribute), false), bindingflags, fields, linelen, comment, excludedeclaretypes, excludepropertytypes, excludearrayslistdict, depth - 1, classsepar);
                         }
                     }
                 }
@@ -87,33 +104,51 @@ namespace BaseUtils
                 return null;
         }
 
-        static public void AddToPNI(List<PropertyNameInfo> ret, Type pt, string name, object [] ca, BindingFlags bf, bool fields, int linelen, string comment, 
-                                                                    Type excludedeclaretype, Type[] propexcluded,bool excludearrayslistdict, int depth, string classsepar)
+        /// <summary>
+        /// Add to PNI
+        /// </summary>
+        /// <param name="ret">Return array</param>
+        /// <param name="propertytype">Type </param>
+        /// <param name="name">Name to call it</param>
+        /// <param name="customattributes">Custom attributes picked up on member</param>
+        /// <param name="bindingflags">What members to iterate</param>
+        /// <param name="fields">if to include fields in any iteration</param>
+        /// <param name="linelen">max linelen before wrap</param>
+        /// <param name="comment">comment to add at end</param>
+        /// <param name="excludedeclaretypes">exclude these declaring type</param>
+        /// <param name="excludepropertytypes">exclude these types</param>
+        /// <param name="excludearrayslistdict">exclude lists or dictionaries</param>
+        /// <param name="excludeNullPNA">exclude entries with null PNA</param>
+        /// <param name="depth">recursion depth, <0 stop</param>
+        /// <param name="classsepar">class seperator string</param>
+        static private void AddToPNI(List<PropertyNameInfo> ret, Type propertytype, string name, object [] customattributes, BindingFlags bindingflags, bool fields, int linelen, string comment, 
+                                                                    Type[] excludedeclaretypes, Type[] excludepropertytypes, bool excludearrayslistdict,
+                                                                    int depth, string classsepar)
         {
-            string help = ca.Length > 0 ? ((dynamic)ca[0]).Text : "";
+            string help = customattributes.Length > 0 ? ((dynamic)customattributes[0]).Text : "";
 
             if (help == null)       // this cancels help if present
                 return;
             
-            if (pt.IsArray)
+            if (propertytype.IsArray)
             {
                 if (excludearrayslistdict)
                     return;
 
-                Type arraytype = pt.GetElementType();
+                Type arraytype = propertytype.GetElementType();
 
                 var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>[1..N]" + classsepar + "itemname for " + help);
                 ret.Add(pni);
 
                 if (arraytype != typeof(string))        // don't do strings..
                 {
-                    var pnis = GetPropertyFieldNames(arraytype, name + "[]" + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslistdict, depth - 1, classsepar);
+                    var pnis = GetPropertyFieldNames(arraytype, name + "[]" + classsepar, bindingflags, fields, linelen, comment, excludedeclaretypes, excludepropertytypes, excludearrayslistdict, depth - 1, classsepar);
                     if (pnis != null)
                         ret.AddRange(pnis);
                 }
 
             }
-            else if ((typeof(System.Collections.IDictionary).IsAssignableFrom(pt)))
+            else if ((typeof(System.Collections.IDictionary).IsAssignableFrom(propertytype)))
             {
                 if (excludearrayslistdict)
                     return;
@@ -121,7 +156,7 @@ namespace BaseUtils
                 var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>" + classsepar + "itemname for " + help);
                 ret.Add(pni);
             }
-            else if (typeof(System.Collections.IList).IsAssignableFrom(pt))
+            else if (typeof(System.Collections.IList).IsAssignableFrom(propertytype))
             {
                 if (excludearrayslistdict)
                     return;
@@ -129,24 +164,34 @@ namespace BaseUtils
                 var pni = PNI(name + classsepar + "Count", typeof(int), 0, comment, "Count of items. Use <name>[1..N]" + classsepar + "itemname for " + help);
                 ret.Add(pni);
 
-                var subclasslist = GetPropertyFieldNames(pt.GenericTypeArguments[0], name + "[]" + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslistdict, depth - 1, classsepar);
+                var subclasslist = GetPropertyFieldNames(propertytype.GenericTypeArguments[0], name + "[]" + classsepar, bindingflags, fields, linelen, comment, excludedeclaretypes, excludepropertytypes, excludearrayslistdict, depth - 1, classsepar);
                 if (subclasslist != null)
                     ret.AddRange(subclasslist);
             }
-            else if (pt.IsClass && pt != typeof(string))
+            else if (propertytype.IsClass && propertytype != typeof(string))
             {
-                var pni = GetPropertyFieldNames(pt, name + classsepar, bf, fields, linelen, comment, excludedeclaretype, propexcluded, excludearrayslistdict, depth - 1, classsepar);
+                var pni = GetPropertyFieldNames(propertytype, name + classsepar, bindingflags, fields, linelen, comment, excludedeclaretypes, excludepropertytypes, excludearrayslistdict, depth - 1, classsepar);
                 if (pni != null)
                     ret.AddRange(pni);
             }
             else
             {
-                PropertyNameInfo pni = PNI(name, pt, linelen, comment, help);
+                PropertyNameInfo pni = PNI(name, propertytype, linelen, comment, help);
                 ret.Add(pni);
             }
         }
+        
+        /// <summary>
+        /// Format PNI
+        /// </summary>
+        /// <param name="name">Name</param>
+        /// <param name="t">Type</param>
+        /// <param name="linelen">Length to wrap</param>
+        /// <param name="comment">Comment field</param>
+        /// <param name="help">help field</param>
+        /// <returns></returns>
 
-        static public PropertyNameInfo PNI( string name, Type t , int linelen, string comment, string help)
+        static private PropertyNameInfo PNI( string name, Type t , int linelen, string comment, string help)
         {
             string pname = t.FullName;
 

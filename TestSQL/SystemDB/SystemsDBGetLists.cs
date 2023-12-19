@@ -28,7 +28,7 @@ namespace EliteDangerousCore.DB
             return SystemsDatabase.Instance.DBRead(db =>
             {
                 var cn = db;
-                using (DbCommand cmd = cn.CreateCommand("select Count(1) from Systems"))
+                using (DbCommand cmd = cn.CreateCommand("select Count(1) from SystemTable"))
                 {
                     return (long)cmd.ExecuteScalar();
                 }
@@ -37,7 +37,7 @@ namespace EliteDangerousCore.DB
 
         // Beware with no extra conditions, you get them all..  Mostly used for debugging
         // use starreport to avoid storing the entries instead pass back one by one
-        public static List<ISystem> ListStars(string where = null, string orderby = null, string limit = null, 
+        public static List<ISystem> ListStars(string where = null, string orderby = null, string limit = null,
                                                 Action<ISystem> starreport = null)
         {
             List<ISystem> ret = new List<ISystem>();
@@ -52,7 +52,7 @@ namespace EliteDangerousCore.DB
 
                 var cn = db;
 
-                using (DbCommand selectSysCmd = cn.CreateSelect("Systems s", MakeSystemQueryNamed, where, orderby, limit: limit, joinlist: MakeSystemQueryNamedJoinList))
+                using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed, where, orderby, limit: limit, joinlist: MakeSystemQueryNamedJoinList))
                 {
                     using (DbDataReader reader = selectSysCmd.ExecuteReader())
                     {
@@ -85,7 +85,7 @@ namespace EliteDangerousCore.DB
 
                 var cn = db;
 
-                using (DbCommand cmd = cn.CreateSelect("Systems s",
+                using (DbCommand cmd = cn.CreateSelect("SystemTable s",
                                                        outparas: "s.x,s.y,s.z",
                                                        where: "((s.edsmid*2333)%100) <" + percentage.ToStringInvariant()
                                                        ))
@@ -119,7 +119,7 @@ namespace EliteDangerousCore.DB
             {
                 SystemsDatabase.Instance.DBRead(db =>
                 {
-                    fill = GetSystemList<V>(db,x, y, z, blocksize, ref namesout, ref vectsout, tovect, additionaltext, chunksize);
+                    fill = GetSystemList<V>(db, x, y, z, blocksize, ref namesout, ref vectsout, tovect, additionaltext, chunksize);
                 }, warnthreshold: 5000);
             }
 
@@ -128,16 +128,15 @@ namespace EliteDangerousCore.DB
             return fill;
         }
 
-
-        public static int GetSystemList<V>(SQLiteConnectionSystem cn, float x, float y, float z, float blocksize, ref string[] names, ref V[] vectors, 
+        public static int GetSystemList<V>(SQLiteConnectionSystem cn, float x, float y, float z, float blocksize, ref string[] names, ref V[] vectors,
                                                 Func<int, int, int, EDStar, V> tovect,
-                                                Func<V, string, string> additionaltext, int chunksize )
+                                                Func<V, string, string> additionaltext, int chunksize)
         {
             names = new string[chunksize];
             vectors = new V[chunksize];
             int fillpos = 0;
 
-            using (DbCommand cmd = cn.CreateSelect("Systems s",
+            using (DbCommand cmd = cn.CreateSelect("SystemTable s",
                                                     outparas: "s.x, s.y, s.z, c.name, s.nameid, n.Name, s.info",
                                                     where: "s.x>=@p1 AND s.x<@p2 AND s.y>=@p3 AND s.y<@p4 AND s.z>=@p5 AND s.z<@p6",
                                                     paras: new Object[] {   SystemClass.DoubleToInt(x), SystemClass.DoubleToInt(x+blocksize),

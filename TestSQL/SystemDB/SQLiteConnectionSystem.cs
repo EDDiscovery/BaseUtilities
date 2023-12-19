@@ -11,7 +11,7 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
- 
+
 using SQLLiteExtensions;
 using System;
 
@@ -19,7 +19,7 @@ namespace EliteDangerousCore.DB
 {
     public class SQLiteConnectionSystem : SQLExtConnectionRegister
     {
-        public SQLiteConnectionSystem() : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true)
+        public SQLiteConnectionSystem(JournalModes journalmode) : base(EliteDangerousCore.EliteConfigInstance.InstanceOptions.SystemDatabasePath, utctimeindicator: true, journalmode: journalmode)
         {
         }
 
@@ -77,17 +77,40 @@ namespace EliteDangerousCore.DB
                 CreateSystemDBTableIndexes();           // ensure they are there 
                 DropStarTables(tablepostfix);         // clean out any temp tables half prepared 
 
-                return 211;     // return, this makes the whole schebang up to 211
+                return 212;     // return, this makes the whole schebang up to 211
             }
-           
-            if ( dbver < 211)           // if we had 210, but not 211, we need to add a new column in but keep the data
+
+            if (dbver < 211)           // if we had 210, but not 211, we need to add a new column in but keep the data
             {
                 ExecuteNonQueries(new string[]                  // always set up
                     {
                         "ALTER TABLE Systems ADD COLUMN info INT DEFAULT NULL",
+                        "ALTER TABLE Systems RENAME TO SystemTable",
                     });
 
-                return 211;
+                return 212;
+            }
+
+            if (dbver < 212)           // if not 212, then rename the systems to systemtable from now on, to cause previous versions to break on this DB
+            {
+                ExecuteNonQueries(new string[]                  // always set up
+                    {
+                        "ALTER TABLE Systems RENAME TO SystemTable",
+                    });
+
+                CreateSystemDBTableIndexes();           // ensure they are there 
+                return 212;
+            }
+
+            if (dbver < 213)           // if not 212, then rename the systems to systemtable from now on, to cause previous versions to break on this DB
+            {
+                ExecuteNonQueries(new string[]                  // always set up
+                    {
+                        "CREATE TABLE IF NOT EXISTS PermitSystems (edsmid INTEGER PRIMARY KEY NOT NULL)",
+                    });
+
+                CreateSystemDBTableIndexes();           // ensure they are there 
+                return 213;
             }
 
             return 0;
@@ -104,8 +127,9 @@ namespace EliteDangerousCore.DB
                 // purposely not using autoincrement or unique on primary keys - this slows it down.
 
                 "CREATE TABLE IF NOT EXISTS Sectors" + postfix + " (id INTEGER PRIMARY KEY NOT NULL, gridid INTEGER, name TEXT NOT NULL COLLATE NOCASE)",
-                "CREATE TABLE IF NOT EXISTS Systems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER, info INTEGER DEFAULT NULL)",
+                "CREATE TABLE IF NOT EXISTS SystemTable" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL , sectorid INTEGER, nameid INTEGER, x INTEGER, y INTEGER, z INTEGER, info INTEGER DEFAULT NULL)",
                 "CREATE TABLE IF NOT EXISTS Names" + postfix + " (id INTEGER PRIMARY KEY NOT NULL , Name TEXT NOT NULL COLLATE NOCASE )",
+                "CREATE TABLE IF NOT EXISTS PermitSystems" + postfix + " (edsmid INTEGER PRIMARY KEY NOT NULL)",
             });
         }
 
@@ -114,8 +138,9 @@ namespace EliteDangerousCore.DB
             ExecuteNonQueries(new string[]
             {
                 "DROP TABLE IF EXISTS Sectors" + postfix,       // dropping the tables kills the indexes
-                "DROP TABLE IF EXISTS Systems" + postfix,
+                "DROP TABLE IF EXISTS SystemTable" + postfix,
                 "DROP TABLE IF EXISTS Names" + postfix,
+                "DROP TABLE IF EXISTS PermitSystems" + postfix,
             });
         }
 
@@ -123,18 +148,19 @@ namespace EliteDangerousCore.DB
         {
             ExecuteNonQueries(new string[]
             {
-                "ALTER TABLE Sectors" + frompostfix + " RENAME TO Sectors" + topostfix,       
-                "ALTER TABLE Systems" + frompostfix + " RENAME TO Systems" + topostfix,       
-                "ALTER TABLE Names" + frompostfix + " RENAME TO Names" + topostfix,       
+                "ALTER TABLE Sectors" + frompostfix + " RENAME TO Sectors" + topostfix,
+                "ALTER TABLE SystemTable" + frompostfix + " RENAME TO SystemTable" + topostfix,
+                "ALTER TABLE Names" + frompostfix + " RENAME TO Names" + topostfix,
+                "ALTER TABLE PermitSystems" + frompostfix + " RENAME TO PermitSystems" + topostfix,
             });
         }
 
-        public void CreateSystemDBTableIndexes() 
+        public void CreateSystemDBTableIndexes()
         {
             string[] queries = new[]
             {
-                "CREATE INDEX IF NOT EXISTS SystemsSectorName ON Systems (sectorid,nameid)",        // worth it for lookups of stars
-                "CREATE INDEX IF NOT EXISTS SystemsXZY ON Systems (x,z,y)",        // speeds up searching. 
+                "CREATE INDEX IF NOT EXISTS SystemsSectorName ON SystemTable (sectorid,nameid)",        // worth it for lookups of stars
+                "CREATE INDEX IF NOT EXISTS SystemsXZY ON SystemTable (x,z,y)",        // speeds up searching. 
                
                 "CREATE INDEX IF NOT EXISTS NamesName ON Names (Name)",            // improved speed from 9038 (named)/1564 (std) to 516/446ms at minimal cost
 

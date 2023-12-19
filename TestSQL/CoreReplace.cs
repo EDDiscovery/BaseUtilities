@@ -20,7 +20,7 @@ namespace EliteDangerousCore
 
         static EliteConfigInstance instance;
 
-        public string SystemDatabasePath { get { return @"c:\code\examples\edsm\db.sql"; } }
+        public string SystemDatabasePath { get { return @"c:\code\examples\edsm\db.sqlite"; } }
 
     }
 

@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -46,6 +44,13 @@ namespace BaseUtils
 
         // ID starting with @ means don't print it
 
+        // Reset lap counter ID
+        public static void Start(string id)
+        {
+            long tc = TickCount;
+            laptimes[id] = startlaptimes[id] = tc;
+        }
+
         // return lap string, delta time to last lap, delta time to start 
         public static Tuple<string,int,int> TickCountLapDelta(string id, bool reset = false)        
         {
@@ -71,6 +76,7 @@ namespace BaseUtils
             laptimes[id] = tc;
             return new Tuple<string,int,int>(res,delta,totaldelta);
         }
+
 
         public static long TickCountFromLastLap(string id)        // lap time to last lap of this id
         {

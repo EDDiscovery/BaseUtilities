@@ -223,15 +223,20 @@ namespace BaseUtils
 
         public override string ToString()
         {
+            return ToString(List);
+        }
+
+        public static string ToString(List<Condition> list)
+        {
             string ret = "";
-            bool multi = conditionlist.Count > 1;
+            bool multi = list.Count > 1;
 
             if (multi)
                 ret += "(";
 
-            for (int j = 0; j < conditionlist.Count; j++)       // First outer is NOT used, second on is..
+            for (int j = 0; j < list.Count; j++)       // First outer is NOT used, second on is..
             {
-                Condition f = conditionlist[j];
+                Condition f = list[j];
 
                 if (j > 0)
                     ret += ") " + f.OuterCondition.ToString() + " (";
@@ -244,6 +249,8 @@ namespace BaseUtils
 
             return ret;
         }
+
+
 
         public string Read(string line)         // decode a set of multi conditions (<cond> Or <cond>) Outer (<cond> And <cond>) etc 
         {

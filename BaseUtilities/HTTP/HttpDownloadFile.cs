@@ -30,7 +30,8 @@ namespace BaseUtils
                                         bool alwaysnewfile,                             // if true, etag is not used, always downloaded 
                                         out bool newfile,                               // returns if new file if storing file
                                         Action<bool, Stream> externalprocessor = null,  // processor, gets newfile and the stream. 
-                                        Func<bool> cancelRequested = null)              // cancel requestor
+                                        Func<bool> cancelRequested = null,              // cancel requestor
+                                        Action<long,double> reportProgress = null)      // report of count and b/s
         {
             newfile = false;
 
@@ -78,10 +79,28 @@ namespace BaseUtils
                         var tmpFilename = filename + ".tmp";        // copy thru tmp
                         using (var destFileStream = File.Open(tmpFilename, FileMode.Create, FileAccess.Write))
                         {
+                            System.Diagnostics.Trace.WriteLine($"HTTP Begin download to {tmpFilename}");
+
+                            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                            long lastreportime = 0;
+
                             byte[] buffer = new byte[64 * 1024];
+                            long count = 0;
                             do
                             {
-                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks, so a long download can be cancelled
+                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks
+
+                                count += numread;
+
+                                var tme = sw.ElapsedMilliseconds;
+
+                                if ( numread == 0 || tme - lastreportime >= 1000)       // if at end, or over a second..
+                                {
+                                    double rate = count / (tme / 1000.0);
+                                    reportProgress?.Invoke(count, rate);
+                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {count:N0} at {rate:N2} b/s");
+                                    lastreportime = (tme / 1000) * 1000;
+                                }
 
                                 if (numread > 0)
                                 {

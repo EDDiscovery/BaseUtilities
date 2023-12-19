@@ -197,6 +197,8 @@ namespace DirectInputDevices
                 }
             }
 
+            //foreach (var ev in events) System.Diagnostics.Debug.WriteLine($"Input Event {ev.ToString()}");
+            
             return (events.Count > 0) ? events : null;
         }
 

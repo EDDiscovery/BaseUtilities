@@ -30,11 +30,11 @@ namespace BaseUtils
             rootpath = "c:\\";
         }
 
-        public LogToFile(string s, string f = null, bool t = true)
+        public LogToFile(string rootpath, string filename = null, bool time = true)
         {
-            rootpath = s;
-            filename = f;
-            time = t;
+            this.rootpath = rootpath;
+            this.filename = filename;
+            this.time = time;
         }
 
         public void Dispose()

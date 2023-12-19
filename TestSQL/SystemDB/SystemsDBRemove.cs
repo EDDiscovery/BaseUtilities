@@ -35,7 +35,7 @@ namespace EliteDangerousCore.DB
 
                     report?.Invoke(" " + string.Join(" ", todo));
 
-                    using (DbCommand cmd = cn.CreateDelete("Systems", "sectorid IN (Select id FROM Sectors WHERE gridid IN (" + string.Join(",", todo) + "))"))
+                    using (DbCommand cmd = cn.CreateDelete("SystemTable", "sectorid IN (Select id FROM Sectors WHERE gridid IN (" + string.Join(",", todo) + "))"))
                     {
                         cmd.ExecuteNonQuery();
                     }
@@ -59,6 +59,18 @@ namespace EliteDangerousCore.DB
             SystemsDatabase.Instance.DBWrite(db =>
             {
                 db.Vacuum();
+            });
+        }
+
+        public static void Remove(long id)
+        {
+            SystemsDatabase.Instance.DBWrite(db =>
+            {
+                using (DbCommand cmd = db.CreateDelete("SystemTable", "edsmid=@p1", new string[] { "p1:int64" }))
+                {
+                    cmd.AddParameterWithValue("p1", id);
+                    cmd.ExecuteNonQuery();
+                }
             });
         }
     }

@@ -23,7 +23,7 @@ namespace TestDirectInput
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
-            inputdevices.Stop();
+            inputdevices?.Stop();
         }
 
         private void Print(string s)
@@ -35,6 +35,15 @@ namespace TestDirectInput
 
         private void button1_Click(object sender, EventArgs e)
         {
+            // tbd
+
+            //MapDialog mp = new MapDialog();
+            //if ( mp.ShowDialog(this) == DialogResult.OK )
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"Device {mp.DeviceName} {mp.ButtonName} {mp.Press}");
+            //}
+            //return;
+
             inputdevices = new InputDeviceList((s) => { BeginInvoke(s); } );
             inputdevices.OnNewEvent += Inputdevices_OnNewEvent;
 
@@ -42,7 +51,7 @@ namespace TestDirectInput
             DirectInputDevices.InputDeviceKeyboard.CreateKeyboard(inputdevices);              // Created.. not started..
             DirectInputDevices.InputDeviceMouse.CreateMouse(inputdevices);
 
-            foreach( var id in inputdevices)
+            foreach (var id in inputdevices)
             {
                 Print("Device " + id.ToString());
                 Print("Buttons: " + string.Join(",", id.EventButtonNames()));
@@ -56,7 +65,7 @@ namespace TestDirectInput
         {
             foreach( var i in list)
             {
-                Print($"Event {i.EventName()} : {i.EventNumber} {i.Pressed} {i.Value}");
+                Print($"Event {i.ToString()} : {i.EventNumber} {i.Pressed} {i.Value}");
             }
         }
     }

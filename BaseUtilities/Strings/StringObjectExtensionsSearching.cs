@@ -75,6 +75,15 @@ public static partial class ObjectExtensionsStrings
         return -1;
     }
 
+    // safe index of with culture
+    static public int SafeIndexOf(this string str, string find, int start, StringComparison compare = StringComparison.CurrentCulture)
+    {
+        if (start >= 0 && start < str.Length)
+            return str.IndexOf(find, start, compare);
+        else
+            return -1;
+    }
+
 
     // if it starts with this, skip it
     public static string Skip(this string s, string t, StringComparison c = StringComparison.InvariantCulture)

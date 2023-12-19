@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright © 2018 EDDiscovery development team
+* Copyright © 2018-2023 EDDiscovery development team
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
 * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,7 +11,7 @@
 * ANY KIND, either express or implied. See the License for the specific language
 * governing permissions and limitations under the License.
 * 
-* EDDiscovery is not affiliated with Frontier Developments plc.
+* 
 */
 using BaseUtils;
 using NFluent;
@@ -28,27 +28,59 @@ namespace EDDiscoveryTests
         [Test]
         public void EvalTestsFunc()
         {
+            {
+                string intexpr = "(fred+20)/2";
+                StringParser sp = new StringParser($"Abs( {intexpr}  )/2+3");
+                sp.Remove(4);       // move pointer to 10
+                Eval evl = new Eval(sp);
+                evl.ReturnFunctionValue = new BaseFunctionsForEval();           // test Fakes
+
+                string res = evl.GetExpressionText();
+                Check.That(res).Equals(intexpr);
+                Check.That(sp.LineLeft).Equals(")/2+3");
+
+            }
+
+            {
+                string expr = "func((fred+20)/2,jim/2+(10+20))";
+                StringParser sp = new StringParser(expr);
+                sp.Remove(5);       // move pointer to first para
+                Eval evl = new Eval(sp);
+                evl.ReturnFunctionValue = new BaseFunctionsForEval();           // test Fakes
+
+                List<object> results = evl.Parameters("Test", 1, new IEvalParaListType[] { IEvalParaListType.CollectAsString, IEvalParaListType.CollectAsString });
+                Check.That(results.Count).Equals(2);
+                Check.That(results[0] as string).Equals("(fred+20)/2");
+                Check.That(results[1] as string).Equals("jim/2+(10+20)");
+
+            }
+
+            {
+                Eval evl = new Eval(new BaseFunctionsForEval());           // test Fakes
+
+                evl.SymbolsFuncsInExpression("Abs(s1)+Abs(s2)", out HashSet<string> vars, out HashSet<string> funcs);
+                Check.That(vars.Count).Equals(2);
+                Check.That(funcs.Count).Equals(1);
+
+                evl.SymbolsFuncsInExpression("v1+v2", out vars, out funcs);
+                Check.That(vars.Count).Equals(2);
+                Check.That(funcs.Count).Equals(0);
+
+                evl.SymbolsFuncsInExpression("Level[0].Rings * 2 / fred + jim", out vars, out funcs);
+                Check.That(vars.Count).Equals(3);
+                Check.That(funcs.Count).Equals(0);
+            }
 
 
             {       // new June 22 array syntaxer
 
-                Dictionary<string, Object> symbols = new Dictionary<string, object>();
+                DictSymbols ds = new DictSymbols();
+                Eval ev = new Eval(ds);
 
-                Eval ev = new Eval(true, true, true, true, true);
-
-                ev.ReturnSymbolValue = (s) =>
-                {
-                    System.Diagnostics.Debug.WriteLine($"Symbol {s}");
-                    if (symbols.ContainsKey(s))
-                        return symbols[s];
-                    else
-                        return new StringParser.ConvertError("No such symbol '" + s + "'");
-                };
-
-                symbols.Add("Level[0].Rings", 20L);
-                symbols.Add("Level[1].Rings", 100L);
-                symbols.Add("Value[1]", 1L);
-                symbols.Add("index", 1L);
+                ds.Symbols.Add("Level[0].Rings", 20L);
+                ds.Symbols.Add("Level[1].Rings", 100L);
+                ds.Symbols.Add("Value[1]", 1L);
+                ds.Symbols.Add("index", 1L);
 
                 Object ret = null;
 
@@ -75,15 +107,6 @@ namespace EDDiscoveryTests
 
             }
 
-            { 
-                Eval ev = new Eval(true, true, true, true, true);           // test Fakes
-                ev.Fake = true;
-                ev.ReturnSymbolValue += (s) => {
-                    System.Diagnostics.Debug.WriteLine($"Fake Symbol {s}");
-                    return 1L; };
-                var ret = ev.Evaluate("Level[0].Rings*2/fred+jim");
-                Check.That(ret).Equals(2);
-            }
 
             {
                 Check.That(StringParser.ConvertNumber("0x") == null).IsTrue();
@@ -252,33 +275,20 @@ namespace EDDiscoveryTests
             }
 
             {
-                // Symbols..
-                Dictionary<string, Object> symbols = new Dictionary<string, object>();
 
-                Eval ev = new Eval(allowfp: true, allowstrings: true);
-                ev.ReturnSymbolValue = (s) =>
-                {
-                    if (symbols.ContainsKey(s))
-                        return symbols[s];
-                    else
-                        return new StringParser.ConvertError("No such symbol '" + s + "'");
-                };
+                DictSymbols ds = new DictSymbols();
+                ds.EvalSupportSet = true;
+                Eval ev = new Eval(ds);
 
-                symbols.Add("d20", (double)20.0);
-                symbols.Add("d10", (double)10.0);
-                symbols.Add("i20", (long)20);
-                symbols.Add("i10", (long)10);
+                ds.Symbols.Add("d20", (double)20.0);
+                ds.Symbols.Add("d10", (double)10.0);
+                ds.Symbols.Add("i20", (long)20);
+                ds.Symbols.Add("i10", (long)10);
 
                 Check.That((long)ev.Evaluate(" i10 + i20 ") == 30).IsTrue();
                 Check.That((double)ev.Evaluate(" i10 + d20 ") == 30.0).IsTrue();
                 Check.That((double)ev.Evaluate(" d10 + d20 ") == 30.0).IsTrue();
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" i20 * i11 ")).ErrorValue.Equals("No such symbol 'i11'")).IsTrue();
-
-                ev.SetSymbolValue = (s, o) =>
-                {
-                    symbols[s] = o;
-                    return o;
-                };
 
                 Check.That((long)ev.Evaluate(" i11 = 20 ") == 20).IsTrue();
                 Check.That((long)ev.Evaluate(" i11 ") == 20).IsTrue();
@@ -287,7 +297,7 @@ namespace EDDiscoveryTests
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" l1 * l1 = 20")).ErrorValue.Equals("No such symbol 'l1'")).IsTrue();
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" i20 * 20 = 20")).ErrorValue.Equals("Lvalue required for = operator")).IsTrue();
 
-                ev.ReturnFunctionValue = BaseFunctionsForEval.BaseFunctions;
+                ev.ReturnFunctionValue = new BaseFunctionsForEval();
 
 
                 Check.That((long)ev.Evaluate(" Abs ( - 20 ) ") == 20).IsTrue();
@@ -311,7 +321,7 @@ namespace EDDiscoveryTests
                 Check.That(((StringParser.ConvertError)ev.Evaluate(" Pow ( 2,3,4 )")).ErrorValue.Equals("Pow() takes 2 parameters maximum")).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.1 ) ") - 1) < 1E-4).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.9 ) ") - 2) < 1E-4).IsTrue();
-                Check.That(((StringParser.ConvertError)ev.Evaluate(" Round (1.23456, 3.4)")).ErrorValue.Equals("Round() type mismatch in parameter 2 wanted Integer")).IsTrue();
+                Check.That(((StringParser.ConvertError)ev.Evaluate(" Round (1.23456, 3.4)")).ErrorValue.Equals("Round() type mismatch in parameter 2 wanted Long")).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.123456, 2 ) ") - 1.12) < 1E-4).IsTrue();
                 Check.That(Math.Abs((double)ev.Evaluate(" Round ( 1.123456, 4 ) ") - 1.1234) < 1E-4).IsTrue();
                 Check.That(Math.Abs((long)ev.Evaluate(" Sign ( 1.123456 ) ") - 1) < 1E-4).IsTrue();
@@ -352,6 +362,19 @@ namespace EDDiscoveryTests
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ab\")") == 0).IsTrue();
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"ac\")") == -1).IsTrue();
                 Check.That((long)ev.Evaluate(" Compare(\"ab\",\"aa\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"helLo there\",\"Lo\",\"InvariantCulture\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"helLo there\",\"lo\",\"InvariantCulture\")") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"hello there\",\"lo\")") == 1).IsTrue();
+                Check.That((long)ev.Evaluate(" Contains(\"hello there\",\"xx\")") == 0).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\")") == 6).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"xhere\")") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",4)") == 6).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",50)") == -1).IsTrue();
+                Check.That((long)ev.Evaluate(" IndexOf(\"hello there\",\"there\",-1)") == -1).IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",4,3)") == "o t").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",400,3)") == "").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",-1,3)") == "").IsTrue();
+                Check.That((string)ev.Evaluate(" Substring(\"hello there\",6,100)") == "there").IsTrue();
 
                 {
                     var ret = ev.Evaluate(" Compare(20.2,\"aa\")");
@@ -363,26 +386,13 @@ namespace EDDiscoveryTests
             }
 
             {
-                Eval ev = new Eval(allowfp: true, allowstrings: true);
-                StackOfDictionaries<string, Object> symbols = new StackOfDictionaries<string, Object>();
-                UserDefinedFunctions userdef = new UserDefinedFunctions(symbols);
-                userdef.BaseFunctions = BaseFunctionsForEval.BaseFunctions;
+                StackDictSymbols ds = new StackDictSymbols();
+                ds.EvalSupportSet = true;
 
-                ev.ReturnSymbolValue = (s) =>
-                {
-                    if (symbols.ContainsKey(s))
-                        return symbols[s];
-                    else
-                        return new StringParser.ConvertError("No such symbol '" + s + "'");
-                };
+                UserDefinedFunctions userdef = new UserDefinedFunctions(ds.Symbols);
+                userdef.BaseFunctions = new BaseFunctionsForEval();
 
-                ev.SetSymbolValue = (s, o) =>
-                {
-                    symbols[s] = o;
-                    return o;
-                };
-
-                ev.ReturnFunctionValue = userdef.Functions;
+                Eval ev = new Eval(ds,userdef);
 
                 userdef.Add("f1", new string[] { }, "10 + 20");
 
@@ -390,7 +400,8 @@ namespace EDDiscoveryTests
 
                 userdef.Add("f2", new string[] { "a" }, "a + 20");
 
-                Check.That((long)ev.Evaluate(" 2*f2( 15 )+10") == 2 * (15 + 20) + 10).IsTrue();
+                var res = ev.Evaluate(" 2*f2( 15 )+10");
+                Check.That((long) res == 2 * (15 + 20) + 10).IsTrue();
 
                 userdef.Add("f3", new string[] { "a", "b", }, "a + b + 20");
 
@@ -404,4 +415,43 @@ namespace EDDiscoveryTests
             System.Diagnostics.Debug.WriteLine("ALL EVAL TESTS FINISHED");
         }
     }
+
+    class DictSymbols : IEvalSymbolHandler
+    {
+        public Dictionary<string, object> Symbols = new Dictionary<string, object>();
+        public bool EvalSupportSet { get; set; } = false;
+
+        public object Get(string s)
+        {
+            if (Symbols.ContainsKey(s))
+                return Symbols[s];
+            else
+                return new StringParser.ConvertError("No such symbol '" + s + "'");
+        }
+        public object Set(string text, object e)
+        {
+            Symbols[text] = e;
+            return e;
+        }
+    }
+    class StackDictSymbols : IEvalSymbolHandler
+    {
+        public StackOfDictionaries<string, Object> Symbols = new StackOfDictionaries<string, Object>();
+        public bool EvalSupportSet { get; set; } = false;
+
+        public object Get(string s)
+        {
+            if (Symbols.ContainsKey(s))
+                return Symbols[s];
+            else
+                return new StringParser.ConvertError("No such symbol '" + s + "'");
+        }
+        public object Set(string text, object e)
+        {
+            Symbols[text] = e;
+            return e;
+        }
+    }
+
+
 }

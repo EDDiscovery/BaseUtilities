@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="QuickJSON, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.1.1.0\lib\net48\QuickJSON.dll</HintPath>
+    <Reference Include="QuickJSON, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.1.4.0\lib\net48\QuickJSON.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -53,8 +53,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Chars\CharObjectExtensions.cs" />
     <Compile Include="CHash\ObjectActivator.cs" />
-    <Compile Include="CHash\ResourceHelpers.cs" />
+    <Compile Include="CHash\AssemblyHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
     <Compile Include="Collections\DictionaryWithFirstLastKey.cs" />
     <Compile Include="Collections\GenerationalDictionary.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="IconSet\IIconSet.cs" />
     <Compile Include="Notifications\Notifications.cs" />
     <Compile Include="Numbers\Matrix.cs" />
+    <Compile Include="Numbers\MathFunc.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Singletons\SingleInstance.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
@@ -93,19 +95,17 @@
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
     <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
-    <Compile Include="StringParsers\IStringParserQuick.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="Ticks\MSticks.cs" />
     <Compile Include="Variables\PropertyInfo.cs" />
-    <Compile Include="Variables\EvalVariables.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
     <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />
     <Compile Include="WebServer\WebServer.cs" />
     <Compile Include="HTTP\HttpDownloadFile.cs" />
-    <Compile Include="Misc\TemplateObjectExtensions.cs" />
+    <Compile Include="CHash\TemplateObjectExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
     <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
     <Compile Include="Strings\StringObjectExtensionsQuotes.cs" />
@@ -115,7 +115,6 @@
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
-    <Compile Include="DebugTraceAndLogs\LogClean.cs" />
     <Compile Include="EMK\Point3D.cs" />
     <Compile Include="EMK\Vector3D.cs" />
     <Compile Include="Files\AssociateExe.cs" />
@@ -141,10 +140,10 @@
     <Compile Include="Files\FileHandles.cs" />
     <Compile Include="Keys\KeyObjectExtensions.cs" />
     <Compile Include="Misc\Maps2d.cs" />
-    <Compile Include="Numbers\BaseFunctions.cs" />
+    <Compile Include="Numbers\EvalBaseFunctions.cs" />
     <Compile Include="Numbers\Eval.cs" />
     <Compile Include="Numbers\IEval.cs" />
-    <Compile Include="Numbers\UserDefinedFunctions.cs" />
+    <Compile Include="Numbers\EvalUserDefinedFunctions.cs" />
     <Compile Include="Translator\Translator.cs" />
     <Compile Include="Win32\NativeMethods.cs" />
     <Compile Include="Process\Processes.cs" />

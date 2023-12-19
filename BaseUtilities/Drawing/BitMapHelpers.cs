@@ -338,6 +338,27 @@ namespace BaseUtils
             return image.Clone(croparea, System.Drawing.Imaging.PixelFormat.DontCare);
         }
 
+        /// <summary>
+        /// Crop bitmap by area - percentages (0-100)
+        /// </summary>
+        /// <param name="image">Bitmap</param>
+        /// <param name="croparea">crop area in percentages</param>
+        /// <returns>new Bitmap</returns>
+        public static Bitmap CropImage(this Bitmap image, RectangleF croparea)
+        {
+            int left = (int)(image.Width * croparea.X / 100.0F);
+            int top = (int)(image.Height * croparea.Y / 100.0F);
+            int width = (int)(image.Width * croparea.Width / 100.0F);
+            int height = (int)(image.Height * croparea.Height / 100.0F);
+            left = Math.Max(0, left);
+            top = Math.Max(0, top);
+            width = Math.Min(width, image.Width - left);
+            height = Math.Min(height, image.Height - top);
+
+            return image.Clone(new Rectangle(left, top, width, height), System.Drawing.Imaging.PixelFormat.DontCare);
+        }
+
+
 
         // not the quickest way in the world, but not supposed to do this at run time
         // can disable a channel, or get a brightness.  If avg granulatity set, you can average over a wider area than the granularity for more smoothing
@@ -350,6 +371,48 @@ namespace BaseUtils
             Maximum,
             Brightness,
         };
+
+        public static Color AverageColour(this Bitmap bmp, RectangleF areainpercent)
+        {
+            System.Drawing.Imaging.BitmapData bmpdata = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                            System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);     // 32 bit words, ARGB format
+
+            int xstart = (int)(bmp.Width * areainpercent.Left / 100.0);
+            int xwidth = (int)(bmp.Width * areainpercent.Width / 100.0);
+            int ystart = (int)(bmp.Height * areainpercent.Top / 100.0);
+            int yheight = (int)(bmp.Height * areainpercent.Height / 100.0);
+            int linestride = bmp.Width * 4;
+
+            IntPtr baseptr = bmpdata.Scan0;     // its a byte ptr
+            baseptr += 4 * xstart + linestride * ystart;
+
+            long alpha = 0, red = 0, green = 0, blue = 0;
+
+            for (int y = 0; y < yheight; y++)
+            {
+                for( int x = 0; x < xwidth; x++)
+                {
+                    int v = System.Runtime.InteropServices.Marshal.ReadInt32(baseptr);  // ARBG
+                    alpha += (uint)((v >> 24) & 0xff);
+                    red += (uint)((v >> 16) & 0xff);
+                    green += (uint)((v >> 8) & 0xff);
+                    blue += (uint)((v >> 0) & 0xff);
+                    baseptr += 4;
+                }
+
+                baseptr += linestride - xwidth * 4;
+            }
+
+            int points = xwidth * yheight;
+            alpha /= points;
+            red /= points;
+            green /= points;
+            blue /= points;
+
+            bmp.UnlockBits(bmpdata);
+
+            return Color.FromArgb((int)alpha, (int)red, (int)green, (int)blue);
+        }
 
         public static Bitmap Function(this Bitmap bmp, int granularityx, int granularityy, int avggranulatityx = 0, int avggranulatityy = 0, BitmapFunction mode = BitmapFunction.Average, 
                         bool enablered = true, bool enablegreen = true, bool enableblue = true, 
@@ -436,10 +499,10 @@ namespace BaseUtils
             IntPtr baseptr = bmpdata.Scan0;     // its a byte ptr
             int linestride = bmp.Width * 4;
 
-            uint red = 0;
-            uint green = 0;
-            uint blue = 0;
-            uint alpha = 0;
+            ulong red = 0;
+            ulong green = 0;
+            ulong blue = 0;
+            ulong alpha = 0;
 
             for (int gy = y; gy < y + height; gy++)
             {

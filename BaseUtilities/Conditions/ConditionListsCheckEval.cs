@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2022 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -26,49 +24,56 @@ namespace BaseUtils
         // check all conditions against these values, one by one.  Outercondition of each Condition determines if this is an OR or AND etc operation
         // shortcircuit stop
         // Variable can be in complex format Rings[0].member
-        // Supports Rings[Iter1].value[Iter2] - Iter1/2 should be predefined if present to 1, and function iterates it until it fails with a missing symbol
-        static public Tuple<bool?, List<ConditionEntry>,List<string>> CheckConditionsEvalIterate(List<Condition> fel, Variables values, bool iterators, bool debugit = false)            // Check all conditions..
-        { 
+        // Supports Iter1-N 
+        static public Tuple<bool?, List<ConditionEntry>, List<string>> CheckConditionsEvalIterate(Eval evl, Variables vars, List<Condition> fel, int iterators, bool debugit = false)            // Check all conditions..
+        {
+            if ( iterators>0)
+            {
+                for (int i = 1; i <= iterators; i++)
+                    vars["Iter" + i] = "1";
+            }
+
+            if ( debugit) System.Diagnostics.Debug.WriteLine($"\n*** Check {ConditionLists.ToString(fel)}");
+
             while (true)
             {
                 var tests = new List<ConditionEntry>();
                 var testres = new List<string>();
 
-                var res = CheckConditionsEval(fel, values, tests,testres, debugit: debugit);
+                if (debugit) System.Diagnostics.Debug.WriteLine($"\nCheck Iter {vars.GetInt("Iter1", -1)} {vars.GetInt("Iter2", -1)} {vars.GetInt("Iter3", -1)} {vars.GetInt("Iter4", -1)}");
 
-                if (iterators && res == false && tests.Count >= 1)        // if not true, and with tests just in case
+                var res = CheckConditionsEval(evl, vars, fel, tests,testres, debugit: debugit);
+
+                if (iterators>0 && res == false && tests.Count >= 1)        // if not true, and with tests just in case
                 {
-                    List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };
-                    var varsinlast = Condition.EvalVariablesUsed(cll);    // what vars are in the last test..
+                    List<Condition> cll = new List<Condition>() { new Condition(tests.Last()) };    // get the last test which failed
 
-                    if ( varsinlast.Contains("Iter1") )     // iteration..
-                    { 
-                        int v1 = values.GetInt("Iter1", -1);  // get iters
-                        int v2 = values.GetInt("Iter2", -1);
+                    HashSet<string> symbols = new HashSet<string>();
 
-                        if (v2 == -1)         // if no iter2, just iter1
+                    Condition.InUse(cll, evl, out HashSet<string> varsinlast, out HashSet<string> _);    // what vars are in the last test..
+
+                    bool cont = false;
+                    for (int i = iterators; i >= 1; i--)
+                    {
+                        string name = "Iter" + i;
+
+                        if (varsinlast.Contains(name))           // if it contains iter, lets try the next iter, and check condition
                         {
-                            if (testres.Last()==null)      // if not failed, we can try next. Else we have failed, and exausted the array
+                            vars[name] = (vars.GetInt(name, -1) + 1).ToStringInvariant();      // set to next value and retry
+                            var testres2 = new List<string>();
+                            CheckConditionsEval(evl, vars, cll, null, testres2, debugit);  // check it and see if it errored on any variables
+                            if (testres2[0] == null)                            // did not error, so go with this
                             {
-                                values["Iter1"] = (v1 + 1).ToStringInvariant();      // set to next value and retry
-                                continue;
+                                cont = true;
+                                break;
                             }
                         }
-                        else 
-                        {
-                            if (testres.Last()==null)      // if not failed, we can try next iter2
-                            {
-                                values["Iter2"] = (v2 + 1).ToStringInvariant();      // set to next value and retry
-                                continue;
-                            }
-                            else if (v2 > 1)                // if iter2>1, we stopped on this, so go back to 1 on iter2 and increment iter1
-                            {
-                                values["Iter1"] = (v1 + 1).ToStringInvariant();      // set to next value and retry
-                                values["Iter2"] = "1";        // reset iter2
-                                continue;
-                            }
-                        }
+
+                        vars[name] = "1";            // reset iterator
                     }
+
+                    if (cont)
+                        continue;
                 }
 
                 return new Tuple<bool?,List<ConditionEntry>,List<string>>(res,tests,testres);
@@ -82,12 +87,10 @@ namespace BaseUtils
         // optionally pass back test executed in order
         // shortcircuit on outer AND condition
         // obeys disabled
-        static public bool? CheckConditionsEval(List<Condition> fel, Variables values, 
-                                            List<ConditionEntry> tests = null, List<string> testerrors = null,
+        static public bool? CheckConditionsEval(Eval evl, Variables vars, List<Condition> fel,
+                                            List<ConditionEntry> testconditions = null, List<string> testerrors = null,
                                             bool debugit = false)
         {
-            EvalVariables evl = new EvalVariables(var:values);
-
             bool? outerres = null;
 
             for( int oc = 0; oc < fel.Count; oc++)
@@ -105,7 +108,7 @@ namespace BaseUtils
                     if (debugit)
                         System.Diagnostics.Debug.WriteLine($"CE `{ce.ItemName}`  {ce.MatchCondition} `{ce.MatchString}`");
 
-                    tests?.Add(ce);
+                    testconditions?.Add(ce);
                     testerrors?.Add(null);
 
                     // these require no left or right
@@ -119,7 +122,7 @@ namespace BaseUtils
                         }
                         else
                         {
-                            testerrors[testerrors.Count - 1] = "AlwaysFalse/True does not have on the left side the word 'Condition'" ;
+                            if (testerrors != null) testerrors[testerrors.Count - 1] = "AlwaysFalse/True does not have on the left side the word 'Condition'" ;
                             innerres = false;
                             break;
                         }
@@ -130,25 +133,25 @@ namespace BaseUtils
 
                         if (ce.MatchCondition == ConditionEntry.MatchType.IsPresent)         
                         {
-                            string name = values.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
+                            string name = vars.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
 
-                            if (values.Exists(name) && values[name] != null)
+                            if (vars.Exists(name) && vars[name] != null)
                                 matched = true;
                         }
                         else if (ce.MatchCondition == ConditionEntry.MatchType.IsNotPresent)
                         {
-                            string name = values.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
+                            string name = vars.Qualify(ce.ItemName);                 // its a straight variable name, allow any special formatting
 
-                            if (!values.Exists(name) || values[name] == null)
+                            if (!vars.Exists(name) || vars[name] == null)
                                 matched = true;
                         }
                         else
                         {
                             Object leftside;
 
-                            if (values.Contains(ce.ItemName))
+                            if (vars.Contains(ce.ItemName))
                             {
-                                string text = values[ce.ItemName];
+                                string text = vars[ce.ItemName];
                                 if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))    // if a double..
                                 {
                                     if (long.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number
@@ -170,7 +173,7 @@ namespace BaseUtils
                                     if (debugit)
                                         System.Diagnostics.Debug.WriteLine($" .. Left side in error ${((StringParser.ConvertError)leftside).ErrorValue}");
 
-                                    testerrors[testerrors.Count - 1] = "Left side did not evaluate: " + ce.ItemName ;
+                                    if (testerrors != null) testerrors[testerrors.Count - 1] = "Left side did not evaluate: " + ce.ItemName ;
                                     leftside = null;        // indicate condition has failed
                                 }
                             }
@@ -187,7 +190,8 @@ namespace BaseUtils
                                     {
                                         if (debugit)
                                             System.Diagnostics.Debug.WriteLine(" .. Left side not string");
-                                        testerrors[testerrors.Count - 1] = "Left side is not a string: " + ce.ItemName ;
+
+                                        if (testerrors != null) testerrors[testerrors.Count - 1] = "Left side is not a string: " + ce.ItemName ;
 
                                         leftside = null;        // indicate condition has failed
                                     }
@@ -196,7 +200,8 @@ namespace BaseUtils
                                 {
                                     if (debugit)
                                         System.Diagnostics.Debug.WriteLine(" .. Left side not number");
-                                    testerrors[testerrors.Count - 1] = "Left side is not a number: " + ce.ItemName ;
+                                    
+                                    if (testerrors != null) testerrors[testerrors.Count - 1] = "Left side is not a number: " + ce.ItemName ;
 
                                     leftside = null;        // indicate condition has failed
                                 }
@@ -235,7 +240,7 @@ namespace BaseUtils
                                         }
                                         else
                                         {
-                                            testerrors[testerrors.Count - 1] = "Right side did not evaluate: " + ce.MatchString ;
+                                            if (testerrors != null) testerrors[testerrors.Count - 1] = "Right side did not evaluate: " + ce.MatchString ;
 
                                             rightside = null;   // indicate bad right side
                                         }
@@ -249,7 +254,7 @@ namespace BaseUtils
                                         {
                                             if (rstring == null)      // must have a string
                                             {
-                                                testerrors[testerrors.Count - 1] = "Right side is not a string: " + ce.ItemName ;
+                                                if (testerrors != null) testerrors[testerrors.Count - 1] = "Right side is not a string: " + ce.ItemName ;
 
                                                 innerres = false;
                                                 rightside = null;
@@ -257,7 +262,7 @@ namespace BaseUtils
                                         }
                                         else if (!(rightside is double || rightside is long))
                                         {
-                                            testerrors[testerrors.Count - 1] = "Right side is not a number: " + ce.ItemName ;
+                                            if (testerrors != null) testerrors[testerrors.Count - 1] = "Right side is not a number: " + ce.ItemName ;
 
                                             innerres = false;
                                             rightside = null;
@@ -274,7 +279,7 @@ namespace BaseUtils
                                             DateTime tmevalue, tmecontent;
                                             if (!DateTime.TryParse(lstring, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmevalue))
                                             {
-                                                testerrors[testerrors.Count - 1] = "Date time not in correct format on left side: " + leftside ;
+                                                if (testerrors != null) testerrors[testerrors.Count - 1] = "Date time not in correct format on left side: " + leftside ;
            
                                                 innerres = false;
                                                 break;
@@ -282,7 +287,7 @@ namespace BaseUtils
                                             }
                                             else if (!DateTime.TryParse(rstring, System.Globalization.CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out tmecontent))
                                             {
-                                                testerrors[testerrors.Count - 1] = "Date time not in correct format on right side: " + rightside ;
+                                                if (testerrors != null) testerrors[testerrors.Count - 1] = "Date time not in correct format on right side: " + rightside ;
  
                                                 innerres = false;
                                                 break;
@@ -321,7 +326,7 @@ namespace BaseUtils
 
                                             if (ret == null)
                                             {
-                                                testerrors[testerrors.Count - 1] = "IsOneOf value list is not in a optionally quoted comma separated form" ;
+                                                if (testerrors != null) testerrors[testerrors.Count - 1] = "IsOneOf value list is not in a optionally quoted comma separated form" ;
           
                                                 innerres = false;
                                                 break;                       // stop the loop, its a false
@@ -366,7 +371,7 @@ namespace BaseUtils
 
                                             if (ll == null || rl == null)
                                             {
-                                                testerrors[testerrors.Count - 1] = "AnyOfAny value list is not in a optionally quoted comma separated form on both sides" ;
+                                                if (testerrors != null) testerrors[testerrors.Count - 1] = "AnyOfAny value list is not in a optionally quoted comma separated form on both sides" ;
                  
                                                 innerres = false;
                                                 break;                       // stop the loop, its a false

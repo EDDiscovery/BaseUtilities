@@ -52,9 +52,9 @@ public static partial class ObjectExtensionsStrings
     {
         if (obj != null)
         {
-            if (start < obj.Length)        // if in range
+            if (start >=0 && start < obj.Length)    // if starts is in range
             {
-                int left = obj.Length - start;      // what is left..
+                int left = obj.Length - start;      // what is left.. must be >=0 because we screen out start > length
                 return obj.Substring(start, Math.Min(left, length));    // min of left, length
             }
         }
@@ -191,17 +191,26 @@ public static partial class ObjectExtensionsStrings
     }
 
     // split removing empty strings
-    static public List<string> SplitNoEmptyStrings(this string s, char splitchar)
+    static public string[] SplitNoEmptyStrings(this string s, char splitchar)
     {
         string[] array = s.Split(splitchar);
-        List<string> entries = new List<string>();
-        for (int i = 0; i < array.Length; i++)
+        int full = array.Count(x => x.Length > 0);
+        if (full == array.Length)
         {
-            if (array[i].Length > 0)
-                entries.Add(array[i]);
+            return array;
         }
+        else
+        {
+            string[] ret = new string[full];
+            int i = 0;
+            foreach (string e in array)
+            {
+                if (e.Length > 0)
+                    ret[i++] = e;
+            }
 
-        return entries;
+            return ret;
+        }
     }
 
 

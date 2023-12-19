@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright 2016 - 2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +10,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- *
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -362,6 +361,7 @@ public static class ObjectExtensionsNumbersBool
 
     #region Version
 
+    // versions are handled as Int Arrays here
     static public int[] VersionFromString(this string s)
     {
         string[] list = s.Split('.');
@@ -399,23 +399,12 @@ public static class ObjectExtensionsNumbersBool
         return 0;
     }
 
-    static public int[] GetVersionInts(this System.Reflection.Assembly aw)
-    {
-        System.Reflection.AssemblyName an = new System.Reflection.AssemblyName(aw.FullName);            // offical way to split it
-        return new int[4] { an.Version.Major, an.Version.Minor, an.Version.Build, an.Version.Revision };
-    }
-
-    static public string GetVersionString(this System.Reflection.Assembly aw)
-    {
-        System.Reflection.AssemblyName an = new System.Reflection.AssemblyName(aw.FullName);
-        return an.Version.Major.ToStringInvariant() + "." + an.Version.Minor.ToStringInvariant() + "." + an.Version.Build.ToStringInvariant() + "." + an.Version.Revision.ToStringInvariant();
-    }
-
     #endregion
 
     #region Arrays and Lists
 
-    static public int[] RestoreArrayFromString(this string plist, int def, int length)      // fill array from comma separ string, with defined length and defined default
+    // fill array from comma separ string, with defined length and defined default
+    static public int[] RestoreArrayFromString(this string plist, int def, int length)      
     {
         int i = 0;
         string[] parray = plist.Split(',');
@@ -428,7 +417,8 @@ public static class ObjectExtensionsNumbersBool
 
         return newarray;
     }
-    // fill array from comma separ string, with min leng (def if less) and max length
+
+    // fill List from comma separ string, with min leng (def if less) and max length
     static public List<int> RestoreIntListFromString(this string plist, int minlength = 0, int def = 0, int maxlength = int.MaxValue)
     {
         List<int> list = new List<int>();
@@ -452,6 +442,7 @@ public static class ObjectExtensionsNumbersBool
         return list;
     }
 
+    // fill array from comma separ string, with min leng (def if less) and max length
     static public bool RestoreArrayFromString(this string plist, out int[] array , int? min = null, int? max = null)   // string of comma values, parse out to array, false if any fail
     {
         string[] parray = plist.Split(',');
@@ -471,7 +462,8 @@ public static class ObjectExtensionsNumbersBool
 
     #region Outputs
 
-    static public bool SafeToString(this double v, string fmt, out string output)     //  safe as fmt can be crap string.. format it.  Additional M type.
+    //  safe as fmt can be crap string.. format it.  Additional M type for "Minus X"
+    static public bool SafeToString(this double v, string fmt, out string output)     
     {
         output = "";
 
@@ -506,6 +498,7 @@ public static class ObjectExtensionsNumbersBool
         }
     }
 
+    //  safe as fmt can be crap string.. format it.  Additional M type for "Minus X"
     static public bool SafeToString(this long v, string fmt, out string output)
     {
         output = "";
@@ -552,7 +545,8 @@ public static class ObjectExtensionsNumbersBool
 
     #region Enhanced Compare
 
-    static public bool CompareTo<T>(this T v, T other, int code) where T : IComparable       // 0 = equal, 1 = v is greater, 2 = v is greater equal, -1, -2
+    // code is 0 = equal, 1 = v is greater, 2 = v is greater equal, -1, -2
+    static public bool CompareTo<T>(this T v, T other, int code) where T : IComparable       
     {
         int compare = v.CompareTo(other);
 
@@ -638,17 +632,20 @@ public static class ObjectExtensionsNumbersBool
         return (a < 0) ? -a : a;
     }
 
-    public static double GaussianDist(double x, double centre, double stddist)     // https://en.wikipedia.org/wiki/Gaussian_function
+    // https://en.wikipedia.org/wiki/Gaussian_function
+    public static double GaussianDist(double x, double centre, double stddist)     
     {
         return Math.Exp(-(x - centre) * (x - centre) / (2 * stddist * stddist));
     }
 
+    // Wichura 1998, Gentle 2003, https://www.statsdirect.com/help/randomization/generate_random_numbers.htm
     public static double GaussianNoise(double x, double u, double stddist)
     {
-        return 1 / Math.Sqrt(2 * Math.PI * stddist) * Math.Exp(-(x - u) * (x - u) / (2 * stddist * stddist));       // Wichura 1998, Gentle 2003, https://www.statsdirect.com/help/randomization/generate_random_numbers.htm
+        return 1 / Math.Sqrt(2 * Math.PI * stddist) * Math.Exp(-(x - u) * (x - u) / (2 * stddist * stddist));       
     }
 
-    public static bool ApproxEquals(this double left, double right, double epsilon = 2.2204460492503131E-16)       // fron newtonsoft JSON, et al, calculate relative epsilon and compare
+    // fron newtonsoft JSON, et al, calculate relative epsilon and compare
+    public static bool ApproxEquals(this double left, double right, double epsilon = 2.2204460492503131E-16)       
     {
         if (left == right)
         {
@@ -692,6 +689,7 @@ public static class ObjectExtensionsNumbersBool
         return bearing > 0 ? bearing : 360 + bearing;
     }
 
+    // distance between two points with radius
     static public double CalculateDistance(double latitude, double longitude, double targetLat, double targetLong, double radius)
     {
         // example: https://www.movable-type.co.uk/scripts/latlong.html
@@ -707,6 +705,7 @@ public static class ObjectExtensionsNumbersBool
         return radius * c;
     }
 
+    // Distance between two lat/longs with radius and altitude
     static public double CalculateDistance(double latitude, double longitude, double alitiude, double targetLat, double targetLong, double targetalt, double radius)
     {
         // https://www.mathworks.com/matlabcentral/answers/403262-calculate-distance-between-two-coordinates-with-depth

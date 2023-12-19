@@ -50,6 +50,18 @@ namespace BaseUtils
             return (T)Enum.Parse(typeof(T), value, true);
         }
 
+        static public T SafeParseEnum<T>(this string value)
+        {
+            try
+            {
+                return (T)Enum.Parse(typeof(T), value, true);
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
+
         static public Type FieldPropertyType(this MemberInfo mi)        // from member info for properties/fields return type
         {
             if (mi.MemberType == System.Reflection.MemberTypes.Property)
@@ -60,27 +72,83 @@ namespace BaseUtils
                 return null;
         }
 
-        public static bool SetValue(this MemberInfo mi, Object instance,  Object value)   // given a member of fields/property, set value in instance
+        // field or property.
+        static public bool TryGetValue<T>(object instance, string fieldorproperty, out T value, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (mi.MemberType == System.Reflection.MemberTypes.Field)
+            if (TryGetValue(instance,fieldorproperty, out object valueo) && valueo.GetType() == typeof(T))
             {
-                var fi = (System.Reflection.FieldInfo)mi;
-                fi.SetValue(instance, value);
+                value = (T)valueo;
                 return true;
             }
-            else if (mi.MemberType == System.Reflection.MemberTypes.Property)
+            else
             {
-                var pi = (System.Reflection.PropertyInfo)mi;
-                if (pi.SetMethod != null)
+                value = default(T);
+                return false;
+            }
+        }
+
+        static public bool TryGetValue(object instance, string fieldorproperty, out object value, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        {
+            MemberInfo mi = instance.GetType().GetField(fieldorproperty, flags);
+            if (mi == null)
+                mi = instance.GetType().GetProperty(fieldorproperty, flags);
+            return TryGetValue(mi, instance, out value);
+        }
+
+        static public bool TryGetValue(MemberInfo mi, object instance, out object value)
+        {
+            if (mi != null)
+            {
+                if (mi.MemberType == MemberTypes.Property)
                 {
-                    pi.SetValue(instance, value);
-                    return true;
+                    var pi = (System.Reflection.PropertyInfo)mi;
+                    if (pi.GetMethod != null)
+                    {
+                        value = ((System.Reflection.PropertyInfo)mi).GetValue(instance);
+                        return true;
+                    }
                 }
                 else
-                    return false;
+                {
+                    value = ((System.Reflection.FieldInfo)mi).GetValue(instance);
+                    return true;
+                }
             }
-            else
-                throw new NotSupportedException();
+            
+            value = null;
+            return false;
+        }
+
+        // given a member of fields/property, set value in instance
+        public static bool SetValue(this MemberInfo mi, Object instance,  Object value)   
+        {
+            try
+            {
+                if (mi.MemberType == System.Reflection.MemberTypes.Field)
+                {
+                    var fi = (System.Reflection.FieldInfo)mi;
+                    fi.SetValue(instance, value);       // may except
+                    return true;
+                }
+                else if (mi.MemberType == System.Reflection.MemberTypes.Property)
+                {
+                    var pi = (System.Reflection.PropertyInfo)mi;
+                    if (pi.SetMethod != null)
+                    {
+                        pi.SetValue(instance, value);
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+                else
+                    throw new NotSupportedException();
+            }
+            catch { }
+            {
+                return false;
+            }
+
         }
 
         // cls = class type (such as typeof(JTokenExtensions)).. gentype = <T> parameter.  then Invoke with return.Invoke(null,new Object[] { values..}) if static, null = instance if not

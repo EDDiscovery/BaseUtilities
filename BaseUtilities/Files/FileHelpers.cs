@@ -12,7 +12,9 @@
  * governing permissions and limitations under the License.
  */
 
+using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace BaseUtils
@@ -186,6 +188,42 @@ namespace BaseUtils
             catch
             {
                 return false;
+            }
+        }
+
+        public static void DeleteFiles(string rootpath, string filenamesearch, TimeSpan maxage, long MaxLogDirSizeMB)
+        {
+            if (Directory.Exists(rootpath))
+            {
+                long totsize = 0;
+
+                DirectoryInfo dir = new DirectoryInfo(rootpath);     // in order, time decending
+                FileInfo[] files = dir.GetFiles(filenamesearch).OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
+
+                foreach (FileInfo fi in files)
+                {
+                    DateTime time = fi.CreationTimeUtc;
+                    TimeSpan fileage = DateTime.UtcNow - time;
+                    totsize += fi.Length;
+
+                    try
+                    {
+                        if (fileage >= maxage)
+                        {
+                            System.Diagnostics.Trace.WriteLine(String.Format("File {0} is older then maximum age. Removing file from Logs.", fi.Name));
+                            fi.Delete();
+                        }
+                        else if (totsize >= MaxLogDirSizeMB * 1048576)
+                        {
+                            System.Diagnostics.Trace.WriteLine($"File {fi.Name} pushes total log directory size over limit of {MaxLogDirSizeMB}MB");
+                            fi.Delete();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"File {fi.Name} cannot remove {ex}");
+                    }
+                }
             }
         }
     }

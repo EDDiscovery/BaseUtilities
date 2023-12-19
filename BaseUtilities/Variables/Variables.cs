@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2022 EDDiscovery development team
+ * Copyright © 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,9 +10,8 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using QuickJSON;
 using System;
 using System.Collections.Generic;
@@ -20,10 +19,8 @@ using System.Linq;
 
 namespace BaseUtils
 {
-    public class Variables
+    public class Variables : IEvalSymbolHandler
     {
-        private Dictionary<string, string> values = new Dictionary<string, string>();
-
         #region Init
 
         public Variables()
@@ -86,6 +83,8 @@ namespace BaseUtils
 
         public IEnumerable<string> NameEnumuerable { get { return values.Keys; } }
         public List<string> NameList { get { return values.Keys.ToList(); } }
+
+        public bool EvalSupportSet { get; set; } = false;       // set for Eval engine to set variables
 
         public bool Exists(string s) { return values.ContainsKey(s); }
         public bool Contains(string s) { return values.ContainsKey(s); }        // to be more consistent
@@ -565,9 +564,51 @@ namespace BaseUtils
 
         #endregion
 
+        #region Eval Support
+
         public string Qualify(string instr)     // Variables are passed thru this in case we want to do some syntax nerfing, but for now, its just pass back
         {
             return instr;
         }
+
+        // Eval Symbol Get. If not there, ConvertError
+        public object Get(string str)
+        {
+            string qualname = Qualify(str);
+
+            if (Exists(qualname))        //  if we have a variable
+            {
+                //System.Diagnostics.Debug.WriteLine($"Variables Get {qualname} {values[qualname]}");
+                string text = this[qualname];
+                if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))
+                {
+                    if (long.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long v))    // if its a number, return number
+                        return v;
+                    else
+                        return d;
+                }
+                else
+                    return text;    // else its a string
+            }
+            else
+                return new StringParser.ConvertError("Unknown symbol " + qualname);
+        }
+
+        // Eval Symbol Set - won't be called unless EvalSupportSet
+        public object Set(string text, object e)
+        {
+            this[text] = Convert.ToString(e);
+            return e;
+        }
+
+        #endregion
+
+        #region vars
+
+        private Dictionary<string, string> values = new Dictionary<string, string>();
+
+        #endregion
+
+
     }
 }

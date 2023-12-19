@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright © 2016-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -28,30 +26,30 @@ namespace BaseUtils
     {
         static public string LogPath { get; set; } = null;           // set path to cause logging to occur
 
-        public String MimeType { get; set; } = "application/json; charset=utf-8";
-
-        protected ResponseData RequestPost(string postData, string action, NameValueCollection headers = null, bool handleException = false )
+        // content types are defined in https://www.iana.org/assignments/media-types/media-types.xhtml
+        // json is the most widely deployed so is the default
+        protected ResponseData RequestPost(string postData, string action, NameValueCollection headers = null, bool handleException = false, string contenttype = "application/json; charset=utf-8")
         {
-            return Request("POST", postData, action, headers, handleException,0);
+            return Request("POST", postData, action, headers, handleException,0, contenttype);
         }
 
-        protected ResponseData RequestPatch(string postData, string action, NameValueCollection headers = null, bool handleException = false)
+        protected ResponseData RequestPatch(string postData, string action, NameValueCollection headers = null, bool handleException = false, string contenttype = "application/json; charset=utf-8")
         {
-            return Request("PATCH", postData, action, headers, handleException,0);
+            return Request("PATCH", postData, action, headers, handleException,0, contenttype);
         }
 
-        protected ResponseData RequestGet(string action, NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
+        protected ResponseData RequestGet(string action, NameValueCollection headers = null, bool handleException = false, int timeout = 5000, string contenttype = "application/json; charset=utf-8")
         {
-            return Request("GET", "", action, headers, handleException, timeout);
+            return Request("GET", "", action, headers, handleException, timeout, contenttype);
         }
 
         // responsecallback is in TASK you must convert back to foreground
         protected void RequestGetAsync(string action, Action<ResponseData,Object> responsecallback, Object tag = null, 
-                                        NameValueCollection headers = null, bool handleException = false, int timeout = 5000)
+                                        NameValueCollection headers = null, bool handleException = false, int timeout = 5000, string contenttype = "application/json; charset=utf-8")
         {
             Task.Factory.StartNew(() =>
             {
-                ResponseData resp = Request("GET", "", action, headers, handleException, timeout);
+                ResponseData resp = Request("GET", "", action, headers, handleException, timeout, contenttype);
                 responsecallback(resp,tag);
             });
         }
@@ -62,10 +60,11 @@ namespace BaseUtils
         // headers = HTTP headers to send, may be null
         // handleException = true, swallow exceptions. Else this will throw
         // timeout = timeout!
+        // content type must be set
         // return ResponseData Always.  Status code is Unauthorized (no HTTP path), BadRequest (exception due to data), or server response.
 
-        protected ResponseData Request(string method, string postData, string endpoint, NameValueCollection headers, bool handleException,
-                                        int timeout)
+        private ResponseData Request(string method, string postData, string endpoint, NameValueCollection headers, bool handleException,
+                                        int timeout, string contenttype)
         {
             if (httpserveraddress == null || httpserveraddress.Length == 0)           // for debugging, set _serveraddress empty
             {
@@ -79,7 +78,7 @@ namespace BaseUtils
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + endpoint);
                     request.Method = method;
-                    request.ContentType = MimeType;    //request.Headers.Add("Accept-Encoding", "gzip,deflate");
+                    request.ContentType = contenttype;   
 
                     if (method == "GET")
                     {
@@ -99,8 +98,15 @@ namespace BaseUtils
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread {System.Threading.Thread.CurrentThread.Name}";
-                    System.Diagnostics.Trace.WriteLine(d1);
+                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
+
+                    foreach(string hdr in request.Headers.AllKeys)
+                    {
+                        var content = request.Headers[hdr];
+                        d1 = d1.AppendPrePad($"{hdr}:{content}", Environment.NewLine);
+                    }
+
+                    System.Diagnostics.Trace.WriteLine(d1 + (method != "GET" ? $"{Environment.NewLine}PostData: " + postData : ""));
                     WriteLog(d1, postData);
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -228,6 +234,31 @@ namespace BaseUtils
             dataStream.Close();
             return data;
         }
+
+        public static string MakeQuery(params System.Object[] values)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int i = 0; i < values.Length;)
+            {
+                string name = values[i] as string;
+                object value = values[i + 1];
+                i += 2;
+                if (value != null)
+                {
+                    if (sb.Length > 0)
+                        sb.Append('&');
+                    if (value is string)
+                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(value as string));
+                    else if (value is bool)
+                        sb.Append(name + "=" + (((bool)value) ? "1" : "0"));
+                    else
+                        sb.Append(name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+
+            return sb.ToString();
+        }
+
 
         protected string httpserveraddress { get; set; }
     }

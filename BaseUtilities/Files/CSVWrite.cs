@@ -22,6 +22,8 @@ namespace BaseUtils
         public string Delimiter { get; private set; } = ",";
         public System.Globalization.CultureInfo FormatCulture { get; set; } = new System.Globalization.CultureInfo("en-US");
 
+        public bool DateTimeZulu = false;
+
         public CSVWrite() {}
         public CSVWrite(string delimiter) 
         {
@@ -32,7 +34,7 @@ namespace BaseUtils
         {
             Delimiter = delimiter;
             if (Delimiter != ";")
-                FormatCulture = new System.Globalization.CultureInfo("en-US");
+                FormatCulture = new System.Globalization.CultureInfo("en-gb");
             else
                 FormatCulture = new System.Globalization.CultureInfo("sv");
         }
@@ -55,10 +57,10 @@ namespace BaseUtils
             {
                 if (value is DateTime)
                 {
-                    if (((DateTime)value).TimeOfDay.TotalSeconds == 0)
-                        output = ((DateTime)value).ToString("yyyy-MM-dd");
+                    if (DateTimeZulu)
+                        output = ((DateTime)value).ToStringZuluInvariant();
                     else
-                        output = ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss");
+                        output = ((DateTime)value).ToString("g",FormatCulture);
                 }
                 else
                 {
