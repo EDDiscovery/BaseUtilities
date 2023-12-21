@@ -98,7 +98,7 @@ namespace BaseUtils
                                 {
                                     double rate = count / (tme / 1000.0);
                                     reportProgress?.Invoke(count, rate);
-                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {count:N0} at {rate:N2} b/s");
+                                    System.Diagnostics.Debug.WriteLine($"{tme} HTTP Downloaded {url} {count:N0} at {rate:N2} b/s");
                                     lastreportime = (tme / 1000) * 1000;
                                 }
 
