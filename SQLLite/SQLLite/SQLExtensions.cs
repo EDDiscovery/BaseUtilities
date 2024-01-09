@@ -90,6 +90,12 @@ public static class SQLiteCommandExtensions
         return res == null ? def : (T)res;
     }
 
+    static public int ExecuteNonQuery(this DbCommand cmd, DbTransaction txn)
+    {
+        cmd.Transaction = txn;
+        return cmd.ExecuteNonQuery();
+    }
+
     static public T ConvertTo<T>(this DbDataReader r, int index)
     {
         Object v = r[index];
