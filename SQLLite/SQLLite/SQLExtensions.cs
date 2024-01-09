@@ -92,7 +92,8 @@ public static class SQLiteCommandExtensions
 
     static public int ExecuteNonQuery(this DbCommand cmd, DbTransaction txn)
     {
-        cmd.Transaction = txn;
+        if ( txn != null)
+            cmd.Transaction = txn;
         return cmd.ExecuteNonQuery();
     }
 
