@@ -481,9 +481,9 @@ namespace EliteDangerousCore.DB
                         {
                             string cmdt = "INSERT INTO Sectors" + tablepostfix + " (id,gridid,name) VALUES " + sectorinsertcmd.ToString();
                             // we should never enter the same sector twice due to the sector caching.. so INSERT INTO is ok
-                            using (var cmd = db.CreateCommand(cmdt, txn))
+                            using (var cmd = db.CreateCommand(cmdt))
                             {
-                                cmd.ExecuteNonQuery();
+                                cmd.ExecuteNonQuery(txn);
                             }
                         }
 
@@ -492,9 +492,9 @@ namespace EliteDangerousCore.DB
                             // we may double insert Names if we are processing the same item again.  We do not cache names.
                             // if we have a duplicate, we update the name because it will be a name update
 
-                            using (var cmd = db.CreateCommand("INSERT OR REPLACE INTO Names" + tablepostfix + " (id,Name) VALUES " + nameinsertcmd.ToString(), txn))
+                            using (var cmd = db.CreateCommand("INSERT OR REPLACE INTO Names" + tablepostfix + " (id,Name) VALUES " + nameinsertcmd.ToString()))
                             {
-                                cmd.ExecuteNonQuery();
+                                cmd.ExecuteNonQuery(txn);
                             }
                         }
 
@@ -506,18 +506,18 @@ namespace EliteDangerousCore.DB
                             //System.Diagnostics.Debug.Assert(!systeminsertcmd.ToString().Contains("."));
 
                             using (var cmd = db.CreateCommand(
-                                (dontoverwrite ? "INSERT OR IGNORE INTO SystemTable" : "INSERT OR REPLACE INTO SystemTable") + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString(), txn))
+                                (dontoverwrite ? "INSERT OR IGNORE INTO SystemTable" : "INSERT OR REPLACE INTO SystemTable") + tablepostfix + " (edsmid,sectorid,nameid,x,y,z,info) VALUES " + systeminsertcmd.ToString()))
                             {
-                                cmd.ExecuteNonQuery();
+                                cmd.ExecuteNonQuery(txn);
                             }
                         }
 
                         if (permitsystemsinsertcmd.Length > 0)    
                         {
                             using (var cmd = db.CreateCommand(
-                                (dontoverwrite ? "INSERT OR IGNORE INTO PermitSystems" : "INSERT OR REPLACE INTO PermitSystems") + tablepostfix + " (edsmid) VALUES " + permitsystemsinsertcmd.ToString(), txn))
+                                (dontoverwrite ? "INSERT OR IGNORE INTO PermitSystems" : "INSERT OR REPLACE INTO PermitSystems") + tablepostfix + " (edsmid) VALUES " + permitsystemsinsertcmd.ToString()))
                             {
-                                cmd.ExecuteNonQuery();
+                                cmd.ExecuteNonQuery(txn);
                             }
                         }
 

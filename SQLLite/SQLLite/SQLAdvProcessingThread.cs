@@ -29,6 +29,9 @@ namespace SQLLiteExtensions
         // are we doing Reader Writer locks between threads.. used in journal mode DELETE.
         public bool RWLocks { get { return rwLock != null; } set { ClearDown(); rwLock = value ? new ReaderWriterLock() : null; } }
 
+        // are we protecting against Connection opening, and others operations
+        public bool ConnectionProtect { get { return lockConnection != null; } set { ClearDown(); lockConnection = value ? new ReaderWriterLock() : null; } }
+
         public string Name { get; set; } = "SQLAdvProcessingThread";   // thread name
 
         public bool MultiThreaded { get { return multithreaded; } set { SetMultithreaded(value); } }    // default is not
@@ -145,6 +148,7 @@ namespace SQLLiteExtensions
         private ManualResetEvent stoppedAllThreads = new ManualResetEvent(true);        // Set to true as there are no running ones, cleared on thread start
 
         private ReaderWriterLock rwLock = new ReaderWriterLock();     // used to prevent writes when readers are running in MT scenarios without WAL mode. Default is normal mode, not WAL mode.
+        private ReaderWriterLock lockConnection = new ReaderWriterLock();     // used to prevent read/write operations when connection is opening
 
         private bool multithreaded = false;             // if MT
         private bool stopCreatingNewThreads = false;    // halt thread creation during stop
@@ -188,7 +192,10 @@ namespace SQLLiteExtensions
             {
                 System.Diagnostics.Debug.WriteLine($"SQL {Name} Thread create connection {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
-                using (connection.Value = CreateConnection())   // hold connection over whole period.
+                lockConnection?.AcquireWriterLock(int.MaxValue);
+                connection.Value = CreateConnection();
+                lockConnection?.ReleaseWriterLock();
+
                 {
                     System.Diagnostics.Debug.WriteLine($"SQL {Name} Connection made {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
 
@@ -225,6 +232,7 @@ namespace SQLLiteExtensions
                                                 {
                                                     try
                                                     {
+                                                        lockConnection?.AcquireReaderLock(int.MaxValue);      // ensure connection open is not happening
                                                         rwLock?.AcquireWriterLock(30*1000);      // 30 seconds - try and gain a lock. This is plenty for most situations. Will except if not
 
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute write job from {job.Jobname}");
@@ -234,6 +242,7 @@ namespace SQLLiteExtensions
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.TickCountLap("SDBS")} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish write job from {job.Jobname}");
 
                                                         rwLock?.ReleaseWriterLock();
+                                                        lockConnection?.ReleaseReaderLock();
                                                         break;
                                                     }
                                                     catch
@@ -248,6 +257,7 @@ namespace SQLLiteExtensions
                                                 {
                                                     try
                                                     {
+                                                        lockConnection?.AcquireReaderLock(int.MaxValue);      // ensure connection open is not happening
                                                         rwLock?.AcquireReaderLock(30 * 1000);
 
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} execute read job from {job.Jobname}");
@@ -257,6 +267,7 @@ namespace SQLLiteExtensions
                                                         //System.Diagnostics.Debug.WriteLine($"{BaseUtils.AppTicks.MSd} SQL {Name} On thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId} finish read job from {job.Jobname}");
 
                                                         rwLock?.ReleaseReaderLock();
+                                                        lockConnection?.ReleaseReaderLock();
                                                         break;
                                                     }
                                                     catch
@@ -285,6 +296,8 @@ namespace SQLLiteExtensions
             finally
             {
                 System.Diagnostics.Debug.WriteLine($"SQL {Name} stop thread {Thread.CurrentThread.Name}-{Thread.CurrentThread.ManagedThreadId}");
+
+                connection.Value?.Dispose();
 
                 Interlocked.Decrement(ref runningThreadsAvailable);            // stopping threads.. decr count, if 0, say all stopped
 

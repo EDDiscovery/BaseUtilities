@@ -363,7 +363,7 @@ namespace EliteDangerousCore.DB
                 {
                     using (var txn = db.BeginTransaction())
                     {
-                        using (DbCommand replaceSectorCmd = db.CreateReplace("Sectors" + tablepostfix, new string[] { "name", "gridid", "id" }, new DbType[] { DbType.String, DbType.Int32, DbType.Int64 }, txn))
+                        using (DbCommand replaceSectorCmd = db.CreateReplace("Sectors" + tablepostfix, new string[] { "name", "gridid", "id" }, new DbType[] { DbType.String, DbType.Int32, DbType.Int64 }))
                         {
                             foreach (var kvp in sectorcache.SectorIDCache.Where(x => x.Value.insertsec))                  // all sectors cached, id is unique so its got all sectors                           
                             {
@@ -384,7 +384,7 @@ namespace EliteDangerousCore.DB
                 {
                     using (var txn = db.BeginTransaction())
                     {
-                        using (var replaceNameCmd = db.CreateReplace("Names" + tablepostfix, new string[] { "name", "id" }, new DbType[] { DbType.String, DbType.Int64 }, txn))
+                        using (var replaceNameCmd = db.CreateReplace("Names" + tablepostfix, new string[] { "name", "id" }, new DbType[] { DbType.String, DbType.Int64 }))
                         {
                             foreach (var kvp in sectorcache.SectorIDCache)                  // all sectors cached, id is unique so its got all sectors                           
                             {
@@ -407,7 +407,7 @@ namespace EliteDangerousCore.DB
                     using (var txn = db.BeginTransaction())
                     {
                         using (var replaceSysCmd = db.CreateReplace("SystemTable" + tablepostfix, new string[] { "sectorid", "nameid", "x", "y", "z", "edsmid", "info" },
-                                            new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64, DbType.Int64 }, txn))
+                                            new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64, DbType.Int64 }))
                         {
                             foreach (var kvp in sectorcache.SectorIDCache)                  // all sectors cached, id is unique so its got all sectors                           
                             {
@@ -459,12 +459,12 @@ namespace EliteDangerousCore.DB
                     var cn = db;
                     txn = cn.BeginTransaction();
 
-                    replaceSectorCmd = cn.CreateReplace("Sectors" + tablepostfix, new string[] { "name", "gridid", "id" }, new DbType[] { DbType.String, DbType.Int32, DbType.Int64 }, txn);
+                    replaceSectorCmd = cn.CreateReplace("Sectors" + tablepostfix, new string[] { "name", "gridid", "id" }, new DbType[] { DbType.String, DbType.Int32, DbType.Int64 });
 
                     replaceSysCmd = cn.CreateReplace("SystemTable" + tablepostfix, new string[] { "sectorid", "nameid", "x", "y", "z", "edsmid", "info" },
-                                        new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64, DbType.Int64 }, txn);
+                                        new DbType[] { DbType.Int64, DbType.Int64, DbType.Int32, DbType.Int32, DbType.Int32, DbType.Int64, DbType.Int64 });
 
-                    replaceNameCmd = cn.CreateReplace("Names" + tablepostfix, new string[] { "name", "id" }, new DbType[] { DbType.String, DbType.Int64 }, txn);
+                    replaceNameCmd = cn.CreateReplace("Names" + tablepostfix, new string[] { "name", "id" }, new DbType[] { DbType.String, DbType.Int64 });
 
                     foreach (var kvp in sectorcache.SectorIDCache)                  // all sectors cached, id is unique so its got all sectors                           
                     {
