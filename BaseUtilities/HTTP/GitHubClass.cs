@@ -28,13 +28,12 @@ namespace BaseUtils
     {
         public static string UserAgent { get; set; } = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
 
-        public delegate void LogLine(string text);
-        LogLine logger = null;
+        private Action<string> LogLine;
 
-        public GitHubClass(string server, LogLine lg = null )
+        public GitHubClass(string server, Action<string> lg = null )
         {
             httpserveraddress = server; 
-            logger = lg;
+            LogLine = lg;
         }
 
         public JArray GetAllReleases(int reqmax)
@@ -208,8 +207,7 @@ namespace BaseUtils
             // download.....
             try
             {
-                if (logger != null)
-                    logger("Download github file " + file.Name);
+                LogLine?.Invoke("Download github file " + file.Name);
 
                 WriteLog("Download github file " + file.Name, "");
                 string destFile = Path.Combine(DestinationDir, file.Name);
@@ -238,8 +236,7 @@ namespace BaseUtils
             }
             catch (Exception ex)
             {
-                if (logger != null)
-                    logger("GitHub DownloadFile Exception" + ex.Message);
+                LogLine?.Invoke("GitHub DownloadFile Exception" + ex.Message);
 
                 WriteLog("GitHub DownloadFile Exception" + ex.Message, "");
                 return false;
