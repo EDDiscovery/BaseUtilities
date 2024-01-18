@@ -62,9 +62,9 @@ namespace BaseUtils
                 return null;
         }
 
-        public static bool TryAppendToFile(string filename, string content)
+        public static bool TryAppendToFile(string filename, string content, bool makefile = false)
         {
-            if (File.Exists(filename))
+            if (makefile == true || File.Exists(filename))
             {
                 try
                 {
@@ -79,6 +79,7 @@ namespace BaseUtils
             else
                 return false;
         }
+
         public static bool TryWriteToFile(string filename, string content)
         {
             try
