@@ -36,6 +36,7 @@ namespace BaseUtils
         public string Peek { get { return (pos < args.Length) ? args[pos] : null; } }
 
         public string Next() { return (pos < args.Length) ? args[pos++] : null; }
+        public string NextLI() { return (pos < args.Length) ? args[pos++].ToLowerInvariant() : null; }
         public string NextEmpty() { return (pos < args.Length) ? args[pos++] : ""; }
         public int Int() { return (pos < args.Length) ? args[pos++].InvariantParseInt(0) : 0; }
         public int? IntNull() { return (pos < args.Length) ? args[pos++].InvariantParseIntNull() : null; }
