@@ -100,10 +100,10 @@ namespace BaseUtils
 
                     string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
 
-                    foreach(string hdr in request.Headers.AllKeys)
+                    foreach (string hdr in request.Headers.AllKeys)
                     {
                         var content = request.Headers[hdr];
-                        d1 = d1.AppendPrePad($"{hdr}:{content}", Environment.NewLine);
+                        d1 = d1.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
                     }
 
                     System.Diagnostics.Trace.WriteLine(d1 + (method != "GET" ? $"{Environment.NewLine}PostData: " + postData : ""));
@@ -112,11 +112,19 @@ namespace BaseUtils
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                     var data = getResponseData(response);
-                    response.Close();
 
                     string d2 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Response {data.StatusCode}";
+                    foreach (string hdr in response.Headers.AllKeys)
+                    {
+                        var content = response.Headers[hdr];
+                        d2 = d2.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+                    }
+
                     System.Diagnostics.Trace.WriteLine(d2);
                     WriteLog(d2, data.Body.Left(1024));
+
+                    response.Close();
+
 
                     return data;
                 }
