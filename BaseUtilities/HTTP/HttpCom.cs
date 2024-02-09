@@ -78,7 +78,9 @@ namespace BaseUtils
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + endpoint);
                     request.Method = method;
-                    request.ContentType = contenttype;   
+                    request.ContentType = contenttype;
+
+                    string dbgmsg = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
 
                     if (method == "GET")
                     {
@@ -93,21 +95,20 @@ namespace BaseUtils
                         Stream dataStream = request.GetRequestStream();     // Get the request stream.
                         dataStream.Write(byteArray, 0, byteArray.Length);       // Write the data to the request stream.
                         dataStream.Close();     // Close the Stream object.
+                        dbgmsg += " PostData: " + RemoveApiKey(postData);
                     }
 
                     if (headers != null)
                         request.Headers.Add(headers);
 
-                    string d1 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
-
                     foreach (string hdr in request.Headers.AllKeys)
                     {
                         var content = request.Headers[hdr];
-                        d1 = d1.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+                        dbgmsg = dbgmsg.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
                     }
 
-                    System.Diagnostics.Trace.WriteLine(d1 + (method != "GET" ? $"{Environment.NewLine}PostData: " + postData : ""));
-                    WriteLog(d1, postData);
+                    System.Diagnostics.Trace.WriteLine(dbgmsg);
+                    WriteLog(dbgmsg,"");
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
@@ -182,6 +183,8 @@ namespace BaseUtils
         {
             str = Regex.Replace(str, "apiKey=[^&]*", "apiKey=xxx", RegexOptions.IgnoreCase);
             str = Regex.Replace(str, "password=[^&]*", "password=xxx", RegexOptions.IgnoreCase);
+            str = Regex.Replace(str, "\"APIKey\":\".*\"", "\"APIKey\":\"xxx\"", RegexOptions.IgnoreCase);
+            str = Regex.Replace(str, "\"commanderFrontierID\":\".*\"", "\"commanderFrontierID\":\"xxx\"", RegexOptions.IgnoreCase);
             return str;
         }
 
