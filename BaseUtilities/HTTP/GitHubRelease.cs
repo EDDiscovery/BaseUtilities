@@ -15,7 +15,10 @@
  */
 
 using QuickJSON;
+using System;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BaseUtils
 {
@@ -88,5 +91,47 @@ namespace BaseUtils
             }
         }
 
+        static public GitHubRelease CheckForNewInstaller(string url, string currentVersion, bool force = false)
+        {
+            try
+            {
+                GitHubClass github = new GitHubClass(url);
+
+                GitHubRelease rel = github.GetLatestRelease();
+
+                if (rel != null)
+                {
+                    var releaseVersion = rel.ReleaseVersion;
+
+                    Version v1 = new Version(releaseVersion);
+                    Version v2 = new Version(currentVersion);
+
+                    if (force || v1.CompareTo(v2) > 0) // Test if newer installer exists:
+                    {
+                        return rel;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return null;
+        }
+
+        static public Task CheckForNewInstallerAsync(string url, string version, Action<GitHubRelease> callbackinthread, bool force = false)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+#if DEBUG
+                // for debugging it
+                //callbackinthread?.Invoke(new BaseUtils.GitHubRelease("Test","10.9.1.9","http", "2018-09-25T09:17:02Z", "Test","1.exe","2.msi","portable.zip"));
+#endif 
+                GitHubRelease rel = CheckForNewInstaller(url,version,force);
+
+                if (rel != null)
+                    callbackinthread?.Invoke(rel);
+            });
+        }
     }
 }
