@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2021 EDDiscovery development team
+ * Copyright 2016-2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,15 +10,12 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -27,136 +24,127 @@ namespace BaseUtils
     public class TraceLog           // intercepts trace/debug and sends it to a file
     {
         public static event Action<Exception> LogFileWriterException;
-        public static string LogFileName { get; private set; }
-        public static string LogFileBaseName { get; private set; }
-        public static Thread LogFileWriterThread;
         public static bool DisableLogDeduplication { get; set; }
-        private static BlockingCollection<string> LogLineQueue = new BlockingCollection<string>();
-        private static AutoResetEvent LogLineQueueEvent = new AutoResetEvent(false);
+        public static bool IsThreadOurs(Thread x) => x == logFileWriterThread;
 
-        private class TraceLogWriter : TextWriter
-        {
-            private ThreadLocal<StringBuilder> logline = new ThreadLocal<StringBuilder>(() => new StringBuilder());
-
-            public override Encoding Encoding { get { return Encoding.UTF8; } }
-            public override IFormatProvider FormatProvider { get { return CultureInfo.InvariantCulture; } }
-
-            public override void Write(string value)
-            {
-                if (value != null)
-                {
-                    logline.Value.Append(value);
-                    string logval = logline.ToString();
-
-                    if (logval.Contains("\n"))
-                    {
-                        logline.Value.Clear();
-                        var lastnewline = logval.LastIndexOf('\n');
-                        TraceLog.WriteLine(logval.Substring(0, lastnewline));
-                        if (lastnewline < logval.Length - 1)
-                        {
-                            logval = logval.Substring(lastnewline + 1);
-                            logline.Value.Append(logval);
-                        }
-                    }
-                }
-            }
-
-            public override void Write(char value) { Write(new string(new[] { value })); }
-            public override void WriteLine(string value) { Write((value ?? "") + "\n"); }
-            public override void WriteLine() { Write("\n"); }
-        }
-
-        public static void RedirectTrace(string logroot, bool debugtoo, string filename = null)
+        public static void RedirectTrace(string logroot, string filename = null)
         {
             if (Directory.Exists(logroot))
             {
                 string logname = Path.Combine(logroot, filename ?? $"Trace_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}");
-                LogFileBaseName = logname;
-                LogFileWriterThread = new Thread(LogWriterThreadProc);
-                LogFileWriterThread.IsBackground = true;
-                LogFileWriterThread.Name = "Log Writer";
-                LogFileWriterThread.Start();
+                logFileBaseName = logname;
+                logFileWriterThread = new Thread(LogWriterThreadProc);
+                logFileWriterThread.IsBackground = true;
+                logFileWriterThread.Name = "Log Writer";
+                logFileWriterThread.Start();
                 System.Diagnostics.Trace.AutoFlush = true;
-                // Log trace events to the above file
-                var tlw = new TraceLogWriter();
-                System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
-                if ( debugtoo )
-                    System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(tlw));
+                tracelistener = new System.Diagnostics.TextWriterTraceListener(new TraceLogWriter());
+                System.Diagnostics.Trace.Listeners.Add(tracelistener);
             }
         }
 
+        // submit a message. \rs are ignored. \ns show line boundaries
         public static void WriteLine(string msg)
         {
             LogLineQueue.Add(msg);
         }
 
-        public static void WaitForOutput(int ms = 100)
+        public static void TerminateLogger(int ms = 10000)
         {
-            LogLineQueueEvent.WaitOne(ms);
+            if (logFileWriterThread != null)
+            {
+                TraceLog.WriteLine(null);
+                logFileWriterThread.Join();
+            }
         }
 
         private static void LogWriterThreadProc()
         {
             int partnum = 0;
-            Dictionary<string, int> msgrepeats = new Dictionary<string, int>();
+            string lastline = null;
+            string nextoutput = null;
+            int repeats = 0;
+
             while (true)
             {
                 try
                 {
-                    LogFileName = $"{LogFileBaseName}.{partnum}.log";
-                    using (TextWriter writer = new StreamWriter(LogFileName))
+                    string logfilename = $"{logFileBaseName}.{partnum}.log";
+                    using (TextWriter writer = new StreamWriter(logfilename))
                     {
-                        int linenum = 0;
+                        int msgnum = 0;
                         while (true)
                         {
-                            string msg = null;
-                            if (msgrepeats.Count < 100 && !msgrepeats.Any(m => m.Value >= 10000) && LogLineQueue.TryTake(out msg, msgrepeats.Count > 1 ? 1000 : Timeout.Infinite))
+                            bool gotone = LogLineQueue.TryTake(out string msg, 1000);       // messages closer than 1s can be merged
+
+                            if (gotone)
                             {
-                                if (msg == null)
+                                if (msg == null)        // stop condition, terminate thread
                                 {
-                                    LogLineQueueEvent.Set();
+                                    var timestamp = DateTime.UtcNow.ToStringZulu();
+                                    writer.WriteLine($"{++msgnum,4}: {timestamp}: Closing log");
+                                    writer.Flush();
+                                    writer.Close();
+                                    System.Diagnostics.Trace.Listeners.Remove(tracelistener);
                                     return;
                                 }
-                                else if (!DisableLogDeduplication && msgrepeats.ContainsKey(msg))
-                                {
-                                    msgrepeats[msg]++;
-                                }
-                                else
-                                {
-                                    var lines = msg.Split('\n');
-                                    var timestamp = DateTime.UtcNow.ToStringZulu();
 
-                                    foreach (var line in lines)
+                                msg = msg.Replace("\r", "");        // remove any /rs as they will double space the log output in editors
+
+                                if (msg.StartsWith("\n"))       // remove any pre line feeds to clean up the output
+                                    msg = msg.Substring(1);
+                            }
+
+                            if (gotone && msg == lastline && !DisableLogDeduplication) // merge with above
+                            {
+                                repeats++;
+                            }
+                            else
+                            {
+                                if (nextoutput != null)
+                                {
+                                    msgnum++;
+
+                                    var lines = nextoutput.Split('\n');           // no empty starts (\n starting) or trailing \ns
+                                    int colon = nextoutput.IndexOf(": ");       // find text after time
+                                    for (int i = 0; i < lines.Length; i++)
                                     {
-                                        writer.WriteLine($"[{timestamp}] {line}");
-                                        linenum++;
+                                        var line = lines[i];
+                                        if (i == 0 && repeats > 0)      // if first line, and repeats, introduce repeat
+                                        {
+                                            writer.WriteLine($"{msgnum,4}: {line.Substring(0, colon)}: Repeated {repeats+1}" + line.Substring(colon));
+                                        }
+                                        else
+                                        {
+                                            if (i > 0)       // if after first line, space out to same size as time
+                                                writer.WriteLine(new string(' ', colon + 4 + 2) + "  " + line);
+                                            else
+                                                writer.WriteLine($"{msgnum,4}: " + line);
+                                        }
                                     }
 
                                     writer.Flush();
-                                    msgrepeats[msg] = 0;
-                                    if (linenum >= 100000)
+
+                                    if (msgnum >= 100000)
                                     {
                                         partnum++;
                                         break;
                                     }
                                 }
-                            }
-                            else
-                            {
-                                foreach (KeyValuePair<string, int> rptkvp in msgrepeats)
-                                {
-                                    if (rptkvp.Value >= 1)
-                                    {
-                                        writer.WriteLine($"[{DateTime.UtcNow.ToStringZulu()}] {rptkvp.Key}");
-                                        if (rptkvp.Value > 1)
-                                        {
-                                            writer.WriteLine($"[{DateTime.UtcNow.ToStringZulu()}] Last message repeated {(rptkvp.Value)} times");
-                                        }
-                                    }
-                                }
 
-                                msgrepeats = new Dictionary<string, int>();
+                                repeats = 0;
+
+                                if (gotone)        // if we got one, set up nextoutput
+                                {
+                                    var timestamp = DateTime.UtcNow.ToStringZulu();
+                                    nextoutput = $"{timestamp}: {msg}";
+                                    lastline = msg;
+                                }
+                                else
+                                {
+                                    nextoutput = null;  // cancel nextoutput
+                                    lastline = null;
+                                }
                             }
                         }
                     }
@@ -171,6 +159,51 @@ namespace BaseUtils
                 }
             }
         }
+
+        private static string logFileBaseName;
+        private static Thread logFileWriterThread;
+        private static System.Diagnostics.TextWriterTraceListener tracelistener;
+        private static BlockingCollection<string> LogLineQueue = new BlockingCollection<string>();
+
+        private class TraceLogWriter : TextWriter
+        {
+            private ThreadLocal<StringBuilder> logline = new ThreadLocal<StringBuilder>(() => new StringBuilder());
+
+            public override Encoding Encoding { get { return Encoding.UTF8; } }
+            public override IFormatProvider FormatProvider { get { return CultureInfo.InvariantCulture; } }
+
+            public override void Write(string value)    // receive string from trace log
+            {
+                if (value != null)
+                {
+                    logline.Value.Append(value);            // we append to the SB, per thread.
+
+                    string logtext = logline.ToString();
+                    // find last new line in the string buffer (last \n so we can pass long bits of text to it with \n in the middle)
+                    var lastnewline = logtext.LastIndexOf('\n');     
+
+                    if (lastnewline>=0)     // if we have a line, we submit it to the trace log
+                    {
+                        string submit = logtext.Substring(0, lastnewline);
+                        TraceLog.WriteLine(submit);
+
+                        logline.Value.Clear();      // clear the buffer
+
+                        if (lastnewline < logtext.Length - 1)    // if we have anything left in logval, add it back to the buffer
+                        {
+                            logtext = logtext.Substring(lastnewline + 1);
+                            logline.Value.Append(logtext);
+                        }
+                    }
+                }
+            }
+
+            public override void Write(char value) { Write(new string(new[] { value })); }
+            public override void WriteLine(string value) { Write((value ?? "") + "\n"); }
+            public override void WriteLine() { Write("\n"); }
+        }
+
+
     }
 
 }

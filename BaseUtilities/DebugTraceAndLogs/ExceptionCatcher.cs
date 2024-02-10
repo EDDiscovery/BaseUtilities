@@ -51,8 +51,7 @@ namespace BaseUtils
             try
             {
                 TraceLog.WriteLine($"\n==== UNHANDLED EXCEPTION ====\n{e.ExceptionObject.ToString()}\n==== cut ====");
-                TraceLog.WriteLine(null);
-                TraceLog.WaitForOutput();
+                TraceLog.TerminateLogger();
                 ExceptionForm.ShowException(e.ExceptionObject as Exception, "An unhandled fatal exception has occurred.", urlfeedback, isFatal: true);
             }
             catch
@@ -127,7 +126,7 @@ namespace BaseUtils
             {
                 return;
             }
-            else if (Thread.CurrentThread == TraceLog.LogFileWriterThread)     // prevents circular exceptions since we use tracelog
+            else if ( TraceLog.IsThreadOurs(Thread.CurrentThread))     // prevents circular exceptions since we use tracelog
             {
                 return;
             }
