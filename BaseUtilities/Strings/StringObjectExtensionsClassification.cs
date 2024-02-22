@@ -25,6 +25,18 @@ public static partial class ObjectExtensionsStrings
     {
         return obj != null && obj.Length > 0;
     }
+    static public bool HasNonSpaceChars(this string obj)
+    {
+        if (obj != null && obj.Length > 0)
+        {
+            foreach( var c in obj)
+            {
+                if (c != ' ')
+                    return true;
+            }
+        }
+        return false;
+    }
     static public bool HasLetterChars(this string obj)
     {
         if (obj != null && obj.Length > 0)
