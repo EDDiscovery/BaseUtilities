@@ -192,6 +192,20 @@ namespace BaseUtils
             }
         }
 
+        public static int DeleteFiles(string rootpath, string wildcardmatch)
+        {
+            DirectoryInfo dir = new DirectoryInfo(rootpath);     // in order, time decending
+            FileInfo[] files = dir.GetFiles(wildcardmatch).OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
+
+            int number = 0;
+            foreach (FileInfo fi in files)
+            {
+                number += DeleteFileNoError(fi.FullName) ? 1 : 0;
+            }
+
+            return number;
+        }
+
         public static void DeleteFiles(string rootpath, string filenamesearch, TimeSpan maxage, long MaxLogDirSizeMB)
         {
             if (Directory.Exists(rootpath))

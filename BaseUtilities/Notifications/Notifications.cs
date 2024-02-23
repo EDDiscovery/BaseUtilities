@@ -131,8 +131,9 @@ namespace BaseUtils
             return notes;
         }
 
-        static public Task CheckForNewNotifications( bool checkgithub, 
-                                                    string notificationsdir,
+        static public Task CheckForNewNotifications( bool checkgithub,
+                                                    string githubfoldername,
+                                                    string localnotificationfolder,
                                                     string githuburl,
                                                     Action<List<Notification>> callbackinthread)
         {
@@ -141,17 +142,11 @@ namespace BaseUtils
                 if (checkgithub)      // if download from github first..
                 {
                     BaseUtils.GitHubClass github = new BaseUtils.GitHubClass(githuburl);
-
-                    var gitfiles = github.ReadDirectory("Notifications");
-
-                    if (gitfiles != null)        // may be empty, unlikely, but
-                    {
-                        github.DownloadFiles(gitfiles, notificationsdir);
-                    }
+                    github.DownloadFolder(new System.Threading.CancellationToken(), localnotificationfolder, githubfoldername, "*.xml", true, true);
                 }
 
                 // always go thru what we have in that folder.. 
-                FileInfo[] allfiles = Directory.EnumerateFiles(notificationsdir, "*.xml", SearchOption.TopDirectoryOnly).Select(f => new System.IO.FileInfo(f)).OrderByDescending(p => p.LastWriteTime).ToArray();
+                FileInfo[] allfiles = Directory.EnumerateFiles(localnotificationfolder, "*.xml", SearchOption.TopDirectoryOnly).Select(f => new System.IO.FileInfo(f)).OrderByDescending(p => p.LastWriteTime).ToArray();
 
                 List<Notification> nlist = new List<Notification>();
 

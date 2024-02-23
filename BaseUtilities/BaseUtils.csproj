@@ -76,7 +76,7 @@
     <Compile Include="Functions\FunctionsBasic.cs" />
     <Compile Include="Conditions\ConditionLists.cs" />
     <Compile Include="Functions\FunctionPersistentData.cs" />
-    <Compile Include="HTTP\HTTPStaticExtensions.cs" />
+    <Compile Include="HTTP\HTTPExtensions.cs" />
     <Compile Include="IconSet\IconGroup.cs" />
     <Compile Include="IconSet\IconSet.cs" />
     <Compile Include="IconSet\IIconSet.cs" />
@@ -104,7 +104,6 @@
     <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
     <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />
     <Compile Include="WebServer\WebServer.cs" />
-    <Compile Include="HTTP\HttpDownloadFile.cs" />
     <Compile Include="CHash\TemplateObjectExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
     <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
@@ -121,13 +120,10 @@
     <Compile Include="Files\CSVWriteGrid.cs" />
     <Compile Include="Files\LineReader.cs" />
     <Compile Include="HTTP\BrowserInfo.cs" />
-    <Compile Include="HTTP\DownloadFile.cs" />
     <Compile Include="HTTP\GitHubClass.cs" />
-    <Compile Include="HTTP\GitHubFile.cs" />
+    <Compile Include="HTTP\RemoteFile.cs" />
     <Compile Include="HTTP\GitHubRelease.cs" />
     <Compile Include="HTTP\HttpCom.cs" />
-    <Compile Include="HTTP\HttpUriEncode.cs" />
-    <Compile Include="HTTP\ResponseData.cs" />
     <Compile Include="Keys\EnhancedSendKeys.cs" />
     <Compile Include="Keys\KeyboardState.cs" />
     <Compile Include="Misc\CommandArgs.cs" />

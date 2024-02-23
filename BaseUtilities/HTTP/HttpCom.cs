@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016-2023 EDDiscovery development team
+ * Copyright © 2016-2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,264 +13,597 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace BaseUtils
 {
     public class HttpCom
     {
-        static public string LogPath { get; set; } = null;           // set path to cause logging to occur
+        // set path to cause logging to occur
+        static public string LogPath { get; set; } = null;
 
-        // content types are defined in https://www.iana.org/assignments/media-types/media-types.xhtml
-        // json is the most widely deployed so is the default
-        protected ResponseData RequestPost(string postData, string action, NameValueCollection headers = null, bool handleException = false, string contenttype = "application/json; charset=utf-8")
+        // default user agent is the entry assembly name. Override if you want another, or set to Null not to send
+        public string UserAgent { get; set; } = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+
+        // Server address to use, endpoint is added to this
+        // can be "" meaning the endpoint is the full URL
+        public string ServerAddress { get { return httpserveraddress; } set { System.Diagnostics.Debug.Assert(value != null);  httpserveraddress = value; } }
+
+        public const string DefaultContentType = "application/json; charset=utf-8";
+        public const int DefaultTimeout = 20000;
+
+        public HttpCom()
         {
-            return Request("POST", postData, action, headers, handleException,0, contenttype);
         }
 
-        protected ResponseData RequestPatch(string postData, string action, NameValueCollection headers = null, bool handleException = false, string contenttype = "application/json; charset=utf-8")
+        public HttpCom(string server)       
         {
-            return Request("PATCH", postData, action, headers, handleException,0, contenttype);
+            ServerAddress = server;
         }
 
-        protected ResponseData RequestGet(string action, NameValueCollection headers = null, bool handleException = false, int timeout = 5000, string contenttype = "application/json; charset=utf-8")
+        public enum Method { POST, GET };
+
+        #region HTTP Requests
+
+        // Blocking POST request, with postdata and with timeout.  Postdata first due to historical reasons
+        protected Response RequestPost(string postData, string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
         {
-            return Request("GET", "", action, headers, handleException, timeout, contenttype);
+            return BlockingRequest(Method.POST, endpoint, postData, headers, contenttype,timeout);
         }
 
-        // responsecallback is in TASK you must convert back to foreground
-        protected void RequestGetAsync(string action, Action<ResponseData,Object> responsecallback, Object tag = null, 
-                                        NameValueCollection headers = null, bool handleException = false, int timeout = 5000, string contenttype = "application/json; charset=utf-8")
+        // Blocking GET request, with timeout
+        // Headers automatically has Accept-Encoding gzip/deflate added
+        protected Response RequestGet(string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
         {
-            Task.Factory.StartNew(() =>
-            {
-                ResponseData resp = Request("GET", "", action, headers, handleException, timeout, contenttype);
-                responsecallback(resp,tag);
-            });
+            if (headers == null)
+                headers = new NameValueCollection();
+
+            headers.Add("Accept-Encoding", "gzip,deflate");
+
+            return BlockingRequest(Method.GET, endpoint, "", headers, contenttype, timeout);
         }
 
-        // method = "POST", "GET", "PATCH"
-        // postdata only for post, normally json. Otherwise empty or null.
-        // endpoint = end point to access, added to httpserveraddress in class ("journal")
+        // Blocking request, with timeout. No cancellation
+        // method = HTTP method
+        // endpoint = end point to access or http full address
+        // headerData for POST etc. normally json. Otherwise null.
         // headers = HTTP headers to send, may be null
-        // handleException = true, swallow exceptions. Else this will throw
-        // timeout = timeout!
         // content type must be set
-        // return ResponseData Always.  Status code is Unauthorized (no HTTP path), BadRequest (exception due to data), or server response.
+        // return Response Always.  Status code is BadRequest (exception due to data), or server response.
 
-        private ResponseData Request(string method, string postData, string endpoint, NameValueCollection headers, bool handleException,
-                                        int timeout, string contenttype)
+        public Response BlockingRequest(Method method, string endpoint, 
+                                        string headerData = null, NameValueCollection headers = null,
+                                        string contenttype = DefaultContentType, int timeout = DefaultTimeout)
         {
-            if (httpserveraddress == null || httpserveraddress.Length == 0)           // for debugging, set _serveraddress empty
-            {
-                System.Diagnostics.Trace.WriteLine(method + RemoveApiKey(endpoint));
-                return new ResponseData(HttpStatusCode.Unauthorized);
-            }
-
             try
             {
                 try
                 {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(httpserveraddress + endpoint);
-                    request.Method = method;
-                    request.ContentType = contenttype;
+                    HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype);
 
-                    string dbgmsg = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Thread '{System.Threading.Thread.CurrentThread.Name}'";
-
-                    if (method == "GET")
-                    {
-                        request.Headers.Add("Accept-Encoding", "gzip,deflate");
-                        request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-                        request.Timeout = timeout;
-                    }
-                    else
-                    {
-                        byte[] byteArray = Encoding.UTF8.GetBytes(postData);  // Set the ContentType property of the WebRequest.
-                        request.ContentLength = byteArray.Length;       // Set the ContentLength property of the WebRequest.
-                        Stream dataStream = request.GetRequestStream();     // Get the request stream.
-                        dataStream.Write(byteArray, 0, byteArray.Length);       // Write the data to the request stream.
-                        dataStream.Close();     // Close the Stream object.
-                        dbgmsg += " PostData: " + RemoveApiKey(postData);
-                    }
-
-                    if (headers != null)
-                        request.Headers.Add(headers);
-
-                    foreach (string hdr in request.Headers.AllKeys)
-                    {
-                        var content = request.Headers[hdr];
-                        dbgmsg = dbgmsg.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
-                    }
-
-                    System.Diagnostics.Trace.WriteLine(dbgmsg);
-                    WriteLog(dbgmsg,"");
+                    request.Timeout = timeout;      // set the timeout for the GetResponse() 
 
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                    var data = getResponseData(response);
-
-                    string d2 = $"HTTP {method} to {httpserveraddress + RemoveApiKey(endpoint)} Response {data.StatusCode}";
-                    foreach (string hdr in response.Headers.AllKeys)
-                    {
-                        var content = response.Headers[hdr];
-                        d2 = d2.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
-                    }
-
-                    System.Diagnostics.Trace.WriteLine(d2);
-                    WriteLog(d2, data.Body.Left(1024));
-
-                    response.Close();
-
-
-                    return data;
+                    var responsedata = Response.Create(response,true);          // always returns a data object, even if response = null;
+                    response?.Close();
+                    return responsedata;
                 }
                 catch (WebException ex)
                 {
-                    if (!handleException)
-                    {
-                        throw;
-                    }
+                    HttpWebResponse response = (HttpWebResponse)ex.Response;
+                    var responsedata = Response.Create(response,true);          // always returns a data object, even if response = null;
 
-                    using (WebResponse response = ex.Response)
-                    {
-                        HttpWebResponse httpResponse = (HttpWebResponse)response;
-                        var data = getResponseData(httpResponse);
-                        System.Diagnostics.Trace.WriteLine(ex.StackTrace);
-                        System.Diagnostics.Trace.WriteLine("WebException : " + ex.Message);
-                        if (httpResponse != null)
-                        {
-                            System.Diagnostics.Trace.WriteLine("Response code : " + httpResponse.StatusCode);
-                            System.Diagnostics.Trace.WriteLine("Response body : " + data.Body);
-                        }
+                    WriteLog("HTTPCom Response Exception", ex.Message);
+                    WriteLog($".. Error code", responsedata.StatusCode.ToString());
+                    WriteLog($".. Error body", responsedata.Body);
+                    WriteLog($".. stack:", ex.StackTrace);
 
-                        System.Diagnostics.Trace.WriteLine(ex.StackTrace);
+                    response?.Close();
 
-                        if (LogPath != null)
-                        {
-                            WriteLog("WebException" + ex.Message, "");
-                            if (httpResponse != null)
-                            {
-                                WriteLog($"HTTP Error code: {httpResponse.StatusCode}", "");
-                                WriteLog($"HTTP Error body: {data.Body}", "");
-                            }
-                        }
-                        return data;
-                    }
+                    return responsedata;
                 }
             }
             catch (Exception ex)
             {
-                if (!handleException)
+                WriteLog("HTTPCom Request Exception", ex.Message);
+                WriteLog("..Stack", ex.StackTrace);
+
+                return new Response(HttpStatusCode.BadRequest);
+            }
+        }
+
+        // blocking request run in task. return Response.  You can await on this. There is no aborting, timeout will stop it.
+        public System.Threading.Tasks.Task<Response> RequestInTask(Method method, string endpoint, 
+                                        string headerData = null, NameValueCollection headers = null,
+                                        string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+        {
+            return System.Threading.Tasks.Task.Run(() =>
+            {
+                return BlockingRequest(method, headerData, endpoint, headers, contenttype, timeout);
+            });
+        }
+
+
+        // Use the BeginGetResponse pattern to run a query asynchronously
+        // note it may still take time to set up so will block until it launches
+        // callback is void RespCallback(Response, object callerdata).  
+        // callback will be in a task not the UI thread. You need to transition to UI thread if applicable using BeginInvoke
+        // there is no timeout here
+        public IAsyncResult AsyncRequest(Action<Response, object> returncallback, object callerdata,
+                                        Method method, string endpoint, 
+                                        string headerData = null, NameValueCollection headers = null,
+                                        string contenttype = DefaultContentType)
+        {
+            HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype);
+            return AsyncRequest(returncallback, callerdata, request);
+        }
+
+        // Use the BeginGetRepsonse pattern to run a query asynchronously
+        // if readbody = true, this function reads the data stream and stores it in rp.Body
+        // Because the HttpWebRequest was sent, you can use .Abort() on it externally to stop the request.  Return will be RequestTimeout.
+        public IAsyncResult AsyncRequest(Action<Response, object> returncallback, object callerdata, HttpWebRequest request, bool readbody = true)
+                                        
+        {
+            try
+            {
+                var asyncresult = request.BeginGetResponse(AysncRespCallback, new Tuple<HttpWebRequest, Action<Response, object>, object,bool>(request, returncallback, callerdata,readbody));
+                return asyncresult;
+            }
+            catch (Exception ex)
+            {
+                WriteLog("HTTPCom Request Async Exception",ex.Message);
+                WriteLog(ex.StackTrace);
+                return null;
+            }
+        }
+
+        // run in task using ASYNC
+        // You can await on this
+        // cancel event allows the request to be aborted.
+        // return Response, or null if cancelled, or RequestTimeout if timeout occurred.
+        public System.Threading.Tasks.Task<Response> AsyncRequestInTask(CancellationToken cancel, Method method, string endpoint, 
+                                        string headerData = null, NameValueCollection headers = null,
+                                        string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+        {
+            HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype);
+            return AsyncRequestInTask(cancel, request, timeout);
+        }
+
+        // run in task using ASYNC
+        // You can await on this
+        // cancel event allows the request to stops. Or you can call Abort() on the request.
+        // return Response, or null if cancelled, or RequestTimeout if timeout occurred.
+        public System.Threading.Tasks.Task<Response> AsyncRequestInTask(CancellationToken cancel, HttpWebRequest request, int timeout)
+        {
+            return System.Threading.Tasks.Task.Run(() =>
+            {
+                return BlockingRequest(cancel, request, timeout);
+            });
+        }
+
+        // perform a BlockingRequest but with a cancellation token.
+        // Wait for it to complete, or a timeout. Return Response
+        // return Response, or null if cancelled, or RequestTimeout if timeout occurred.
+        public Response BlockingRequest(CancellationToken cancel, Method method, string endpoint, 
+                                                string headerData = null, NameValueCollection headers = null,
+                                                string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+        {
+            HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype);
+            return BlockingRequest(cancel, request, timeout);
+        }
+
+        // perform a BlockingRequest but with a cancellation token.
+        // Wait for it to complete, or a timeout. Return Response
+        // if readbody = true, this function reads the data stream and stores it in rp.Body
+        // return Response, or null if cancelled, or RequestTimeout if timeout occurred.
+        public Response BlockingRequest(CancellationToken cancel, HttpWebRequest request, int timeout, bool readbody = true)
+        {
+            ManualResetEvent complete = new ManualResetEvent(false);    // set when request completes
+            Response rp = null;     // passed back response
+
+            // do this async in this task, will return.  The callback stores the response and sets the manual reset event to trigger the wait below
+            var asyncresult = AsyncRequest((r, o) => { rp = r; complete.Set(); }, null, request, readbody);
+
+            if (asyncresult == null)
+                return null;
+
+            var obj = (Tuple<HttpWebRequest, Action<Response, object>, object,bool>)asyncresult.AsyncState;      // get handle to request data
+
+            // wait for complete or for cancel, with timeout
+            var waitforresult = WaitHandle.WaitAny(new WaitHandle[] { complete, cancel.WaitHandle }, timeout);
+
+            if (waitforresult == WaitHandle.WaitTimeout)
+            {
+                obj.Item1.Abort();      // grab the request and abort it
+                complete.WaitOne();     // will cause the transaction to complete
+                return new Response(HttpStatusCode.RequestTimeout);
+            }
+            else if (waitforresult == 1)        // cancel
+            {
+                obj.Item1.Abort();      // grab the request and abort it
+                complete.WaitOne();     // will cause the transaction to complete
+                return null;
+            }
+            else
+            {                                   // complete fired with response
+                return rp;
+            }
+        }
+
+        /// Class holds the status code and headers of the response, and optionally the body in a string
+        [System.Diagnostics.DebuggerDisplay("{StatusCode}")]
+        public class Response
+        {
+            public HttpStatusCode StatusCode { get; set; }
+            public HttpWebResponse HttpResponse { get; set; }       // set if body is not read
+            public string Body { get; set; }                        // filled if body is read
+            public NameValueCollection Headers { get; set; }
+            public bool Error { get; set; }
+            public Response(HttpStatusCode statusCode, string content = null, NameValueCollection headers = null)
+            {
+                StatusCode = statusCode;
+                Body = content;
+                Headers = headers;
+                Error = (int)statusCode >= 400;
+            }
+
+            public static Response Create(HttpWebResponse response, bool readbody)
+            {
+                if (response == null)
                 {
-                    throw;
+                    WriteLog("HTTPCom Response is null");
+                    return new Response(HttpStatusCode.NotFound);
                 }
 
-                System.Diagnostics.Trace.WriteLine("Exception : " + ex.Message);
-                System.Diagnostics.Trace.WriteLine(ex.StackTrace);
+                Response ourresponse;
 
-                WriteLog("Exception" + ex.Message, "");
- 
-                return new ResponseData(HttpStatusCode.BadRequest);
+                if (readbody)
+                {
+                    var dataStream = response.GetResponseStream();
+                    StreamReader reader = new StreamReader(dataStream);
+                    ourresponse = new Response(response.StatusCode, reader.ReadToEnd(), response.Headers);
+                    reader.Close();
+                    dataStream.Close();
+                }
+                else
+                {
+                    ourresponse = new Response(response.StatusCode);
+                    ourresponse.HttpResponse= response;
+                }
+
+                string d2 = $"HTTPCom Response {response.Method} to {response.ResponseUri.ToString().RemoveApiKey()}: {response.StatusCode}";
+                foreach (string hdr in response.Headers.AllKeys)
+                {
+                    var content = response.Headers[hdr];
+                    d2 = d2.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+                }
+
+                if ( readbody)
+                    WriteLog(d2, ourresponse.Body.Left(1024), false);
+
+                return ourresponse;
             }
         }
 
-        protected string RemoveApiKey(string str)
+        // make a request to this endpoint with this method, optional post headerdata.  
+        // if endpoint starts with http, its the full url, else its ServerAddress+endpoint
+        // content types are defined in https://www.iana.org/assignments/media-types/media-types.xhtml
+        // user agent if null uses the UserAgent member, else give specific user agent
+        public HttpWebRequest MakeRequest(Method method, string endpoint, string headerData, NameValueCollection headers, string contenttype, string useragent = null)
         {
-            str = Regex.Replace(str, "apiKey=[^&]*", "apiKey=xxx", RegexOptions.IgnoreCase);
-            str = Regex.Replace(str, "password=[^&]*", "password=xxx", RegexOptions.IgnoreCase);
-            str = Regex.Replace(str, "\"APIKey\":\".*\"", "\"APIKey\":\"xxx\"", RegexOptions.IgnoreCase);
-            str = Regex.Replace(str, "\"commanderFrontierID\":\".*\"", "\"commanderFrontierID\":\"xxx\"", RegexOptions.IgnoreCase);
-            return str;
-        }
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(endpoint.StartsWith("http", StringComparison.InvariantCultureIgnoreCase) ? endpoint : ServerAddress + endpoint);
+            request.Method = method.ToString();
+            request.ContentType = contenttype;
+            request.UserAgent = useragent ?? UserAgent;      // set user agent
 
-        protected static string EscapeLongDataString(string str)
-        {
-            string ret = "";
+            string dbgmsg = $"HTTPCom {method} to {ServerAddress + endpoint.RemoveApiKey()} Thread '{System.Threading.Thread.CurrentThread.Name}'";
 
-            for (int p = 0; p < str.Length; p += 16384)
+            if (method == Method.GET)
             {
-                ret += Uri.EscapeDataString(str.Substring(p, Math.Min(str.Length - p, 16384)));
+                request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            }
+            else
+            {
+                byte[] byteArray = Encoding.UTF8.GetBytes(headerData);  // Set the ContentType property of the WebRequest.
+                request.ContentLength = byteArray.Length;       // Set the ContentLength property of the WebRequest.
+                Stream dataStream = request.GetRequestStream();     // Get the request stream.
+                dataStream.Write(byteArray, 0, byteArray.Length);       // Write the data to the request stream.
+                dataStream.Close();     // Close the Stream object.
+                dbgmsg += " PostData: " + headerData.RemoveApiKey();
             }
 
-            return ret;
+            if (headers != null)
+                request.Headers.Add(headers);
+
+            foreach (string hdr in request.Headers.AllKeys)
+            {
+                var content = request.Headers[hdr];
+                dbgmsg = dbgmsg.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+            }
+
+            WriteLog(dbgmsg,null,false);
+
+            return request;
         }
 
-        private static Object LOCK = new Object();
-        static public  void WriteLog(string str1, string str2)
+        #endregion
+
+        #region Download file
+
+        // Blocking static download file from URI. Ensure its the http(s):// full path
+        // Useragent will be entry assembly
+        public static bool DownloadFileFromURI(CancellationToken canceltoken,
+                                                string fulluri,                  
+                                                string filename,                                
+                                                bool alwaysnewfile,                             
+                                                out bool downloaded,                               
+                                                Action<long, double> reportProgress = null,  
+                                                int initialtimeout = 20000)
         {
-            //System.Diagnostics.Debug.WriteLine("From:" + Environment.StackTrace.StackTrace("WriteLog",10) + Environment.NewLine + "HTTP:" + str1 + ":" + str2);
+            HttpCom hp = new HttpCom("");   // no server url
+            return hp.DownloadFile(canceltoken, fulluri, filename, alwaysnewfile, out downloaded, reportProgress, initialtimeout);
+        }
+
+        // Blocking download file.
+        // give endpoint as a full uri (starting with http) or endpoint and the address will be ServerAddress+endpoint
+        // store into filename which must be not null and should be a valid location to store into. trapped exception if not and return false.
+        // alwaysnewfile if true, etag is not used, always download and return downloaded = true
+        //               If false and the etag file is there, and the file is the same, don't download it but return true with downloaded = false. Else download
+        // downloaded is set true if the file has been streamed down. 
+        // cancelRequested/canceltoken allows cancellation by either means.
+        // reportprogress allows feedback on downloads
+        // initialtimeout is the timeout between request and response.  Thereafter there is no timeout on the streaming down.
+        // return true if file is present already (using etag) or has been downloaded okay
+        // does not except.
+        // supports GZIP/Deflate
+        public bool DownloadFile(CancellationToken canceltoken,
+                                string uriorendpoint,
+                                string filename,
+                                bool dontuseetagdownfiles,
+                                out bool downloaded,
+                                Action<long, double> reportProgress = null,
+                                int initialtimeout = 20000)
+        {
+            downloaded = false;
+
+            System.Diagnostics.Debug.Assert(filename != null);
+            System.Diagnostics.Debug.Assert(uriorendpoint != null);
+
+            var etagFilename = dontuseetagdownfiles ? null : filename + ".etag";           // if we give a filename and we are not always asking for a new file, we get a .etag file
+
+            var request = MakeRequest(Method.GET, uriorendpoint, null, null, null);
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+            if (etagFilename != null && File.Exists(etagFilename) && File.Exists(filename))   // if we want to etag it, and we have it, and we have the file, we can do a check
+            {
+                var etag = File.ReadAllText(etagFilename);
+                if (etag != "")
+                    request.Headers[HttpRequestHeader.IfNoneMatch] = etag;
+                else
+                    request.IfModifiedSince = File.GetLastWriteTimeUtc(etagFilename);
+            }
+
+            WriteLog($"HTTPCom Downloadfile {request.RequestUri} to {filename}");
+
+            Response rp = BlockingRequest(canceltoken, request, initialtimeout, false);         // don't download..
+
+            if (rp == null)     // cancelled
+                return false;
+
+            if (rp.StatusCode == HttpStatusCode.NotModified)          // response will be closed as anything that webexcepts closes it.
+            {
+                return true;
+            }
+
+            if (rp.HttpResponse != null)    // if we have a response body to read
+            {
+                try
+                {
+                    using (var httpStream = rp.HttpResponse.GetResponseStream())
+                    {
+                        downloaded = true;
+                        var tmpFilename = filename + ".tmp";        // copy thru tmp
+                        using (var destFileStream = File.Open(tmpFilename, FileMode.Create, FileAccess.Write))
+                        {
+                            WriteLog($"HTTPCom Begin download from {request.RequestUri} to {tmpFilename}");
+
+                            reportProgress?.Invoke(0, 0);        // first progress report 0/0
+
+                            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                            long lastreportime = 0;
+
+                            byte[] buffer = new byte[64 * 1024];
+                            long count = 0;
+                            do
+                            {
+                                int numread = httpStream.Read(buffer, 0, buffer.Length);        // read in blocks
+
+                                count += numread;
+
+                                var tme = sw.ElapsedMilliseconds;
+
+                                if (numread == 0 || tme - lastreportime >= 1000)       // if at end, or over a second..
+                                {
+                                    double rate = count / (tme / 1000.0);
+                                    reportProgress?.Invoke(count, rate);
+                                    WriteLog($"HTTPCom {tme} Downloading {request.RequestUri} {count:N0} at {rate:N2} b/s");
+                                    lastreportime = (tme / 1000) * 1000;
+                                }
+
+                                if (numread > 0)
+                                {
+                                    destFileStream.Write(buffer, 0, numread);
+
+                                    if (canceltoken.IsCancellationRequested)
+                                    {
+                                        destFileStream.Close();
+                                        File.Delete(tmpFilename);
+                                        rp.HttpResponse.Close();
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            } while (true);
+                        }
+
+                        File.Delete(filename);
+                        File.Move(tmpFilename, filename);
+
+                        if (etagFilename != null)
+                        {
+                            File.WriteAllText(etagFilename, rp.HttpResponse.Headers[HttpResponseHeader.ETag]);
+                            File.SetLastWriteTimeUtc(etagFilename, rp.HttpResponse.LastModified.ToUniversalTime());
+                        }
+
+                        WriteLog($"HTTPCom Finished Download {request.RequestUri} to {filename}");
+                        rp.HttpResponse.Close();
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    WriteLog($"HTTPCom Download exception {request.RequestUri} to {filename} {ex}");
+                    rp.HttpResponse.Close();
+                }
+            }
+            else
+            {
+                //WriteLog($"HTTPCom Downloadfile {request.RequestUri} to {filename} : Status code {rp.StatusCode} {rp.Body}");
+            }
+            return false;
+        }
+
+        // Blocking, download these remote files to localdownloadfolder
+        // remote files can be http: or endpoints to ServerAddress
+        // if synchronise folder is true, only files in the file list are allowed in the folder.
+        // if remote file has a SHA field, its checked against the SHA of the file, and no download will be performed.  
+        // or you can use the etag system
+        // timeout is per file
+        public bool DownloadFiles(CancellationToken cancel, string localdownloadfolder, List<RemoteFile> files, bool dontuseetagdownfiles,
+                                bool synchronisefolder, int perfileinitialtimeout = DefaultTimeout)
+        {
+            if (!Directory.Exists(localdownloadfolder))
+                return false;
+
+            foreach (var ghf in files)
+            {
+                if (cancel.IsCancellationRequested)
+                    return false;
+
+                string downloadfile = Path.Combine(localdownloadfolder, ghf.Name);
+
+                // we don't use etag, we use DownloadNeeded
+                if (ghf.DownloadNeeded(downloadfile))
+                {
+                    if (!DownloadFile(cancel, ghf.DownloadURL, downloadfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
+                        return false;
+                }
+                else
+                {
+                    WriteLog($"HTTPCom Download File {ghf.DownloadURL} is already present at {downloadfile}");
+                }
+            }
+
+            if (synchronisefolder)      // after successful download, if sync folder, remove any others
+            {
+                FileInfo[] allFiles = Directory.EnumerateFiles(localdownloadfolder, "*.*", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.Name).ToArray();
+
+                foreach (var file in allFiles)
+                {
+                    if (files.FindIndex(x => x.Name.Equals(file.Name, StringComparison.InvariantCultureIgnoreCase)) == -1)
+                    {
+                        WriteLog($"HTTPCom Download File synchronise folder remove {file.FullName}");
+                        FileHelpers.DeleteFileNoError(file.FullName);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+
+        #endregion
+
+
+        #region Implementation
+
+        // call back handler for AsyncRequest
+        private void AysncRespCallback(IAsyncResult asynchronousResult)
+        {
+            var obj = (Tuple<HttpWebRequest, Action<Response, object>, object,bool>)asynchronousResult.AsyncState;
+            HttpWebRequest request = (HttpWebRequest)obj.Item1;
+
+            try
+            {
+                var response = request.EndGetResponse(asynchronousResult) as HttpWebResponse;
+
+                var responsedata = Response.Create(response,obj.Item4);          // always not null, even if response is null.  Read body is indicated in item4
+
+                if (obj.Item4)            // if read body, we can close
+                    response?.Close();
+
+                obj.Item2.Invoke(responsedata, obj.Item3);
+            }
+            catch( WebException ex)
+            {
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                var responsedata = Response.Create(response,true);          // always returns a data object, even if response = null, and download the exception body
+                response?.Close();
+
+                obj.Item2.Invoke(responsedata, obj.Item3);
+            }
+            catch (Exception ex)
+            {
+                WriteLog("HTTPCom Response Async Exception: " + ex.Message);
+                WriteLog($".. stack:", ex.StackTrace);
+
+                obj.Item2.Invoke(new Response(HttpStatusCode.ServiceUnavailable), obj.Item3);
+            }
+        }
+
+        static protected void WriteLog(string str1, string str2 = null, bool tracelog = true)
+        {
+            string msg = $"{str1}{(str2 != null ? ": " + str2 : "")}";
+
+            if (tracelog)
+                System.Diagnostics.Trace.WriteLine(msg);
+            else
+                System.Diagnostics.Debug.WriteLine(msg);
 
             if (LogPath == null || !Directory.Exists(LogPath))
                 return;
 
-            if (str1 != null && str1.ToLowerInvariant().Contains("password"))
-                str1 = "** This string contains a password so not logging it.**";
-
-            if (str2 != null && str2.ToLowerInvariant().Contains("password"))
-                str2 = "** This string contains a password so not logging it.**";
-
             try
             {
-                lock(LOCK)
+                lock(writelock)
                 {
                     string filename = Path.Combine(LogPath, "HTTP_" + DateTime.Now.ToString("yyyy-MM-dd") + ".hlog");
 
                     using (StreamWriter w = File.AppendText(filename))
                     {
-                        w.WriteLine(DateTime.UtcNow.ToStringZulu() + ": " + str1 + ": " + str2);
+                        w.WriteLine(DateTime.UtcNow.ToStringZulu() + ": " + msg);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine("Exception : " + ex.Message);
+                System.Diagnostics.Trace.WriteLine("HTTPCom Log Exception : " + ex.Message);
                 System.Diagnostics.Trace.WriteLine(ex.StackTrace);
             }
         }
 
-        private ResponseData getResponseData(HttpWebResponse response, bool? error = null)
-        {
-            if (response == null)
-                return new ResponseData(HttpStatusCode.NotFound);
+        private static Object writelock = new Object();
+        private string httpserveraddress { get; set; }
 
-            var dataStream = response.GetResponseStream();
-            StreamReader reader = new StreamReader(dataStream);
-            var data = new ResponseData(response.StatusCode, reader.ReadToEnd(), response.Headers);
-            reader.Close();
-            dataStream.Close();
-            return data;
-        }
-
-        public static string MakeQuery(params System.Object[] values)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            for (int i = 0; i < values.Length;)
-            {
-                string name = values[i] as string;
-                object value = values[i + 1];
-                i += 2;
-                if (value != null)
-                {
-                    if (sb.Length > 0)
-                        sb.Append('&');
-                    if (value is string)
-                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(value as string));
-                    else if (value is bool)
-                        sb.Append(name + "=" + (((bool)value) ? "1" : "0"));
-                    else
-                        sb.Append(name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
-                }
-            }
-
-            return sb.ToString();
-        }
-
-
-        protected string httpserveraddress { get; set; }
+        #endregion
     }
 }
