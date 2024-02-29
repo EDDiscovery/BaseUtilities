@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace BaseUtils.Win32
@@ -325,6 +326,11 @@ namespace BaseUtils.Win32
         VK_NONAME         = 0xFC,
         VK_PA1            = 0xFD,
         VK_OEM_CLEAR      = 0xFE;
+
+        public static HandleRef NullHandleRef = new HandleRef(null, IntPtr.Zero);
+        public const int SW_SCROLLCHILDREN = 0x0001,
+                        SW_INVALIDATE = 0x0002,
+                        SW_ERASE = 0x0004;
     }
 
     public enum HookType
@@ -628,7 +634,100 @@ namespace BaseUtils.Win32
         public static extern int OemKeyScan(short wAsciiVal);
         [DllImport("kernel32.dll", ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         public static extern int GetTickCount();
+
+        [DllImport("user32.dll", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        [ResourceExposure(ResourceScope.None)]
+        public static extern int ScrollWindowEx(HandleRef hWnd, int nXAmount, int nYAmount,
+              COMRECT rectScrollRegion, ref RECT rectClip,
+              HandleRef hrgnUpdate, ref RECT prcUpdate, int flags);
     }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+
+        public RECT(int left, int top, int right, int bottom)
+        {
+            this.left = left;
+            this.top = top;
+            this.right = right;
+            this.bottom = bottom;
+        }
+
+        public RECT(System.Drawing.Rectangle r)
+        {
+            this.left = r.Left;
+            this.top = r.Top;
+            this.right = r.Right;
+            this.bottom = r.Bottom;
+        }
+
+        public static RECT FromXYWH(int x, int y, int width, int height)
+        {
+            return new RECT(x, y, x + width, y + height);
+        }
+
+        public System.Drawing.Size Size
+        {
+            get
+            {
+                return new System.Drawing.Size(this.right - this.left, this.bottom - this.top);
+            }
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class COMRECT
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+
+        public COMRECT()
+        {
+        }
+
+        public COMRECT(System.Drawing.Rectangle r)
+        {
+            this.left = r.X;
+            this.top = r.Y;
+            this.right = r.Right;
+            this.bottom = r.Bottom;
+        }
+
+
+        public COMRECT(int left, int top, int right, int bottom)
+        {
+            this.left = left;
+            this.top = top;
+            this.right = right;
+            this.bottom = bottom;
+        }
+
+        /* Unused
+        public RECT ToRECT() {
+            return new RECT(left, top, right, bottom);
+        }
+        */
+
+        public static COMRECT FromXYWH(int x, int y, int width, int height)
+        {
+            return new COMRECT(x, y, x + width, y + height);
+        }
+
+        public override string ToString()
+        {
+            return "Left = " + left + " Top " + top + " Right = " + right + " Bottom = " + bottom;
+        }
+    }
+
+
 
 
 
