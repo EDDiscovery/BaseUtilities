@@ -30,7 +30,7 @@ namespace BaseUtils
 
                 #region Variables
                 functions.Add("exist", new FuncEntry(Exist, 1, 20, FuncEntry.PT.M)); // no macros, all literal, can be strings
-                functions.Add("existsdefault", new FuncEntry(ExistsDefault, FuncEntry.PT.M, FuncEntry.PT.MESE));   // first is a macro but can not exist, second is a string or macro which must exist
+                functions.Add("existsdefault", new FuncEntry(ExistsDefault, 2, FuncEntry.PT.M, FuncEntry.PT.MSE, FuncEntry.PT.MSE, FuncEntry.PT.MSE, FuncEntry.PT.MSE, FuncEntry.PT.MSE));   // first is a macro but can not exist, second etc is a string or macro which must exist
                 functions.Add("expand", new FuncEntry(Expand, 1, 20, FuncEntry.PT.ME)); // check var, can be string (if so expanded)
                 functions.Add("expandarray", new FuncEntry(ExpandArray, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("expandvars", new FuncEntry(ExpandVars, 4, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE, FuncEntry.PT.LS));   // var 1 is text root/string, not var, not string, var 2 can be var or string, var 3/4 is integers or variables, checked in function
@@ -194,12 +194,28 @@ namespace BaseUtils
 
         protected bool ExistsDefault(out string output)
         {
-            if (vars.Exists(paras[0].Value))        // either s.value is an expanded string, or a literal.. does not matter.
-                output = vars[paras[0].Value];
-            else
-                output = paras[1].Value;
+            for (int i = 0; i < paras.Count; i++)
+            {
+                if (paras[i].IsString)     // first literal string wins
+                {
+                    //System.Diagnostics.Debug.WriteLine($"ExistsDefault Selected String {paras[i].Value}");
+                    output = paras[i].Value;
+                    return true;
+                }
+                else if (vars.Exists(paras[i].Value))   // else its a macro name, if it exists, we stop
+                {
+                    output = vars[paras[i].Value];
+                    //System.Diagnostics.Debug.WriteLine($"ExistsDefault Selected Macro {paras[i].Value} = {output}");
+                    return true;
+                }
+                else
+                {
+                    //System.Diagnostics.Debug.WriteLine($"ExistsDefault Not found Macro {paras[i].Value}");
+                }
+            }
 
-            return true;
+            output = "No default value found in ExistsDefault";
+            return false;
         }
 
         protected bool Expand(out string output)

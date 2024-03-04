@@ -34,7 +34,8 @@ namespace AudioExtensions
 
         public string[] GetVoiceNames()
         {
-            return synth.GetInstalledVoices().Select(v => v.VoiceInfo.Name).ToArray();
+            var list = synth.GetInstalledVoices().Where(x=>x.Enabled == true).Select(v => v.VoiceInfo.Name);
+            return list.ToArray();
         }
 
 

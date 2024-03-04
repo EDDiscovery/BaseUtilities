@@ -19,6 +19,7 @@ using System.Linq;
 
 namespace BaseUtils
 {
+    [System.Diagnostics.DebuggerDisplay("{Count} Variables")]
     public class Variables : IEvalSymbolHandler
     {
         #region Init

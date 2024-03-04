@@ -105,7 +105,7 @@ namespace BaseUtils
                 // if string, and its an expand string type, do it..
                 if (isstr)
                 {
-                    if (fe.Expandstring(paras.Count))
+                    if (fe.IsStringToBeExpanded(paras.Count))
                     {
                         string resexp;          // expand out any strings.. recursion
                         Functions.ExpandResult sexpresult = caller.ExpandStringFull(t, out resexp, recdepth + 1);
@@ -164,6 +164,11 @@ namespace BaseUtils
                         else
                             return "Variable '" + t + "' does not exist";
                     }
+                }
+                else if (ptype == FuncEntry.PT.MSE)   // macro, no expand, unchecked,  or string expand
+                {
+                    if (!isstr)
+                        t = vars.Qualify(t);
                 }
                 else if (ptype == FuncEntry.PT.LmeSE)   // a Literal, or a macro expanded, or a string expanded
                 {
@@ -246,6 +251,7 @@ namespace BaseUtils
 
         #region Class only access
 
+        [System.Diagnostics.DebuggerDisplay("{IsString} {Value} {Int} {Long} {Fractional}")]
         protected class Parameter
         {
             public string Value;
@@ -296,6 +302,7 @@ namespace BaseUtils
                 ME,         // Macro name in both unquoted and quoted, with expansion in string.  Macro expanded, must be present
                 M,          // Macro name in both unquoted and quoted, with expansion in string. Not macro expanded.  Not checked for existance.
                 ms,         // Macro name in unquoted, unexpanded, unchecked for existance OR unexpanded string.
+                MSE,        // Macro name in unquoted, unexpanded, unchecked for existance OR expanded string
                 MESE,       // Macro name in unquoted, expanded, must be there OR expanded string
                 LmeSE,      // Macro name in unquoted, expanded, or its a literal OR expanded string
                 ImeSE,      // Macro name check, if present, expanded or literal OR expanded string, followed by a int convert which must work.
@@ -303,8 +310,9 @@ namespace BaseUtils
                 FmeSEBlk,   // as oer FmeSE but allowing a blank string to go thru
             };
 
-            public static PT[] expandedstrings = new PT[] { PT.M, PT.ME, PT.MESE, PT.LmeSE, PT.ImeSE, PT.FmeSE, PT.FmeSEBlk };
-            public bool Expandstring(int pno) { return expandedstrings.Contains(paratype[pno]); }
+            // indicate which ones of the above want expanded strings..
+            public static PT[] expandedstrings = new PT[] { PT.M, PT.ME, PT.MESE, PT.MSE, PT.LmeSE, PT.ImeSE, PT.FmeSE, PT.FmeSEBlk };
+            public bool IsStringToBeExpanded(int pno) { return expandedstrings.Contains(paratype[pno]); }
 
             public PT[] paratype;
             public string fname;        // actual in code function name for reflection
