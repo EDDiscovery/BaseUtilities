@@ -83,10 +83,10 @@ public static partial class ControlHelpersStaticFunc
     }
 
     // move all controls after startcontrol by shift in Y
-    static public void ShiftControls(this Control.ControlCollection coll, Control startcontrol ,Point offset)
+    static public void ShiftControls(this Control.ControlCollection coll, Control startcontrol, Point offset)
     {
         bool active = false;
-        foreach(Control c in coll)
+        foreach (Control c in coll)
         {
             System.Diagnostics.Debug.WriteLine($"Control {c.Name} at {c.Location} {c.Size}");
             if (c == startcontrol)
@@ -94,6 +94,25 @@ public static partial class ControlHelpersStaticFunc
             else if (active)
                 c.Location = new Point(c.Location.X + offset.X, c.Location.Y + offset.Y);
         }
+    }
+
+    // move all controls at or below y by offset, and optionally change size
+    static public void ShiftControls(this Control control, int y, Point offset, bool adjustheight = true)
+    {
+        List<Control> controls = new List<Control>();
+        foreach (Control c in control.Controls)
+        {
+            if (c.Top >= y)
+                controls.Add(c);
+        }
+
+        foreach (Control c in controls)
+        {
+            c.Location = new Point(c.Location.X + offset.X, c.Location.Y + offset.Y);
+        }
+
+        if (adjustheight)
+            control.Height -= offset.Y;
     }
 
     static public void InsertRangeBefore(this Control.ControlCollection coll, Control startpoint, IEnumerable<Control> clist)

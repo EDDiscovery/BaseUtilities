@@ -323,82 +323,73 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return new Tuple<int,int>(rowno,count);
     }
 
-    public static void FilterGridView(this DataGridView vw, string searchstr, bool checktags = false)       // can be VERY SLOW for large grids
+    // can be VERY SLOW for large grids
+    public static void FilterGridView(this DataGridView grid, Func<DataGridViewRow,bool> condition)      
     {
-        vw.SuspendLayout();
-        vw.Enabled = false;
+        grid.SuspendLayout();
+        grid.Enabled = false;
 
-        bool[] visible = new bool[vw.RowCount];
+        bool[] visible = new bool[grid.RowCount];
         bool visibleChanged = false;
 
-        foreach (DataGridViewRow row in vw.Rows.OfType<DataGridViewRow>())
+        foreach (DataGridViewRow row in grid.Rows.OfType<DataGridViewRow>())
         {
-            bool found = false;
-
-            if (searchstr.Length < 1)
-                found = true;
-            else
-            {
-                foreach (DataGridViewCell cell in row.Cells)
-                {
-                    if (cell.Value != null)
-                    {
-                        if (cell.Value.ToString().IndexOf(searchstr, 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (checktags)
-                    {
-                        List<string> slist = cell.Tag as List<string>;
-                        if (slist != null)
-                        {
-                            if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        string str = cell.Tag as string;
-                        if (str != null)
-                        {
-                            if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
+            bool found = condition(row);
             visible[row.Index] = found;
             visibleChanged |= found != row.Visible;
         }
 
         if (visibleChanged)
         {
-            var selectedrow = vw.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
-            DataGridViewRow[] rows = vw.Rows.OfType<DataGridViewRow>().ToArray();
-            vw.Rows.Clear();
+            var selectedrow = grid.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
+            DataGridViewRow[] rows = grid.Rows.OfType<DataGridViewRow>().Where(rw=>!rw.IsNewRow).ToArray();
 
             for (int i = 0; i < rows.Length; i++)
             {
                 rows[i].Visible = visible[i];
             }
 
-            vw.Rows.Clear();
-            vw.Rows.AddRange(rows.ToArray());
-
-            vw.Rows[selectedrow].Selected = true;
+            grid.Rows.Clear();
+            grid.Rows.AddRange(rows.ToArray());
+            grid.Rows[selectedrow].Selected = true;
         }
 
-        vw.Enabled = true;
-        vw.ResumeLayout();
+        grid.Enabled = true;
+        grid.ResumeLayout();
     }
 
+    public static bool IsTextInRow(this DataGridViewRow row, string searchstr, bool checktags = false)
+    {
+        if (!searchstr.HasChars())
+            return true;
+
+        foreach (DataGridViewCell cell in row.Cells)
+        {
+            if (cell.Value != null)
+            {
+                if (cell.Value.ToString().IndexOf(searchstr, 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                    return true;
+            }
+
+            if (checktags)
+            {
+                List<string> slist = cell.Tag as List<string>;
+                if (slist != null)
+                {
+                    if (slist.ContainsIn(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        return true;
+                }
+
+                string str = cell.Tag as string;
+                if (str != null)
+                {
+                    if (str.IndexOf(searchstr, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
 }
