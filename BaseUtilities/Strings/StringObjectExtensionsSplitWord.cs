@@ -162,7 +162,7 @@ public static class ObjectExtensionsStringsSplitWord
             sb.Append("0");
 
         string res = sb.ToString();
-        System.Diagnostics.Debug.WriteLine($"..SplitCapsWordFull `{capslower}` => `{res}`");
+        //System.Diagnostics.Debug.WriteLine($"..SplitCapsWordFull `{capslower}` => `{res}`");
 
         return res;
     }
@@ -208,7 +208,7 @@ public static class ObjectExtensionsStringsSplitWord
         }
         
         string res = String.Join(" ", words);
-        System.Diagnostics.Debug.WriteLine($"SplitCapsWord `{capslower}` => `{res}`");
+       // System.Diagnostics.Debug.WriteLine($"SplitCapsWord `{capslower}` => `{res}`");
         return res;
     }
 
