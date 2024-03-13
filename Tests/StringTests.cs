@@ -222,5 +222,39 @@ namespace EDDiscoveryTests
             }
         }
 
+        [Test]
+        public void ObjectExtensions_SplitCapsWord()
+        {
+            {
+                string s = "FredAndJim20";
+                string r = s.SplitCapsWord();
+                Check.That(r).IsEqualTo("Fred And Jim20");
+            }
+            {
+                string s = "MulticañónFred";
+                string r = s.SplitCapsWord();
+                Check.That(r).IsEqualTo("Multicañón Fred");
+            }
+            {
+                Check.That("AAAwalk".SplitCapsWord()).IsEqualTo("AA Awalk");
+                Check.That("AAAWalk".SplitCapsWord()).IsEqualTo("AAA Walk");
+                Check.That("A Walk in the park".SplitCapsWord()).IsEqualTo("A Walk in the park");
+            }
+            {
+                string s = "MulticañónFred";
+                string r = s.SplitCapsWordFull();
+                Check.That(r).IsEqualTo("Multicañón Fred");
+            }
+            {
+                string s = "MulticañónFred001";
+                string r = s.SplitCapsWordFull();
+                Check.That(r).IsEqualTo("Multicañón Fred 1");
+            }
+            {
+                string s = "MulticañónFred-1929";
+                string r = s.SplitCapsWordFull();
+                Check.That(r).IsEqualTo("Multicañón Fred -1929");
+            }
+        }
     }
 }

@@ -33,8 +33,10 @@ public static class ObjectExtensionsStringsSplitWord
     // at each alpha start, we search using a for loop searchlist first, so it can match stuff with _ and digits/spaces in, 
     // then we do a quick namerep lookup, but this is alpha numeric only
 
-    enum State { space, alpha, nonalpha, digits0, digits };
-    static public string SplitCapsWordFull(this string capslower, Dictionary<string, string> namerep = null, Dictionary<string, string> searchlist = null)     // fixes numbers, does replacement of alpha sequences
+    enum State { whitespace, alpha, nonalpha, digits0, digits };
+
+    // fixes numbers, does replacement of alpha sequences
+    static public string SplitCapsWordFull(this string capslower, Dictionary<string, string> namerep = null, Dictionary<string, string> searchlist = null)     
     {
         if (capslower == null || capslower.Length == 0)
             return "";
@@ -43,7 +45,7 @@ public static class ObjectExtensionsStringsSplitWord
 
         System.Text.StringBuilder sb = new System.Text.StringBuilder(256);
 
-        State state = State.space;
+        State state = State.whitespace;
 
         for (int i = 0; i < s.Length; i++)
         {
@@ -55,18 +57,18 @@ public static class ObjectExtensionsStringsSplitWord
                     sb.Append(c);
                 else if (state != State.digits0)  // digits0, we just ignore, otherwise we jump into it
                 {
-                    if (state != State.space)  // if not in space, space it out, but don't print it
+                    if (state != State.whitespace)  // if not in space, space it out, but don't print it
                         sb.Append(' ');
                     state = State.digits0;     // digits 0.
                 }
             }
-            else if (c >= '1' && c <= '9')  // numbers
+            else if ( char.IsDigit(c))  // rest of the numbers
             {
                 if (state == State.digits)
                     sb.Append(c);                   // in digits, so print it, as we have removed 0 front stuff.
                 else
                 {
-                    if (state != State.space && state != State.digits0)
+                    if (state != State.whitespace && state != State.digits0)
                         sb.Append(' ');     // so, we space out if came from not these two states
 
                     state = State.digits;           // else jump into digits, and append
@@ -78,13 +80,13 @@ public static class ObjectExtensionsStringsSplitWord
                 if (state == State.digits0)        // left in digit 0, therefore a run of 0's, so don't lose it (since they are not inserted)
                     sb.Append('0');
 
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))   // if now alpha
+                if (char.IsLetter(c))   // if now alpha
                 {
                     if (state == State.alpha)
                         sb.Append(c);
                     else
                     {
-                        if (state != State.space)
+                        if (state != State.whitespace)
                             sb.Append(' ');
 
                         state = State.alpha;
@@ -111,7 +113,7 @@ public static class ObjectExtensionsStringsSplitWord
                         if (done == false && namerep != null)           // at alpha start, see if we have any global subs of alpha numerics
                         {
                             int j = i + 1;
-                            for (; j < s.Length && ((s[j] >= 'A' && s[j] <= 'Z') || (s[j] >= 'a' && s[j] <= 'z') || (s[j] >= '0' && s[j] <= '9')); j++)
+                            for (; j < s.Length && char.IsLetterOrDigit(s[j]); j++)
                                 ;
 
                             string keyname = s.Substring(i, j - i);
@@ -135,16 +137,16 @@ public static class ObjectExtensionsStringsSplitWord
                     if (c == '_')       // _ is space
                         c = ' ';
 
-                    if (c == ' ')       // now space, go into space mode..
+                    if (char.IsWhiteSpace(c))       // if whitespace
                     {
-                        state = State.space;
+                        state = State.whitespace;
                         sb.Append(c);
                     }
                     else
                     {                                       // any other than 0-9 and a-z
                         if (state != State.nonalpha)
                         {
-                            if (state != State.space)       // space it
+                            if (state != State.whitespace)       // space it
                                 sb.Append(' ');
 
                             state = State.nonalpha;
@@ -159,8 +161,13 @@ public static class ObjectExtensionsStringsSplitWord
         if (state == State.digits0)     // if trailing 0, append.
             sb.Append("0");
 
-        return sb.ToString();
+        string res = sb.ToString();
+        System.Diagnostics.Debug.WriteLine($"..SplitCapsWordFull `{capslower}` => `{res}`");
+
+        return res;
     }
+
+    // this split captialised words apart only
 
     // regexp of below : string s = Regex.Replace(capslower, @"([A-Z]+)([A-Z][a-z])", "$1 $2"); //Upper(rep)UpperLower = Upper(rep) UpperLower
     // s = Regex.Replace(s, @"([a-z\d])([A-Z])", "$1 $2");     // lowerdecUpper split
@@ -171,7 +178,6 @@ public static class ObjectExtensionsStringsSplitWord
         if (capslower == null || capslower.Length == 0)
             return "";
 
-        List<int> positions = new List<int>();
         List<string> words = new List<string>();
 
         int start = 0;
@@ -181,26 +187,29 @@ public static class ObjectExtensionsStringsSplitWord
 
         for (int i = 1; i <= capslower.Length; i++)
         {
-            char c0 = capslower[i - 1];
-            char c1 = i < capslower.Length ? capslower[i] : '\0';
-            char c2 = i < capslower.Length - 1 ? capslower[i + 1] : '\0';
+            char c0 = capslower[i - 1];                                 // first character                     
+            char c1 = i < capslower.Length ? capslower[i] : '\0';       // second 
+            bool c1iswhitespace = false;
+            char c2 = i < capslower.Length - 1 ? capslower[i + 1] : '\0';   // third
 
             if (i == capslower.Length || // End of string
-                (i < capslower.Length - 1 && c0 >= 'A' && c0 <= 'Z' && c1 >= 'A' && c1 <= 'Z' && c2 >= 'a' && c2 <= 'z') || // UpperUpperLower
-                (((c0 >= 'a' && c0 <= 'z') || (c0 >= '0' && c0 <= '9')) && c1 >= 'A' && c1 <= 'Z') || // LowerdigitUpper
-                (c1 == '-' || c1 == ' ' || c1 == '\t' || c1 == '\r')) // dash or whitespace
+                (i < capslower.Length - 1 && char.IsUpper(c0) && char.IsUpper(c1) && char.IsLower(c2)) || // UpperUpperLower
+                (((char.IsLower(c0)) || (char.IsDigit(c0))) && char.IsUpper(c1)) || // Lower|digitUpper
+                ((c1iswhitespace = c1 == '-' || char.IsWhiteSpace(c1))==true)) // dash or whitespace
             {
                 if (i > start)
                     words.Add(capslower.Substring(start, i - start));
 
-                if (i < capslower.Length && (c1 == '-' || c1 == ' ' || c1 == '\t' || c1 == '\r'))
+                if (i < capslower.Length && c1iswhitespace)
                     start = i + 1;
                 else
                     start = i;
             }
         }
-
-        return String.Join(" ", words);
+        
+        string res = String.Join(" ", words);
+        System.Diagnostics.Debug.WriteLine($"SplitCapsWord `{capslower}` => `{res}`");
+        return res;
     }
 
 
