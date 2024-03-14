@@ -323,6 +323,17 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return new Tuple<int,int>(rowno,count);
     }
 
+    // return range (inclusive) as objects. end = -1 means to end
+    public static object[] CellsObjects(this DataGridViewRow rw, int start = 0, int end = -1)
+    {
+        if (end == -1)
+            end = rw.Cells.Count - 1;
+        object[] obj = new object[end - start + 1];
+        for (int i = start; i <= end; i++)
+            obj[i - start] = rw.Cells[i].Value;
+        return obj;
+    }
+
     // can be VERY SLOW for large grids
     public static void FilterGridView(this DataGridView grid, Func<DataGridViewRow,bool> condition)      
     {
