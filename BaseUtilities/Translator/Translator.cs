@@ -86,6 +86,7 @@ namespace BaseUtils
         public string GetOriginalFile(string fullid) => originalfile?[fullid]??"?";         // ensure its there first!
         public int GetOriginalLine(string fullid) => originalline?[fullid]??-1;         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
+        public void ReDefine(string fullid, string newdefine) { translations[fullid] = newdefine; }        // for edtools
         public List<string> NotUsed()                                               // if track use on, whats not used
         {
             if (inuse != null)
