@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2021 EDDiscovery development team
+ * Copyright © 2020-2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
@@ -51,11 +49,14 @@ namespace BaseUtils
 
     public class Translator
     {
-        static public Translator Instance { get
+        static public Translator Instance
+        {
+            get
             {
                 if (instance == null)
                     instance = new Translator();
-                return instance; }
+                return instance;
+            }
         }
 
         static Translator instance;
@@ -82,11 +83,33 @@ namespace BaseUtils
 
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
-        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid]??"?";         // ensure its there first!
-        public string GetOriginalFile(string fullid) => originalfile?[fullid]??"?";         // ensure its there first!
-        public int GetOriginalLine(string fullid) => originalline?[fullid]??-1;         // ensure its there first!
+        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid] ?? "?";         // ensure its there first!
+        public string GetOriginalFile(string fullid) => originalfile?[fullid] ?? "?";         // ensure its there first!
+        public int GetOriginalLine(string fullid) => originalline?[fullid] ?? -1;         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
         public void ReDefine(string fullid, string newdefine) { translations[fullid] = newdefine; }        // for edtools
+        public string FindTranslation(string text) { var txlist = translations.ToList(); var txpos = txlist.FindIndex(x => x.Value == text); return txpos >= 0 ? txlist[txpos].Key : null; }
+        public string FindTranslation(string text, string primaryfile, string currentfile, bool rootonlynamesprimary)
+        {
+            var txlist = translations.ToList();
+            foreach (var kvp in txlist)
+            {
+                if (kvp.Value == text)
+                {
+                    if (currentfile != primaryfile && originalfile[kvp.Key] == primaryfile && (!rootonlynamesprimary || !kvp.Key.Contains(".")))
+                        return kvp.Key;
+                    else if (originalfile[kvp.Key] == currentfile)
+                        return kvp.Key;
+                }
+            }
+            return null;
+        }
+
+        public string[] FileList()
+        {
+            return originalfile.Values.Distinct().ToArray();
+        }
+
         public List<string> NotUsed()                                               // if track use on, whats not used
         {
             if (inuse != null)
@@ -105,15 +128,15 @@ namespace BaseUtils
 
 
         // You can call this multiple times if required for debugging purposes
-        public bool LoadTranslation(string language, CultureInfo uicurrent, 
-                                    string[] txfolders, int includesearchupdepth, 
-                                    string logdir, 
+        public bool LoadTranslation(string language, CultureInfo uicurrent,
+                                    string[] txfolders, int includesearchupdepth,
+                                    string logdir,
                                     string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
                                     bool loadorgenglish = false,                // optional load original english and store
                                     bool loadfile = false,                      // remember file where it came from
                                     bool trackinuse = false,                    // mark if in use
                                     bool debugout = false                       // list translators in log file
-                                    )       
+                                    )
         {
 #if DEBUG
             if (logger != null)
@@ -130,9 +153,9 @@ namespace BaseUtils
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
-           //  uicurrent = CultureInfo.CreateSpecificCulture("it"); // debug
+            //  uicurrent = CultureInfo.CreateSpecificCulture("it"); // debug
 
-            Tuple<string,string> langsel = null;
+            Tuple<string, string> langsel = null;
 
             if (language == "Auto")
             {
@@ -222,7 +245,7 @@ namespace BaseUtils
 
                             string id = s.NextWord(" :");
 
-                            if (id.Equals("SECTION",StringComparison.InvariantCultureIgnoreCase))
+                            if (id.Equals("SECTION", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 prefix = s.NextQuotedWord(" /");
                             }
@@ -244,24 +267,43 @@ namespace BaseUtils
                                     {
                                         foreign = s.NextQuotedWord(replaceescape: true);
                                         err = foreign == null;
+                                        if (err)
+                                        {
+                                            logger?.WriteLine(string.Format("*** Translator ID but no translation text {0}", id));
+                                            System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation text {0}", id);
+                                        }
                                     }
                                     else if (s.IsCharMoveOn('@'))
                                         foreign = null;
-                                    else
-                                        err = true;
-
-                                    if (err == true)
+                                    else if (s.IsCharMoveOn('='))
                                     {
-                                        logger?.WriteLine(string.Format("*** Translator ID but no translation {0}", id));
-                                        System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation {0}", id);
+                                        string keyword = s.NextWord();
+                                        if (translations.ContainsKey(keyword))
+                                        {
+                                            foreign = translations[keyword];
+                                        }
+                                        else
+                                        {
+                                            logger?.WriteLine(string.Format("*** Translator ID with reference = but no reference found {0}", id));
+                                            System.Diagnostics.Debug.WriteLine("*** Translator ID reference = but no reference found {0}", id);
+                                            err = true;
+                                        }
+
                                     }
                                     else
+                                    {
+                                        logger?.WriteLine(string.Format("*** Translator ID bad format {0}", id));
+                                        System.Diagnostics.Debug.WriteLine("*** Translator ID bad format {0}", id);
+                                        err = true;
+                                    }
+
+                                    if (err != true)
                                     {
                                         if (!translations.ContainsKey(id))
                                         {
                                             //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
-                                            if ( debugout )
-                                                logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id , orgenglish, foreign));
+                                            if (debugout)
+                                                logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
                                             translations[id] = foreign;
                                             if (loadorgenglish)
@@ -297,7 +339,7 @@ namespace BaseUtils
             }
         }
 
-        public void AddExcludedControls(Type [] s)
+        public void AddExcludedControls(Type[] s)
         {
             ExcludedControls.AddRange(s);
         }
@@ -312,7 +354,7 @@ namespace BaseUtils
                 {
                     FileInfo[] allFiles = Directory.EnumerateFiles(folder, "*.tlf", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
                     System.Diagnostics.Debug.WriteLine("TX Check folder " + folder);
-                    foreach ( FileInfo f in allFiles)
+                    foreach (FileInfo f in allFiles)
                     {
 #if !DEBUG
                         if ( f.Name.Contains("example-ex"))
@@ -335,7 +377,7 @@ namespace BaseUtils
             return (from x in languages select Path.GetFileNameWithoutExtension(x.Item2)).ToList();
         }
 
-        static public Tuple<string,string> FindISOLanguage(List<Tuple<string,string>> lang, string isoname)    // take filename part only, see if filename text-<iso> is present
+        static public Tuple<string, string> FindISOLanguage(List<Tuple<string, string>> lang, string isoname)    // take filename part only, see if filename text-<iso> is present
         {
             return lang.Find(x =>
             {
@@ -351,12 +393,12 @@ namespace BaseUtils
 
         public string Translate(string english, string id)
         {
-            if (translations != null && !english.StartsWith("<code") )
+            if (translations != null && !english.StartsWith("<code"))
             {
                 string key = id;
                 if (OutputIDs)
                 {
-                    string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key]??"Null") : "Missing");
+                    string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key] ?? "Null") : "Missing");
                     System.Diagnostics.Debug.WriteLine(tx);
                     logger?.WriteLine(tx);
                 }
@@ -366,7 +408,7 @@ namespace BaseUtils
                     if (inuse != null)
                         inuse[key] = true;
 
-                    
+
                     if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
                         var orgeng = originalenglish[key];
@@ -406,7 +448,7 @@ namespace BaseUtils
             var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
             if (errlist.HasChars())
             {
-                System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist.Replace(",",", ").WordWrap(160)}}};");
+                System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist.Replace(",", ", ").WordWrap(160)}}};");
                 System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",\n").Replace("EDTx.", "    ")};");
             }
             if (enumset != null)
@@ -428,14 +470,14 @@ namespace BaseUtils
                 {
                     // if embedded id, try and translate the ID
 
-                    if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))                                                                                       
+                    if (ctrl.Text.StartsWith("%") && ctrl.Text.EndsWith("%"))
                     {
                         string id = ctrl.Text.Substring(1, ctrl.Text.Length - 2);
                         ctrl.Text = Translate(id, id);
                         if (debugit)
                             System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
                     }
-                    else 
+                    else
                     {
                         // else make ID for control
 
@@ -546,7 +588,7 @@ namespace BaseUtils
                 if (InsertName(c))      // containers don't send thru 
                     id = id.AppendPrePad(c.Name, ".");
 
-                errlist = errlist.AppendPrePad( Tx(tt, c, enumset, id, debugit), ", ");
+                errlist = errlist.AppendPrePad(Tx(tt, c, enumset, id, debugit), ", ");
             }
 
             return errlist;
@@ -609,7 +651,7 @@ namespace BaseUtils
             {
                 foreach (ToolStripItem dd in ddi.DropDownItems)
                 {
-                    errlist = errlist.AppendPrePad( Tx(dd, enumset, subname.AppendPrePad(itemname, ".")), ", ");
+                    errlist = errlist.AppendPrePad(Tx(dd, enumset, subname.AppendPrePad(itemname, ".")), ", ");
                 }
             }
 
