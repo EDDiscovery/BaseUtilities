@@ -150,34 +150,39 @@ public static partial class ControlHelpersStaticFunc
         return s;
     }
 
-    static public void ApplyAnchor(this Control c, AnchorStyles ac, Point initialpos, Size initialsize, int widthdelta, int heightdelta)
+    // this class applies an anchor to a control, with its initial location/size, its minimum size
+    static public void ApplyAnchor(this Control c, AnchorStyles ac, Point originalcontrolloc, Size originalcontrolsize, Size minsize, int widthdelta, int heightdelta)
     {
         if (ac == AnchorStyles.None)
             return;
 
         //System.Diagnostics.Debug.WriteLine("Control {0} is at {1}, initialpos {2} ", c.Name, c.Location, initialpos);
-        int left = initialpos.X;
-        int width = initialsize.Width;
-        if ((ac & AnchorStyles.Right) != 0)
+        int left = originalcontrolloc.X;
+        int width = originalcontrolsize.Width;
+        if ((ac & AnchorStyles.Right) != 0)     // if anchored right
         {
-            if ((ac & AnchorStyles.Left) != 0)
+            if ((ac & AnchorStyles.Left) != 0)  // if anchored right and left, we need to change its width
             {
-                width = Math.Max(initialsize.Width, initialsize.Width + widthdelta);
+                width = Math.Max(minsize.Width, originalcontrolsize.Width + widthdelta);
             }
             else
-                left = Math.Max(initialpos.X, initialpos.X + widthdelta);
+            {
+                left = Math.Max(0,originalcontrolloc.X + widthdelta);       // slide to position, don't allow it to slide off the left
+            }
         }
 
-        int top = initialpos.Y;
-        int height = initialsize.Height;
+        int top = originalcontrolloc.Y;
+        int height = originalcontrolsize.Height;
         if ((ac & AnchorStyles.Bottom) != 0)
         {
             if ((ac & AnchorStyles.Top) != 0)
             {
-                height = Math.Max(initialsize.Height, initialsize.Height + heightdelta);
+                height = Math.Max(minsize.Height, originalcontrolsize.Height + heightdelta);
             }
             else
-                top = Math.Max(initialpos.Y, initialpos.Y + heightdelta);
+            {
+                top = Math.Max(0, originalcontrolloc.Y + heightdelta);
+            }
         }
 
         //System.Diagnostics.Debug.WriteLine("Move to {0} to {1} {2}", c.Name, new Point(left, top), new Size(width, height));
