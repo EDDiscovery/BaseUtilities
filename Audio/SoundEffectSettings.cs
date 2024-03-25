@@ -25,6 +25,7 @@ namespace AudioExtensions
         public bool Any { get { return echoenabled || chorusenabled || reverbenabled || distortionenabled || gargleenabled || pitchshiftenabled; } }
         public bool OverrideNone { get { return Values.Exists("NoEffects"); } set { Values["NoEffects"] = (value) ? "1" : "0"; } }
         public bool Merge { get { return Values.Exists("MergeEffects"); } set { Values["MergeEffects"] = (value) ? "1" : "0"; } }
+        public bool NoGlobalEffects { get { return Values.Exists("NoGlobalEffects"); } set { Values["NoGlobalEffects"] = (value) ? "1" : "0"; } }
 
         public bool echoenabled { get { return Values.Exists("EchoMix") || Values.Exists("EchoFeedback") || Values.Exists("EchoDelay"); } }
         public int echomix { get { return Values.GetInt("EchoMix", 50); } set { Values["EchoMix"] = value.ToString(); } }
@@ -60,20 +61,29 @@ namespace AudioExtensions
         public SoundEffectSettings(Variables v )
         { Values = v; }
 
-        public static SoundEffectSettings Create( Variables globals, Variables local)
+        public static SoundEffectSettings Create(Variables globals, Variables local)
         {
-            SoundEffectSettings ses = new SoundEffectSettings(local);        // use the rest of the vars to place effects
+            SoundEffectSettings ses = new SoundEffectSettings(local);        // use the vars to place effects
 
             if (ses.OverrideNone)      // if none
+            {
                 ses = null;             // no speech effects
+                System.Diagnostics.Debug.WriteLine("SES No effects");
+            }
             else if (ses.Merge)       // merged
             {
                 Variables merged = new Variables(globals, local);   // add global settings (if not null) overridden by vars
                 ses = new SoundEffectSettings(merged);
+                System.Diagnostics.Debug.WriteLine($"SES Merged effects {ses.Values.ToString()}");
             }
-            else if (!ses.Any)        // if none on the command line
+            else if (!ses.NoGlobalEffects && !ses.Any )     // if SES global effects allowed, and ses does not have any active ones
             {
                 ses = (globals != null) ? new SoundEffectSettings(globals) : null;
+                System.Diagnostics.Debug.WriteLine($"SES Global effects {ses?.Values.ToString()}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"SES Local effects {ses?.Values.ToString()}");
             }
 
             return ses;
