@@ -215,8 +215,29 @@ namespace BaseUtils
 
             var obj = (Tuple<HttpWebRequest, Action<Response, object>, object,bool>)asyncresult.AsyncState;      // get handle to request data
 
-            // wait for complete or for cancel, with timeout
-            var waitforresult = WaitHandle.WaitAny(new WaitHandle[] { complete, cancel.WaitHandle }, timeout);
+            // Fix hang under mono when performing requests on UI thread
+            int waitforresult;
+
+            if (System.Windows.Forms.Application.MessageLoop)
+            {
+                do
+                {
+                    int curtimeout = timeout < 0 || timeout > 1000 ? 1000 : timeout;
+
+                    // wait for complete or for cancel, with timeout
+                    waitforresult = WaitHandle.WaitAny(new WaitHandle[] { complete, cancel.WaitHandle }, curtimeout);
+
+                    if (waitforresult == WaitHandle.WaitTimeout)
+                        System.Windows.Forms.Application.DoEvents();
+
+                    if (timeout > 0)
+                        timeout -= curtimeout;
+                } while (waitforresult == WaitHandle.WaitTimeout && timeout != 0);
+            }
+            else
+            {
+                waitforresult = WaitHandle.WaitAny(new WaitHandle[] { complete, cancel.WaitHandle }, timeout);
+            }
 
             if (waitforresult == WaitHandle.WaitTimeout)
             {
