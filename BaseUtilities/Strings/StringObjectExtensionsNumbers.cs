@@ -65,6 +65,10 @@ public static class ObjectExtensionsStringsNumbers
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
     }
+    public static string ToStringInvariantNAN(this double v, string format)
+    {
+        return v != double.NaN ? v.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
+    }
     public static string ToStringInvariant(this double v)
     {
         return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -90,6 +94,10 @@ public static class ObjectExtensionsStringsNumbers
     public static string ToStringInvariant(this double? v, string format)
     {
         return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
+    }
+    public static string ToStringInvariantNAN(this double? v, string format)
+    {
+        return (v.HasValue && v.Value != double.NaN) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
     }
     public static string ToStringInvariant(this float? v, string format)
     {

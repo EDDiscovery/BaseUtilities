@@ -25,33 +25,10 @@ public static partial class ObjectExtensionsStrings
     {
         return (obj ?? string.Empty).ToString();
     }
-
-    public static string ToNANSafeString(this double obj, string format)
-    {
-        return (obj != double.NaN) ? obj.ToString(format) : string.Empty;
-    }
-
-    public static string ToNANNullSafeString(this double? obj, string format)
-    {
-        return (obj.HasValue && obj != double.NaN) ? obj.Value.ToString(format) : string.Empty;
-    }
-
-
+ 
     public static string Alt(this string obj, string alt)
     {
         return (obj == null || obj.Length == 0) ? alt : obj;
-    }
-
-    // if object.ToString equals unknowntext, return "" else return string, but do a space replace
-    public static string ToNullUnknownString(this object obj, string unknowntext = "Unknown", string spacereplacetext="_")
-    {
-        if (obj == null)
-            return string.Empty;
-        else
-        {
-            string str = obj.ToString();
-            return str.Equals(unknowntext) ? "" : str.Replace(spacereplacetext, " ");
-        }
     }
 
     public static void AppendPrePad(this System.Text.StringBuilder sb, string data, string prepad = " ")
