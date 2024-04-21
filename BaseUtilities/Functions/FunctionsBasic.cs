@@ -48,6 +48,7 @@ namespace BaseUtils
                 functions.Add("eval", new FuncEntry(Eval, 1, FuncEntry.PT.LmeSE, FuncEntry.PT.LS, FuncEntry.PT.LmeSE));   // can be string, can be variable, can be literal p2 is not a variable, and can't be a string. p3 can be string, can be variable
                 functions.Add("floor", new FuncEntry(Floor, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));     // first is macros or lit, second is macro or literal
                 functions.Add("hnum", new FuncEntry(Hnum, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));   // para 1 literal or var, para 2 string, literal or var
+                functions.Add("tostring", new FuncEntry(ToString, FuncEntry.PT.FmeSE, FuncEntry.PT.LmeSE));  // first is macro or lit. second is macro or literal
 
                 functions.Add("iftrue", new FuncEntry(Iftrue, 2, FuncEntry.PT.ImeSE, FuncEntry.PT.ms, FuncEntry.PT.ms));   // check var1-3, allow strings var1-3
                 functions.Add("iffalse", new FuncEntry(Iffalse, 2, FuncEntry.PT.ImeSE, FuncEntry.PT.ms, FuncEntry.PT.ms));   // check var1-3, allow strings var1-3
@@ -802,6 +803,13 @@ namespace BaseUtils
             double para = paras[0].Fractional;
             string fmt = paras[1].Value;
             para = Math.Abs(para);
+            return para.ToStringExtendedSafe(fmt, out output);
+        }
+
+        protected bool ToString(out string output)
+        {
+            double para = paras[0].Fractional;
+            string fmt = paras[1].Value;
             return para.ToStringExtendedSafe(fmt, out output);
         }
 
