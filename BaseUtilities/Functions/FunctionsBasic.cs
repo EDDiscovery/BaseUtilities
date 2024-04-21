@@ -802,14 +802,14 @@ namespace BaseUtils
             double para = paras[0].Fractional;
             string fmt = paras[1].Value;
             para = Math.Abs(para);
-            return para.SafeToString(fmt, out output);
+            return para.ToStringExtendedSafe(fmt, out output);
         }
 
         protected bool Int(out string output)
         {
             long para = paras[0].Long;
             string fmt = paras[1].Value;
-            return para.SafeToString(fmt, out output);
+            return para.ToStringExtendedSafe(fmt, out output);
         }
 
         protected bool Floor(out string output)
@@ -817,7 +817,7 @@ namespace BaseUtils
             double para = paras[0].Fractional;
             string fmt = paras[1].Value;
             para = Math.Floor(para);
-            return para.SafeToString(fmt, out output);
+            return para.ToStringExtendedSafe(fmt, out output);
         }
 
         protected bool RoundCommon(out string output)
@@ -838,7 +838,7 @@ namespace BaseUtils
                 res = Math.Round(value, digits);
             }
 
-            return res.SafeToString(fmt, out output);
+            return res.ToStringExtendedSafe(fmt, out output);
         }
 
         protected bool Random(out string output)

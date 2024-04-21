@@ -298,10 +298,10 @@ namespace BaseUtils
             }
             else if (value is double)
             {
-                return ((double)value).SafeToString(fmt, out ret);
+                return ((double)value).ToStringExtendedSafe(fmt, out ret);
             }
             else if (value is long)
-                return ((long)value).SafeToString(fmt, out ret);
+                return ((long)value).ToStringExtendedSafe(fmt, out ret);
             else
             {
                 ret = (string)value;

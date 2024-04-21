@@ -137,7 +137,7 @@ namespace BaseUtils
                 {
                     string output;
 
-                    bool ok = (list[0] is double) ? ((double)list[0]).SafeToString(list[1] as string, out output) : ((long)list[0]).SafeToString(list[1] as string, out output);
+                    bool ok = (list[0] is double) ? ((double)list[0]).ToStringExtendedSafe(list[1] as string, out output) : ((long)list[0]).ToStringExtendedSafe(list[1] as string, out output);
 
                     if (ok)
                         return output;

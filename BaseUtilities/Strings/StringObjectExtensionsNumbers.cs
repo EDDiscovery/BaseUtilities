@@ -119,6 +119,127 @@ public static class ObjectExtensionsStringsNumbers
     {
         return (v.HasValue) ? v.Value.ToString(format, System.Globalization.CultureInfo.InvariantCulture) : "";
     }
+
+    // safe as fmt can be crap string.. format it.
+    // default Invariant but this can be overridden with "CurC"
+    // Additional M type for "Minus X"
+    // Additional M=text; type for "text X" on minus
+    static public bool ToStringExtendedSafe(this double v, string fmt, out string output)
+    {
+        output = "";
+
+        try
+        {
+            if (fmt.StartsWith("M="))
+            {
+                int indexofsemi = fmt.IndexOf(';');
+                if (indexofsemi > 0)
+                {
+                    string text = fmt.Substring(2, indexofsemi - 2);
+
+                    if (v < 0)
+                    {
+                        output = text + " ";
+                        v = -v;
+                    }
+
+                    fmt = fmt.Substring(indexofsemi + 1);
+                }
+                else
+                    throw new Exception();
+            }
+            else if (fmt.StartsWith("M"))
+            {
+                fmt = fmt.Substring(1);
+
+                if (v < 0)
+                {
+                    output = "Minus ";
+                    v = -v;
+                }
+            }
+
+            System.Globalization.CultureInfo cl = System.Globalization.CultureInfo.InvariantCulture;
+
+            if (fmt.StartsWith("CurC", StringComparison.InvariantCultureIgnoreCase))
+            {
+                cl = System.Globalization.CultureInfo.CurrentUICulture;
+                fmt = fmt.Substring(4);
+            }
+
+            output += v.ToString(fmt, cl);
+            return true;
+        }
+        catch
+        {
+            output = "Format must be a c# ToString format";
+            return false;
+        }
+    }
+
+    // safe as fmt can be crap string.. format it.
+    // default Invariant but this can be overridden with "CurC"
+    // Additional M type for "Minus X"
+    // Additional M=text; type for "text X" on minus
+    static public bool ToStringExtendedSafe(this long v, string fmt, out string output)
+    {
+        output = "";
+
+        try
+        {
+            if (fmt.StartsWith("M="))
+            {
+                int indexofsemi = fmt.IndexOf(';');
+                if (indexofsemi > 0)
+                {
+                    string text = fmt.Substring(2, indexofsemi - 2);
+
+                    if (v < 0)
+                    {
+                        output = text + " ";
+                        v = -v;
+                    }
+
+                    fmt = fmt.Substring(indexofsemi + 1);
+                }
+                else
+                    throw new Exception();
+            }
+            else if (fmt.StartsWith("M"))
+            {
+                fmt = fmt.Substring(1);
+
+                if (v < 0)
+                {
+                    output = "Minus ";
+                    v = -v;
+                }
+            }
+
+            if (fmt == "O")
+                output += Convert.ToString(v, 8);
+            else if (fmt == "B")
+                output += Convert.ToString(v, 2);
+            else
+            {
+                System.Globalization.CultureInfo cl = System.Globalization.CultureInfo.InvariantCulture;
+
+                if (fmt.StartsWith("CurC", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    cl = System.Globalization.CultureInfo.CurrentUICulture;
+                    fmt = fmt.Substring(4);
+                }
+
+                output += v.ToString(fmt, cl);
+            }
+            return true;
+        }
+        catch
+        {
+            output = "Format must be a c# ToString format";
+            return false;
+        }
+    }
 }
 
 
