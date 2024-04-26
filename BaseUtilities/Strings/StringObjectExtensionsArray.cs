@@ -34,7 +34,7 @@ public static partial class ObjectExtensionsStrings
         return -1;
     }
 
-    // does any array element contain s with case control (missing from c#)
+    // does any array element contain s with case control (missing from c#)  
     // return index.
     static public int Contains(this string[] array, string s, StringComparison compare)
     {
@@ -47,25 +47,8 @@ public static partial class ObjectExtensionsStrings
         return -1;
     }
 
-    // in array, find first occurance of any of the array[n] terms in s, return -1 not found, or set arrayindex to the one found and return the position in s where found
-    static public int IndexOf(this string s, string[] array, out int arrayindex)   
-    {
-        int found = -1;
-        arrayindex = -1;
-        for (int av = 0; av < array.Length; av++)
-        {
-            int pos = s.IndexOf(array[av]);
-            if (pos != -1 && (found == -1 || pos < found))
-            {
-                found = pos;
-                arrayindex = av;
-            }
-        }
-        return found;
-    }
-
-    // Case insensitive version of Array.Indexof
-    static public int IndexOf(this string[] array, string text, StringComparison compare ) 
+    // Does the text match one of the array elements, if so, return number of element (>0) or -1 if not
+    static public int Equals(this string[] array, string text, StringComparison compare = StringComparison.CurrentCulture)
     {
         for (int av = 0; av < array.Length; av++)
         {
@@ -74,6 +57,23 @@ public static partial class ObjectExtensionsStrings
         }
 
         return -1;
+    }
+
+    // in array, find first occurance of any of the array[n] terms in s, return -1 not found, or set arrayindex to the one found and return the position in s where found
+    static public int IndexOf(this string s, string[] array, out int arrayindex, StringComparison culture = StringComparison.CurrentCulture, int startindex = 0)   
+    {
+        int found = -1;
+        arrayindex = -1;
+        for (int av = 0; av < array.Length; av++)
+        {
+            int pos = s.IndexOf(array[av],startindex,culture);
+            if (pos != -1 && (found == -1 || pos < found))
+            {
+                found = pos;
+                arrayindex = av;
+            }
+        }
+        return found;
     }
 
     static public string Join(this string[] array, char text)

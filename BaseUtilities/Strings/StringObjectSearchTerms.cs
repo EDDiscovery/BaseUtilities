@@ -42,7 +42,7 @@ namespace BaseUtils
                     string nextword = sp.NextWord(": ");                // stop on next : or space
                     int term;
 
-                    if (sp.IsCharMoveOn(':') && (term = Names.IndexOf(nextword, StringComparison.InvariantCultureIgnoreCase)) > 0)       // if :, and it matches nextword
+                    if (sp.IsCharMoveOn(':') && (term = Names.Equals(nextword, StringComparison.InvariantCultureIgnoreCase)) > 0)       // if :, and it matches nextword
                     {
                         string search = sp.NextQuotedWord(" ");     // next quoted word
                         if (search != null)
