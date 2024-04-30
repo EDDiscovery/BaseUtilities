@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+ * Copyright 2016 - 2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,35 +10,24 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 public static class ObjectExtensionsStringsSplitWord
 {
-    // fix word_word to Word Word
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([_])([A-Za-z]+)", m => { return m.Groups[1].Value.FixTitleCase() + " " + m.Groups[3].Value.FixTitleCase(); });
-    // fix _word to spc Word
-    //  s = Regex.Replace(s, @"([_])([A-Za-z]+)", m => { return " " + m.Groups[2].Value.FixTitleCase(); });
-    // fix zeros
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([0-9])", "$1 $2");       // Any ascii followed by number, split
-    //  s = Regex.Replace(s, @"(^0)(0+)", "");     // any 000 at start of line, remove
-    //  s = Regex.Replace(s, @"( 0)(0+)", " ");     // any space 000 in middle of line, remove
-    //  s = Regex.Replace(s, @"(0)([0-9]+)", "$2");   // any 0Ns left, remove 0
-
-    // at each alpha start, we search using a for loop searchlist first, so it can match stuff with _ and digits/spaces in, 
-    // then we do a quick namerep lookup, but this is alpha numeric only
 
     enum State { whitespace, alpha, nonalpha, digits0, digits };
 
-    // fixes numbers, does replacement of alpha sequences
-    static public string SplitCapsWordFull(this string capslower, Dictionary<string, string> namerep = null, Dictionary<string, string> searchlist = null)     
+    // Splits camel case apart, and numbers apart.
+    // allows for search list replacement of text at the start of an alpha sequence
+    // allows for replacement of alpha numerics at the start of an alpha sequence
+    // keeps 's together with alpah
+
+    static public string SplitCapsWordFull(this string capslower, Dictionary<string, string> alphanumericreplace = null, Dictionary<string, string> searchlist = null)     
     {
-        if (capslower == null || capslower.Length == 0)
+        if (!capslower.HasChars())
             return "";
 
         string s = SplitCapsWord(capslower);
@@ -80,19 +69,19 @@ public static class ObjectExtensionsStringsSplitWord
                 if (state == State.digits0)        // left in digit 0, therefore a run of 0's, so don't lose it (since they are not inserted)
                     sb.Append('0');
 
-                if (char.IsLetter(c))   // if now alpha
+                if (char.IsLetter(c))               // if alpha char
                 {
-                    if (state == State.alpha)
+                    if (state == State.alpha)       // if in alpha, just append
                         sb.Append(c);
                     else
                     {
-                        if (state != State.whitespace)
+                        if (state != State.whitespace)  // not in alpha, if in another state, whitespace it
                             sb.Append(' ');
 
-                        state = State.alpha;
+                        state = State.alpha;        // now in alpha
                         bool done = false;
 
-                        if (searchlist != null)
+                        if (searchlist != null)     // check to see if text left matches a replacement string..
                         {
                             string strleft = s.Substring(i);
 
@@ -107,10 +96,9 @@ public static class ObjectExtensionsStringsSplitWord
                                     break;
                                 }
                             }
-
                         }
 
-                        if (done == false && namerep != null)           // at alpha start, see if we have any global subs of alpha numerics
+                        if (done == false && alphanumericreplace != null)           // at alpha start, see if we have any global subs of alpha numerics
                         {
                             int j = i + 1;
                             for (; j < s.Length && char.IsLetterOrDigit(s[j]); j++)
@@ -119,10 +107,10 @@ public static class ObjectExtensionsStringsSplitWord
                             string keyname = s.Substring(i, j - i);
                             //                        string keyname = namekeys.Find(x => s.Substring(i).StartsWith(x));
 
-                            if (namerep.ContainsKey(keyname))
+                            if (alphanumericreplace.ContainsKey(keyname))
                             {
                                 //System.Diagnostics.Debug.WriteLine("Check " + keyname + " Replace " + namerep[keyname]);
-                                sb.Append(namerep[keyname]);
+                                sb.Append(alphanumericreplace[keyname]);
                                 i += keyname.Length - 1;                  // skip this, we are in alpha, -1 because of i++ at top
                                 done = true;
                             }
@@ -133,17 +121,21 @@ public static class ObjectExtensionsStringsSplitWord
                     }
                 }
                 else
-                {
-                    if (c == '_')       // _ is space
+                {                                                   // NOT a letter
+                    if (c == '_')                                   // _ is space
                         c = ' ';
 
                     if (char.IsWhiteSpace(c))       // if whitespace
                     {
-                        state = State.whitespace;
+                        state = State.whitespace;   // now in whitespace, and append
+                        sb.Append(c);
+                    }
+                    else if ( c == '\'' && state == State.alpha )   // in alpha and quote, text'text stay in alpha
+                    {
                         sb.Append(c);
                     }
                     else
-                    {                                       // any other than 0-9 and a-z
+                    {                                           // any other than 0-9 and a-z
                         if (state != State.nonalpha)
                         {
                             if (state != State.whitespace)       // space it
@@ -167,16 +159,21 @@ public static class ObjectExtensionsStringsSplitWord
         return res;
     }
 
-    // this split captialised words apart only
-
-    // regexp of below : string s = Regex.Replace(capslower, @"([A-Z]+)([A-Z][a-z])", "$1 $2"); //Upper(rep)UpperLower = Upper(rep) UpperLower
-    // s = Regex.Replace(s, @"([a-z\d])([A-Z])", "$1 $2");     // lowerdecUpper split
-    // s = Regex.Replace(s, @"[-\s]", " "); // -orwhitespace with spc
+    // this splits captialised words apart only, to a string
 
     public static string SplitCapsWord(this string capslower)
     {
-        if (capslower == null || capslower.Length == 0)
-            return "";
+        var words = SplitCapsWordToList(capslower);
+        string res = String.Join(" ", words);
+        // System.Diagnostics.Debug.WriteLine($"SplitCapsWord `{capslower}` => `{res}`");
+        return res;
+    }
+
+    // this splits captialised words apart only, to a word list, 
+    public static List<string> SplitCapsWordToList(this string capslower)
+    {
+        if (!capslower.HasChars())
+            return new List<string> { "" };
 
         List<string> words = new List<string>();
 
@@ -194,23 +191,37 @@ public static class ObjectExtensionsStringsSplitWord
 
             if (i == capslower.Length || // End of string
                 (i < capslower.Length - 1 && char.IsUpper(c0) && char.IsUpper(c1) && char.IsLower(c2)) || // UpperUpperLower
-                (((char.IsLower(c0)) || (char.IsDigit(c0))) && char.IsUpper(c1)) || // Lower|digitUpper
-                ((c1iswhitespace = c1 == '-' || char.IsWhiteSpace(c1))==true)) // dash or whitespace
+                (((char.IsLower(c0)) || (char.IsDigit(c0))) && char.IsUpper(c1)) || // (Lower|digit)Upper
+                ((c1iswhitespace = c1 == '-' || char.IsWhiteSpace(c1)) == true)) // dash or whitespace
             {
                 if (i > start)
-                    words.Add(capslower.Substring(start, i - start));
+                    words.Add(capslower.Substring(start, i - start));       // new word
 
-                if (i < capslower.Length && c1iswhitespace)
+                if (i < capslower.Length && c1iswhitespace) // move start on..
                     start = i + 1;
                 else
                     start = i;
             }
         }
-        
-        string res = String.Join(" ", words);
-       // System.Diagnostics.Debug.WriteLine($"SplitCapsWord `{capslower}` => `{res}`");
-        return res;
+
+        return words;
     }
+
+
+    // fix word_word to Word Word
+    //  s = Regex.Replace(s, @"([A-Za-z]+)([_])([A-Za-z]+)", m => { return m.Groups[1].Value.FixTitleCase() + " " + m.Groups[3].Value.FixTitleCase(); });
+    // fix _word to spc Word
+    //  s = Regex.Replace(s, @"([_])([A-Za-z]+)", m => { return " " + m.Groups[2].Value.FixTitleCase(); });
+    // fix zeros
+    //  s = Regex.Replace(s, @"([A-Za-z]+)([0-9])", "$1 $2");       // Any ascii followed by number, split
+    //  s = Regex.Replace(s, @"(^0)(0+)", "");     // any 000 at start of line, remove
+    //  s = Regex.Replace(s, @"( 0)(0+)", " ");     // any space 000 in middle of line, remove
+    //  s = Regex.Replace(s, @"(0)([0-9]+)", "$2");   // any 0Ns left, remove 0
+
+    // regexp of below : string s = Regex.Replace(capslower, @"([A-Z]+)([A-Z][a-z])", "$1 $2"); //Upper(rep)UpperLower = Upper(rep) UpperLower
+    // s = Regex.Replace(s, @"([a-z\d])([A-Z])", "$1 $2");     // lowerdecUpper split
+    // s = Regex.Replace(s, @"[-\s]", " "); // -orwhitespace with spc
+
 
 
 }
