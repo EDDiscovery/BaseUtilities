@@ -166,6 +166,10 @@ namespace EMK.LightGeometry
             for (int i = 0; i < 3; i++) New[i] = P[i] + V[i];
             return new Point3D(New);
         }
+        public override string ToString()
+        {
+            return $"({_Coordinates[0].ToStringInvariant()},{_Coordinates[0].ToStringInvariant()},{_Coordinates[0].ToStringInvariant()})";
+        }
     }
 
     public struct Vector3
@@ -197,6 +201,11 @@ namespace EMK.LightGeometry
         public static Vector3 operator -(Vector3 a, Vector3 b)
         {
             return new Vector3 { X = a.X - b.X, Y = a.Y - b.Y, Z = a.Z - b.Z };
+        }
+
+        public override string ToString()
+        {
+            return $"({X.ToStringInvariant()},{Y.ToStringInvariant()},{Z.ToStringInvariant()})";
         }
     }
 }

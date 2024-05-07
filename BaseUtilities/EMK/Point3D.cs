@@ -197,21 +197,9 @@ namespace EMK.LightGeometry
 			return (int)HashCode;
 		}
 
-		/// <summary>
-		/// Object.GetHashCode override.
-		/// Returns a textual description of the point.
-		/// </summary>
-		/// <returns>String describing this point.</returns>
-		public override string ToString()
-		{
-			string Deb = "{";
-			string Sep = ";";
-			string Fin = "}";
-			string Resultat = Deb;
-			int Dimension = 3;
-			for (int i=0; i<Dimension; i++)
-				Resultat += _Coordinates[i].ToString() + (i!=Dimension-1 ? Sep : Fin);
-			return Resultat;
-		}
+        public override string ToString()
+        {
+            return $"({_Coordinates[0].ToStringInvariant()},{_Coordinates[1].ToStringInvariant()},{_Coordinates[2].ToStringInvariant()})";
+        }
 	}
 }
