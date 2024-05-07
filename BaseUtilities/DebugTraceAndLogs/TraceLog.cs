@@ -43,6 +43,9 @@ namespace BaseUtils
             }
         }
 
+        public static string ImportantMessagePrefix = "***";    // used to signify messages which should be pumped thru this
+        public static Action<string> ImportantMessage;      // hook to get important messages ***
+
         // submit a message. \rs are ignored. \ns show line boundaries
         public static void WriteLine(string msg)
         {
@@ -87,6 +90,12 @@ namespace BaseUtils
                                     writer.Close();
                                     System.Diagnostics.Trace.Listeners.Remove(tracelistener);
                                     return;
+                                }
+
+                                // pump this out thru the interface to give the program a chance to present it
+                                if ( msg.StartsWith(ImportantMessagePrefix))
+                                {
+                                    ImportantMessage?.Invoke(msg);
                                 }
 
                                 msg = msg.Replace("\r", "");        // remove any /rs as they will double space the log output in editors
