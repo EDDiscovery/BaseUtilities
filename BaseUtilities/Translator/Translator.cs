@@ -423,10 +423,10 @@ namespace BaseUtils
                 }
                 else
                 {
-                    logger?.WriteLine(string.Format("{0}: {1} @", id, english.EscapeControlChars().AlwaysQuoteString()));
+                    logger?.WriteLine($"{id}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     english = "! " + english + " !";          // no id at all, use ! to indicate
                     translations.Add(key, english);
-                    //System.Diagnostics.Debug.WriteLine("*** Missing Translate ID: {0}: \"{1}\" => \"{2}\"", id, normal.EscapeControlChars(), "<" + normal.EscapeControlChars() + ">");
+                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID: {id}: {english.EscapeControlChars().AlwaysQuoteString()} @" );
                     return english;
                 }
             }
