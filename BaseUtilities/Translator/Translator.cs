@@ -440,6 +440,7 @@ namespace BaseUtils
         // controls can be marked <code> to say don't translate, or use %id% to indicate to use an ID
         // We must go thru this procedure even if translations are off due to the embedded IDs such as %OK%
 
+        [System.Diagnostics.DebuggerHidden]
         public void TranslateControls(Control ctrl, Enum[] enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
@@ -544,6 +545,8 @@ namespace BaseUtils
         }
 
         // translate tooltips.  Does not support %id%.  <code> is ignored.  No check for duplicates due to tooltip replication on some controls (nov 22)
+
+        [System.Diagnostics.DebuggerHidden]
         public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null, bool debugit = false)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
@@ -600,6 +603,7 @@ namespace BaseUtils
             TranslateToolstrip(ctrl, enumset, parent.GetType().Name);
         }
 
+        [System.Diagnostics.DebuggerHidden]
         public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, string subname)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development

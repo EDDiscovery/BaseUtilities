@@ -562,7 +562,7 @@ public static class ObjectExtensionsNumbersBool
     }
 
     // fron newtonsoft JSON, et al, calculate relative epsilon and compare
-    public static bool ApproxEquals(this double left, double right, double epsilon = 2.2204460492503131E-16)       
+    public static bool ApproxEquals(this double left, double right, double epsilon = 2.2204460492503131E-16)
     {
         if (left == right)
         {
@@ -575,6 +575,17 @@ public static class ObjectExtensionsNumbersBool
         return (-tolerance < difference && tolerance > difference);
     }
 
+    // Less than this percent in error.
+    public static bool ApproxEqualsPercent(this double left, double right, double percent = 0.1)
+    {
+        if (left == right)
+        {
+            return true;
+        }
+
+        double diff = Math.Abs((left - right) / left);
+        return diff <= percent / 100;
+    }
     static public double Length(double x, double y, double z, double ox, double oy, double oz)
     {
         return Math.Sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy) + (z - oz) * (z - oz));
