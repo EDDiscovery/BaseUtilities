@@ -70,6 +70,7 @@
     <Compile Include="Conditions\ConditionListsCheckEval.cs" />
     <Compile Include="Conditions\ConditionListsCheck.cs" />
     <Compile Include="DDE\DDEServer.cs" />
+    <Compile Include="DebugTraceAndLogs\Debugger.cs" />
     <Compile Include="Drawing\DrawingHelpers.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />

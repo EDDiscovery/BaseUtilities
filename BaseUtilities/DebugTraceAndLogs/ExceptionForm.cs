@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2020 EDDiscovery development team
+ * Copyright © 2016 - 2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,9 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -40,6 +38,7 @@ namespace BaseUtils
 
             if (isFatal || res != DialogResult.Ignore)
             {
+                Application.Exit();
                 Environment.Exit(1);
             }
 
@@ -60,11 +59,6 @@ namespace BaseUtils
         private string reportURL;
 
         private Image icon = null;
-        private bool isExpanded = true;
-        private int lastExpandedHeight = -1;
-
-        private readonly int CollapsedHeight = -1;
-        private readonly int MinimumHeightExpanded = -1;
 
         private ExceptionForm(Exception ex, string desc, string reportUrl, bool isFatal = false)
         {
@@ -74,10 +68,6 @@ namespace BaseUtils
             exception = ex;
             this.isFatal = isFatal;
             reportURL = reportUrl;
-
-            // Get some information from the designer.
-            CollapsedHeight = Height - pnlDetails.Height - (pnlDetails.Top - pnlHeader.Bottom);
-            MinimumHeightExpanded = CollapsedHeight + 80;   // 80 ≈ 4 lines of text.
         }
 
 
@@ -89,32 +79,6 @@ namespace BaseUtils
             else
                 return string.Empty;
         }
-
-        // Show or hide the extended details panel, and resize the form to fit appropriately.
-        private void ToggleDetails()
-        {
-            SuspendLayout();
-
-            isExpanded = !isExpanded;
-            btnDetails.Text = (isExpanded ? "▲" : "▼") + "  &Details";
-            pnlDetails.Visible = isExpanded;
-
-            if (isExpanded)
-            {
-                MinimumSize = new Size(MinimumSize.Width, MinimumHeightExpanded);
-                MaximumSize = Size.Empty;
-                Height = lastExpandedHeight;
-            }
-            else
-            {
-                lastExpandedHeight = Height;
-                MaximumSize = new Size(int.MaxValue, CollapsedHeight);
-                MinimumSize = new Size(MinimumSize.Width, CollapsedHeight);
-            }
-
-            ResumeLayout(true);
-        }
-
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
@@ -130,7 +94,6 @@ namespace BaseUtils
         {
             base.OnLoad(e);
 
-            ToggleDetails();
             icon = SystemIcons.Error.ToBitmap();
             pnlIcon.BackgroundImage = icon;
 
@@ -139,10 +102,6 @@ namespace BaseUtils
                 // Remove btnContinue
                 pnlHeader.Controls.Remove(btnContinue);
                 btnContinue.Dispose();
-
-                // Center btnReport in the panel
-                btnReport.Anchor &= ~AnchorStyles.Left;
-                btnReport.Left = pnlHeader.ClientSize.Width / 2 - btnReport.Width / 2;
             }
 
             string appShortName = Assembly.GetEntryAssembly().GetName().Name;
@@ -181,11 +140,6 @@ namespace BaseUtils
             }
         }
 
-
-        private void btnDetails_Click(object sender, EventArgs e)
-        {
-            ToggleDetails();
-        }
 
         private void btnContinueOrExit_MouseClick(object sender, MouseEventArgs e)
         {
