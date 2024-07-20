@@ -128,6 +128,7 @@ namespace EliteDangerousCore.DB
             return fill;
         }
 
+
         public static int GetSystemList<V>(SQLiteConnectionSystem cn, float x, float y, float z, float blocksize, ref string[] names, ref V[] vectors,
                                                 Func<int, int, int, EDStar, V> tovect,
                                                 Func<V, string, string> additionaltext, int chunksize)

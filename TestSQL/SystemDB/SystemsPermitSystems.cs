@@ -39,6 +39,27 @@ namespace EliteDangerousCore.DB
 
             return ret;
         }
+
+        static public List<ISystem> GetListPermitSystems()
+        {
+            List<ISystem> ret = new List<ISystem>();
+            SystemsDatabase.Instance.DBRead(cn =>
+            {
+                using (DbCommand selectSysCmd = cn.CreateSelect("SystemTable s", MakeSystemQueryNamed, "s.edsmid IN (Select edsmid From PermitSystems)", joinlist: MakeSystemQueryNamedJoinList))
+                {
+                    using (DbDataReader reader = selectSysCmd.ExecuteReader())
+                    {
+                        while (reader.Read())      // if there..
+                        {
+                            SystemClass s = MakeSystem(reader);
+                            ret.Add(s);
+                        }
+                    }
+                }
+            });
+
+            return ret;
+        }
     }
 }
 

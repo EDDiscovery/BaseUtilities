@@ -20,8 +20,6 @@ namespace EliteDangerousCore.Spansh
 {
     public partial class SpanshClass : BaseUtils.HttpCom
     {
-        
-
         public static EDStar? SpanshStarNameToEDStar(string name)
         {
             if (spanshtoedstar.TryGetValue(name, out EDStar value))
@@ -95,40 +93,6 @@ namespace EliteDangerousCore.Spansh
             { "B (Blue-White super giant) Star", EDStar.B_BlueWhiteSuperGiant },
             { "G (White-Yellow super giant) Star", EDStar.G_WhiteSuperGiant },
         };
-
-        public static EDPlanet? SpanshPlanetNameToEDPlanet(string name)
-        {
-            if (spanshtoedplanet.TryGetValue(name, out EDPlanet value))
-                return value;
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"SPANSH failed to decode planet {name}");
-                return null;
-            }
-        }
-
-        private static Dictionary<string, EDPlanet> spanshtoedplanet = new Dictionary<string, EDPlanet>(StringComparer.InvariantCultureIgnoreCase)
-        {
-            { "Ammonia world", EDPlanet.Ammonia_world },
-            { "Class I gas giant", EDPlanet.Sudarsky_class_I_gas_giant },
-            { "Class II gas giant", EDPlanet.Sudarsky_class_II_gas_giant },
-            { "Class III gas giant", EDPlanet.Sudarsky_class_III_gas_giant },
-            { "Class IV gas giant", EDPlanet.Sudarsky_class_IV_gas_giant },
-            { "Class V gas giant", EDPlanet.Sudarsky_class_V_gas_giant },
-            { "Earth-like world", EDPlanet.Earthlike_body },
-            { "Gas giant with ammonia-based life", EDPlanet.Gas_giant_with_ammonia_based_life },
-            { "Gas giant with water-based life", EDPlanet.Gas_giant_with_water_based_life },
-            { "Helium gas giant", EDPlanet.Helium_gas_giant },
-            { "Helium-rich gas giant", EDPlanet.Helium_rich_gas_giant },
-            { "High metal content world", EDPlanet.High_metal_content_body },
-            { "Metal-rich body", EDPlanet.Metal_rich_body },
-            { "Icy body", EDPlanet.Icy_body },
-            { "Rocky Ice world", EDPlanet.Rocky_ice_body },
-            { "Rocky body", EDPlanet.Rocky_body },
-            { "Water giant", EDPlanet.Water_giant },
-            { "Water world", EDPlanet.Water_world },
-        };
-
     }
 }
 

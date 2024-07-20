@@ -30,6 +30,14 @@ namespace EliteDangerousCore.DB
         public static bool WALMode { get; set; } = false;
         public string DBSource { get; private set; } = "Unknown";
         public bool HasStarType { get { return DBSource == "SPANSH"; } }
+        public bool HasSystemAddresses { get { return DBSource == "SPANSH"; } }
+        public bool RebuildRunning { get; private set; } = true;                // we are rebuilding until we have the system db table in there
+        public HashSet<long> PermitSystems { get; private set; }                             // list of permit systems
+
+        public bool IsPermitSystem(ISystem s)
+        {
+            return HasSystemAddresses ? PermitSystems.Contains(s.SystemAddress ?? -1) : PermitSystems.Contains(s.EDSMID ?? -1);
+        }
 
         public static SystemsDatabase Instance
         {
@@ -101,14 +109,11 @@ namespace EliteDangerousCore.DB
 
         const string TempTablePostfix = "temp"; // postfix for temp tables
 
-        public bool RebuildRunning { get; private set; } = true;                // we are rebuilding until we have the system db table in there
-
-        public HashSet<long> PermitSystems { get; private set; }                             // list of permit systems
 
 
         // this deletes the current DB data, reloads from the file, and recreates the indexes etc
 
-        public long MakeSystemTableFromFile(string filename, bool[] gridids, int blocksize, Func<bool> cancelRequested, Action<string> reportProgress,
+        public long MakeSystemTableFromFile(string filename, bool[] gridids, int blocksize, System.Threading.CancellationToken cancelRequested, Action<string> reportProgress,
                                             string debugoutputfile = null, int method = 0)
         {
             DBWrite(action: conn =>
@@ -141,7 +146,7 @@ namespace EliteDangerousCore.DB
             {
                 SystemsDB.Loader3 loader = new SystemsDB.Loader3(TempTablePostfix, blocksize, gridids, true, false, debugoutputfile);   // overlap write with insert or replace
                 updates = loader.ParseJSONFile(filename, cancelRequested, reportProgress);
-                loader.Finish();
+                loader.Finish(cancelRequested);
             }
             else
                 System.Diagnostics.Debug.Assert(false);
