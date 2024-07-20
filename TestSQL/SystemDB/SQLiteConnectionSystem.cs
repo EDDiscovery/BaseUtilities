@@ -37,6 +37,13 @@ namespace EliteDangerousCore.DB
             int dbver = reg.GetSetting("DBVer", (int)0);      // use reg, don't use the built in func as they create new connections and confuse the schema
             int dborg = dbver;
 
+            int dbclassifiermode = reg.GetSetting("DBClassifier", (int)0);      // get the flag indicating new EC classifiers, if not there, use 0
+            if ( dbver == 0 || dbclassifiermode == 1)       // if new DB (no version) or classifier mode is on
+            {
+                EliteNameClassifier.ChangeToNewBitPositions();  // new mode
+                reg.PutSetting("DBClassifier", 1);              // and remember for next start up
+            }
+
             if (dbver < 210)    // less than 210, delete the lot and start again
             {
                 ExecuteNonQueries(new string[]                  // always set up
