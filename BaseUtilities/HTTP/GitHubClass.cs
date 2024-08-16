@@ -29,6 +29,7 @@ namespace BaseUtils
 
         public JArray GetAllReleases(int reqmax)
         {
+            // always returns response
             var response = RequestGet("releases?per_page=" + reqmax.ToString());
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -41,6 +42,7 @@ namespace BaseUtils
 
         public GitHubRelease GetLatestRelease()
         {
+            // always returns response
             var response = RequestGet("releases/latest");
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -61,8 +63,10 @@ namespace BaseUtils
         // NULL if folder not found or not an array return.  Empty list if files not there
         public List<RemoteFile> ReadFolder(System.Threading.CancellationToken cancel, string gitfolder, int timeout = DefaultTimeout)
         {
+            // call blocking request, cancel will result in null
             var response = BlockingRequest(cancel, Method.GET, "contents/" + Uri.EscapeDataString(gitfolder), timeout:timeout);
-            if (response.StatusCode == HttpStatusCode.OK)
+
+            if (response?.StatusCode == HttpStatusCode.OK)      // response will be null if cancelled, bug #3548
             {
                 JArray ja = JArray.Parse(response.Body);
 
@@ -100,7 +104,7 @@ namespace BaseUtils
         public bool DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
                                 bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
         {
-            List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);
+            List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled
 
             if (remotefiles != null)
             {
@@ -117,7 +121,7 @@ namespace BaseUtils
         public bool DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, List<string> matches,
                                                 bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
         {
-            var remotefiles = ReadFolder(cancel, gitfolder, timeout);
+            var remotefiles = ReadFolder(cancel, gitfolder, timeout);   // will return null if cancelled
 
             if (remotefiles != null)
             {

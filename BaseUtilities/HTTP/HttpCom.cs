@@ -52,6 +52,7 @@ namespace BaseUtils
         #region HTTP Requests
 
         // Blocking POST request, with postdata and with timeout.  Postdata first due to historical reasons
+        // Response returned always
         protected Response RequestPost(string postData, string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
         {
             return BlockingRequest(Method.POST, endpoint, postData, headers, contenttype,timeout);
@@ -59,6 +60,7 @@ namespace BaseUtils
 
         // Blocking GET request, with timeout
         // Headers automatically has Accept-Encoding gzip/deflate added
+        // Response returned always
         protected Response RequestGet(string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
         {
             if (headers == null)
@@ -473,6 +475,8 @@ namespace BaseUtils
                                 {
                                     break;
                                 }
+
+                                //System.Diagnostics.Debug.WriteLine($"Loaded block {count}");  Thread.Sleep(200);
                             } while (true);
                         }
 
