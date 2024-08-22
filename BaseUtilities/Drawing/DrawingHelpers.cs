@@ -245,7 +245,7 @@ public static partial class DrawingHelpersStaticFunc
 
     public static int ScaleScrollbar(this Font f)                    //given a font, scale the scroll bar
     {
-        return (int)(f.GetHeight() / 18 * 32);
+        return (int)(f.GetHeight() / 18 * 28);
     }
 
     public static float ScaleSize(this Font f, float nominalat12)      //given a font, and size at normal 12 point, what size should i make it now
