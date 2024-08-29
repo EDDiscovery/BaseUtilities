@@ -393,6 +393,10 @@ namespace BaseUtils
 
         public string Translate(string english, string id)
         {
+            if ( id == "DataGridView.WordWrap")
+            {
+
+            }
             if (translations != null && !english.StartsWith("<code"))
             {
                 string key = id;
@@ -544,7 +548,7 @@ namespace BaseUtils
             return errlist;
         }
 
-        // translate tooltips.  Does not support %id%.  <code> is ignored.  No check for duplicates due to tooltip replication on some controls (nov 22)
+        // translate tooltips.  Does not support %id%.  <code> is ignored.  Does check for non used enums now
 
         [System.Diagnostics.DebuggerHidden]
         public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null, bool debugit = false)
@@ -552,15 +556,22 @@ namespace BaseUtils
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-            var errlist = Tx(tt, parent, elist, subname != null ? subname : parent.GetType().Name, debugit);
+            var elistremoved = elist != null ? new List<string>(elist) : new List<string>(); // either duplicate or empty
+            var errlist = Tx(tt, parent, elist, elistremoved, subname != null ? subname : parent.GetType().Name, debugit);
+
             if (errlist.HasChars())
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
                 System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",\n").Replace("EDTx.", "    ")};");
             }
+            if (elistremoved.Count>0)
+            {
+                System.Diagnostics.Debug.WriteLine("Extra unused tooltip enums: " + string.Join(",",elistremoved));
+                System.Diagnostics.Debug.Assert(false, "Tooltip Enum set contains extra Enums: " + string.Join(",", elistremoved));
+            }
         }
 
-        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, string subname, bool debugit)
+        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, List<string> enumsetremoved, string subname, bool debugit)
         {
             string errlist = "";
 
@@ -572,11 +583,14 @@ namespace BaseUtils
 
                 string enumid = id.Replace(".", "_");
 
-                // if we do have it, unlike controls, we dont remove the enum to double detect, because some controls (Exttextbox, extcombobox) copy
+                // if we do have it, unlike controls, we can't just remove the ID from enumset, because some controls (Exttextbox, extcombobox) copy
                 // down their tooltips to their subcontrols and they end up being present multiple times
+                // we do however remove them from the enumsetremoved to keep count
 
                 if (enumset == null || !enumset.Contains(enumid))
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
+                else
+                    enumsetremoved.Remove(enumid);
 
                 tt.SetToolTip(ctrl, Translate(s, id));
 
@@ -591,7 +605,7 @@ namespace BaseUtils
                 if (InsertName(c))      // containers don't send thru 
                     id = id.AppendPrePad(c.Name, ".");
 
-                errlist = errlist.AppendPrePad(Tx(tt, c, enumset, id, debugit), ", ");
+                errlist = errlist.AppendPrePad(Tx(tt, c, enumset, enumsetremoved, id, debugit), ", ");
             }
 
             return errlist;
