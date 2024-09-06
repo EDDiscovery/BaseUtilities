@@ -48,12 +48,16 @@ public static class ObjectExtensionsStringsCompare
     {
         var datal = ReadNumeric(left, removetext);
         var datar = ReadNumeric(right, removetext);
-        if (datal.Item2 == false)        // left bad, right better
-            return 1;
+        
+        if (datal.Item2 == false)        // left bad
+            return datar.Item2 == false ? 0 : 1;          // if both bad, same, else less
         else if (datar.Item2 == false)   // right bad, left better
             return -1;
         else
-            return datal.Item1.CompareTo(datar.Item1);
+        {
+            var res = datal.Item1.CompareTo(datar.Item1);
+            return res;
+        }
     }
 
     static public int CompareAlphaInt(this string x, string y)
