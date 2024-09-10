@@ -147,6 +147,7 @@
     <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
     <Compile Include="Misc\SHA.cs" />
     <Compile Include="Drawing\BitMapHelpers.cs" />
+    <Compile Include="WinForms\DataGridViewCell.cs" />
     <Compile Include="WinForms\MenuItems.cs" />
     <Compile Include="WinForms\ControlDragger.cs" />
     <Compile Include="WinForms\ControlSplitter.cs" />
