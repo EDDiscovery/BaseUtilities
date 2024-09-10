@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -401,6 +402,26 @@ public static partial class DataGridViewControlHelpersStaticFunc
         }
 
         return false;
+    }
+
+    static public StringFormat StringFormatFromDataGridViewContentAlignment(this DataGridViewContentAlignment c)
+    {
+        StringFormat f = new StringFormat();
+        if (c == DataGridViewContentAlignment.BottomCenter || c == DataGridViewContentAlignment.MiddleCenter || c == DataGridViewContentAlignment.TopCenter)
+            f.Alignment = StringAlignment.Center;
+        else if (c == DataGridViewContentAlignment.BottomLeft || c == DataGridViewContentAlignment.MiddleLeft || c == DataGridViewContentAlignment.TopLeft)
+            f.Alignment = StringAlignment.Near;
+        else
+            f.Alignment = StringAlignment.Far;
+
+        if (c == DataGridViewContentAlignment.BottomCenter || c == DataGridViewContentAlignment.BottomLeft || c == DataGridViewContentAlignment.BottomRight)
+            f.LineAlignment = StringAlignment.Far;
+        else if (c == DataGridViewContentAlignment.MiddleLeft || c == DataGridViewContentAlignment.MiddleCenter || c == DataGridViewContentAlignment.MiddleRight)
+            f.LineAlignment = StringAlignment.Center;
+        else
+            f.LineAlignment = StringAlignment.Near;
+
+        return f;
     }
 
 }

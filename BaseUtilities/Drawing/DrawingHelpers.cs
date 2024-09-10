@@ -21,7 +21,7 @@ public static partial class DrawingHelpersStaticFunc
 {
     #region Content Align
 
-    static public StringFormat StringFormatFromContentAlignment(ContentAlignment c)
+    static public StringFormat StringFormatFromContentAlignment(this ContentAlignment c)
     {
         StringFormat f = new StringFormat();
         if (c == ContentAlignment.BottomCenter || c == ContentAlignment.MiddleCenter || c == ContentAlignment.TopCenter)
