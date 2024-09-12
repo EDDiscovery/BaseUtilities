@@ -107,7 +107,7 @@ namespace BaseUtils
             }
 
             // paint text
-            using (Brush textBrush = new SolidBrush(this.DataGridView.CurrentRow.Index == rowIndex && texttoright ? cellStyle.SelectionForeColor : cellStyle.ForeColor))
+            using (Brush textBrush = new SolidBrush(this.Selected ? cellStyle.SelectionForeColor : cellStyle.ForeColor))        // if selected, inverse video
             { 
                 if (texttoright)
                 {
@@ -144,9 +144,9 @@ namespace BaseUtils
             // Draws the cell grid
             base.Paint(g, clipBounds, cellBounds,  rowIndex, cellState, value, formattedValue, errorText, cellStyle, advancedBorderStyle, (paintParts & ~DataGridViewPaintParts.ContentForeground));
 
-            using (Brush backColorBrush = new SolidBrush(cellStyle.BackColor))
+            using (Brush backColorBrush = new SolidBrush(this.Selected ? cellStyle.SelectionForeColor : cellStyle.BackColor))       // inverse video on selection
             {
-                using (Brush foreColorBrush = new SolidBrush(cellStyle.ForeColor))
+                using (Brush foreColorBrush = new SolidBrush(!this.Selected ? cellStyle.SelectionForeColor : cellStyle.BackColor))
                 {
                     using (StringFormat fmt = cellStyle.Alignment.StringFormatFromDataGridViewContentAlignment())
                     {
