@@ -107,6 +107,13 @@ namespace BaseUtils
             }
         }
 
+        // Add a row, return the row object
+        public DataGridViewRow Add(Object[] cells)
+        {
+            int rowno = Rows.Add(cells);
+            return Rows[rowno];
+        }
+
         // Touching the TopLeftHeaderCell here prevents
         // System.InvalidOperationException: This operation cannot be performed while an auto-filled column is being resized.
 
