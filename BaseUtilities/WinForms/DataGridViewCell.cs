@@ -51,6 +51,10 @@ namespace BaseUtils
         public int BarMinPixelSize { get; set; } = 4;       // when %>0T
         public bool TextToRightPreferentially { get; set; } = false;
         public string PercentageTextFormat { get; set; } = "{0:0.#}%";
+        public int BarMaxHeight { get; set; } = 0;  // set to max height limit in pixels. 0 means no limit
+        public int BarMinHeight { get; set; } = 4;  // set to min height limit in pixels
+        public float BarHeightPercentage { get; set; } = 100;  // set to % of cell height (less margin)
+        public Padding Margin { get; set; } = new Padding(2,2,2,2);
 
         // float is it preferred type
         public DataGridViewProgressCell()
@@ -67,6 +71,10 @@ namespace BaseUtils
             n.BarMinPixelSize = this.BarMinPixelSize;
             n.TextToRightPreferentially = this.TextToRightPreferentially;
             n.PercentageTextFormat = this.PercentageTextFormat;
+            n.BarMaxHeight = this.BarMaxHeight;
+            n.BarMinHeight = this.BarMinHeight;
+            n.BarHeightPercentage = this.BarHeightPercentage;
+            n.Margin = this.Margin;
             return n;
         }
 
@@ -82,20 +90,28 @@ namespace BaseUtils
             float percent = value is int ? ((int)value) : value is double ? ((float)(double)value) : ((float)value);
             percent = percent.Range(0, 100);
 
+            int cellwidthavailable = cellBounds.Width - Margin.Left - Margin.Right;
+
             // compute barwidth, and if percentange set, set a minimum
-            int barwidth = (int)((percent * cellBounds.Width /100.0 - 4));
+            int barwidth = (int)(percent * (float)cellwidthavailable/100.0f);
             if ( percent>0)
-                barwidth = Math.Max(BarMinPixelSize, barwidth);     
+                barwidth = Math.Max(BarMinPixelSize, barwidth);
+
+            int barheight = (int)((float)(cellBounds.Height - Margin.Top - Margin.Bottom) * BarHeightPercentage / 100.0f);
+            barheight = BarMaxHeight > 0 ? Math.Min(BarMaxHeight, barheight) : barheight;
+            barheight = Math.Max(barheight, BarMinHeight);
 
             // set bar area
-            Rectangle bararea = new Rectangle(cellBounds.X + 2, cellBounds.Y + 2, barwidth, cellBounds.Height - 4);
+            Rectangle bararea = new Rectangle(cellBounds.X + Margin.Left, cellBounds.Y + cellBounds.Height/2 - barheight/2, barwidth, barheight);
+
+            //System.Diagnostics.Debug.WriteLine($"row {RowIndex} Percent {percent} bounds {cellBounds} width {barwidth} height {barheight} {bararea} col {BarForeColor}");
 
             // measure text
             string text = string.Format(PercentageTextFormat, percent);
             var size = TextRenderer.MeasureText(text, cellStyle.Font, new Size(30000, 1000));
 
             // work out if text will fit in bar, or needs to be to the right. Text preference helps set the condition
-            bool texttoright = TextToRightPreferentially ? (barwidth + size.Width + 4 < cellBounds.Width) : size.Width + 4 > barwidth;
+            bool texttoright = TextToRightPreferentially ? (barwidth + size.Width + Margin.Left < cellBounds.Width) : size.Width + Margin.Left > barwidth;
 
             // if we have a bar..
             if (bararea.Width > 0)
@@ -111,13 +127,18 @@ namespace BaseUtils
             { 
                 if (texttoright)
                 {
-                    g.DrawString(text, cellStyle.Font, textBrush, bararea.X + barwidth, bararea.Y);
+                    using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center })
+                    {
+                        var textarea = new Rectangle(bararea.X + bararea.Width, cellBounds.Y, cellBounds.Width - bararea.Width, cellBounds.Height);
+                        g.DrawString(text, cellStyle.Font, textBrush, textarea, fmt);
+                    }
                 }
                 else
                 {
-                    using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Center })
+                    using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        g.DrawString(text, cellStyle.Font, textBrush, bararea, fmt);
+                        var textarea = new Rectangle(bararea.X, cellBounds.Y, bararea.Width, cellBounds.Height);
+                        g.DrawString(text, cellStyle.Font, textBrush, textarea, fmt);
                     }
                 }
 
