@@ -447,6 +447,25 @@ public static partial class ControlHelpersStaticFunc
         }
     }
 
+    static public ToolTip FindToolTipControl(this Control c)
+    {
+        var p = c.Parent;
+        while (p != null)
+        {
+            var cc = p as System.ComponentModel.IContainer;
+            if (cc != null)
+            {
+                var clisttt = cc.Components.OfType<ToolTip>().ToList(); // find all tooltips
+                if (clisttt.Count > 0)
+                    return clisttt[0];
+            }
+            p = p.Parent;
+        }
+
+        return null;
+    }
+
+
     static public System.ComponentModel.IContainer GetParentContainerComponents(this Control p)
     {
         IContainerControl c = p.GetContainerControl();  // get container control (UserControl or Form)
