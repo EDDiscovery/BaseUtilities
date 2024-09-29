@@ -86,6 +86,7 @@
     <Compile Include="Numbers\MathFunc.cs" />
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Singletons\SingleInstance.cs" />
+    <Compile Include="Strings\StringBuilderExtensions.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
     <Compile Include="Strings\StringObjectExtensionsClassification.cs" />
     <Compile Include="Strings\StringObjectExtensionsReplacing.cs" />

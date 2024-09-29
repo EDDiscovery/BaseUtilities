@@ -25,46 +25,11 @@ public static partial class ObjectExtensionsStrings
     {
         return (obj ?? string.Empty).ToString();
     }
- 
+
     public static string Alt(this string obj, string alt)
     {
         return (obj == null || obj.Length == 0) ? alt : obj;
     }
 
-    public static void AppendPrePad(this System.Text.StringBuilder sb, string data, string prepad = " ")
-    {
-        if (data != null && data.Length > 0)
-        {
-            if (sb.Length > 0)
-                sb.Append(prepad);
-            sb.Append(data);
-        }
-    }
-
-    public static bool AppendPrePad(this System.Text.StringBuilder sb, string data, string prefix, string prepad, bool showblanks )
-    {
-        if (data != null && (showblanks || data.Length > 0))
-        {
-            if (sb.Length > 0)
-                sb.Append(prepad);
-            if (prefix.Length > 0)
-                sb.Append(prefix);
-            sb.Append(data);
-            return true;
-        }
-        else
-            return false;
-    }
-
-    public static string AppendPrePad(this string sb, string other, string prepad = " ")
-    {
-        if (other != null && other.Length > 0)
-        {
-            if (sb.Length > 0)
-                sb += prepad;
-            sb += other;
-        }
-        return sb;
-    }
 }
 

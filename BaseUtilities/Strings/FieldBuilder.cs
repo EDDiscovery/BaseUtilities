@@ -33,6 +33,7 @@ namespace BaseUtils
         //
         // or first object = NewPrefix only, define next pad to use, then go back to standard pad
 
+
         public class NewPrefix   // indicator class, use this as first item to indicate the next prefix to use.  After one use, its discarded.
         {
             public string prefix;
@@ -41,42 +42,56 @@ namespace BaseUtils
 
         static public string Build(params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+            var sb = new System.Text.StringBuilder(256);
+            Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+            return sb.ToString();
+        }
+        static public void Build(System.Text.StringBuilder sb, params System.Object[] values)
+        {
+            Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
         }
 
         static public string BuildSetPad(string padchars, params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
+            var sb = new System.Text.StringBuilder(256);
+            Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
+            return sb.ToString();
         }
-
+        static public void BuildSetPad(System.Text.StringBuilder sb, string padchars, params System.Object[] values)
+        {
+            Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
+        }
         static public string BuildSetPadShowBlanks(string padchars, bool showblanks, params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
+            var sb = new System.Text.StringBuilder(256);
+            Build(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
+            return sb.ToString();
+        }
+        static public void BuildSetPadShowBlanks(System.Text.StringBuilder sb, string padchars, bool showblanks, params System.Object[] values)
+        {
+            Build(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
         }
 
-        static private string Build(System.Globalization.CultureInfo ct, string padchars, bool showblanks, params System.Object[] values)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(64);
-
+        static public void Build(System.Text.StringBuilder sb, System.Globalization.CultureInfo ct, string padchars, bool showblanks, params System.Object[] values)
+        { 
             string overrideprefix = string.Empty;
 
-            for (int i = 0; i < values.Length;)
+            for (int indexn = 0; indexn < values.Length;)
             {
-                Object first = values[i];
+                Object first = values[indexn];
 
                 if ( first is NewPrefix )       // first item is special, a new prefix, override
                 {
                     overrideprefix = (first as NewPrefix).prefix;
-                    i++;
+                    indexn++;
                 }
                 else if ( first is string )     // normal, string
                 {
-                    System.Diagnostics.Debug.Assert(i + 2 <= values.Length,"Field Builder missing parameter");
+                    System.Diagnostics.Debug.Assert(indexn + 2 <= values.Length,"Field Builder missing parameter");
 
                     string[] fieldnames = ((string)first).Split(';');
 
-                    object value = values[i + 1];
-                    i += 2;
+                    object value = values[indexn + 1];
 
                     string pad = padchars;
                     if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
@@ -195,26 +210,50 @@ namespace BaseUtils
                                 }
                             }
 
-                            // if printed something, text must be non null and of length, and it returns true.  Only adds on prefix and prepad if required
-                            if (sb.AppendPrePad(output, fieldnames[0], (overrideprefix.Length > 0) ? overrideprefix : pad, showblanks))
-                            {                                                                   // prefix with fieldnames[0], and prefix with newline if defined, or pad
-                                if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
-                                    sb.Append(fieldnames[1]);
+                            if (output.Length > 0 || showblanks)    // if output not blank, or show blanks
+                            {
+                                if (indexn > 0)      // if not first, separ
+                                {
+                                    sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
+                                }
 
+                                sb.Append(fieldnames[0]);       // print first field
+                                sb.Append(output);              // print output
                                 overrideprefix = string.Empty;
                             }
                         }
                     }
+
+                    indexn += 2;
                 }
                 else
                 {
                     System.Diagnostics.Debug.Assert(false);
-                    return "!!REPORT ERROR IN FORMAT STRING!!";
+                    sb.Clear();
+                    sb.Append("!!REPORT ERROR IN FORMAT STRING!!");
                 }
             }
-
-            return sb.ToString();
         }
 
+    }
+}
+
+public static class FieldStringBuilder
+{
+    static public void Build(this System.Text.StringBuilder sb, params System.Object[] values)
+    {
+        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+    }
+    static public void BuildPrePad(this System.Text.StringBuilder sb, string prepad, params System.Object[] values)
+    {
+        if (sb.Length > 0)
+            sb.Append(prepad);
+        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+    }
+    static public void BuildPrePadPadChars(this System.Text.StringBuilder sb, string prepad, string padchars, params System.Object[] values)
+    {
+        if (sb.Length > 0)
+            sb.Append(prepad);
+        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
     }
 }
