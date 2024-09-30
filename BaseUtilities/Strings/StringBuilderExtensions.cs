@@ -91,6 +91,13 @@ public static partial class ObjectExtensionsStrings
         return sb;
     }
 
+    public static StringBuilder AppendSemiColonS(this System.Text.StringBuilder sb)
+    {
+        if (sb.Length > 0)
+            sb.Append("; ");
+        return sb;
+    }
+
     public static bool AppendPrePad(this System.Text.StringBuilder sb, string data, string prefix, string prepad, bool showblanks )
     {
         if (data != null && (showblanks || data.Length > 0))
@@ -115,6 +122,25 @@ public static partial class ObjectExtensionsStrings
             sb += other;
         }
         return sb;
+    }
+
+    static public void Build(this StringBuilder sb, params System.Object[] values)
+    {
+        BaseUtils.FieldBuilder.BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, false, values);
+    }
+    // build into string. Padding is at front if buffer is already full
+    static public void BuildCont(this StringBuilder sb, params System.Object[] values)
+    {
+        BaseUtils.FieldBuilder.BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, true, values);
+    }
+    // build into string. Padding is internal only between fields and not at start
+    static public void BuildSetPad(this StringBuilder sb, string padchars, params System.Object[] values)
+    {
+        BaseUtils.FieldBuilder.BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, false, values);
+    }
+    static public void BuildSetPadCont(this StringBuilder sb, string padchars, params System.Object[] values)
+    {
+        BaseUtils.FieldBuilder.BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, true, values);
     }
 }
 

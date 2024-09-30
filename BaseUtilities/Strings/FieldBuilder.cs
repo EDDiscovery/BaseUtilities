@@ -43,38 +43,38 @@ namespace BaseUtils
         static public string Build(params System.Object[] values)
         {
             var sb = new System.Text.StringBuilder(256);
-            Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+            BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, false,values);
             return sb.ToString();
-        }
-        static public void Build(System.Text.StringBuilder sb, params System.Object[] values)
-        {
-            Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
         }
 
         static public string BuildSetPad(string padchars, params System.Object[] values)
         {
             var sb = new System.Text.StringBuilder(256);
-            Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
+            BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, false, values);
             return sb.ToString();
-        }
-        static public void BuildSetPad(System.Text.StringBuilder sb, string padchars, params System.Object[] values)
-        {
-            Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
         }
         static public string BuildSetPadShowBlanks(string padchars, bool showblanks, params System.Object[] values)
         {
             var sb = new System.Text.StringBuilder(256);
-            Build(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
+            BuildField(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, false, values);
             return sb.ToString();
         }
-        static public void BuildSetPadShowBlanks(System.Text.StringBuilder sb, string padchars, bool showblanks, params System.Object[] values)
-        {
-            Build(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
-        }
 
-        static public void Build(System.Text.StringBuilder sb, System.Globalization.CultureInfo ct, string padchars, bool showblanks, params System.Object[] values)
+        /// <summary>
+        /// Field Builder, an alternate formatter
+        /// </summary>
+        /// <param name="sb">buffer</param>
+        /// <param name="ct">culture to print numbers in</param>
+        /// <param name="padchars">padding between items, unless overriden by NewPrefix </param>
+        /// <param name="showblanks">show blank items</param>
+        /// <param name="padifbufferfull">if true, and sb is filled, pad first item. Else don't pad first item </param>
+        /// <param name="values">Value list</param>
+        
+        static public void BuildField(System.Text.StringBuilder sb, System.Globalization.CultureInfo ct, string padchars, bool showblanks, bool padifbufferfull = false, params System.Object[] values)
         { 
             string overrideprefix = string.Empty;
+
+            bool printed = padifbufferfull ? sb.Length > 0 : false;             // if padifbufferfull then if there is anything in it, we pad first. else we dont
 
             for (int indexn = 0; indexn < values.Length;)
             {
@@ -212,14 +212,18 @@ namespace BaseUtils
 
                             if (output.Length > 0 || showblanks)    // if output not blank, or show blanks
                             {
-                                if (indexn > 0)      // if not first, separ
+                                if (printed)      // if not first, separ
                                 {
                                     sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
                                 }
 
                                 sb.Append(fieldnames[0]);       // print first field
                                 sb.Append(output);              // print output
+                                if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
+                                    sb.Append(fieldnames[1]);
+
                                 overrideprefix = string.Empty;
+                                printed = true;
                             }
                         }
                     }
@@ -235,25 +239,5 @@ namespace BaseUtils
             }
         }
 
-    }
-}
-
-public static class FieldStringBuilder
-{
-    static public void Build(this System.Text.StringBuilder sb, params System.Object[] values)
-    {
-        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
-    }
-    static public void BuildPrePad(this System.Text.StringBuilder sb, string prepad, params System.Object[] values)
-    {
-        if (sb.Length > 0)
-            sb.Append(prepad);
-        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
-    }
-    static public void BuildPrePadPadChars(this System.Text.StringBuilder sb, string prepad, string padchars, params System.Object[] values)
-    {
-        if (sb.Length > 0)
-            sb.Append(prepad);
-        BaseUtils.FieldBuilder.Build(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
     }
 }
