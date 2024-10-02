@@ -33,6 +33,7 @@ namespace BaseUtils
         //
         // or first object = NewPrefix only, define next pad to use, then go back to standard pad
 
+
         public class NewPrefix   // indicator class, use this as first item to indicate the next prefix to use.  After one use, its discarded.
         {
             public string prefix;
@@ -41,42 +42,56 @@ namespace BaseUtils
 
         static public string Build(params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, ", ", false, values);
+            var sb = new System.Text.StringBuilder(256);
+            BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, ", ", false, false,values);
+            return sb.ToString();
         }
 
         static public string BuildSetPad(string padchars, params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, false, values);
+            var sb = new System.Text.StringBuilder(256);
+            BuildField(sb, System.Globalization.CultureInfo.CurrentCulture, padchars, false, false, values);
+            return sb.ToString();
         }
-
         static public string BuildSetPadShowBlanks(string padchars, bool showblanks, params System.Object[] values)
         {
-            return Build(System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, values);
+            var sb = new System.Text.StringBuilder(256);
+            BuildField(sb,System.Globalization.CultureInfo.CurrentCulture, padchars, showblanks, false, values);
+            return sb.ToString();
         }
 
-        static private string Build(System.Globalization.CultureInfo ct, string padchars, bool showblanks, params System.Object[] values)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(64);
-
+        /// <summary>
+        /// Field Builder, an alternate formatter
+        /// </summary>
+        /// <param name="sb">buffer</param>
+        /// <param name="ct">culture to print numbers in</param>
+        /// <param name="padchars">padding between items, unless overriden by NewPrefix </param>
+        /// <param name="showblanks">show blank items</param>
+        /// <param name="padifbufferfull">if true, and sb is filled, pad first item. Else don't pad first item </param>
+        /// <param name="values">Value list</param>
+        
+        static public void BuildField(System.Text.StringBuilder sb, System.Globalization.CultureInfo ct, string padchars, bool showblanks, bool padifbufferfull = false, params System.Object[] values)
+        { 
             string overrideprefix = string.Empty;
 
-            for (int i = 0; i < values.Length;)
+            bool printed = padifbufferfull ? sb.Length > 0 : false;             // if padifbufferfull then if there is anything in it, we pad first. else we dont
+
+            for (int indexn = 0; indexn < values.Length;)
             {
-                Object first = values[i];
+                Object first = values[indexn];
 
                 if ( first is NewPrefix )       // first item is special, a new prefix, override
                 {
                     overrideprefix = (first as NewPrefix).prefix;
-                    i++;
+                    indexn++;
                 }
                 else if ( first is string )     // normal, string
                 {
-                    System.Diagnostics.Debug.Assert(i + 2 <= values.Length,"Field Builder missing parameter");
+                    System.Diagnostics.Debug.Assert(indexn + 2 <= values.Length,"Field Builder missing parameter");
 
                     string[] fieldnames = ((string)first).Split(';');
 
-                    object value = values[i + 1];
-                    i += 2;
+                    object value = values[indexn + 1];
 
                     string pad = padchars;
                     if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
@@ -195,25 +210,33 @@ namespace BaseUtils
                                 }
                             }
 
-                            // if printed something, text must be non null and of length, and it returns true.  Only adds on prefix and prepad if required
-                            if (sb.AppendPrePad(output, fieldnames[0], (overrideprefix.Length > 0) ? overrideprefix : pad, showblanks))
-                            {                                                                   // prefix with fieldnames[0], and prefix with newline if defined, or pad
+                            if (output.Length > 0 || showblanks)    // if output not blank, or show blanks
+                            {
+                                if (printed)      // if not first, separ
+                                {
+                                    sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
+                                }
+
+                                sb.Append(fieldnames[0]);       // print first field
+                                sb.Append(output);              // print output
                                 if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
                                     sb.Append(fieldnames[1]);
 
                                 overrideprefix = string.Empty;
+                                printed = true;
                             }
                         }
                     }
+
+                    indexn += 2;
                 }
                 else
                 {
                     System.Diagnostics.Debug.Assert(false);
-                    return "!!REPORT ERROR IN FORMAT STRING!!";
+                    sb.Clear();
+                    sb.Append("!!REPORT ERROR IN FORMAT STRING!!");
                 }
             }
-
-            return sb.ToString();
         }
 
     }

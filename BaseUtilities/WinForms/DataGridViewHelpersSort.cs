@@ -105,7 +105,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
         e.Handled = true;
     }
 
-    // sort using alpha culture/case sensitive
+    // sort using alpha culture/case sensitive, empty cells get pushed down
     // usetag means use cell tag as subsititute text
 
     static public void SortDataGridViewColumnAlpha(this DataGridViewSortCompareEventArgs e, bool usecelltag = false)
@@ -118,13 +118,13 @@ public static partial class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.Length == 0 ? 1 : right.Length == 0 ? -1 : left.CompareTo(right);
         }
         else
         {
             string left = e.CellValue1?.ToString();
             string right = e.CellValue2?.ToString();
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareTo(right);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.Length == 0 ? 1 : right.Length == 0 ? -1 : left.CompareTo(right);
         }
 
         e.Handled = true;

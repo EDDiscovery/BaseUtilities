@@ -68,22 +68,22 @@ namespace AudioExtensions
             if (ses.OverrideNone)      // if none
             {
                 ses = null;             // no speech effects
-                System.Diagnostics.Debug.WriteLine("SES No effects");
+                //System.Diagnostics.Debug.WriteLine("SES No effects");
             }
             else if (ses.Merge)       // merged
             {
                 Variables merged = new Variables(globals, local);   // add global settings (if not null) overridden by vars
                 ses = new SoundEffectSettings(merged);
-                System.Diagnostics.Debug.WriteLine($"SES Merged effects {ses.Values.ToString()}");
+                //System.Diagnostics.Debug.WriteLine($"SES Merged effects {ses.Values.ToString()}");
             }
             else if (!ses.NoGlobalEffects && !ses.Any )     // if SES global effects allowed, and ses does not have any active ones
             {
                 ses = (globals != null) ? new SoundEffectSettings(globals) : null;
-                System.Diagnostics.Debug.WriteLine($"SES Global effects {ses?.Values.ToString()}");
+                //System.Diagnostics.Debug.WriteLine($"SES Global effects {ses?.Values.ToString()}");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"SES Local effects {ses?.Values.ToString()}");
+                //System.Diagnostics.Debug.WriteLine($"SES Local effects {ses?.Values.ToString()}");
             }
 
             return ses;

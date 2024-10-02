@@ -563,6 +563,7 @@ namespace BaseUtils
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlisttt = new Enum[] {{{errlist.WordWrap(160)}}};");
                 System.Diagnostics.Debug.WriteLine($"{errlist.Split(",").Join(",\n").Replace("EDTx.", "    ")};");
+                System.Diagnostics.Debug.Assert(false, "Tooltip has errors:" + errlist);
             }
             if (elistremoved.Count>0)
             {
