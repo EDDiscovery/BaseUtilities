@@ -138,7 +138,7 @@ namespace BaseUtils
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Trace.WriteLine("Exception {ex}");
+                    System.Diagnostics.Trace.WriteLine($"Exception {ex}");
                 }
             }
             return null;
