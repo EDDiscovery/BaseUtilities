@@ -246,11 +246,11 @@ namespace BaseUtils
             return NextWord(terminators, lowercase: System.Globalization.CultureInfo.InvariantCulture, replacescape:replaceescape);
         }
 
-        // NextWord with a fixed space comma (or other) terminator.  Fails if not a separ list
-
-        public string NextWordComma(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false, char separ = ',')
+        // NextWord with a terminator and comma.
+        // Fails if not followed by a comma
+        public string NextWordComma(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false, char separ = ',', string terminators = " ")
         {
-            string res = NextWord(" " + separ, lowercase, replaceescape);
+            string res = NextWord(terminators + separ, lowercase, replaceescape);
             return IsCharMoveOnOrEOL(separ) ? res : null;
         }
 
@@ -310,16 +310,15 @@ namespace BaseUtils
                 return null;
         }
 
-        // NextQuotedWord with a fixed space comma terminator.  Fails if not a comma separ list
-
-        public string NextQuotedWordComma(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false, char separ = ',' )           // comma separ
+        // NextQuotedWord with terminators and comma.
+        // Fails if not followed by a comma
+        public string NextQuotedWordComma(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false, char separ = ',', string terminators = " " )           // comma separ
         {
-            string res = NextQuotedWord(" " + separ, lowercase, replaceescape);
+            string res = NextQuotedWord(terminators + separ, lowercase, replaceescape);
             return IsCharMoveOnOrEOL(separ) ? res : null;
         }
 
         // if quoted, take the quote string, else take the rest, space stripped.
-
         public string NextQuotedWordOrLine(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false)
         {
             if (pos < line.Length)
@@ -496,12 +495,13 @@ namespace BaseUtils
             return s?.InvariantParseBoolNull();
         }
 
+        // note comma is mandatory, and terminators does not include it
         public bool? NextBoolComma(string terminators = " ", char separ = ',')
         {
             bool? res = NextBool(terminators);
             return IsCharMoveOnOrEOL(separ) ? res : null;
         }
-
+        
         public double? NextDouble(string terminators = " ")
         {
             string s = NextWord(terminators);
@@ -515,6 +515,7 @@ namespace BaseUtils
             return v ?? def;
         }
 
+        // note comma is mandatory, and terminators does not include it
         public double? NextDoubleComma(string terminators = " ", char separ = ',')
         {
             double? res = NextDouble(terminators);
@@ -534,6 +535,7 @@ namespace BaseUtils
             return v ?? def;
         }
 
+        // note comma is mandatory, and terminators does not include it
         public int? NextIntComma(string terminators = " ", char separ = ',')
         {
             int? res = NextInt(terminators);
@@ -553,6 +555,7 @@ namespace BaseUtils
             return v ?? def;
         }
 
+        // note comma is mandatory, and terminators does not include it
         public long? NextLongComma(string terminators = " ", char separ = ',')
         {
             long? res = NextLong(terminators);

@@ -80,12 +80,16 @@ namespace BaseUtils
             return an.Version.Major.ToStringInvariant() + "." + an.Version.Minor.ToStringInvariant() + "." + an.Version.Build.ToStringInvariant() + "." + an.Version.Revision.ToStringInvariant();
         }
 
-
-        public static string GetResourceAsString(this Assembly ass, string resourcename)        // resourcename should be the whole thing - OpenTk.name
+        // resourcename should be the whole thing - OpenTk.name.
+        // null if not found
+        public static string GetResourceAsString(this Assembly ass, string resourcename)        
         {
             try
             {
                 var stream = ass.GetManifestResourceStream(resourcename);
+
+                // System.Diagnostics.Debug.WriteLine(string.Join(", ", ass.GetManifestResourceNames()));
+
                 if (stream != null)
                 {
                     using (StreamReader reader = new StreamReader(stream))
@@ -102,13 +106,40 @@ namespace BaseUtils
             return null;
         }
 
-        public static string GetResourceAsString(string fullname)       // Opentk.resourcename.. assembly must be loaded.  File should be an embedded resource.
+        // Opentk.resourcename.. assembly must be loaded.  Must be an embedded resource.
+        // null if not found
+        public static string GetResourceAsString(string fullname)       
         {
             int dotpos = fullname.IndexOf('.');
             if (dotpos >= 0)
             {
                 Assembly aw = BaseUtils.ResourceHelpers.GetAssemblyByName(fullname.Left(dotpos));
                 return aw.GetResourceAsString(fullname);
+            }
+            return null;
+        }
+
+        // Opentk.resourcename.. assembly must be loaded.  Must be an embedded resource.
+        // null if not found
+        public static System.Drawing.Image GetResourceAsImage(string fullname)       
+        {
+            int dotpos = fullname.IndexOf('.');
+            if (dotpos >= 0)
+            {
+                try
+                {
+                    Assembly ass = BaseUtils.ResourceHelpers.GetAssemblyByName(fullname.Left(dotpos));
+
+                    //System.Diagnostics.Debug.WriteLine(string.Join(", ", ass.GetManifestResourceNames()));
+
+                    var rs = ass.GetManifestResourceStream(fullname);
+                    if (rs != null)
+                        return new System.Drawing.Bitmap(rs);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine("Exception {ex}");
+                }
             }
             return null;
         }
