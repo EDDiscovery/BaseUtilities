@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2023 EDDiscovery development team
+ * Copyright 2017-2023 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -128,6 +128,7 @@ namespace BaseUtils
                 functions.Add("tell", new FuncEntry(TellFile, FuncEntry.PT.ME));
                 functions.Add("write", new FuncEntry(WriteFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
                 functions.Add("writeline", new FuncEntry(WriteLineFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
+                functions.Add("combinepaths", new FuncEntry(CombinePaths, 2,10, FuncEntry.PT.MESE));
                 #endregion
 
                 #region Processes
@@ -1078,6 +1079,12 @@ namespace BaseUtils
 
 
         #region File Functions
+
+        protected bool CombinePaths(out string output)
+        {
+            output = Path.Combine(paras.Select(x => x.Value).ToArray());
+            return true;
+        }
 
         protected bool OpenFile(out string output)
         {
