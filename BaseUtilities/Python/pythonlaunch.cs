@@ -16,6 +16,7 @@
 
 using Microsoft.Win32;
 using System;
+using System.Diagnostics;
 
 namespace BaseUtils
 {
@@ -87,6 +88,31 @@ namespace BaseUtils
                 return chk2;
 
             return null;
+        }
+
+        static public object PyExeLaunch(string pyfile, string arguments, string workindir, string runas, bool waitforexit)
+        {
+            Process p = new Process();
+            p.StartInfo.FileName = "py.exe";
+            p.StartInfo.Arguments = pyfile + (arguments.HasChars() ? (" "+ arguments) : "");
+            p.StartInfo.WorkingDirectory = workindir;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.Verb = runas;
+            p.StartInfo.RedirectStandardOutput = waitforexit;
+            p.StartInfo.RedirectStandardError = waitforexit;
+            if (p.Start())
+            {
+                if (waitforexit)
+                {
+                    p.WaitForExit();
+                    return new Tuple<string,string>(p.StandardOutput.ReadToEnd(),p.StandardError.ReadToEnd());
+                }
+                else
+                    return p;
+            }
+            else
+                return null;
+
         }
     }
 }
