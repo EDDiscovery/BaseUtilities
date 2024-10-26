@@ -149,6 +149,7 @@
     <Compile Include="Misc\SHA.cs" />
     <Compile Include="Drawing\BitMapHelpers.cs" />
     <Compile Include="WinForms\DataGridViewCell.cs" />
+    <Compile Include="WinForms\DataGridViewHelpersColumnSettingsJSON.cs" />
     <Compile Include="WinForms\MenuItems.cs" />
     <Compile Include="WinForms\ControlDragger.cs" />
     <Compile Include="WinForms\ControlSplitter.cs" />
