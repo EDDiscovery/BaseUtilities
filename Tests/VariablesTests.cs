@@ -16,12 +16,7 @@
 using BaseUtils;
 using NFluent;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
+using QuickJSON;
 
 namespace EDDiscoveryTests
 {
@@ -31,7 +26,7 @@ namespace EDDiscoveryTests
         [Test]
         public void Variables()
         {
-            {
+              {
                 Variables vars = new Variables();
                 vars["IsPlanet"] = "1";
                 vars["IsBig"] = "1";
@@ -53,7 +48,28 @@ namespace EDDiscoveryTests
 
             }
 
-        }
 
+        }
+        [Test]
+        public void JSON()
+        {
+            {
+                JToken tk = new JObject { ["Fred"] = new JArray { 1, 2, 3 } };
+                System.Diagnostics.Debug.WriteLine($"{tk.ToString(true)}");
+                Variables vars = new Variables();
+                vars.FromJSON(tk, "json");
+                JToken tkout = vars.ToJSON("json");
+                Check.That(tkout.ToString(true)).IsEqualTo(tk.ToString(true));
+            }
+            {
+                JToken tk = new JObject { ["Fred"] = 10, ["Jim"] = 20, ["Abby"] = new JObject { ["Clancy"] = 10, ["George"] = new JObject { ["david"] = 10, ["edward"] = 20 } }, ["End"] = 20 };
+                System.Diagnostics.Debug.WriteLine($"{tk.ToString(false)}");
+                Variables vars = new Variables();
+                vars.FromJSON(tk, "json");
+
+                JToken tkout = vars.ToJSON("json");
+                Check.That(tkout.ToString(true)).IsEqualTo(tk.ToString(true));
+            }
+        }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2017 EDDiscovery development team
+ * Copyright 2017-2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -16,19 +16,19 @@ namespace BaseUtils
 {
     public class FunctionPersistentData
     {
-        public FileHandles fh;
-        public Processes procs;
+        public FileHandles FileHandles { get; set; }
+        public Processes Processes { get; set; }
 
         public FunctionPersistentData()
         {
-            fh = new BaseUtils.FileHandles();
-            procs = new BaseUtils.Processes();
+            FileHandles = new BaseUtils.FileHandles();
+            Processes = new BaseUtils.Processes();
         }
 
         public void CloseAll()
         {
-            fh.CloseAll();
-            procs.CloseAll();
+            FileHandles.CloseAll();
+            Processes.CloseAll();
         }
     }
 }

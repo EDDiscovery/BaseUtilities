@@ -348,9 +348,10 @@ namespace BaseUtils
             }
         }
 
-        public int ParaCount { get { return paras.Count; } }
         static public Random GetRandom() { return rnd; }
         static public void SetRandom(Random r) { rnd = r; }
+        public int ParaCount { get { return paras.Count; } }
+
         protected static Random rnd = new Random();
         protected List<Parameter> paras;
         protected Functions caller;

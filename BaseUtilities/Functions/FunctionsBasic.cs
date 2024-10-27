@@ -87,6 +87,7 @@ namespace BaseUtils
                 functions.Add("lowerinvariant", new FuncEntry(LowerInvariant, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("lower", new FuncEntry(Lower, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("phrase", new FuncEntry(Phrase, 1, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
+                functions.Add("tojson", new FuncEntry(ToJson, 1, FuncEntry.PT.M, FuncEntry.PT.ImeSE));
 
                 functions.Add("regex", new FuncEntry(Regex, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("replace", new FuncEntry(Replace, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
@@ -634,8 +635,27 @@ namespace BaseUtils
                 JToken tk = JToken.Parse(json);
                 if (tk != null)
                 {
-                    vars.AddJSONVariables(tk, varprefix);
+                    vars.FromJSON(tk, varprefix);
                     output = "1";
+                    return true;
+                }
+            }
+            catch { }
+
+            output = "0";
+            return false;
+        }
+        protected bool ToJson(out string output)
+        {
+            string json = paras[0].Value;
+            bool verbose = paras.Count > 1 ? paras[1].Int != 0 : false;
+
+            try
+            {
+                JToken tk = vars.ToJSON(json);
+                if (tk != null)
+                {
+                    output = tk.ToString(verbose);
                     return true;
                 }
             }
@@ -1104,7 +1124,7 @@ namespace BaseUtils
                 if (VerifyFileAccess(file, fm))
                 {
                     string errmsg;
-                    int id = persistentdata.fh.Open(file, fm, fm == FileMode.Open ? FileAccess.Read : FileAccess.Write, out errmsg);
+                    int id = persistentdata.FileHandles.Open(file, fm, fm == FileMode.Open ? FileAccess.Read : FileAccess.Write, out errmsg);
                     if (id > 0)
                         vars[handle] = id.ToStringInvariant();
                     else
@@ -1128,7 +1148,7 @@ namespace BaseUtils
 
             if (hv != null && persistentdata != null)
             {
-                persistentdata.fh.Close(hv.Value);
+                persistentdata.FileHandles.Close(hv.Value);
                 output = "1";
                 return true;
             }
@@ -1145,7 +1165,7 @@ namespace BaseUtils
 
             if (hv != null && persistentdata != null)
             {
-                if (persistentdata.fh.ReadLine(hv.Value, out output))
+                if (persistentdata.FileHandles.ReadLine(hv.Value, out output))
                 {
                     if (output == null)
                         output = "0";
@@ -1181,7 +1201,7 @@ namespace BaseUtils
 
             if (hv != null && persistentdata != null)
             {
-                if (persistentdata.fh.WriteLine(hv.Value, line, lf, out output))
+                if (persistentdata.FileHandles.WriteLine(hv.Value, line, lf, out output))
                 {
                     output = "1";
                     return true;
@@ -1202,7 +1222,7 @@ namespace BaseUtils
             long pos = paras[1].Long;
             if (hv != null && persistentdata != null)
             {
-                if (persistentdata.fh.Seek(hv.Value, pos, out output))
+                if (persistentdata.FileHandles.Seek(hv.Value, pos, out output))
                 {
                     output = "1";
                     return true;
@@ -1221,7 +1241,7 @@ namespace BaseUtils
             int? hv = paras[0].Value.InvariantParseIntNull();
             if (hv != null && persistentdata != null)
             {
-                if (persistentdata.fh.Tell(hv.Value, out output))
+                if (persistentdata.FileHandles.Tell(hv.Value, out output))
                 {
                     return true;
                 }
@@ -1436,7 +1456,7 @@ namespace BaseUtils
             {
                 if (VerifyProcessAllowed(procname, cmdline))
                 {
-                    int pid = persistentdata.procs.StartProcess(procname, cmdline);
+                    int pid = persistentdata.Processes.StartProcess(procname, cmdline);
 
                     if (pid != 0)
                     {
@@ -1464,7 +1484,7 @@ namespace BaseUtils
 
             if (hv != null && persistentdata != null)
             {
-                BaseUtils.Processes.ProcessResult r = (kill) ? persistentdata.procs.KillProcess(hv.Value) : persistentdata.procs.CloseProcess(hv.Value);
+                BaseUtils.Processes.ProcessResult r = (kill) ? persistentdata.Processes.KillProcess(hv.Value) : persistentdata.Processes.CloseProcess(hv.Value);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = "1";
@@ -1486,7 +1506,7 @@ namespace BaseUtils
             if (hv != null && persistentdata != null)
             {
                 int exitcode;
-                BaseUtils.Processes.ProcessResult r = persistentdata.procs.HasProcessExited(hv.Value, out exitcode);
+                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.HasProcessExited(hv.Value, out exitcode);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = exitcode.ToStringInvariant();
@@ -1514,7 +1534,7 @@ namespace BaseUtils
 
             if (hv != null && persistentdata != null )
             {
-                BaseUtils.Processes.ProcessResult r = persistentdata.procs.WaitForProcess(hv.Value, timeout);
+                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.WaitForProcess(hv.Value, timeout);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = "1";
@@ -1538,7 +1558,7 @@ namespace BaseUtils
         {
             if (persistentdata != null)
             {
-                output = persistentdata.procs.FindProcess(paras[0].Value).ToStringInvariant();
+                output = persistentdata.Processes.FindProcess(paras[0].Value).ToStringInvariant();
                 return true;
             }
             else

@@ -540,26 +540,98 @@ namespace BaseUtils
 
         #region JSON to variables   
 
-        // verified 31/7/2020 with baseutils.JSON, recoded to properly work!
-        public void AddJSONVariables(JToken t, string name)     // give root name to start..
+        // Recorded 27/10/24 to new syntax output format
+        // give root name to start..
+        public void FromJSON(JToken t, string name)     
         {
             //System.Diagnostics.Debug.WriteLine(t.GetType().Name+ " " + name );
 
             if (t is JArray)
             {
-                values[name + "_Count"] = t.Count().ToString();
+                values[name + "[]_Count"] = t.Count().ToString();
                 int childindex = 1;
                 foreach (var subitem in t)
-                    AddJSONVariables(subitem, name + "_" + childindex++ );
+                    FromJSON(subitem, name + "[" + (childindex++).ToStringInvariant() + "]");
             }
             else if (t is JObject)
             {
                 foreach (var kvp in (JObject)t)
-                    AddJSONVariables(kvp.Value, name + "_" + kvp.Key );
+                    FromJSON(kvp.Value, name + "." + kvp.Key);
             }
-            else 
+            else
             {
-                values[name] = t.ToStringLiteral();
+                if (t.IsBool)       // intercept bool to print 1/0 not true/false
+                    values[name] = ((bool)t) ? "1" : "0";
+                else 
+                    values[name] = t.ToStringLiteral();
+            }
+        }
+        
+        // new reverse method of variables -> JSON. Null if no variables
+        public JToken ToJSON(string name)     // give root name to start..
+        {
+            string[] varlist = values.Keys.Where(x => x.StartsWith(name)).ToArray();
+
+            if (varlist.Length > 0)
+            {
+                int vpos = 0;
+                var tk = ToJSONInternal(varlist, ref vpos, name);
+
+                System.Diagnostics.Debug.WriteLine($"JSON is {tk.Item2.ToString(true)}");
+
+                return tk.Item2;
+            }
+            else
+                return null;
+        }
+
+        // iterate thru variables making up json. Variables should be in JSON order, as per output from AddJSONVariables
+        private Tuple<string,JToken> ToJSONInternal(string[] varlist, ref int vpos, string vroot)
+        {
+            string vname = varlist[vpos];
+            int nextdelim = vname.IndexOfAny(new char[] { '.', '[' },vroot.Length);
+
+            if (nextdelim == -1)            // if nothing left, its a jtoken, use implicit converstion string->JTOKEN
+            {
+                // its a string, its lost its type, see if we can represent it as a number
+                string v = values[varlist[vpos++]];
+                long? iv = v.InvariantParseIntNull();
+                if (iv.HasValue)
+                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), iv);
+                ulong? ulv = v.InvariantParseULongNull();
+                if (ulv.HasValue)
+                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), ulv);
+                double? dv = v.InvariantParseDoubleNull();
+                if (dv.HasValue)
+                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), dv);
+
+                return new Tuple<string, JToken>(vname.Substring(vroot.Length), v);
+            }
+            else if (vname[nextdelim] == '.')       // if its an object..
+            {
+                string newvroot = vname.Substring(0, nextdelim + 1);      // new vroot including delim
+
+                JObject jo = new JObject();
+                while (vpos < varlist.Length && varlist[vpos].StartsWith(newvroot))       // while matching new vroot entirely
+                {
+                    var ret = ToJSONInternal(varlist, ref vpos, newvroot);
+                    jo[ret.Item1] = ret.Item2;
+                }
+                return new Tuple<string, JToken>(vname.Substring(vroot.Length, nextdelim - vroot.Length), jo);
+            }
+            else
+            {           // must be an array
+                string newvroot = vname.Substring(0, nextdelim + 1);      // new vroot including delim
+
+                JArray ja = new JArray();
+                while (vpos < varlist.Length && varlist[vpos].StartsWith(newvroot))       // while matching new vroot entirely
+                {
+                    var ret = ToJSONInternal(varlist, ref vpos, newvroot);      // name will be returning ]_Count,1], 2] etc. We ignore names
+                    if ( !ret.Item1.Contains("Count"))
+                        ja.Add(ret.Item2);
+                }
+                return new Tuple<string, JToken>(vname.Substring(vroot.Length, nextdelim - vroot.Length), ja);
+
             }
         }
 
