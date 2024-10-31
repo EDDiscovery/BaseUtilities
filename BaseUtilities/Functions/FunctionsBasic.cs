@@ -129,7 +129,12 @@ namespace BaseUtils
                 functions.Add("tell", new FuncEntry(TellFile, FuncEntry.PT.ME));
                 functions.Add("write", new FuncEntry(WriteFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
                 functions.Add("writeline", new FuncEntry(WriteLineFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
-                functions.Add("combinepaths", new FuncEntry(CombinePaths, 2,10, FuncEntry.PT.MESE));
+                functions.Add("combinepaths", new FuncEntry(CombinePaths, 2, 10, FuncEntry.PT.MESE));
+                functions.Add("directoryname", new FuncEntry(DirectoryName, FuncEntry.PT.MESE));
+                functions.Add("filename", new FuncEntry(FileName, FuncEntry.PT.MESE));
+                functions.Add("extension", new FuncEntry(Extension, FuncEntry.PT.MESE));
+                functions.Add("filenamenoextension", new FuncEntry(FileNameNoExtension, FuncEntry.PT.MESE));
+                functions.Add("fullpath", new FuncEntry(FullPath, FuncEntry.PT.MESE));
                 #endregion
 
                 #region Processes
@@ -645,6 +650,7 @@ namespace BaseUtils
             output = "0";
             return false;
         }
+
         protected bool ToJson(out string output)
         {
             string json = paras[0].Value;
@@ -1103,6 +1109,34 @@ namespace BaseUtils
         protected bool CombinePaths(out string output)
         {
             output = Path.Combine(paras.Select(x => x.Value).ToArray());
+            return true;
+        }
+
+        protected bool DirectoryName(out string output)
+        {
+            output = Path.GetDirectoryName(paras[0].Value);
+            return true;
+        }
+
+        protected bool FileName(out string output)
+        {
+            output = Path.GetFileName(paras[0].Value);
+            return true;
+        }
+        protected bool Extension(out string output)
+        {
+            output = Path.GetExtension(paras[0].Value);
+            return true;
+        }
+
+        protected bool FileNameNoExtension(out string output)
+        {
+            output = Path.GetFileNameWithoutExtension(paras[0].Value);
+            return true;
+        }
+        protected bool FullPath(out string output)
+        {
+            output = Path.GetFullPath(paras[0].Value);
             return true;
         }
 

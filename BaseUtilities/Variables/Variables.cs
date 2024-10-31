@@ -538,10 +538,10 @@ namespace BaseUtils
 
         #endregion
 
-        #region JSON to variables   
+        #region JSON to variables and back
 
         // Recorded 27/10/24 to new syntax output format
-        // give root name to start..
+        // give root name to start.. or name = null/empty no name
         public void FromJSON(JToken t, string name)     
         {
             //System.Diagnostics.Debug.WriteLine(t.GetType().Name+ " " + name );
@@ -556,18 +556,18 @@ namespace BaseUtils
             else if (t is JObject)
             {
                 foreach (var kvp in (JObject)t)
-                    FromJSON(kvp.Value, name + "." + kvp.Key);
+                    FromJSON(kvp.Value, (name.HasChars() ? (name + "." ) : "" ) + kvp.Key);
             }
             else
             {
-                if (t.IsBool)       // intercept bool to print 1/0 not true/false
-                    values[name] = ((bool)t) ? "1" : "0";
+                if (t.IsBool)       // intercept bool to print 1/0 not true/false, and mark the name as _BOOL to indicate that, and to allow TOJSON to round trip it
+                    values[name+"_BOOL"] = ((bool)t) ? "1" : "0";
                 else 
                     values[name] = t.ToStringLiteral();
             }
         }
         
-        // new reverse method of variables -> JSON. Null if no variables
+        // reverse method of variables -> JSON. Null if no variables
         public JToken ToJSON(string name)     // give root name to start..
         {
             string[] varlist = values.Keys.Where(x => x.StartsWith(name)).ToArray();
@@ -577,7 +577,7 @@ namespace BaseUtils
                 int vpos = 0;
                 var tk = ToJSONInternal(varlist, ref vpos, name);
 
-                System.Diagnostics.Debug.WriteLine($"JSON is {tk.Item2.ToString(true)}");
+               // System.Diagnostics.Debug.WriteLine($"JSON is {tk.Item2.ToString(true)}");
 
                 return tk.Item2;
             }
@@ -593,19 +593,29 @@ namespace BaseUtils
 
             if (nextdelim == -1)            // if nothing left, its a jtoken, use implicit converstion string->JTOKEN
             {
+                string subname = vname.Substring(vroot.Length);
+
                 // its a string, its lost its type, see if we can represent it as a number
+
                 string v = values[varlist[vpos++]];
                 long? iv = v.InvariantParseIntNull();
-                if (iv.HasValue)
-                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), iv);
-                ulong? ulv = v.InvariantParseULongNull();
-                if (ulv.HasValue)
-                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), ulv);
-                double? dv = v.InvariantParseDoubleNull();
-                if (dv.HasValue)
-                    return new Tuple<string, JToken>(vname.Substring(vroot.Length), dv);
+                if (iv.HasValue)        // its a number..
+                {
+                    if (subname.EndsWith("_BOOL"))      // bools are turned into numbers with _BOOL on the end (see above)
+                        return new Tuple<string, JToken>(subname.Substring(0,subname.Length-5), iv != 0);       // turn back to BOOL
+                    else
+                        return new Tuple<string, JToken>(subname, iv);       // keep as long
+                }
 
-                return new Tuple<string, JToken>(vname.Substring(vroot.Length), v);
+                ulong ? ulv = v.InvariantParseULongNull();  // ulong
+                if (ulv.HasValue)
+                    return new Tuple<string, JToken>(subname, ulv);
+
+                double? dv = v.InvariantParseDoubleNull();  // double
+                if (dv.HasValue)
+                    return new Tuple<string, JToken>(subname, dv);
+
+                return new Tuple<string, JToken>(subname, v);   // string
             }
             else if (vname[nextdelim] == '.')       // if its an object..
             {
@@ -631,7 +641,6 @@ namespace BaseUtils
                         ja.Add(ret.Item2);
                 }
                 return new Tuple<string, JToken>(vname.Substring(vroot.Length, nextdelim - vroot.Length), ja);
-
             }
         }
 

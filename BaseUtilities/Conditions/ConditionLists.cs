@@ -319,14 +319,14 @@ namespace BaseUtils
 
         #region Helpers
 
-        // is condition variable flag in actiondata set
+        // does any conditions in this last have this action variable defined
         // obeys disabled flag
 
-        public bool IsActionVarDefined(string flagvar)
+        public bool IsActionVarDefined(string actionvarname)
         {
             foreach (Condition l in conditionlist)
             {
-                if ( !l.Disabled && l.ActionVars.Exists(flagvar))
+                if ( !l.Disabled && l.ActionVars.Exists(actionvarname))
                     return true;
             }
 
@@ -334,27 +334,30 @@ namespace BaseUtils
         }
 
         // Event name.. give me conditions which match that name or ALL
-        // flagstart, if not null ,compare with start of action data and include only if matches
+        // You can say only give me conditions which has this action var set
         // obeys disabled flag
 
-        public List<Condition> GetConditionListByEventName(string eventname, string flagvar = null)
+        public List<Condition> GetConditionListByEventName(string eventname, string actionvarcontains = null)
         {
             List<Condition> fel;
 
-            if (flagvar != null)
+            if (actionvarcontains != null)
+            {
                 fel = (from fil in conditionlist
                        where
                        !fil.Disabled &&
                      (fil.EventName.Equals("All", StringComparison.InvariantCultureIgnoreCase) || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase)) &&
-                     fil.ActionVars.Exists(flagvar)
+                     fil.ActionVars.Exists(actionvarcontains)
                        select fil).ToList();
-
+            }
             else
+            {
                 fel = (from fil in conditionlist
                        where
                        !fil.Disabled &&
                      (fil.EventName.Equals("All", StringComparison.InvariantCultureIgnoreCase) || fil.EventName.Equals(eventname, StringComparison.InvariantCultureIgnoreCase))
                        select fil).ToList();
+            }
 
             return (fel.Count == 0) ? null : fel;
         }
