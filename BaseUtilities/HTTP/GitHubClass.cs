@@ -26,6 +26,9 @@ namespace BaseUtils
         public GitHubClass(string server) : base(server)
         {
         }
+        public GitHubClass(string server,string useragent) : base(server,useragent)
+        {
+        }
 
         public JArray GetAllReleases(int reqmax)
         {
@@ -60,6 +63,50 @@ namespace BaseUtils
                 return null;
         }
 
+
+        // Read a whole tree, on branch, given a folder node.
+        // NULL if folder not found or not an array return.  Empty list if files not there
+        public List<RemoteFile> ReadFolderTree(System.Threading.CancellationToken cancel, string branch, string gitfolder, int timeout = DefaultTimeout)
+        {
+            var response = BlockingRequest(cancel, Method.GET, "git/trees/" + branch + ":" + Uri.EscapeDataString(gitfolder) + "?recursive=1", timeout: timeout);
+
+            if (response?.StatusCode == HttpStatusCode.OK)      // response will be null if cancelled, bug #3548
+            {
+                JObject jr = JObject.Parse(response.Body);
+
+                List<RemoteFile> rf = new List<RemoteFile>();
+
+                foreach (var entry in jr["tree"])
+                {
+                    string type = entry["type"].Str();
+                    if (type == "blob")
+                    {
+                        string path = entry["path"].Str();
+                        string url = entry["url"].Str();
+                        string sha = entry["sha"].Str();
+                        long size = entry["size"].Long();
+
+                        //System.Diagnostics.Debug.WriteLine($"Folder tree {gitfolder} {Path.Combine(gitfolder, path)} {url}");
+
+                        // stupid thing does not give a download url, just a blob url (which I don't want). Synthesise one up
+                        string synthurl = url.Replace("//api.github.com/repos/", "//raw.githubusercontent.com/");
+                        int pos = synthurl.IndexOf("git/blobs/");
+                        if (pos >= 0)
+                            synthurl = synthurl.Substring(0, pos) + branch + "/" + gitfolder + "/" + path;
+                       
+                        //System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
+
+                        rf.Add(new RemoteFile(Path.GetFileName(path), Path.GetDirectoryName(path), synthurl, size, sha));
+                    }
+                }
+
+                return rf;
+            }
+            else
+                return null;
+        }
+
+
         // NULL if folder not found or not an array return.  Empty list if files not there
         public List<RemoteFile> ReadFolder(System.Threading.CancellationToken cancel, string gitfolder, int timeout = DefaultTimeout)
         {
@@ -69,14 +116,22 @@ namespace BaseUtils
             if (response?.StatusCode == HttpStatusCode.OK)      // response will be null if cancelled, bug #3548
             {
                 JArray ja = JArray.Parse(response.Body);
+                System.Diagnostics.Debug.WriteLine($"Read folder {gitfolder} : {ja.ToString(true)}");
 
                 if (ja != null)
                 {
                     List<RemoteFile> files = new List<RemoteFile>();
                     foreach (JObject jo in ja)
                     {
-                        RemoteFile file = new RemoteFile(jo["name"].Str(), jo["download_url"].Str(), jo["size"].Int(), jo["sha"].Str());
-                        files.Add(file);
+                        string type = jo["type"].Str();
+                        if (type != "dir")
+                        {
+                            string name = jo["name"].Str();
+                            string url = jo["download_url"].Str();
+                            //System.Diagnostics.Debug.WriteLine($"Read folder {name}->{url}");
+                            RemoteFile file = new RemoteFile(name, "", url, jo["size"].Int(), jo["sha"].Str());
+                            files.Add(file);
+                        }
                     }
                     return files;
                 }

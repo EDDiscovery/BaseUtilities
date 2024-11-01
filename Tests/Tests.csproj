@@ -102,6 +102,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HTTPGitHub.cs" />
     <Compile Include="DateTimeTests.cs" />
     <Compile Include="FunctionStringExpander.cs" />
     <Compile Include="VariablesTests.cs" />

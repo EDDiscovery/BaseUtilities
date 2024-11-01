@@ -90,7 +90,7 @@ namespace BaseUtils
             return null;
         }
 
-        static public object PyExeLaunch(string pyfile, string arguments, string workindir, string runas, bool waitforexit)
+        static public object PyExeLaunch(string pyfile, string arguments, string workindir, string runas, bool waitforexit, bool createnowindow = false)
         {
             Process p = new Process();
             p.StartInfo.FileName = "py.exe";
@@ -100,19 +100,27 @@ namespace BaseUtils
             p.StartInfo.Verb = runas;
             p.StartInfo.RedirectStandardOutput = waitforexit;
             p.StartInfo.RedirectStandardError = waitforexit;
-            if (p.Start())
-            {
-                if (waitforexit)
-                {
-                    p.WaitForExit();
-                    return new Tuple<string,string>(p.StandardOutput.ReadToEnd(),p.StandardError.ReadToEnd());
-                }
-                else
-                    return p;
-            }
-            else
-                return null;
+            p.StartInfo.CreateNoWindow = createnowindow;
 
+            try
+            {
+                if (p.Start())
+                {
+                    if (waitforexit)
+                    {
+                        p.WaitForExit();
+                        return new Tuple<string, string>(p.StandardOutput.ReadToEnd(), p.StandardError.ReadToEnd());
+                    }
+                    else
+                        return p;
+                }
+            }
+            catch ( Exception ex )
+            {
+                System.Diagnostics.Trace.WriteLine($"PyExeLaunch error {ex}");
+            }
+
+            return null;
         }
     }
 }

@@ -29,7 +29,7 @@ namespace BaseUtils
         static public string LogPath { get; set; } = null;
 
         // default user agent is the entry assembly name. Override if you want another, or set to Null not to send
-        public string UserAgent { get; set; } = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+        public string UserAgent { get; set; } 
 
         // Server address to use, endpoint is added to this
         // can be "" meaning the endpoint is the full URL
@@ -38,13 +38,24 @@ namespace BaseUtils
         public const string DefaultContentType = "application/json; charset=utf-8";
         public const int DefaultTimeout = 20000;
 
+        // backwards compatible setting user agent
         public HttpCom()
         {
+            UserAgent = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
         }
 
-        public HttpCom(string server)       
+        // backwards compatible setting user agent
+        public HttpCom(string server)
         {
             ServerAddress = server;
+            UserAgent = System.Reflection.Assembly.GetEntryAssembly().GetName().Name + " v" + System.Reflection.Assembly.GetEntryAssembly().FullName.Split(',')[1].Split('=')[1];
+        }
+
+        // Full control
+        public HttpCom(string server,string useragent)
+        {
+            ServerAddress = server;
+            UserAgent = useragent;
         }
 
         public enum Method { POST, GET };
@@ -507,7 +518,7 @@ namespace BaseUtils
             return false;
         }
 
-        // Blocking, download these remote files to localdownloadfolder
+        // Blocking, download these remote files to localdownloadfolder (or subfolders of it, if Path is set in RemoteFile)
         // remote files can be http: or endpoints to ServerAddress
         // if synchronise folder is true, only files in the file list are allowed in the folder.
         // if remote file has a SHA field, its checked against the SHA of the file, and no download will be performed.  
@@ -519,35 +530,58 @@ namespace BaseUtils
             if (!Directory.Exists(localdownloadfolder))
                 return false;
 
+            localdownloadfolder = Path.GetFullPath(localdownloadfolder);        // make canonical
+
+            HashSet<string> foldersvisited = new HashSet<string> { localdownloadfolder };
+
             foreach (var ghf in files)
             {
                 if (cancel.IsCancellationRequested)
                     return false;
 
-                string downloadfile = Path.Combine(localdownloadfolder, ghf.Name);
+                // if we have a path, make sure folder is there, and add it to the folder list
+                if (ghf.Path.HasChars())
+                {
+                    string downloadfolder = Path.Combine(localdownloadfolder, ghf.Path);
+                    if (!Directory.Exists(downloadfolder))
+                        FileHelpers.CreateDirectoryNoError(downloadfolder);
+                    foldersvisited.Add(downloadfolder);
+                }
+
+                string downloadlocalfile = Path.Combine(localdownloadfolder, ghf.Path, ghf.Name);
 
                 // we don't use etag, we use DownloadNeeded
-                if (ghf.DownloadNeeded(downloadfile))
+                if (ghf.DownloadNeeded(downloadlocalfile))
                 {
-                    if (!DownloadFile(cancel, ghf.DownloadURL, downloadfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
+                    //System.Diagnostics.Debug.WriteLine($"Download {ghf.DownloadURL} to {downloadlocalfile}");
+                    if (!DownloadFile(cancel, ghf.DownloadURL, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
                         return false;
                 }
                 else
                 {
-                    WriteLog($"HTTPCom Download File {ghf.DownloadURL} is already present at {downloadfile}");
+                    WriteLog($"HTTPCom Download File {ghf.DownloadURL} is already present at {downloadlocalfile}");
                 }
             }
 
             if (synchronisefolder)      // after successful download, if sync folder, remove any others
             {
-                FileInfo[] allFiles = Directory.EnumerateFiles(localdownloadfolder, "*.*", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.Name).ToArray();
-
-                foreach (var file in allFiles)
+                foreach (var folder in foldersvisited)
                 {
-                    if (files.FindIndex(x => x.Name.Equals(file.Name, StringComparison.InvariantCultureIgnoreCase)) == -1)
+                    FileInfo[] allFiles = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.Name).ToArray();
+
+                    string subpath = folder.Substring(localdownloadfolder.Length);      // get sub path
+                    if (subpath.Length > 0)
+                        subpath = subpath.Substring(1);     // remove the first /
+
+                    //System.Diagnostics.Debug.WriteLine($"HTTPcom check {folder} for files in subpath `{subpath}`");
+
+                    foreach (var file in allFiles)
                     {
-                        WriteLog($"HTTPCom Download File synchronise folder remove {file.FullName}");
-                        FileHelpers.DeleteFileNoError(file.FullName);
+                        if (files.FindIndex(x => x.Path.EqualsIIC(subpath) && x.Name.EqualsIIC(file.Name)) == -1)
+                        {
+                            WriteLog($"HTTPCom Download File synchronise folder remove {file.FullName}");
+                            FileHelpers.DeleteFileNoError(file.FullName);
+                        }
                     }
                 }
             }

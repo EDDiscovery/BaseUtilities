@@ -12,21 +12,25 @@
  * governing permissions and limitations under the License.
  */
 
+using System.Collections.Generic;
+
 namespace BaseUtils
 {
     // holds a description not the data of a remote file.
 
-    [System.Diagnostics.DebuggerDisplay("{Name} {Size} {DownloadURL}")]
+    [System.Diagnostics.DebuggerDisplay("{Path} : {Name} {Size} {DownloadURL}")]
     public class RemoteFile
     {
-        public RemoteFile(string name, string uri, long size = -1, string sha = "" )
+        public RemoteFile(string name, string path, string uri, long size = -1, string sha = "")
         {
             Name = name;
+            Path = path;
             DownloadURL = uri;
             Size = size;
             SHA = sha;
         }
         public string Name { get; private set; }
+        public string Path { get; private set; }        // path to Name, empty if none
         public string DownloadURL { get; private set; }
         public long Size { get; private set; }
         public string SHA { get; private set; }     // may not be present. If its not, DownloadNeeded will return true always
@@ -48,6 +52,5 @@ namespace BaseUtils
 
             return true;
         }
-
     }
 }
