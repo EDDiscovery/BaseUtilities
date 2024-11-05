@@ -63,10 +63,30 @@ namespace BaseUtils
                 return null;
         }
 
+        // convert a branch and subpath of the repo pointed to by the URL into a download URI
+        // ServerPath should be set to something like https://api.github.com/repos/EDDiscovery/EDDiscoveryData/
+        // which gets converted to https://raw.githubusercontent.com/EDDiscovery/EDDiscoveryData/<branch>/<subpath>
 
-        // Read a whole tree, on branch, given a folder node.
+        public string GetDownloadURI(string branch, string subpath)
+        {
+            return "https://raw.githubusercontent.com/" + ServerAddress.Substring(ServerAddress.IndexOf("/repos/") + 7) + branch + "/" + subpath;
+        }
+        public static string GetDownloadURI(string server, string branch, string subpath)
+        {
+            return "https://raw.githubusercontent.com/" + server.Substring(server.IndexOf("/repos/") + 7) + branch + "/" + subpath;
+        }
+
+        // given a download URI, get a download URI for another file in the same folder
+        public static string GetDownloadURIFromRoot(string rootdownload, string filename)
+        {
+            int lastslash = rootdownload.LastIndexOf('/');
+            return lastslash > 0 ? rootdownload.Substring(0, lastslash + 1) + filename : null;
+        }
+
+        // Read a whole tree, on branch, given a folder node (such as VideoFiles or ActionFiles/V1)
         // NULL if folder not found or not an array return.  Empty list if files not there
-        public List<RemoteFile> ReadFolderTree(System.Threading.CancellationToken cancel, string branch, string gitfolder, int timeout = DefaultTimeout)
+        // local path is localpath + relative path on server from gitfolder.
+        public List<RemoteFile> ReadFolderTree(System.Threading.CancellationToken cancel, string branch, string gitfolder, string localpath, int timeout = DefaultTimeout)
         {
             var response = BlockingRequest(cancel, Method.GET, "git/trees/" + branch + ":" + Uri.EscapeDataString(gitfolder) + "?recursive=1", timeout: timeout);
 
@@ -81,22 +101,24 @@ namespace BaseUtils
                     string type = entry["type"].Str();
                     if (type == "blob")
                     {
-                        string path = entry["path"].Str();
+                        string serverlocalpath = entry["path"].Str();
                         string url = entry["url"].Str();
                         string sha = entry["sha"].Str();
                         long size = entry["size"].Long();
 
-                        //System.Diagnostics.Debug.WriteLine($"Folder tree {gitfolder} {Path.Combine(gitfolder, path)} {url}");
+                        System.Diagnostics.Debug.WriteLine($"Folder tree {gitfolder} {Path.Combine(gitfolder, serverlocalpath)} {url}");
 
-                        // stupid thing does not give a download url, just a blob url (which I don't want). Synthesise one up
+                        // stupid thing does not give a download url, just a blob url (which we don't want). Synthesise one up - see format in GetDownloadURI
                         string synthurl = url.Replace("//api.github.com/repos/", "//raw.githubusercontent.com/");
                         int pos = synthurl.IndexOf("git/blobs/");
                         if (pos >= 0)
-                            synthurl = synthurl.Substring(0, pos) + branch + "/" + gitfolder + "/" + path;
+                            synthurl = synthurl.Substring(0, pos) + branch + "/" + gitfolder + "/" + serverlocalpath;
                        
-                        //System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
+                        System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
 
-                        rf.Add(new RemoteFile(Path.GetFileName(path), Path.GetDirectoryName(path), synthurl, size, sha));
+                        rf.Add(new RemoteFile(Path.GetFileName(serverlocalpath),  // local name
+                                                Path.Combine(localpath,Path.GetDirectoryName(serverlocalpath)), // local path
+                                                synthurl, size, sha));
                     }
                 }
 
@@ -106,7 +128,7 @@ namespace BaseUtils
                 return null;
         }
 
-
+        // Read a folder, which will come from master, given a folder node (such as VideoFiles or ActionFiles/V1)
         // NULL if folder not found or not an array return.  Empty list if files not there
         public List<RemoteFile> ReadFolder(System.Threading.CancellationToken cancel, string gitfolder, int timeout = DefaultTimeout)
         {
@@ -140,51 +162,23 @@ namespace BaseUtils
             return null;
         }
 
-        // download in a task from remote git folder all files matching wildcardmatch to localdownloadfilder
-        // you can await on this.
-        // and you can cancel it
-        // optionally clean the local folder
-        public System.Threading.Tasks.Task<bool> DownloadFolderInTask(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
-                                                               bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
-        {
-            return System.Threading.Tasks.Task.Run(() =>
-            {
-                return DownloadFolder(cancel, localdownloadfolder, gitfolder, wildcardmatch, dontuseetagdownfiles, synchronisefolder, timeout);
-            });
-        }
-
         // Blocking, download from remote git folder all files matching wildcardmatch to localdownloadfilder
         // and you can cancel it from another thread
-        // optionally clean the local folder
-        public bool DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
+        // optionally clean the local folder so only files downloaded are left
+        // returns list of remote files downloaded or null on error
+        public List<RemoteFile> DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
                                 bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
         {
             List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled
 
-            if (remotefiles != null)
+            if (remotefiles != null)        // if got some
             {
                 remotefiles = (from f in remotefiles where f.Name.WildCardMatch(wildcardmatch) select f).ToList();      // wildcard match
-                return DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout);
+                if ( DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout) )
+                    return remotefiles;
             }
-            else
-                return false;
-        }
 
-        // Blocking, download from remote git folder all files matching the list of files in the list to localdownloadfilder
-        // and you can cancel it from another thread
-        // optionally clean the local folder
-        public bool DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, List<string> matches,
-                                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
-        {
-            var remotefiles = ReadFolder(cancel, gitfolder, timeout);   // will return null if cancelled
-
-            if (remotefiles != null)
-            {
-                remotefiles = (from f in remotefiles where matches.Contains(f.Name, StringComparer.InvariantCultureIgnoreCase) select f).ToList();
-                return DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout);
-            }
-            else
-                return false;
+            return null;
         }
     }
 }

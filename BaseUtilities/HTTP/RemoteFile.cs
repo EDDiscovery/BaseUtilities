@@ -13,6 +13,8 @@
  */
 
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace BaseUtils
 {
@@ -25,15 +27,15 @@ namespace BaseUtils
         {
             Name = name;
             Path = path;
-            DownloadURL = uri;
+            DownloadURI = uri;
             Size = size;
             SHA = sha;
         }
-        public string Name { get; private set; }
-        public string Path { get; private set; }        // path to Name, empty if none
-        public string DownloadURL { get; private set; }
-        public long Size { get; private set; }
-        public string SHA { get; private set; }     // may not be present. If its not, DownloadNeeded will return true always
+        public string Name { get; private set; }        // filename (fred.txt)
+        public string Path { get; private set; }        // relative path to root folder for local storage. Can be ""
+        public string DownloadURI { get; private set; } // where to get the file on the web
+        public long Size { get; private set; }          // set if known
+        public string SHA { get; private set; }         // may not be present. If its not, DownloadNeeded will return true always
 
         public bool DownloadNeeded(string destFile)
         {
@@ -48,6 +50,46 @@ namespace BaseUtils
 
                 if (localsha.Equals(SHA))
                     return false;
+            }
+
+            return true;
+        }
+
+
+        // given a list of these downloaded files, make sure the folders are synchronised to have only the files listed in them
+
+        public static bool SynchroniseFolders(string localdownloadfolderroot, List<RemoteFile> files)
+        {
+            localdownloadfolderroot = System.IO.Path.GetFullPath(localdownloadfolderroot);        // make canonical
+
+            HashSet<string> foldersvisited = new HashSet<string> { localdownloadfolderroot };
+
+            foreach (var ghf in files)
+            {
+                if (ghf.Path.HasChars())
+                {
+                    string downloadfolder = System.IO.Path.Combine(localdownloadfolderroot, ghf.Path);
+                    foldersvisited.Add(downloadfolder);
+                }
+            }
+
+            foreach (var folder in foldersvisited)
+            {
+                FileInfo[] allFiles = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.Name).ToArray();
+
+                string subpath = folder.Substring(localdownloadfolderroot.Length);      // get sub path
+                if (subpath.Length > 0)
+                    subpath = subpath.Substring(1);     // remove the first /
+
+                //System.Diagnostics.Debug.WriteLine($"HTTPcom check {folder} for files in subpath `{subpath}`");
+
+                foreach (var file in allFiles)
+                {
+                    if (files.FindIndex(x => x.Path.EqualsIIC(subpath) && x.Name.EqualsIIC(file.Name)) == -1)
+                    {
+                        FileHelpers.DeleteFileNoError(file.FullName);
+                    }
+                }
             }
 
             return true;

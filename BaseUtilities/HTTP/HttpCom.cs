@@ -519,74 +519,71 @@ namespace BaseUtils
         }
 
         // Blocking, download these remote files to localdownloadfolder (or subfolders of it, if Path is set in RemoteFile)
-        // remote files can be http: or endpoints to ServerAddress
-        // if synchronise folder is true, only files in the file list are allowed in the folder.
-        // if remote file has a SHA field, its checked against the SHA of the file, and no download will be performed.  
+        // remote files can be http: or endpoints to ServerAddress.  The DownloadURI in remote files gives the location to get it from
+        // If remote file has a SHA field, its checked against the SHA of the file, and no download will be performed if its the same
         // or you can use the etag system
         // timeout is per file
-        public bool DownloadFiles(CancellationToken cancel, string localdownloadfolder, List<RemoteFile> files, bool dontuseetagdownfiles,
-                                bool synchronisefolder, int perfileinitialtimeout = DefaultTimeout)
+
+        public bool DownloadFiles(CancellationToken cancel,
+                                string localdownloadfolderroot,
+                                List<RemoteFile> files,
+                                bool dontuseetagdownfiles,
+                                int perfileinitialtimeout = DefaultTimeout)
         {
-            if (!Directory.Exists(localdownloadfolder))
+            localdownloadfolderroot = Path.GetFullPath(localdownloadfolderroot);        // make canonical
+
+            if (!Directory.Exists(localdownloadfolderroot))
                 return false;
 
-            localdownloadfolder = Path.GetFullPath(localdownloadfolder);        // make canonical
-
-            HashSet<string> foldersvisited = new HashSet<string> { localdownloadfolder };
-
-            foreach (var ghf in files)
+            foreach (var item in files)
             {
                 if (cancel.IsCancellationRequested)
                     return false;
 
-                // if we have a path, make sure folder is there, and add it to the folder list
-                if (ghf.Path.HasChars())
+                // if we have a path, make sure folder is there
+                if (item.Path.HasChars())
                 {
-                    string downloadfolder = Path.Combine(localdownloadfolder, ghf.Path);
+                    string downloadfolder = Path.Combine(localdownloadfolderroot, item.Path);
                     if (!Directory.Exists(downloadfolder))
                         FileHelpers.CreateDirectoryNoError(downloadfolder);
-                    foldersvisited.Add(downloadfolder);
                 }
 
-                string downloadlocalfile = Path.Combine(localdownloadfolder, ghf.Path, ghf.Name);
+                // synth the local path, which is the root folder, plus its path and name
+                string downloadlocalfile = Path.Combine(localdownloadfolderroot, item.Path, item.Name);
 
-                // we don't use etag, we use DownloadNeeded
-                if (ghf.DownloadNeeded(downloadlocalfile))
+                // here we use DownloadNeeded to do a sha comparision if we have an SHA in the remote file descriptor.
+                if (item.DownloadNeeded(downloadlocalfile))
                 {
                     //System.Diagnostics.Debug.WriteLine($"Download {ghf.DownloadURL} to {downloadlocalfile}");
-                    if (!DownloadFile(cancel, ghf.DownloadURL, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
+                    if (!DownloadFile(cancel, item.DownloadURI, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
                         return false;
                 }
                 else
                 {
-                    WriteLog($"HTTPCom Download File {ghf.DownloadURL} is already present at {downloadlocalfile}");
-                }
-            }
-
-            if (synchronisefolder)      // after successful download, if sync folder, remove any others
-            {
-                foreach (var folder in foldersvisited)
-                {
-                    FileInfo[] allFiles = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.Name).ToArray();
-
-                    string subpath = folder.Substring(localdownloadfolder.Length);      // get sub path
-                    if (subpath.Length > 0)
-                        subpath = subpath.Substring(1);     // remove the first /
-
-                    //System.Diagnostics.Debug.WriteLine($"HTTPcom check {folder} for files in subpath `{subpath}`");
-
-                    foreach (var file in allFiles)
-                    {
-                        if (files.FindIndex(x => x.Path.EqualsIIC(subpath) && x.Name.EqualsIIC(file.Name)) == -1)
-                        {
-                            WriteLog($"HTTPCom Download File synchronise folder remove {file.FullName}");
-                            FileHelpers.DeleteFileNoError(file.FullName);
-                        }
-                    }
+                    WriteLog($"HTTPCom Download File already present: {item.DownloadURI} -> {downloadlocalfile}");
                 }
             }
 
             return true;
+        }
+
+        // Download and optionally synchronise folder
+        public bool DownloadFiles(CancellationToken cancel,
+                                string localdownloadfolderroot,
+                                List<RemoteFile> files,
+                                bool dontuseetagdownfiles,
+                                bool synchronisefolder,
+                                int perfileinitialtimeout = DefaultTimeout)
+        {
+            if (DownloadFiles(cancel, localdownloadfolderroot, files, dontuseetagdownfiles, perfileinitialtimeout))
+            {
+                if (synchronisefolder)
+                    return RemoteFile.SynchroniseFolders(localdownloadfolderroot, files);
+
+                return true;
+            }
+
+            return false;
         }
 
 

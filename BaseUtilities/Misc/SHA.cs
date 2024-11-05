@@ -46,6 +46,7 @@ namespace BaseUtils
 
                 foreach (string filename in filenames)
                 {
+                    //System.Diagnostics.Debug.WriteLine($"SHA calc from {filename}");
                     using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
                     {
                         using (BinaryReader br = new BinaryReader(fs))

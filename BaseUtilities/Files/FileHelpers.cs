@@ -119,6 +119,21 @@ namespace BaseUtils
             }
         }
 
+        public static bool DeleteDirectoryNoError(string path, bool recursive)
+        {
+            try
+            {
+                Directory.Delete(path,recursive);
+                return true;
+            }
+            catch
+            {       // on purpose no error - thats the point of it
+                //System.Diagnostics.Debug.WriteLine("Exception " + ex);
+                return false;
+            }
+        }
+
+
         public static bool TryCopy(string source, string file, bool overwrite)
         {
             try
@@ -192,10 +207,10 @@ namespace BaseUtils
             }
         }
 
-        public static int DeleteFiles(string rootpath, string wildcardmatch)
+        public static int DeleteFiles(string rootpath, string wildcardmatch, SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
             DirectoryInfo dir = new DirectoryInfo(rootpath);     // in order, time decending
-            FileInfo[] files = dir.GetFiles(wildcardmatch).OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
+            FileInfo[] files = dir.GetFiles(wildcardmatch, searchOption).OrderByDescending(f => f.LastWriteTimeUtc).ToArray();
 
             int number = 0;
             foreach (FileInfo fi in files)

@@ -31,6 +31,7 @@ namespace EDDiscoveryTests
         public void FolderTree()
         {
             GitHubClass ghc = new BaseUtils.GitHubClass("https://api.github.com/repos/EDDiscovery/EDDiscoveryData/", "EDDiscovery");
+            System.Diagnostics.Debug.WriteLine($"Download repo {ghc.GetDownloadURI("master", "VideoFiles/readme.txt")}");
             //var files = ghc.ReadFolder(new System.Threading.CancellationToken(), "VideoFiles");
             var files2 = ghc.ReadFolderTree(new System.Threading.CancellationToken(), "master", "VideoFiles");
             Check.That(files2).IsNotNull();
