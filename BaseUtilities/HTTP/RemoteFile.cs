@@ -20,7 +20,7 @@ namespace BaseUtils
 {
     // holds a description not the data of a remote file.
 
-    [System.Diagnostics.DebuggerDisplay("{Path} : {Name} {Size} {DownloadURL}")]
+    [System.Diagnostics.DebuggerDisplay("{Path} : {Name} {Size} {DownloadURI}")]
     public class RemoteFile
     {
         public RemoteFile(string name, string path, string uri, long size = -1, string sha = "")

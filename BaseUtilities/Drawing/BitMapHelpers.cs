@@ -18,6 +18,16 @@ namespace BaseUtils
 {
     public static class BitMapHelpers
     {
+        // using FromFile or new Bitmap locks the file, this loads, copies it so its unattached
+        // may except, protect yourself
+        public static Bitmap LoadBitmapNoLock(this string source)
+        {
+            using (var tmp = new Bitmap(source))
+            {
+                return new Bitmap(tmp);
+            }
+        }
+
         public static Bitmap ReplaceColourInBitmap(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
         {
             Bitmap newmap = new Bitmap(source.Width, source.Height);

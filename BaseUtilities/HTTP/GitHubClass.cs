@@ -106,7 +106,7 @@ namespace BaseUtils
                         string sha = entry["sha"].Str();
                         long size = entry["size"].Long();
 
-                        System.Diagnostics.Debug.WriteLine($"Folder tree {gitfolder} {Path.Combine(gitfolder, serverlocalpath)} {url}");
+                        //System.Diagnostics.Debug.WriteLine($"Folder tree {gitfolder} {Path.Combine(gitfolder, serverlocalpath)} {url}");
 
                         // stupid thing does not give a download url, just a blob url (which we don't want). Synthesise one up - see format in GetDownloadURI
                         string synthurl = url.Replace("//api.github.com/repos/", "//raw.githubusercontent.com/");
@@ -114,7 +114,7 @@ namespace BaseUtils
                         if (pos >= 0)
                             synthurl = synthurl.Substring(0, pos) + branch + "/" + gitfolder + "/" + serverlocalpath;
                        
-                        System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
+                        //System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
 
                         rf.Add(new RemoteFile(Path.GetFileName(serverlocalpath),  // local name
                                                 Path.Combine(localpath,Path.GetDirectoryName(serverlocalpath)), // local path
@@ -138,7 +138,7 @@ namespace BaseUtils
             if (response?.StatusCode == HttpStatusCode.OK)      // response will be null if cancelled, bug #3548
             {
                 JArray ja = JArray.Parse(response.Body);
-                System.Diagnostics.Debug.WriteLine($"Read folder {gitfolder} : {ja.ToString(true)}");
+                //System.Diagnostics.Debug.WriteLine($"Read folder {gitfolder} : {ja.ToString(true)}");
 
                 if (ja != null)
                 {
