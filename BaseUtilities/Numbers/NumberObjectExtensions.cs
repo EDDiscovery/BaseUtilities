@@ -419,13 +419,13 @@ public static class ObjectExtensionsNumbersBool
     }
 
     // fill List from comma separ string, with min leng (def if less) and max length
-    static public List<int> RestoreIntListFromString(this string plist, int minlength = 0, int def = 0, int maxlength = int.MaxValue)
+    static public List<int> RestoreIntListFromString(this string plist, int minlength = 0, int def = 0, int maxlength = int.MaxValue, char splitchar = ',')
     {
         List<int> list = new List<int>();
 
         if (plist.Length > 0)
         {
-            string[] parray = plist.Split(',');
+            string[] parray = plist.Split(splitchar);
 
             for (int i = 0; i < parray.Length && list.Count < maxlength; i++)
             {
@@ -443,9 +443,9 @@ public static class ObjectExtensionsNumbersBool
     }
 
     // fill array from comma separ string, with min leng (def if less) and max length
-    static public bool RestoreArrayFromString(this string plist, out int[] array , int? min = null, int? max = null)   // string of comma values, parse out to array, false if any fail
+    static public bool RestoreArrayFromString(this string plist, out int[] array , int? min = null, int? max = null, char splitchar = ',')   // string of comma values, parse out to array, false if any fail
     {
-        string[] parray = plist.Split(',');
+        string[] parray = plist.Split(splitchar);
 
         array = new int[parray.Length];
 
