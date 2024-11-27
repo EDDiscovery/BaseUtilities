@@ -63,24 +63,27 @@ public static partial class DataGridViewControlHelpersStaticFunc
             int[] displayindexes = new int[dgv.ColumnCount];
             int dicount = 0;
 
+            var fillwja = jo["FillWeight"].Array();
+            var dija = jo["DisplayIndex"].Array();
+
             for (int i = 0; i < dgv.Columns.Count; i++)
             {
-                double fillw = jo["FillWeight"].Array()[i].Double(100);
+                double fillw = i < fillwja.Count ? fillwja[i].Double(100) : double.MinValue;        // ensure i is in range - bug found
                 if (fillw > double.MinValue)
                 {
                     dgv.Columns[i].Visible = fillw > 0;
                     dgv.Columns[i].FillWeight = (float)Math.Abs(fillw);
+                }
 
-                    int di = jo["DisplayIndex"].Array()[i].Int(i);
-                    if (di >= 0 && di < dgv.ColumnCount)
-                    {
-                        displayindexes[di] = i;
-                        dicount++;
-                    }
+                int di = i < dija.Count ? dija[i].Int(i) : int.MinValue;        // ensure i is in range
+                if (di >= 0 && di < dgv.ColumnCount)
+                {
+                    displayindexes[di] = i;
+                    dicount++;
                 }
             }
 
-            if (dicount == dgv.ColumnCount)
+            if (dicount == dgv.ColumnCount)     // if we have set the display indexes of all columns, we can update it. otherwise ignore
             {
                 // when you change the display index, the others shuffle around. So need to set them it seems in display index increasing order.
                 // hence the array, and we set in this order.
