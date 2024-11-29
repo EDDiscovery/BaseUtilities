@@ -557,7 +557,7 @@ namespace BaseUtils
 
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
             var elistremoved = elist != null ? new List<string>(elist) : new List<string>(); // either duplicate or empty
-            var errlist = Tx(tt, parent, elist, elistremoved, subname != null ? subname : parent.GetType().Name, debugit);
+            var errlist = Tx(tt, parent, elist, elistremoved, subname != null ? subname : parent.GetType().Name, debugit,0);
 
             if (errlist.HasChars())
             {
@@ -572,13 +572,16 @@ namespace BaseUtils
             }
         }
 
-        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, List<string> enumsetremoved, string subname, bool debugit)
+        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, List<string> enumsetremoved, string subname, bool debugit, int level)
         {
             string errlist = "";
 
-            string s = tt.GetToolTip(ctrl);
-            //System.Diagnostics.Debug.WriteLine($"Tooltip {ctrl.Name} = {s}");
-            if (s != null && s.Length > 1 && s.HasLetterChars() && !s.StartsWith("<code"))
+            string defaulttooltiptext = tt.GetToolTip(ctrl);
+
+            if (debugit)
+                System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}Tooltip Control at {level} name {ctrl.Name} tooltext `{defaulttooltiptext}`");
+
+            if (defaulttooltiptext != null && defaulttooltiptext.Length > 1 && defaulttooltiptext.HasLetterChars() && !defaulttooltiptext.StartsWith("<code"))
             {
                 string id = subname.AppendPrePad("ToolTip", ".");
 
@@ -593,10 +596,16 @@ namespace BaseUtils
                 else
                     enumsetremoved.Remove(enumid);
 
-                tt.SetToolTip(ctrl, Translate(s, id));
+                string translate = Translate(defaulttooltiptext, id);
+                tt.SetToolTip(ctrl, translate);
 
                 if (debugit)
-                    System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
+                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level*4)}Set tooltip to id {id} text `{translate}` ({GetOriginalFile(id)} {GetOriginalLine(id)})");
+            }
+            else
+            {
+                if ( debugit )
+                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}No tooltip on control");
             }
 
             foreach (Control c in ctrl.Controls)
@@ -605,8 +614,12 @@ namespace BaseUtils
 
                 if (InsertName(c))      // containers don't send thru 
                     id = id.AppendPrePad(c.Name, ".");
+                if (debugit)
+                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level*4)} -> into {c.Name} with id {id}");
 
-                errlist = errlist.AppendPrePad(Tx(tt, c, enumset, enumsetremoved, id, debugit), ", ");
+                string res = Tx(tt, c, enumset, enumsetremoved, id, debugit, level + 1);
+
+                errlist = errlist.AppendPrePad(res, ", ");
             }
 
             return errlist;
