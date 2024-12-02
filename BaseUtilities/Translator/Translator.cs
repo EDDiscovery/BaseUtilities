@@ -649,7 +649,9 @@ namespace BaseUtils
 
                 if ( !foundinenumset )
                 {
-                    errlist = errlist.AppendPrePad("EDTx." + toplevelnames[0] + prefixid + ".ToolTip", ", ");
+                    string id = toplevelnames[0] + prefixid + ".ToolTip";
+                    string enumid = id.Replace(".", "_");
+                    errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
                 }
             }
             else
