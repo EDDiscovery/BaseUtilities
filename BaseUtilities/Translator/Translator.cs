@@ -82,6 +82,11 @@ namespace BaseUtils
         public bool Translating { get { return translations != null; } }
 
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
+        public bool TryGetValue(string fullid, out string text)     // true if translation is defined and non null
+        {
+            text = translations != null && translations.ContainsKey(fullid) ? translations[fullid] : null;
+            return text != null;
+        }
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
         public string GetOriginalEnglish(string fullid) => originalenglish?[fullid] ?? "?";         // ensure its there first!
         public string GetOriginalFile(string fullid) => originalfile?[fullid] ?? "?";         // ensure its there first!
