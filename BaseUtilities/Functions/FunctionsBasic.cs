@@ -1016,6 +1016,7 @@ namespace BaseUtils
             bool splitcaps = paras.Count == 5 && paras[4].Value.IndexOf("splitcaps", StringComparison.InvariantCultureIgnoreCase) >= 0;
             bool nameonly = paras.Count == 5 && paras[4].Value.IndexOf("nameonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
             bool valueonly = paras.Count == 5 && paras[4].Value.IndexOf("valueonly", StringComparison.InvariantCultureIgnoreCase) >= 0;
+            bool removecount = paras.Count == 5 && paras[4].Value.IndexOf("removecount", StringComparison.InvariantCultureIgnoreCase) >= 0;
 
             output = "";
 
@@ -1023,7 +1024,7 @@ namespace BaseUtils
             int index = 0;
             foreach (string key in vars.NameEnumuerable)
             {
-                if (key.StartsWith(arrayroot))
+                if (key.StartsWith(arrayroot) && (!removecount || !key.EndsWith("_Count")))
                 {
                     index++;
                     if (index >= start && index < start + length)
