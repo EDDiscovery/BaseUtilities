@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017-2022 EDDiscovery development team
+ * Copyright 2017-2024 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 
 using System.Collections.Generic;
@@ -20,16 +18,17 @@ namespace BaseUtils
 {
     public class Functions
     {
-        public Variables vars;
-        public FunctionPersistentData persistentdata;
+        public int MaxRecursionDepth { get; set; } = 10;
+        public Variables Vars { get; private set; }
+        public FunctionPersistentData PersistentData { get; private set; }
 
         public delegate FunctionHandlers delegateGetCFH(Functions c, Variables vars, FunctionPersistentData handles, int recdepth);
         public static delegateGetCFH GetCFH;            // SET this to override and add on more functions
 
         public Functions(Variables v, FunctionPersistentData f)
         {
-            vars = v;
-            persistentdata = f;
+            Vars = v;
+            PersistentData = f;
 
             if (GetCFH == null)                     // Make sure we at least have some functions.. the base ones
                 GetCFH = DefaultGetCFH;
@@ -79,12 +78,12 @@ namespace BaseUtils
 
         public ExpandResult ExpandString(string line, out string result)
         {
-            return ExpandStringFull(line, out result, 1);
+            return ExpandStringFull(line, out result, 0);
         }
 
-        public ExpandResult ExpandStringFull(string line, out string result, int recdepth)
+        public ExpandResult ExpandStringFull(string line, out string result, int recdepth = 0)
         {
-            if (recdepth > 9)
+            if (recdepth >= MaxRecursionDepth)
             {
                 result = "Recursion detected - aborting expansion";
                 return ExpandResult.Failed;
@@ -112,7 +111,7 @@ namespace BaseUtils
                         string funcname = line.Substring(pos, apos - pos);
                         apos++;     // past the (
 
-                        FunctionHandlers cfh = GetCFH(this, vars, persistentdata, recdepth);
+                        FunctionHandlers cfh = GetCFH(this, Vars, PersistentData, recdepth);
 
                         string errprefix = "";
                         if (funcname.Length > 0)

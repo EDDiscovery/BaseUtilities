@@ -12,6 +12,7 @@
  * governing permissions and limitations under the License.
  */
 
+using BaseUtils;
 using System;
 using System.Drawing;
 
@@ -129,6 +130,22 @@ public static class ObjectExtensionsColours
             (byte)Math.Max(Math.Min(Math.Round((float)c.R * val), 255), 0),
             (byte)Math.Max(Math.Min(Math.Round((float)c.G * val), 255), 0),
             (byte)Math.Max(Math.Min(Math.Round((float)c.B * val), 255), 0));
+    }
+    
+    public static Color ColorFromNameOrValues(this string str)        // From color from a name, or from values
+    {
+        Color c = Color.FromName(str);
+        if ( c.A == 0)
+        {
+            StringParser s = new StringParser(str);
+            int? a = s.NextIntComma(" ,");
+            int? r = s.NextIntComma(" ,");
+            int? g = s.NextIntComma(" ,");
+            int? b = s.NextInt();
+            if (a.HasValue && r.HasValue && g.HasValue && b.HasValue)
+                c = Color.FromArgb(a.Value, r.Value, g.Value, b.Value);
+        }
+        return c;
     }
 }
 

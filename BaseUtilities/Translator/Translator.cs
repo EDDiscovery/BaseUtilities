@@ -450,12 +450,16 @@ namespace BaseUtils
         // We must go thru this procedure even if translations are off due to the embedded IDs such as %OK%
 
         [System.Diagnostics.DebuggerHidden]
-        public void TranslateControls(Control ctrl, Enum[] enumset, Control[] ignorelist = null, string subname = null, bool debugit = false)
+        public void TranslateControls(Control parent, Enum[] enumset, Control[] ignorelist = null, string[] toplevelnames = null, bool debugit = false)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
             var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-            var errlist = Tx(ctrl, elist, subname != null ? subname : ctrl.GetType().Name, ignorelist, debugit);
+
+            if (toplevelnames == null)
+                toplevelnames = new string[] { parent.GetType().Name };
+
+            var errlist = Tx(parent, elist, toplevelnames, "", ignorelist, debugit);
             if (errlist.HasChars())
             {
                 System.Diagnostics.Debug.WriteLine($"        var enumlist = new Enum[] {{{errlist.Replace(",", ", ").WordWrap(160)}}};");
@@ -468,7 +472,7 @@ namespace BaseUtils
             }
         }
 
-        private string Tx(Control ctrl, List<string> enumset, string subname, Control[] ignorelist, bool debugit = false)
+        private string Tx(Control ctrl, List<string> enumset, string[] toplevelnames, string prefixid, Control[] ignorelist, bool debugit = false)
         {
             string errlist = "";
 
@@ -489,22 +493,33 @@ namespace BaseUtils
                     }
                     else
                     {
-                        // else make ID for control
+                        bool foundinenumset = false;
+                        foreach (var tln in toplevelnames)
+                        {
+                            string id = tln + ((ctrl is GroupBox || ctrl is TabPage) ? (prefixid + "." + ctrl.Name) : prefixid);
+                            string enumid = id.Replace(".", "_");
 
-                        string id = (ctrl is GroupBox || ctrl is TabPage) ? (subname + "." + ctrl.Name) : subname;
+                            if (enumset.Contains(enumid))     // if found, use this
+                            {
+                                foundinenumset = true;
 
-                        // make sure enumset has it, else add to errlist
-                        string enumid = id.Replace(".", "_");
-                        if (enumset == null || !enumset.Contains(enumid))
+                                ctrl.Text = Translate(ctrl.Text, id);
+
+                                if (debugit)
+                                    System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
+
+                                enumset.Remove(enumid);
+                                break;
+                            }
+
+                        }
+
+                        if ( !foundinenumset)
+                        {
+                            string id = toplevelnames[0] + ((ctrl is GroupBox || ctrl is TabPage) ? (prefixid + "." + ctrl.Name) : prefixid);
+                            string enumid = id.Replace(".", "_");
                             errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
-                        else
-                            enumset.Remove(enumid);
-
-                        // translate
-                        ctrl.Text = Translate(ctrl.Text, id);
-
-                        if (debugit)
-                            System.Diagnostics.Debug.WriteLine($" {id} -> {ctrl.Text} ({GetOriginalFile(id)} {GetOriginalLine(id)})");
+                        }
                     }
                 }
 
@@ -512,37 +527,61 @@ namespace BaseUtils
                 if (ctrl is DataGridView)
                 {
                     DataGridView v = ctrl as DataGridView;
-                    foreach (DataGridViewColumn c in v.Columns)
+                    foreach (DataGridViewColumn col in v.Columns)
                     {
-                        if (c.HeaderText != null && c.HeaderText.Length > 1 && c.HeaderText.HasLetterChars())
+                        if (col.HeaderText != null && col.HeaderText.Length > 1 && col.HeaderText.HasLetterChars())
                         {
-                            string id = subname.AppendPrePad(c.Name, ".");
+                            bool foundinenumset = false;
+                            foreach (var tln in toplevelnames)
+                            {
+                                string idlong = tln + prefixid + "." + ctrl.Name + "." + col.Name;  // new dec 24 include ctrl name in id for multiple grids per control
+                                string enumid = idlong.Replace(".", "_");
 
-                            string enumid = id.Replace(".", "_");
+                                if (enumset.Contains(enumid))     // if found, use this
+                                {
+                                    foundinenumset = true;
+                                    col.HeaderText = Translate(col.HeaderText, idlong);
+                                    enumset.Remove(enumid);
+                                    break;
+                                }
+                                else
+                                {
+                                    string idshort = tln + prefixid + "." + col.Name;  // new dec 24 short older version (EDTx.UserControlJournalGrid_ColumnTime)
+                                    enumid = idshort.Replace(".", "_");
 
-                            if (enumset == null || !enumset.Contains(enumid))
+                                    if (enumset.Contains(enumid))     // if found, use this
+                                    {
+                                        foundinenumset = true;
+                                        col.HeaderText = Translate(col.HeaderText, idshort);
+                                        enumset.Remove(enumid);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!foundinenumset)
+                            {
+                                string id = toplevelnames[0] + prefixid + "." + ctrl.Name + "." + col.Name;  // new dec 24 include ctrl name in id for multiple grids per control
+                                string enumid = id.Replace(".", "_");
                                 errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
-                            else
-                                enumset.Remove(enumid);
-
-                            c.HeaderText = Translate(c.HeaderText, id);
+                            }
                         }
                     }
                 }
 
                 // if tabpage, add on the page name
                 if (ctrl is TabPage)
-                    subname = subname.AppendPrePad(ctrl.Name, ".");
+                    prefixid = prefixid + "." + ctrl.Name;
 
                 // do sub controls
                 foreach (Control c in ctrl.Controls)
                 {
-                    string name = subname;
+                    string nextid = prefixid;
 
                     if (InsertName(c))
-                        name = name.AppendPrePad(c.Name, ".");
+                        nextid = nextid + "." + c.Name;
 
-                    errlist = errlist.AppendPrePad(Tx(c, enumset, name, ignorelist, debugit), ", ");
+                    errlist = errlist.AppendPrePad(Tx(c, enumset, toplevelnames, nextid, ignorelist, debugit), ", ");
                 }
             }
             else
@@ -556,13 +595,17 @@ namespace BaseUtils
         // translate tooltips.  Does not support %id%.  <code> is ignored.  Does check for non used enums now
 
         [System.Diagnostics.DebuggerHidden]
-        public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string subname = null, bool debugit = false)
+        public void TranslateTooltip(ToolTip tt, Enum[] enumset, Control parent, string[] toplevelnames = null, bool debugit = false)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
-            var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
-            var elistremoved = elist != null ? new List<string>(elist) : new List<string>(); // either duplicate or empty
-            var errlist = Tx(tt, parent, elist, elistremoved, subname != null ? subname : parent.GetType().Name, debugit,0);
+            var elist = enumset.Select(x => x.ToString()).ToList();
+            var elistremoved = new List<string>(elist); // either duplicate or empty
+
+            if (toplevelnames == null)
+                toplevelnames = new string[] { parent.GetType().Name };
+
+            var errlist = Tx(tt, parent, elist, elistremoved, toplevelnames, "", debugit,0);
 
             if (errlist.HasChars())
             {
@@ -577,7 +620,7 @@ namespace BaseUtils
             }
         }
 
-        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, List<string> enumsetremoved, string subname, bool debugit, int level)
+        private string Tx(ToolTip tt, Control ctrl, List<string> enumset, List<string> enumsetremoved, string[] toplevelnames, string prefixid, bool debugit, int level)
         {
             string errlist = "";
 
@@ -588,24 +631,33 @@ namespace BaseUtils
 
             if (defaulttooltiptext != null && defaulttooltiptext.Length > 1 && defaulttooltiptext.HasLetterChars() && !defaulttooltiptext.StartsWith("<code"))
             {
-                string id = subname.AppendPrePad("ToolTip", ".");
+                bool foundinenumset = false;
+                foreach (var tln in toplevelnames)
+                {
+                    string id = tln + prefixid + ".ToolTip";
+                    string enumid = id.Replace(".", "_");
 
-                string enumid = id.Replace(".", "_");
+                    if (enumset.Contains(enumid))     // if found, use this
+                    {
+                        foundinenumset = true;
 
-                // if we do have it, unlike controls, we can't just remove the ID from enumset, because some controls (Exttextbox, extcombobox) copy
-                // down their tooltips to their subcontrols and they end up being present multiple times
-                // we do however remove them from the enumsetremoved to keep count
+                        string translate = Translate(defaulttooltiptext, id);
+                        tt.SetToolTip(ctrl, translate);
 
-                if (enumset == null || !enumset.Contains(enumid))
+                        if (debugit)
+                            System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}Set tooltip to id {id} text `{translate}`");
+
+                        enumsetremoved.Remove(enumid);
+                        break;
+                    }
+                }
+
+                if ( !foundinenumset )
+                {
+                    string id = toplevelnames[0] + prefixid + ".ToolTip";
+                    string enumid = id.Replace(".", "_");
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
-                else
-                    enumsetremoved.Remove(enumid);
-
-                string translate = Translate(defaulttooltiptext, id);
-                tt.SetToolTip(ctrl, translate);
-
-                if (debugit)
-                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level*4)}Set tooltip to id {id} text `{translate}` ({GetOriginalFile(id)} {GetOriginalLine(id)})");
+                }
             }
             else
             {
@@ -615,14 +667,14 @@ namespace BaseUtils
 
             foreach (Control c in ctrl.Controls)
             {
-                string id = subname;
+                string nextid = prefixid;
 
                 if (InsertName(c))      // containers don't send thru 
-                    id = id.AppendPrePad(c.Name, ".");
+                    nextid = "." + c.Name;
                 if (debugit)
-                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level*4)} -> into {c.Name} with id {id}");
+                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level*4)} -> into {c.Name} with id {nextid}");
 
-                string res = Tx(tt, c, enumset, enumsetremoved, id, debugit, level + 1);
+                string res = Tx(tt, c, enumset, enumsetremoved, toplevelnames, nextid, debugit, level + 1);
 
                 errlist = errlist.AppendPrePad(res, ", ");
             }
@@ -633,21 +685,22 @@ namespace BaseUtils
         // translate toolstrips.  Does not support %id%.  <code> is ignored.
         public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, Control parent)
         {
-            TranslateToolstrip(ctrl, enumset, parent.GetType().Name);
+            TranslateToolstrip(ctrl, enumset, new string[] { parent.GetType().Name });
         }
 
         [System.Diagnostics.DebuggerHidden]
-        public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, string subname)
+        public void TranslateToolstrip(ToolStrip ctrl, Enum[] enumset, string[] toplevelnames = null)
         {
             System.Diagnostics.Debug.Assert(enumset != null);       // for now, disable ability. comment this out during development
 
-            var elist = enumset == null ? null : enumset.Select(x => x.ToString()).ToList();
+            var elist = enumset.Select(x => x.ToString()).ToList();
 
             string errlist = "";
 
             foreach (ToolStripItem msi in ctrl.Items)
             {
-                errlist = errlist.AppendPrePad(Tx(msi, elist, subname), ", ");
+                var errl = Tx(msi, elist, toplevelnames, "");
+                errlist = errlist.AppendPrePad(errl, ", ");
             }
 
             if (errlist.HasChars())
@@ -663,7 +716,7 @@ namespace BaseUtils
             }
         }
 
-        private string Tx(ToolStripItem msi, List<string> enumset, string subname)
+        private string Tx(ToolStripItem msi, List<string> enumset, string[] toplevelnames, string prefixid)
         {
             string errlist = "";
 
@@ -671,16 +724,27 @@ namespace BaseUtils
 
             if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && !msi.Text.StartsWith("<code"))
             {
-                string id = subname.AppendPrePad(itemname, ".");
+                bool foundinenumset = false;
+                foreach ( var tln in toplevelnames)
+                {
+                    string id = tln + prefixid + "." + itemname;
+                    string enumid = id.Replace(".", "_");
 
-                string enumid = id.Replace(".", "_");
+                    if ( enumset.Contains(enumid))
+                    {
+                        foundinenumset = true;
+                        msi.Text = Translate(msi.Text, id);
+                        enumset.Remove(enumid);
+                        break;
+                    }
+                }
 
-                if (enumset == null || !enumset.Contains(enumid))
+                if (!foundinenumset)
+                {
+                    string id = toplevelnames[0] + prefixid + "." + itemname;
+                    string enumid = id.Replace(".", "_");
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
-                else
-                    enumset.Remove(enumid);
-
-                msi.Text = Translate(msi.Text, id);
+                }
             }
 
             var ddi = msi as ToolStripDropDownItem;
@@ -688,7 +752,9 @@ namespace BaseUtils
             {
                 foreach (ToolStripItem dd in ddi.DropDownItems)
                 {
-                    errlist = errlist.AppendPrePad(Tx(dd, enumset, subname.AppendPrePad(itemname, ".")), ", ");
+                    string nextid = prefixid + "." + itemname;
+                    var erl = Tx(dd, enumset, toplevelnames, nextid);
+                    errlist = errlist.AppendPrePad(erl, ", ");
                 }
             }
 
