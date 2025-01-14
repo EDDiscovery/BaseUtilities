@@ -185,6 +185,7 @@ namespace EMK.LightGeometry
             Z = z;
         }
 
+        [QuickJSON.JsonIgnore]
         public float LengthSquared
         {
             get
