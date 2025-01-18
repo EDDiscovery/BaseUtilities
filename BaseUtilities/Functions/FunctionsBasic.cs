@@ -86,6 +86,7 @@ namespace BaseUtils
                 functions.Add("length", new FuncEntry(Length, FuncEntry.PT.MESE));
                 functions.Add("lowerinvariant", new FuncEntry(LowerInvariant, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("lower", new FuncEntry(Lower, 1, 20, FuncEntry.PT.MESE));
+                functions.Add("phrasel", new FuncEntry(PhraseL, 1, FuncEntry.PT.MESE));
                 functions.Add("phrase", new FuncEntry(Phrase, 1, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("tojson", new FuncEntry(ToJson, 1, FuncEntry.PT.M, FuncEntry.PT.ImeSE));
 
@@ -593,6 +594,12 @@ namespace BaseUtils
         protected bool Phrase(out string output)
         {
             output = paras[0].Value.PickOneOfGroups(rnd, paras.Count > 1 ? paras[1].Value : ";", paras.Count > 2 ? paras[2].Value : "{", paras.Count > 3 ? paras[3].Value : "}");
+            return true;
+        }
+
+        protected bool PhraseL(out string output)
+        {
+            output = paras[0].Value.PickOneOfGroups(rnd, "<;>", "{{{", "}}}");
             return true;
         }
 
