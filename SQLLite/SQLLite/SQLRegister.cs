@@ -37,12 +37,13 @@ namespace SQLLiteExtensions
             }
         }
 
-        public bool DeleteKey(string sKey)        // SQL wildcards
+        public int DeleteKey(string sKey)        // SQL wildcards
         {
-            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID like @key"))
+            using (DbCommand cmd = cn.CreateCommand("Delete from Register WHERE ID LIKE @key"))
             {
                 cmd.AddParameterWithValue("@key", sKey);
-                return cmd.ExecuteScalar() != null;
+                var res = cmd.ExecuteNonQuery();
+                return res;
             }
         }
 
