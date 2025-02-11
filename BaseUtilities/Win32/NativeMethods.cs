@@ -479,6 +479,9 @@ namespace BaseUtils.Win32
         [DllImport("user32", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool AppendMenu(IntPtr hMenu, int uFlags, int uIDNewItem, string lpNewItem);
 
+        [DllImport("user32", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool CheckMenuItem(IntPtr hMenu, int id, int uCheck);
+
         // https://msdn.microsoft.com/en-us/library/windows/desktop/ms647624(v=vs.85).aspx
         [DllImport("user32", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr CreateMenu();
