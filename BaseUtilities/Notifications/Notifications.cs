@@ -1,7 +1,7 @@
 ﻿/*
- * Copyright © 2022-2022 EDDiscovery development team
+ * Copyright © 2022-2025 EDDiscovery development team
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * Licensed under the Apache License, Version 2.0 (the "License") {get;set;} you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -27,24 +26,24 @@ namespace BaseUtils
     {
         public class NotificationParas
         {
-            public string Text;
-            public string Caption;
+            public string Text { get; set; }
+            public string Caption { get; set; }
         }
+
+        [System.Diagnostics.DebuggerDisplay("{StartUTC} {EndUTC} {VersionMin} {VersionMax} Always={AlwaysShow} E={EntryType}")]
 
         public class Notification
         {
-            public DateTime StartUTC;
-            public DateTime EndUTC;
-            public string VersionMin;
-            public string VersionMax;
-            public string[] actionpackpresent;  // any is present to trigger
-            public string[] actionpackpresentenabled;  // any is present and enabled to trigger
-            public string[] actionpackpresentdisabled;  // any is present and disabled
-            public string[] actionpacknotpresent;  // any is not present to trigger
-            public string EntryType;
-            public float PointSize;
-            public bool HighLight;
-            public Dictionary<string, NotificationParas> ParaStrings;
+            public DateTime StartUTC {get;set;}
+            public DateTime EndUTC {get;set;}
+            public string VersionMin {get;set;}
+            public string VersionMax {get;set;}
+            public bool AlwaysShow {get;set;}             // set to always show, else a condition must pass
+            public Dictionary<string, string[]> Conditions {get;set;}     // list of CONDITIONxxx = string,string
+            public string EntryType {get;set;}
+            public float PointSize {get;set;}
+            public bool HighLight {get;set;}
+            public Dictionary<string, NotificationParas> ParaStrings {get;set;}
 
             public NotificationParas Select(string lang)
             {
@@ -52,7 +51,8 @@ namespace BaseUtils
             }
         }
 
-        static public List<Notification> ReadNotificationsFile(string notfile)
+        // read XML file and compile notifications
+        static public List<Notification> ReadNotificationsFile(string notfile, string notificationsection)
         {
             List<Notification> notes = new List<Notification>();
 
@@ -66,15 +66,13 @@ namespace BaseUtils
                 {
                     //System.Diagnostics.Debug.WriteLine("Item " + toplevel.Name);
 
-                    if (toplevel.Name == "Notifications")
+                    if (toplevel.Name == notificationsection)
                     {
                         foreach (XElement entry in toplevel.Elements())
                         {
                             try
                             {
                                 // protect each notification from each other..
-
-                                // System.Diagnostics.Debug.WriteLine(" Entry " + entry.Name);
 
                                 Notification n = new Notification();
                                 n.StartUTC = DateTime.Parse(entry.Attribute("StartUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal);
@@ -91,17 +89,19 @@ namespace BaseUtils
                                 if (entry.Attribute("VersionMin") != null)
                                     n.VersionMin = entry.Attribute("VersionMin").Value;
 
-                                if (entry.Attribute("ActionPackPresent") != null)
-                                    n.actionpackpresent = entry.Attribute("ActionPackPresent").Value.Split(',');
+                                if (entry.Attribute("AlwaysShow") != null)      // always show has been added - its either this now (feb 25) or a condition passes
+                                    n.AlwaysShow = entry.Attribute("AlwaysShow").Value == "1";
 
-                                if (entry.Attribute("ActionPackNotPresent") != null)
-                                    n.actionpacknotpresent = entry.Attribute("ActionPackNotPresent").Value.Split(',');
+                                n.Conditions = new Dictionary<string, string[]>();
 
-                                if (entry.Attribute("ActionPackPresentEnabled") != null)
-                                    n.actionpackpresentenabled = entry.Attribute("ActionPackPresentEnabled").Value.Split(',');
-
-                                if (entry.Attribute("ActionPackPresentDisabled") != null)
-                                    n.actionpackpresentdisabled = entry.Attribute("ActionPackPresentDisabled").Value.Split(',');
+                                foreach( XAttribute at in entry.Attributes())
+                                {
+                                    //System.Diagnostics.Debug.WriteLine($"{at.Name.LocalName} = {at.Value}");
+                                    if ( at.Name.LocalName.StartsWith("Condition"))
+                                    {
+                                        n.Conditions[at.Name.LocalName] = at.Value.Split(",");
+                                    }
+                                }
 
                                 n.ParaStrings = new Dictionary<string, NotificationParas>();
 
@@ -114,6 +114,7 @@ namespace BaseUtils
                                 }
 
                                 notes.Add(n);
+                               // System.Diagnostics.Debug.WriteLine($"Notification {n.StartUTC}..{n.EndUTC} {n.EntryType} {n.AlwaysShow}");
                             }
                             catch (Exception ex)
                             {
@@ -135,6 +136,7 @@ namespace BaseUtils
                                                     string githubfoldername,
                                                     string localnotificationfolder,
                                                     string githuburl,
+                                                    string notificationsection,
                                                     Action<List<Notification>> callbackinthread)
         {
             return Task.Factory.StartNew(() =>
@@ -152,7 +154,7 @@ namespace BaseUtils
 
                 foreach (FileInfo f in allfiles)       // process all files found..
                 {
-                    var list = ReadNotificationsFile(f.FullName);
+                    var list = ReadNotificationsFile(f.FullName, notificationsection);
                     nlist.AddRange(list);
                 }
 
