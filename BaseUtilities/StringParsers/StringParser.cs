@@ -191,8 +191,24 @@ namespace BaseUtils
 
         #region WORDs bare or quoted
 
-        // WORD defined by terminators. options to lowercase it and de-escape it
+        // WORD defined by terminat
 
+        public string NextWord(char terminator)
+        {
+            if (pos >= line.Length)     // null if there is nothing..
+                return null;
+            else
+            {
+                int start = pos;
+
+                while (pos < line.Length && line[pos] != terminator)
+                    pos++;
+
+                return line.Substring(start, pos - start);
+            }
+        }
+
+        // WORD defined by terminators. options to lowercase it and de-escape it
         public string NextWord(string terminators = " ", System.Globalization.CultureInfo lowercase = null, bool replacescape = false)
         {
             if (pos >= line.Length)     // null if there is nothing..

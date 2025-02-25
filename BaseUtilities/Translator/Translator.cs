@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 public static class TranslatorExtensions
@@ -133,23 +134,24 @@ namespace BaseUtils
 
 
         // You can call this multiple times if required for debugging purposes
-        public bool LoadTranslation(string language, CultureInfo uicurrent,
-                                    string[] txfolders, int includesearchupdepth,
-                                    string logdir,
-                                    string includefolderreject = "\\bin",       // use to reject include files in specific locations - for debugging
-                                    bool loadorgenglish = false,                // optional load original english and store
-                                    bool loadfile = false,                      // remember file where it came from
-                                    bool trackinuse = false,                    // mark if in use
-                                    bool debugout = false                       // list translators in log file
+        public bool LoadTranslation(string language, 
+                                    CultureInfo uicurrent,
+                                    string[] txfolders, 
+                                    int includesearchupdepth,
+                                    string logdir = null,       // if non null, logger is active
+                                    bool storesourceinfo = false,      // if true, accumulate info on where IDs come from
+                                    string includefolderreject = "\\bin"       // use to reject include files in specific locations - for debugging
                                     )
         {
-#if DEBUG
-            if (logger != null)
-                logger.Dispose();
+            if (logdir!=null)
+            {
+                if (logger != null)
+                    logger.Dispose();
 
-            logger = new LogToFile();
-            logger.SetFile(logdir, "translator-ids.log", false);
-#endif
+                logger = new LogToFile();
+                logger.SetFile(logdir, "translator-ids.log", false);
+            }
+
             translations = null;        // forget any
             originalenglish = null;
             originalfile = null;
@@ -180,22 +182,27 @@ namespace BaseUtils
             System.Diagnostics.Debug.WriteLine("Load Language " + langsel.Item2);
             logger?.WriteLine("Read " + langsel.Item2 + " from " + langsel.Item1);
 
+            string tlfile = Path.Combine(langsel.Item1, langsel.Item2);
+
+            // tlx faster load
+
+            if ( Path.GetExtension(tlfile).Equals(".tlx", StringComparison.InvariantCultureIgnoreCase))     
+            {
+                return ReadFromFile(tlfile);
+            }
+
             using (LineReader lr = new LineReader())
             {
-                string tlffile = Path.Combine(langsel.Item1, langsel.Item2);
-
-                if (lr.Open(tlffile))
+                if (lr.Open(tlfile))
                 {
                     translations = new Dictionary<string, string>();
-                    if (loadorgenglish)
-                        originalenglish = new Dictionary<string, string>();
-                    if (loadfile)
+                    if (storesourceinfo)
                     {
+                        originalenglish = new Dictionary<string, string>();
                         originalfile = new Dictionary<string, string>();
                         originalline = new Dictionary<string, int>();
-                    }
-                    if (trackinuse)
                         inuse = new Dictionary<string, bool>();
+                    }
 
                     string prefix = "";
 
@@ -207,7 +214,7 @@ namespace BaseUtils
                         {
                             line = line.Mid(7).Trim();
 
-                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlffile));
+                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlfile));
 
                             string filename = null;
 
@@ -307,14 +314,13 @@ namespace BaseUtils
                                         if (!translations.ContainsKey(id))
                                         {
                                             //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
-                                            if (debugout)
+                                            if (logger != null)
                                                 logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
                                             translations[id] = foreign;
-                                            if (loadorgenglish)
+                                            if (storesourceinfo)
+                                            { 
                                                 originalenglish[id] = orgenglish;
-                                            if (loadfile)
-                                            {
                                                 originalfile[id] = lr.CurrentFile;
                                                 originalline[id] = lr.CurrentLine;
                                             }
@@ -344,6 +350,49 @@ namespace BaseUtils
             }
         }
 
+        // write keys to a file - much faster to load than normal version
+        public bool WriteToFile(string filename)
+        {
+            StringBuilder sp = new StringBuilder(200000);
+            foreach (var v in translations)
+            {
+                sp.Append(v.Key);
+                sp.Append(":");
+                if ( v.Value != null )  
+                    sp.Append(v.Value);
+                else
+                { }
+                sp.Append('\0');
+            }
+
+            return FileHelpers.TryWriteToFile(filename, sp.ToString());
+        }
+
+        // faster load
+        public bool ReadFromFile(string filename)
+        {
+            translations = new Dictionary<string, string>();
+            string st = FileHelpers.TryReadAllTextFromFile(filename);
+            if (st != null)
+            {
+                StringParser sp = new StringParser(st);
+                while (!sp.IsEOL)
+                {
+                    string key = sp.NextWord(':');
+                    sp.MoveOn(1);
+                    string value = sp.NextWord('\0');
+                    sp.MoveOn(1);
+                    if (value.Length > 0)
+                        translations[key] = value;
+                    else
+                        translations[key] = null;
+                }
+                return true;
+            }
+            return false;
+        }
+
+
         public void AddExcludedControls(Type[] s)
         {
             ExcludedControls.AddRange(s);
@@ -357,8 +406,9 @@ namespace BaseUtils
             {
                 try
                 {
-                    FileInfo[] allFiles = Directory.EnumerateFiles(folder, "*.tlf", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
-                    System.Diagnostics.Debug.WriteLine("TX Check folder " + folder);
+                    List<FileInfo> allFiles = Directory.EnumerateFiles(folder, "*.tlf", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList();
+                    allFiles.AddRange(Directory.EnumerateFiles(folder, "*.tlx", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList());
+                    System.Diagnostics.Debug.WriteLine("Translator Check folder " + folder);
                     foreach (FileInfo f in allFiles)
                     {
 #if !DEBUG
