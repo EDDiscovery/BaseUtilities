@@ -49,6 +49,18 @@ namespace BaseUtils
             {
                 return ParaStrings.ContainsKey(lang) ? ParaStrings[lang] : (ParaStrings.ContainsKey("en") ? ParaStrings["en"] : null);
             }
+
+            public string Key
+            {
+                get
+                {
+                    string key = "<" + StartUTC.ToStringZulu() + ":" + EndUTC.ToStringZulu() + ":" + AlwaysShow.ToStringIntValue() + ":";
+                    foreach (var x in Conditions)
+                        key += "(" + x.Key + "=" + string.Join(";", x.Value) + ")";
+                    key += ">";
+                    return key;
+                }
+            }
         }
 
         // read XML file and compile notifications
