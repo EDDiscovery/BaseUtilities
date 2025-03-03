@@ -90,11 +90,13 @@ namespace BaseUtils
             return null;
         }
 
-        static public object PyExeLaunch(string pyfile, string arguments, string workindir, string runas, bool waitforexit, bool createnowindow = false)
+        static public object PyExeLaunch(string pyfile, string arguments, string workindir, string runas, bool waitforexit, bool createnowindow = false, string forceversion = null)
         {
             Process p = new Process();
             p.StartInfo.FileName = "py.exe";
-            p.StartInfo.Arguments = pyfile + (arguments.HasChars() ? (" "+ arguments) : "");
+            p.StartInfo.Arguments = pyfile + (arguments.HasChars() ? (" " + arguments) : "");
+            if (forceversion != null)
+                p.StartInfo.Arguments = "-" + forceversion + " " + p.StartInfo.Arguments;
             p.StartInfo.WorkingDirectory = workindir;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.Verb = runas;
@@ -104,6 +106,7 @@ namespace BaseUtils
 
             try
             {
+                System.Diagnostics.Trace.WriteLine($"Python (Snake) Running {p.StartInfo.Arguments}");
                 if (p.Start())
                 {
                     if (waitforexit)
