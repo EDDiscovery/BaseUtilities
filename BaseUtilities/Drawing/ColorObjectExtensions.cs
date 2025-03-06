@@ -131,8 +131,9 @@ public static class ObjectExtensionsColours
             (byte)Math.Max(Math.Min(Math.Round((float)c.G * val), 255), 0),
             (byte)Math.Max(Math.Min(Math.Round((float)c.B * val), 255), 0));
     }
-    
-    public static Color ColorFromNameOrValues(this string str)        // From color from a name, or from values
+
+    // From color from a name, or from a,r,h,b decimal values, or from HTLM #FFFFFF string
+    public static Color ColorFromNameOrValues(this string str)        
     {
         Color c = Color.FromName(str);
         if ( c.A == 0)
@@ -144,6 +145,17 @@ public static class ObjectExtensionsColours
             int? b = s.NextInt();
             if (a.HasValue && r.HasValue && g.HasValue && b.HasValue)
                 c = Color.FromArgb(a.Value, r.Value, g.Value, b.Value);
+            else
+            {
+                try
+                {
+                    c = System.Drawing.ColorTranslator.FromHtml(str);
+                }
+                catch
+                {
+                    c = Color.Red;
+                }
+            }
         }
         return c;
     }
