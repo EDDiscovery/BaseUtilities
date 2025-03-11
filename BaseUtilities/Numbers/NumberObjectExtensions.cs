@@ -662,5 +662,21 @@ public static class ObjectExtensionsNumbersBool
     }
 
     #endregion
+
+    #region Bit counting
+
+    static public int RightMostBit(this int n)
+    {
+        int pos = -1;
+        while( n!=0)
+        {
+            n = n >> 1;
+            pos++;
+        }
+
+        return pos;
+    }
+
+    #endregion
 }
 
