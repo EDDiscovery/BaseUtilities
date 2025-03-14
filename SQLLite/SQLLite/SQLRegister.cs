@@ -48,7 +48,15 @@ namespace SQLLiteExtensions
         }
 
         // Date times return them in UTC Kind
+
+        // return setting or default value
         public T GetSetting<T>(string key, T defaultvalue)
+        {
+            return GetSetting(key, defaultvalue, out bool _);
+        }
+
+        // return setting or default value, return if default value
+        public T GetSetting<T>(string key, T defaultvalue, out bool usedret)
         {
             Type tt = typeof(T);
             Object ret = null;
@@ -63,6 +71,8 @@ namespace SQLLiteExtensions
                 ret = GetSetting(key, "ValueInt");
             else if (tt == typeof(double))
                 ret = GetSetting(key, "ValueDouble");
+            else if (tt == typeof(float))
+                ret = (float)GetSetting(key, "ValueDouble");
             else if (tt == typeof(string))
                 ret = GetSetting(key, "ValueString");
             else if (tt == typeof(bool))
@@ -86,7 +96,16 @@ namespace SQLLiteExtensions
             else
                 System.Diagnostics.Debug.Assert(false, "Not valid type");
 
-            return ret != null ? (T)ret : (T)defaultvalue;
+            if (ret != null)
+            { 
+                usedret = false;
+                return (T)ret;
+            }
+            else
+            {
+                usedret = true;
+                return (T)defaultvalue;
+            }
         }
 
         public bool PutSetting<T>(string key, T value)
@@ -99,6 +118,11 @@ namespace SQLLiteExtensions
                 return PutSetting(key, "ValueInt", value);
             else if (tt == typeof(double))
                 return PutSetting(key, "ValueDouble", value);
+            else if (tt == typeof(float))
+            {
+                var dv = Convert.ChangeType(value, typeof(double));
+                return PutSetting(key, "ValueDouble", dv);
+            }
             else if (tt == typeof(string))
                 return PutSetting(key, "ValueString", value);
             else if (tt == typeof(bool))
