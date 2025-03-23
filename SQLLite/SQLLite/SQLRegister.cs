@@ -58,43 +58,52 @@ namespace SQLLiteExtensions
         // return setting or default value, return if default value
         public T GetSetting<T>(string key, T defaultvalue, out bool usedret)
         {
-            Type tt = typeof(T);
             Object ret = null;
+            Type tt = typeof(T);
 
-            if (tt == typeof(int))
+            try
             {
-                ret = GetSetting(key, "ValueInt");
-                if (ret != null )            // DB returns Long, so we need to convert
-                    ret = Convert.ToInt32(ret);
-            }
-            else if (tt == typeof(long))
-                ret = GetSetting(key, "ValueInt");
-            else if (tt == typeof(double))
-                ret = GetSetting(key, "ValueDouble");
-            else if (tt == typeof(float))
-                ret = (float)GetSetting(key, "ValueDouble");
-            else if (tt == typeof(string))
-                ret = GetSetting(key, "ValueString");
-            else if (tt == typeof(bool))
-            {
-                ret = GetSetting(key, "ValueInt");
-                if (ret != null)        // convert return to bool
-                    ret = Convert.ToInt32(ret) != 0;
-            }
-            else if (tt == typeof(DateTime))
-            {
-                ret = GetSetting(key, "ValueString");
-                if (ret != null)
+
+                if (tt == typeof(int))
                 {
-                    string s = Convert.ToString(ret);
-                    if (DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
-                        ret = date;
-                    else
-                        ret = null;
+                    ret = GetSetting(key, "ValueInt");
+                    if (ret != null)            // DB returns Long, so we need to convert
+                        ret = Convert.ToInt32(ret);
                 }
+                else if (tt == typeof(long))
+                    ret = GetSetting(key, "ValueInt");
+                else if (tt == typeof(double))
+                    ret = GetSetting(key, "ValueDouble");
+                else if (tt == typeof(float))
+                    ret = (float)(double)GetSetting(key, "ValueDouble");        // GetSetting returns a object, so need to go to its native type double then to float (Crash!)
+                else if (tt == typeof(string))
+                    ret = GetSetting(key, "ValueString");
+                else if (tt == typeof(bool))
+                {
+                    ret = GetSetting(key, "ValueInt");
+                    if (ret != null)        // convert return to bool
+                        ret = Convert.ToInt32(ret) != 0;
+                }
+                else if (tt == typeof(DateTime))
+                {
+                    ret = GetSetting(key, "ValueString");
+                    if (ret != null)
+                    {
+                        string s = Convert.ToString(ret);
+                        if (DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
+                            ret = date;
+                        else
+                            ret = null;
+                    }
+                }
+                else
+                    System.Diagnostics.Debug.Assert(false, "Not valid type");
             }
-            else
-                System.Diagnostics.Debug.Assert(false, "Not valid type");
+            catch (Exception ex)
+            {
+                // Protect against Robert!
+                System.Diagnostics.Trace.WriteLine($"SQL Register exception for key {key} type {tt.Name} def {defaultvalue} {ex}");
+            }
 
             if (ret != null)
             { 
