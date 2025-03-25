@@ -66,11 +66,12 @@ namespace BaseUtils
 
         private LogToFile logger = null;
 
-        private Dictionary<string, string> translations = null;         // translation result can be null, which means, use the in-game english string
-        private Dictionary<string, string> originalenglish = null;      // optional load
-        private Dictionary<string, string> originalfile = null;         // optional load
-        private Dictionary<string, int> originalline = null;            // optional load
-        private Dictionary<string, bool> inuse = null;                  // optional load
+        private Dictionary<string, string> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
+        private Dictionary<string, string> originalenglish = null;      // optional load - translation id -> english
+        private Dictionary<string, string> originalfile = null;         // optional load - translation id -> file
+        private Dictionary<string, int> originalline = null;            // optional load - translation id -> line
+        private Dictionary<string, bool> inuse = null;                  // optional load - translation id -> use flag
+
         private List<Type> ExcludedControls = new List<Type>();
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
@@ -94,6 +95,26 @@ namespace BaseUtils
         public int GetOriginalLine(string fullid) => originalline?[fullid] ?? -1;         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
         public void ReDefine(string fullid, string newdefine) { translations[fullid] = newdefine; }        // for edtools
+        public bool Rename(string from, string to, string file, int line = 0)
+        {
+            if (translations.ContainsKey(from))
+            {
+                translations[to] = translations[from];
+                translations.Remove(from);
+                if (originalenglish != null)
+                {
+                    originalenglish[to] = originalenglish[from];
+                    originalfile[to] = file;
+                    originalline[to] = line;
+                    originalenglish.Remove(from);
+                    originalfile.Remove(from);
+                    originalline.Remove(from);
+                }
+                return true;
+            }
+            else
+                return false;
+        }
         public string FindTranslation(string text) { var txlist = translations.ToList(); var txpos = txlist.FindIndex(x => x.Value == text); return txpos >= 0 ? txlist[txpos].Key : null; }
         public string FindTranslation(string text, string primaryfile, string currentfile, bool rootonlynamesprimary)
         {
@@ -205,13 +226,44 @@ namespace BaseUtils
                     }
 
                     string prefix = "";
+                    int commentblankcount = 1;
+                    bool lastwassection = false;
 
                     string line = null;
                     while ((line = lr.ReadLine()) != null)
                     {
                         line = line.Trim();
-                        if (line.StartsWith("Include", StringComparison.InvariantCultureIgnoreCase))
+                        if (line.Length == 0 || line.StartsWith("//"))
                         {
+                            if (storesourceinfo && !lastwassection)         // if comment, and we are not between a SECTION and an ID
+                            {
+                                string id = "COMMENTBLANK:" + commentblankcount++;      // record the information
+                                translations[id] = null;
+                                originalenglish[id] = line;
+                                originalfile[id] = lr.CurrentFile;
+                                originalline[id] = lr.CurrentLine;
+                            }
+                            lastwassection = false;
+                        }
+                        else if (line.StartsWith("SECTION ", StringComparison.InvariantCultureIgnoreCase))  // if a section..
+                        {
+                            StringParser s = new StringParser(line);
+                            s.NextWord();
+                            prefix = s.NextQuotedWord(" /");
+                            lastwassection = true;      // flag used to indicate if next line is blank, not to store
+                        }
+                        else if (line.StartsWith("Include", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            lastwassection = false;
+                            if (storesourceinfo)                            // we store these as comments so they can be spitted back out by translatenormalise
+                            {
+                                string id = "COMMENTBLANK:" + commentblankcount++;
+                                translations[id] = null;
+                                originalenglish[id] = line;
+                                originalfile[id] = lr.CurrentFile;
+                                originalline[id] = lr.CurrentLine;
+                            }
+
                             line = line.Mid(7).Trim();
 
                             DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlfile));
@@ -251,94 +303,88 @@ namespace BaseUtils
                                 logger?.WriteLine("Readingfile " + filename);
                             }
                         }
-                        else if (line.Length > 0 && !line.StartsWith("//"))
+                        else 
                         {
-                            StringParser s = new StringParser(line);
+                            lastwassection = false;
 
+                            StringParser s = new StringParser(line);
                             string id = s.NextWord(" :");
 
-                            if (id.Equals("SECTION", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                prefix = s.NextQuotedWord(" /");
-                            }
+                            if (id.StartsWith(".") && prefix.HasChars())
+                                id = prefix + id;
                             else
+                                prefix = id.Word(new char[] { '.' });
+
+                            if (s.IsCharMoveOn(':'))
                             {
-                                if (id.StartsWith(".") && prefix.HasChars())
-                                    id = prefix + id;
-                                else
-                                    prefix = id.Word(new char[] { '.' });
+                                string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
 
-                                if (s.IsCharMoveOn(':'))
+                                string foreign = null;
+                                bool err = false;
+
+                                if (s.IsStringMoveOn("=>"))
                                 {
-                                    string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
-
-                                    string foreign = null;
-                                    bool err = false;
-
-                                    if (s.IsStringMoveOn("=>"))
+                                    foreign = s.NextQuotedWord(replaceescape: true);
+                                    err = foreign == null;
+                                    if (err)
                                     {
-                                        foreign = s.NextQuotedWord(replaceescape: true);
-                                        err = foreign == null;
-                                        if (err)
-                                        {
-                                            logger?.WriteLine(string.Format("*** Translator ID but no translation text {0}", id));
-                                            System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation text {0}", id);
-                                        }
+                                        logger?.WriteLine(string.Format("*** Translator ID but no translation text {0}", id));
+                                        System.Diagnostics.Debug.WriteLine("*** Translator ID but no translation text {0}", id);
                                     }
-                                    else if (s.IsCharMoveOn('@'))
-                                        foreign = null;
-                                    else if (s.IsCharMoveOn('='))
+                                }
+                                else if (s.IsCharMoveOn('@'))
+                                    foreign = null;
+                                else if (s.IsCharMoveOn('='))
+                                {
+                                    string keyword = s.NextWord();
+                                    if (translations.ContainsKey(keyword))
                                     {
-                                        string keyword = s.NextWord();
-                                        if (translations.ContainsKey(keyword))
-                                        {
-                                            foreign = translations[keyword];
-                                        }
-                                        else
-                                        {
-                                            logger?.WriteLine(string.Format("*** Translator ID with reference = but no reference found {0}", id));
-                                            System.Diagnostics.Debug.WriteLine("*** Translator ID reference = but no reference found {0}", id);
-                                            err = true;
-                                        }
-
+                                        foreign = translations[keyword];
                                     }
                                     else
                                     {
-                                        logger?.WriteLine(string.Format("*** Translator ID bad format {0}", id));
-                                        System.Diagnostics.Debug.WriteLine("*** Translator ID bad format {0}", id);
+                                        logger?.WriteLine(string.Format("*** Translator ID with reference = but no reference found {0}", id));
+                                        System.Diagnostics.Debug.WriteLine("*** Translator ID reference = but no reference found {0}", id);
                                         err = true;
                                     }
 
-                                    if (err != true)
-                                    {
-                                        if (!translations.ContainsKey(id))
-                                        {
-                                            //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
-                                            if (logger != null)
-                                                logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
-
-                                            translations[id] = foreign;
-                                            if (storesourceinfo)
-                                            { 
-                                                originalenglish[id] = orgenglish;
-                                                originalfile[id] = lr.CurrentFile;
-                                                originalline[id] = lr.CurrentLine;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            string errt = $"Translator Repeat {lr.CurrentFile}:{lr.CurrentLine} '{id}";
-                                            logger?.WriteLine(errt);
-                                            System.Diagnostics.Debug.WriteLine(errt);
-                                        }
-                                    }
                                 }
                                 else
                                 {
-                                    string errt = $"Line misformat {lr.CurrentFile}:{lr.CurrentLine} '{line}";
-                                    logger?.WriteLine(errt);
-                                    System.Diagnostics.Debug.WriteLine(errt);
+                                    logger?.WriteLine(string.Format("*** Translator ID bad format {0}", id));
+                                    System.Diagnostics.Debug.WriteLine("*** Translator ID bad format {0}", id);
+                                    err = true;
                                 }
+
+                                if (err != true)
+                                {
+                                    if (!translations.ContainsKey(id))
+                                    {
+                                        //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
+                                        if (logger != null)
+                                            logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
+
+                                        translations[id] = foreign;
+                                        if (storesourceinfo)
+                                        {
+                                            originalenglish[id] = orgenglish;
+                                            originalfile[id] = lr.CurrentFile;
+                                            originalline[id] = lr.CurrentLine;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        string errt = $"Translator Repeat {lr.CurrentFile}:{lr.CurrentLine} '{id}";
+                                        logger?.WriteLine(errt);
+                                        System.Diagnostics.Debug.WriteLine(errt);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                string errt = $"Line misformat {lr.CurrentFile}:{lr.CurrentLine} '{line}";
+                                logger?.WriteLine(errt);
+                                System.Diagnostics.Debug.WriteLine(errt);
                             }
                         }
                     }
