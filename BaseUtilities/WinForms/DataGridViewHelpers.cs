@@ -20,6 +20,20 @@ using System.Windows.Forms;
 
 public static partial class DataGridViewControlHelpersStaticFunc
 {
+    // make DGV double buffered
+    public static void MakeDoubleBuffered(this DataGridView datagridView)
+    {
+        // this improves dataGridView's scrolling performance
+        typeof(DataGridView).InvokeMember(
+            "DoubleBuffered",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.SetProperty,
+            null,
+            datagridView,
+            new object[] { true }
+            );
+    }
+
     // try and force this row to centre or top so its displayed - using Current is not good enough to ensure its on screen
     static public void DisplayRow(this DataGridView grid, int rown, bool centre)
     {
