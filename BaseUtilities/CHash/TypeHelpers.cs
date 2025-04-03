@@ -13,10 +13,12 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+using QuickJSON.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace BaseUtils
 {
@@ -178,6 +180,32 @@ namespace BaseUtils
         {
             foreach (var d in items)
                 hash.Add(d);
+        }
+
+        public static void CopyPropertiesFields(this Object to, Object from, BindingFlags bf = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, bool properties = true, bool fields = true)
+        {
+            foreach (MemberInfo mi in from.GetType().GetMembers(bf))
+            {
+                if (mi.MemberType == MemberTypes.Property && properties)
+                {
+                    PropertyInfo pi = mi as PropertyInfo;
+                    if (pi.CanWrite)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"TypeHelpers copy property {pi.Name}");
+                        pi.SetValue(to, pi.GetValue(from));
+                    }
+                }
+                else if (mi.MemberType == MemberTypes.Field && fields)
+                {
+                    FieldInfo fi = mi as FieldInfo;
+                    var ca = fi.GetCustomAttributes(typeof(CompilerGeneratedAttribute), false);     // ignore backing fields of properties by seeing if its a compiler generated
+                    if (ca.Length == 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"TypeHelpers copy field {fi.Name}");
+                        fi.SetValue(to, fi.GetValue(from));
+                    }
+                }
+            }
         }
     }
 }
