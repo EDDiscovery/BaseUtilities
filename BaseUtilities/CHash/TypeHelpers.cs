@@ -189,9 +189,9 @@ namespace BaseUtils
                 if (mi.MemberType == MemberTypes.Property && properties)
                 {
                     PropertyInfo pi = mi as PropertyInfo;
-                    if (pi.CanWrite)
+                    if (pi.CanWrite)    // some properties are get only
                     {
-                        System.Diagnostics.Debug.WriteLine($"TypeHelpers copy property {pi.Name}");
+                       // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy property {pi.Name}");
                         pi.SetValue(to, pi.GetValue(from));
                     }
                 }
@@ -201,7 +201,7 @@ namespace BaseUtils
                     var ca = fi.GetCustomAttributes(typeof(CompilerGeneratedAttribute), false);     // ignore backing fields of properties by seeing if its a compiler generated
                     if (ca.Length == 0)
                     {
-                        System.Diagnostics.Debug.WriteLine($"TypeHelpers copy field {fi.Name}");
+                       // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy field {fi.Name}");
                         fi.SetValue(to, fi.GetValue(from));
                     }
                 }
