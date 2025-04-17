@@ -16,6 +16,8 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Linq;
+using System.Windows.Forms;
 
 public static partial class DrawingHelpersStaticFunc
 {
@@ -285,6 +287,40 @@ public static partial class DrawingHelpersStaticFunc
             Disabled.SetColorMatrix(new ColorMatrix(disabledMatrix), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
         }
     }
+
+    // Helper to paint multi coloured backgrounds
+    static public void PaintMultiColouredRectangles(Graphics gr, Rectangle area, Color[] themecolours, float direction)
+    {
+        using (LinearGradientBrush br = new LinearGradientBrush(area, themecolours[0], themecolours[1], direction))
+        {
+            if (themecolours.Length >= 4 && themecolours[3] != themecolours[2])
+            {
+                br.InterpolationColors = new ColorBlend(4)
+                {
+                    Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2], themecolours[3] },
+                    Positions = new float[] { 0f, 0.33f, 0.66f, 1f }
+                };
+                //System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
+            }
+            else if (themecolours.Length >= 3 && themecolours[2] != themecolours[1])
+            {
+                br.InterpolationColors = new ColorBlend(3)
+                {
+                    Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2] },
+                    Positions = new float[] { 0f, 0.5f, 1f }
+                };
+               // System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
+            }
+            else
+            {
+             //   System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area}");
+            }
+
+            gr.FillRectangle(br, area);
+        }
+    }
+
+
 
     #endregion
 }
