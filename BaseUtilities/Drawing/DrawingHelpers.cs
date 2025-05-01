@@ -291,41 +291,47 @@ public static partial class DrawingHelpersStaticFunc
     // Helper to paint multi coloured backgrounds
     static public void DrawMultiColouredRectangles(this Graphics gr, Rectangle area, Color[] themecolours, float direction)
     {
-        using (LinearGradientBrush br = new LinearGradientBrush(area, themecolours[0], themecolours[1], direction))
+        if (area.Width > 0 && area.Height > 0)
         {
-            if (themecolours.Length >= 4 && themecolours[3] != themecolours[2])
+            using (LinearGradientBrush br = new LinearGradientBrush(area, themecolours[0], themecolours[1], direction))
             {
-                br.InterpolationColors = new ColorBlend(4)
+                if (themecolours.Length >= 4 && themecolours[3] != themecolours[2])
                 {
-                    Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2], themecolours[3] },
-                    Positions = new float[] { 0f, 0.33f, 0.66f, 1f }
-                };
-                //System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
-            }
-            else if (themecolours.Length >= 3 && themecolours[2] != themecolours[1])
-            {
-                br.InterpolationColors = new ColorBlend(3)
+                    br.InterpolationColors = new ColorBlend(4)
+                    {
+                        Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2], themecolours[3] },
+                        Positions = new float[] { 0f, 0.33f, 0.66f, 1f }
+                    };
+                    //System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
+                }
+                else if (themecolours.Length >= 3 && themecolours[2] != themecolours[1])
                 {
-                    Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2] },
-                    Positions = new float[] { 0f, 0.5f, 1f }
-                };
-                // System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
-            }
-            else
-            {
-                //   System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area}");
-            }
+                    br.InterpolationColors = new ColorBlend(3)
+                    {
+                        Colors = new Color[] { themecolours[0], themecolours[1], themecolours[2] },
+                        Positions = new float[] { 0f, 0.5f, 1f }
+                    };
+                    // System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area} with {br.InterpolationColors.Colors.Length}");
+                }
+                else
+                {
+                    //   System.Diagnostics.Debug.WriteLine($"Paint MultiColoured Rectangles {area}");
+                }
 
-            gr.FillRectangle(br, area);
+                gr.FillRectangle(br, area);
+            }
         }
     }
 
     // Helper to paint a rectangle
     static public void DrawFilledRectangle(this Graphics gr, Rectangle area, Color colour)
     {
-        using (SolidBrush br = new SolidBrush(colour))
+        if (area.Width > 0 && area.Height > 0)
         {
-            gr.FillRectangle(br, area);
+            using (SolidBrush br = new SolidBrush(colour))
+            {
+                gr.FillRectangle(br, area);
+            }
         }
     }
 
