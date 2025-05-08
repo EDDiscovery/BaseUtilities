@@ -723,7 +723,7 @@ namespace BaseUtils
             string defaulttooltiptext = tt.GetToolTip(ctrl);
 
             if (debugit)
-                System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}Tooltip Control at {level} name {ctrl.Name} tooltext `{defaulttooltiptext}`");
+                System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}{level} Tooltip Control {ctrl.Name} tooltext `{defaulttooltiptext}` prefix `{prefixid}`");
 
             if (defaulttooltiptext != null && defaulttooltiptext.Length > 1 && defaulttooltiptext.HasLetterChars() && !defaulttooltiptext.StartsWith("<code"))
             {
@@ -741,7 +741,7 @@ namespace BaseUtils
                         tt.SetToolTip(ctrl, translate);
 
                         if (debugit)
-                            System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}Set tooltip to id {id} text `{translate}`");
+                            System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}   Set tooltip to id {id} text `{translate}`");
 
                         enumsetremoved.Remove(enumid);
                         break;
@@ -753,12 +753,14 @@ namespace BaseUtils
                     string id = toplevelnames[0] + prefixid + ".ToolTip";
                     string enumid = id.Replace(".", "_");
                     errlist = errlist.AppendPrePad("EDTx." + enumid, ", ");
+                    if (debugit)
+                        System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)} **** Error for {ctrl.Name} {id} enum {enumid}");
                 }
             }
             else
             {
                 if ( debugit )
-                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)}No tooltip on control");
+                    System.Diagnostics.Debug.WriteLine($"{new string(' ', level * 4)} No tooltip on control");
             }
 
             foreach (Control c in ctrl.Controls)
@@ -857,10 +859,10 @@ namespace BaseUtils
             return errlist;
         }
 
-        // helper
+        // helper, do we insert the name as a subname control. Containers normally dont
         private bool InsertName(Control c)
         {
-            return c.GetType().Name == "PanelNoTheme" || !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
+            return !(c is Panel || c is DataGridView || c is GroupBox || c is SplitContainer);
         }
 
 
