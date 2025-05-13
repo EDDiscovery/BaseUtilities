@@ -106,20 +106,27 @@ namespace DirectInputDevices
 
             System.Diagnostics.Debug.WriteLine("IDL start");
 
-            while (true)
+            while (!stophandle.WaitOne(0))
             {
-                int hhit = System.Threading.WaitHandle.WaitAny(wh);
-
-                if (hhit == inputdevices.Count)  // stop!
-                    break;
-
-                List<InputDeviceEvent> list = inputdevices[hhit].GetEvents();
-
-                if (list != null)
+                try
                 {
-                    //System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID().Name);
+                    int hhit = System.Threading.WaitHandle.WaitAny(wh);
 
-                    invokeAsyncOnUiThread(() => { OnNewEvent?.Invoke(list); }); // call in action context.
+                    if (hhit == inputdevices.Count)  // stop!
+                        break;
+
+                    List<InputDeviceEvent> list = inputdevices[hhit].GetEvents();
+
+                    if (list != null && !stophandle.WaitOne(0))
+                    {
+                        //System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID().Name);
+
+                        invokeAsyncOnUiThread(() => { OnNewEvent?.Invoke(list); }); // call in action context.
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine($"Error in InputDeviceList.waitthread: {ex}");
                 }
             }
         }
