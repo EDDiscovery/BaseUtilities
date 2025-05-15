@@ -56,13 +56,13 @@ public static partial class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left.CompareNumeric(right, removetext);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext);
         }
         else
         {
             string left = e.CellValue1?.ToString();
             string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareNumeric(right, removetext);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext);
         }
 
         e.Handled = true;
@@ -81,7 +81,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left.CompareDateCurrentCulture(right);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareDateCurrentCulture(right);
         }
         else
         {
@@ -169,13 +169,13 @@ public static partial class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left.CompareAlphaInt(right);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareAlphaInt(right);
         }
         else
         {
             string left = e.CellValue1?.ToString();
             string right = e.CellValue2?.ToString();
-            e.SortResult = left.CompareAlphaInt(right);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareAlphaInt(right);
         }
 
         e.Handled = true;

@@ -483,7 +483,15 @@ public static partial class ControlHelpersStaticFunc
 
         return null;
     }
-
-
+    // find a parents tool tip control
+    static public Control FindTag(this Control.ControlCollection cc, Object tag)
+    {
+        foreach (Control c in cc)
+        {
+            if (c.Tag == tag)
+                return c;
+        }
+        return null;
+    }
 
 }
