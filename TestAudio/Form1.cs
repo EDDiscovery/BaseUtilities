@@ -1,13 +1,7 @@
 ﻿using AudioExtensions;
 using BaseUtils;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AudioTest
@@ -16,17 +10,46 @@ namespace AudioTest
     {
         AudioDriverCSCore audiodriver;
         AudioQueue audioqueue;
+
+        SpeechSynthesizer speechsynthesiser;
+        WindowsSpeechEngine winspeech;
+        SpeechSynthesizerWindowsMedia windowsmediaspeechsynth;
+
         public Form1()
         {
             InitializeComponent();
             audiodriver = new AudioDriverCSCore("Default");
             audioqueue = new AudioQueue(audiodriver);
+
+            winspeech = new WindowsSpeechEngine();
+            windowsmediaspeechsynth = new SpeechSynthesizerWindowsMedia();
+
+            speechsynthesiser = new SpeechSynthesizer(new ISpeechEngine[] { winspeech, windowsmediaspeechsynth });
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            var voices = speechsynthesiser.GetVoiceNames();
+            richTextBoxLog.AppendText($"Voices: {voices.Count}:");
+            richTextBoxLog.AppendText(string.Join(",", voices) + Environment.NewLine);
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            audioqueue.StopAll();
+            audiodriver.Stop();
+            audiodriver.Dispose();
+
+            winspeech.Dispose();
+            windowsmediaspeechsynth.Dispose();
+
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             Variables vars = new Variables();
-            SoundEffectSettings ses = SoundEffectSettings.Set(vars, vars);        // work out the settings
+            SoundEffectSettings ses = SoundEffectSettings.Create(vars, vars);        // work out the settings
             AudioQueue.AudioSample audio = audioqueue.Generate(@"c:\code\examples\pack\hulldamage.mp3", ses);
             audioqueue.Submit(audio, 60, AudioQueue.Priority.Normal);
             AudioQueue.AudioSample audio2 = audioqueue.Generate(@"c:\code\examples\pack\sampledockingrequest.mp3", ses);
@@ -59,6 +82,36 @@ namespace AudioTest
             //var ap = audioqueue.Append(audio, audio2);
 
             audioqueue.Submit(ap, 60, AudioQueue.Priority.Normal);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var stream = speechsynthesiser.Speak("Hello sailors", "en", "Ivona 2 Emma OEM", -5);
+            var sample = audioqueue.Generate(stream);
+            audioqueue.Submit(sample, 100, AudioQueue.Priority.Normal);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            var stream = speechsynthesiser.Speak("Hello sailors How are you 10 < 20", "en", "WM/Microsoft Ravi", -5);
+            if (stream != null)
+            {
+                var sample = audioqueue.Generate(stream);
+                audioqueue.Submit(sample, 100, AudioQueue.Priority.Normal);
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            var speakBody = "Hello <phoneme alphabet='ipa' ph = 'ˈakɜːnɑ'>Not ssml Achenar</phoneme> and <phoneme alphabet='ipa' ph = 'paɪ'>Pai</phoneme> or <phoneme alphabet='ipa' ph = 'ʃuː'>woose Szu</phoneme> the end";
+
+            var stream = speechsynthesiser.Speak(speakBody, "en", "WM/Microsoft Ravi", 0);
+
+            if (stream != null)
+            {
+                var sample = audioqueue.Generate(stream);
+                audioqueue.Submit(sample, 100, AudioQueue.Priority.Normal);
+            }
         }
     }
 }
