@@ -18,25 +18,20 @@ using System.Linq;
 
 public static class ObjectExtensionsStringsQuotes
 {
-    public static string QuoteString(this string obj, bool comma = false, bool bracket = false, bool space = true)
+    // quote string, control if quoted if contains comma, a bracket ), a comma, or empty. Allow quote character to be selected
+    public static string QuoteString(this string obj, bool comma = false, bool bracket = false, bool space = true, bool empty = true, char quote = '"')
     {
-        if (obj.Length == 0 || obj.Contains("\"") || obj[obj.Length - 1] == ' ' || (space && obj.Contains(" ")) || (bracket && obj.Contains(")")) || (comma && obj.Contains(",")))
-            obj = "\"" + obj.Replace("\"", "\\\"") + "\"";
-
-        return obj;
-    }
-
-    public static string QuoteStringSel(this string obj, char quote = '"' , bool comma = false, bool bracket = false, bool space = true)
-    {
-        if (obj.Length == 0 || obj.Contains(quote) || obj[obj.Length - 1] == ' ' || (space && obj.Contains(" ")) || (bracket && obj.Contains(")")) || (comma && obj.Contains(",")))
+        if (obj.Length == 0)
+            return empty ? "\"\"" : "";
+        else if (obj.Contains(quote) || obj[obj.Length - 1] == ' ' || (space && obj.Contains(" ")) || (bracket && obj.Contains(")")) || (comma && obj.Contains(",")))
             obj = quote + obj.Replace(quote.ToString(), "\\" + quote.ToString()) + quote;
 
         return obj;
     }
 
-    public static string AlwaysQuoteString(this string obj)
+    public static string AlwaysQuoteString(this string obj, char quote = '"')
     {
-        return "\"" + obj.Replace("\"", "\\\"") + "\"";
+        return quote + obj.Replace(quote.ToString(), "\\" + quote.ToString()) + quote;
     }
 
     public static string QuoteStrings(this IEnumerable<string> obja)

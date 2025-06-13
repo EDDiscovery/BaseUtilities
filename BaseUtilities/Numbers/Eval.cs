@@ -173,6 +173,11 @@ namespace BaseUtils
                 return false;
             }
         }
+        public bool TryEvaluateDouble(string s, out double lvalue, bool checkend = true, bool unary = false)
+        {
+            sp = new StringParser(s);
+            return TryEvaluateDouble(unary, checkend, out lvalue);
+        }
 
         // Allow control of unary entry and check end on a case by case basis and return Long or ConvertError
         public bool TryEvaluateLong(bool unary, bool checkend, out long lvalue)          // Allow control of unary entry and check end on a case by case basis
@@ -189,6 +194,12 @@ namespace BaseUtils
                 lvalue = 0;
                 return false;
             }
+        }
+
+        public bool TryEvaluateLong(string s, out long lvalue, bool checkend = true, bool unary = false)
+        {
+            sp = new StringParser(s);
+            return TryEvaluateLong(unary, checkend, out lvalue);
         }
 
         // At the current string parse  point, get the next expression as a string.. do not evaluate it, dummy it. Leave position after expression (space removed)

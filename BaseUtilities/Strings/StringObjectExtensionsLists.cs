@@ -132,7 +132,7 @@ public static class ObjectExtensionsStringsLists
             return false;
     }
 
-    public static string ToStringCommaList(this System.Collections.Generic.List<string> list, int mincount = 100000, bool escapectrl = false, string separ = ", ")
+    public static string ToStringCommaList(this System.Collections.Generic.List<string> list, int mincount = 100000, bool escapectrl = false, bool quoteifempty = true, string separ = ", ")
     {
         string r = "";
         for (int i = 0; i < list.Count; i++)
@@ -151,9 +151,9 @@ public static class ObjectExtensionsStringsLists
                 r += separ;
 
             if (escapectrl)
-                r += list[i].EscapeControlChars().QuoteString(comma: true);
+                r += list[i].EscapeControlChars().QuoteString(comma: true, empty:quoteifempty);
             else
-                r += list[i].QuoteString(comma: true);
+                r += list[i].QuoteString(comma: true, empty:quoteifempty);
         }
 
         return r;

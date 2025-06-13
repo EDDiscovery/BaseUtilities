@@ -38,7 +38,7 @@ namespace AudioExtensions
     }
 
 
-    public class SpeechSynthesizer
+    public class SpeechSynthesizer: IDisposable
     {
         ISpeechEngine[] speechengines;
         TaskQueue tq;
@@ -92,6 +92,13 @@ namespace AudioExtensions
                 callback(audio);
                 //System.Diagnostics.Debug.WriteLine($"{Environment.TickCount} SpeechSynth callback done {say}");
             });
+        }
+
+        public void Dispose()
+        {
+            foreach (var x in speechengines)
+                x.Dispose();
+            speechengines = null;
         }
     }
 }

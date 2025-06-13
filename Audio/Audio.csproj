@@ -57,7 +57,7 @@
     <Compile Include="SpeechSythesizerWindows.cs" />
     <Compile Include="VoiceRecognitionIF.cs" />
     <Compile Include="VoiceRecognitionWindows.cs" />
-    <Compile Include="SpeechSynthesizerWindowsMedia.cs" />
+    <Compile Include="WindowsMediaSpeechEngine.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BaseUtilities\BaseUtils.csproj">

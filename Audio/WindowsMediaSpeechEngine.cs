@@ -23,11 +23,11 @@ using Windows.Media.SpeechSynthesis;
 
 namespace AudioTest
 {
-    public class SpeechSynthesizerWindowsMedia : ISpeechEngine
+    public class WindowsMediaSpeechEngine : ISpeechEngine
     {
         public string PrefixName => "WM/";
 
-        public SpeechSynthesizerWindowsMedia()
+        public WindowsMediaSpeechEngine()
         {
             // as informed from EDDI, lets double check their state
             var regfolder = @"SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens";
