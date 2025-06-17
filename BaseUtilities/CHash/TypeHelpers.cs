@@ -182,7 +182,13 @@ namespace BaseUtils
                 hash.Add(d);
         }
 
-        public static void CopyPropertiesFields(this Object to, Object from, BindingFlags bf = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, bool properties = true, bool fields = true)
+        /// <summary>
+        /// Good for value types and arrays of value types
+        /// Bad if its a reference type, this means you get the same pointer to the reference in both
+        /// </summary>
+
+        public static void CopyPropertiesFields(this Object to, Object from, BindingFlags bf = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
+                                                            bool properties = true, bool fields = true)
         {
             foreach (MemberInfo mi in from.GetType().GetMembers(bf))
             {
@@ -191,8 +197,16 @@ namespace BaseUtils
                     PropertyInfo pi = mi as PropertyInfo;
                     if (pi.CanWrite)    // some properties are get only
                     {
-                       // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy property {pi.Name}");
-                        pi.SetValue(to, pi.GetValue(from));
+                        // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy property {pi.Name}");
+                        if (pi.PropertyType.IsArray)
+                        {
+                            Array array1 = (Array)pi.GetValue(from);
+                            Array array2 = Array.CreateInstance(array1.GetType().GetElementType(), array1.Length);
+                            Array.Copy(array1, array2, array1.Length);
+                            pi.SetValue(to, array2);
+                        }
+                        else
+                            pi.SetValue(to, pi.GetValue(from));
                     }
                 }
                 else if (mi.MemberType == MemberTypes.Field && fields)
@@ -201,8 +215,16 @@ namespace BaseUtils
                     var ca = fi.GetCustomAttributes(typeof(CompilerGeneratedAttribute), false);     // ignore backing fields of properties by seeing if its a compiler generated
                     if (ca.Length == 0)
                     {
-                       // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy field {fi.Name}");
-                        fi.SetValue(to, fi.GetValue(from));
+                        // System.Diagnostics.Debug.WriteLine($"TypeHelpers copy field {fi.Name}");
+                        if (fi.FieldType.IsArray)       // need to do a deep copy
+                        {
+                            Array array1 = (Array)fi.GetValue(from);
+                            Array array2 = Array.CreateInstance(array1.GetType().GetElementType(), array1.Length);
+                            Array.Copy(array1, array2, array1.Length);
+                            fi.SetValue(to, array2);
+                        }
+                        else
+                            fi.SetValue(to, fi.GetValue(from));
                     }
                 }
             }
