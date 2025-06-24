@@ -19,6 +19,7 @@ using System.Collections.Generic;
 
 namespace BaseUtils
 {
+    [System.Diagnostics.DebuggerDisplay("{GroupName} {EventName} {Action}")]
     public class Condition
     {
         public List<ConditionEntry> Fields { get; set; }             // its condition fields

@@ -654,6 +654,7 @@ namespace BaseUtils
         }
 
         // Eval Symbol Get. If not there, ConvertError
+        // tries to convert to double/long else return string
         public object Get(string str)
         {
             string qualname = Qualify(str);

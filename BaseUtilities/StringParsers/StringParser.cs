@@ -772,7 +772,7 @@ namespace BaseUtils
                         return v;
                 }
 
-                return new ConvertError("Incorrectly formatted 'c' expression");
+                return new ConvertError("Incorrectly formatted character 'c' expression");
             }
             else if (IsChar('"'))
             {
@@ -781,7 +781,7 @@ namespace BaseUtils
                     Object v = NextQuotedWord(replaceescape: replaceescape);
 
                     if (v == null)
-                        return new ConvertError("Missing end quote");
+                        return new ConvertError("Missing end quote in string");
                     else
                     {
                         //System.Diagnostics.Debug.WriteLine("Value is " + v);

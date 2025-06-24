@@ -918,23 +918,40 @@ namespace BaseUtils
                 fmt = paras[2].Value;
             }
 
-            BaseUtils.Eval ev = new BaseUtils.Eval(s, checkend: true, allowfp: true, allowstrings: false);
+            BaseUtils.Eval ev = new BaseUtils.Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
 
-            Object ret = ev.Evaluate();
+            Object ret = ev.Evaluate(s);
 
-            if ( ev.InError && tryit )
+            if (ev.InError)
             {
-                output = "NAN";
+                if (tryit)
+                {
+                    output = "NAN";
+                    return true;
+                }
+                else
+                {
+                    output = ((StringParser.ConvertError)ret).ErrorValue;
+                    return false;
+                }
+            }
+            else if (fmt == "")
+            {
+                output = ev.ToString(System.Globalization.CultureInfo.InvariantCulture);        // will work with all types, long, double, string
                 return true;
             }
-
-            if (fmt == "")
-            {
-                output = ev.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                return ev.InError == false;
-            }
             else
-                return ev.ToSafeString(fmt, out output);
+            {
+                try
+                {
+                    return ev.ToSafeString(fmt, out output);        // may not convert, depends if format is correct for the type
+                }
+                catch
+                {
+                    output = "Type did not convert to string";
+                    return false;
+                }
+            }
         }
 
         const double LM = 0.000001;
