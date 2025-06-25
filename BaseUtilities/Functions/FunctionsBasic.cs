@@ -111,8 +111,16 @@ namespace BaseUtils
                 functions.Add("wordlistentry", new FuncEntry(WordListEntry, 2, FuncEntry.PT.MESE, FuncEntry.PT.ImeSE, FuncEntry.PT.MESE));
                 #endregion
 
+                #region File Read Write
+                functions.Add("closefile", new FuncEntry(CloseFile, FuncEntry.PT.ImeSE));
+                functions.Add("openfile", new FuncEntry(OpenFile, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE));
+                functions.Add("seek", new FuncEntry(SeekFile, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE));
+                functions.Add("tell", new FuncEntry(TellFile, FuncEntry.PT.ImeSE));
+                functions.Add("write", new FuncEntry(Write, FuncEntry.PT.ImeSE, FuncEntry.PT.MESE));
+                functions.Add("writeline", new FuncEntry(WriteLine, FuncEntry.PT.ImeSE, FuncEntry.PT.MESE));
+                #endregion
+
                 #region Files
-                functions.Add("closefile", new FuncEntry(CloseFile, FuncEntry.PT.ME));
                 functions.Add("direxists", new FuncEntry(DirExists, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("fileexists", new FuncEntry(FileExists, 1, 20, FuncEntry.PT.MESE));
                 functions.Add("deletefile", new FuncEntry(DeleteFile, 1, 20, FuncEntry.PT.MESE));
@@ -121,15 +129,10 @@ namespace BaseUtils
                 functions.Add("findline", new FuncEntry(FindLine, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
                 functions.Add("mkdir", new FuncEntry(MkDir, FuncEntry.PT.MESE));
                 functions.Add("rmdir", new FuncEntry(RmDir, FuncEntry.PT.MESE));
-                functions.Add("openfile", new FuncEntry(OpenFile, FuncEntry.PT.M, FuncEntry.PT.MESE, FuncEntry.PT.LmeSE));
-                functions.Add("readline", new FuncEntry(ReadLineFile, FuncEntry.PT.ME, FuncEntry.PT.M));
+                functions.Add("readline", new FuncEntry(ReadLine, FuncEntry.PT.ImeSE, FuncEntry.PT.M));
                 functions.Add("readalltext", new FuncEntry(ReadAllText, FuncEntry.PT.MESE));
                 functions.Add("safevarname", new FuncEntry(SafeVarName, FuncEntry.PT.MESE));
-                functions.Add("seek", new FuncEntry(SeekFile, FuncEntry.PT.ME, FuncEntry.PT.ImeSE));
                 functions.Add("systempath", new FuncEntry(SystemPath, FuncEntry.PT.LmeSE));
-                functions.Add("tell", new FuncEntry(TellFile, FuncEntry.PT.ME));
-                functions.Add("write", new FuncEntry(WriteFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
-                functions.Add("writeline", new FuncEntry(WriteLineFile, FuncEntry.PT.ME, FuncEntry.PT.MESE));
                 functions.Add("combinepaths", new FuncEntry(CombinePaths, 2, 10, FuncEntry.PT.MESE));
                 functions.Add("directoryname", new FuncEntry(DirectoryName, FuncEntry.PT.MESE));
                 functions.Add("filename", new FuncEntry(FileName, FuncEntry.PT.MESE));
@@ -139,13 +142,13 @@ namespace BaseUtils
                 #endregion
 
                 #region Processes
-                functions.Add("closeprocess", new FuncEntry(CloseProcess, FuncEntry.PT.ME));
+                functions.Add("closeprocess", new FuncEntry(CloseProcess, FuncEntry.PT.ImeSE));
                 functions.Add("findprocess", new FuncEntry(FindProcess, FuncEntry.PT.MESE));
-                functions.Add("hasprocessexited", new FuncEntry(HasProcessExited, FuncEntry.PT.ME));
-                functions.Add("killprocess", new FuncEntry(KillProcess, FuncEntry.PT.ME));
+                functions.Add("hasprocessexited", new FuncEntry(HasProcessExited, FuncEntry.PT.ImeSE));
+                functions.Add("killprocess", new FuncEntry(KillProcess, FuncEntry.PT.ImeSE));
                 functions.Add("listprocesses", new FuncEntry(ListProcesses, FuncEntry.PT.M));
                 functions.Add("startprocess", new FuncEntry(StartProcess, FuncEntry.PT.MESE, FuncEntry.PT.MESE));
-                functions.Add("waitforprocess", new FuncEntry(WaitForProcess, FuncEntry.PT.ME, FuncEntry.PT.ImeSE));
+                functions.Add("waitforprocess", new FuncEntry(WaitForProcess, FuncEntry.PT.ImeSE, FuncEntry.PT.ImeSE));
                 #endregion
 
                 #region Time
@@ -1128,43 +1131,7 @@ namespace BaseUtils
 
         #endregion
 
-
-        #region File Functions
-
-        protected bool CombinePaths(out string output)
-        {
-            output = Path.Combine(paras.Select(x => x.Value).ToArray());
-            return true;
-        }
-
-        protected bool DirectoryName(out string output)
-        {
-            output = Path.GetDirectoryName(paras[0].Value);
-            return true;
-        }
-
-        protected bool FileName(out string output)
-        {
-            output = Path.GetFileName(paras[0].Value);
-            return true;
-        }
-        protected bool Extension(out string output)
-        {
-            output = Path.GetExtension(paras[0].Value);
-            return true;
-        }
-
-        protected bool FileNameNoExtension(out string output)
-        {
-            output = Path.GetFileNameWithoutExtension(paras[0].Value);
-            return true;
-        }
-        protected bool FullPath(out string output)
-        {
-            output = Path.GetFullPath(paras[0].Value);
-            return true;
-        }
-
+        #region File Read Write
         protected bool OpenFile(out string output)
         {
             if (persistentdata == null)
@@ -1203,11 +1170,9 @@ namespace BaseUtils
 
         protected bool CloseFile(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                persistentdata.FileHandles.Close(hv.Value);
+                persistentdata.FileHandles.Close(paras[0].Int);
                 output = "1";
                 return true;
             }
@@ -1218,13 +1183,11 @@ namespace BaseUtils
             }
         }
 
-        protected bool ReadLineFile(out string output)
+        protected bool ReadLine(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                if (persistentdata.FileHandles.ReadLine(hv.Value, out output))
+                if (persistentdata.FileHandles.ReadLine(paras[0].Int, out output))
                 {
                     if (output == null)
                         output = "0";
@@ -1245,22 +1208,19 @@ namespace BaseUtils
             }
         }
 
-        protected bool WriteLineFile(out string output)
+        protected bool WriteLine(out string output)
         {
-            return WriteToFile(out output, true);
+            return WriteToFileInt(out output, true);
         }
-        protected bool WriteFile(out string output)
+        protected bool Write(out string output)
         {
-            return WriteToFile(out output, false);
+            return WriteToFileInt(out output, false);
         }
-        protected bool WriteToFile(out string output, bool lf)
+        protected bool WriteToFileInt(out string output, bool lf)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-            string line = paras[1].Value;
-
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                if (persistentdata.FileHandles.WriteLine(hv.Value, line, lf, out output))
+                if (persistentdata.FileHandles.WriteLine(paras[0].Int, paras[1].Value, lf, out output))
                 {
                     output = "1";
                     return true;
@@ -1277,11 +1237,9 @@ namespace BaseUtils
 
         protected bool SeekFile(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-            long pos = paras[1].Long;
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                if (persistentdata.FileHandles.Seek(hv.Value, pos, out output))
+                if (persistentdata.FileHandles.Seek(paras[0].Int, paras[1].Long, out output))
                 {
                     output = "1";
                     return true;
@@ -1297,10 +1255,9 @@ namespace BaseUtils
         }
         protected bool TellFile(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                if (persistentdata.FileHandles.Tell(hv.Value, out output))
+                if (persistentdata.FileHandles.Tell(paras[0].Int, out output))
                 {
                     return true;
                 }
@@ -1313,6 +1270,45 @@ namespace BaseUtils
                 return false;
             }
         }
+
+        #endregion
+
+        #region File Functions
+
+        protected bool CombinePaths(out string output)
+        {
+            output = Path.Combine(paras.Select(x => x.Value).ToArray());
+            return true;
+        }
+
+        protected bool DirectoryName(out string output)
+        {
+            output = Path.GetDirectoryName(paras[0].Value);
+            return true;
+        }
+
+        protected bool FileName(out string output)
+        {
+            output = Path.GetFileName(paras[0].Value);
+            return true;
+        }
+        protected bool Extension(out string output)
+        {
+            output = Path.GetExtension(paras[0].Value);
+            return true;
+        }
+
+        protected bool FileNameNoExtension(out string output)
+        {
+            output = Path.GetFileNameWithoutExtension(paras[0].Value);
+            return true;
+        }
+        protected bool FullPath(out string output)
+        {
+            output = Path.GetFullPath(paras[0].Value);
+            return true;
+        }
+
 
         protected bool FileExists(out string output)
         {
@@ -1539,11 +1535,9 @@ namespace BaseUtils
 
         protected bool CloseKillProcess(out string output, bool kill)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
-                BaseUtils.Processes.ProcessResult r = (kill) ? persistentdata.Processes.KillProcess(hv.Value) : persistentdata.Processes.CloseProcess(hv.Value);
+                BaseUtils.Processes.ProcessResult r = (kill) ? persistentdata.Processes.KillProcess(paras[0].Int) : persistentdata.Processes.CloseProcess(paras[0].Int);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = "1";
@@ -1560,12 +1554,10 @@ namespace BaseUtils
 
         protected bool HasProcessExited(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-
-            if (hv != null && persistentdata != null)
+            if (persistentdata != null)
             {
                 int exitcode;
-                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.HasProcessExited(hv.Value, out exitcode);
+                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.HasProcessExited(paras[0].Int, out exitcode);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = exitcode.ToStringInvariant();
@@ -1588,12 +1580,9 @@ namespace BaseUtils
 
         protected bool WaitForProcess(out string output)
         {
-            int? hv = paras[0].Value.InvariantParseIntNull();
-            int timeout = paras[1].Int;
-
-            if (hv != null && persistentdata != null )
+            if (persistentdata != null )
             {
-                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.WaitForProcess(hv.Value, timeout);
+                BaseUtils.Processes.ProcessResult r = persistentdata.Processes.WaitForProcess(paras[0].Int, paras[1].Int);
                 if (r == BaseUtils.Processes.ProcessResult.OK)
                 {
                     output = "1";

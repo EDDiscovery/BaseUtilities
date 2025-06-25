@@ -178,7 +178,7 @@ namespace BaseUtils
                 }
                 else if (ptype == FuncEntry.PT.ImeSE)   // as per meSE but must be integer.
                 {
-                    string errstr = "String parameter '" + t + "' is not an integer";
+                    string errstr = "String parameter '" + t + "' is not an eval expression";
 
                     if (!isstr)
                     {
@@ -187,16 +187,15 @@ namespace BaseUtils
                         if (vars.Exists(mname))         // if its a variable.. expand and check it converts
                         {
                             t = vars[mname];
-                            errstr = "Variable '" + mname + "' value '" + t + "' is not an integer";
+                            errstr = "Variable '" + mname + "' value '" + t + "' is not an eval expression";
                         }
                         else
-                            errstr = "Parameter '" + t + "' is not an integer or a variable name";
+                            errstr = "Parameter '" + t + "' is not an eval expression or a variable name";
                     }
 
-                    long? l = t.InvariantParseLongNull();
-                    if (l != null)
+                    if (Eval.EvalBFLong(t, vars, out long l))
                     {
-                        paras.Add(new Parameter() { Value = t, Int = (int)l.Value, Long = l.Value });
+                        paras.Add(new Parameter() { Value = t, Int = (int)l, Long = l, Fractional = l});
                         return null;
                     }
                     else
@@ -204,7 +203,7 @@ namespace BaseUtils
                 }
                 else if (ptype == FuncEntry.PT.FmeSE || ptype == FuncEntry.PT.FmeSEBlk )    
                 {
-                    string errstr = "String parameter '" + t + "' is not a number";
+                    string errstr = "String parameter '" + t + "' is not a eval expression";
 
                     if (!isstr)
                     {
@@ -213,10 +212,10 @@ namespace BaseUtils
                         if (vars.Exists(mname))
                         {
                             t = vars[mname];
-                            errstr = "Variable '" + mname + "' value '" + t + "' is not a number";
+                            errstr = "Variable '" + mname + "' value '" + t + "' is not a eval expression";
                         }
                         else
-                            errstr = "Parameter '" + t + "' is not an number or a variable name";
+                            errstr = "Parameter '" + t + "' is not an eval expression or a variable name";
                     }
 
                     if (t.Length == 0)      // empty string, may pass due to Blk.
@@ -226,11 +225,9 @@ namespace BaseUtils
                     }
                     else
                     {
-                        double? l = t.InvariantParseDoubleNull();
-
-                        if (l != null && !double.IsInfinity(l.Value) && !double.IsNaN(l.Value))     
-                        {
-                            paras.Add(new Parameter() { Value = t, Fractional = l.Value });
+                        if (Eval.EvalBFDouble(t, vars, out double d) && !double.IsInfinity(d) && !double.IsNaN(d))
+                        { 
+                            paras.Add(new Parameter() { Value = t, Fractional = d, Long = (long)d, Int = (int)d});
                             return null;
                         }
                         else

@@ -74,6 +74,49 @@ namespace BaseUtils
             };
         }
 
+        // evaluate string with base functions and these vars
+        static public Object EvalBF(string s, Variables vars)
+        {
+            Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
+            return ev.Evaluate(s);
+        }
+
+        static public bool EvalBFLong(string s, Variables vars, out long v)
+        {
+            Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
+            var obj = ev.Evaluate(s);
+            if (obj is long)
+            {
+                v = (long)obj;
+                return true;
+            }
+            else
+            {
+                v = 0;
+                return false;
+            }
+        }
+        static public bool EvalBFDouble(string s, Variables vars, out double v)
+        {
+            Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
+            var obj = ev.Evaluate(s);
+            if (obj is long)
+            {
+                v = (double)(long)obj;
+                return true;
+            }
+            else if (obj is double)
+            {
+                v = (double)obj;
+                return true;
+            }
+            else
+            {
+                v = 0;
+                return false;
+            }
+        }
+
         public int DefaultBase { get; set; } = 10;              // default base value
         public bool CheckEnd { get; set; } = false;             // after expression, check string is at end
         public bool ReplaceEscape { get; set; } = false;        // in strings, expand escape
@@ -160,9 +203,11 @@ namespace BaseUtils
             Evaluate(unary, checkend);
 
             if (value is long)
-                value = (double)(long)value;
-
-            if ( value is double )
+            {
+                dvalue = (double)(long)value;
+                return true;
+            }
+            else if (value is double)
             {
                 dvalue = (double)value;
                 return true;
