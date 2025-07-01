@@ -378,7 +378,7 @@ namespace BaseUtils
         // Read a quoted word list off, supporting multiple separ chars, and with multiple other terminators, and the lowercard/replaceescape options
         // null list on error
         public List<string> NextQuotedWordList(System.Globalization.CultureInfo lowercase = null, bool replaceescape = false , 
-                                        string separchars = ",", string otherterminators = " ", bool separoptional = false)
+                                        string separchars = ",", string otherterminators = " ", bool separoptional = false, int max = -1)
         {
             List<string> ret = new List<string>();
 
@@ -389,6 +389,9 @@ namespace BaseUtils
                     return null;
 
                 ret.Add(v);
+
+                if (--max == 0)     // if max counted to 0 stop
+                    break;
 
                 if (separoptional)  // if this is set, we these are optional and if not present won't bork it.
                 {
