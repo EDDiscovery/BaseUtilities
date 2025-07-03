@@ -275,7 +275,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
                     rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
 
                     dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
-                    dgv.DisplayRow(rowno, true); 
+                    dgv.DisplayRow(rowno, true);
                 }
 
                 pos = new Tuple<long, int>(-2, 0);      // done
@@ -311,9 +311,9 @@ public static partial class DataGridViewControlHelpersStaticFunc
                             Where(c => c.Index != grid.NewRowIndex).    // not this pesky one
                             Select(c => c.Index).Distinct();
 
-        if ( rows.Count() == 0 && usecellsifnorowselection)
+        if (rows.Count() == 0 && usecellsifnorowselection)
         {
-            rows = grid.SelectedCells.OfType<DataGridViewCell>().Select(x=>x.RowIndex).Distinct();
+            rows = grid.SelectedCells.OfType<DataGridViewCell>().Select(x => x.RowIndex).Distinct();
         }
 
         var selectedrows = ascending ? rows.OrderBy(x => x).ToArray() : rows.OrderByDescending(x => x).ToArray();
@@ -325,17 +325,17 @@ public static partial class DataGridViewControlHelpersStaticFunc
 
 
     // first selectedrows entry, with a default, and with new row nerf
-    public static Tuple<int,int> SelectedRowAndCount(this DataGridView grid, bool ascending, bool usecellsifnorowselection, 
+    public static Tuple<int, int> SelectedRowAndCount(this DataGridView grid, bool ascending, bool usecellsifnorowselection,
                                               int defaultnoselection = 0, bool nonewrow = true)
     {
-        var rows = SelectedRows(grid,ascending,usecellsifnorowselection);
+        var rows = SelectedRows(grid, ascending, usecellsifnorowselection);
         int rowno = rows.Length > 0 ? rows[0] : defaultnoselection;
         int count = Math.Max(1, rows.Length);
         // if no new row, use one before, if possible
         if (nonewrow && rowno > 0 && rowno == grid.NewRowIndex)
             rowno--;
         //System.Diagnostics.Debug.WriteLine($"DGV Selected row or current {rowno} len {count}");
-        return new Tuple<int,int>(rowno,count);
+        return new Tuple<int, int>(rowno, count);
     }
 
     // return range (inclusive) as objects. end = -1 means to end
@@ -350,7 +350,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
     }
 
     // can be VERY SLOW for large grids
-    public static void FilterGridView(this DataGridView grid, Func<DataGridViewRow,bool> condition)      
+    public static void FilterGridView(this DataGridView grid, Func<DataGridViewRow, bool> condition)
     {
         grid.SuspendLayout();
         grid.Enabled = false;
@@ -368,7 +368,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
         if (visibleChanged)
         {
             var selectedrow = grid.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
-            DataGridViewRow[] rows = grid.Rows.OfType<DataGridViewRow>().Where(rw=>!rw.IsNewRow).ToArray();
+            DataGridViewRow[] rows = grid.Rows.OfType<DataGridViewRow>().Where(rw => !rw.IsNewRow).ToArray();
 
             for (int i = 0; i < rows.Length; i++)
             {
@@ -438,4 +438,13 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return f;
     }
 
+    public static void AddTextCells(this DataGridViewRow rw, int number)
+    {
+        while(number-->0)
+        {
+            DataGridViewTextBoxCell cx = new DataGridViewTextBoxCell();
+            cx.Value = "";
+            rw.Cells.Add(cx);
+        }
+    }
 }

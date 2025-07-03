@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2022 EDDiscovery development team
+ * Copyright 2016 - 2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -46,7 +46,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
     // sort using number. Removetext will remove text suggested
     // usetag means use cell tag as subsititute text
 
-    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null, bool usecelltag = false)
+    static public void SortDataGridViewColumnNumeric(this DataGridViewSortCompareEventArgs e, string removetext = null, bool usecelltag = false, bool striptonumeric = false)
     {
         if (usecelltag)
         {
@@ -56,13 +56,13 @@ public static partial class DataGridViewControlHelpersStaticFunc
             var left = tagl != null ? tagl : e.CellValue1?.ToString();      // tags preferred if present
             var right = tagr != null ? tagr : e.CellValue2?.ToString();
 
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext, striptonumeric);
         }
         else
         {
             string left = e.CellValue1?.ToString();
             string right = e.CellValue2?.ToString();
-            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext);
+            e.SortResult = left == null ? 1 : right == null ? -1 : left.CompareNumeric(right, removetext, striptonumeric);
         }
 
         e.Handled = true;

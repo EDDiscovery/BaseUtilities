@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2021 - 2021 EDDiscovery development team
+ * Copyright 2021 - 2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
 
 using System;
@@ -21,12 +19,17 @@ public static class ObjectExtensionsStringsCompare
 {
     // read first number in the string, return if read..
     
-    static public Tuple<double, bool> ReadNumeric(string left, string removetext = null)
+    static public Tuple<double, bool> ReadNumeric(string left, string removetext = null, bool striptonumeric = false)
     {
         double vleft = 0;
         bool leftgood = false;
         if (left != null)
         {
+            if (striptonumeric)
+            {
+                while (left.Length > 0 && !left[0].IsDigitOrDotOrNegSign())
+                    left = left.Substring(1);
+            }
             if (removetext != null)
                 left = left.Replace(removetext, "");
 
@@ -44,10 +47,10 @@ public static class ObjectExtensionsStringsCompare
 
     // compare two strings numerically
 
-    static public int CompareNumeric(this string left, string right, string removetext = null)
+    static public int CompareNumeric(this string left, string right, string removetext = null, bool striptonumeric = false)
     {
-        var datal = ReadNumeric(left, removetext);
-        var datar = ReadNumeric(right, removetext);
+        var datal = ReadNumeric(left, removetext, striptonumeric);
+        var datar = ReadNumeric(right, removetext, striptonumeric);
         
         if (datal.Item2 == false)        // left bad
             return datar.Item2 == false ? 0 : 1;          // if both bad, same, else less
