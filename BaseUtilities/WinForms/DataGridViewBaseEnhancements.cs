@@ -114,6 +114,24 @@ namespace BaseUtils
             return Rows[rowno];
         }
 
+        public Action<DataGridViewCell, Rectangle, Point> HoverOverCell;
+
+        public void EnableCellHoverOverCallback()
+        {
+            this.CellMouseEnter += (s, e) =>
+            {
+                if (e.ColumnIndex >= 0 && e.RowIndex >= 0)
+                {
+                    var cell = this[e.ColumnIndex, e.RowIndex];
+                    var rec = GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+                    var sloc = PointToScreen(rec.Location);
+
+                    HoverOverCell?.Invoke(cell, rec, sloc);
+                }
+            };
+        }
+
+        #region Implementation
         // Touching the TopLeftHeaderCell here prevents
         // System.InvalidOperationException: This operation cannot be performed while an auto-filled column is being resized.
 
@@ -229,9 +247,12 @@ namespace BaseUtils
             }
         }
 
+
+
         private ContextMenuStrip defaultstrip = null;
         private bool cmschangingoverride = false;
         private Dictionary<DataGridViewColumn, float> FillWeight = new Dictionary<DataGridViewColumn, float>();
 
+        #endregion
     }
 }
