@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2020 EDDiscovery development team
+ * Copyright 2016 - 2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,7 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
  *
  */
 
@@ -25,11 +24,12 @@ namespace BaseUtils
 {
     public static class ExceptionCatcher
     {
-        static private string urlfeedback = "Unknown";
+        public enum ExceptionType { CurrentDomain, Application };
+        public static Action<Exception,ExceptionType> ExceptionHandler;         // call back to handle the exception and show something to the user
 
-        public static void RedirectExceptions(string url)
+        public static void RedirectExceptions(Action<Exception, ExceptionType> handler)
         {
-            urlfeedback = url;
+            ExceptionHandler = handler;
 
             // Log unhandled exceptions
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -52,7 +52,7 @@ namespace BaseUtils
             {
                 TraceLog.WriteLine($"\n==== UNHANDLED EXCEPTION ====\n{e.ExceptionObject.ToString()}\n==== cut ====");
                 TraceLog.TerminateLogger();
-                ExceptionForm.ShowException(e.ExceptionObject as Exception, "An unhandled fatal exception has occurred.", urlfeedback, isFatal: true);
+                ExceptionHandler?.Invoke(e.ExceptionObject as Exception, ExceptionType.CurrentDomain); // give it to the handler
             }
             catch
             {
@@ -76,7 +76,7 @@ namespace BaseUtils
                     return;
                 }
 
-                ExceptionForm.ShowException(e.Exception, "There was an unhandled UI exception.", urlfeedback);
+                ExceptionHandler?.Invoke(e.Exception, ExceptionType.Application);       // give it to the handler
             }
             catch
             {

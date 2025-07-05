@@ -129,12 +129,6 @@
     <Compile Include="Keys\EnhancedSendKeys.cs" />
     <Compile Include="Keys\KeyboardState.cs" />
     <Compile Include="Misc\CommandArgs.cs" />
-    <Compile Include="DebugTraceAndLogs\ExceptionForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="DebugTraceAndLogs\ExceptionForm.Designer.cs">
-      <DependentUpon>ExceptionForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Files\FileHandles.cs" />
     <Compile Include="Keys\KeyObjectExtensions.cs" />
     <Compile Include="Misc\Maps2d.cs" />
@@ -184,11 +178,6 @@
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="Drawing\FontLoader.cs" />
     <Compile Include="XML\xml.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="DebugTraceAndLogs\ExceptionForm.resx">
-      <DependentUpon>ExceptionForm.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
