@@ -67,11 +67,10 @@ namespace BaseUtils
                    SingleOrDefault(assembly => assembly.GetName().Name == name);
         }
 
-        // as an Int Array
-        static public int[] GetAssemblyVersionValues(this Assembly aw)
+        static public Version GetAssemblyVersion(this Assembly aw)
         {
             AssemblyName an = new AssemblyName(aw.FullName);            // offical way to split it
-            return new int[4] { an.Version.Major, an.Version.Minor, an.Version.Build, an.Version.Revision };
+            return an.Version;
         }
 
         static public string GetAssemblyVersionString(this Assembly aw)

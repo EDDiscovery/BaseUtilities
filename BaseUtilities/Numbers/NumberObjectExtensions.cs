@@ -361,42 +361,25 @@ public static class ObjectExtensionsNumbersBool
 
     #region Version
 
-    // versions are handled as Int Arrays here
-    static public int[] VersionFromString(this string s)
+    // non excepting, and can accept null. Null if no version
+    public static Version VersionFromString(this string s)
     {
-        string[] list = s.Split('.');
-        return VersionFromStringArray(list);
-    }
-
-    static public int[] VersionFromStringArray(this string[] list)
-    {
-        if (list.Length > 0)
-        {
-            int[] v = new int[list.Length];
-
-            for (int i = 0; i < list.Length; i++)
-            {
-                if (!list[i].InvariantParse(out v[i]))
-                    return null;
-            }
-
-            return v;
-        }
-
+        if (s != null && Version.TryParse(s, out Version res))
+            return res;
         return null;
     }
-
-    static public int CompareVersion(this int[] v1, int[] v2)    // is V1>V2, 1, 0 = equals, -1 less
+    public static int VersionMajorMinorCompare(this Version left, Version right)
     {
-        for (int i = 0; i < v1.Length; i++)
-        {
-            if (i >= v2.Length || v1[i] > v2[i])
-                return 1;
-            else if (v1[i] < v2[i])
-                return -1;
-        }
-
-        return 0;
+        if (left.Major < right.Major)
+            return -1;
+        else if (left.Major > right.Major)
+            return 1;
+        else if (left.Minor < right.Minor)
+            return -1;
+        else if (left.Minor > right.Minor)
+            return 1;
+        else
+            return 0;
     }
 
     #endregion
