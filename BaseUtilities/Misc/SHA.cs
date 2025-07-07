@@ -84,12 +84,34 @@ namespace BaseUtils
                     byte[] hash = sha1.ComputeHash(ms.ToArray());
                     StringBuilder formatted = new StringBuilder(2 * hash.Length);
                     foreach (byte b in hash)
-                    {
                         formatted.AppendFormat("{0:X2}", b);
-                    }
 
-                    return formatted.ToNullSafeString();
+                    return formatted.ToString();
                 }
+            }
+        }
+        static public string CalcSha(this string stringvalue)
+        {
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                Byte[] buf = Encoding.UTF8.GetBytes(stringvalue);       // use UTF-8 to get encoding for the UTF-16 stringvalue for byte purposes.
+                var hash = sha1.ComputeHash(buf);
+                StringBuilder formatted = new StringBuilder(2 * hash.Length);
+                foreach (byte b in hash)
+                    formatted.AppendFormat("{0:X2}", b);
+                return formatted.ToString();
+            }
+        }
+        static public string CalcSha8(this string stringvalue)
+        {
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                Byte[] buf = Encoding.UTF8.GetBytes(stringvalue);       // use UTF-8 to get encoding for the UTF-16 stringvalue for byte purposes.
+                var hash = sha1.ComputeHash(buf);
+                StringBuilder formatted = new StringBuilder(2 * hash.Length);
+                for( int i = 0;  i < 7; i++)
+                    formatted.AppendFormat("{0:X2}", hash[i]);
+                return formatted.ToString();
             }
         }
     }
