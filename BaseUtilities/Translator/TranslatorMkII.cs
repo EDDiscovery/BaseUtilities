@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2020-2024 EDDiscovery development team
+ * Copyright 2025-2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -20,9 +20,19 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-public static class TranslatorExtensionsMKII
+public static class TranslatorExtensionsMkII
 {
+    static public string Tx(this string s)               // given english text and enumeration, translate
+    {
+        return BaseUtils.TranslatorMkII.Instance.Translate(s);
+    }
 }
+
+public interface ITranslatableControl
+{
+    bool TranslateDoChildren { get; }
+}
+
 
 namespace BaseUtils
 {
@@ -30,19 +40,19 @@ namespace BaseUtils
     // in translator file, .Label means use the previous first word prefix stored, for shortness
     // using Label: "English" @ means for debug, replace @ with <english> as the foreign word in the debug build. In release, just use the in-code text
 
-    public class TranslatorMKII
+    public class TranslatorMkII
     {
-        static public Translator Instance
+        static public TranslatorMkII Instance
         {
             get
             {
                 if (instance == null)
-                    instance = new Translator();
+                    instance = new TranslatorMkII();
                 return instance;
             }
         }
 
-        static Translator instance;
+        static TranslatorMkII instance;
 
         public bool OutputIDs { get; set; } = false;             // for debugging
 
@@ -56,7 +66,7 @@ namespace BaseUtils
 
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
 
-        public TranslatorMKII() // only use via debugging
+        public TranslatorMkII() // only use via debugging
         {
         }
 
@@ -135,16 +145,16 @@ namespace BaseUtils
 
 
         // You can call this multiple times if required for debugging purposes
-        public bool LoadTranslation(string language, 
+        public bool LoadTranslation(string language,
                                     CultureInfo uicurrent,
-                                    string[] txfolders, 
+                                    string[] txfolders,
                                     int includesearchupdepth,
                                     string logdir = null,       // if non null, logger is active
                                     bool storesourceinfo = false,      // if true, accumulate info on where IDs come from
                                     string includefolderreject = "\\bin"       // use to reject include files in specific locations - for debugging
                                     )
         {
-            if (logdir!=null)
+            if (logdir != null)
             {
                 if (logger != null)
                     logger.Dispose();
@@ -187,7 +197,7 @@ namespace BaseUtils
 
             // tlx faster load
 
-            if ( Path.GetExtension(tlfile).Equals(".tlx", StringComparison.InvariantCultureIgnoreCase))     
+            if (Path.GetExtension(tlfile).Equals(".tlx", StringComparison.InvariantCultureIgnoreCase))
             {
                 return ReadFromFile(tlfile);
             }
@@ -288,7 +298,7 @@ namespace BaseUtils
                                 logger?.WriteLine("Readingfile " + filename);
                             }
                         }
-                        else 
+                        else
                         {
                             StringParser s = new StringParser(line);
                             string id = s.NextWord(" :");
@@ -387,7 +397,7 @@ namespace BaseUtils
             {
                 sp.Append(v.Key);
                 sp.Append(":");
-                if ( v.Value != null )  
+                if (v.Value != null)
                     sp.Append(v.Value);
                 else
                 { }
@@ -470,20 +480,15 @@ namespace BaseUtils
             return english.CalcSha8();
         }
 
-        public string Translate(string english)
-        {
-            return Translate(english, english.CalcSha8());
-        }
-
         // Translate string. Normal is the english text, ID is the ID to look up.
         // if translator is off english is returned.
         // any <code> items are returned as is.
 
-        public string Translate(string english, string id)
+        public string Translate(string english)
         {
             if (translations != null && !english.StartsWith("<code"))
             {
-                string key = id;
+                string key = english.CalcSha8();
                 if (OutputIDs)
                 {
                     string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key] ?? "Null") : "Missing");
@@ -491,11 +496,15 @@ namespace BaseUtils
                     logger?.WriteLine(tx);
                 }
 
+                if (!translations.ContainsKey(key))     // if we don't have the key, try the full version, in case we ever have a clash
+                {
+                    key = english.CalcSha();
+                }
+
                 if (translations.ContainsKey(key))
                 {
                     if (inuse != null)
                         inuse[key] = true;
-
 
                     if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
@@ -511,10 +520,10 @@ namespace BaseUtils
                 }
                 else
                 {
-                    logger?.WriteLine($"{id}: {english.EscapeControlChars().AlwaysQuoteString()} @");
+                    logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
+                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     english = "! " + english + " !";          // no id at all, use ! to indicate
                     translations.Add(key, english);
-                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID: {id}: {english.EscapeControlChars().AlwaysQuoteString()} @" );
                     return english;
                 }
             }
@@ -522,7 +531,104 @@ namespace BaseUtils
                 return english;
         }
 
+        // translate controls, verify control name is in enumset.
+        // all controls to translate must be in the enumset and enumset must have exactly that list. Else assert in debug
+        // controls can be marked <code> to say don't translate, or use %id% to indicate to use an ID
+        // We must go thru this procedure even if translations are off due to the embedded IDs such as %OK%
 
+        //[System.Diagnostics.DebuggerHidden]
+        public void TranslateControls(Control ctrl)
+        {
+            bool translatable = ctrl is ITranslatableControl || ctrl is Label || ctrl is TabPage;
 
+            if (translatable )      // these are translatable
+            {
+                // ignore if there is nothing to translate or starts with <code
+
+                if ( ctrl.Text?.Length > 1 && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
+                {
+                    string txtext = Translate(ctrl.Text);
+
+                    ctrl.Text = txtext;
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Rejected control {ctrl.GetType().Name}");
+            }
+
+            // if datagrid view, we need to deal with headers
+            if (ctrl is DataGridView)
+            {
+                DataGridView v = ctrl as DataGridView;
+                foreach (DataGridViewColumn col in v.Columns)
+                {
+                    if (col.HeaderText != null && col.HeaderText.Length > 1 && col.HeaderText.HasLetterChars())
+                    {
+                        string txtext = Translate(col.HeaderText);
+
+                        col.HeaderText = txtext;
+                    }
+                }
+            }
+
+            bool dochildren = ctrl is ITranslatableControl tc ? tc.TranslateDoChildren : ctrl is Form ? true : false;
+
+            if (dochildren)
+            {
+                // do sub controls
+                foreach (Control c in ctrl.Controls)
+                {
+                    TranslateControls(c);
+                }
+            }
+        }
+
+        //[System.Diagnostics.DebuggerHidden]
+        public void TranslateTooltip(ToolTip tt, Control ctrl)
+        {
+            string defaulttooltiptext = tt.GetToolTip(ctrl);
+
+            if (defaulttooltiptext != null && defaulttooltiptext.Length > 1 && defaulttooltiptext.HasLetterChars() && !defaulttooltiptext.StartsWith("<code"))
+            {
+                string txtext = Translate(defaulttooltiptext);
+                tt.SetToolTip(ctrl, txtext);
+            }
+
+            foreach (Control c in ctrl.Controls)
+            {
+                TranslateTooltip(tt, c);
+            }
+        }
+
+        //[System.Diagnostics.DebuggerHidden]
+        public void TranslateToolstrip(ToolStrip ctrl)
+        {
+            foreach (ToolStripItem msi in ctrl.Items)
+            {
+                TranslateToolstrip(msi);
+            }
+        }
+
+        private void TranslateToolstrip(ToolStripItem msi)
+        {
+            string itemname = msi.Name;
+
+            if (msi.Text != null && msi.Text.Length > 1 && msi.Text.HasLetterChars() && !msi.Text.StartsWith("<code"))
+            {
+                string txtext = Translate(msi.Text);
+                msi.Text = txtext;
+            }
+
+            var ddi = msi as ToolStripDropDownItem;
+
+            if (ddi != null)
+            {
+                foreach (ToolStripItem dd in ddi.DropDownItems)
+                {
+                    TranslateToolstrip(dd);
+                }
+            }
+        }
     }
 }
