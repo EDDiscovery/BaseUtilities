@@ -26,7 +26,7 @@ namespace BaseUtils
         public GitHubClass(string server) : base(server)
         {
         }
-        public GitHubClass(string server,string useragent) : base(server,useragent)
+        public GitHubClass(string server, string useragent) : base(server, useragent)
         {
         }
 
@@ -113,11 +113,11 @@ namespace BaseUtils
                         int pos = synthurl.IndexOf("git/blobs/");
                         if (pos >= 0)
                             synthurl = synthurl.Substring(0, pos) + branch + "/" + gitfolder + "/" + serverlocalpath;
-                       
+
                         //System.Diagnostics.Debug.WriteLine($"... synth download url {synthurl}");
 
                         rf.Add(new RemoteFile(Path.GetFileName(serverlocalpath),  // local name
-                                                Path.Combine(localpath,Path.GetDirectoryName(serverlocalpath)), // local path
+                                                Path.Combine(localpath, Path.GetDirectoryName(serverlocalpath)), // local path
                                                 synthurl, size, sha));
                     }
                 }
@@ -133,7 +133,7 @@ namespace BaseUtils
         public List<RemoteFile> ReadFolder(System.Threading.CancellationToken cancel, string gitfolder, int timeout = DefaultTimeout)
         {
             // call blocking request, cancel will result in null
-            var response = BlockingRequest(cancel, Method.GET, "contents/" + Uri.EscapeDataString(gitfolder), timeout:timeout);
+            var response = BlockingRequest(cancel, Method.GET, "contents/" + Uri.EscapeDataString(gitfolder), timeout: timeout);
 
             if (response?.StatusCode == HttpStatusCode.OK)      // response will be null if cancelled, bug #3548
             {
@@ -165,17 +165,23 @@ namespace BaseUtils
         // Blocking, download from remote git folder all files matching wildcardmatch to localdownloadfilder
         // and you can cancel it from another thread
         // optionally clean the local folder so only files downloaded are left
+        // optionally clean the local folder if the download fails or no files are in github
         // returns list of remote files downloaded or null on error
         public List<RemoteFile> DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
-                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
+                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout, bool cleanfolderifdownloademptyorfailed = false)
         {
             List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled
 
             if (remotefiles != null)        // if got some
             {
                 remotefiles = (from f in remotefiles where f.Name.WildCardMatch(wildcardmatch) select f).ToList();      // wildcard match
-                if ( DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout) )
+                if (DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout))
                     return remotefiles;
+            }
+            else if (cleanfolderifdownloademptyorfailed)
+            {
+                BaseUtils.FileHelpers.DeleteDirectoryNoError(localdownloadfolder, true);        // this removes the folder
+                FileHelpers.CreateDirectoryNoError(localdownloadfolder);    // this puts it back
             }
 
             return null;
