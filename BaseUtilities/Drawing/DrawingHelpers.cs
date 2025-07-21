@@ -85,6 +85,10 @@ public static partial class DrawingHelpersStaticFunc
     {
         return (r.Top + r.Bottom) / 2;
     }
+    public static int Area(this Rectangle r)
+    {
+        return r.Width * r.Height;
+    }
 
     public static Point ClipTo(this Point p, Rectangle r,int offsetrightbottom = -1)
     {
