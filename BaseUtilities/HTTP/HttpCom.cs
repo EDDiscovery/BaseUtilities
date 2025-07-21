@@ -393,9 +393,10 @@ namespace BaseUtils
         // cancelRequested/canceltoken allows cancellation by either means.
         // reportprogress allows feedback on downloads
         // initialtimeout is the timeout between request and response.  Thereafter there is no timeout on the streaming down.
-        // return true if file is present already (using etag) or has been downloaded okay
         // does not except.
         // supports GZIP/Deflate
+        // return true if file is present already (using etag) or has been downloaded okay. False if an error occurs
+
         public bool DownloadFile(CancellationToken canceltoken,
                                 string uriorendpoint,
                                 string filename,
@@ -519,10 +520,12 @@ namespace BaseUtils
         }
 
         // Blocking, download these remote files to localdownloadfolder (or subfolders of it, if Path is set in RemoteFile)
+        // you can pass an empty list which still gives true
         // remote files can be http: or endpoints to ServerAddress.  The DownloadURI in remote files gives the location to get it from
         // If remote file has a SHA field, its checked against the SHA of the file, and no download will be performed if its the same
         // or you can use the etag system
         // timeout is per file
+        // true if all files downloaded okay
 
         public bool DownloadFiles(CancellationToken cancel,
                                 string localdownloadfolderroot,
@@ -554,8 +557,9 @@ namespace BaseUtils
                 // here we use DownloadNeeded to do a sha comparision if we have an SHA in the remote file descriptor.
                 if (item.DownloadNeeded(downloadlocalfile))
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Download {ghf.DownloadURL} to {downloadlocalfile}");
-                    if (!DownloadFile(cancel, item.DownloadURI, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout))
+                    var downloadok = DownloadFile(cancel, item.DownloadURI, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout);
+                    System.Diagnostics.Debug.WriteLine($"Download {item.FullPath} to {downloadlocalfile} = {downloadok}");
+                    if (!downloadok)
                         return false;
                 }
                 else
@@ -568,6 +572,8 @@ namespace BaseUtils
         }
 
         // Download and optionally synchronise folder
+        // see DownloadFiles for parameters
+
         public bool DownloadFiles(CancellationToken cancel,
                                 string localdownloadfolderroot,
                                 List<RemoteFile> files,
@@ -575,6 +581,8 @@ namespace BaseUtils
                                 bool synchronisefolder,
                                 int perfileinitialtimeout = DefaultTimeout)
         {
+            // if download succeeded
+
             if (DownloadFiles(cancel, localdownloadfolderroot, files, dontuseetagdownfiles, perfileinitialtimeout))
             {
                 if (synchronisefolder)

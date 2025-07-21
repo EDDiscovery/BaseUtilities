@@ -179,6 +179,7 @@
     <Compile Include="WinForms\ControlHelpers.cs" />
     <Compile Include="Drawing\FontLoader.cs" />
     <Compile Include="XML\xml.cs" />
+    <Compile Include="ZIP\ZipExpand.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

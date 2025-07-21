@@ -84,7 +84,8 @@ namespace BaseUtils
         }
 
         // Read a whole tree, on branch, given a folder node (such as VideoFiles or ActionFiles/V1)
-        // NULL if folder not found or not an array return.  Empty list if files not there
+        // NULL if github denies or folder not found 
+        // Empty list if files not there
         // local path is localpath + relative path on server from gitfolder.
         public List<RemoteFile> ReadFolderTree(System.Threading.CancellationToken cancel, string branch, string gitfolder, string localpath, int timeout = DefaultTimeout)
         {
@@ -124,12 +125,17 @@ namespace BaseUtils
 
                 return rf;
             }
+            else if (response?.StatusCode == HttpStatusCode.NoContent) // no content in folder, empty file list
+            {
+                return new List<RemoteFile>();
+            }
             else
                 return null;
         }
 
         // Read a folder, which will come from master, given a folder node (such as VideoFiles or ActionFiles/V1)
-        // NULL if folder not found or not an array return.  Empty list if files not there
+        // NULL if github denies or folder not found 
+        // Empty list if files not there
         public List<RemoteFile> ReadFolder(System.Threading.CancellationToken cancel, string gitfolder, int timeout = DefaultTimeout)
         {
             // call blocking request, cancel will result in null
@@ -158,6 +164,10 @@ namespace BaseUtils
                     return files;
                 }
             }
+            else if (response?.StatusCode == HttpStatusCode.NoContent) // no content in folder, empty file list
+            {
+                return new List<RemoteFile>();
+            }
 
             return null;
         }
@@ -165,23 +175,26 @@ namespace BaseUtils
         // Blocking, download from remote git folder all files matching wildcardmatch to localdownloadfilder
         // and you can cancel it from another thread
         // optionally clean the local folder so only files downloaded are left
-        // optionally clean the local folder if the download fails or no files are in github
-        // returns list of remote files downloaded or null on error
+        // returns list of remote files downloaded
+        // or null on error
         public List<RemoteFile> DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
-                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout, bool cleanfolderifdownloademptyorfailed = false)
+                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
         {
-            List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled
+            List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled or error occurred such as github denying us
 
-            if (remotefiles != null)        // if got some
+            if (remotefiles != null)        // if not got an error return
             {
-                remotefiles = (from f in remotefiles where f.Name.WildCardMatch(wildcardmatch) select f).ToList();      // wildcard match
-                if (DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout))
+                // wildcard match, download only files matching this wildcard
+
+                remotefiles = (from f in remotefiles where f.Name.WildCardMatch(wildcardmatch) select f).ToList();
+
+                // download, may be an empty list, code copes with this.
+                bool succeededall = DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout);
+
+                if (succeededall)
+                {
                     return remotefiles;
-            }
-            else if (cleanfolderifdownloademptyorfailed)
-            {
-                BaseUtils.FileHelpers.DeleteDirectoryNoError(localdownloadfolder, true);        // this removes the folder
-                FileHelpers.CreateDirectoryNoError(localdownloadfolder);    // this puts it back
+                }
             }
 
             return null;

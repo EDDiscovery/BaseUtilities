@@ -36,6 +36,7 @@ namespace BaseUtils
         public string DownloadURI { get; private set; } // where to get the file on the web
         public long Size { get; private set; }          // set if known
         public string SHA { get; private set; }         // may not be present. If its not, DownloadNeeded will return true always
+        public string FullPath { get { return System.IO.Path.Combine(Path, Name); } }
 
         public bool DownloadNeeded(string destFile)
         {

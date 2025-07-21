@@ -13,6 +13,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,6 +22,77 @@ namespace BaseUtils
 {
     public static class FileHelpers
     {
+        // read file in, write it out with same encoding
+        // set CR type (default platform Environment.NewLine)
+
+        public static bool ChangeLineEndings(string infile, string outfile, string outlf = null)
+        {
+            try
+            {
+                outlf = outlf ?? Environment.NewLine;
+
+                List<string> lines = new List<string>();
+
+                //System.Diagnostics.Debug.WriteLine($"File {infile}");
+
+                // open in UTF8 no bom, if it gets a BOM, it will change its endcoding
+                using (StreamReader instream = new StreamReader(infile, new UTF8Encoding(false),true))
+                {
+                    while( !instream.EndOfStream)
+                    {
+                        string str = instream.ReadLine();
+                        lines.Add(str);
+                    }
+
+                    var inencoding = instream.CurrentEncoding;
+                    //var preamble = instream.CurrentEncoding.GetPreamble();
+                    instream.Close();
+
+                    using (StreamWriter outstream = new StreamWriter(outfile, false, inencoding))
+                    {
+                        foreach (var line in lines)
+                        {
+                            outstream.Write(line);
+                            outstream.Write(outlf);
+                        }
+
+                        return true;
+                    }
+                }
+
+            }
+            catch (Exception ex) 
+            {
+                return false;
+            }
+        }
+
+        static public void DumpFile(string file)
+        {
+            using( FileStream instream = new FileStream(file,FileMode.Open,FileAccess.Read,FileShare.Read))
+            {
+                byte[] xbuf = new byte[1];
+                int ll = 0;
+
+                while (true)
+                {
+                    int len = instream.Read(xbuf, 0, 1);
+                    if (len > 0)
+                    {
+                        System.Diagnostics.Debug.Write($" {(int)xbuf[0]}");
+                        if (++ll == 80)
+                        {
+                            ll = 0;
+                            System.Diagnostics.Debug.WriteLine("");
+                        }
+                    }
+                    else
+                        break;
+                }
+            }
+            System.Diagnostics.Debug.WriteLine("");
+        }
+
         public static string TryReadAllTextFromFile(string filename, Encoding encoding = null, FileShare fs = FileShare.ReadWrite)
         {
             if (File.Exists(filename))
@@ -256,5 +328,6 @@ namespace BaseUtils
                 }
             }
         }
+
     }
 }
