@@ -525,13 +525,15 @@ namespace BaseUtils
         // If remote file has a SHA field, its checked against the SHA of the file, and no download will be performed if its the same
         // or you can use the etag system
         // timeout is per file
+        // a local backup folder where you can get a copy of the file can be provided if the download from the internet failed
         // true if all files downloaded okay
 
         public bool DownloadFiles(CancellationToken cancel,
                                 string localdownloadfolderroot,
                                 List<RemoteFile> files,
                                 bool dontuseetagdownfiles,
-                                int perfileinitialtimeout = DefaultTimeout)
+                                int perfileinitialtimeout = DefaultTimeout,
+                                string localbackupfolder = null)
         {
             localdownloadfolderroot = Path.GetFullPath(localdownloadfolderroot);        // make canonical
 
@@ -559,8 +561,22 @@ namespace BaseUtils
                 {
                     var downloadok = DownloadFile(cancel, item.DownloadURI, downloadlocalfile, dontuseetagdownfiles, out bool newfile, initialtimeout: perfileinitialtimeout);
                     System.Diagnostics.Debug.WriteLine($"Download {item.FullPath} to {downloadlocalfile} = {downloadok}");
+
                     if (!downloadok)
-                        return false;
+                    {
+                        // we can use a local backup folder to get files..
+                        if ( localbackupfolder != null)
+                        {
+                            string lb = Path.Combine(localbackupfolder, item.Name);
+                            if ( File.Exists(lb))
+                            {
+                                if (!FileHelpers.TryCopy(lb, downloadlocalfile, true))
+                                    return false;
+                            }
+                        }
+                        else
+                            return false;
+                    }
                 }
                 else
                 {
@@ -579,11 +595,12 @@ namespace BaseUtils
                                 List<RemoteFile> files,
                                 bool dontuseetagdownfiles,
                                 bool synchronisefolder,
-                                int perfileinitialtimeout = DefaultTimeout)
+                                int perfileinitialtimeout = DefaultTimeout,
+                                string localbackupfolder = null)
         {
             // if download succeeded
 
-            if (DownloadFiles(cancel, localdownloadfolderroot, files, dontuseetagdownfiles, perfileinitialtimeout))
+            if (DownloadFiles(cancel, localdownloadfolderroot, files, dontuseetagdownfiles, perfileinitialtimeout, localbackupfolder))
             {
                 if (synchronisefolder)
                     return RemoteFile.SynchroniseFolders(localdownloadfolderroot, files);

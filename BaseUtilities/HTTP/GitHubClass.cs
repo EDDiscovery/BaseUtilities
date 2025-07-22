@@ -176,9 +176,11 @@ namespace BaseUtils
         // and you can cancel it from another thread
         // optionally clean the local folder so only files downloaded are left
         // returns list of remote files downloaded
+        // a local backup folder where you can get a copy of the file can be provided if the download from the internet failed
         // or null on error
+
         public List<RemoteFile> DownloadFolder(System.Threading.CancellationToken cancel, string localdownloadfolder, string gitfolder, string wildcardmatch,
-                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout)
+                                bool dontuseetagdownfiles, bool synchronisefolder, int timeout = DefaultTimeout, string localbackupfolder = null)
         {
             List<RemoteFile> remotefiles = ReadFolder(cancel, gitfolder, timeout);  // will return null if cancelled or error occurred such as github denying us
 
@@ -189,7 +191,7 @@ namespace BaseUtils
                 remotefiles = (from f in remotefiles where f.Name.WildCardMatch(wildcardmatch) select f).ToList();
 
                 // download, may be an empty list, code copes with this.
-                bool succeededall = DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout);
+                bool succeededall = DownloadFiles(cancel, localdownloadfolder, remotefiles, dontuseetagdownfiles, synchronisefolder, timeout, localbackupfolder);
 
                 if (succeededall)
                 {
