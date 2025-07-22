@@ -148,6 +148,7 @@ namespace BaseUtils
     [System.Diagnostics.DebuggerDisplay("CSV File Rows {Rows.Count}")]
     public class CSVFile
     {
+        [System.Diagnostics.DebuggerDisplay("Cells {Cells.Count} NextCell {nextcell}")]
         public class Row
         {
             public Row(System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns)
