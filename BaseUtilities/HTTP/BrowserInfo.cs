@@ -22,15 +22,19 @@ namespace BaseUtils
     {
         public static string GetDefault()
         {
-            const string userChoice = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
-            using (Microsoft.Win32.RegistryKey userChoiceKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(userChoice))
-            {
-                if (userChoiceKey != null)
-                {
-                    object progIdValue = userChoiceKey.GetValue("Progid");
-                    if (progIdValue != null)
-                        return progIdValue.ToString();
-                }
+            // win11/10
+            const string userChoicewin11 = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoiceLatest\ProgId";
+            const string userChoicewin10 = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
+
+            Microsoft.Win32.RegistryKey userChoiceKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(userChoicewin11);
+            if (userChoiceKey == null)
+                userChoiceKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(userChoicewin10);
+
+            if ( userChoiceKey != null )
+            { 
+                object progIdValue = userChoiceKey.GetValue("Progid");
+                if (progIdValue != null)
+                    return progIdValue.ToString();
             }
 
             return null;
