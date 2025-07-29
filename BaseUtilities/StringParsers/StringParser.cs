@@ -179,12 +179,30 @@ namespace BaseUtils
             return IsEOL || t == ' ' || IsCharMoveOn(t);       
         }
 
+        // skip foward until a character in the array is found
+        // true if its found. Pos is on the EOL or the found character
         public bool SkipUntil(char[] chars)
         {
             while (pos < line.Length && Array.IndexOf(chars, line[pos]) == -1)
                 pos++;
 
             return pos < line.Length;
+        }
+
+        // If text is found, skips to it, optional past it, optionally skip space after
+        // if not, no position changes
+        public bool SkipTo(string text, StringComparison sc = StringComparison.InvariantCulture, bool moveover = true, bool skipspace = true)
+        {
+            int indexof = line.IndexOf(text, pos, sc);
+            if (indexof != -1)
+            {
+                pos = indexof + (moveover ? text.Length : 0);
+                if (skipspace)
+                    SkipSpace();
+                return true;
+            }
+            else
+                return false;
         }
 
         #endregion

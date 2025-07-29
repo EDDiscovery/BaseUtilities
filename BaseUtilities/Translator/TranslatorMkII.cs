@@ -52,23 +52,9 @@ namespace BaseUtils
             }
         }
 
-        static TranslatorMkII instance;
-
-        public bool OutputIDs { get; set; } = false;             // for debugging
-
-        private LogToFile logger = null;
-
-        private Dictionary<string, string> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
-        private Dictionary<string, string> originalenglish = null;      // optional load - translation id -> english
-        private Dictionary<string, string> originalfile = null;         // optional load - translation id -> file
-        private Dictionary<string, int> originalline = null;            // optional load - translation id -> line
-        private Dictionary<string, bool> inuse = null;                  // optional load - translation id -> use flag
-
+        public bool OutputIDs { get; set; } = false;            // for debugging
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
-
-        public TranslatorMkII() // only use via debugging
-        {
-        }
+        public IEnumerable<string> EnumerateEnglish { get { return originalenglish.Values; } }
 
         public bool CompareTranslatedToCode { get; set; } = false;      // if set, will moan if the translate does not match the code
         public bool Translating { get { return translations != null; } }
@@ -143,6 +129,9 @@ namespace BaseUtils
                 return null;
         }
 
+        public TranslatorMkII() // only use via debugging
+        {
+        }
 
         // You can call this multiple times if required for debugging purposes
         public bool LoadTranslation(string language,
@@ -150,6 +139,8 @@ namespace BaseUtils
                                     string[] txfolders,
                                     int includesearchupdepth,
                                     string logdir = null,       // if non null, logger is active
+                                    string logfile = null,      // optionally set logfile
+                                    bool storeenglish = false,
                                     bool storesourceinfo = false,      // if true, accumulate info on where IDs come from
                                     string includefolderreject = "\\bin"       // use to reject include files in specific locations - for debugging
                                     )
@@ -160,7 +151,7 @@ namespace BaseUtils
                     logger.Dispose();
 
                 logger = new LogToFile();
-                logger.SetFile(logdir, "translator-ids.log", false);
+                logger.SetFile(logdir, logfile ?? $"translator-ids-{language}.log", false);
             }
 
             translations = null;        // forget any
@@ -207,9 +198,12 @@ namespace BaseUtils
                 if (lr.Open(tlfile))
                 {
                     translations = new Dictionary<string, string>();
-                    if (storesourceinfo)
-                    {
+                    
+                    if (storeenglish)
                         originalenglish = new Dictionary<string, string>();
+
+                    if ( storesourceinfo)
+                    { 
                         originalfile = new Dictionary<string, string>();
                         originalline = new Dictionary<string, int>();
                         inuse = new Dictionary<string, bool>();
@@ -326,7 +320,9 @@ namespace BaseUtils
                                     }
                                 }
                                 else if (s.IsCharMoveOn('@'))
+                                {
                                     foreign = null;
+                                }
                                 else if (s.IsCharMoveOn('='))
                                 {
                                     string keyword = s.NextWord();
@@ -353,14 +349,18 @@ namespace BaseUtils
                                 {
                                     if (!translations.ContainsKey(id))
                                     {
-                                        //                                            System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => {orgenglish} => {foreign} ");
+                                       // System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => `{orgenglish}` => {foreign} ");
+
                                         if (logger != null)
                                             logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
                                         translations[id] = foreign;
+
+                                        if ( storeenglish)
+                                            originalenglish[id] = orgenglish;
+
                                         if (storesourceinfo)
                                         {
-                                            originalenglish[id] = orgenglish;
                                             originalfile[id] = lr.CurrentFile;
                                             originalline[id] = lr.CurrentLine;
                                         }
@@ -630,5 +630,15 @@ namespace BaseUtils
                 }
             }
         }
+
+
+        private LogToFile logger = null;
+
+        private Dictionary<string, string> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
+        private Dictionary<string, string> originalenglish = null;      // optional load - translation id -> english
+        private Dictionary<string, string> originalfile = null;         // optional load - translation id -> file
+        private Dictionary<string, int> originalline = null;            // optional load - translation id -> line
+        private Dictionary<string, bool> inuse = null;                  // optional load - translation id -> use flag
+        private static TranslatorMkII instance;
     }
 }

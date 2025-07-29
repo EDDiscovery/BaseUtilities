@@ -61,7 +61,7 @@ namespace BaseUtils
                 }
 
             }
-            catch (Exception ex) 
+            catch
             {
                 return false;
             }
