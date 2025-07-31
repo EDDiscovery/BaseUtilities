@@ -72,7 +72,7 @@ namespace BaseUtils
                 {
                     var tsitem = new System.Windows.Forms.ToolStripMenuItem();
                     tsitem.Checked = RowHeadersVisible;
-                    tsitem.Text = "Header".TxID("DataGridView", "Header");
+                    tsitem.Text = "Header".Tx();
                     tsitem.Size = new System.Drawing.Size(178, 22);
                     tsitem.Click += Tsheader_Click;
                     columnContextMenu.Items.Add(tsitem);
@@ -95,7 +95,7 @@ namespace BaseUtils
                     var globalwrapmode = this.DefaultCellStyle.WrapMode;
                     tsww.CheckState = Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.True ? CheckState.Checked :
                                                         Columns[HitIndex].DefaultCellStyle.WrapMode == DataGridViewTriState.NotSet ? CheckState.Indeterminate : CheckState.Unchecked;
-                    tsww.Text = Columns[HitIndex].HeaderText + " " + "Word Wrap (Override)".TxID("DataGridView", "WordWrap");
+                    tsww.Text = Columns[HitIndex].HeaderText + " " + "Word Wrap (Override)".Tx();
                     tsww.Tag = Columns[HitIndex];
                     tsww.Size = new System.Drawing.Size(178, 22);
                     tsww.Click += Tsww_Click;

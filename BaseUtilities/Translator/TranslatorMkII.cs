@@ -22,7 +22,7 @@ using System.Windows.Forms;
 
 public static class TranslatorExtensionsMkII
 {
-    static public string Tx(this string s)               // given english text and enumeration, translate
+    static public string Tx(this string s)               // given english text translate. Works even if translator has not been initialised
     {
         return BaseUtils.TranslatorMkII.Instance.Translate(s);
     }
@@ -36,10 +36,6 @@ public interface ITranslatableControl
 
 namespace BaseUtils
 {
-    // specials : if text in a control = <code> its presumed its a code filled in entry and not suitable for translation
-    // in translator file, .Label means use the previous first word prefix stored, for shortness
-    // using Label: "English" @ means for debug, replace @ with <english> as the foreign word in the debug build. In release, just use the in-code text
-
     public class TranslatorMkII
     {
         static public TranslatorMkII Instance
@@ -52,12 +48,18 @@ namespace BaseUtils
             }
         }
 
-        public bool OutputIDs { get; set; } = false;            // for debugging
+        // translations are loaded
+        public bool Translating { get { return translations != null; } }
+
+        // Debugging
+        public bool OutputIDs { get; set; } = false;            // Output IDs to log
+        public bool CompareTranslatedToCode { get; set; } = false;      // if set, will moan if the translate does not match the code
+
+        // key list
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
+        // must have stored english in load
         public IEnumerable<string> EnumerateEnglish { get { return originalenglish.Values; } }
 
-        public bool CompareTranslatedToCode { get; set; } = false;      // if set, will moan if the translate does not match the code
-        public bool Translating { get { return translations != null; } }
 
         public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
         public bool TryGetValue(string fullid, out string text)     // true if translation is defined and non null
@@ -66,7 +68,7 @@ namespace BaseUtils
             return text != null;
         }
         public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
-        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid] ?? "?";         // ensure its there first!
+        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid] ?? "?";         // ensure its there first and only if load indicates store english
         public string GetOriginalFile(string fullid) => originalfile?[fullid] ?? "?";         // ensure its there first!
         public int GetOriginalLine(string fullid) => originalline?[fullid] ?? -1;         // ensure its there first!
         public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
@@ -198,15 +200,17 @@ namespace BaseUtils
                 if (lr.Open(tlfile))
                 {
                     translations = new Dictionary<string, string>();
-                    
-                    if (storeenglish)
-                        originalenglish = new Dictionary<string, string>();
 
-                    if ( storesourceinfo)
-                    { 
+                    if (storesourceinfo)           // source info needs all of it
+                    {
+                        originalenglish = new Dictionary<string, string>();
                         originalfile = new Dictionary<string, string>();
                         originalline = new Dictionary<string, int>();
                         inuse = new Dictionary<string, bool>();
+                    }
+                    else if (storeenglish)
+                    {
+                        originalenglish = new Dictionary<string, string>();
                     }
 
                     string prefix = "";
@@ -322,21 +326,6 @@ namespace BaseUtils
                                 else if (s.IsCharMoveOn('@'))
                                 {
                                     foreign = null;
-                                }
-                                else if (s.IsCharMoveOn('='))
-                                {
-                                    string keyword = s.NextWord();
-                                    if (translations.ContainsKey(keyword))
-                                    {
-                                        foreign = translations[keyword];
-                                    }
-                                    else
-                                    {
-                                        logger?.WriteLine(string.Format("*** Translator ID with reference = but no reference found {0}", id));
-                                        System.Diagnostics.Debug.WriteLine("*** Translator ID reference = but no reference found {0}", id);
-                                        err = true;
-                                    }
-
                                 }
                                 else
                                 {
@@ -461,7 +450,7 @@ namespace BaseUtils
 
         static public List<string> EnumerateLanguageNames(string[] txfolders)
         {
-            List<Tuple<string, string>> languages = BaseUtils.Translator.EnumerateLanguages(txfolders);
+            List<Tuple<string, string>> languages = BaseUtils.TranslatorMkII.EnumerateLanguages(txfolders);
             return (from x in languages select Path.GetFileNameWithoutExtension(x.Item2)).ToList();
         }
 
@@ -492,7 +481,6 @@ namespace BaseUtils
                 if (OutputIDs)
                 {
                     string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key] ?? "Null") : "Missing");
-                    System.Diagnostics.Debug.WriteLine(tx);
                     logger?.WriteLine(tx);
                 }
 
@@ -508,8 +496,7 @@ namespace BaseUtils
 
                     if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
-                        var orgeng = originalenglish[key];
-                        logger?.WriteLine($"Difference Key {key} code `{english}` translation `{orgeng}`");
+                        logger?.WriteLine($"Difference Key {key} code `{english}` translation file had `{originalenglish[key]}`");
                     }
 
 #if DEBUG
@@ -521,10 +508,10 @@ namespace BaseUtils
                 else
                 {
                     logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
-                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
-                    english = "! " + english + " !";          // no id at all, use ! to indicate
-                    translations.Add(key, english);
-                    return english;
+                    System.Diagnostics.Trace.WriteLine($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
+                    string errtext = "! " + english + " !";          // no id at all, use ! to indicate
+                    translations[key] = errtext;
+                    return errtext;
                 }
             }
             else
@@ -532,12 +519,10 @@ namespace BaseUtils
         }
 
         // translate controls, verify control name is in enumset.
-        // all controls to translate must be in the enumset and enumset must have exactly that list. Else assert in debug
-        // controls can be marked <code> to say don't translate, or use %id% to indicate to use an ID
-        // We must go thru this procedure even if translations are off due to the embedded IDs such as %OK%
+        // controls can be marked <code to say don't translate
 
         //[System.Diagnostics.DebuggerHidden]
-        public void TranslateControls(Control ctrl)
+        public void TranslateControls(Control ctrl, int minlen = 2, bool traceit = false)
         {
             bool translatable = ctrl is ITranslatableControl || ctrl is Label || ctrl is TabPage;
 
@@ -545,17 +530,15 @@ namespace BaseUtils
             {
                 // ignore if there is nothing to translate or starts with <code
 
-                if ( ctrl.Text?.Length > 1 && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
+                if ( ctrl.Text?.Length >= minlen && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
                 {
                     string txtext = Translate(ctrl.Text);
+                    if (traceit) System.Diagnostics.Debug.WriteLine($"TX `{ctrl.Text}` -> `{txtext}`");
 
                     ctrl.Text = txtext;
                 }
             }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"Rejected control {ctrl.GetType().Name}");
-            }
+
 
             // if datagrid view, we need to deal with headers
             if (ctrl is DataGridView)
@@ -563,7 +546,7 @@ namespace BaseUtils
                 DataGridView v = ctrl as DataGridView;
                 foreach (DataGridViewColumn col in v.Columns)
                 {
-                    if (col.HeaderText != null && col.HeaderText.Length > 1 && col.HeaderText.HasLetterChars())
+                    if (col.HeaderText != null && col.HeaderText.Length >= minlen && col.HeaderText.HasLetterChars())
                     {
                         string txtext = Translate(col.HeaderText);
 
@@ -572,14 +555,17 @@ namespace BaseUtils
                 }
             }
 
-            bool dochildren = ctrl is ITranslatableControl tc ? tc.TranslateDoChildren : ctrl is Form ? true : false;
+            // splitterpanel is a panel
+            bool dochildren = ctrl is ITranslatableControl tc ? tc.TranslateDoChildren : (ctrl is Form || ctrl is UserControl || ctrl is Panel || ctrl is SplitContainer);
+
+            if (traceit) System.Diagnostics.Debug.WriteLine($"Tx {ctrl.Name} {ctrl.GetType().Name}  translateable {translatable} dochildren {dochildren}");
 
             if (dochildren)
             {
                 // do sub controls
                 foreach (Control c in ctrl.Controls)
                 {
-                    TranslateControls(c);
+                    TranslateControls(c,minlen,traceit);
                 }
             }
         }

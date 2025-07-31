@@ -137,7 +137,6 @@
     <Compile Include="Numbers\Eval.cs" />
     <Compile Include="Numbers\IEval.cs" />
     <Compile Include="Numbers\EvalUserDefinedFunctions.cs" />
-    <Compile Include="Translator\Translator.cs" />
     <Compile Include="Win32\NativeMethods.cs" />
     <Compile Include="Process\Processes.cs" />
     <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
