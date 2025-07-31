@@ -26,6 +26,10 @@ public static class TranslatorExtensionsMkII
     {
         return BaseUtils.TranslatorMkII.Instance.Translate(s);
     }
+    static public string Tx(this string s, bool translate)              
+    {
+        return translate ? BaseUtils.TranslatorMkII.Instance.Translate(s) : s;
+    }
 }
 
 public interface ITranslatableControl
@@ -60,76 +64,43 @@ namespace BaseUtils
         // must have stored english in load
         public IEnumerable<string> EnumerateEnglish { get { return originalenglish.Values; } }
 
+        public bool IsDefined(string id) => translations != null && translations.ContainsKey(id);
 
-        public bool IsDefined(string fullid) => translations != null && translations.ContainsKey(fullid);
-        public bool TryGetValue(string fullid, out string text)     // true if translation is defined and non null
+        // recorded in translator list if store source info is on during load
+        static public bool IsSourceID(string id) { return id.StartsWith("SOURCE:"); }
+
+        // true if translation is defined, returns translation text (may be null)
+        public bool TryGetValue(string id, out string text)
         {
-            text = translations != null && translations.ContainsKey(fullid) ? translations[fullid] : null;
-            return text != null;
-        }
-        public string GetTranslation(string fullid) => translations[fullid];         // ensure its there first!
-        public string GetOriginalEnglish(string fullid) => originalenglish?[fullid] ?? "?";         // ensure its there first and only if load indicates store english
-        public string GetOriginalFile(string fullid) => originalfile?[fullid] ?? "?";         // ensure its there first!
-        public int GetOriginalLine(string fullid) => originalline?[fullid] ?? -1;         // ensure its there first!
-        public void UnDefine(string fullid) { translations.Remove(fullid); }        // debug
-        public void ReDefine(string fullid, string newdefine) { translations[fullid] = newdefine; }        // for edtools
-        public bool Rename(string from, string to, string file, int line = 0)
-        {
-            if (translations.ContainsKey(from))
-            {
-                translations[to] = translations[from];
-                translations.Remove(from);
-                if (originalenglish != null)
-                {
-                    originalenglish[to] = originalenglish[from];
-                    originalfile[to] = file;
-                    originalline[to] = line;
-                    originalenglish.Remove(from);
-                    originalfile.Remove(from);
-                    originalline.Remove(from);
-                }
-                return true;
-            }
-            else
-                return false;
-        }
-        public string FindTranslation(string text) { var txlist = translations.ToList(); var txpos = txlist.FindIndex(x => x.Value == text); return txpos >= 0 ? txlist[txpos].Key : null; }
-        public string FindTranslation(string text, string primaryfile, string currentfile, bool rootonlynamesprimary)
-        {
-            var txlist = translations.ToList();
-            foreach (var kvp in txlist)
-            {
-                if (kvp.Value == text)
-                {
-                    if (currentfile != primaryfile && originalfile[kvp.Key] == primaryfile && (!rootonlynamesprimary || !kvp.Key.Contains(".")))
-                        return kvp.Key;
-                    else if (originalfile[kvp.Key] == currentfile)
-                        return kvp.Key;
-                }
-            }
-            return null;
+            text = null;
+            return translations != null && translations.TryGetValue(id, out text);
         }
 
-        public string[] FileList()
+        // requires load to have originalenglish
+        public bool TryGetOriginalEnglish(string id, out string text)
         {
-            return originalfile.Values.Distinct().ToArray();
+            text = null;
+            return originalenglish != null ? originalenglish.TryGetValue(id, out text) : false;
+        }
+        public bool IsDefinedEnglish(string english)
+        {
+            return originalenglish.Values.Contains(english);
         }
 
-        public List<string> NotUsed()                                               // if track use on, whats not used
+        // requires load to have originalsource
+        public bool TryGetSource(string id, out string file, out int lineno)
         {
-            if (inuse != null)
-            {
-                List<string> res = new List<string>();
-                foreach (var kvp in translations)
-                {
-                    if (!inuse.ContainsKey(kvp.Key))
-                        res.Add(kvp.Key);
-                }
-                return res;
-            }
-            else
-                return null;
+            file = null;
+            lineno = 0;
+            return originalfile != null ? originalfile.TryGetValue(id, out file) && originalline.TryGetValue(id, out lineno) : false;
         }
+        public string[] SourceFileList()
+        {
+            return originalfile?.Values.Distinct().ToArray() ?? null;
+        }
+
+        public void UnDefine(string id) { translations.Remove(id); originalenglish?.Remove(id); originalfile?.Remove(id); originalline?.Remove(id); }
+        public void ReDefine(string id, string newdefine) { translations[id] = newdefine; }        // for edtools
 
         public TranslatorMkII() // only use via debugging
         {
@@ -143,7 +114,7 @@ namespace BaseUtils
                                     string logdir = null,       // if non null, logger is active
                                     string logfile = null,      // optionally set logfile
                                     bool storeenglish = false,
-                                    bool storesourceinfo = false,      // if true, accumulate info on where IDs come from
+                                    bool storesourceinfo = false,
                                     string includefolderreject = "\\bin"       // use to reject include files in specific locations - for debugging
                                     )
         {
@@ -160,7 +131,6 @@ namespace BaseUtils
             originalenglish = null;
             originalfile = null;
             originalline = null;
-            inuse = null;
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
@@ -203,45 +173,27 @@ namespace BaseUtils
 
                     if (storesourceinfo)           // source info needs all of it
                     {
-                        originalenglish = new Dictionary<string, string>();
                         originalfile = new Dictionary<string, string>();
                         originalline = new Dictionary<string, int>();
-                        inuse = new Dictionary<string, bool>();
                     }
-                    else if (storeenglish)
+
+                    if (storeenglish)
                     {
                         originalenglish = new Dictionary<string, string>();
                     }
 
-                    string prefix = "";
                     int commentblankcount = 1;
 
                     string line = null;
                     while ((line = lr.ReadLine()) != null)
                     {
                         line = line.Trim();
-                        if (line.Length == 0 || line.StartsWith("//"))
+                        if (line.Length == 0 || line.StartsWith("//") || line.StartsWith("SECTION ", StringComparison.InvariantCultureIgnoreCase))
                         {
                             if (storesourceinfo)
                             {
-                                string id = "COMMENTBLANK:" + commentblankcount++;      // record the information
-                                translations[id] = null;
-                                originalenglish[id] = line;
-                                originalfile[id] = lr.CurrentFile;
-                                originalline[id] = lr.CurrentLine;
-                            }
-                        }
-                        else if (line.StartsWith("SECTION ", StringComparison.InvariantCultureIgnoreCase))  // if a section..
-                        {
-                            StringParser s = new StringParser(line);
-                            s.NextWord();
-                            prefix = s.NextQuotedWord(" /");
-
-                            if (storesourceinfo)
-                            {
-                                string id = "COMMENTBLANK:" + commentblankcount++;      // record the information
-                                translations[id] = null;
-                                originalenglish[id] = line;
+                                string id = "SOURCE:" + commentblankcount++;      // record the information
+                                translations[id] = line;
                                 originalfile[id] = lr.CurrentFile;
                                 originalline[id] = lr.CurrentLine;
                             }
@@ -250,9 +202,8 @@ namespace BaseUtils
                         {
                             if (storesourceinfo)                            // we store these as comments so they can be spitted back out by translatenormalise
                             {
-                                string id = "COMMENTBLANK:" + commentblankcount++;
-                                translations[id] = null;
-                                originalenglish[id] = line;
+                                string id = "SOURCE:" + commentblankcount++;
+                                translations[id] = line;
                                 originalfile[id] = lr.CurrentFile;
                                 originalline[id] = lr.CurrentLine;
                             }
@@ -301,11 +252,6 @@ namespace BaseUtils
                             StringParser s = new StringParser(line);
                             string id = s.NextWord(" :");
 
-                            if (id.StartsWith(".") && prefix.HasChars())
-                                id = prefix + id;
-                            else
-                                prefix = id.Word(new char[] { '.' });
-
                             if (s.IsCharMoveOn(':'))
                             {
                                 string orgenglish = s.NextQuotedWord(replaceescape: true);  // first is the original english version
@@ -338,14 +284,14 @@ namespace BaseUtils
                                 {
                                     if (!translations.ContainsKey(id))
                                     {
-                                       // System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => `{orgenglish}` => {foreign} ");
+                                        // System.Diagnostics.Debug.WriteLine($"{lr.CurrentFile} {lr.CurrentLine} {id} => `{orgenglish}` => {foreign} ");
 
                                         if (logger != null)
                                             logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
                                         translations[id] = foreign;
 
-                                        if ( storeenglish)
+                                        if (storeenglish)
                                             originalenglish[id] = orgenglish;
 
                                         if (storesourceinfo)
@@ -491,9 +437,6 @@ namespace BaseUtils
 
                 if (translations.ContainsKey(key))
                 {
-                    if (inuse != null)
-                        inuse[key] = true;
-
                     if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
                     {
                         logger?.WriteLine($"Difference Key {key} code `{english}` translation file had `{originalenglish[key]}`");
@@ -526,11 +469,11 @@ namespace BaseUtils
         {
             bool translatable = ctrl is ITranslatableControl || ctrl is Label || ctrl is TabPage;
 
-            if (translatable )      // these are translatable
+            if (translatable)      // these are translatable
             {
                 // ignore if there is nothing to translate or starts with <code
 
-                if ( ctrl.Text?.Length >= minlen && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
+                if (ctrl.Text?.Length >= minlen && ctrl.Text.HasLetterChars() && !ctrl.Text.StartsWith("<code"))
                 {
                     string txtext = Translate(ctrl.Text);
                     if (traceit) System.Diagnostics.Debug.WriteLine($"TX `{ctrl.Text}` -> `{txtext}`");
@@ -565,7 +508,7 @@ namespace BaseUtils
                 // do sub controls
                 foreach (Control c in ctrl.Controls)
                 {
-                    TranslateControls(c,minlen,traceit);
+                    TranslateControls(c, minlen, traceit);
                 }
             }
         }
@@ -624,7 +567,6 @@ namespace BaseUtils
         private Dictionary<string, string> originalenglish = null;      // optional load - translation id -> english
         private Dictionary<string, string> originalfile = null;         // optional load - translation id -> file
         private Dictionary<string, int> originalline = null;            // optional load - translation id -> line
-        private Dictionary<string, bool> inuse = null;                  // optional load - translation id -> use flag
         private static TranslatorMkII instance;
     }
 }
