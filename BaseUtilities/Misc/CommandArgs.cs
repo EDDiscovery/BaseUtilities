@@ -14,6 +14,9 @@
  *
  */
 
+using System;
+using System.Collections.Generic;
+
 namespace BaseUtils
 {
     public class CommandArgs
@@ -26,6 +29,21 @@ namespace BaseUtils
             args = a;
             pos = index;
         }
+        public CommandArgs(string a)
+        {
+            StringParser sp = new StringParser(a);
+            List<string> argsl = new List<string>();
+            while (!sp.IsEOL)
+            {
+                string t = sp.NextQuotedWord(" \r\n\t");
+                if (t == null)
+                    break;
+                argsl.Add(t);
+            }
+
+             args = argsl.ToArray();
+            pos = 0;
+        }
 
         public CommandArgs(CommandArgs other)
         {
@@ -34,7 +52,18 @@ namespace BaseUtils
         }
 
         public string Peek { get { return (pos < args.Length) ? args[pos] : null; } }
-
+        public bool PeekAndRemoveIf(string s, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+        {
+            if (pos < args.Length)
+            {
+                if (args[pos].Equals(s, sc))
+                {
+                    pos++;
+                    return true;
+                }
+            }
+            return false;
+        } 
         public string Next() { return (pos < args.Length) ? args[pos++] : null; }
         public string NextLI() { return (pos < args.Length) ? args[pos++].ToLowerInvariant() : null; }
         public string NextEmpty() { return (pos < args.Length) ? args[pos++] : ""; }
