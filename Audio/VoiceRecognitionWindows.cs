@@ -50,6 +50,16 @@ namespace AudioExtensions
 
             try
             {
+                //foreach (RecognizerInfo ri in SpeechRecognitionEngine.InstalledRecognizers())
+                //{
+                //    System.Diagnostics.Debug.WriteLine($"{ri.Name} {ri.Culture} {ri.Description}");
+                //    foreach( var info in ri.AdditionalInfo)
+                //    {
+                //        System.Diagnostics.Debug.WriteLine($" .. {info.Key} = {info.Value}");
+
+                //    }
+                //}
+
                 recognizer = new SpeechRecognitionEngine(ct);       // may except if ct is not there on machine
                 recognizer.SpeechHypothesized += Engine_SpeechHypothesized;
                 recognizer.SpeechRecognized += Engine_SpeechRecognized;
@@ -73,8 +83,9 @@ namespace AudioExtensions
 
                 System.Diagnostics.Debug.WriteLine($"{AppTicks.MSd} VR Open");
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Cannot open speech {ex}");
                 recognizer = null;
                 return false;
             }
@@ -123,6 +134,8 @@ namespace AudioExtensions
         // begin update grammar
         public void BeginGrammarUpdate()
         {
+            System.Diagnostics.Trace.Assert(IsOpen, "Voice recognition Must be open to update grammar");
+
             while (updatinggrammar)       // recogniser update is async - so we may be stuck waiting for it. We can't double update, we need to pause
             {
                 if (winform)
@@ -137,7 +150,8 @@ namespace AudioExtensions
 
         public void AddGrammar(string s)
         {
-            System.Diagnostics.Debug.Assert(updatinggrammar == true);
+            System.Diagnostics.Trace.Assert(IsOpen, "Voice recognition Must be open to update grammar");
+            System.Diagnostics.Trace.Assert(updatinggrammar == true, "Must be in update grammar");
 
             if (!currentgrammar.ContainsKey(s))
             {
@@ -221,7 +235,8 @@ namespace AudioExtensions
 
         public void EndGrammarUpdate()
         {
-            System.Diagnostics.Debug.Assert(updatinggrammar == true);
+            System.Diagnostics.Trace.Assert(IsOpen, "Voice recognition Must be open to update grammar");
+            System.Diagnostics.Trace.Assert(updatinggrammar == true, "Must be in update grammar");
             System.Diagnostics.Debug.WriteLine($"{AppTicks.MSd} VR Request update with current {currentgrammar.Count} new {updategrammar.Count}");
             recognizer.RequestRecognizerUpdate();
         }

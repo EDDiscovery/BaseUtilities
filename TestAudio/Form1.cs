@@ -13,8 +13,11 @@ namespace AudioTest
 
         SpeechSynthesizer speechsynthesiser;
         WindowsSpeechEngine winspeech;
-        SpeechSynthesizerWindowsMedia windowsmediaspeechsynth;
 
+        WindowsMediaSpeechEngine windowsmediaspeechsynth;
+
+        VoiceRecognitionWindows vrw;
+        
         public Form1()
         {
             InitializeComponent();
@@ -22,17 +25,43 @@ namespace AudioTest
             audioqueue = new AudioQueue(audiodriver);
 
             winspeech = new WindowsSpeechEngine();
-            windowsmediaspeechsynth = new SpeechSynthesizerWindowsMedia();
+            windowsmediaspeechsynth = new WindowsMediaSpeechEngine();
 
             speechsynthesiser = new SpeechSynthesizer(new ISpeechEngine[] { winspeech, windowsmediaspeechsynth });
+
+            vrw = new VoiceRecognitionWindows();
+            vrw.Confidence = 0.7f;
+            vrw.SpeechRecognised += (text, conf) => { Log($"Speech Recognised {conf} {text}"); };
+            vrw.SpeechNotRecognised += (text, conf) => { Log($"Speech NOT Recognised {conf} {text}"); };
+
+        }
+
+        void Log(string s)
+        {
+            richTextBoxLog.AppendText(s);
+            richTextBoxLog.AppendText(Environment.NewLine);
+            richTextBoxLog.ScrollToCaret();
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             var voices = speechsynthesiser.GetVoiceNames();
-            richTextBoxLog.AppendText($"Voices: {voices.Count}:");
-            richTextBoxLog.AppendText(string.Join(",", voices) + Environment.NewLine);
+            Log($"Voices: {voices.Count}:");
+            Log(string.Join(",", voices));
+
+            if (vrw.Open(System.Globalization.CultureInfo.CurrentCulture, true))
+            {
+                vrw.BeginGrammarUpdate();
+                vrw.AddGrammar("Hello");
+                vrw.AddGrammar("Welcome");
+                vrw.AddGrammar("Goodbye");
+                vrw.AddGrammar("Shields up");
+                vrw.EndGrammarUpdate();
+                Log("Open speech recognition successfully");
+            }
+            else
+                Log("Cannot open speech recognition");
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -44,6 +73,8 @@ namespace AudioTest
 
             winspeech.Dispose();
             windowsmediaspeechsynth.Dispose();
+
+            vrw.Close();
 
         }
         private void button1_Click(object sender, EventArgs e)
