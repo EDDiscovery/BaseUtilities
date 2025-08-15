@@ -1,6 +1,5 @@
-﻿
-/*
- * Copyright © 2016 - 2019 EDDiscovery development team
+﻿/*
+ * Copyright 2016 - 2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,17 +10,10 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
 
 
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Linq;
 using System.Windows.Forms;
 
 public static partial class ControlHelpersStaticFunc
@@ -77,22 +69,38 @@ public static partial class ControlHelpersStaticFunc
     }
 
     // Make a tree of splitters, controlled by the string in sp
+    // def = <splitterdef> | <usercontroldefinition>
+    // splitterdef = 'H'|'V' '(' <splitterdist%> , <def>, <def> )
+    // <splitterdist%> = floating point split size
+    // usercontroldefinition = 'U' ''' <configstring> '''  
+    // configstring = anything, passed to MakeNode
+    // H = horz splitter
+    // V = vert splitter
 
     static public SplitContainer SplitterTreeMakeFromCtrlString(BaseUtils.StringParser sp, 
                                                             Func<Orientation, int, SplitContainer> MakeSC, 
                                                             Func<string, Control> MakeNode , int lvl)
     {
         char tomake;
+        // go to HVU and get. If U, return null to indicate its a user control and no more splitters
+
         if (sp.SkipUntil(new char[] { 'H', 'V', 'U' }) && (tomake = sp.GetChar()) != 'U')
         {
-            sp.IsCharMoveOn('(');   // ignore (
+            // its a splitter, ignore (
 
+            sp.IsCharMoveOn('(');   
+
+            // Make the splitter
             SplitContainer sc = MakeSC(tomake == 'H' ? Orientation.Horizontal : Orientation.Vertical, lvl);
 
+            // next item is the splitter distance
             double percent = sp.NextDouble(",") ?? 0.5;
             sc.SplitterDistance(percent);
             
+            // make split side one
             SplitContainer one = SplitterTreeMakeFromCtrlString(sp, MakeSC, MakeNode, lvl+1);
+
+            // if its indicating its a U'<config>' then make a node, giving the node its parameters, else its made a split container, add
 
             if (one == null)
             {
@@ -102,8 +110,10 @@ public static partial class ControlHelpersStaticFunc
             else
                 sc.Panel1.Controls.Add(one);
 
+            // make split side two
             SplitContainer two = SplitterTreeMakeFromCtrlString(sp, MakeSC, MakeNode, lvl+1);
 
+            // if its indicating its a U'<config>' then make a node, giving the node its parameters, else its made a split container, add
             if (two == null)
             {
                 string para = sp.PeekChar() == '\'' ? sp.NextQuotedWord() : "";
@@ -118,7 +128,8 @@ public static partial class ControlHelpersStaticFunc
             return null;
     }
 
-    // Report control state of a tree of splitters
+    // Report control state of a tree of splitters, as above
+    // getpara is given the control and it returns its configuration string inside the U'<configstring>'
 
     static public string SplitterTreeState(this SplitContainer sc, string cur, Func<Control, string> getpara)
     {
@@ -169,7 +180,6 @@ public static partial class ControlHelpersStaticFunc
         else
             action(sc.Panel2, sc.Panel2.Controls[0]);
     }
-
 
     static public void Merge(this SplitContainer topsplitter , int panel )      // currentsplitter has a splitter underneath it in panel (0/1)
     {
