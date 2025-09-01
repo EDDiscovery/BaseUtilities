@@ -50,7 +50,8 @@ namespace DirectInputDevices
 
         public InputDeviceJoystickWindows(DirectInput di, DeviceInstance d , bool paxison)
         {
-            jsi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, Name = d.InstanceName.RemoveTrailingCZeros()};
+            jsi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, 
+                Name = d.InstanceName.RemoveTrailingCZeros().Trim()};
 
             axisevents = paxison;
 
