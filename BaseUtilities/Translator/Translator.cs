@@ -529,9 +529,9 @@ namespace BaseUtils
                 else
                 {
                     logger?.WriteLine($"{id}: {english.EscapeControlChars().AlwaysQuoteString()} @");
+                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID: {id}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     english = "! " + english + " !";          // no id at all, use ! to indicate
                     translations.Add(key, english);
-                    System.Diagnostics.Trace.WriteLine($"*** Missing Translate ID: {id}: {english.EscapeControlChars().AlwaysQuoteString()} @" );
                     return english;
                 }
             }
