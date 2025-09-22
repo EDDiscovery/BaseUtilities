@@ -12,7 +12,10 @@
  * governing permissions and limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.SqlClient;
 using System.Windows.Forms;
 
 public static partial class DataGridViewControlHelpersStaticFunc
@@ -181,4 +184,14 @@ public static partial class DataGridViewControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    static public Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> GetCurrentSort(this DataGridView dgv, int defcol = 0)
+    {
+        return new Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder>(dgv.SortedColumn != null ? dgv.SortedColumn : dgv.Columns[defcol], dgv.SortOrder);
+    }
+
+    static public void RestoreSort(this DataGridView dgv, Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> sort)
+    {
+        dgv.Sort(sort.Item1, (sort.Item2== System.Windows.Forms.SortOrder.Descending) ? ListSortDirection.Descending : ListSortDirection.Ascending);
+        dgv.Columns[sort.Item1.Index].HeaderCell.SortGlyphDirection = sort.Item2;
+    }
 }

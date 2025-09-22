@@ -64,23 +64,4 @@ public static partial class DataGridViewControlHelpersStaticFunc
 
         return bestrow;
     }
-
-    static public int GetLastRowWithValue(this DataGridView grid)
-    {
-        for (int i = grid.RowCount - 1; i >= 0; i--)
-        {
-            var row = grid.Rows[i];
-            if (row.Cells.Count > 0)
-            {
-                foreach (DataGridViewCell c in row.Cells)
-                {
-                    if (c.Value != null && (!(c.Value is string) || ((string)c.Value).HasChars()))
-                        return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-
 }
