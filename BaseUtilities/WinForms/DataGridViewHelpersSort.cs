@@ -12,7 +12,9 @@
  * governing permissions and limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 public static partial class DataGridViewControlHelpersStaticFunc
@@ -181,4 +183,26 @@ public static partial class DataGridViewControlHelpersStaticFunc
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Get current DGV sort
+    /// </summary>
+    /// <param name="dgv">DGV</param>
+    /// <param name="defcol">default column to sort if no sort is set</param>
+    /// <returns>Tuple containing info</returns>
+
+    static public Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> GetCurrentSort(this DataGridView dgv, int defcol = 0)
+    {
+        return new Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder>(dgv.SortedColumn != null ? dgv.SortedColumn : dgv.Columns[defcol], dgv.SortOrder);
+    }
+
+    /// <summary>
+    /// Restore sort given GetCurrentSortInfo
+    /// </summary>
+    /// <param name="dgv">DGV</param>
+    /// <param name="sort">Tuple from GetCurrentSort</param>
+    static public void RestoreSort(this DataGridView dgv, Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> sort)
+    {
+        dgv.Sort(sort.Item1, (sort.Item2 == System.Windows.Forms.SortOrder.Descending) ? ListSortDirection.Descending : ListSortDirection.Ascending);
+        dgv.Columns[sort.Item1.Index].HeaderCell.SortGlyphDirection = sort.Item2;
+    }
 }

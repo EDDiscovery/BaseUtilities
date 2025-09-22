@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2022 EDDiscovery development team
+ * Copyright 2016 - 2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -17,8 +17,9 @@ using System.Windows.Forms;
 
 public static partial class DataGridViewControlHelpersStaticFunc
 {
-    // Find text in coloun
-
+    /// <summary>
+    /// Find Row With the value in the column requested, given text. Does not obey hidden
+    /// <returns>-1 not found, row otherwise</returns>
     static public int FindRowWithValue(this DataGridView grid, int coln, string text, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
     {
         foreach (DataGridViewRow row in grid.Rows)
@@ -31,6 +32,9 @@ public static partial class DataGridViewControlHelpersStaticFunc
 
         return -1;
     }
+    /// <summary>
+    /// Find Row With the value in the column requested, given Row.Tag. Does not obey hidden
+    /// <returns>-1 not found, row otherwise</returns>
     static public int FindRowWithTag(this DataGridView grid, object tag)
     {
         foreach (DataGridViewRow row in grid.Rows)
@@ -64,23 +68,4 @@ public static partial class DataGridViewControlHelpersStaticFunc
 
         return bestrow;
     }
-
-    static public int GetLastRowWithValue(this DataGridView grid)
-    {
-        for (int i = grid.RowCount - 1; i >= 0; i--)
-        {
-            var row = grid.Rows[i];
-            if (row.Cells.Count > 0)
-            {
-                foreach (DataGridViewCell c in row.Cells)
-                {
-                    if (c.Value != null && (!(c.Value is string) || ((string)c.Value).HasChars()))
-                        return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-
 }

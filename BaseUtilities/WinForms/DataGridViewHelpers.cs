@@ -146,12 +146,17 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return count;
     }
 
-    // tries to set row and preferredcolumn, else tries another one on same row
-    public static bool SetCurrentSelOnRow(this DataGridView dgv, int row, int preferredcolumn)
+    // tries to set row and preferredcolumn, else tries another one on same row. Obeys hidden/visible
+    // if preferredcolumn < 0 selects whole row
+    public static bool SetCurrentSelOnRow(this DataGridView dgv, int row, int preferredcolumn = -1)
     {
         if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
         {
-            if (preferredcolumn < dgv.Columns.Count && dgv.Columns[preferredcolumn].Visible)
+            if ( preferredcolumn < 0 )
+            {
+                dgv.Rows[row].Selected = true;  
+            }
+            else if (preferredcolumn < dgv.Columns.Count && dgv.Columns[preferredcolumn].Visible)
             {
                 dgv.CurrentCell = dgv.Rows[row].Cells[preferredcolumn];
                 return true;
@@ -180,7 +185,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
         return false;
     }
 
-    // Sets selected to all cells on row and sets Current to first visible
+    // Sets selected to all cells on row and sets Current to first visible.  Obeys hidden/visible
     public static bool SetCurrentAndSelectAllCellsOnRow(this DataGridView dgv, int row)
     {
         if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
