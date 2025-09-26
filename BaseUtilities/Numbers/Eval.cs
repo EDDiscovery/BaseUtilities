@@ -117,7 +117,7 @@ namespace BaseUtils
             }
         }
 
-        public int DefaultBase { get; set; } = 10;              // default base value
+        public uint DefaultBase { get; set; } = 10;              // default base value
         public bool CheckEnd { get; set; } = false;             // after expression, check string is at end
         public bool ReplaceEscape { get; set; } = false;        // in strings, expand escape
         public bool AllowFP { get; set; } = false;              // Allow floating point values
@@ -436,9 +436,13 @@ namespace BaseUtils
             }
             else
             {
-                value = sp.ConvertNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape, AllowMemberSymbol);
+                value = sp.ConvertPositiveNumberStringSymbolChar(DefaultBase, AllowFP, AllowStrings, ReplaceEscape, AllowMemberSymbol);
 
-                if (value is StringParser.ConvertSymbol)    // symbol must resolve to a value or Error
+                if (value is ulong ul)
+                {
+                    value = (long)ul;                 // convert to long, we process longs
+                }
+                else if (value is StringParser.ConvertSymbol)    // symbol must resolve to a value or Error
                 {
                     string symname = (value as StringParser.ConvertSymbol).SymbolValue;
 

@@ -53,9 +53,9 @@ namespace BaseUtils
             return pos == line.Length;
         }
 
-        public void MoveOn(int n)       // with skip space
+        public void MoveOn(int n)       // move pointer, backwards or forwards, allowing to end pos (line.Length) and limiting to >=0
         {
-            pos = Math.Min(pos + n, line.Length);
+            pos = Math.Max(Math.Min(pos + n, line.Length),0);
             SkipSpace();
         }
 
@@ -648,11 +648,13 @@ namespace BaseUtils
 
         // 
         // Summary:
-        //      Reads a int or fp.  Null if error. Skipped space at end to next if valid return
+        //      Reads a ulong or fp.  Null if error. Skipped space at end to next if valid return
         //
 
-        public Object ConvertNumber(int baseof = 10, bool allowfp = false)     
+        public Object ConvertPositiveNumber(uint baseof = 10, bool allowfp = false)     
         {
+            int startpos = pos;
+
             bool prefix = false;
             if (IsStringMoveOn("0x", skipspace: false))
             {
@@ -669,15 +671,16 @@ namespace BaseUtils
                 baseof = 10;
                 prefix = true;
             }
-            else if (IsChar('0') && IsNextCharOneOf("01234567"))
+            else if (baseof == 10 && IsChar('0') && IsNextCharOneOf("01234567"))
             {
                 baseof = 8;
-                pos++;      // waste first 0
+                prefix = true;
+                pos++;                      // waste first 0
             }
 
-            long v = 0;
+            ulong v = 0;
 
-            int initpos = pos;
+            int numberstartpos = pos;
 
             if (baseof == 16)
             {
@@ -685,7 +688,7 @@ namespace BaseUtils
 
                 while (pos < line.Length && (n = line[pos].ToHex()) != null)
                 {
-                    v = (v * 16) + n.Value;
+                    v = (v * 16) + (uint)n.Value;
                     pos++;
                 }
             }
@@ -693,14 +696,14 @@ namespace BaseUtils
             {
                 while (pos < line.Length && line[pos] >= '0' && line[pos] < '0' + baseof)
                 {
-                    v = (v * baseof) + (line[pos] - '0');
+                    v = (v * baseof) + (uint)(line[pos] - '0');
                     pos++;
                 }
             }
                 
-            bool intdigits = initpos != pos;
+            bool havedigits = numberstartpos != pos;
 
-            if (allowfp && !prefix && ( (IsChar('.') && !IsNextChar('.')) || IsCharOneOf("eE") ))
+            if (allowfp && !prefix && ( (IsChar('.') && !IsNextChar('.')) || (havedigits && IsCharOneOf("eE")) ))
             {
                 bool decimaldigits = false;
                 if (IsCharMoveOn('.'))      //X.X, move on and collect
@@ -712,8 +715,11 @@ namespace BaseUtils
                     }
                 }
 
-                if (intdigits == false && decimaldigits == false)       // must have some sort of digits!
+                if (havedigits == false && decimaldigits == false)       // must have some sort of digits!
+                {
+                    pos = startpos;
                     return null;
+                }
 
                 if (IsCharOneOfMoveOn("eE"))                        // if E..
                 {
@@ -724,10 +730,13 @@ namespace BaseUtils
                         pos++;
 
                     if (epos == pos)                                // no E digits
+                    {
+                        pos = startpos;
                         return null;
+                    }
                 }
 
-                string s = line.Substring(initpos, pos - initpos);
+                string s = line.Substring(numberstartpos, pos - numberstartpos);
                 //System.Diagnostics.Debug.WriteLine("Floating Point str " + s);
 
                 double? dres = s.InvariantParseDoubleNull();
@@ -738,9 +747,12 @@ namespace BaseUtils
                     return dres.Value;
                 }
                 else
+                {
+                    pos = startpos;
                     return null;
+                }
             }
-            else if (initpos != pos)            // long value
+            else if (numberstartpos != pos)            // long value
             {
                 //System.Diagnostics.Debug.WriteLine("Value is " + v + " of " + v.GetType().Name);
 
@@ -760,12 +772,6 @@ namespace BaseUtils
             return null;
         }
 
-        static public Object ConvertNumber(string s, int baseof = 10, bool allowfp = false) // static version
-        {
-            StringParser sp = new StringParser(s);
-            return sp.ConvertNumber(baseof, allowfp);
-        }
-
         public class ConvertError
         {
             public string ErrorValue { get; private set; }
@@ -780,15 +786,15 @@ namespace BaseUtils
         }
 
         // Reads number, "string", symbol, char 'c' or fp. 
-        // returns long, string, double, Error or Symbol.  never null
+        // returns ulong, string, double, Error or Symbol.  never null
 
-        public Object ConvertNumberStringSymbolChar(int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowmembersymbol = false)
+        public Object ConvertPositiveNumberStringSymbolChar(uint baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowmembersymbol = false)
         {
             if (IsCharMoveOn('\'', skipspace: false))    // cannot be spaced..
             {
                 if (Left >= 2)
                 {
-                    long v = line[pos++];
+                    ulong v = line[pos++];
                     if (IsCharMoveOn('\''))         // space skip at end
                         return v;
                 }
@@ -832,19 +838,13 @@ namespace BaseUtils
             }
             else
             {
-                Object value = ConvertNumber(baseof, allowfp);
+                Object value = ConvertPositiveNumber(baseof, allowfp);
 
                 if (value != null)
                     return value;
                 else
                     return new ConvertError("Badly formed or missing number");
             }
-        }
-
-        static public Object ConvertNumberStringSymbolChar(string s, int baseof = 10, bool allowfp = false, bool allowstrings = false, bool replaceescape = false, bool allowarraymembersymbols = false)
-        {
-            StringParser sp = new StringParser(s);
-            return sp.ConvertNumberStringSymbolChar(baseof, allowfp, allowstrings, replaceescape,allowarraymembersymbols);
         }
 
 #endregion
