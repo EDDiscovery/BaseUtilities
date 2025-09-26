@@ -24,7 +24,8 @@ namespace BaseUtils
 {
     public static partial class TypeHelpers
     {
-        static public MethodInfo FindMember(this MemberInfo[] methods, Type[] paras)    // Must be MethodInfo's, find matching these paras..
+        // find matching functions across all members of a class having this set of parameters
+        static public MethodInfo FindMember(this MemberInfo[] methods, Type[] paras)    
         {
             foreach (var memberinfo in methods)
             {
@@ -45,6 +46,13 @@ namespace BaseUtils
             }
 
             return null;
+        }
+
+        // does this member declare this member
+        static public bool IsDeclared(this Type t, string membername)
+        {
+            MemberInfo[] mi = t.GetMember(membername, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            return mi.Length > 0;
         }
 
         static public T ParseEnum<T>(this string value)
