@@ -33,6 +33,10 @@ public static class ObjectExtensionsStringsNumbers
     {
         return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
+    public static string ToStringInvariant(this byte v)
+    {
+        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
     public static string ToStringInvariant(this uint v, string format)
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
