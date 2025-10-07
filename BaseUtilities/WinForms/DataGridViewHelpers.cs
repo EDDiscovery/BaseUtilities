@@ -240,7 +240,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
             {
                 int rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
 
-                dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
+                dgv.SetCurrentSelOnRow(rowno, 0);
                 dgv.DisplayRow(rowno, true);
                 pos = new Tuple<long, int>(-2, 0);      // done
                 return true;        // moved
@@ -279,7 +279,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
                 {
                     rowno = dgv.Rows.GetFirstRow(DataGridViewElementStates.Visible);
 
-                    dgv.SetCurrentAndSelectAllCellsOnRow(rowno);
+                    dgv.SetCurrentSelOnRow(rowno, 0);
                     dgv.DisplayRow(rowno, true);
                 }
 
