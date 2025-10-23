@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Web.UI.WebControls;
 
 namespace BaseUtils
 {
@@ -134,13 +135,16 @@ namespace BaseUtils
                 return null;
         }
 
-        public static bool TryAppendToFile(string filename, string content, bool makefile = false)
+        public static bool TryAppendToFile(string filename, string content, Encoding encoding = null, bool makefile = false)
         {
             if (makefile == true || File.Exists(filename))
             {
                 try
                 {
-                    File.AppendAllText(filename, content);
+                    if (encoding == null)
+                        encoding = new UTF8Encoding(false);     // UTF8 NO BOM as per specification
+
+                    File.AppendAllText(filename, content, encoding);
                     return true;
                 }
                 catch
@@ -152,11 +156,14 @@ namespace BaseUtils
                 return false;
         }
 
-        public static bool TryWriteToFile(string filename, string content)
+        public static bool TryWriteToFile(string filename, string content, Encoding encoding = null)
         {
             try
             {
-                File.WriteAllText(filename, content);
+                if (encoding == null)
+                    encoding = new UTF8Encoding(false);     // UTF8 NO BOM as per specification https://learn.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=netframework-4.8&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(System.IO.File.WriteAllText)%3Bk(TargetFrameworkMoniker-.NETFramework%2CVersion%3Dv4.8)%3Bk(DevLang-csharp)%26rd%3Dtrue
+
+                File.WriteAllText(filename, content, encoding);
                 return true;
             }
             catch
@@ -164,6 +171,23 @@ namespace BaseUtils
                 return false;
             }
         }
+
+        public static bool TryWriteAllLinesToFile(string filename, string[] contents, Encoding encoding = null)
+        {
+            try
+            {
+                if (encoding == null)
+                    encoding = new UTF8Encoding(false);     // UTF8 NO BOM as per specification https://learn.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=netframework-4.8&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(System.IO.File.WriteAllText)%3Bk(TargetFrameworkMoniker-.NETFramework%2CVersion%3Dv4.8)%3Bk(DevLang-csharp)%26rd%3Dtrue
+
+                File.WriteAllLines(filename, contents, encoding);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
         // if erroriftoobig = false, returns top folder if above is too big for directory depth
         public static DirectoryInfo GetDirectoryAbove( this DirectoryInfo di, int above, bool errorifpastroot = false )        
