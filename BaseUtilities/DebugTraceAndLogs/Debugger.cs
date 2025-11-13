@@ -20,6 +20,10 @@ namespace BaseUtils
 
     public static class DebuggerHelpers
     {
+        public static int OutputLevel { get; set; } = 0;
+        public static string OutputControl { get; set; } = "";
+
+
         [System.Diagnostics.Conditional("DEBUG")]
         [System.Diagnostics.DebuggerHidden]
         public static void BreakAssert(bool value, string report)
@@ -42,6 +46,40 @@ namespace BaseUtils
                 System.Diagnostics.Debugger.Break();
             }
         }
+
+        [System.Diagnostics.Conditional("DEBUG")]
+        [System.Diagnostics.DebuggerHidden]
+        public static void Assert(this bool v, string msg = "")
+        {
+            System.Diagnostics.Debug.Assert(v, msg);
+        }
+
+
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void DO(this string s, string part)
+        {
+            if (OutputControl.Contains(part))
+                System.Diagnostics.Debug.WriteLine(s);
+        }
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void DW(this string s, string part)
+        {
+            if (OutputControl.Contains(part))
+                System.Diagnostics.Debug.Write(s);
+        }
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void DO(this string s, int level = 0)
+        {
+            if (level >= OutputLevel)
+                System.Diagnostics.Debug.WriteLine(s);
+        }
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void DW(this string s, int level = 0)
+        {
+            if (level >= OutputLevel)
+                System.Diagnostics.Debug.Write(s);
+        }
+
     }
 
 }

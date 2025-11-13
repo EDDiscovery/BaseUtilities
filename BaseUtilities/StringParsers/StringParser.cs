@@ -148,6 +148,40 @@ namespace BaseUtils
                 return false;
         }
 
+        public bool IsStringMoveOn(out string res, StringComparison sc, bool skipspace, params string[] search)
+        {
+            foreach (var x in search)
+            {
+                if (line.Substring(pos).StartsWith(x, sc))
+                {
+                    res = x;
+                    pos += x.Length;
+                    if (skipspace)
+                        SkipSpace();
+                    return true;
+                }
+            }
+
+            res = null;
+            return false;
+        }
+
+        public int IsStringMoveOn(StringComparison sc, bool skipspace, params string[] search)
+        {
+            for( int i = 0; i < search.Length; i++)
+            {
+                if (line.Substring(pos).StartsWith(search[i], sc))
+                {
+                    pos += search[i].Length;
+                    if (skipspace)
+                        SkipSpace();
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
         public bool IsCharMoveOn(char t, bool skipspace = true)
         {
             if (pos < line.Length && line[pos] == t)
