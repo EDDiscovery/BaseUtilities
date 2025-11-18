@@ -28,7 +28,8 @@ namespace BaseUtils
             }
         }
 
-        public static Bitmap ReplaceColourInBitmap(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
+        // Clone bitmap
+        public static Bitmap CloneBitmapReplaceColour(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
         {
             Bitmap newmap = new Bitmap(source.Width, source.Height);
 
