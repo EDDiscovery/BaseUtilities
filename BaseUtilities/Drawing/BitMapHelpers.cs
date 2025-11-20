@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright 2016-2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,36 +11,97 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace BaseUtils
 {
     public static class BitMapHelpers
     {
-        // using FromFile or new Bitmap locks the file, this loads, copies it so its unattached
-        // may except, protect yourself
-        public static Bitmap LoadBitmapNoLock(this string source)
+        #region Multithread support
+        // Helpers to use Images/Bitmaps in a multithread environment - can't multithread GDI objects so can't access a stored bitmaps in multi thread
+
+        static object bitmapgdilock = new object();
+
+        static public void DrawImageLocked(this Graphics gr, Image image, int x, int y, int width, int height)
         {
-            using (var tmp = new Bitmap(source))
+            lock (bitmapgdilock)
             {
-                return new Bitmap(tmp);
+                gr.DrawImage(image, x, y, width, height);
+            }
+        }
+
+        static public void DrawImageLocked(this Graphics gr, Image image, Rectangle rect)
+        {
+            lock (bitmapgdilock)
+            {
+                gr.DrawImage(image, rect);
             }
         }
 
         // Clone bitmap
-        public static Bitmap CloneBitmapReplaceColour(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
+        public static Image CloneLocked(this Image source)
         {
-            Bitmap newmap = new Bitmap(source.Width, source.Height);
-
-            System.Drawing.Imaging.ImageAttributes ia = new System.Drawing.Imaging.ImageAttributes();
-            ia.SetRemapTable(remap, System.Drawing.Imaging.ColorAdjustType.Bitmap);
-
-            using (Graphics gr = Graphics.FromImage(newmap))
-                gr.DrawImage(source, new Rectangle(0, 0, source.Width, source.Height), 0, 0, source.Width, source.Height, GraphicsUnit.Pixel, ia);
-
-            return newmap;
+            lock (bitmapgdilock)
+            {
+                Bitmap newmap = new Bitmap(source);
+                return newmap;
+            }
         }
+
+        static Dictionary<Image, float> imageintensities = new Dictionary<Image, float>();       // cached locked image intensity database
+
+        // return the image intensity of the central region of an image, protected
+        public static float CentralImageIntensity(this Image source)
+        {
+            lock (bitmapgdilock)
+            {
+                if (imageintensities.TryGetValue(source, out float value))
+                    return value;
+                else
+                {
+                    float ii = ((Bitmap)source).Function(BitMapHelpers.BitmapFunction.Brightness, source.Width * 3 / 8, source.Height * 3 / 8, source.Width * 2 / 8, source.Height * 2 / 8).Item2;
+                    imageintensities[source] = ii;
+                    return ii;
+                }
+            }
+        }
+
+        // Clone bitmap and recolour
+        public static Bitmap CloneReplaceColourLocked(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
+        {
+            lock (bitmapgdilock)
+            {
+                Bitmap newmap = new Bitmap(source.Width, source.Height);
+
+                System.Drawing.Imaging.ImageAttributes ia = new System.Drawing.Imaging.ImageAttributes();
+                ia.SetRemapTable(remap, System.Drawing.Imaging.ColorAdjustType.Bitmap);
+
+                using (Graphics gr = Graphics.FromImage(newmap))
+                    gr.DrawImage(source, new Rectangle(0, 0, source.Width, source.Height), 0, 0, source.Width, source.Height, GraphicsUnit.Pixel, ia);
+
+                return newmap;
+            }
+        }
+
+        // using FromFile or new Bitmap locks the file, this loads, copies it so its unattached
+        // may except, protect yourself
+        public static Bitmap CloneBitmapFromFileLocked(this string source)
+        {
+            lock (bitmapgdilock)
+            {
+                using (var tmp = new Bitmap(source))
+                {
+                    return new Bitmap(tmp);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Helpers
 
         public static Bitmap ScaleColourInBitmap(Bitmap source, System.Drawing.Imaging.ColorMatrix cm)
         {
@@ -561,10 +622,7 @@ namespace BaseUtils
             else
                 return new Tuple<float, float, float, float>(alpha, red, green, blue);
         }
-
-
-
-
-
     }
+
+    #endregion
 }
