@@ -25,6 +25,7 @@ namespace BaseUtils
 
         static object bitmapgdilock = new object();
 
+        // draw from an image, under GDI lock.  Image may be direct and not owned by thread
         static public void DrawImageLocked(this Graphics gr, Image image, int x, int y, int width, int height)
         {
             lock (bitmapgdilock)
@@ -33,6 +34,7 @@ namespace BaseUtils
             }
         }
 
+        // draw from an image, under GDI lock.  Image may be direct and not owned by thread
         static public void DrawImageLocked(this Graphics gr, Image image, Rectangle rect)
         {
             lock (bitmapgdilock)
@@ -41,7 +43,7 @@ namespace BaseUtils
             }
         }
 
-        // Clone bitmap
+        // Clone bitmap under GDI lock
         public static Image CloneLocked(this Image source)
         {
             lock (bitmapgdilock)
@@ -51,25 +53,7 @@ namespace BaseUtils
             }
         }
 
-        static Dictionary<Image, float> imageintensities = new Dictionary<Image, float>();       // cached locked image intensity database
-
-        // return the image intensity of the central region of an image, protected
-        public static float CentralImageIntensity(this Image source)
-        {
-            lock (bitmapgdilock)
-            {
-                if (imageintensities.TryGetValue(source, out float value))
-                    return value;
-                else
-                {
-                    float ii = ((Bitmap)source).Function(BitMapHelpers.BitmapFunction.Brightness, source.Width * 3 / 8, source.Height * 3 / 8, source.Width * 2 / 8, source.Height * 2 / 8).Item2;
-                    imageintensities[source] = ii;
-                    return ii;
-                }
-            }
-        }
-
-        // Clone bitmap and recolour
+        // Clone bitmap and recolour under GDI lock
         public static Bitmap CloneReplaceColourLocked(Bitmap source, System.Drawing.Imaging.ColorMap[] remap)
         {
             lock (bitmapgdilock)
@@ -86,8 +70,26 @@ namespace BaseUtils
             }
         }
 
+                static Dictionary<Image, float> imageintensities = new Dictionary<Image, float>();       // cached locked image intensity database
+
+        // return the image intensity of the central region of an image under GDI lock
+        public static float CentralImageIntensity(this Image source)
+        {
+            lock (bitmapgdilock)
+            {
+                if (imageintensities.TryGetValue(source, out float value))
+                    return value;
+                else
+                {
+                    float ii = ((Bitmap)source).Function(BitMapHelpers.BitmapFunction.Brightness, source.Width * 3 / 8, source.Height * 3 / 8, source.Width * 2 / 8, source.Height * 2 / 8).Item2;
+                    imageintensities[source] = ii;
+                    return ii;
+                }
+            }
+        }
+
         // using FromFile or new Bitmap locks the file, this loads, copies it so its unattached
-        // may except, protect yourself
+        // may except, protect yourself.  under GDI lock
         public static Bitmap CloneBitmapFromFileLocked(this string source)
         {
             lock (bitmapgdilock)
