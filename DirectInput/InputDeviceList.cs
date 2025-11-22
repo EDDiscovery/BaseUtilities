@@ -72,6 +72,7 @@ namespace DirectInputDevices
             if (waitfordatathread == null)
             {
                 waitfordatathread = new System.Threading.Thread(waitthread);
+                waitfordatathread.Name = "InputDeviceListThread";
                 waitfordatathread.Start();
             }
         }
