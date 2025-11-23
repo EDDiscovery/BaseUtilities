@@ -147,9 +147,12 @@ namespace BaseUtils
                         }
                         else
                         {
-                            Object leftside;
+                            var clf = ConditionEntry.Classify(ce.MatchCondition);
+                            bool comparisionisstringordate = clf == ConditionEntry.Classification.String || clf == ConditionEntry.Classification.Date;
 
-                            if (vars.Contains(ce.ItemName))
+                            Object leftside;        // double, long, string
+
+                            if (vars.Contains(ce.ItemName))     // if a direct variable name
                             {
                                 string text = vars[ce.ItemName];
                                 if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))    // if a double..
@@ -167,24 +170,28 @@ namespace BaseUtils
                             else
                             {
                                 leftside = evl.EvaluateQuickCheck(ce.ItemName);            // evaluate left side
+                                bool leftsideisnumber = leftside is long || leftside is double;
 
-                                if (evl.InError)
+                                if (evl.InError)        // in error, must not be here
                                 {
                                     if (debugit)
                                         System.Diagnostics.Debug.WriteLine($" .. Left side in error ${((StringParser.ConvertError)leftside).ErrorValue}");
 
-                                    if (testerrors != null) testerrors[testerrors.Count - 1] = "Left side did not evaluate: " + ce.ItemName ;
+                                    if (testerrors != null) testerrors[testerrors.Count - 1] = "Left side did not evaluate: " + ce.ItemName;
+
                                     leftside = null;        // indicate condition has failed
+                                }
+                                else if ( comparisionisstringordate && leftsideisnumber)    // if we ended up with a number, but we are doing a string comparision, its probably just a 3 so treat as string
+                                {
+                                    leftside = ce.ItemName;
                                 }
                             }
 
                             string lstring = leftside as string;        // used below
-                            var clf = ConditionEntry.Classify(ce.MatchCondition);
-                            bool stringordate = clf == ConditionEntry.Classification.String || clf == ConditionEntry.Classification.Date;
 
                             if (leftside != null)   // if we have a leftside, check it for stringness 
                             {
-                                if (stringordate)
+                                if (comparisionisstringordate)
                                 {
                                     if (lstring == null)
                                     {
@@ -231,26 +238,31 @@ namespace BaseUtils
                                     // require a right side
 
                                     Object rightside = evl.EvaluateQuickCheck(ce.MatchString);
+                                    bool rightsideisnumber = rightside is long || rightside is double;
 
-                                    if (evl.InError)
+                                    if (evl.InError)        // could be due to just a bit of text
                                     {
-                                        if (stringordate)            // if in error, and we are doing string date comparisions, allow bare on right
+                                        if (comparisionisstringordate)           // if in error, and we are doing string date comparisions, allow bare on right
                                         {
                                             rightside = ce.MatchString;
                                         }
                                         else
                                         {
-                                            if (testerrors != null) testerrors[testerrors.Count - 1] = "Right side did not evaluate: " + ce.MatchString ;
+                                            if (testerrors != null) testerrors[testerrors.Count - 1] = "Right side did not evaluate: " + ce.MatchString;
 
                                             rightside = null;   // indicate bad right side
                                         }
+                                    }
+                                    else if (comparisionisstringordate && right)
+                                    {
+                                        rightside = ce.MatchString;
                                     }
 
                                     string rstring = rightside as string;
 
                                     if (rightside != null)      // if good right side
                                     {
-                                        if (stringordate)
+                                        if (comparisionisstringordate)
                                         {
                                             if (rstring == null)      // must have a string
                                             {
