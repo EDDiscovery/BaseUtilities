@@ -253,7 +253,7 @@ namespace BaseUtils
                                             rightside = null;   // indicate bad right side
                                         }
                                     }
-                                    else if (comparisionisstringordate && right)
+                                    else if (comparisionisstringordate && rightsideisnumber)
                                     {
                                         rightside = ce.MatchString;
                                     }
