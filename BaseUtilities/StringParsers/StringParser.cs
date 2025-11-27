@@ -618,7 +618,6 @@ namespace BaseUtils
             string s = NextWord(terminators);
             return s?.InvariantParseLongNull();
         }
-
         public long NextLong(long def, string terminators = " ")
         {
             string s = NextWord(terminators);
@@ -664,7 +663,6 @@ namespace BaseUtils
             return null;
         }
 
-
         public DateTime? NextDateTime(CultureInfo ci , DateTimeStyles ds = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, string terminators = " ")
         {
             string s = NextQuotedWord(terminators);
@@ -676,16 +674,110 @@ namespace BaseUtils
                 return null;
         }
 
-#endregion
+        // Better number extraction with no terminators, leaves string alone if failed
 
-#region Converters for evaluations
+        public bool TryGetNext(out int res, uint baseof = 10)
+        {
+            res = 0;
+            object value = ConvertNumber(baseof);
+            if (value is long ll)
+            {
+                res = (int)ll;
+                return true;
+            }
+            else
+                return false;
+        }
+        public bool TryGetNext(out long res, uint baseof = 10)
+        {
+            res = 0;
+            object value = ConvertNumber(baseof);
+            if (value is long ll)
+            {
+                res = ll;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public bool TryGetNext(out uint res, uint baseof = 10)
+        {
+            res = 0;
+            object value = ConvertPositiveNumber(baseof);
+            if (value is ulong ll)
+            {
+                res = (uint)ll;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public bool TryGetNext(out ulong res, uint baseof = 10)
+        {
+            res = 0;
+            object value = ConvertPositiveNumber(baseof);
+            if (value is ulong ll)
+            {
+                res = ll;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public bool TryGetDouble(out double res)
+        {
+            res = 0;
+            object value = ConvertNumber(10,true);
+            if (value is long ll)
+            {
+                res = ll;
+                return true;
+            }
+            if (value is double dp)
+            {
+                res = dp;
+                return true;
+            }
+            else
+                return false;
+        }
+
+
+        #endregion
+
+        #region Converters for evaluations
 
         // 
         // Summary:
-        //      Reads a ulong or fp.  Null if error. Skipped space at end to next if valid return
+        //      Reads a long or fp.  Null if error. Skipped space at end if valid return
         //
 
-        public Object ConvertPositiveNumber(uint baseof = 10, bool allowfp = false)     
+        public Object ConvertNumber(uint baseof = 10, bool allowfp = false)
+        {
+            bool negative = IsCharMoveOn('-');
+            Object value = ConvertPositiveNumber(baseof, allowfp);
+            if (value is ulong ul)
+            {
+                long ll = (long)ul;
+                return negative ? -ll : ll;
+            }
+            else if (value is double dp)
+            {
+                return negative ? -dp : dp;
+            }
+
+            return null;
+        }
+
+        // 
+        // Summary:
+        //      Reads a ulong or fp.  Null if error. Skipped space at end if valid return
+        //
+
+        public Object ConvertPositiveNumber(uint baseof = 10, bool allowfp = false)
         {
             int startpos = pos;
 
