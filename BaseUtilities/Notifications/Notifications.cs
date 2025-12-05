@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2022-2025 EDDiscovery development team
+ * Copyright 2022-2025 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License") {get;set;} you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -24,30 +24,34 @@ namespace BaseUtils
 {
     public static class Notifications
     {
-        public class NotificationParas
+        [System.Diagnostics.DebuggerDisplay("`{Caption}` `{Text}`")]
+        public class NotificationMessages
         {
             public string Text { get; set; }
             public string Caption { get; set; }
         }
 
-        [System.Diagnostics.DebuggerDisplay("{StartUTC} {EndUTC} {VersionMin} {VersionMax} Always={AlwaysShow} E={EntryType}")]
-
+        [System.Diagnostics.DebuggerDisplay("{StartUTC}..{EndUTC} {VersionMin}..{VersionMax} {AlwaysShow} {Type} c{Conditions.Count} n{NotificationsByLanguage.Count}")]
         public class Notification
         {
-            public DateTime StartUTC {get;set;}
-            public DateTime EndUTC {get;set;}
-            public string VersionMin {get;set;}
-            public string VersionMax {get;set;}
-            public bool AlwaysShow {get;set;}             // set to always show, else a condition must pass
-            public Dictionary<string, string[]> Conditions {get;set;}     // list of CONDITIONxxx = string,string
-            public string EntryType {get;set;}
-            public float PointSize {get;set;}
-            public bool HighLight {get;set;}
-            public Dictionary<string, NotificationParas> ParaStrings {get;set;}
+            public DateTime StartUTC { get; set; }         // StartUTC="2025-12-01T00:00:00Z"
+            public DateTime EndUTC { get; set; }            // EndUTC="2026-03-01T23:00:00Z"
+            public string VersionMin { get; set; }         // VersionMin="19.0.11.0"
+            public string VersionMax { get; set; }         // VersionMax="19.0.11.0"
+            public bool AlwaysShow { get; set; }            // AlwaysShow = 1/0 : set to always show, else a condition must pass
+            public Dictionary<string, string[]> Conditions { get; set; }     // list of CONDITIONxxx = "string,string"
+            public string Type { get; set; }               // Type="Popup" (pop out a window), "Log" (push it to log), "New" (put it on the New Feature Button)
+            public float PointSize { get; set; }           // PointSize="N"
+            public bool HighLight { get; set; }            // HighLight="Yes"  for "Log" do we show it in highlight colour
 
-            public NotificationParas Select(string lang)
+            public Dictionary<string, NotificationMessages> NotificationsByLanguage { get; set; }       // List of Notifications, contains Text and Caption. Keyed by "Lang"="en" in the Body Section
+            // <Body Caption="Odyssey Update" Lang="en">
+            //Test Notification Present Enabled JMKV2
+            //</Body>
+
+            public NotificationMessages Select(string lang)
             {
-                return ParaStrings.ContainsKey(lang) ? ParaStrings[lang] : (ParaStrings.ContainsKey("en") ? ParaStrings["en"] : null);
+                return NotificationsByLanguage.ContainsKey(lang) ? NotificationsByLanguage[lang] : (NotificationsByLanguage.ContainsKey("en") ? NotificationsByLanguage["en"] : null);
             }
 
             public string Key
@@ -90,7 +94,7 @@ namespace BaseUtils
                                 n.StartUTC = DateTime.Parse(entry.Attribute("StartUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal);
                                 n.EndUTC = entry.Attribute("EndUTC") != null ? DateTime.Parse(entry.Attribute("EndUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal) : DateTime.MaxValue;
 
-                                n.EntryType = entry.Attribute("Type").Value;
+                                n.Type = entry.Attribute("Type").Value;
 
                                 n.PointSize = entry.Attribute("PointSize") != null ? entry.Attribute("PointSize").Value.InvariantParseFloat(12) : -1;
                                 n.HighLight = entry.Attribute("Highlight") != null && entry.Attribute("Highlight").Value == "Yes";
@@ -115,12 +119,12 @@ namespace BaseUtils
                                     }
                                 }
 
-                                n.ParaStrings = new Dictionary<string, NotificationParas>();
+                                n.NotificationsByLanguage = new Dictionary<string, NotificationMessages>();
 
                                 foreach (XElement body in entry.Elements())
                                 {
                                     string lang = body.Attribute("Lang").Value;
-                                    n.ParaStrings[lang] = new NotificationParas() { Text = body.Value, Caption = body.Attribute("Caption").Value };
+                                    n.NotificationsByLanguage[lang] = new NotificationMessages() { Text = body.Value, Caption = body.Attribute("Caption").Value };
 
                                     // System.Diagnostics.Debug.WriteLine("    " + body.Attribute("Lang").Value + " Body " + body.Value);
                                 }

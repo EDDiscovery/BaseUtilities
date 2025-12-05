@@ -151,9 +151,9 @@ namespace AudioExtensions
 
         public void Dispose(AudioData o)
         {
-            IWaveSource iws = o.data as IWaveSource;
+            IWaveSource iws = o.Data as IWaveSource;
             iws.Dispose();
-            o.data = null;      // added to help catch any sequencing errors
+            o.Data = null;      // added to help catch any sequencing errors
             //System.Diagnostics.Debug.WriteLine("Audio disposed");
         }
 
@@ -161,7 +161,7 @@ namespace AudioExtensions
         {
             if (aout != null)
             {
-                IWaveSource current = o.data as IWaveSource;
+                IWaveSource current = o.Data as IWaveSource;
                 aout.Initialize(current);
                 aout.Volume = (float)(vol) / 100;
                 aout.Play();
@@ -242,8 +242,8 @@ namespace AudioExtensions
             if (front == null || end == null)
                 return null;
 
-            IWaveSource frontws = (IWaveSource)front.data;
-            IWaveSource mixws = (IWaveSource)end.data;
+            IWaveSource frontws = (IWaveSource)front.Data;
+            IWaveSource mixws = (IWaveSource)end.Data;
 
             if (frontws.WaveFormat.Channels < mixws.WaveFormat.Channels)      // need to adapt to previous format
                 frontws = frontws.ToStereo();
@@ -263,8 +263,8 @@ namespace AudioExtensions
             if (front == null || mix == null)
                 return null;
 
-            IWaveSource frontws = (IWaveSource)front.data;
-            IWaveSource mixws = (IWaveSource)mix.data;
+            IWaveSource frontws = (IWaveSource)front.Data;
+            IWaveSource mixws = (IWaveSource)mix.Data;
 
             if (frontws.WaveFormat.Channels < mixws.WaveFormat.Channels)      // need to adapt to previous format
                 frontws = frontws.ToStereo();
@@ -285,15 +285,16 @@ namespace AudioExtensions
             if ( audio == null)
                 return null;
 
-            IWaveSource aws = (IWaveSource)audio.data;
+            IWaveSource aws = (IWaveSource)audio.Data;
 
             return new AudioData(new EnvelopeWaveSource(aws, attackms,decayms,sustainms,releasems,maxamplitude,sustainamplitude));
         }
 
-        public AudioData Tone(double frequency, double amplitude, double lengthms)     // Single tone at frequency for x ms, amplitude = 0 to 100.
+        public AudioData Tone(double frequency, double amplitude, double lengthms, SoundEffectSettings ap = null)     // Single tone at frequency for x ms, amplitude = 0 to 100, with effects
         {
-            IWaveSource s = new ToneWaveSource(frequency,amplitude, lengthms);
+            IWaveSource s = new ToneWaveSource(frequency, amplitude, lengthms);
             System.Diagnostics.Debug.Assert(s != null);
+            ApplyEffects(ref s, ap);
             return new AudioData(s);
         }
 
@@ -351,7 +352,7 @@ namespace AudioExtensions
 
         public int Lengthms(AudioData audio)
         {
-            IWaveSource ws = audio.data as IWaveSource;
+            IWaveSource ws = audio.Data as IWaveSource;
             System.Diagnostics.Debug.Assert(ws != null);
             TimeSpan w = ws.GetLength();
             return (int)w.TotalMilliseconds;
@@ -359,7 +360,7 @@ namespace AudioExtensions
 
         public int TimeLeftms(AudioData audio)
         {
-            IWaveSource ws = audio.data as IWaveSource;
+            IWaveSource ws = audio.Data as IWaveSource;
             System.Diagnostics.Debug.Assert(ws != null);
             TimeSpan l = ws.GetLength();
             TimeSpan p = ws.GetPosition();

@@ -22,47 +22,44 @@ namespace AudioExtensions
         public delegate void SampleStart(AudioQueue sender, Object tag);
         public delegate void SampleOver(AudioQueue sender, Object tag);
 
-        public enum Priority { Low, Normal, High, HighClear };
+        public enum Priority { Low, Normal, High, HighClear , Immediate };
         static public Priority GetPriority(string s) { Priority p; if (Enum.TryParse<AudioQueue.Priority>(s, true, out p)) return p; else return Priority.Normal; }
 
-        public class AudioSample
+        public class AudioSample : IDisposable
         {
-            public List<System.IO.Stream> handlelist = new List<System.IO.Stream>();   // audio samples held in files to free
-            public AudioData audiodata;         // the audio data, in the driver format
-            public int volume;                  // 0-100
-            public Priority priority;           // set audio prority.
+            public List<System.IO.Stream> Streams { get; set; } = new List<System.IO.Stream>();   // audio samples held in files to free
+            public AudioData AudioData { get; set; }         // the audio data, in the driver format
+            public int Volume { get; set; }                  // 0-100
+            public Priority Priority { get; set; }           // set audio priority.
 
-            public event SampleStart sampleStartEvent;
-            public object sampleStartTag;
+            public event SampleStart StartEvent;
+            public object SampleStartTag { get; set; }
 
             public void SampleStart(AudioQueue q)
             {
-                if (sampleStartEvent != null)
-                    sampleStartEvent(q, sampleStartTag);
+                if (StartEvent != null)
+                    StartEvent(q, SampleStartTag);
             }
 
-            public event SampleOver sampleOverEvent;
-            public object sampleOverTag;
+            public event SampleOver EndEvent;
+            public object SampleEndTag { get; set; }
 
             public void SampleOver(AudioQueue q)
             {
-                if (sampleOverEvent != null)
-                    sampleOverEvent(q, sampleOverTag);
+                if (EndEvent != null)
+                    EndEvent(q, SampleEndTag);
             }
 
-            public void FreeHandles()
+            public void Dispose()
             {
-                foreach (System.IO.Stream i in handlelist)
+                foreach (System.IO.Stream i in Streams)
                     i.Dispose();
-                handlelist.Clear();
+                Streams.Clear();
             }
 
-            public AudioSample linkeds;             // link to another queue. if set, we halt the queue if thissample is not t at the top of the list
-            public AudioQueue linkedq;              // of the other queue, then release them to play together.
+            public AudioSample LinkedSample { get; set; }             // link to another sample. if set, we halt the queue if thissample is not t at the top of the list
+            public AudioQueue LinkedQueue { get; set; }               // of the other queue, then release them to play together.
         }
-
-        List<AudioSample> audioqueue;
-        IAudioDriver ad;
 
         public AudioQueue(IAudioDriver adp)
         {
@@ -96,8 +93,8 @@ namespace AudioExtensions
             if ( callback )
                 a.SampleOver(this);     // let callers know a sample is over
 
-            a.FreeHandles();
-            ad.Dispose(a.audiodata);        // tell the driver to clean up
+            a.Dispose();
+            ad.Dispose(a.AudioData);        // tell the driver to clean up
         }
 
         private void AudioStoppedEvent()            //CScore calls then when audio over.
@@ -129,22 +126,22 @@ namespace AudioExtensions
             {
                 //System.Diagnostics.Debug.WriteLine("Play " + ad.Lengthms(newdata.audiodata) + " in queue " + InQueuems() + " " + newdata.priority);
 
-                if ( audioqueue.Count > 0 && newdata.priority > audioqueue[0].priority )       // if something is playing, and we have priority..
+                if ( audioqueue.Count > 0 && newdata.Priority > audioqueue[0].Priority )       // if something is playing, and we have priority..
                 {
                     //System.Diagnostics.Debug.WriteLine((Environment.TickCount % 10000).ToString("00000") + " Priority insert " + newdata.priority + " front " + audioqueue[0].priority);
 
                     List<AudioSample> removelist = new List<AudioSample>();
 
-                    if (newdata.priority == Priority.HighClear)                     // if high clear
+                    if (newdata.Priority == Priority.HighClear || newdata.Priority == Priority.Immediate)   // if high clear or immediate
                     {
                         for (int i = 1; i < audioqueue.Count; i++)                  // remove all after current
                             removelist.Add(audioqueue[i]);
                     }
-                    else if (audioqueue[0].priority == Priority.Low)                 // if low at front, remove all other lows after it
+                    else if (audioqueue[0].Priority == Priority.Low)                 // if low at front, remove all other lows after it
                     {
                         for (int i = 1; i < audioqueue.Count; i++)
                         {
-                            if (audioqueue[i].priority == Priority.Low)
+                            if (audioqueue[i].Priority == Priority.Low)
                             {
                                 removelist.Add(audioqueue[i]);
                                 //System.Diagnostics.Debug.WriteLine("Queue to remove " + i);
@@ -158,10 +155,19 @@ namespace AudioExtensions
                         audioqueue.Remove(a);
                     }
 
-                    if (audioqueue[0].priority == Priority.High || audioqueue[0].priority == Priority.HighClear)  // High playing, don't interrupt, but this one next
+                    // immediate, stop this one, insert this as next
+                    if (newdata.Priority == Priority.Immediate)
+                    {
                         audioqueue.Insert(1, newdata);  // add one past front
+                        ad.Stop();                      // stopping makes it stop, does the callback, this gets called again, audio plays
+                    }
+                    // high priority is playing, play directly after
+                    else if (audioqueue[0].Priority == Priority.High || audioqueue[0].Priority == Priority.HighClear || audioqueue[0].Priority == Priority.Immediate)  
+                    {
+                        audioqueue.Insert(1, newdata);  // add one past front
+                    }
                     else
-                    {                                       
+                    {
                         audioqueue.Insert(1, newdata);  // add one past front
                         ad.Stop();                      // stopping makes it stop, does the callback, this gets called again, audio plays
                     }
@@ -179,15 +185,15 @@ namespace AudioExtensions
 
             if (audioqueue.Count > 0)
             {
-                if (audioqueue[0].linkedq != null && audioqueue[0].linkeds != null)       // linked to another audio q, both must be at front to proceed
+                if (audioqueue[0].LinkedQueue != null && audioqueue[0].LinkedSample != null)       // linked to another audio q, both must be at front to proceed
                 {
-                    if (!audioqueue[0].linkedq.IsWaiting(audioqueue[0].linkeds))        // if its not on top, don't play it yet
+                    if (!audioqueue[0].LinkedQueue.IsWaiting(audioqueue[0].LinkedSample))        // if its not on top, don't play it yet
                         return;
 
-                    audioqueue[0].linkedq.ReleaseHalt();        // it is waiting, so its stopped.. release halt on other one
+                    audioqueue[0].LinkedQueue.ReleaseHalt();        // it is waiting, so its stopped.. release halt on other one
                 }
 
-                ad.Start(audioqueue[0].audiodata, audioqueue[0].volume);    // driver, play this
+                ad.Start(audioqueue[0].AudioData, audioqueue[0].Volume);    // driver, play this
                 audioqueue[0].SampleStart(this);     // let callers know a sample started
             }
         }
@@ -198,10 +204,10 @@ namespace AudioExtensions
 
             int len = 0;
             if (audioqueue.Count > 0)
-                len = ad.TimeLeftms(audioqueue[0].audiodata);
+                len = ad.TimeLeftms(audioqueue[0].AudioData);
 
             for (int i = 1; i < audioqueue.Count; i++)
-                len += ad.Lengthms(audioqueue[i].audiodata);
+                len += ad.Lengthms(audioqueue[i].AudioData);
             return len;
         }
 
@@ -211,7 +217,7 @@ namespace AudioExtensions
 
             if (audio != null)
             {
-                AudioSample a = new AudioSample() { audiodata = audio };
+                AudioSample a = new AudioSample() { AudioData = audio };
                 return a;
             }
             else
@@ -225,8 +231,8 @@ namespace AudioExtensions
                 AudioData audio = ad.Generate(audioms, effects, ensuresomeaudio);
                 if (audio != null)
                 {
-                    AudioSample a = new AudioSample() { audiodata = audio };
-                    a.handlelist.Add(audioms);
+                    AudioSample a = new AudioSample() { AudioData = audio };
+                    a.Streams.Add(audioms);
                     return a;
                 }
             }
@@ -236,13 +242,13 @@ namespace AudioExtensions
 
         public AudioSample Append(AudioSample last, AudioSample next)
         {
-            AudioData audio = ad.Append(last.audiodata, next.audiodata);
+            AudioData audio = ad.Append(last.AudioData, next.AudioData);
 
             if (audio != null)
             {
-                last.audiodata = audio;
-                last.handlelist.AddRange(next.handlelist);
-                next.handlelist.Clear();
+                last.AudioData = audio;
+                last.Streams.AddRange(next.Streams);
+                next.Streams.Clear();
                 return last;
             }
             else
@@ -251,25 +257,25 @@ namespace AudioExtensions
 
         public AudioSample Mix(AudioSample last, AudioSample mix)
         {
-            AudioData audio = ad.Mix(last.audiodata, mix.audiodata);
+            AudioData audio = ad.Mix(last.AudioData, mix.AudioData);
 
             if (audio != null)
             {
-                last.audiodata = audio;
-                last.handlelist.AddRange(mix.handlelist);
-                mix.handlelist.Clear();
+                last.AudioData = audio;
+                last.Streams.AddRange(mix.Streams);
+                mix.Streams.Clear();
                 return last;
             }
             else
                 return null;
         }
-        public AudioSample Tone(double frequency, double amplitude, double lengthms)
+        public AudioSample Tone(double frequency, double amplitude, double lengthms, SoundEffectSettings ses = null)
         {
-            AudioData audio = ad.Tone(frequency, amplitude, lengthms);
+            AudioData audio = ad.Tone(frequency, amplitude, lengthms,ses);
 
             if (audio != null)
             {
-                return new AudioSample() { audiodata = audio };
+                return new AudioSample() { AudioData = audio };
             }
             else
                 return null;
@@ -278,10 +284,10 @@ namespace AudioExtensions
         public AudioSample Envelope(AudioSample last, double attackms, double decayms, double sustainms, double releasems,
                                     double maxamplitude, double sustainamplitude)
         {
-            AudioData audio = ad.Envelope(last.audiodata, attackms, decayms, sustainms, releasems, maxamplitude, sustainamplitude);
+            AudioData audio = ad.Envelope(last.AudioData, attackms, decayms, sustainms, releasems, maxamplitude, sustainamplitude);
             if (audio != null)
             {
-                return new AudioSample() { audiodata = audio };
+                return new AudioSample() { AudioData = audio };
             }
             else
                 return null;
@@ -289,8 +295,8 @@ namespace AudioExtensions
 
         public void Submit(AudioSample s, int vol, Priority p)       // submit to queue
         {
-            s.volume = vol;
-            s.priority = p;
+            s.Volume = vol;
+            s.Priority = p;
             Queue(s);
         }
 
@@ -331,9 +337,12 @@ namespace AudioExtensions
         {
             if (audioqueue.Count > 0)
             {
-                audioqueue[0].linkedq = null;   // make sure queue now ignores the link
+                audioqueue[0].LinkedQueue = null;   // make sure queue now ignores the link
                 Queue(null);
             }
         }
+
+        private List<AudioSample> audioqueue;
+        private IAudioDriver ad;
     }
 }

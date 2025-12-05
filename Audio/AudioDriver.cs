@@ -22,8 +22,8 @@ namespace AudioExtensions
     public class AudioData              // this holds the data object, used to wrap the object to give it a proper named class.
     {
         public AudioData() { }
-        public AudioData(Object d) { data = d; }
-        public Object data;
+        public AudioData(Object d) { Data = d; }
+        public Object Data { get; set; }
     }
 
     public interface IAudioDriver : IDisposable
@@ -41,7 +41,7 @@ namespace AudioExtensions
         AudioData Append(AudioData front, AudioData append);      // either may be null, in which case null.. Converted to append format
         AudioData Envelope(AudioData audio, double attackms, double decayms, double sustainms, double releasems,
                                             double maxamplitude, double sustainamplitude);      // audio = null results in null
-        AudioData Tone(double frequency, double amplitude, double lengthms);
+        AudioData Tone(double frequency, double amplitude, double lengthms, SoundEffectSettings effects = null);
 
         int Lengthms(AudioData audio);                     // whats the length?
         int TimeLeftms(AudioData audio);

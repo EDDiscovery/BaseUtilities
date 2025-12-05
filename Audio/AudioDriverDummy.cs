@@ -79,7 +79,7 @@ namespace AudioExtensions
             return null;
         }
 
-        public AudioData Tone(double frequency, double amplitude, double lengthms)
+        public AudioData Tone(double frequency, double amplitude, double lengthms, SoundEffectSettings effects = null)
         {
             return null;
         }
