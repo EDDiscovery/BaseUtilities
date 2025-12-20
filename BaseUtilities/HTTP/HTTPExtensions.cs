@@ -99,6 +99,11 @@ static public class HTTPExtensions
                     sb.Append('&');
                 if (value is string)
                     sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(value as string));
+                else if (value is string[])
+                {
+                    foreach( var x in value as string[])
+                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(x as string));
+                }
                 else if (value is bool)
                     sb.Append(name + "=" + (((bool)value) ? "1" : "0"));
                 else
