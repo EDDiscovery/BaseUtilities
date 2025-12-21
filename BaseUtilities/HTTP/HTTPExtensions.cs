@@ -117,6 +117,12 @@ static public class HTTPExtensions
                     sb.Append(name + "=" + bs);
                     System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{bs}`");
                 }
+                else if (value is double dl)
+                {
+                    string bs = dl.ToStringInvariant("N4");
+                    sb.Append(name + "=" + bs);
+                    System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{bs}`");
+                }
                 else
                 {
                     string res = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
