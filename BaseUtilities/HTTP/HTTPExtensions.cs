@@ -85,6 +85,7 @@ static public class HTTPExtensions
     }
 
     // Make a string of key=value&key2=value pairs
+    // Make a string of key=value&key2=value pairs
     public static string MakeQuery(params System.Object[] values)
     {
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -97,17 +98,32 @@ static public class HTTPExtensions
             {
                 if (sb.Length > 0)
                     sb.Append('&');
-                if (value is string)
-                    sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(value as string));
+
+                if (value is string str)
+                {
+                    sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(str));
+                    System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{str}`");
+                }
                 else if (value is string[])
                 {
-                    foreach (var x in value as string[])
-                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(x as string));
+                    foreach (string x in value as string[])
+                    {
+                        sb.Append(name + "=" + System.Web.HttpUtility.UrlEncode(x));
+                        System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{x}`");
+                    }
                 }
-                else if (value is bool)
-                    sb.Append(name + "=" + (((bool)value) ? "1" : "0"));
+                else if (value is bool bl)
+                {
+                    string bs = bl ? "1" : "0";
+                    sb.Append(name + "=" + bs);
+                    System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{bs}`");
+                }
                 else
-                    sb.Append(name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+                {
+                    string res = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+                    sb.Append(name + "=" + res);
+                    System.Diagnostics.Debug.WriteLine($"MakeQuery {name} = `{res}`");
+                }
             }
         }
 
