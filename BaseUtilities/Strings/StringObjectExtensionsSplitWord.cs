@@ -13,6 +13,7 @@
  */
 
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 
 public static class ObjectExtensionsStringsSplitWord
@@ -208,20 +209,47 @@ public static class ObjectExtensionsStringsSplitWord
     }
 
 
-    // fix word_word to Word Word
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([_])([A-Za-z]+)", m => { return m.Groups[1].Value.FixTitleCase() + " " + m.Groups[3].Value.FixTitleCase(); });
-    // fix _word to spc Word
-    //  s = Regex.Replace(s, @"([_])([A-Za-z]+)", m => { return " " + m.Groups[2].Value.FixTitleCase(); });
-    // fix zeros
-    //  s = Regex.Replace(s, @"([A-Za-z]+)([0-9])", "$1 $2");       // Any ascii followed by number, split
-    //  s = Regex.Replace(s, @"(^0)(0+)", "");     // any 000 at start of line, remove
-    //  s = Regex.Replace(s, @"( 0)(0+)", " ");     // any space 000 in middle of line, remove
-    //  s = Regex.Replace(s, @"(0)([0-9]+)", "$2");   // any 0Ns left, remove 0
+    public static string SplitCapsWordNumbersConjoined(this string capslower)
+    {
+        var words = SplitCapsWordToListNumbersConjoined(capslower);
+        string res = String.Join(" ", words);
+        return res;
+    }
 
-    // regexp of below : string s = Regex.Replace(capslower, @"([A-Z]+)([A-Z][a-z])", "$1 $2"); //Upper(rep)UpperLower = Upper(rep) UpperLower
-    // s = Regex.Replace(s, @"([a-z\d])([A-Z])", "$1 $2");     // lowerdecUpper split
-    // s = Regex.Replace(s, @"[-\s]", " "); // -orwhitespace with spc
+    // Fred 3DMake becomes two entries
+    public static List<string> SplitCapsWordToListNumbersConjoined(this string capslower)
+    {
+        if (!capslower.HasChars())
+            return new List<string> { "" };
 
+        List<string> words = new List<string>();
+
+        int start = 0;
+
+        for (int i = 1; i <= capslower.Length; i++)
+        {
+            char c0 = capslower[i - 1];                                 // first character                     
+            char c1 = i < capslower.Length ? capslower[i] : '\0';       // second 
+            bool c1iswhitespace = false;
+
+            if (i == capslower.Length || // End of string
+                (char.IsLetter(c0) && char.IsDigit(c1)) ||        // letter number = split
+                (char.IsLower(c0) && char.IsUpper(c1)) ||        // lower upper = split
+                (c1iswhitespace = char.IsWhiteSpace(c1))
+              )
+            {
+                if (i > start)
+                    words.Add(capslower.Substring(start, i - start));       // new word
+
+                if (i < capslower.Length && c1iswhitespace) // move start on..
+                    start = i + 1;
+                else
+                    start = i;
+            }
+        }
+
+        return words;
+    }
 
 
 }
