@@ -29,6 +29,9 @@ namespace BaseUtils
             args = a;
             pos = index;
         }
+
+        // Assemble line arguments.
+        // the // donotes a comment line
         public CommandArgs(string a)
         {
             StringParser sp = new StringParser(a);
@@ -38,10 +41,13 @@ namespace BaseUtils
                 string t = sp.NextQuotedWord(" \r\n\t");
                 if (t == null)
                     break;
-                argsl.Add(t);
+                if (t == "//")
+                    sp.SkipPastCRLF(true);
+                else
+                    argsl.Add(t);
             }
 
-             args = argsl.ToArray();
+            args = argsl.ToArray();
             pos = 0;
         }
 
@@ -77,9 +83,15 @@ namespace BaseUtils
         public bool Bool() { return (pos < args.Length) ? args[pos++].InvariantParseBool(false) : false; }
         public bool? BoolNull() { return (pos < args.Length) ? args[pos++].InvariantParseBoolNull() : null; }
 
-        public string Rest(string sep = " ") { return string.Join(sep, args, pos, args.Length - pos); }
+        public string Rest(string sep = " ", int pos = 0, int items = -1) 
+        {
+            if (items == -1)
+                items = args.Length - pos;
+            return string.Join(sep, args, pos, items); 
+        }
 
         public string this[int v] { get { int left = args.Length - pos; return (v < left) ? args[pos + v] : null; } }
+        public int Pos { get { return pos; } }
         public bool More { get { return args.Length > pos; } }
         public int Left { get { return args.Length - pos; } }
         public void Remove() { if (pos < args.Length) pos++; }

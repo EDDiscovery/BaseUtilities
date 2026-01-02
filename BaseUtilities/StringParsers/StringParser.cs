@@ -45,6 +45,7 @@ namespace BaseUtils
 
         #region Character or String related functions
 
+        // true if at EOL
         public bool SkipSpace()
         {
             while (pos < line.Length && char.IsWhiteSpace(line[pos]))
@@ -53,13 +54,30 @@ namespace BaseUtils
             return pos == line.Length;
         }
 
-        public void MoveOn(int n)       // move pointer, backwards or forwards, allowing to end pos (line.Length) and limiting to >=0
+        // true if at EOL, skip past CR or CRLF
+        public bool SkipPastCRLF(bool skipspaceafter = true)
+        {
+            while (pos < line.Length && line[pos] != '\r')
+                pos++;
+
+            if (pos < line.Length && line[pos] != '\n')
+                pos++;
+
+            if (skipspaceafter)
+                SkipSpace();
+
+            return pos == line.Length;
+        }
+
+        // move pointer, backwards or forwards, allowing to end pos (line.Length) and limiting to >=0, skip afterwards
+        public void MoveOn(int n)       
         {
             pos = Math.Max(Math.Min(pos + n, line.Length),0);
             SkipSpace();
         }
 
-        public void Remove(int n)       // waste N chars
+        // move pointer backwards and forwards, limited to line
+        public void Remove(int n)       
         {
             pos = Math.Min(pos + n, line.Length);
         }
