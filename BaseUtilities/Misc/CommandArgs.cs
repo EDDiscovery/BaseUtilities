@@ -83,7 +83,9 @@ namespace BaseUtils
         public bool Bool() { return (pos < args.Length) ? args[pos++].InvariantParseBool(false) : false; }
         public bool? BoolNull() { return (pos < args.Length) ? args[pos++].InvariantParseBoolNull() : null; }
 
-        public string Rest(string sep = " ", int pos = 0, int items = -1) 
+        public string Rest(string sep = " ") { return string.Join(sep, args, pos, args.Length - pos); }
+
+        public string Arguments(int pos, int items = -1, string sep = " ") 
         {
             if (items == -1)
                 items = args.Length - pos;
