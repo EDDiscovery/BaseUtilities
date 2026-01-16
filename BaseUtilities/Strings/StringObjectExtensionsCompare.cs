@@ -105,10 +105,6 @@ public static class ObjectExtensionsStringsCompare
 
     // these accept s = null without barfing
 
-    public static bool ContainsIIC(this string s, string other)
-    {
-        return s != null && s.Contains(other, StringComparison.InvariantCultureIgnoreCase);
-    }
     public static bool EqualsIIC(this string s, string other)
     {
         return s != null && s.Equals(other, StringComparison.InvariantCultureIgnoreCase);
@@ -117,7 +113,7 @@ public static class ObjectExtensionsStringsCompare
     {
         return s!= null && s.StartsWith(other, StringComparison.InvariantCultureIgnoreCase);
     }
-    public static bool EndWithIIC(this string s, string other)
+    public static bool EndsWithIIC(this string s, string other)
     {
         return s != null && s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
     }

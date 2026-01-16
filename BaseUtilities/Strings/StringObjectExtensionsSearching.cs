@@ -26,6 +26,14 @@ public static partial class ObjectExtensionsStrings
     {
         return data.IndexOf(comparision, culture) >= 0;
     }
+    public static bool ContainsIIC(this string s, string other)
+    {
+        return s != null && s.Contains(other, StringComparison.InvariantCultureIgnoreCase);
+    }
+    public static int IndexOfIIC(this string s, string other)
+    {
+        return s.IndexOf(other, StringComparison.InvariantCultureIgnoreCase);
+    }
 
     //Return index of (plus an offset) or length
     public static int IndexOfOrLength(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture, int startindex = 0, int offset = 0)
