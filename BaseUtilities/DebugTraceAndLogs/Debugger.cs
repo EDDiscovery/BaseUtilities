@@ -49,11 +49,12 @@ namespace BaseUtils
 
         [System.Diagnostics.Conditional("DEBUG")]
         [System.Diagnostics.DebuggerHidden]
-        public static void Assert(this bool v, string msg = "")
+        public static void Assert(this bool v, string msg = "", Action optaction = null)
         {
+            if (!v)
+                optaction?.Invoke();
             System.Diagnostics.Debug.Assert(v, msg);
         }
-
 
         [System.Diagnostics.Conditional("DEBUG")]
         public static void DO(this string s, string part)
@@ -79,8 +80,6 @@ namespace BaseUtils
             if (level >= OutputLevel)
                 System.Diagnostics.Debug.Write(s);
         }
-
     }
-
 }
 
