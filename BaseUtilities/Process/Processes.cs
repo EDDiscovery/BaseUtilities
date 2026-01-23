@@ -18,11 +18,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace BaseUtils
 {
     public class Processes
     {
+        [DllImport("shell32.dll")]
+        static extern int FindExecutable(string lpFile, string lpDirectory, [Out] System.Text.StringBuilder lpResult);
+
         private Dictionary<int, Process> processes;
 
         public Processes()
@@ -135,6 +139,15 @@ namespace BaseUtils
                 return ProcessResult.UnknownPID;
         }
 
+        public static string GetExecutableForFile(string path)
+        {
+            System.Text.StringBuilder res = new System.Text.StringBuilder();
+            int v = FindExecutable(path, null, res);
+            if (v >= 32) // ! whoosh
+                return res.ToString();
+            else
+                return null;
+        }
 
     }
 }
