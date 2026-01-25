@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2020 EDDiscovery development team
+ * Copyright 2016 - 2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
 
 using System;
@@ -147,6 +145,43 @@ namespace BaseUtils
                 return res.ToString();
             else
                 return null;
+        }
+
+
+        // open a text file, goto first line containing "text" if given
+        // uses assigned editor or notepad
+        // returns PID, -1 if not opened
+        public static int OpenEditorForTextFileAtText(string file, string text = null)
+        {
+            string[] lines;
+            if (file != null && (lines = FileHelpers.TryReadAllLinesFromFile(file)) != null)
+            {
+                int lineno = text != null ? Array.FindIndex(lines, x => x.ContainsIIC(text)) : -1;
+
+                string exeforlog = Processes.GetExecutableForFile(file);
+
+                string exe = "Notepad.exe";
+                string cmd = $"\"{file}\"";
+
+                if (exeforlog != null) // got one
+                {
+                    exe = exeforlog;
+
+                    if (exe.ContainsIIC("Notepad++"))
+                    {
+                        cmd = lineno >= 0 ? $"-n{lineno + 1} \"{file}\"" : $"\"{file}\"";
+                    }
+                    else if (exe.ContainsIIC("\\code"))
+                    {
+                        cmd = lineno >= 0 ? $"--goto \"{file}:{lineno + 1}\"" : $"\"{file}\"";
+                    }
+                }
+
+                BaseUtils.Processes process = new BaseUtils.Processes();
+                return process.StartProcess(exe, cmd);
+            }
+
+            return -1;
         }
 
     }
