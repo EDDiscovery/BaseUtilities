@@ -70,6 +70,21 @@ public static class ObjectExtensionsStringsLists
         return -1;
     }
 
+    // count of elements contained within str with case control (missing from c#)
+    // return count.
+    static public int ContainsCount(this string str, IEnumerable<string> list, StringComparison compare)
+    {
+        int count = 0;
+        foreach (var s in list)
+        {
+            if (str.Contains(s, compare))
+                count++;
+        }
+
+        return count;
+    }
+
+    // return index of comparision found in list
     public static int StartsWithInList(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)
     {
         int i = 0;
@@ -84,6 +99,7 @@ public static class ObjectExtensionsStringsLists
         return -1;
     }
 
+    // return index of comparision found in list
     public static int EndsWithInList(this IEnumerable<string> list, string comparision, StringComparison c = StringComparison.CurrentCulture)
     {
         int i = 0;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016-2021 EDDiscovery development team
+ * Copyright 2016-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
 
 using System;
@@ -25,26 +23,62 @@ using System.Globalization;
 
 namespace BaseUtils.Icons
 {
-    public class IconSet : IIcons
+    public class IconSet 
     {
-        private Dictionary<string, Object> Icons { get; set; } = new Dictionary<string, Object>(StringComparer.InvariantCultureIgnoreCase);
+        #region Public 
 
-        public bool Contains(string name)       // contains this icon. Icons are case insensitive, as the windows file system is.
+        // Singleton support if required
+        static public IconSet Instance { get { return instance; } }
+
+        public static void CreateSingleton()
+        {
+            instance = new IconSet();
+        }
+
+        public static Image GetImage(string name)                       // static access. does not barf if no instance, instead returns small bitmap
+        {
+            return Instance?.Get(name) ?? new Bitmap(1, 1);
+        }
+        public static bool TryGetImage(string name, out Image img)      // static access. 
+        {
+            img = Instance?.GetOrNull(name);
+            return img != null;
+        }
+        public static Bitmap GetBitmap(string name)        // static access. does not barf if no instance, instead returns small bitmap
+        {
+            return (Bitmap)(Instance?.Get(name)) ?? new Bitmap(1, 1);
+        }
+        public static bool Contains(string name)        // static access. does not barf if no instance
+        {
+            return Instance?.Exists(name) ?? false;
+        }
+
+        // Instance
+
+        public void AddAlias(string name, string originalname)
+        {
+            Icons[name] = Get(originalname);
+        }
+
+        public void Add(string name, Image i)
+        {
+            Icons[name] = i;
+        }
+        
+        public bool Exists(string name)       // contains this icon. Icons are case insensitive, as the windows file system is.
         {
             return Icons.ContainsKey(name);
         }
 
         public string[] Names() { return Icons.Keys.ToArray(); }        // all of the names available
+
         public bool DontReportMissingErrors { get; set; } = false;
 
         public IconSet() { }
 
-        private class LazyLoadFromAssembly
-        {
-            public Assembly asm;
-            public string resname;
-        }
+        #endregion
 
+        #region Loading
         public void LoadIconsFromAssembly(Assembly asm, bool lazyload = true)
         {
             string[] resnames = asm.GetManifestResourceNames();
@@ -68,30 +102,6 @@ namespace BaseUtils.Icons
             }
         }
 
-        private void LoadIconsFromDirectory(string path, string extension)
-        {
-            foreach (var file in Directory.EnumerateFiles(path, "*." + extension, SearchOption.AllDirectories))
-            {
-                string name = file.Substring(path.Length + 1).Replace('/', '.').Replace('\\', '.').Replace("." + extension, "");
-                Image img = null;
-
-                try
-                {
-                    img = Image.FromFile(file);
-                    SetImageTransparency(img, name);
-                }
-                catch
-                {
-                    // Ignore any bad images
-                    continue;
-                }
-
-                if (!Icons.ContainsKey(name))
-                    System.Diagnostics.Debug.WriteLine("Icon Pack new unknown " + name);
-
-                Icons[name] = img;
-            }
-        }
 
         public void LoadIconsFromDirectory(string path)      // tested 1/feb/2018
         {
@@ -198,27 +208,53 @@ namespace BaseUtils.Icons
 
         }
 
-        public void AddAlias(string name, string originalname)
-        {
-            Icons[name] = Get(originalname);
-        }
+        #endregion
 
-        public void Add(string name, Image i)
-        {
-            Icons[name] = i;
-        }
+        #region Implementaion
 
-        public Image Get(string name)       // name is case insensitive
+        private void LoadIconsFromDirectory(string path, string extension)
         {
-            if (Icons == null)      // seen designer barfing over this
-                return new Bitmap(1, 1);
-
-            if (!Icons.TryGetValue(name, out object o))            // if not found, must return someting, so default
+            foreach (var file in Directory.EnumerateFiles(path, "*." + extension, SearchOption.AllDirectories))
             {
-                System.Diagnostics.Debug.WriteLineIf(!DontReportMissingErrors,"*** MISSING ICON " + name);
-                if (!Icons.TryGetValue("Default", out o))            // if not found, must return someting, so default
-                    return new Bitmap(1, 1);
+                string name = file.Substring(path.Length + 1).Replace('/', '.').Replace('\\', '.').Replace("." + extension, "");
+                Image img = null;
+
+                try
+                {
+                    img = Image.FromFile(file);
+                    SetImageTransparency(img, name);
+                }
+                catch
+                {
+                    // Ignore any bad images
+                    continue;
+                }
+
+                if (!Icons.ContainsKey(name))
+                    System.Diagnostics.Debug.WriteLine("Icon Pack new unknown " + name);
+
+                Icons[name] = img;
             }
+        }
+
+        // always returns an image
+        private Image Get(string name)
+        {
+            var img = GetOrNull(name);
+            if (img == null)
+            {
+                System.Diagnostics.Debug.WriteLineIf(!DontReportMissingErrors, "*** MISSING ICON " + name);
+                img = GetOrNull("Default");
+                if (img == null)
+                    img = new Bitmap(1, 1);
+            }
+            return img;
+        }
+
+        private Image GetOrNull(string name)       
+        {
+            if (Icons == null || !Icons.TryGetValue(name, out object o))      // protect against Icons being null during design, return null if not defined
+                return null;
 
             if (o is LazyLoadFromAssembly)          // if not loaded, pick it up.
             {
@@ -229,11 +265,9 @@ namespace BaseUtils.Icons
                 SetImageTransparency(img, name);
                 Icons[name] = img;      // now its an Image, so next time, it will load directly
                 return img;
-
             }
             else
                 return o as Image;
-
         }
 
         private static void SetImageTransparency(Image image, string name)
@@ -247,23 +281,14 @@ namespace BaseUtils.Icons
             }
         }
 
-        // Singleton support if required
-
-        static public IconSet Instance { get { return instance; } }
+        private Dictionary<string, Object> Icons { get; set; } = new Dictionary<string, Object>(StringComparer.InvariantCultureIgnoreCase);
         static private IconSet instance;
-
-        public static void CreateSingleton()
+        private class LazyLoadFromAssembly
         {
-            instance = new IconSet();
+            public Assembly asm;
+            public string resname;
         }
 
-        public static Image GetIcon(string name)        // static access. does not barf if no instance, instead returns small bitmap
-        {
-            return Instance?.Get(name) ?? new Bitmap(1, 1);
-        }
-        public static Bitmap GetBitmap(string name)        // static access. does not barf if no instance, instead returns small bitmap
-        {
-            return (Bitmap)(Instance?.Get(name)) ?? new Bitmap(1, 1);
-        }
+        #endregion
     }
 }

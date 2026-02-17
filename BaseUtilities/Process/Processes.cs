@@ -148,15 +148,15 @@ namespace BaseUtils
         }
 
 
-        // open a text file, goto first line containing "text" if given
+        // open a text file, goto first line containing all of the text elements
         // uses assigned editor or notepad
         // returns PID, -1 if not opened
-        public static int OpenEditorForTextFileAtText(string file, string text = null)
+        public static int OpenEditorForTextFileAtText(string file, string[] text = null)
         {
             string[] lines;
             if (file != null && (lines = FileHelpers.TryReadAllLinesFromFile(file)) != null)
             {
-                int lineno = text != null ? Array.FindIndex(lines, x => x.ContainsIIC(text)) : -1;
+                int lineno = text != null ? Array.FindIndex(lines, x => x.ContainsCount(text, StringComparison.InvariantCultureIgnoreCase) == text.Length) : -1;
 
                 string exeforlog = Processes.GetExecutableForFile(file);
 

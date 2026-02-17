@@ -33,7 +33,7 @@ namespace BaseUtils.Icons
 
         protected void Init(string basedir, IEnumerable<T> keys)
         {
-            icons = keys.ToDictionary(e => e, e => IconSet.GetIcon(basedir + "." + e.ToString()));
+            icons = keys.ToDictionary(e => e, e => IconSet.GetImage(basedir + "." + e.ToString()));
         }
 
         public Image this[T key] => icons[key];
