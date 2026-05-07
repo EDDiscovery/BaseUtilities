@@ -36,10 +36,19 @@ namespace BaseUtils.WebServer
         {
             string file = Path.Combine(path, partialpath);
 
-            if ( File.Exists(file))
-            {
-                System.Diagnostics.Debug.WriteLine("File Request: " + file);
+            bool findfile = File.Exists(file);
 
+            if (!findfile)
+            {
+                partialpath = partialpath.Replace('/', '\\');       // try slashes the other way
+                file = Path.Combine(path, partialpath);
+                findfile = File.Exists(file);
+            }
+
+            System.Diagnostics.Debug.WriteLine("File Request: " + file);
+
+            if (findfile)
+            {
                 try
                 {
                     string ext = Path.GetExtension(file);

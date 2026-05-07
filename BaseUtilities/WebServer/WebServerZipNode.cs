@@ -39,9 +39,14 @@ namespace BaseUtils.WebServer
                 {
                     //foreach (var x in zipfile.Entries) System.Diagnostics.Debug.WriteLine("Zip file " + x.FullName);
 
-                    partialpath = partialpath.Replace('/', '\\');       // zip files use back slashes and urls are forward slashes.
-
                     var file = zipfile.GetEntry(partialpath);
+
+                    if (file == null)
+                    {
+                        partialpath = partialpath.Replace('/', '\\');       // try slashes the other way
+                        file = zipfile.GetEntry(partialpath);
+                    }
+
                     System.Diagnostics.Debug.WriteLine("Request " + partialpath);
 
                     if (file != null)
