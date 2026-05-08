@@ -213,7 +213,14 @@ namespace BaseUtils
                 return false;
         }
 
-        public bool IsCharOneOfMoveOn(string t, bool skipspace = true)   // any char in t is acceptable, then move
+        // if at EOL, or separ is space (space is auto removed so therefore okay) or separ (and move)
+        public bool IsCharMoveOnOrEOL(char t) 
+        {
+            return IsEOL || t == ' ' || IsCharMoveOn(t);
+        }
+
+        // any char in t is acceptable, then move
+        public bool IsCharOneOfMoveOn(string t, bool skipspace = true)   
         {
             if (pos < line.Length && t.Contains(line[pos]))
             {
@@ -226,9 +233,10 @@ namespace BaseUtils
                 return false;
         }
 
-        public bool IsCharMoveOnOrEOL(char t) // if at EOL, or separ is space (space is auto removed so therefore okay) or separ (and move)
+        // any char in t is acceptable, or EOL, then move
+        public bool IsCharOneOfMoveOnOrEOL(string t, bool skipspace = true) 
         {
-            return IsEOL || t == ' ' || IsCharMoveOn(t);       
+            return IsEOL || IsCharOneOfMoveOn(t);
         }
 
         // skip foward until a character in the array is found
@@ -578,13 +586,14 @@ namespace BaseUtils
 
         #region Numbers and Bools
 
+        // read item until terminator, skip space
         public bool? NextBool(string terminators = " ")
         {
             string s = NextWord(terminators);
             return s?.InvariantParseBoolNull();
         }
 
-        // note comma is mandatory, and terminators does not include it
+        // we read the item until terminator, skip space, next character must be seperator or EOL
         public bool? NextBoolComma(string terminators = " ", char separ = ',')
         {
             bool? res = NextBool(terminators);
@@ -604,7 +613,6 @@ namespace BaseUtils
             return v ?? def;
         }
 
-        // note comma is mandatory, and terminators does not include it
         public double? NextDoubleComma(string terminators = " ", char separ = ',')
         {
             double? res = NextDouble(terminators);
@@ -624,7 +632,13 @@ namespace BaseUtils
             return v ?? def;
         }
 
-        // note comma is mandatory, and terminators does not include it
+        // read the int, skip space, next one must be on the skip list or EOL
+        public int? NextInt(string terminators, string skiplist = "," )
+        {
+            int? res = NextInt(terminators);
+            return res != null && IsCharOneOfMoveOnOrEOL(skiplist) ? res : null;
+        }
+
         public int? NextIntComma(string terminators = " ", char separ = ',')
         {
             int? res = NextInt(terminators);

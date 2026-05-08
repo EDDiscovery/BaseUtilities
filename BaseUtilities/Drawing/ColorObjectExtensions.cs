@@ -132,19 +132,32 @@ public static class ObjectExtensionsColours
             (byte)Math.Max(Math.Min(Math.Round((float)c.B * val), 255), 0));
     }
 
-    // From color from a name, or from a,r,h,b decimal values, or from HTLM #FFFFFF string
+    // From color from a name,
+    // or from a,r,g,b decimal values,
+    // or from r,g,b decimal values
+    // or from rgb(r,g,b) decimal values,
+    // or from rgb(a,r,g,b) decimal values,
+    // or from HTML #FFFFFF string
     public static Color ColorFromNameOrValues(this string str)        
     {
         Color c = Color.FromName(str);
-        if ( c.A == 0)
+        if ( c.A == 0) // not a name
         {
+            if (str.StartsWith("rgb("))     // from css/javascript
+                str = str.Substring(4);
+
             StringParser s = new StringParser(str);
-            int? a = s.NextIntComma(" ,");
-            int? r = s.NextIntComma(" ,");
-            int? g = s.NextIntComma(" ,");
-            int? b = s.NextInt();
-            if (a.HasValue && r.HasValue && g.HasValue && b.HasValue)
-                c = Color.FromArgb(a.Value, r.Value, g.Value, b.Value);
+            int? p1 = s.NextInt(" ,", ",");
+            int? p2 = s.NextInt(" ,", ",");
+            int? p3 = s.NextInt(" ,)", ",)");
+            int? p4 = s.NextInt(" )", ")");
+            if (p1.HasValue && p2.HasValue && p3.HasValue)
+            {
+                if (p4.HasValue)
+                    c = Color.FromArgb(p1.Value, p2.Value, p3.Value, p4.Value);
+                else
+                    c = Color.FromArgb(p1.Value, p2.Value, p3.Value);
+            }
             else
             {
                 try
