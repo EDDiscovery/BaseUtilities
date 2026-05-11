@@ -72,6 +72,7 @@
     <Compile Include="DDE\DDEServer.cs" />
     <Compile Include="DebugTraceAndLogs\Debugger.cs" />
     <Compile Include="Drawing\DrawingHelpers.cs" />
+    <Compile Include="Drawing\FontLoader.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />
     <Compile Include="Functions\FunctionsBasic.cs" />
@@ -175,7 +176,6 @@
     <Compile Include="WinForms\DataGridViewHelpers.cs" />
     <Compile Include="WinForms\WindowMovementControl.cs" />
     <Compile Include="WinForms\ControlHelpers.cs" />
-    <Compile Include="Drawing\FontLoader.cs" />
     <Compile Include="XML\xml.cs" />
     <Compile Include="ZIP\ZipExpand.cs" />
   </ItemGroup>

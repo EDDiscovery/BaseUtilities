@@ -350,6 +350,10 @@ namespace BaseUtils.WebServer
 
         public static Tuple<string,bool> GetContentType(string path)
         {
+            string ext = System.IO.Path.GetExtension(path);
+            if (ext == ".woff" || ext == ".ttf" || ext == ".woff2" || ext == "otf") // need to tell it its a font, download binary
+                return new Tuple<string, bool>("font/woff", true);
+
             string contenttype = System.Web.MimeMapping.GetMimeMapping(path);
             bool readbin = BinaryMIMETypes.StartsWith(contenttype, StringComparison.InvariantCultureIgnoreCase) >= 0;
 

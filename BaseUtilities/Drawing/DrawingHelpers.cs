@@ -161,7 +161,7 @@ public static partial class DrawingHelpersStaticFunc
             if (ownfont)
                 fnt.Dispose();
 
-            fnt = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fnt.Size - 0.5f, fnt.Style);
+            fnt = new Font(fnt.FontFamily.Name, fnt.Size - 0.5f, fnt.Style);
             ownfont = true;
         }
     }
@@ -186,7 +186,7 @@ public static partial class DrawingHelpersStaticFunc
         {
             fontsize += dir;
 
-            Font fnt2 = BaseUtils.FontLoader.GetFont(fnt.FontFamily.Name, fontsize, fnt.Style);
+            Font fnt2 = new Font(fnt.FontFamily.Name, fontsize, fnt.Style);
 
             drawnsize = BaseUtils.BitMapHelpers.MeasureStringUnformattedLengthInBitmap(text, fnt2);
             smallerthanbox = Math.Ceiling(drawnsize.Width) <= areasize.Width && Math.Ceiling(drawnsize.Height) < areasize.Height;

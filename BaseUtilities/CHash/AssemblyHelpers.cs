@@ -105,6 +105,24 @@ namespace BaseUtils
             return null;
         }
 
+        public static byte[] GetResourceBytes(this Assembly assembly, string resourcename)
+        {
+            try
+            {
+                var resourceStream = assembly.GetManifestResourceStream(resourcename);
+                var bytes = new byte[resourceStream.Length];
+                resourceStream.Read(bytes, 0, (int)resourceStream.Length);
+                resourceStream.Close();
+                return bytes;
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Resource get " + e.ToString());
+            }
+
+            return null;
+        }
+
         // Opentk.resourcename.. assembly must be loaded.  Must be an embedded resource.
         // null if not found
         public static string GetResourceAsString(string fullname)       
