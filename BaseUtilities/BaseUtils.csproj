@@ -144,6 +144,12 @@
     <Compile Include="Drawing\BitMapHelpers.cs" />
     <Compile Include="WinForms\DataGridViewCell.cs" />
     <Compile Include="WinForms\DataGridViewHelpersColumnSettingsJSON.cs" />
+    <Compile Include="WinForms\FontDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="WinForms\FontDialog.Designer.cs">
+      <DependentUpon>FontDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="WinForms\MenuItems.cs" />
     <Compile Include="WinForms\ControlDragger.cs" />
     <Compile Include="WinForms\ControlSplitter.cs" />
@@ -181,6 +187,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="WinForms\FontDialog.resx">
+      <DependentUpon>FontDialog.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

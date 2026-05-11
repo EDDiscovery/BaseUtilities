@@ -13,18 +13,18 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 
 namespace BaseUtils
 {
+    // Class allows own fonts to be loaded
+
     public static class FontLoader
     {
-        private static PrivateFontCollection PrivateFonts = new PrivateFontCollection();
-
         public static void AddFileFont(string path)
         {
             PrivateFonts.AddFontFile(path);
@@ -36,33 +36,36 @@ namespace BaseUtils
             PrivateFonts.AddMemoryFont(fontData, fontBytes.Length);
         }
 
-        public static Font GetFont(string name, float size)
+        // return the font, either an installed or private font of this font family name
+        public static Font GetFont(string familyname, float size)
         {
-            var family = GetPrivateFont(name);
+            var family = GetPrivateFontFamily(familyname);
 
             if (family != null)
             {
                 return new Font(family, size);
             }
 
-            return new Font(name, size);
+            return new Font(familyname, size);
         }
 
-        public static Font GetFont(string name, float size, FontStyle style = FontStyle.Regular)
+        // return the font, either an installed or private font of this font family name, with a style
+        public static Font GetFont(string familyname, float size, FontStyle style = FontStyle.Regular)
         {
-            var family = GetPrivateFont(name, style);
+            var family = GetPrivateFontFamily(familyname, style);
 
             if (family != null)
             {
                 return new Font(family, size, style);
             }
 
-            return new Font(name, size, style);
+            return new Font(familyname, size, style);
         }
 
+        // return the font of a family with the particular size and style
         public static Font GetFont(FontFamily reqfamily, float size, FontStyle style = FontStyle.Regular)
         {
-            var privatefamily = GetPrivateFont(reqfamily.Name, style);
+            var privatefamily = GetPrivateFontFamily(reqfamily.Name, style);
 
             if (privatefamily != null)
             {
@@ -72,14 +75,35 @@ namespace BaseUtils
             return new Font(reqfamily, size, style);
         }
 
+        // return all fonts, both installed and in memory fonts
+        public static List<FontFamily> GetFontFamilies()
+        {
+            var list = new List<FontFamily>();
+            list.AddRange(PrivateFonts.Families);
+            InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+            list.AddRange(installedFontCollection.Families);
+            return list;
+        }
 
-        // does not check size, since it can be rounded down
-        public static bool IsFontAvailable(string name, FontStyle fs = FontStyle.Regular)
+        // given a name, return the font family
+        public static FontFamily GetFontFamily(string name)
+        {
+            var family = GetPrivateFontFamily(name);
+            if (family == null)
+            {
+                InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+                family = installedFontCollection.Families.Where(x=>x.Name == name).FirstOrDefault();
+            }
+            return family;
+        }
+
+        // Is this font available with this style.
+        public static bool IsFontAvailable(string familyname, FontStyle fs = FontStyle.Regular)
         {
             try
             {
-                Font fnt = GetFont(name, 12, fs);
-                bool res = fnt.Name == name && fnt.Style == fs;
+                Font fnt = GetFont(familyname, 12, fs);
+                bool res = fnt.Name == familyname && fnt.Style == fs;
                 fnt.Dispose();
                 return res;
             }
@@ -89,12 +113,12 @@ namespace BaseUtils
             }
         }
 
-        private static FontFamily GetPrivateFont(string name)
+        private static FontFamily GetPrivateFontFamily(string name)
         {
             return PrivateFonts.Families.FirstOrDefault(f => f.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        private static FontFamily GetPrivateFont(string name, FontStyle style)
+        private static FontFamily GetPrivateFontFamily(string name, FontStyle style)
         {
             return PrivateFonts.Families.FirstOrDefault(f => f.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) && f.IsStyleAvailable(style));
         }
@@ -104,40 +128,6 @@ namespace BaseUtils
             return PrivateFonts.Families.FirstOrDefault(f => f.Name == find.Name);
         }
 
-        public static Font FontSelection(System.Windows.Forms.Control parent, Font curfont, int min = 4, int max = 36, bool musthaveregular = false)
-        {
-            using (var fd = new System.Windows.Forms.FontDialog())
-            {
-                fd.Font = curfont;
-                fd.MinSize = min;
-                fd.MaxSize = max;
-                System.Windows.Forms.DialogResult result;
-
-                try
-                {
-                    result = fd.ShowDialog(parent);
-                }
-                catch (ArgumentException ex)
-                {
-                    System.Windows.Forms.MessageBox.Show(ex.Message);
-                    return null;
-                }
-
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    if (!musthaveregular || fd.Font.Style == FontStyle.Regular)
-                    {
-                        return fd.Font;
-                    }
-                    else
-                        System.Windows.Forms.MessageBox.Show("Font does not have regular style");
-                }
-
-                return null;
-            }
-
-        }
-
-
+        private static PrivateFontCollection PrivateFonts = new PrivateFontCollection();
     }
 }
