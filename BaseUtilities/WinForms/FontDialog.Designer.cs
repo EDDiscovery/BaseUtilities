@@ -32,15 +32,15 @@
             this.labelFontName = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.labelSample = new System.Windows.Forms.Label();
+            this.comboBoxStyle = new System.Windows.Forms.ComboBox();
             this.comboBoxSize = new System.Windows.Forms.ComboBox();
             this.buttonCancel = new System.Windows.Forms.Button();
             this.buttonOK = new System.Windows.Forms.Button();
+            this.labelsyleprompt = new System.Windows.Forms.Label();
+            this.labelFontsize = new System.Windows.Forms.Label();
             this.labelFontprompt = new System.Windows.Forms.Label();
             this.labelSampleName = new System.Windows.Forms.Label();
             this.panelFonts = new System.Windows.Forms.Panel();
-            this.comboBoxStyle = new System.Windows.Forms.ComboBox();
-            this.labelFontsize = new System.Windows.Forms.Label();
-            this.labelsyleprompt = new System.Windows.Forms.Label();
             this.panelTop.SuspendLayout();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -91,6 +91,15 @@
             this.labelSample.TabIndex = 0;
             this.labelSample.Text = "Current Font:";
             // 
+            // comboBoxStyle
+            // 
+            this.comboBoxStyle.Enabled = false;
+            this.comboBoxStyle.FormattingEnabled = true;
+            this.comboBoxStyle.Location = new System.Drawing.Point(418, 6);
+            this.comboBoxStyle.Name = "comboBoxStyle";
+            this.comboBoxStyle.Size = new System.Drawing.Size(71, 21);
+            this.comboBoxStyle.TabIndex = 2;
+            // 
             // comboBoxSize
             // 
             this.comboBoxSize.Enabled = false;
@@ -122,6 +131,24 @@
             this.buttonOK.Text = "OK";
             this.buttonOK.UseVisualStyleBackColor = true;
             // 
+            // labelsyleprompt
+            // 
+            this.labelsyleprompt.AutoSize = true;
+            this.labelsyleprompt.Location = new System.Drawing.Point(366, 9);
+            this.labelsyleprompt.Name = "labelsyleprompt";
+            this.labelsyleprompt.Size = new System.Drawing.Size(33, 13);
+            this.labelsyleprompt.TabIndex = 0;
+            this.labelsyleprompt.Text = "Style:";
+            // 
+            // labelFontsize
+            // 
+            this.labelFontsize.AutoSize = true;
+            this.labelFontsize.Location = new System.Drawing.Point(235, 9);
+            this.labelFontsize.Name = "labelFontsize";
+            this.labelFontsize.Size = new System.Drawing.Size(30, 13);
+            this.labelFontsize.TabIndex = 0;
+            this.labelFontsize.Text = "Size:";
+            // 
             // labelFontprompt
             // 
             this.labelFontprompt.AutoSize = true;
@@ -149,41 +176,15 @@
             this.panelFonts.Size = new System.Drawing.Size(920, 363);
             this.panelFonts.TabIndex = 1;
             // 
-            // comboBoxStyle
-            // 
-            this.comboBoxStyle.Enabled = false;
-            this.comboBoxStyle.FormattingEnabled = true;
-            this.comboBoxStyle.Location = new System.Drawing.Point(418, 6);
-            this.comboBoxStyle.Name = "comboBoxStyle";
-            this.comboBoxStyle.Size = new System.Drawing.Size(71, 21);
-            this.comboBoxStyle.TabIndex = 2;
-            // 
-            // labelFontsize
-            // 
-            this.labelFontsize.AutoSize = true;
-            this.labelFontsize.Location = new System.Drawing.Point(235, 9);
-            this.labelFontsize.Name = "labelFontsize";
-            this.labelFontsize.Size = new System.Drawing.Size(30, 13);
-            this.labelFontsize.TabIndex = 0;
-            this.labelFontsize.Text = "Size:";
-            // 
-            // labelsyleprompt
-            // 
-            this.labelsyleprompt.AutoSize = true;
-            this.labelsyleprompt.Location = new System.Drawing.Point(366, 9);
-            this.labelsyleprompt.Name = "labelsyleprompt";
-            this.labelsyleprompt.Size = new System.Drawing.Size(33, 13);
-            this.labelsyleprompt.TabIndex = 0;
-            this.labelsyleprompt.Text = "Style:";
-            // 
-            // FontForm
+            // FontDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(920, 495);
             this.Controls.Add(this.panelFonts);
             this.Controls.Add(this.panelTop);
-            this.Name = "FontForm";
+            this.Name = "FontDialog";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "FontForm";
             this.panelTop.ResumeLayout(false);
             this.panelTop.PerformLayout();

@@ -72,7 +72,7 @@
     <Compile Include="DDE\DDEServer.cs" />
     <Compile Include="DebugTraceAndLogs\Debugger.cs" />
     <Compile Include="Drawing\DrawingHelpers.cs" />
-    <Compile Include="Drawing\FontLoader.cs" />
+    <Compile Include="Drawing\FontHandler.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
     <Compile Include="Functions\Functions.cs" />
     <Compile Include="Functions\FunctionsBasic.cs" />

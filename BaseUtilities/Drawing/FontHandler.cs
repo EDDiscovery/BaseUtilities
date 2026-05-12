@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2020 EDDiscovery development team
+ * Copyright © 2016 - 2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -21,9 +21,9 @@ using System.Runtime.InteropServices;
 
 namespace BaseUtils
 {
-    // Class allows own fonts to be loaded
+    // Class allows own fonts to be loaded, to get and list fonts, and to get font setting strings
 
-    public static class FontLoader
+    public static class FontHandler
     {
         public static void AddFileFont(string path)
         {
@@ -111,6 +111,29 @@ namespace BaseUtils
             {
                 return false;
             }
+        }
+
+        // from a setting string, get font
+        public static Font GetFontFromSetting(string settingstring, Font deffont)
+        {
+            string[] values = settingstring.Split('`');
+            if (values.Length == 3)
+            {
+                try
+                {
+                    return BaseUtils.FontHandler.GetFont(values[0], values[1].InvariantParseFloat(12), (FontStyle)Enum.Parse(typeof(FontStyle), values[2]));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Font sel exception {ex}");
+                }
+            }
+            return deffont;
+        }
+
+        public static string GetFontSettingString(Font n)       // font may be null
+        {
+            return n == null ? "" : n.Name + '`' + n.SizeInPoints.ToStringInvariant() + '`' + n.Style.ToString();
         }
 
         private static FontFamily GetPrivateFontFamily(string name)

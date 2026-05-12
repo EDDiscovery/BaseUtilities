@@ -21,11 +21,40 @@ namespace BaseUtils
 {
     public partial class FontDialog : Form
     {
-        public FontFamily SelectedFont { get; set; } = null;
+        public string SelectedFont { get; set; } = "MS Sans Serif";
         public float SelectedSize { get; set; } = 8.25F;
         public FontStyle SelectedStyle { get; set; } = FontStyle.Regular;
+        
+        public void Set(Font fnt)
+        {
+            SelectedFont = fnt.Name;
+            SelectedSize = fnt.Size;
+            SelectedStyle = fnt.Style;
+        }
+
+        public Font GetFont()
+        {
+            return FontHandler.GetFont(SelectedFont, SelectedSize, SelectedStyle);
+        }
+
         public bool AllowStyleSelect { get; set; } = true;
+
         public string Saying { get; set; } = "The quick brown fox jumps over the lazy dog";
+
+
+        // Static font caller, null if Cancel.
+        public static Font SelectFont(System.Windows.Forms.Control parent, Font curfont)
+        {
+            var frm = new FontDialog();
+            frm.Set(curfont);
+            if (frm.ShowDialog() == DialogResult.OK)
+            {
+                return FontHandler.GetFont(frm.SelectedFont, frm.SelectedSize, frm.SelectedStyle);
+            }
+            else
+                return null;
+        }
+
 
         public FontDialog()
         {
@@ -36,7 +65,7 @@ namespace BaseUtils
         {
             base.OnLoad(e);
 
-            var fontFamilies = FontLoader.GetFontFamilies();
+            var fontFamilies = FontHandler.GetFontFamilies();
 
             int vpos = 0;
             foreach (var fontFamily in fontFamilies)
@@ -47,8 +76,8 @@ namespace BaseUtils
                     l.Text = fontFamily.Name + " : " + Saying;
                     l.AutoSize = true;
                     l.Location = new Point(4, vpos);
-                    l.Font = FontLoader.GetFont(fontFamily, 12, FontStyle.Regular);
-                    l.Tag = fontFamily;
+                    l.Font = FontHandler.GetFont(fontFamily, 12, FontStyle.Regular);
+                    l.Tag = fontFamily.Name;
                     panelFonts.Controls.Add(l);
                     if ( l.Height > 32)
                     {
@@ -57,8 +86,8 @@ namespace BaseUtils
                     }
                     else
                     {
-                        fontpos[fontFamily] = vpos;
-                        fontlab[fontFamily] = l;
+                        fontpos[fontFamily.Name] = vpos;
+                        fontlab[fontFamily.Name] = l;
                         vpos += 32;
                         l.Click += L_Click;
                        // System.Diagnostics.Debug.WriteLine($"Added font {fontFamily.Name} reg {fontFamily.IsStyleAvailable(FontStyle.Regular)} italic {fontFamily.IsStyleAvailable(FontStyle.Italic)} bold {fontFamily.IsStyleAvailable(FontStyle.Bold)} under {fontFamily.IsStyleAvailable(FontStyle.Underline)}  ");
@@ -88,8 +117,8 @@ namespace BaseUtils
 
             if (SelectedFont != null)
             {
-                labelFontName.Text = SelectedFont.Name;
-                labelSample.Font = FontLoader.GetFont(SelectedFont, SelectedSize, SelectedStyle);
+                labelFontName.Text = SelectedFont;
+                labelSample.Font = FontHandler.GetFont(SelectedFont, SelectedSize, SelectedStyle);
                 labelSample.Text = Saying;
 
                 fontlab[SelectedFont].BackColor = Color.FromArgb(0,192,0);
@@ -97,13 +126,16 @@ namespace BaseUtils
                 comboBoxSize.SelectedItem = v;
 
                 comboBoxStyle.Items.Clear();
-                if (SelectedFont.IsStyleAvailable(FontStyle.Regular))
+
+                var fontfamily = FontHandler.GetFontFamily(SelectedFont);
+
+                if (fontfamily.IsStyleAvailable(FontStyle.Regular))
                     comboBoxStyle.Items.Add("Regular");
-                if (SelectedFont.IsStyleAvailable(FontStyle.Bold))
+                if (fontfamily.IsStyleAvailable(FontStyle.Bold))
                     comboBoxStyle.Items.Add("Bold");
-                if (SelectedFont.IsStyleAvailable(FontStyle.Italic))
+                if (fontfamily.IsStyleAvailable(FontStyle.Italic))
                     comboBoxStyle.Items.Add("Italic");
-                if (SelectedFont.IsStyleAvailable(FontStyle.Underline))
+                if (fontfamily.IsStyleAvailable(FontStyle.Underline))
                     comboBoxStyle.Items.Add("Underline");
 
                 comboBoxStyle.SelectedItem = SelectedStyle.ToString();
@@ -124,7 +156,7 @@ namespace BaseUtils
             else
             {
                 labelFontName.Text = "Select font..";
-                labelFontName.Font = FontLoader.GetFont("MS Sans Serif", 12, FontStyle.Regular);
+                labelFontName.Font = FontHandler.GetFont("MS Sans Serif", 12, FontStyle.Regular);
                 labelSample.Text = ""; 
                 comboBoxSize.Enabled = false;
                 comboBoxStyle.Enabled = false;
@@ -137,7 +169,7 @@ namespace BaseUtils
             if (SelectedFont != null)
                 fontlab[SelectedFont].BackColor = Color.Transparent;
 
-            SelectedFont = ((Control)sender).Tag as FontFamily;
+            SelectedFont = ((Control)sender).Tag as string;
             SetFont();
             panelFonts.Refresh();
         }
@@ -145,7 +177,7 @@ namespace BaseUtils
         private void ComboBoxSize_SelectedIndexChanged(object sender, EventArgs e)
         {
             float v = float.Parse(comboBoxSize.SelectedItem.ToString());
-            var font = FontLoader.GetFont(SelectedFont, v, FontStyle.Regular);
+            var font = FontHandler.GetFont(SelectedFont, v, FontStyle.Regular);
             SelectedSize = font.Size;
             SetFont();
         }
@@ -159,43 +191,9 @@ namespace BaseUtils
             }
         }
 
-        private Dictionary<FontFamily, int> fontpos = new Dictionary<FontFamily, int>();
-        private Dictionary<FontFamily, Label> fontlab = new Dictionary<FontFamily, Label>();
+        private Dictionary<string, int> fontpos = new Dictionary<string, int>();
+        private Dictionary<string, Label> fontlab = new Dictionary<string, Label>();
 
-        // if you want the older dialog..
-        public static Font FontSelection(System.Windows.Forms.Control parent, Font curfont, int min = 4, int max = 36, bool musthaveregular = false)
-        {
-            using (var fd = new System.Windows.Forms.FontDialog())
-            {
-                fd.Font = curfont;
-                fd.MinSize = min;
-                fd.MaxSize = max;
-                System.Windows.Forms.DialogResult result;
-
-                try
-                {
-                    result = fd.ShowDialog(parent);
-                }
-                catch (ArgumentException ex)
-                {
-                    System.Windows.Forms.MessageBox.Show(ex.Message);
-                    return null;
-                }
-
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    if (!musthaveregular || fd.Font.Style == FontStyle.Regular)
-                    {
-                        return fd.Font;
-                    }
-                    else
-                        System.Windows.Forms.MessageBox.Show("Font does not have regular style");
-                }
-
-                return null;
-            }
-
-        }
-
+    
     }
 }
