@@ -24,6 +24,7 @@ namespace BaseUtils
         public string SelectedFont { get; set; } = "MS Sans Serif";
         public float SelectedSize { get; set; } = 8.25F;
         public FontStyle SelectedStyle { get; set; } = FontStyle.Regular;
+        public bool ShowPrivateFonts { get; set; } = false;
         
         public void Set(Font fnt)
         {
@@ -43,10 +44,11 @@ namespace BaseUtils
 
 
         // Static font caller, null if Cancel.
-        public static Font SelectFont(System.Windows.Forms.Control parent, Font curfont)
+        public static Font SelectFont(System.Windows.Forms.Control parent, Font curfont, bool showprivatefonts = false)
         {
             var frm = new FontDialog();
             frm.Set(curfont);
+            frm.ShowPrivateFonts = showprivatefonts;
             if (frm.ShowDialog() == DialogResult.OK)
             {
                 return FontHandler.GetFont(frm.SelectedFont, frm.SelectedSize, frm.SelectedStyle);
@@ -65,7 +67,7 @@ namespace BaseUtils
         {
             base.OnLoad(e);
 
-            var fontFamilies = FontHandler.GetFontFamilies();
+            var fontFamilies = FontHandler.GetFontFamilies(ShowPrivateFonts);
 
             int vpos = 0;
             foreach (var fontFamily in fontFamilies)
