@@ -76,10 +76,11 @@ namespace BaseUtils
         }
 
         // return all fonts, both installed and in memory fonts
-        public static List<FontFamily> GetFontFamilies()
+        public static List<FontFamily> GetFontFamilies(bool includeprivatefonts = false)
         {
             var list = new List<FontFamily>();
-            list.AddRange(PrivateFonts.Families);
+            if ( includeprivatefonts)
+                list.AddRange(PrivateFonts.Families);
             InstalledFontCollection installedFontCollection = new InstalledFontCollection();
             list.AddRange(installedFontCollection.Families);
             return list;
