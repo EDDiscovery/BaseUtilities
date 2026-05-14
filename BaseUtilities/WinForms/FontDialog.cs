@@ -25,7 +25,11 @@ namespace BaseUtils
         public float SelectedSize { get; set; } = 8.25F;
         public FontStyle SelectedStyle { get; set; } = FontStyle.Regular;
         public bool ShowPrivateFonts { get; set; } = false;
-        
+
+        public Color SelectedColor { get; set; } = Color.FromArgb(192,192, 192);
+        public Color HoverColor { get; set; } = Color.FromArgb(220, 220, 220);
+        public Color NormalColor { get; set; } = Color.FromArgb(240, 240, 240);
+
         public void Set(Font fnt)
         {
             SelectedFont = fnt.Name;
@@ -69,6 +73,11 @@ namespace BaseUtils
 
             var fontFamilies = FontHandler.GetFontFamilies(ShowPrivateFonts);
 
+            if (fontFamilies.Find(x => x.Name == SelectedFont) == null)
+            {
+                SelectedFont = fontFamilies.Find(x=>x.Name == "Arial")?.Name ?? fontFamilies[0].Name;
+            }
+
             int vpos = 0;
             foreach (var fontFamily in fontFamilies)
             {
@@ -78,10 +87,11 @@ namespace BaseUtils
                     l.Text = fontFamily.Name + " : " + Saying;
                     l.AutoSize = true;
                     l.Location = new Point(4, vpos);
+                    l.BackColor = NormalColor;
                     l.Font = FontHandler.GetFont(fontFamily, 12, FontStyle.Regular);
-                    l.Tag = fontFamily.Name;
+
                     panelFonts.Controls.Add(l);
-                    if ( l.Height > 32)
+                    if ( l.Height > 32)     // must add to size
                     {
                         panelFonts.Controls.Remove(l);
                       //  System.Diagnostics.Debug.WriteLine($"Rejected font {fontFamily.Name}");
@@ -91,6 +101,9 @@ namespace BaseUtils
                         fontpos[fontFamily.Name] = vpos;
                         fontlab[fontFamily.Name] = l;
                         vpos += 32;
+                        l.MouseEnter += (s1, e1) => { l.BackColor = ((string)l.Tag) == SelectedFont ? SelectedColor : HoverColor; };
+                        l.MouseLeave += (s2, e2) => { l.BackColor = ((string)l.Tag) == SelectedFont ? SelectedColor : NormalColor; };
+                        l.Tag = fontFamily.Name;
                         l.Click += L_Click;
                        // System.Diagnostics.Debug.WriteLine($"Added font {fontFamily.Name} reg {fontFamily.IsStyleAvailable(FontStyle.Regular)} italic {fontFamily.IsStyleAvailable(FontStyle.Italic)} bold {fontFamily.IsStyleAvailable(FontStyle.Bold)} under {fontFamily.IsStyleAvailable(FontStyle.Underline)}  ");
                     }
@@ -122,8 +135,8 @@ namespace BaseUtils
                 labelFontName.Text = SelectedFont;
                 labelSample.Font = FontHandler.GetFont(SelectedFont, SelectedSize, SelectedStyle);
                 labelSample.Text = Saying;
-
-                fontlab[SelectedFont].BackColor = Color.FromArgb(0,192,0);
+                fontlab[SelectedFont].BackColor = SelectedColor;
+                System.Diagnostics.Debug.WriteLine($"Applied selected to {fontlab[SelectedFont].Text}");
                 string v = SelectedSize.ToString("N0");
                 comboBoxSize.SelectedItem = v;
 
@@ -169,9 +182,12 @@ namespace BaseUtils
         private void L_Click(object sender, EventArgs e)
         {
             if (SelectedFont != null)
-                fontlab[SelectedFont].BackColor = Color.Transparent;
+            {
+                fontlab[SelectedFont].BackColor = NormalColor;
+            }
 
             SelectedFont = ((Control)sender).Tag as string;
+
             SetFont();
             panelFonts.Refresh();
         }
