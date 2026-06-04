@@ -195,7 +195,7 @@ namespace BaseUtils
         /// Bad if its a reference type, this means you get the same pointer to the reference in both
         /// </summary>
 
-        public static void CopyPropertiesFields(this Object to, Object from, BindingFlags bf = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
+        public static void CopyPropertiesFields(this Object to, Object from, BindingFlags bf = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                                                             bool properties = true, bool fields = true)
         {
             foreach (MemberInfo mi in from.GetType().GetMembers(bf))
@@ -236,6 +236,14 @@ namespace BaseUtils
                     }
                 }
             }
+        }
+
+        // is T the default of T?
+        public static bool IsDefault<T>(this T value) where T : struct
+        {
+            bool isDefault = value.Equals(default(T));
+
+            return isDefault;
         }
     }
 }
