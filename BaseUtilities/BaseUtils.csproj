@@ -1,197 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C657C881-F3E1-45BA-ACA5-966348010414}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BaseUtils</RootNamespace>
     <AssemblyName>BaseUtils</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;JSONBIGINT</DefineConstants>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;JSONBIGINT</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <AssemblyVersion>2.0</AssemblyVersion>
+    <AssemblyTitle>General</AssemblyTitle>
+    <AssemblyProduct>General</AssemblyProduct>
+    <AssemblyCBopyright>Copyright © 2026</AssemblyCBopyright>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="QuickJSON, Version=2.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.2.10.0\lib\net48\QuickJSON.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.IO.Compression.ZipFile, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\System.IO.Compression.ZipFile.4.3.0\lib\net46\System.IO.Compression.ZipFile.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.IO.Compression" />
+    <PackageReference Include="RJKJSoft.QuickJSON" Version="2.10.0" />
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Chars\CharObjectExtensions.cs" />
-    <Compile Include="CHash\ObjectActivator.cs" />
-    <Compile Include="CHash\AssemblyHelpers.cs" />
-    <Compile Include="Collections\CollectionStaticHelpers.cs" />
-    <Compile Include="Collections\DictionaryWithFirstLastKey.cs" />
-    <Compile Include="Collections\GenerationalDictionary.cs" />
-    <Compile Include="Collections\DictionaryOfDictionaries.cs" />
-    <Compile Include="Collections\DisposableDictionary.cs" />
-    <Compile Include="Collections\RangeLists.cs" />
-    <Compile Include="Collections\SortedDictionaryDuplicates.cs" />
-    <Compile Include="Collections\SortedListDuplicates.cs" />
-    <Compile Include="Collections\StackOfDictionaries.cs" />
-    <Compile Include="Conditions\Condition.cs" />
-    <Compile Include="Conditions\ConditionEntry.cs" />
-    <Compile Include="Conditions\ConditionListsCheckEval.cs" />
-    <Compile Include="Conditions\ConditionListsCheck.cs" />
-    <Compile Include="DDE\DDEServer.cs" />
-    <Compile Include="DebugTraceAndLogs\Debugger.cs" />
-    <Compile Include="Drawing\DrawingHelpers.cs" />
-    <Compile Include="Drawing\FontHandler.cs" />
-    <Compile Include="Functions\FunctionHandlers.cs" />
-    <Compile Include="Functions\Functions.cs" />
-    <Compile Include="Functions\FunctionsBasic.cs" />
-    <Compile Include="Conditions\ConditionLists.cs" />
-    <Compile Include="Functions\FunctionPersistentData.cs" />
-    <Compile Include="HTTP\HTTPExtensions.cs" />
-    <Compile Include="IconSet\IconGroup.cs" />
-    <Compile Include="IconSet\IconSet.cs" />
-    <Compile Include="Notifications\Notifications.cs" />
-    <Compile Include="Numbers\Matrix.cs" />
-    <Compile Include="Numbers\MathFunc.cs" />
-    <Compile Include="Python\pythonlaunch.cs" />
-    <Compile Include="Singletons\SingleInstance.cs" />
-    <Compile Include="Strings\StringBuilderExtensions.cs" />
-    <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
-    <Compile Include="Strings\StringObjectExtensionsClassification.cs" />
-    <Compile Include="Strings\StringObjectExtensionsReplacing.cs" />
-    <Compile Include="Strings\StringObjectExtensionsSlicing.cs" />
-    <Compile Include="Strings\StringObjectExtensionsArray.cs" />
-    <Compile Include="Strings\StringObjectExtensionsWords.cs" />
-    <Compile Include="Strings\StringObjectSearchTerms.cs" />
-    <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
-    <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
-    <Compile Include="Strings\StringObjectExtensionsLines.cs" />
-    <Compile Include="SVG\svg.cs" />
-    <Compile Include="Threads\TaskQueue.cs" />
-    <Compile Include="Ticks\MSticks.cs" />
-    <Compile Include="Translator\TranslatorMkII.cs" />
-    <Compile Include="Variables\PropertyInfo.cs" />
-    <Compile Include="WebServer\WebServerZipNode.cs" />
-    <Compile Include="WebServer\WebServerFileNode.cs" />
-    <Compile Include="WebServer\WebServerJSONDispatcher.cs" />
-    <Compile Include="WebServer\WebServerHTTPDispatcher.cs" />
-    <Compile Include="WebServer\WebServer.cs" />
-    <Compile Include="CHash\TemplateObjectExtensions.cs" />
-    <Compile Include="Strings\StringObjectExtensionsNumbers.cs" />
-    <Compile Include="Strings\StringObjectExtensionsSplitWord.cs" />
-    <Compile Include="Strings\StringObjectExtensionsQuotes.cs" />
-    <Compile Include="Strings\StringObjectExtensionsEscape.cs" />
-    <Compile Include="Strings\StringObjectExtensionsOneOf.cs" />
-    <Compile Include="Strings\StringObjectExtensionsLists.cs" />
-    <Compile Include="Variables\Variables.cs" />
-    <Compile Include="Dates\DateObjectExtensions.cs" />
-    <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />
-    <Compile Include="EMK\Point3D.cs" />
-    <Compile Include="EMK\Vector3D.cs" />
-    <Compile Include="Files\AssociateExe.cs" />
-    <Compile Include="Files\CSVWriteGrid.cs" />
-    <Compile Include="Files\LineReader.cs" />
-    <Compile Include="HTTP\BrowserInfo.cs" />
-    <Compile Include="HTTP\GitHubClass.cs" />
-    <Compile Include="HTTP\RemoteFile.cs" />
-    <Compile Include="HTTP\GitHubRelease.cs" />
-    <Compile Include="HTTP\HttpCom.cs" />
-    <Compile Include="Keys\EnhancedSendKeys.cs" />
-    <Compile Include="Keys\KeyboardState.cs" />
-    <Compile Include="Misc\CommandArgs.cs" />
-    <Compile Include="Files\FileHandles.cs" />
-    <Compile Include="Keys\KeyObjectExtensions.cs" />
-    <Compile Include="Misc\Maps2d.cs" />
-    <Compile Include="Numbers\EvalBaseFunctions.cs" />
-    <Compile Include="Numbers\Eval.cs" />
-    <Compile Include="Numbers\IEval.cs" />
-    <Compile Include="Numbers\EvalUserDefinedFunctions.cs" />
-    <Compile Include="Win32\NativeMethods.cs" />
-    <Compile Include="Process\Processes.cs" />
-    <Compile Include="DebugTraceAndLogs\AppTicks.cs" />
-    <Compile Include="Misc\SHA.cs" />
-    <Compile Include="Drawing\BitMapHelpers.cs" />
-    <Compile Include="WinForms\DataGridViewCell.cs" />
-    <Compile Include="WinForms\DataGridViewHelpersColumnSettingsJSON.cs" />
-    <Compile Include="WinForms\FontDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="WinForms\FontDialog.Designer.cs">
-      <DependentUpon>FontDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="WinForms\MenuItems.cs" />
-    <Compile Include="WinForms\ControlDragger.cs" />
-    <Compile Include="WinForms\ControlSplitter.cs" />
-    <Compile Include="WinForms\DataGridViewColumnControl.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="WinForms\DataGridViewBaseEnhancements.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Drawing\HotSpotMap.cs" />
-    <Compile Include="Drawing\ColorObjectExtensions.cs" />
-    <Compile Include="Numbers\DistanceParser.cs" />
-    <Compile Include="Numbers\LineStore.cs" />
-    <Compile Include="Numbers\NumberObjectExtensions.cs" />
-    <Compile Include="Files\CSVRead.cs" />
-    <Compile Include="Files\CSVWrite.cs" />
-    <Compile Include="Strings\StringCombinations.cs" />
-    <Compile Include="Strings\FieldBuilder.cs" />
-    <Compile Include="Files\FileHelpers.cs" />
-    <Compile Include="Files\LogToFile.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CHash\TypeHelpers.cs" />
-    <Compile Include="Strings\StringObjectExtensions.cs" />
-    <Compile Include="StringParsers\StringParser.cs" />
-    <Compile Include="DebugTraceAndLogs\TraceLog.cs" />
-    <Compile Include="Win32\Win32Constants.cs" />
-    <Compile Include="WinForms\DataGridViewHelpersColumnSettings.cs" />
-    <Compile Include="WinForms\DataGridViewHelpersFind.cs" />
-    <Compile Include="WinForms\DataGridViewHelpersSort.cs" />
-    <Compile Include="WinForms\DataGridViewHelpers.cs" />
-    <Compile Include="WinForms\WindowMovementControl.cs" />
-    <Compile Include="WinForms\ControlHelpers.cs" />
-    <Compile Include="XML\xml.cs" />
-    <Compile Include="ZIP\ZipExpand.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="WinForms\FontDialog.resx">
-      <DependentUpon>FontDialog.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
