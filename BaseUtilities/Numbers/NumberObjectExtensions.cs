@@ -54,6 +54,98 @@ public static class ObjectExtensionsNumbersBool
 
     #endregion
 
+    #region Hnum
+    public static bool Hnum(this double value, string[] postfixes, out string output)
+    {
+        if (postfixes == null || postfixes.Length < 6)
+        {
+            output = "Need prefixes and postfixes";
+        }
+        else if (double.IsNaN(value))
+        {
+            output = "Not a Number";
+        }
+        else if (double.IsNegativeInfinity(value))
+        {
+            output = "Negative Infinity";
+        }
+        else if (double.IsPositiveInfinity(value))
+        {
+            output = "Positive Infinity";
+        }
+        else if (value == 0)// like, doh.  can't log zero
+        {
+            output = "0";
+            return true;
+        }
+        else
+        {
+            string prefix = "";
+            if (value < 0)
+            {
+                prefix = postfixes[0] + " ";
+                value = -value;
+            }
+
+            double order = Math.Log10(value);
+
+            if (double.IsInfinity(order))
+            {
+                output = "Log10(0) Something badly wrong, should have been caught - report";
+            }
+            else if (order >= 12)        // trillions, say X.Y trillion
+            {
+                value /= 1E12;
+                output = prefix + value.ToStringInvariant("0.##") + " " + postfixes[1];
+            }
+            else if (order >= 9)        // billions, say X.Y billion
+            {
+                value /= 1E9;
+                output = prefix + value.ToStringInvariant("0.##") + " " + postfixes[2];
+            }
+            else if (order >= 6)        // millions, say X.Y millions
+            {
+                value /= 1E6;
+                output = prefix + value.ToStringInvariant("0.##") + " " + postfixes[3];
+            }
+            else if (order >= 4)        // 10000+ thousands, say X thousands
+            {
+                value = Math.Round(value / 1E3 * 10.0) / 10.0;   // in thousands
+                output = prefix + value.ToStringInvariant("0.#") + " " + postfixes[4];
+            }
+            else if (order >= 3)        // 1000-9999, say xx hundred
+            {
+                value = Math.Round(value / 1E2 * 10.0) / 10.0;   // in hundreds
+                int hundreds = (int)value;  // thousand parts
+                output = prefix + (hundreds / 10).ToStringInvariant() + " " + postfixes[4];
+                if (hundreds % 10 != 0) // hundred parts
+                    output += " " + (hundreds % 10).ToStringInvariant() + " " + postfixes[5];
+            }
+            else if (order >= 2)       // 100-999
+            {
+                output = prefix + value.ToStringInvariant("0");
+            }
+            else if (order >= 1)       // 10-99
+            {
+                output = prefix + value.ToStringInvariant("0");
+            }
+            else if (order >= 0)      //1-9
+                output = prefix + value.ToStringInvariant("0.#");
+            else
+            {                         // order is <0.  so minimum digits is 1
+                int digits = (int)(-order) + 1;
+                string s = "0." + new string('#', digits);
+                output = prefix + value.ToStringInvariant(s);
+            }
+
+
+            return true;
+        }
+
+        return false;
+    }
+    #endregion
+
     #region Int
 
     static public bool InvariantParse(this string s, out int i)
