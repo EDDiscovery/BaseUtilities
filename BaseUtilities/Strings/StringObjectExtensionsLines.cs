@@ -207,7 +207,7 @@ public static class ObjectExtensionsLineStrings
     }
 
     // Format into lines, breaking at linelimit.
-    public static string FormatIntoLines(this IEnumerable<string> list, int linelimit = 80, string newline = null)
+    public static string FormatIntoLines(this IEnumerable<string> list, int linelimit = 80, string newline = null, string seperator = ", ")
     {
         if (newline == null)
             newline = Environment.NewLine;
@@ -217,14 +217,16 @@ public static class ObjectExtensionsLineStrings
 
         foreach (var s in list)
         {
-            if (res.Length != lastlf)
-                res.Append(", ");
-            res.Append(s);
-            if (res.Length - lastlf >= linelimit)
+            if (res.Length-lastlf >= linelimit)
             {
+                res.Append(seperator);
                 res.Append(newline);
                 lastlf = res.Length;
             }
+            else if (res.Length > 0)
+                res.Append(seperator);
+
+            res.Append(s);
         }
 
         return res.ToNullSafeString();
