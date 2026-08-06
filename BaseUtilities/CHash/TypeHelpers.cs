@@ -245,5 +245,24 @@ namespace BaseUtils
 
             return isDefault;
         }
+
+        /// <summary>
+        /// Is type a dictionary
+        /// </summary>
+        /// <param name="type">type to check</param>
+        /// <returns>true if dictionary</returns>
+        public static bool IsDictionary(this Type type)
+        {
+            return typeof(System.Collections.IDictionary).IsAssignableFrom(type);
+        }
+        /// <summary>
+        /// Is type a enumerable
+        /// </summary>
+        /// <param name="type">type to check</param>
+        /// <returns>true if enumerable</returns>
+        public static bool IsEnumerable(this Type type)
+        {
+            return typeof(System.Collections.IEnumerable).IsAssignableFrom(type);
+        }
     }
 }

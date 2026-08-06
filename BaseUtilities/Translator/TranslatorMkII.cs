@@ -451,7 +451,7 @@ namespace BaseUtils
                 else
                 {
                     logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
-                    System.Diagnostics.Trace.WriteLine($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
+                    Debugger.TraceBreak($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     string errtext = "! " + english + " !";          // no id at all, use ! to indicate
                     translations[key] = errtext;
                     return errtext;

@@ -32,7 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="QuickJSON, Version=2.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.2.10.0\lib\net48\QuickJSON.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.3.0.0\lib\net48\QuickJSON.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -87,11 +87,11 @@
     <Compile Include="Python\pythonlaunch.cs" />
     <Compile Include="Singletons\SingleInstance.cs" />
     <Compile Include="Strings\StringBuilderExtensions.cs" />
+    <Compile Include="Strings\StringObjectExtensionsIEnumerable.cs" />
     <Compile Include="Strings\StringObjectExtensionsSearching.cs" />
     <Compile Include="Strings\StringObjectExtensionsClassification.cs" />
     <Compile Include="Strings\StringObjectExtensionsReplacing.cs" />
     <Compile Include="Strings\StringObjectExtensionsSlicing.cs" />
-    <Compile Include="Strings\StringObjectExtensionsArray.cs" />
     <Compile Include="Strings\StringObjectExtensionsWords.cs" />
     <Compile Include="Strings\StringObjectSearchTerms.cs" />
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
@@ -101,6 +101,7 @@
     <Compile Include="Threads\TaskQueue.cs" />
     <Compile Include="Ticks\MSticks.cs" />
     <Compile Include="Translator\TranslatorMkII.cs" />
+    <Compile Include="UnitTests\UnitTests.cs" />
     <Compile Include="Variables\PropertyInfo.cs" />
     <Compile Include="WebServer\WebServerZipNode.cs" />
     <Compile Include="WebServer\WebServerFileNode.cs" />
@@ -113,7 +114,6 @@
     <Compile Include="Strings\StringObjectExtensionsQuotes.cs" />
     <Compile Include="Strings\StringObjectExtensionsEscape.cs" />
     <Compile Include="Strings\StringObjectExtensionsOneOf.cs" />
-    <Compile Include="Strings\StringObjectExtensionsLists.cs" />
     <Compile Include="Variables\Variables.cs" />
     <Compile Include="Dates\DateObjectExtensions.cs" />
     <Compile Include="DebugTraceAndLogs\ExceptionCatcher.cs" />

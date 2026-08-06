@@ -344,7 +344,7 @@ namespace BaseUtils
         // For all in the Values list, fill in data given from fields in O if possible
         // stoptext allows you to isolate the root part. Normally ["_","["]
 
-        public void GetValuesIndicated(Object o, Type[] propexcluded, int maxdepth, string[] stoptext)
+        public void GetValuesIndicated(Object o, HashSet<Type> propexcluded, int maxdepth, string[] stoptext)
         {
             Type jtype = o.GetType();
 
@@ -384,7 +384,7 @@ namespace BaseUtils
         // onlyenumerate means pick only top level fields/properties of name
         // ensuredoublerep means a double will always have a . in it, to make sure the reader knows its a double
 
-        public void AddPropertiesFieldsOfClass( Object o, string prefix , Type[] propexcluded, 
+        public void AddPropertiesFieldsOfClass( Object o, string prefix , HashSet<Type> propexcluded, 
                                                 int maxdepth, HashSet<string> onlyenumerate = null, bool ensuredoublerep = false, string classsepar = "_",
                                                 System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)      
         {
@@ -418,7 +418,7 @@ namespace BaseUtils
             }
         }
 
-        public void AddDataOfType(Object o, Type rettype, string name, int depth, Type[] classtypeexcluded = null , bool ensuredoublerep = false, string classsepar = "_",
+        public void AddDataOfType(Object o, Type rettype, string name, int depth, HashSet<Type> classtypeexcluded = null , bool ensuredoublerep = false, string classsepar = "_",
                                     System.Reflection.BindingFlags bf = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
         {
             if (depth < 0)      // 0, list, class, object, .. limit depth
@@ -432,13 +432,17 @@ namespace BaseUtils
                 rettype = rettype.GetGenericArguments()[0];
             }
 
-           // System.Diagnostics.Debug.WriteLine("Object " + name + " " + rettype.Name);
+            //System.Diagnostics.Debug.WriteLine($"AddDataOfType {rettype.Name} : {name} {(o==null ? "Null":"")}");
 
             System.Globalization.CultureInfo ct = System.Globalization.CultureInfo.InvariantCulture;
 
-            try // just to make sure a strange type does not barfe it
+            try 
             {
-                if (typeof(System.Collections.IDictionary).IsAssignableFrom(rettype))
+                if (rettype.Name.Equals("String"))      // intercept string as its an enumerable
+                {
+                    values[name] = o == null ? "" : (string)o;
+                }
+                else if (rettype.IsDictionary())
                 {
                     int count = 0;
                     if (o != null)
@@ -459,7 +463,7 @@ namespace BaseUtils
 
                     values[name + classsepar + "Count"] = values[name + "Count"] = count.ToString(ct);                           // older style for scripts
                 }
-                else if (typeof(System.Collections.IList).IsAssignableFrom(rettype))        // this includes Arrays
+                else if (rettype.IsEnumerable())  
                 {
                     int count = 0;
                     if (o != null)
@@ -485,10 +489,6 @@ namespace BaseUtils
                 {
                     values[name] = "";
                 }
-                else if (o is string)     // string is a class, so intercept first
-                {
-                    values[name] = o as string;
-                }
                 else if (rettype.IsClass)
                 {
                     foreach (System.Reflection.PropertyInfo pi in rettype.GetProperties(bf))
@@ -507,6 +507,15 @@ namespace BaseUtils
                     {
                         AddDataOfType(fi.GetValue(o), fi.FieldType, name + classsepar + fi.Name, depth-1 , classtypeexcluded, ensuredoublerep, classsepar, bf);
                     }
+
+                    var mi = rettype.GetMember("ToString", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly);
+                    if ( mi.Length>0)
+                    {
+                        //System.Diagnostics.Debug.WriteLine($"AddDataOfType {rettype.Name} {mi[0].DeclaringType.Name}");
+                        string p = o.ToString();
+                        values[name] = p;
+                    }
+
                 }
                 else if (rettype.IsPrimitive || rettype == typeof(DateTime))
                 {
@@ -517,8 +526,12 @@ namespace BaseUtils
                         string vt = ensuredoublerep ? ((double)v).ToStringG17InvariantWithDot() : ((double)v).ToString(ct);
                         values[name] = vt;
                     }
+                    else if (v is uint)
+                        values[name] = ((uint)v).ToString(ct);
                     else if (v is int)
                         values[name] = ((int)v).ToString(ct);
+                    else if (v is ulong)
+                        values[name] = ((ulong)v).ToString(ct);
                     else if (v is long)
                         values[name] = ((long)v).ToString(ct);
                     else if (v is bool)

@@ -18,10 +18,10 @@ namespace BaseUtils
 {
     // use instead of ASSERT and it breaks on the caller not the callee..
 
-    public static class DebuggerHelpers
+    public static class Debugger
     {
-        public static int OutputLevel { get; set; } = 0;
         public static string OutputControl { get; set; } = "";
+        public static bool StopOnTraceBreak { get; set; } = false;
 
 
         [System.Diagnostics.Conditional("DEBUG")]
@@ -69,16 +69,18 @@ namespace BaseUtils
                 System.Diagnostics.Debug.Write(s);
         }
         [System.Diagnostics.Conditional("DEBUG")]
-        public static void DO(this string s, int level = 0)
+        public static void DP(string part, string s)
         {
-            if (level >= OutputLevel)
+            if (OutputControl.Contains(part + ";"))
                 System.Diagnostics.Debug.WriteLine(s);
         }
-        [System.Diagnostics.Conditional("DEBUG")]
-        public static void DW(this string s, int level = 0)
+
+        [System.Diagnostics.DebuggerHidden]
+        public static void TraceBreak(this string s, bool disablebreak = false)
         {
-            if (level >= OutputLevel)
-                System.Diagnostics.Debug.Write(s);
+            System.Diagnostics.Trace.WriteLine(s);
+            if ( StopOnTraceBreak && disablebreak == false)
+                System.Diagnostics.Debugger.Break();
         }
     }
 }

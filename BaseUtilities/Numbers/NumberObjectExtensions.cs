@@ -478,6 +478,17 @@ public static class ObjectExtensionsNumbersBool
 
     #region Arrays and Lists
 
+    // product a separ listed set of numbers in list.. 
+    public static string ToStringFromArray(this IEnumerable<int> intlist, string separ)
+    {
+        string outstr = "";
+        foreach(var i in intlist)
+        {
+            outstr = outstr.AppendPrePad(i.ToStringInvariant(), separ);
+        }
+        return outstr;
+    }
+
     // fill array from comma separ string, with defined length and defined default
     static public int[] RestoreArrayFromString(this string plist, int def, int length)      
     {

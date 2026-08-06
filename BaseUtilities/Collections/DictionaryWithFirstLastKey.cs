@@ -23,6 +23,14 @@ namespace BaseUtils
 
     public class DictionaryWithFirstLastKey<TKey, TValue> : Dictionary<TKey,TValue>
     {
+        public DictionaryWithFirstLastKey() : base()
+        {
+        }
+
+        public DictionaryWithFirstLastKey(IEqualityComparer<TKey> comparer) : base(comparer)
+        {
+        }
+
         public TKey FirstKey { get; set; } = default(TKey);     // first one added
         public TKey LastKey { get; set; } = default(TKey);      // last one
 

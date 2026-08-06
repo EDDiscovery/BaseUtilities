@@ -27,7 +27,19 @@ namespace BaseUtils
         public uint Generation { get; private set; } = 0;
         public uint UpdatesAtThisGeneration { get; private set; } = 0;
 
-        private Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>> dictionary = new Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>>();
+        private Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>> dictionary;
+        private IEqualityComparer<TKey> comparer = null;
+
+        public GenerationalDictionary()
+        {
+            dictionary = new Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>>();
+        }
+
+        public GenerationalDictionary(IEqualityComparer<TKey> comparer)
+        {
+            this.comparer = comparer;
+            dictionary = new Dictionary<TKey, DictionaryWithFirstLastKey<uint, TValue>>(comparer);
+        }
 
         public void NextGeneration()
         {
@@ -66,6 +78,7 @@ namespace BaseUtils
             }
             return v;
         }
+
 
         public Dictionary<TKey, TValue> Get(uint generation, Predicate<TValue> predicate = null)
         {
@@ -141,7 +154,7 @@ namespace BaseUtils
 
         public Dictionary<TKey, TValue> GetLast(Predicate<TValue> predicate = null)
         {
-            Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>();
+            Dictionary<TKey, TValue> ret = new Dictionary<TKey, TValue>(comparer);
             if (predicate == null)
             {
                 foreach (var kvp in dictionary)

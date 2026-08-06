@@ -15,6 +15,7 @@
  */
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -159,6 +160,21 @@ namespace BaseUtils
                 }
             }
             return null;
+        }
+
+        public static List<MethodInfo> GetMethods(this Assembly assembly, Predicate<MethodInfo> predicate, BindingFlags bf = BindingFlags.Public | BindingFlags.Static)
+        {
+            List<MethodInfo> methods = new List<MethodInfo>();
+            var etype = assembly.GetTypes();
+            foreach( var type in etype)
+            {
+                foreach( var methodinfo in type.GetMethods(bf))
+                {
+                    if (predicate(methodinfo))
+                        methods.Add(methodinfo);
+                }
+            }
+            return methods;
         }
     }
 }

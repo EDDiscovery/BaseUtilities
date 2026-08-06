@@ -13,6 +13,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public static partial class ObjectExtensionsStrings
 {
@@ -55,5 +57,77 @@ public static partial class ObjectExtensionsStrings
         return (number == 1) ? s.Substring(startpos) : null;      // if only 1 left, the EOL is the end char, so return
     }
 
+    static public string Join(this string[] array, char text)
+    {
+        return string.Join(new string(new char[] { text }), array);
+    }
+    static public string Join(this string[] array, string text)
+    {
+        return string.Join(text, array);
+    }
+
+    // both are separ strings (ssksk;skjsks; etc) is all of contains in semilist.
+    public static bool ContainsAllItemsInList(this string semilist, string contains, char separ)
+    {
+        string[] sl = semilist.SplitNoEmptyStartFinish(separ);
+        string[] cl = contains.SplitNoEmptyStartFinish(separ);
+        foreach (var s in cl)
+        {
+            if (Array.IndexOf(sl, s) < 0)
+                return false;
+        }
+
+        return true;
+
+    }
+
+    public static bool MatchesAllItemsInList(this string semilist, string contains, char separ)
+    {
+        string[] sl = semilist.SplitNoEmptyStartFinish(separ);
+        string[] cl = contains.SplitNoEmptyStartFinish(separ);
+
+        if (sl.Length == cl.Length)
+        {
+            foreach (var s in cl)
+            {
+                if (Array.IndexOf(sl, s) < 0)
+                    return false;
+            }
+
+            return true;
+        }
+        else
+            return false;
+    }
+
+    public static string ToStringCommaList(this System.Collections.Generic.List<string> list, int mincount = 100000, bool escapectrl = false, bool quoteifempty = true, string separ = ", ", int max = -1)
+    {
+        string r = "";
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (i >= mincount && list[i].Length == 0)           // if >= minimum, and zero
+            {
+                int j = i + 1;
+                while (j < list.Count && list[j].Length == 0)   // if all others are zero
+                    j++;
+
+                if (j == list.Count)        // if so, stop
+                    break;
+            }
+
+            if (i > 0)
+                r += separ;
+
+            if (escapectrl)
+                r += list[i].EscapeControlChars().QuoteString(comma: true, empty: quoteifempty);
+            else
+                r += list[i].QuoteString(comma: true, empty: quoteifempty);
+
+            if (--max == 0)
+                break;
+        }
+
+        return r;
+    }
 }
 
