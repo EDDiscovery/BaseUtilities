@@ -378,6 +378,7 @@ namespace BaseUtils
         }
 
         // of a class, enumerate and store values in variables
+        // null variables are expressed as empty string
         // prefix is used on all variables created
         // propexcluded knocks out types selected
         // maxdepth of recursion
@@ -513,7 +514,7 @@ namespace BaseUtils
                     {
                         //System.Diagnostics.Debug.WriteLine($"AddDataOfType {rettype.Name} {mi[0].DeclaringType.Name}");
                         string p = o.ToString();
-                        values[name] = p;
+                        values[name] = p ?? "";         // it may return null, nulls are empty in our land
                     }
 
                 }
