@@ -81,6 +81,16 @@ namespace BaseUtils.UnitTests
             return this;
         }
         [System.Diagnostics.DebuggerHidden()]
+        public Check IsApprox(double value,double percent = 0.1)
+        {
+            if (!Test(CheckObject != null && ((double)CheckObject).ApproxEqualsPercent(value,percent)))      // can't be null, should use IsNull
+            {
+                System.Diagnostics.Debug.WriteLine($"Unit Test Double check failed {(double)CheckObject} vs {value}");
+                System.Diagnostics.Debugger.Break();
+            }
+            return this;
+        }
+        [System.Diagnostics.DebuggerHidden()]
         public Check Contains(string s, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
         {
             if (!Test(CheckObject is string && ((string)CheckObject).IndexOf(s,sc)>=0))      // can't be null, should use IsNull
@@ -139,6 +149,7 @@ namespace BaseUtils.UnitTests
         {
             BaseUtils.UnitTests.Check.Section(s);
         }
+
         [System.Diagnostics.DebuggerHidden()]
         public static void Check(dynamic x)
         {
@@ -146,6 +157,7 @@ namespace BaseUtils.UnitTests
             if (!chk.Test(x == true))
                 System.Diagnostics.Debugger.Break();
         }
+        
         [System.Diagnostics.DebuggerHidden()]
         public static Check CheckThat(object o)
         {
