@@ -18,42 +18,6 @@ using System.Linq;
 
 public static class ObjectExtensionsNumbersBool
 {
-    #region Evaluator - cheap and nasty
-
-    public static bool Eval(this string ins, out string res)        // true, res = eval.  false, res = error
-    {
-        System.Data.DataTable dt = new System.Data.DataTable();
-
-        res = "";
-
-        try
-        {
-            var v = dt.Compute(ins, "");
-            System.Type t = v.GetType();
-            //System.Diagnostics.Debug.WriteLine("Type return is " + t.ToString());
-            if (v is double)
-                res = ((double)v).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            else if (v is System.Decimal)
-                res = ((System.Decimal)v).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            else if (v is int)
-                res = ((int)v).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            else
-            {
-                res = "Expression is Not A Number";
-                return false;
-            }
-
-            return true;
-        }
-        catch
-        {
-            res = "Expression does not evaluate";
-            return false;
-        }
-    }
-
-    #endregion
-
     #region Hnum
     public static bool Hnum(this double value, string[] postfixes, out string output)
     {

@@ -103,6 +103,44 @@ public static class ObjectExtensionsStringsCompare
         return ev;
     }
 
+    // how many runs match between the two strings
+    public static int ApproxMatch(this string str, string other, int min)       
+    {
+        int total = 0;
+        for (int i = 0; i < str.Length; i++)
+        {
+            for (int j = 0; i < str.Length && j < other.Length; j++)
+            {
+                if (str[i] == other[j])
+                {
+                    int i2 = i + 1, j2 = j + 1;
+
+                    int count = 1;
+                    while (i2 < str.Length && j2 < other.Length && str[i2] == other[j2])
+                    {
+                        count++;
+                        i2++;
+                        j2++;
+                    }
+
+                    //if ( count>1)  System.Diagnostics.Debug.WriteLine("Match " + str.Substring(i) + " vs " + other.Substring(j) + " " + count);
+                    if (count >= min)   // at least this number of chars in a row.
+                    {
+                        total += count;
+                        i += count;
+                        //System.Diagnostics.Debug.WriteLine(" left " + str.Substring(i));
+                    }
+                }
+            }
+        }
+
+        //System.Diagnostics.Debug.WriteLine("** TOTAL " + str + " vs " + other + " " + total);
+
+        return total;
+    }
+
+
+
     // these accept s = null without barfing
 
     public static bool EqualsIIC(this string s, string other)
@@ -117,6 +155,7 @@ public static class ObjectExtensionsStringsCompare
     {
         return s != null && s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
     }
+
 
 }
 

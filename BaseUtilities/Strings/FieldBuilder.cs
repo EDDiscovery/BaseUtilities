@@ -18,21 +18,21 @@ namespace BaseUtils
     static public class FieldBuilder
     {
         // first object = format string
-        // second object = data value
-        //
-        //      if data value null, or string is empty (unless showblanks is used) : field is removed and not shown
-        //
-        //      if data value is string, format = prefix;postfix
-        //      if data value is bool, format = false text;true text
-        //      if data value is double/float, format = prefix;postfix[;floatformat]    format = "0" if not present    
-        //      if data value is int/long, format = prefix;postfix [;int format]        format = "0" if not present
-        //      if data value is date time, format = prefix;postfix [;date format]      format = "g" if not present
-        //      if data value is enum, format = prefix;postfix 
-        //
-        //      if prefix starts with a <, no ,<spc> pad
+        //     format string = <prefix>;<postfix> [;<format>] [;<condition>] [;<option>]
+        //          if prefix starts with a <, no ,<spc> pad
+        //     <format> = for string, numbers/datetime/ classes/enum 
+        //              either ,<fieldwidth>:<format> or <format> or ,<fieldwidth>
+        //              <fieldwidth> is positive left pad, negative right pad.  You must use the comma in front to tell it you want field width
+        //              <format> is a standard numeric or datetime c# format https://learn.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings
+        //              example: string ",20" enums ",20" numbers ",20:N0" or "N0"
+        //              default is 0 for numbers or g for datetime
+        //     <condition> = only for numbers or strings. Uses Eval engine, must compute to 1 or 0, string/number is passed in as 'Value'
+        //     <option> = SCF means split caps full on output. Use comma to separate options
         //
         // or first object = NewPrefix only, define next pad to use, then go back to standard pad
-
+        //
+        // second object = data value
+        //      if data value null, or result is empty (unless showblanks is used), or condition if given fails : field is removed and not shown
 
         public class NewPrefix   // indicator class, use this as first item to indicate the next prefix to use.  After one use, its discarded.
         {
@@ -85,146 +85,157 @@ namespace BaseUtils
                     overrideprefix = (first as NewPrefix).prefix;
                     indexn++;
                 }
-                else if ( first is string )     // normal, string
+                else if ( first is string ctrlstring )     // normal, string
                 {
                     System.Diagnostics.Debug.Assert(indexn + 2 <= values.Length,"Field Builder missing parameter");
 
-                    string[] fieldnames = ((string)first).Split(';');
-
                     object value = values[indexn + 1];
-
-                    string pad = padchars;
-                    if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
-                    {
-                        fieldnames[0] = fieldnames[0].Substring(1);
-                        pad = "";
-                    }
 
                     if (value != null)
                     {
-                        if (value is bool)
+                        Type t = value.GetType();
+                        // field 3 is format, field 4 is condition.
+
+                        string[] fieldnames = ctrlstring.Split(';');
+                        string cond = fieldnames.Length >= 4 && fieldnames[3].Length>0 ? fieldnames[3] : null;
+                        string output = null;
+                        char fc = t.Name[0];
+
+                        if (fc == 'S' && t.Name.Equals("String"))
+                        {
+                            string s = (string)value;
+                            if (cond == null || Eval.EvalBool(cond, s))
+                            {
+                                if (fieldnames.Length >= 3)
+                                    output = string.Format("{0" + fieldnames[2] + "}", s);
+                                else
+                                    output = s;
+                            }
+                        }
+                        else if (fc == 'B' && t.Name.Equals("Boolean"))
                         {
                             if (fieldnames.Length != 2)
                             {
-                                sb.AppendPrePad("!!REPORT ERROR IN FORMAT STRING " + first + "!!", (overrideprefix.Length > 0) ? overrideprefix : pad);
                                 System.Diagnostics.Trace.WriteLine("*** FIELD BUILDER ERROR" + first);
                             }
                             else
                             {
-                                string s = ((bool)value) ? fieldnames[1] : fieldnames[0];
-                                sb.AppendPrePad(s, (overrideprefix.Length > 0) ? overrideprefix : pad);
-                                overrideprefix = string.Empty;
+                                output = ((bool)value) ? fieldnames[1] : fieldnames[0];
                             }
                         }
                         else
                         {
-                            string format = fieldnames.Length >= 3 ? fieldnames[2] : "0";
+                            string format = null;
 
-                            string output;
-                            if (value is string)
+                            if (fieldnames.Length >= 3 && fieldnames[2].Length>0)
                             {
-                                output = (string)value;
+                                if (fieldnames[2][0] == ',')
+                                    format = "{0" + fieldnames[2] + "}";
+                                else
+                                    format = "{0:" + fieldnames[2] + "}";
                             }
-                            else if (value is int)
+
+                            if (t.IsPrimitive)
                             {
-                                output = ((int)value).ToString(format, ct);
+                                if (fc == 'I' && t.Name.Equals("Int32"))
+                                {
+                                    var v = ((int)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (fc == 'I' && t.Name.Equals("Int64"))
+                                {
+                                    var v = ((long)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (fc == 'D' && t.Name.Equals("Double"))
+                                {
+                                    double v = ((double)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (fc == 'S' && t.Name.Equals("Single"))
+                                {
+                                    var v = ((float)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (t.Name.Equals("UInt32"))
+                                {
+                                    var v = ((uint)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (t.Name.Equals("UInt64"))
+                                {
+                                    var v = ((ulong)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (t.Name.Equals("UInt16"))
+                                {
+                                    var v = ((ushort)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (t.Name.Equals("Int16"))
+                                {
+                                    var v = ((short)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else if (t.Name.Equals("UInt8"))
+                                {
+                                    var v = ((byte)value);
+                                    if (cond == null || Eval.EvalBool(cond, v.ToStringInvariant()))
+                                        output = format == null ? v.ToString(ct) : string.Format(ct, format, v);
+                                }
+                                else
+                                    System.Diagnostics.Debug.Assert(false, $"Unknown primitive type {t.Name}");
                             }
-                            else if (value is long)
+                            else if (t.Name.Equals("DateTime"))
                             {
-                                output = ((long)value).ToString(format, ct);
-                            }
-                            else if (value is double)
-                            {
-                                output = ((double)value).ToString(format, ct);
-                            }
-                            else if (value is float)
-                            {
-                                output = ((float)value).ToString(format, ct);
-                            }
-                            else if (value is ushort)
-                            {
-                                output = ((ushort)value).ToString(format, ct);
-                            }
-                            else if (value is short)
-                            {
-                                output = ((short)value).ToString(format, ct);
-                            }
-                            else if (value is uint)
-                            {
-                                output = ((uint)value).ToString(format, ct);
-                            }
-                            else if (value is ulong)
-                            {
-                                output = ((ulong)value).ToString(format, ct);
-                            }
-                            else if (value is double?)
-                            {
-                                output = ((double?)value).Value.ToString(format,ct);
-                            }
-                            else if (value is float?)
-                            {
-                                output = ((float?)value).Value.ToString(format,ct);
-                            }
-                            else if (value is int?)
-                            {
-                                output = ((int?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is uint?)
-                            {
-                                output = ((uint?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is ushort?)
-                            {
-                                output = ((ushort?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is short?)
-                            {
-                                output = ((short?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is long?)
-                            {
-                                output = ((long?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is ulong?)
-                            {
-                                output = ((ulong?)value).Value.ToString(format, ct);
-                            }
-                            else if (value is DateTime)
-                            {
-                                format = fieldnames.Length >= 3 ? fieldnames[2] : "g";
-                                output = ((DateTime)value).ToString(format,ct);
+                                if (format == null)
+                                    output = ((DateTime)value).ToString(ct);
+                                else
+                                    output = ((DateTime)value).ToString(format, ct);
                             }
                             else
                             {
-                                Type t = value.GetType();
-                                if (t.BaseType.Name.Equals("Enum"))
-                                {
-                                    var ev = Activator.CreateInstance(t);
-                                    ev = value;
-                                    output = ev.ToString();
-                                }
-                                else
-                                {
-                                    output = "";
-                                    System.Diagnostics.Debug.Assert(false);
-                                }
+                                //System.Diagnostics.Debug.WriteLine($"Fieldbuilder ToString for type {value.GetType().Name}");
+                                output = format == null ? value.ToString() : string.Format(ct, format, value);
                             }
+                        }
 
-                            if (output.Length > 0 || showblanks)    // if output not blank, or show blanks
+                        if ( output != null && (output.Length > 0 || showblanks) )   // if output not null, and has characters or show blanks
+                        {
+                            if (printed)      // if not first, separ
                             {
-                                if (printed)      // if not first, separ
+                                string pad = padchars;
+                                if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
                                 {
-                                    sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
+                                    fieldnames[0] = fieldnames[0].Substring(1);
+                                    pad = "";
                                 }
 
-                                sb.Append(fieldnames[0]);       // print first field
-                                sb.Append(output);              // print output
-                                if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
-                                    sb.Append(fieldnames[1]);
-
-                                overrideprefix = string.Empty;
-                                printed = true;
+                                sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
                             }
+
+                            sb.Append(fieldnames[0]);       // print first field
+
+                            if (fieldnames.Length>=5)
+                            {
+                                if (fieldnames[4].Contains("SCF"))
+                                    output = output.SplitCapsWordFull();
+                            }
+
+                            sb.Append(output);              // print output
+                            if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
+                                sb.Append(fieldnames[1]);
+
+                            overrideprefix = string.Empty;
+                            printed = true;
                         }
                     }
 

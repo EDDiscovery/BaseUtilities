@@ -103,48 +103,5 @@ public static partial class ObjectExtensionsStrings
         return false;
     }
 
-    public static bool EqualsAlphaNumOnlyNoCase(this string left, string right)
-    {
-        left = left.Replace("_", "").Replace(" ", "").ToLowerInvariant();        // remove _, spaces and lower
-        right = right.Replace("_", "").Replace(" ", "").ToLowerInvariant();
-        return left.Equals(right);
-    }
-
-    public static int ApproxMatch(this string str, string other, int min)       // how many runs match between the two strings
-    {
-        int total = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            for (int j = 0; i < str.Length && j < other.Length; j++)
-            {
-                if (str[i] == other[j])
-                {
-                    int i2 = i + 1, j2 = j + 1;
-
-                    int count = 1;
-                    while (i2 < str.Length && j2 < other.Length && str[i2] == other[j2])
-                    {
-                        count++;
-                        i2++;
-                        j2++;
-                    }
-
-                    //if ( count>1)  System.Diagnostics.Debug.WriteLine("Match " + str.Substring(i) + " vs " + other.Substring(j) + " " + count);
-                    if (count >= min)   // at least this number of chars in a row.
-                    {
-                        total += count;
-                        i += count;
-                        //System.Diagnostics.Debug.WriteLine(" left " + str.Substring(i));
-                    }
-                }
-            }
-        }
-
-        //System.Diagnostics.Debug.WriteLine("** TOTAL " + str + " vs " + other + " " + total);
-
-        return total;
-    }
-
-
 }
 

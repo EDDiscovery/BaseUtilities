@@ -33,14 +33,11 @@ public static class ObjectExtensionsStringsNumbers
     {
         return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
-    public static string ToStringInvariant(this byte v)
-    {
-        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-    }
     public static string ToStringInvariant(this uint v, string format)
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
     }
+
     public static string ToStringInvariant(this long v)
     {
         return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -57,6 +54,30 @@ public static class ObjectExtensionsStringsNumbers
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
     }
+
+
+    public static string ToStringInvariant(this short v)
+    {
+        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+    public static string ToStringInvariant(this short v, string format)
+    {
+        return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
+    }
+    public static string ToStringInvariant(this ushort v)
+    {
+        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+    public static string ToStringInvariant(this ushort v, string format)
+    {
+        return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    public static string ToStringInvariant(this byte v)
+    {
+        return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     public static string ToStringIntValue(this bool v)
     {
         return v ? "1" : "0";
@@ -65,6 +86,7 @@ public static class ObjectExtensionsStringsNumbers
     {
         return (v.HasValue) ? (v.Value ? "1" : "0") : "";
     }
+
     public static string ToStringInvariant(this double v, string format)
     {
         return v.ToString(format, System.Globalization.CultureInfo.InvariantCulture);

@@ -96,6 +96,44 @@ namespace BaseUtils
                 return false;
             }
         }
+
+        // return does it work, and the result. Function is passed "Value" as the input var
+        static public bool EvalBool(string s, string inputvar, out bool v)
+        {
+            Variables vars = new Variables();
+            vars["Value"] = inputvar;
+            Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
+            var obj = ev.Evaluate(s);
+            if (obj is long res)
+            {
+                v =  res != 0;
+                return true;
+            }
+            else
+            {
+                System.Diagnostics.Trace.WriteLine($"EvalBool error condition {s} failed with value {inputvar}");
+                v = false;
+                return false;
+            }
+        }
+
+        // return true only if works and result is true. Function is passed "Value" as the input var
+        static public bool EvalBool(string s, string inputvar)
+        {
+            Variables vars = new Variables();
+            vars["Value"] = inputvar;
+            Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
+            var obj = ev.Evaluate(s);
+            if (obj is long res)
+            {
+                return res != 0;
+            }
+            else
+            {
+                System.Diagnostics.Trace.WriteLine($"EvalBool error condition {s} failed with value {inputvar}");
+                return false;
+            }
+        }
         static public bool EvalBFDouble(string s, Variables vars, out double v)
         {
             Eval ev = new Eval(vars, new BaseFunctionsForEval(), checkend: true, allowfp: true, allowstrings: true);
