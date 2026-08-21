@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright 2016 - 2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,8 +10,6 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
 
 using System;
@@ -24,50 +22,6 @@ using System.Windows.Forms;
 public static class KeyObjectExtensions
 {
     public const Keys NumEnter = (Keys)1024;    // special keys code for numenter
-
-    private static Tuple<string, Keys>[] oemtx = new Tuple<string, Keys>[]      // need these due to repeats of codes in the keys enum
-    {                                                                           // just using tostring gets you sometimes these, sometimes the oem names
-        new Tuple<string,Keys>("Semicolon", Keys.Oem1),     // 186d
-        new Tuple<string,Keys>("Question", Keys.Oem2),      // 191 OemQuestion
-        new Tuple<string,Keys>("Tilde", Keys.Oem3),         // 192 Oemtilde
-        new Tuple<string,Keys>("OpenBrackets", Keys.Oem4),  // 219 OemOpenBrackets
-        new Tuple<string,Keys>("Pipe", Keys.Oem5),          // 220 OemPipe
-        new Tuple<string,Keys>("Equals", Keys.Oemplus),     // 187 need to call it equals to avoid confusion with num key plus
-        new Tuple<string,Keys>("CloseBrackets", Keys.Oem6), // 221 OemCloseBrackets
-        new Tuple<string,Keys>("Quotes", Keys.Oem7),        // 222 OenQuotes
-        new Tuple<string,Keys>("Backquote", Keys.Oem8),     // 223 oem8 does not have an alias, but make one up for consistency
-        new Tuple<string,Keys>("OemClear", Keys.OemClear),  // 254 clashes with clear, so give it a longer name
-        new Tuple<string,Keys>("PageDown", Keys.Next),      // 34 rename next to pagedown which it shares a name with.
-                                                            // Oem102 = OemBackslash
-    };
-
-
-
-    public static void VerifyKeyOE()//keep for testing
-    {
-        foreach (string kn in Enum.GetNames(typeof(Keys)))
-        {
-            Keys k = (Keys)Enum.Parse(typeof(Keys), kn);
-            string name = k.ToString();
-            Keys vk = name.ToVkey();
-            string errstr = (k != vk) ? " *** ERROR" : "";
-            System.Diagnostics.Debug.WriteLine("ID " + kn.PadRight(15) + " Key " + k + "(" + (int)k + ") Name " + name + " to " + vk + errstr);
-        }
-    }
-
-    public static Keys VKeyAdjust(this Keys key , bool extended, int sc)        // take a key, plus extended and sc, and work out alternate name
-    {
-        if (key == Keys.Enter && extended)
-            return NumEnter;      // FORCE.. no num pad enter.. bodge
-        if (key == Keys.ShiftKey && sc == 0x36)
-            return Keys.RShiftKey;
-        if (key == Keys.ControlKey && extended)
-            return Keys.RControlKey;
-        if (key == Keys.Menu && extended)
-            return Keys.RMenu;
-
-        return key;
-    }
 
     public static string VKeyToString(this System.Windows.Forms.Keys key)       // key to string..
     {
@@ -84,31 +38,21 @@ public static class KeyObjectExtensions
             Tuple<string, Keys> vk = (from t in oemtx where t.Item2 == key select t).FirstOrDefault();  // see if we have a table translate..
 
             if (vk != null)
+            {
                 keyname = vk.Item1;
+            }
             else if (keyname.StartsWith("Oem"))                        // oem tender care..
             {           // just caps case it for niceness
                 System.Globalization.TextInfo textInfo = new System.Globalization.CultureInfo("en-US", false).TextInfo;
-                keyname = textInfo.ToTitleCase(keyname.Substring( keyname.Length>4 ? 3 : 0));    // if its OemPeriod, use Period. if its Oem1, use Oem1
+                keyname = textInfo.ToTitleCase(keyname.Substring(keyname.Length > 4 ? 3 : 0));    // if its OemPeriod, use Period. if its Oem1, use Oem1
             }
         }
-
 
         return k + keyname;
     }
 
-    public static string ShiftersToString(Keys shift, Keys alt, Keys ctrl)  // shift/alt/ctrl holds either None, or Shift, or RShift etc
-    {
-        string k = "";
-        if (shift != Keys.None)
-            k = (shift != Keys.RShiftKey ) ? "Shift" : "RShift";
-        if (alt != Keys.None)
-            k = k.AppendPrePad( (alt != Keys.RMenu) ? "Alt" : "RAlt", "+");
-        if (ctrl != Keys.None)
-            k = k.AppendPrePad( (ctrl != Keys.RControlKey) ? "Ctrl" : "RCtrl", "+");
-        return k;
-    }
-
-    public static string WMKeyToString(this Keys key, ulong lparam, Keys modifier)     // using Control.Modifier produce a key string
+    // using Control.Modifier produce a key string
+    public static string WMKeyToString(this Keys key, ulong lparam, Keys modifier)
     {
         string k = "";
 
@@ -135,9 +79,21 @@ public static class KeyObjectExtensions
             k = k.AppendPrePad("Ctrl", "+");
         }
 
-        if (key != Keys.None )
+        if (key != Keys.None)
             k = k.AppendPrePad(key.VKeyToString(), "+");
 
+        return k;
+    }
+
+    public static string ShiftersToString(Keys shift, Keys alt, Keys ctrl)  // shift/alt/ctrl holds either None, or Shift, or RShift etc
+    {
+        string k = "";
+        if (shift != Keys.None)
+            k = (shift != Keys.RShiftKey ) ? "Shift" : "RShift";
+        if (alt != Keys.None)
+            k = k.AppendPrePad( (alt != Keys.RMenu) ? "Alt" : "RAlt", "+");
+        if (ctrl != Keys.None)
+            k = k.AppendPrePad( (ctrl != Keys.RControlKey) ? "Ctrl" : "RCtrl", "+");
         return k;
     }
 
@@ -295,6 +251,8 @@ public static class KeyObjectExtensions
         return keyseq;
     }
 
+    #region debug
+
     static public Dictionary<char, uint> CharToScanCode()       // give me a char vs scan code map
     {
         Dictionary<char, uint> chartoscancode = new Dictionary<char, uint>();
@@ -320,6 +278,57 @@ public static class KeyObjectExtensions
         return chartoscancode;
     }
 
+    public static void VerifyKeyOE()//keep for testing
+    {
+        foreach (string kn in Enum.GetNames(typeof(Keys)))
+        {
+            Keys k = (Keys)Enum.Parse(typeof(Keys), kn);
+            string name = k.ToString();
+            Keys vk = name.ToVkey();
+            string errstr = (k != vk) ? " *** ERROR" : "";
+            System.Diagnostics.Debug.WriteLine("ID " + kn.PadRight(15) + " Key " + k + "(" + (int)k + ") Name " + name + " to " + vk + errstr);
+        }
+    }
+
+    public static Keys VKeyAdjust(this Keys key, bool extended, int sc)        // take a key, plus extended and sc, and work out alternate name
+    {
+        if (key == Keys.Enter && extended)
+            return NumEnter;      // FORCE.. no num pad enter.. bodge
+        if (key == Keys.ShiftKey && sc == 0x36)
+            return Keys.RShiftKey;
+        if (key == Keys.ControlKey && extended)
+            return Keys.RControlKey;
+        if (key == Keys.Menu && extended)
+            return Keys.RMenu;
+
+        return key;
+    }
+
+    #endregion
+
+    // UK:
+    //  oem8 12345567890 oemMinus oemPlus
+    //  qwertyuiop oem4 oem6
+    //  asdfghjkl oem1 oem3 oem7
+    //  shift oem5 zxcvbnm oemComma oemPeriod Oem2 shift
+
+    // oem's shift around by layout
+
+    private static Tuple<string, Keys>[] oemtx = new Tuple<string, Keys>[]      // need these due to repeats of codes in the keys enum
+    {                                                                           // just using tostring gets you sometimes these, sometimes the oem names
+        new Tuple<string,Keys>("Semicolon", Keys.Oem1),     // 186d
+        new Tuple<string,Keys>("Question", Keys.Oem2),      // 191 OemQuestion
+        new Tuple<string,Keys>("Tilde", Keys.Oem3),         // 192 Oemtilde
+        new Tuple<string,Keys>("OpenBrackets", Keys.Oem4),  // 219 OemOpenBrackets
+        new Tuple<string,Keys>("Pipe", Keys.Oem5),          // 220 OemPipe
+        new Tuple<string,Keys>("Equals", Keys.Oemplus),     // 187 need to call it equals to avoid confusion with num key plus
+        new Tuple<string,Keys>("CloseBrackets", Keys.Oem6), // 221 OemCloseBrackets
+        new Tuple<string,Keys>("Quotes", Keys.Oem7),        // 222 OenQuotes
+        new Tuple<string,Keys>("Backquote", Keys.Oem8),     // 223 oem8 does not have an alias, but make one up for consistency
+        new Tuple<string,Keys>("OemClear", Keys.OemClear),  // 254 clashes with clear, so give it a longer name
+        new Tuple<string,Keys>("PageDown", Keys.Next),      // 34 rename next to pagedown which it shares a name with.
+                                                            // Oem102 = OemBackslash
+    };
 
 }
 

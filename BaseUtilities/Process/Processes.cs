@@ -184,5 +184,12 @@ namespace BaseUtils
             return -1;
         }
 
+        public static int Explorer(string folder)
+        {
+            BaseUtils.Processes process = new BaseUtils.Processes();
+            string exe = "explorer.exe";
+            return process.StartProcess(exe, folder);
+        }
+
     }
 }
