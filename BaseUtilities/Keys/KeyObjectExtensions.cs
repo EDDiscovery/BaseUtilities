@@ -15,15 +15,34 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
+// OEM naming, for languages, from top left of keyboard, only oem keys.
+// BA oem1 = oemsemicolon
+// BB oemplus
+// BC oemComma
+// BD oemMinus
+// BE oemperiod
+// BF oem2 = oemquestion
+// C0 oem3 = oemtilde
+// DB oem4 = openbrackets
+// DC oem5 = oempipe
+// DD oem6 = closebrackets
+// DE oem7 = quotes
+// DF oem8
+// E2 oem102 = backslash
+//                   top row    row 2      row 3       row 4
+// GB               : 8 - +   | OB CB    | ; ~ 7     | 5 , . ?
+// Spanish          : 5 OB CB | 1 +      | ~ 7 ?     | \ , . -
+// Polish           : ~ - +   | OB CB    | 1 7 5     | \ , . ?
+// French Leg       : 7 OB +  | 6 1      |   ~ 5     | \ , . ? 8
+// Belgium          : 7 OB -  | 6 1      |   ~ 5     | \ , . ? +
 
 public static class KeyObjectExtensions
 {
     public const Keys NumEnter = (Keys)1024;    // special keys code for numenter
 
-    public static string VKeyToString(this System.Windows.Forms.Keys key)       // key to string..
+    public static string VKeyToString(this Keys key)       // key to string..
     {
         string k = "";
 
@@ -49,6 +68,31 @@ public static class KeyObjectExtensions
         }
 
         return k + keyname;
+    }
+
+    public static Keys ToVkey(this string name)     // name to VKey
+    {
+        if (name != null && name.Length > 0)
+        {
+            if (name.Equals("NumEnter", StringComparison.InvariantCultureIgnoreCase))       // special care
+                return NumEnter;
+
+            if (name.Length == 1 && char.IsDigit(name[0]))          
+                return Keys.D0 + (name[0] - '0');       // direct conversion
+
+            Tuple<string, Keys> vk = (from t in oemtx where t.Item1.Equals(name, StringComparison.InvariantCultureIgnoreCase) select t).FirstOrDefault();  // see if we have a table translate..
+            if (vk != null) // see if any overrides in order
+                return vk.Item2;
+
+            System.Windows.Forms.Keys key;
+            if (Enum.TryParse<System.Windows.Forms.Keys>(name, true, out key))      // try with name
+                return key;
+
+            if (Enum.TryParse<System.Windows.Forms.Keys>("Oem" + name, true, out key)) //last try with an OEM name as we strip OEM above for some of them
+                return key;
+        }
+
+        return Keys.None;
     }
 
     // using Control.Modifier produce a key string
@@ -89,37 +133,12 @@ public static class KeyObjectExtensions
     {
         string k = "";
         if (shift != Keys.None)
-            k = (shift != Keys.RShiftKey ) ? "Shift" : "RShift";
+            k = (shift != Keys.RShiftKey) ? "Shift" : "RShift";
         if (alt != Keys.None)
-            k = k.AppendPrePad( (alt != Keys.RMenu) ? "Alt" : "RAlt", "+");
+            k = k.AppendPrePad((alt != Keys.RMenu) ? "Alt" : "RAlt", "+");
         if (ctrl != Keys.None)
-            k = k.AppendPrePad( (ctrl != Keys.RControlKey) ? "Ctrl" : "RCtrl", "+");
+            k = k.AppendPrePad((ctrl != Keys.RControlKey) ? "Ctrl" : "RCtrl", "+");
         return k;
-    }
-
-    public static Keys ToVkey(this string name)     // name to VKey
-    {
-        if (name != null && name.Length > 0)
-        {
-            if (name.Equals("NumEnter", StringComparison.InvariantCultureIgnoreCase))       // special care
-                return NumEnter;
-
-            if (name.Length == 1 && char.IsDigit(name[0]))          
-                return Keys.D0 + (name[0] - '0');       // direct conversion
-
-            Tuple<string, Keys> vk = (from t in oemtx where t.Item1.Equals(name, StringComparison.InvariantCultureIgnoreCase) select t).FirstOrDefault();  // see if we have a table translate..
-            if (vk != null) // see if any overrides in order
-                return vk.Item2;
-
-            System.Windows.Forms.Keys key;
-            if (Enum.TryParse<System.Windows.Forms.Keys>(name, true, out key))      // try with name
-                return key;
-
-            if (Enum.TryParse<System.Windows.Forms.Keys>("Oem" + name, true, out key)) //last try with an OEM name as we strip OEM above for some of them
-                return key;
-        }
-
-        return Keys.None;
     }
 
     public static Keys ShiftKey(bool state, bool right)         // names of keys in various states
@@ -176,7 +195,8 @@ public static class KeyObjectExtensions
             return Keys.None;
     }
 
-    public static List<Keys> KeyList(bool inclshifts = false)  // base keys, repeates removed, mouse removed, modifiers removed, with optional inclusion if shift keys
+    // base keys, repeates removed, mouse removed, modifiers removed, with optional inclusion if shift keys
+    public static List<Keys> KeyList(bool inclshifts = false)  
     {
         Keys[] alwaysremove = new Keys[] { Keys.None, Keys.LButton, Keys.RButton, Keys.MButton, Keys.XButton1, Keys.XButton2,
                                     Keys.Shift, Keys.Control, Keys.Alt , Keys.Modifiers , Keys.KeyCode, Keys.PrintScreen,
@@ -194,7 +214,8 @@ public static class KeyObjectExtensions
         return kl;
     }
 
-    public static List<string> KeyListString(bool inclshifts = false)  // names of base keys as strings
+    // names of base keys as strings
+    public static List<string> KeyListString(bool inclshifts = false)  
     {
         List<Keys> kl = KeyList(inclshifts);
         List<string> ks = (from Keys k in kl select VKeyToString(k)).ToList();
@@ -202,8 +223,8 @@ public static class KeyObjectExtensions
     }
 
     // tested 14/11/2017 with alt/shift/ctrl combinations.. left and right
-
-    public static string GenerateSequence(this Keys[] keys)      // first one is the primary, the rest are shifters
+    // first one is the primary, the rest are shifters
+    public static string GenerateSequence(this Keys[] keys)      
     {
         if (keys.Length == 2)       // combinations with shift second..  nicer to do it this way because it keeps the timings
         {
@@ -251,46 +272,8 @@ public static class KeyObjectExtensions
         return keyseq;
     }
 
-    #region debug
-
-    static public Dictionary<char, uint> CharToScanCode()       // give me a char vs scan code map
-    {
-        Dictionary<char, uint> chartoscancode = new Dictionary<char, uint>();
-        for (short i = 0; i < 0xff; i++)    // for OEMASCII codes on page 437, map to OEMASCII 
-        {
-            Encoding enc = Encoding.GetEncoding(437);
-            byte[] myByte = new byte[] { (byte)(i) };
-            string str = enc.GetString(myByte);     // now in unicode
-
-            int res = (int)BaseUtils.Win32.SafeNativeMethods.OemKeyScan(i);  // in code page 437
-
-            if (res != -1)
-            {
-                //System.Diagnostics.Debug.WriteLine("Char {0:x} {1} = SC {2:x}", i, str, res);
-
-                if (i == '.' && res == 0x53)    // some maps call '.' numpad period.. lets call it dot on sc 34
-                    res = 0x34;
-
-                chartoscancode[str[0]] = (uint)res;
-            }
-        }
-
-        return chartoscancode;
-    }
-
-    public static void VerifyKeyOE()//keep for testing
-    {
-        foreach (string kn in Enum.GetNames(typeof(Keys)))
-        {
-            Keys k = (Keys)Enum.Parse(typeof(Keys), kn);
-            string name = k.ToString();
-            Keys vk = name.ToVkey();
-            string errstr = (k != vk) ? " *** ERROR" : "";
-            System.Diagnostics.Debug.WriteLine("ID " + kn.PadRight(15) + " Key " + k + "(" + (int)k + ") Name " + name + " to " + vk + errstr);
-        }
-    }
-
-    public static Keys VKeyAdjust(this Keys key, bool extended, int sc)        // take a key, plus extended and sc, and work out alternate name
+    // take a key, plus extended and sc, and work out alternate name
+    public static Keys VKeyAdjust(this Keys key, bool extended, int sc)        
     {
         if (key == Keys.Enter && extended)
             return NumEnter;      // FORCE.. no num pad enter.. bodge
@@ -304,18 +287,11 @@ public static class KeyObjectExtensions
         return key;
     }
 
-    #endregion
+    // need these due to repeats of codes in the keys enum
+    // just using tostring gets you sometimes these, sometimes the oem names
 
-    // UK:
-    //  oem8 12345567890 oemMinus oemPlus
-    //  qwertyuiop oem4 oem6
-    //  asdfghjkl oem1 oem3 oem7
-    //  shift oem5 zxcvbnm oemComma oemPeriod Oem2 shift
-
-    // oem's shift around by layout
-
-    private static Tuple<string, Keys>[] oemtx = new Tuple<string, Keys>[]      // need these due to repeats of codes in the keys enum
-    {                                                                           // just using tostring gets you sometimes these, sometimes the oem names
+    private static Tuple<string, Keys>[] oemtx = new Tuple<string, Keys>[]      
+    {                                                                           
         new Tuple<string,Keys>("Semicolon", Keys.Oem1),     // 186d
         new Tuple<string,Keys>("Question", Keys.Oem2),      // 191 OemQuestion
         new Tuple<string,Keys>("Tilde", Keys.Oem3),         // 192 Oemtilde
@@ -329,6 +305,5 @@ public static class KeyObjectExtensions
         new Tuple<string,Keys>("PageDown", Keys.Next),      // 34 rename next to pagedown which it shares a name with.
                                                             // Oem102 = OemBackslash
     };
-
 }
 

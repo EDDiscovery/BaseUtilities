@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2023 EDDiscovery development team
+ * Copyright 2023-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -11,84 +11,155 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace DirectInputDevices
 {
     public partial class InputMapDialog : Form
     {
-        public string DeviceName { get { return textBoxDevice.Text; } }
-        public string ButtonName { get { return textBoxName.Text; } }
+        public IInputDevice Device { get; set; }
+        public string KeyName { get { return labelKeyboard.Text; } }        // Joy_XAvis, POV, Joy_14, or VKey Name
         public bool Press { get { return radioButtonPressed.Checked; } }
-
-        private InputDeviceList inputdevices;
-
-        Timer timer = new Timer();
+        public bool AllowAxis { get; set; } = false;
+        public bool ShowPressOrRelease { get; set; } = true;
+        public bool ShowOKCancel { get; set; } = true;
+        public bool AxisOnly { get; set; } = false;
+        public bool EscapeQuits { get; set; } = false;
 
         public InputMapDialog()
         {
             InitializeComponent();
-            inputdevices = new InputDeviceList((s) => { BeginInvoke(s); });
-            inputdevices.OnNewEvent += Inputdevices_OnNewEvent;
+        }
 
-            InputDeviceJoystickWindows.CreateJoysticks(inputdevices, false);
-            InputDeviceKeyboard.CreateKeyboard(inputdevices);              // Created.. not started..
-            InputDeviceMouse.CreateMouse(inputdevices);
+        public void Init(InputDeviceList idl)    
+        {
+            inputdevices = idl;
+        }
 
-            inputdevices.Start();
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
 
-            timer.Interval = 500;
-            timer.Tick += Timer_Tick;
+            labelTitle.Text = AxisOnly ? "Move a joystick axis" : AllowAxis ? "Press a key, joystick button, mouse button or move a joystick axis" : "Press a key, joystick or mouse button";
+            panelPressRelease.Visible = ShowPressOrRelease;
+            buttonCancel.Visible = buttonOK.Visible = ShowOKCancel;
+
+            buttonback = buttonMouseClick.BackColor;
+            lastclicktimemousebutton = (uint)Environment.TickCount;
+            closetimer.Tick += (s, e2) => { DialogResult = DialogResult.OK; Close(); };
+
+            inputdevices.OnNewEventInThread += Inputdevices_OnNewEvent;
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            int okbottopressbot = buttonOK.Bottom - panelPressRelease.Bottom;       // need to do before fiddling
+            int oktoptopresstop = buttonOK.Top - panelPressRelease.Top;
+            if (!ShowOKCancel)
+                Height -= okbottopressbot;
+            if (!ShowPressOrRelease)
+                Height -= oktoptopresstop;
+            base.OnShown(e);
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            waitingevent = null;
-            timer.Stop();
-            inputdevices.Stop();
             base.OnClosing(e);
+            inputdevices.OnNewEventInThread -= Inputdevices_OnNewEvent;
         }
-
-        DirectInputDevices.InputDeviceEvent waitingevent;
-        bool allowmouse = false;
 
         //we wait until accepting it due to mouse down on ok
         private void Inputdevices_OnNewEvent(List<InputDeviceEvent> list)
         {
-            if (waitingevent == null)       // nothing in queue
+            if (!Application.MessageLoop)      // pump to message loop
             {
-                waitingevent = list[0];
-                //System.Diagnostics.Debug.WriteLine($"waiting event {waitingevent.Device.Name()}");
-                timer.Start();
-            }
-            else
-            {
-               // System.Diagnostics.Debug.WriteLine($"reject waiting event {waitingevent.Device.Name()}");
+                BeginInvoke((MethodInvoker)delegate { Inputdevices_OnNewEvent(list); });
+                return;
             }
 
-        }
-
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            if (waitingevent != null)
+            foreach (var ev in list)
             {
-                if (waitingevent.Device.Name() != "Mouse" || allowmouse)
+                System.Diagnostics.Debug.WriteLine($"Event {ev.ToString()}");
+
+                bool accept = false;
+
+                if (ev.Axis)
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Event {waitingevent.ToString()}");
-                    textBoxDevice.Text = waitingevent.Device.Name();
-                    textBoxName.Text = waitingevent.EventName();
+                    if (AllowAxis)
+                    {
+                        if (Math.Abs(ev.Value - 500) > 250)       // make sure they push it more than half way
+                        {
+                            accept = true;
+                        }
+                    }
                 }
-                allowmouse = false;
-                waitingevent = null;
+                else if (ev.Pressed)        // must be a pressed event, ignore up events
+                {
+                    if (ev.Device.Name == "Mouse")
+                    {
+                        if (!AxisOnly && ev.Pressed && mouseallowed && ((uint)Environment.TickCount - lastclicktimemousebutton) > 250)
+                        {
+                            mouseallowed = false;
+                            lastclicktimemousebutton = (uint)Environment.TickCount;
+                            buttonMouseClick.BackColor = buttonback;
+                            //System.Diagnostics.Debug.WriteLine($"Mouse click accepted");
+                            accept = true;
+                        }
+                        else
+                        {
+                            //System.Diagnostics.Debug.WriteLine($"Mouse click rejected");
+                        }
+                    }
+                    else 
+                    {
+                        if (EscapeQuits && ev.Device.Name == "Keyboard" && ev.EventNumber == (int)Keys.Escape)
+                        {
+                            DialogResult = DialogResult.Cancel;
+                            Close();
+                        }
+                        else
+                        {
+                            accept = !AxisOnly;      // keyboard/joybutton if not axis only
+                        }
+                    }
+                }
+
+                if (accept)
+                {
+                    Device = ev.Device;
+                    labelDevice.Text = ev.Device.Name;
+                    labelKeyboard.Text = ev.EventName();
+
+                    if (!ShowOKCancel)
+                    {
+                        closetimer.Start();
+                    }
+                }
             }
+
+
         }
 
         private void buttonMouseClick_MouseDown(object sender, MouseEventArgs e)
         {
-            allowmouse = true;
+            if (mouseallowed == false && ((uint)Environment.TickCount - lastclicktimemousebutton) > 250)
+            {
+                lastclicktimemousebutton = (uint)Environment.TickCount;     // records last click time on button to debounce
+                mouseallowed = true;
+                buttonMouseClick.BackColor = Color.Green;
+                //System.Diagnostics.Debug.WriteLine($"Enable mouse click accepted");
+            }
         }
+
+        private Color buttonback;
+        private uint lastclicktimemousebutton;
+        private bool mouseallowed = false;
+        private Timer closetimer = new Timer() { Interval = 500 };
+        private InputDeviceList inputdevices;
     }
 }

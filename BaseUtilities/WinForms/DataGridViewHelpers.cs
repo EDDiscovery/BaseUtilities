@@ -186,12 +186,12 @@ public static partial class DataGridViewControlHelpersStaticFunc
     }
 
     // Sets selected to all cells on row and sets Current to first visible.  Obeys hidden/visible
-    public static bool SetCurrentAndSelectAllCellsOnRow(this DataGridView dgv, int row)
+    public static bool SetCurrentAndSelectAllCellsOnRow(this DataGridView dgv, int row, bool dontsetcurrent= false)
     {
         if (row >= 0 && row < dgv.Rows.Count && dgv.Rows[row].Visible)
         {
             DataGridViewRow rw = dgv.Rows[row];
-            bool setcurrent = false;
+            bool setcurrent = dontsetcurrent;
             for (int i = 0; i < dgv.Columns.Count; i++)
             {
                 if (dgv.Columns[i].Visible)
@@ -363,7 +363,7 @@ public static partial class DataGridViewControlHelpersStaticFunc
         bool[] visible = new bool[grid.RowCount];
         bool visibleChanged = false;
 
-        foreach (DataGridViewRow row in grid.Rows.OfType<DataGridViewRow>())
+        foreach (DataGridViewRow row in grid.Rows)
         {
             bool found = condition(row);
             visible[row.Index] = found;
@@ -372,8 +372,8 @@ public static partial class DataGridViewControlHelpersStaticFunc
 
         if (visibleChanged)
         {
-            var selectedrow = grid.SelectedRows.OfType<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
-            DataGridViewRow[] rows = grid.Rows.OfType<DataGridViewRow>().Where(rw => !rw.IsNewRow).ToArray();
+            var selectedrow = grid.SelectedRows.Cast<DataGridViewRow>().Select(r => r.Index).FirstOrDefault();
+            DataGridViewRow[] rows = grid.Rows.Cast<DataGridViewRow>().Where(rw => !rw.IsNewRow).ToArray();
 
             for (int i = 0; i < rows.Length; i++)
             {

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright 2017-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,15 +10,11 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
+
 using SharpDX.DirectInput;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DirectInputDevices
@@ -43,7 +39,8 @@ namespace DirectInputDevices
         // 0xD2 	DIK_INSERT Insert 	80 | 52
         // 0xD3 	DIK_DELETE Delete   80 | 53
 
-        static public System.Windows.Forms.Keys SharpKeyToKeys(SharpDX.DirectInput.Key k)        // Sharp DX - > Windows Keys
+        // Sharp DX - > Windows Keys, matching KeyObjectExtensions key names
+        static public System.Windows.Forms.Keys SharpKeyToVKeys(SharpDX.DirectInput.Key k)        
         {
             if (sharptokeys.ContainsKey(k))     // NEED to manually cope with this.. MapVirtualKey is very limited
             {
@@ -169,7 +166,7 @@ namespace DirectInputDevices
 
     public class InputDeviceKeyboard : IInputDevice
     {
-        public InputDeviceIdentity ID() { return ksi; }
+        public InputDeviceIdentity ID => ksi;
         InputDeviceIdentity ksi;
 
         SharpDX.DirectInput.Keyboard keyboard;
@@ -209,10 +206,10 @@ namespace DirectInputDevices
             List<InputDeviceEvent> events = new List<InputDeviceEvent>();
             foreach (KeyboardUpdate k in ke)
             {
-                Keys ky = SharpKeyConversion.SharpKeyToKeys(k.Key);
+                Keys ky = SharpKeyConversion.SharpKeyToVKeys(k.Key);
                 //System.Diagnostics.Debug.WriteLine("** Sharp key " + k.Key + " " + (int)k.Key + k.IsPressed);
                 //System.Diagnostics.Debug.WriteLine( "      => " + ky.ToString() + " norm " + ky.VKeyToString() + ":" + (int)ky );
-                events.Add(new InputDeviceEvent(this, (int)ky, k.IsPressed));
+                events.Add(new InputDeviceEvent(this, (int)ky, k.IsPressed, false));
             }
 
             return (events.Count > 0) ? events : null;
@@ -275,10 +272,7 @@ namespace DirectInputDevices
             }
         }
 
-        public string Name()
-        {
-            return ksi.Name;
-        }
+        public string Name => ksi.Name;
 
         public override string ToString()
         {
@@ -318,7 +312,7 @@ namespace DirectInputDevices
         {
             Keys ky = ToKeys(ev);
             Key sk = SharpKeyConversion.KeysToSharpKey(ky);
-            Keys back = SharpKeyConversion.SharpKeyToKeys(sk);
+            Keys back = SharpKeyConversion.SharpKeyToVKeys(sk);
             System.Diagnostics.Debug.WriteLine("Check " + ky.VKeyToString() + " -> " + sk + " ->" + back.VKeyToString());
             return ky == back;
         }

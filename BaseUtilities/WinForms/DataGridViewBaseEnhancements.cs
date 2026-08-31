@@ -46,7 +46,8 @@ namespace BaseUtils
         // on mouse down, set cell type, button pressed, row or column index or -1
         public DataGridViewHitTestType HitType { get; private set; }
         public MouseButtons HitButton { get; private set; }
-        public int HitIndex { get; private set; }
+        public int HitIndex { get; private set; }           // Row
+        public int HitColumn { get; private set; }          // Col
 
         // is row selected
         public bool RowSelect { get { return HitType == DataGridViewHitTestType.Cell || HitType == DataGridViewHitTestType.RowHeader; } }
@@ -173,6 +174,7 @@ namespace BaseUtils
                     }
 
                     HitIndex = ht.RowIndex;
+                    HitColumn = ht.ColumnIndex;
                     SetCMS(defaultstrip);
                 }
                 else
@@ -180,17 +182,18 @@ namespace BaseUtils
             }
             else if (HitType == DataGridViewHitTestType.ColumnHeader)
             {
-                HitIndex = ht.ColumnIndex;
+                HitColumn = HitIndex = ht.ColumnIndex;      // for historic reasons, both set
                 SetCMS((e.Button == MouseButtons.Right && ColumnHeaderMenuStrip != null) ? ColumnHeaderMenuStrip : defaultstrip);
             }
             else if (HitType == DataGridViewHitTestType.RowHeader)
             {
+                HitColumn = -1;
                 HitIndex = ht.RowIndex;
                 SetCMS((e.Button == MouseButtons.Right && RowHeaderMenuStrip != null) ? RowHeaderMenuStrip : defaultstrip);
             }
             else if (HitType == DataGridViewHitTestType.TopLeftHeader)
             {
-                HitIndex = -1;
+                HitColumn = HitIndex = -1;
                 SetCMS((e.Button == MouseButtons.Right && TopLeftHeaderMenuStrip != null) ? TopLeftHeaderMenuStrip : defaultstrip);
             }
             else

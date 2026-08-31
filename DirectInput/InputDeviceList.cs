@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 EDDiscovery development team
+ * Copyright 2017-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -10,15 +10,11 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- *
  */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DirectInputDevices
 {
@@ -26,16 +22,10 @@ namespace DirectInputDevices
 
     public class InputDeviceList : IEnumerable<IInputDevice>
     {
-        public event Action<List<InputDeviceEvent>> OnNewEvent;
+        public event Action<List<InputDeviceEvent>> OnNewEventInThread;         // in thread when this happens (change)
 
-        private Action<Action> invokeAsyncOnUiThread;
-        private System.Threading.AutoResetEvent stophandle = new System.Threading.AutoResetEvent(false);        // used by dispose to tell thread to stop
-        private System.Threading.Thread waitfordatathread;      // the background worker
-        private List<IInputDevice> inputdevices { get; set; } = new List<IInputDevice>();
-
-        public InputDeviceList(Action<Action> i)            // Action context is pass to call in.. 
+        public InputDeviceList()            
         {
-            invokeAsyncOnUiThread = i;
         }
 
         public void Add(IInputDevice i)
@@ -84,7 +74,7 @@ namespace DirectInputDevices
                 stophandle.Set();
                 waitfordatathread.Join();
                 waitfordatathread = null;
-                System.Diagnostics.Debug.WriteLine("IDL Stop");
+                //System.Diagnostics.Debug.WriteLine("IDL Stop");
             }
         }
 
@@ -105,7 +95,7 @@ namespace DirectInputDevices
                 wh[i] = inputdevices[i].Eventhandle();
             wh[inputdevices.Count] = stophandle;
 
-            System.Diagnostics.Debug.WriteLine("IDL start");
+            //System.Diagnostics.Debug.WriteLine("IDL start");
 
             while (true)
             {
@@ -120,9 +110,14 @@ namespace DirectInputDevices
                 {
                     //System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID().Name);
 
-                    invokeAsyncOnUiThread(() => { OnNewEvent?.Invoke(list); }); // call in action context.
+                    OnNewEventInThread?.Invoke(list);           // call in thread context
                 }
             }
         }
+
+        private System.Threading.AutoResetEvent stophandle = new System.Threading.AutoResetEvent(false);        // used by dispose to tell thread to stop
+        private System.Threading.Thread waitfordatathread;      // the background worker
+        private List<IInputDevice> inputdevices { get; set; } = new List<IInputDevice>();
+
     }
 }
