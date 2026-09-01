@@ -54,6 +54,8 @@ namespace DirectInputDevices
             closetimer.Tick += (s, e2) => { DialogResult = DialogResult.OK; Close(); };
 
             inputdevices.OnNewEventInThread += Inputdevices_OnNewEvent;
+
+            extButtonDrawnClose.Visible = FormBorderStyle == FormBorderStyle.None;
         }
 
         protected override void OnShown(EventArgs e)
@@ -161,5 +163,11 @@ namespace DirectInputDevices
         private bool mouseallowed = false;
         private Timer closetimer = new Timer() { Interval = 500 };
         private InputDeviceList inputdevices;
+
+        private void extButtonDrawnClose_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
     }
 }

@@ -42,6 +42,7 @@ namespace DirectInputDevices
             this.labelDevice = new System.Windows.Forms.Label();
             this.labelKeyboard = new System.Windows.Forms.Label();
             this.panelOuter = new System.Windows.Forms.Panel();
+            this.extButtonDrawnClose = new ExtendedControls.ExtButtonDrawn();
             this.panelPressRelease.SuspendLayout();
             this.panelOuter.SuspendLayout();
             this.SuspendLayout();
@@ -169,6 +170,7 @@ namespace DirectInputDevices
             // panelOuter
             // 
             this.panelOuter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelOuter.Controls.Add(this.extButtonDrawnClose);
             this.panelOuter.Controls.Add(this.labelTitle);
             this.panelOuter.Controls.Add(this.buttonOK);
             this.panelOuter.Controls.Add(this.buttonCancel);
@@ -184,6 +186,27 @@ namespace DirectInputDevices
             this.panelOuter.Name = "panelOuter";
             this.panelOuter.Size = new System.Drawing.Size(351, 227);
             this.panelOuter.TabIndex = 9;
+            // 
+            // extButtonDrawnClose
+            // 
+            this.extButtonDrawnClose.AutoEllipsis = false;
+            this.extButtonDrawnClose.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.extButtonDrawnClose.BorderColor = System.Drawing.Color.Orange;
+            this.extButtonDrawnClose.BorderWidth = 1;
+            this.extButtonDrawnClose.ButtonDisabledScaling = 0.25F;
+            this.extButtonDrawnClose.Image = null;
+            this.extButtonDrawnClose.ImageSelected = ExtendedControls.ExtButtonDrawn.ImageType.Close;
+            this.extButtonDrawnClose.Location = new System.Drawing.Point(322, 3);
+            this.extButtonDrawnClose.MouseOverColor = System.Drawing.Color.White;
+            this.extButtonDrawnClose.MouseSelectedColor = System.Drawing.Color.Green;
+            this.extButtonDrawnClose.MouseSelectedColorEnable = true;
+            this.extButtonDrawnClose.Name = "extButtonDrawnClose";
+            this.extButtonDrawnClose.Selectable = true;
+            this.extButtonDrawnClose.Size = new System.Drawing.Size(20, 20);
+            this.extButtonDrawnClose.TabIndex = 9;
+            this.extButtonDrawnClose.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.extButtonDrawnClose.UseMnemonic = true;
+            this.extButtonDrawnClose.Click += new System.EventHandler(this.extButtonDrawnClose_Click);
             // 
             // InputMapDialog
             // 
@@ -217,5 +240,6 @@ namespace DirectInputDevices
         private System.Windows.Forms.Label labelDevice;
         private System.Windows.Forms.Label labelKeyboard;
         private System.Windows.Forms.Panel panelOuter;
+        private ExtendedControls.ExtButtonDrawn extButtonDrawnClose;
     }
 }
