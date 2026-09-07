@@ -101,6 +101,14 @@ namespace BaseUtils
                         string output = null;
                         char fc = t.Name[0];
 
+                        // see if the < in first field changes the padding between fields
+                        string pad = padchars;
+                        if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
+                        {
+                            fieldnames[0] = fieldnames[0].Substring(1);
+                            pad = "";
+                        }
+
                         if (fc == 'S' && t.Name.Equals("String"))
                         {
                             string s = (string)value;
@@ -121,6 +129,7 @@ namespace BaseUtils
                             else
                             {
                                 output = ((bool)value) ? fieldnames[1] : fieldnames[0];
+                                fieldnames[0] = fieldnames[1] = "";
                             }
                         }
                         else
@@ -212,13 +221,6 @@ namespace BaseUtils
                         {
                             if (printed)      // if not first, separ
                             {
-                                string pad = padchars;
-                                if (fieldnames[0].Length > 0 && fieldnames[0][0] == '<')
-                                {
-                                    fieldnames[0] = fieldnames[0].Substring(1);
-                                    pad = "";
-                                }
-
                                 sb.Append(overrideprefix.Length > 0 ? overrideprefix : pad);
                             }
 
@@ -231,7 +233,8 @@ namespace BaseUtils
                             }
 
                             sb.Append(output);              // print output
-                            if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)
+
+                            if (fieldnames.Length >= 2 && fieldnames[1].Length > 0)     // print postfix
                                 sb.Append(fieldnames[1]);
 
                             overrideprefix = string.Empty;
