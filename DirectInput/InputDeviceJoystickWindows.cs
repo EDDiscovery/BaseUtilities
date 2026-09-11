@@ -31,6 +31,10 @@ namespace DirectInputDevices
 
         public System.Threading.AutoResetEvent Eventhandle() { return eventhandle; }
 
+        public int ButtonCount => butstate.Length;
+        public int POVCount => povvalue.Length;
+        public string[] AxisPresent { get; private set; }
+
         public InputDeviceJoystickWindows(DirectInput di, DeviceInstance d)
         {
             jsi = new InputDeviceIdentity() { 
@@ -69,17 +73,29 @@ namespace DirectInputDevices
                     //System.Diagnostics.Debug.WriteLine("  {0} {1} {2} {3} {4}", jsi.Name, deviceObject.UsagePage, deviceObject.Usage, deviceObject.Offset, guid.ToString());
 
                     if (guid == ObjectGuid.XAxis)
+                    {
                         axispresent[(int)Axis.X] = true;
+                    }
                     else if (guid == ObjectGuid.YAxis)
+                    {
                         axispresent[(int)Axis.Y] = true;
+                    }
                     else if (guid == ObjectGuid.ZAxis)
+                    {
                         axispresent[(int)Axis.Z] = true;
+                    }
                     else if (guid == ObjectGuid.RxAxis)
+                    {
                         axispresent[(int)Axis.RX] = true;
+                    }
                     else if (guid == ObjectGuid.RyAxis)
+                    {
                         axispresent[(int)Axis.RY] = true;
+                    }
                     else if (guid == ObjectGuid.RzAxis)
+                    {
                         axispresent[(int)Axis.RZ] = true;
+                    }
                     else if (guid == ObjectGuid.Slider)
                     {
                         int axisentry = (int)Axis.U + slidercount;
@@ -99,6 +115,15 @@ namespace DirectInputDevices
                     o.Range = new InputRange(AxisMinRange, AxisMaxRange);
                 }
             }
+
+            List<string> axis = new List<string>();
+            for(int i = 0; i < axispresent.Length; i++)
+            {
+                if (axispresent[i])
+                    axis.Add(new string[] { "X", "Y", "Z", "RX", "RY", "RZ", "U", "V" }[i]);
+            }
+
+            AxisPresent = axis.ToArray(); 
         }
 
 

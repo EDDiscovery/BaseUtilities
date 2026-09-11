@@ -19,13 +19,10 @@ namespace DirectInputDevices
 {
     public class InputDeviceMouse : IInputDevice
     {
+        public int ButtonCount => 0;
+        public int POVCount => 0;
+        public string[] AxisPresent => new string[0];
         public InputDeviceIdentity ID => msi;
-        InputDeviceIdentity msi;
-
-        SharpDX.DirectInput.Mouse mouse;
-        bool[] butstate;
-
-        System.Threading.AutoResetEvent eventhandle = new System.Threading.AutoResetEvent(false);       // used by joy to signal data
         public System.Threading.AutoResetEvent Eventhandle() { return eventhandle; }
 
         public InputDeviceMouse(DirectInput di,DeviceInstance d)
@@ -129,5 +126,10 @@ namespace DirectInputDevices
             }
 
         }
+
+        private InputDeviceIdentity msi;
+        private SharpDX.DirectInput.Mouse mouse;
+        private bool[] butstate;
+        private System.Threading.AutoResetEvent eventhandle = new System.Threading.AutoResetEvent(false);       // used by joy to signal data
     }
 }

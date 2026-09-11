@@ -49,6 +49,10 @@ namespace DirectInputDevices
         string ToString();                          // description
 
         List<string> EventButtonNames();            // names of actionable button/keys of this device
+
+        int ButtonCount { get; }                    // number of joystick buttons
+        int POVCount { get; }                    
+        string[] AxisPresent { get; }              // empty if none, its X,Y,Z,RX,RY,RZ,U,V, not in any particular order note
     }
 
     // A event raised by an Input device

@@ -167,7 +167,11 @@ namespace DirectInputDevices
     public class InputDeviceKeyboard : IInputDevice
     {
         public InputDeviceIdentity ID => ksi;
-        InputDeviceIdentity ksi;
+
+        public int ButtonCount => 0;
+        public int POVCount => 0;
+        public string[] AxisPresent => new string[0];
+
 
         SharpDX.DirectInput.Keyboard keyboard;
 
@@ -196,7 +200,6 @@ namespace DirectInputDevices
             }
         }
 
-        KeyboardState ks;
 
         public List<InputDeviceEvent> GetEvents()       // Events use keys enumeration
         {
@@ -316,5 +319,8 @@ namespace DirectInputDevices
             System.Diagnostics.Debug.WriteLine("Check " + ky.VKeyToString() + " -> " + sk + " ->" + back.VKeyToString());
             return ky == back;
         }
+
+        private KeyboardState ks;
+        private InputDeviceIdentity ksi;
     }
 }
