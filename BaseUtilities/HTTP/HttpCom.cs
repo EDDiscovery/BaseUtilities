@@ -64,22 +64,22 @@ namespace BaseUtils
 
         // Blocking POST request, with postdata and with timeout.  Postdata first due to historical reasons
         // Response returned always
-        protected Response RequestPost(string postData, string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+        protected Response RequestPost(string postData, string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout, string useragent = null)
         {
-            return BlockingRequest(Method.POST, endpoint, postData, headers, contenttype,timeout);
+            return BlockingRequest(Method.POST, endpoint, postData, headers, contenttype,timeout, useragent);
         }
 
         // Blocking GET request, with timeout
         // Headers automatically has Accept-Encoding gzip/deflate added
         // Response returned always
-        protected Response RequestGet(string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+        protected Response RequestGet(string endpoint, NameValueCollection headers = null, string contenttype = DefaultContentType, int timeout = DefaultTimeout, string useragent = null)
         {
             if (headers == null)
                 headers = new NameValueCollection();
 
             headers.Add("Accept-Encoding", "gzip,deflate");
 
-            return BlockingRequest(Method.GET, endpoint, "", headers, contenttype, timeout);
+            return BlockingRequest(Method.GET, endpoint, "", headers, contenttype, timeout, useragent);
         }
 
         // Blocking request, with timeout. No cancellation
@@ -88,17 +88,18 @@ namespace BaseUtils
         // headerData for POST etc. normally json. Otherwise null.
         // headers = HTTP headers to send, may be null
         // content type must be set
+        // useragent is an override if required
         // return Response Always.  Status code is BadRequest (exception due to data), or server response.
 
         public Response BlockingRequest(Method method, string endpoint, 
                                         string headerData = null, NameValueCollection headers = null,
-                                        string contenttype = DefaultContentType, int timeout = DefaultTimeout)
+                                        string contenttype = DefaultContentType, int timeout = DefaultTimeout, string useragent = null)
         {
             try
             {
                 try
                 {
-                    HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype);
+                    HttpWebRequest request = MakeRequest(method, endpoint, headerData, headers, contenttype, useragent);
 
                     request.Timeout = timeout;      // set the timeout for the GetResponse() 
 
@@ -338,6 +339,9 @@ namespace BaseUtils
 
             string dbgmsg = $"HTTPCom {method} to {ServerAddress + endpoint.RemoveApiKey()} Thread '{System.Threading.Thread.CurrentThread.Name}'";
 
+            if (headers != null)        // must add BEFORE GetRequestStream - bug sept 26
+                request.Headers.Add(headers);
+
             if (method == Method.GET)
             {
                 request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
@@ -346,19 +350,22 @@ namespace BaseUtils
             {
                 byte[] byteArray = Encoding.UTF8.GetBytes(headerData);  // Set the ContentType property of the WebRequest.
                 request.ContentLength = byteArray.Length;       // Set the ContentLength property of the WebRequest.
-                Stream dataStream = request.GetRequestStream();     // Get the request stream.
+
+                // Get the request stream.      This starts the conversation. HTTP starts here, unlike Get where it starts GetResponse
+
+                Stream dataStream = request.GetRequestStream();     
                 dataStream.Write(byteArray, 0, byteArray.Length);       // Write the data to the request stream.
                 dataStream.Close();     // Close the Stream object.
                 dbgmsg += " PostData: " + headerData.RemoveApiKey();
             }
 
-            if (headers != null)
-                request.Headers.Add(headers);
-
             foreach (string hdr in request.Headers.AllKeys)
             {
-                var content = request.Headers[hdr];
-                dbgmsg = dbgmsg.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+                if (!hdr.Contains("Signature"))
+                {
+                    var content = request.Headers[hdr];
+                    dbgmsg = dbgmsg.AppendPrePad($"  {hdr}:{content}", Environment.NewLine);
+                }
             }
 
             WriteLog(dbgmsg,null,false);
