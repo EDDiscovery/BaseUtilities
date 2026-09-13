@@ -53,7 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Chars\CharObjectExtensions.cs" />
+    <Compile Include="Bytes\Bytes.cs" />
     <Compile Include="CHash\ObjectActivator.cs" />
     <Compile Include="CHash\AssemblyHelpers.cs" />
     <Compile Include="Collections\CollectionStaticHelpers.cs" />
