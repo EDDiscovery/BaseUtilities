@@ -23,12 +23,15 @@ namespace DirectInputDevices
     public partial class InputMapDialog : Form
     {
         public IInputDevice Device { get; set; }
-        public string KeyName { get { return labelKeyboard.Text; } }        // Joy_XAvis, POV, Joy_14, or VKey Name
+        public string KeyName { get { return labelKeyboard.Text; } }        // Joy_XAxis, POV, Joy_14, or VKey Name
+        public bool DirectionPositive { get; set; }                         // Joy direction
         public bool Press { get { return radioButtonPressed.Checked; } }
-        public bool AllowAxis { get; set; } = false;
+
+        public bool AllowAxis { get; set; } = false;                        // moving an axis is a trigger
+        public bool AllowMouse { get; set; } = true;                        // moving an axis is a trigger
+        public bool AllowKeyboard { get; set; } = true;                        // moving an axis is a trigger
         public bool ShowPressOrRelease { get; set; } = true;
         public bool ShowOKCancel { get; set; } = true;
-        public bool AxisOnly { get; set; } = false;
         public bool EscapeQuits { get; set; } = false;
 
         public InputMapDialog()
@@ -44,8 +47,11 @@ namespace DirectInputDevices
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+            string t = labelTitle.Text = AllowKeyboard ? "Press a Key" : "";
+            t = t.AppendPrePad(AllowMouse ? "Press a Mouse Button" : "", ",");
+            t = t.AppendPrePad(AllowAxis ? "Move a joystick axis" : "", ",");
+            labelTitle.Text = t;
 
-            labelTitle.Text = AxisOnly ? "Move a joystick axis" : AllowAxis ? "Press a key, joystick button, mouse button or move a joystick axis" : "Press a key, joystick or mouse button";
             panelPressRelease.Visible = ShowPressOrRelease;
             buttonCancel.Visible = buttonOK.Visible = ShowOKCancel;
 
@@ -56,6 +62,7 @@ namespace DirectInputDevices
             inputdevices.OnNewEventInThread += Inputdevices_OnNewEvent;
 
             extButtonDrawnClose.Visible = FormBorderStyle == FormBorderStyle.None;
+            labelClickForMouse.Visible = buttonMouseClick.Visible = AllowMouse;
         }
 
         protected override void OnShown(EventArgs e)
@@ -66,6 +73,8 @@ namespace DirectInputDevices
                 Height -= okbottopressbot;
             if (!ShowPressOrRelease)
                 Height -= oktoptopresstop;
+            if (!AllowMouse)
+                Height -= buttonMouseClick.Height;
             base.OnShown(e);
         }
 
@@ -96,6 +105,7 @@ namespace DirectInputDevices
                     {
                         if (Math.Abs(ev.Value - 500) > 250)       // make sure they push it more than half way
                         {
+                            DirectionPositive = ev.Value > 500;
                             accept = true;
                         }
                     }
@@ -104,7 +114,7 @@ namespace DirectInputDevices
                 {
                     if (ev.Device.Name == "Mouse")
                     {
-                        if (!AxisOnly && ev.Pressed && mouseallowed && ((uint)Environment.TickCount - lastclicktimemousebutton) > 250)
+                        if ( AllowMouse && ev.Pressed && mouseallowed && ((uint)Environment.TickCount - lastclicktimemousebutton) > 250)
                         {
                             mouseallowed = false;
                             lastclicktimemousebutton = (uint)Environment.TickCount;
@@ -126,7 +136,8 @@ namespace DirectInputDevices
                         }
                         else
                         {
-                            accept = !AxisOnly;      // keyboard/joybutton if not axis only
+                            System.Diagnostics.Debug.WriteLine("Keyboard Hit");
+                            accept = AllowKeyboard;
                         }
                     }
                 }

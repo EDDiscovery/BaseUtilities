@@ -25,7 +25,7 @@ namespace BaseUtils.Icons
 {
     public class IconSet 
     {
-        #region Public 
+        #region Static Public 
 
         // Singleton support if required
         static public IconSet Instance { get { return instance; } }
@@ -53,7 +53,43 @@ namespace BaseUtils.Icons
             return Instance?.Exists(name) ?? false;
         }
 
-        // Instance
+        #endregion
+
+        #region Instance
+
+        // always returns an image
+        public Image Get(string name)
+        {
+            var img = GetOrNull(name);
+            if (img == null)
+            {
+                System.Diagnostics.Debug.WriteLineIf(!DontReportMissingErrors, "*** MISSING ICON " + name);
+                img = GetOrNull("Default");
+                if (img == null)
+                    img = new Bitmap(1, 1);
+            }
+            return img;
+        }
+
+        // returns an image or null if it does not exist
+        public Image GetOrNull(string name)
+        {
+            if (Icons == null || !Icons.TryGetValue(name, out object o))      // protect against Icons being null during design, return null if not defined
+                return null;
+
+            if (o is LazyLoadFromAssembly)          // if not loaded, pick it up.
+            {
+                var ll = o as LazyLoadFromAssembly;
+                //System.Diagnostics.Debug.WriteLine("Lazy load " + ll.resname);
+
+                Image img = Image.FromStream(ll.asm.GetManifestResourceStream(ll.resname));
+                SetImageTransparency(img, name);
+                Icons[name] = img;      // now its an Image, so next time, it will load directly
+                return img;
+            }
+            else
+                return o as Image;
+        }
 
         public void AddAlias(string name, string originalname)
         {
@@ -64,7 +100,7 @@ namespace BaseUtils.Icons
         {
             Icons[name] = i;
         }
-        
+
         public bool Exists(string name)       // contains this icon. Icons are case insensitive, as the windows file system is.
         {
             return Icons.ContainsKey(name);
@@ -235,39 +271,6 @@ namespace BaseUtils.Icons
 
                 Icons[name] = img;
             }
-        }
-
-        // always returns an image
-        private Image Get(string name)
-        {
-            var img = GetOrNull(name);
-            if (img == null)
-            {
-                System.Diagnostics.Debug.WriteLineIf(!DontReportMissingErrors, "*** MISSING ICON " + name);
-                img = GetOrNull("Default");
-                if (img == null)
-                    img = new Bitmap(1, 1);
-            }
-            return img;
-        }
-
-        private Image GetOrNull(string name)       
-        {
-            if (Icons == null || !Icons.TryGetValue(name, out object o))      // protect against Icons being null during design, return null if not defined
-                return null;
-
-            if (o is LazyLoadFromAssembly)          // if not loaded, pick it up.
-            {
-                var ll = o as LazyLoadFromAssembly;
-                //System.Diagnostics.Debug.WriteLine("Lazy load " + ll.resname);
-
-                Image img = Image.FromStream(ll.asm.GetManifestResourceStream(ll.resname));
-                SetImageTransparency(img, name);
-                Icons[name] = img;      // now its an Image, so next time, it will load directly
-                return img;
-            }
-            else
-                return o as Image;
         }
 
         private static void SetImageTransparency(Image image, string name)

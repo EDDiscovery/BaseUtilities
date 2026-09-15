@@ -29,11 +29,10 @@ namespace DirectInputDevices
         public int AxisMustReportDifference { get; set; } = 10; // will delay the report by AxisMustReportDelay. Below this all values are ignored
         public int AxisMustReportDelay { get; set; } = 500;
 
-        public System.Threading.AutoResetEvent Eventhandle() { return eventhandle; }
-
+        public AutoResetEvent Eventhandle() { return eventhandle; }
         public int ButtonCount => butstate.Length;
         public int POVCount => povvalue.Length;
-        public string[] AxisPresent { get; private set; }
+        public string[] AxisPresent { get; private set; }       // not null, may be empty, always in the order "X", "Y", "Z", "RX", "RY", "RZ", "U", "V" 
 
         public InputDeviceJoystickWindows(DirectInput di, DeviceInstance d)
         {

@@ -37,7 +37,7 @@ namespace DirectInputDevices
             this.buttonOK = new System.Windows.Forms.Button();
             this.buttonCancel = new System.Windows.Forms.Button();
             this.panelPressRelease = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
+            this.labelClickForMouse = new System.Windows.Forms.Label();
             this.buttonMouseClick = new System.Windows.Forms.Button();
             this.labelDevice = new System.Windows.Forms.Label();
             this.labelKeyboard = new System.Windows.Forms.Label();
@@ -100,7 +100,7 @@ namespace DirectInputDevices
             // 
             this.buttonOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.buttonOK.Location = new System.Drawing.Point(260, 186);
+            this.buttonOK.Location = new System.Drawing.Point(325, 186);
             this.buttonOK.Name = "buttonOK";
             this.buttonOK.Size = new System.Drawing.Size(75, 23);
             this.buttonOK.TabIndex = 5;
@@ -112,7 +112,7 @@ namespace DirectInputDevices
             // 
             this.buttonCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.buttonCancel.Location = new System.Drawing.Point(179, 186);
+            this.buttonCancel.Location = new System.Drawing.Point(244, 186);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(75, 23);
             this.buttonCancel.TabIndex = 6;
@@ -129,14 +129,14 @@ namespace DirectInputDevices
             this.panelPressRelease.Size = new System.Drawing.Size(306, 37);
             this.panelPressRelease.TabIndex = 6;
             // 
-            // label4
+            // labelClickForMouse
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(13, 105);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(83, 13);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Click For Mouse";
+            this.labelClickForMouse.AutoSize = true;
+            this.labelClickForMouse.Location = new System.Drawing.Point(13, 105);
+            this.labelClickForMouse.Name = "labelClickForMouse";
+            this.labelClickForMouse.Size = new System.Drawing.Size(83, 13);
+            this.labelClickForMouse.TabIndex = 0;
+            this.labelClickForMouse.Text = "Click For Mouse";
             // 
             // buttonMouseClick
             // 
@@ -175,7 +175,7 @@ namespace DirectInputDevices
             this.panelOuter.Controls.Add(this.buttonOK);
             this.panelOuter.Controls.Add(this.buttonCancel);
             this.panelOuter.Controls.Add(this.labelKeyboard);
-            this.panelOuter.Controls.Add(this.label4);
+            this.panelOuter.Controls.Add(this.labelClickForMouse);
             this.panelOuter.Controls.Add(this.labelDevice);
             this.panelOuter.Controls.Add(this.panelPressRelease);
             this.panelOuter.Controls.Add(this.buttonMouseClick);
@@ -184,11 +184,12 @@ namespace DirectInputDevices
             this.panelOuter.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelOuter.Location = new System.Drawing.Point(0, 0);
             this.panelOuter.Name = "panelOuter";
-            this.panelOuter.Size = new System.Drawing.Size(351, 227);
+            this.panelOuter.Size = new System.Drawing.Size(416, 227);
             this.panelOuter.TabIndex = 9;
             // 
             // extButtonDrawnClose
             // 
+            this.extButtonDrawnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.extButtonDrawnClose.AutoEllipsis = false;
             this.extButtonDrawnClose.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.extButtonDrawnClose.BorderColor = System.Drawing.Color.Orange;
@@ -196,7 +197,7 @@ namespace DirectInputDevices
             this.extButtonDrawnClose.ButtonDisabledScaling = 0.25F;
             this.extButtonDrawnClose.Image = null;
             this.extButtonDrawnClose.ImageSelected = ExtendedControls.ExtButtonDrawn.ImageType.Close;
-            this.extButtonDrawnClose.Location = new System.Drawing.Point(322, 3);
+            this.extButtonDrawnClose.Location = new System.Drawing.Point(387, 3);
             this.extButtonDrawnClose.MouseOverColor = System.Drawing.Color.White;
             this.extButtonDrawnClose.MouseSelectedColor = System.Drawing.Color.Green;
             this.extButtonDrawnClose.MouseSelectedColorEnable = true;
@@ -204,6 +205,7 @@ namespace DirectInputDevices
             this.extButtonDrawnClose.Selectable = true;
             this.extButtonDrawnClose.Size = new System.Drawing.Size(20, 20);
             this.extButtonDrawnClose.TabIndex = 9;
+            this.extButtonDrawnClose.TabStop = false;
             this.extButtonDrawnClose.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.extButtonDrawnClose.UseMnemonic = true;
             this.extButtonDrawnClose.Click += new System.EventHandler(this.extButtonDrawnClose_Click);
@@ -212,7 +214,7 @@ namespace DirectInputDevices
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(351, 227);
+            this.ClientSize = new System.Drawing.Size(416, 227);
             this.Controls.Add(this.panelOuter);
             this.Name = "InputMapDialog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -235,7 +237,7 @@ namespace DirectInputDevices
         private System.Windows.Forms.Button buttonOK;
         private System.Windows.Forms.Button buttonCancel;
         private System.Windows.Forms.Panel panelPressRelease;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label labelClickForMouse;
         private System.Windows.Forms.Button buttonMouseClick;
         private System.Windows.Forms.Label labelDevice;
         private System.Windows.Forms.Label labelKeyboard;
