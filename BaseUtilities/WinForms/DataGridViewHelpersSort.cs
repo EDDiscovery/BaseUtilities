@@ -183,26 +183,16 @@ public static partial class DataGridViewControlHelpersStaticFunc
         e.Handled = true;
     }
 
-    /// <summary>
-    /// Get current DGV sort
-    /// </summary>
-    /// <param name="dgv">DGV</param>
-    /// <param name="defcol">default column to sort if no sort is set</param>
-    /// <returns>Tuple containing info</returns>
+    // more modern way to get/apply sort state. 
 
-    static public Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> GetCurrentSort(this DataGridView dgv, int defcol = 0)
+    public static Tuple<SortOrder, int> GetSort(this DataGridView dataGrid, int defsortcolindex = 0, SortOrder deforder = SortOrder.Ascending)
     {
-        return new Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder>(dgv.SortedColumn != null ? dgv.SortedColumn : dgv.Columns[defcol], dgv.SortOrder);
+        return dataGrid.SortOrder != SortOrder.None ? Tuple.Create(dataGrid.SortOrder, dataGrid.SortedColumn.Index) : Tuple.Create(deforder, defsortcolindex);
     }
 
-    /// <summary>
-    /// Restore sort given GetCurrentSortInfo
-    /// </summary>
-    /// <param name="dgv">DGV</param>
-    /// <param name="sort">Tuple from GetCurrentSort</param>
-    static public void RestoreSort(this DataGridView dgv, Tuple<DataGridViewColumn, System.Windows.Forms.SortOrder> sort)
+    public static void Sort(this DataGridView dataGrid, Tuple<SortOrder, int> set)
     {
-        dgv.Sort(sort.Item1, (sort.Item2 == System.Windows.Forms.SortOrder.Descending) ? ListSortDirection.Descending : ListSortDirection.Ascending);
-        dgv.Columns[sort.Item1.Index].HeaderCell.SortGlyphDirection = sort.Item2;
+        dataGrid.Sort(dataGrid.Columns[set.Item2], set.Item1 == SortOrder.Descending ? System.ComponentModel.ListSortDirection.Descending : System.ComponentModel.ListSortDirection.Ascending);
+        dataGrid.Columns[set.Item2].HeaderCell.SortGlyphDirection = set.Item1;
     }
 }

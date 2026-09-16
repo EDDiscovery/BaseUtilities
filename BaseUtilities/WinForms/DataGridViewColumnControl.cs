@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2020-2023 EDDiscovery development team
+ * Copyright 2020-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -18,6 +18,8 @@ using System.Windows.Forms;
 
 namespace BaseUtils
 {
+    // Builds on Base Enhancements to add column control drop down dialogs and column reorder
+
     public class DataGridViewColumnControl : DataGridViewBaseEnhancements
     {
         public bool ColumnReorder { get; set; } = true;                     // default is to allow column reordering via right click dragging
@@ -89,7 +91,7 @@ namespace BaseUtils
                     columnContextMenu.Items.Add(tsitem);
                 }
 
-                if (PerColumnWordWrapControl && HitIndex>=0)        // bug #3376 check hitindex
+                if (PerColumnWordWrapControl && HitIndex>=0 && Columns[HitIndex] is DataGridViewTextBoxColumn)        // bug #3376 check hitindex, Sept 26 only allow text columns to have word wrap controlled.. other column types don't respond
                 {
                     var tsww = new System.Windows.Forms.ToolStripMenuItem();
                     var globalwrapmode = this.DefaultCellStyle.WrapMode;
