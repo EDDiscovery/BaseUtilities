@@ -210,8 +210,7 @@ namespace DirectInputDevices
             foreach (KeyboardUpdate k in ke)
             {
                 Keys ky = SharpKeyConversion.SharpKeyToVKeys(k.Key);
-                //System.Diagnostics.Debug.WriteLine("** Sharp key " + k.Key + " " + (int)k.Key + k.IsPressed);
-                //System.Diagnostics.Debug.WriteLine( "      => " + ky.ToString() + " norm " + ky.VKeyToString() + ":" + (int)ky );
+                //System.Diagnostics.Debug.WriteLine($"\r\nInputDeviceKeyboard Sharp key {k.Key} {(int)k.Key} Pressed:{k.IsPressed} => Keys {ky} {ky.VKeyToString()}");
                 events.Add(new InputDeviceEvent(this, (int)ky, k.IsPressed, false));
             }
 
