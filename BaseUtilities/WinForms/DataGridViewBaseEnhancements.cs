@@ -40,7 +40,7 @@ namespace BaseUtils
         public ContextMenuStrip RowHeaderMenuStrip { get; set; } = null;
         public ContextMenuStrip TopLeftHeaderMenuStrip { get; set; } = null;
 
-        // if true, only accept clicks on cells if a single row is selected
+        // if true, only accept clicks on cells if a single row is all selected or no cells are selected
         public bool SingleRowSelect { get; set; } = true;           
 
         // on mouse down, set cell type, button pressed, row or column index or -1
@@ -55,12 +55,12 @@ namespace BaseUtils
         // if right on row, row number, else -1
         public int RightClickRow { get { return RowSelect && HitButton == MouseButtons.Right ? HitIndex : -1; } }
         public bool RightClickRowValid { get { return RightClickRow >= 0; } }
-        public DataGridViewRow ClickedRightRow { get { return RowSelect && HitButton == MouseButtons.Right ? Rows[HitIndex] : null; } }
+        public DataGridViewRow ClickedRightRow { get { return RowSelect && HitButton == MouseButtons.Right && HitButton>=0 ? Rows[HitIndex] : null; } }
 
         // if left click on row, row number, else -1
         public int LeftClickRow { get { return RowSelect && HitButton == MouseButtons.Left ? HitIndex : -1; } }
         public bool LeftClickRowValid { get { return LeftClickRow >= 0; } }
-        public DataGridViewRow ClickedLeftRow { get { return RowSelect && HitButton == MouseButtons.Left ? Rows[HitIndex] : null; } }
+        public DataGridViewRow ClickedLeftRow { get { return RowSelect && HitButton == MouseButtons.Left && HitIndex>= 0 ? Rows[HitIndex] : null; } }
 
         // if either click on row, row number, else -1
         public int ClickRow { get { return RowSelect ? HitIndex : -1; } }
@@ -165,7 +165,9 @@ namespace BaseUtils
 
             if (HitType == DataGridViewHitTestType.Cell)
             {
-                if (!SingleRowSelect || this.IsAllSelectionsOnSameRow())
+                // if not in single row select, or no cells selected, or all cells are on the same row
+
+                if (!SingleRowSelect || SelectedCells.Count == 0 ||  this.IsAllSelectionsOnSameRow())
                 {
                     if (e.Button == MouseButtons.Right && SingleRowSelect)
                     {
