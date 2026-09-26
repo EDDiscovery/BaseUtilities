@@ -86,56 +86,59 @@ namespace BaseUtils
                     {
                         foreach (XElement entry in toplevel.Elements())
                         {
-                            try
+                            if (entry.Name == "Entry")      // anything else but entry is ignored
                             {
-                                // protect each notification from each other..
-
-                                Notification n = new Notification();
-                                n.StartUTC = DateTime.Parse(entry.Attribute("StartUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal);
-                                n.EndUTC = entry.Attribute("EndUTC") != null ? DateTime.Parse(entry.Attribute("EndUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal) : DateTime.MaxValue;
-
-                                n.Type = entry.Attribute("Type").Value;
-
-                                n.PointSize = entry.Attribute("PointSize") != null ? entry.Attribute("PointSize").Value.InvariantParseFloat(12) : -1;
-                                n.HighLight = entry.Attribute("Highlight") != null && entry.Attribute("Highlight").Value == "Yes";
-
-                                if (entry.Attribute("VersionMax") != null)
-                                    n.VersionMax = entry.Attribute("VersionMax").Value;
-
-                                if (entry.Attribute("VersionMin") != null)
-                                    n.VersionMin = entry.Attribute("VersionMin").Value;
-
-                                if (entry.Attribute("AlwaysShow") != null)      // always show has been added - its either this now (feb 25) or a condition passes
-                                    n.AlwaysShow = entry.Attribute("AlwaysShow").Value == "1";
-
-                                n.Conditions = new Dictionary<string, string[]>();
-
-                                foreach( XAttribute at in entry.Attributes())
+                                try
                                 {
-                                    //System.Diagnostics.Debug.WriteLine($"{at.Name.LocalName} = {at.Value}");
-                                    if ( at.Name.LocalName.StartsWith("Condition"))
+                                    // protect each notification from each other..
+
+                                    Notification n = new Notification();
+                                    n.StartUTC = DateTime.Parse(entry.Attribute("StartUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal);
+                                    n.EndUTC = entry.Attribute("EndUTC") != null ? DateTime.Parse(entry.Attribute("EndUTC").Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AdjustToUniversal) : DateTime.MaxValue;
+
+                                    n.Type = entry.Attribute("Type").Value;
+
+                                    n.PointSize = entry.Attribute("PointSize") != null ? entry.Attribute("PointSize").Value.InvariantParseFloat(12) : -1;
+                                    n.HighLight = entry.Attribute("Highlight") != null && entry.Attribute("Highlight").Value == "Yes";
+
+                                    if (entry.Attribute("VersionMax") != null)
+                                        n.VersionMax = entry.Attribute("VersionMax").Value;
+
+                                    if (entry.Attribute("VersionMin") != null)
+                                        n.VersionMin = entry.Attribute("VersionMin").Value;
+
+                                    if (entry.Attribute("AlwaysShow") != null)      // always show has been added - its either this now (feb 25) or a condition passes
+                                        n.AlwaysShow = entry.Attribute("AlwaysShow").Value == "1";
+
+                                    n.Conditions = new Dictionary<string, string[]>();
+
+                                    foreach (XAttribute at in entry.Attributes())
                                     {
-                                        n.Conditions[at.Name.LocalName] = at.Value.Split(",");
+                                        //System.Diagnostics.Debug.WriteLine($"{at.Name.LocalName} = {at.Value}");
+                                        if (at.Name.LocalName.StartsWith("Condition"))
+                                        {
+                                            n.Conditions[at.Name.LocalName] = at.Value.Split(",");
+                                        }
                                     }
+
+                                    n.NotificationsByLanguage = new Dictionary<string, NotificationMessages>();
+
+                                    foreach (XElement body in entry.Elements())
+                                    {
+                                        string lang = body.Attribute("Lang").Value;
+                                        n.NotificationsByLanguage[lang] = new NotificationMessages() { Text = body.Value, Caption = body.Attribute("Caption").Value };
+
+                                        // System.Diagnostics.Debug.WriteLine("    " + body.Attribute("Lang").Value + " Body " + body.Value);
+                                    }
+
+                                    notes.Add(n);
+                                    // System.Diagnostics.Debug.WriteLine($"Notification {n.StartUTC}..{n.EndUTC} {n.EntryType} {n.AlwaysShow}");
                                 }
-
-                                n.NotificationsByLanguage = new Dictionary<string, NotificationMessages>();
-
-                                foreach (XElement body in entry.Elements())
+                                catch (Exception ex)
                                 {
-                                    string lang = body.Attribute("Lang").Value;
-                                    n.NotificationsByLanguage[lang] = new NotificationMessages() { Text = body.Value, Caption = body.Attribute("Caption").Value };
-
-                                    // System.Diagnostics.Debug.WriteLine("    " + body.Attribute("Lang").Value + " Body " + body.Value);
+                                    System.Diagnostics.Debug.WriteLine("Notification XML File " + notfile + " inner exception " + ex.Message);
                                 }
-
-                                notes.Add(n);
-                               // System.Diagnostics.Debug.WriteLine($"Notification {n.StartUTC}..{n.EndUTC} {n.EntryType} {n.AlwaysShow}");
                             }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine("Notification XML File " + notfile + " inner exception " + ex.Message);
-                            };
                         }
                     }
                 }
