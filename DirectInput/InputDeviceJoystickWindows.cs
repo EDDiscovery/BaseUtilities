@@ -307,18 +307,36 @@ namespace DirectInputDevices
         }
 
         // call to create all joysticks into ilist
-        public static void CreateJoysticks(InputDeviceList ilist)
+        // can repeatedly call to add more or remove ones
+        // true if changed list
+        public static bool CreateJoysticks(InputDeviceList ilist)
         {
             DirectInput dinput = new DirectInput();
 
-            foreach (DeviceInstance di in dinput.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly))
+            var devlist = dinput.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly).ToList();
+
+            bool changed = false;
+
+            foreach (DeviceInstance di in devlist)
             {
-                //   if (di.InstanceName.Contains("Logitech"))
+                if ( ilist.Find(x=>x.ID.Productguid == di.ProductGuid && x.ID.Instanceguid == di.InstanceGuid) == null)
                 {
                     InputDeviceJoystickWindows j = new InputDeviceJoystickWindows(dinput, di);
                     ilist.Add(j);
+                    changed = true;
                 }
             }
+
+            foreach(var id in ilist)
+            {
+                if ( devlist.Find(x=>x.ProductGuid == id.ID.Productguid && x.InstanceGuid == id.ID.Instanceguid) == null)
+                {
+                    ilist.Remove(id);
+                    changed = true;
+                }
+            }
+                
+            return changed;
         }
 
         private InputDeviceIdentity jsi;

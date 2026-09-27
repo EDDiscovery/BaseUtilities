@@ -33,6 +33,11 @@ namespace DirectInputDevices
             inputdevices.Add(i);
         }
 
+        public void Remove(IInputDevice i)
+        {
+            inputdevices.Remove(i);
+        }
+
         public IInputDevice Find(Predicate<IInputDevice> p)
         {
             return inputdevices.Find(p);
