@@ -20,21 +20,28 @@ namespace DirectInputDevices
 {
     // list of devices, and main event loop.  Hook to OnNewEvent
 
+    [System.Diagnostics.DebuggerDisplay("IL {inputdevices.Count}")]
     public class InputDeviceList : IEnumerable<IInputDevice>
     {
         public event Action<List<InputDeviceEvent>> OnNewEventInThread;         // in thread when this happens (change)
+
+        public bool Running => waitfordatathread != null;
 
         public InputDeviceList()            
         {
         }
 
+        // add device, must stop, you need to restart it
         public void Add(IInputDevice i)
         {
+            Stop();                 
             inputdevices.Add(i);
         }
 
+        // remove device, must stop, you need to restart it
         public void Remove(IInputDevice i)
         {
+            Stop();
             inputdevices.Remove(i);
         }
 
@@ -79,7 +86,7 @@ namespace DirectInputDevices
                 stophandle.Set();
                 waitfordatathread.Join();
                 waitfordatathread = null;
-                //System.Diagnostics.Debug.WriteLine("IDL Stop");
+                System.Diagnostics.Debug.WriteLine("IDL Stop");
             }
         }
 
@@ -100,7 +107,7 @@ namespace DirectInputDevices
                 wh[i] = inputdevices[i].Eventhandle();
             wh[inputdevices.Count] = stophandle;
 
-            //System.Diagnostics.Debug.WriteLine("IDL start");
+            System.Diagnostics.Debug.WriteLine("IDL start");
 
             while (true)
             {

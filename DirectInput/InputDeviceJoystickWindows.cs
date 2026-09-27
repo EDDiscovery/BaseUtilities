@@ -308,14 +308,18 @@ namespace DirectInputDevices
 
         // call to create all joysticks into ilist
         // can repeatedly call to add more or remove ones
-        // true if changed list
+        // true if changed list. Will stop and restart the IDL 
         public static bool CreateJoysticks(InputDeviceList ilist)
         {
+            System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);
+
             DirectInput dinput = new DirectInput();
 
             var devlist = dinput.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly).ToList();
 
             bool changed = false;
+
+            bool isrunning = ilist.Running;
 
             foreach (DeviceInstance di in devlist)
             {
@@ -327,14 +331,24 @@ namespace DirectInputDevices
                 }
             }
 
+            var toremove = new List<IInputDevice>();
+
             foreach(var id in ilist)
             {
-                if ( devlist.Find(x=>x.ProductGuid == id.ID.Productguid && x.InstanceGuid == id.ID.Instanceguid) == null)
+                if ( id.ID.GameControl && devlist.Find(x=>x.ProductGuid == id.ID.Productguid && x.InstanceGuid == id.ID.Instanceguid) == null)
                 {
-                    ilist.Remove(id);
-                    changed = true;
+                    toremove.Add(id);
                 }
             }
+
+            foreach(var x in toremove)
+            {
+                ilist.Remove(x);
+                changed = true;
+            }
+
+            if (changed && isrunning)          // if was running, restart
+                ilist.Start();
                 
             return changed;
         }
