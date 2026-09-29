@@ -20,7 +20,7 @@ using System.Threading;
 
 namespace DirectInputDevices
 {
-    public class InputDeviceJoystickWindows : IInputDevice
+    public class InputDeviceControllers : IInputDevice
     {
         public InputDeviceIdentity ID => jsi;
         public int AxisMinRange { get; set; } = 0;          // axis are reported over this range.
@@ -34,13 +34,13 @@ namespace DirectInputDevices
         public int POVCount => povvalue.Length;
         public string[] AxisPresent { get; private set; }       // not null, may be empty, always in the order "X", "Y", "Z", "RX", "RY", "RZ", "U", "V" 
 
-        public InputDeviceJoystickWindows(DirectInput di, DeviceInstance d)
+        public InputDeviceControllers(DirectInput di, DeviceInstance d)
         {
             jsi = new InputDeviceIdentity() { 
                         Instanceguid = d.InstanceGuid, 
                         Productguid = d.ProductGuid, 
                         Name = d.InstanceName.RemoveTrailingCZeros().Trim(),        // PC has a trailing space in name!
-                        GameControl = true};       
+                        DeviceType = InputDeviceIdentity.DeviceClass.Controllers};       
 
             stick = new SharpDX.DirectInput.Joystick(di, d.InstanceGuid);
             stick.SetNotification(eventhandle);
@@ -304,53 +304,6 @@ namespace DirectInputDevices
         public override string ToString()
         {
             return jsi.Name + ":" + jsi.Instanceguid + ":" + jsi.Productguid + ":" + jsi.ProductId.ToString("x") + "," + jsi.VendorId.ToString("x") + ":" + butstate.Length + "," + povvalue.Length + "," + slidercount;
-        }
-
-        // call to create all joysticks into ilist
-        // can repeatedly call to add more or remove ones
-        // true if changed list. Will stop and restart the IDL 
-        public static bool CreateJoysticks(InputDeviceList ilist)
-        {
-            System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);
-
-            DirectInput dinput = new DirectInput();
-
-            var devlist = dinput.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly).ToList();
-
-            bool changed = false;
-
-            bool isrunning = ilist.Running;
-
-            foreach (DeviceInstance di in devlist)
-            {
-                if ( ilist.Find(x=>x.ID.Productguid == di.ProductGuid && x.ID.Instanceguid == di.InstanceGuid) == null)
-                {
-                    InputDeviceJoystickWindows j = new InputDeviceJoystickWindows(dinput, di);
-                    ilist.Add(j);
-                    changed = true;
-                }
-            }
-
-            var toremove = new List<IInputDevice>();
-
-            foreach(var id in ilist)
-            {
-                if ( id.ID.GameControl && devlist.Find(x=>x.ProductGuid == id.ID.Productguid && x.InstanceGuid == id.ID.Instanceguid) == null)
-                {
-                    toremove.Add(id);
-                }
-            }
-
-            foreach(var x in toremove)
-            {
-                ilist.Remove(x);
-                changed = true;
-            }
-
-            if (changed && isrunning)          // if was running, restart
-                ilist.Start();
-                
-            return changed;
         }
 
         private InputDeviceIdentity jsi;

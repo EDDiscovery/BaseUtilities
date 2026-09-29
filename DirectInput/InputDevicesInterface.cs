@@ -28,7 +28,9 @@ namespace DirectInputDevices
         public int VendorId { get; set; }
         public int ProductId { get; set; }
         public string VendorProductId => $"{VendorId:X4}{ProductId:X4}";        // as used by frontier
-        public bool GameControl { get; set; }       // per sharpdx DeviceClass
+
+        public enum DeviceClass { Controllers, Keyboard, Mouse };
+        public DeviceClass DeviceType { get; set; }       
     }
 
     // An Input device

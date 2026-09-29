@@ -54,7 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InputDeviceJoystickWindows.cs" />
+    <Compile Include="InputDeviceControllers.cs" />
     <Compile Include="InputDeviceKeyboard.cs" />
     <Compile Include="InputDeviceList.cs" />
     <Compile Include="InputDeviceMouse.cs" />

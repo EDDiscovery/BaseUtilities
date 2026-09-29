@@ -182,12 +182,14 @@ namespace DirectInputDevices
         {
             // those silly foreign people call keyboard something other than it in english, so we need to fix it to english
 
-            ksi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, Name = "Keyboard"};
+            ksi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, Name = "Keyboard", DeviceType = InputDeviceIdentity.DeviceClass.Keyboard };
 
             keyboard = new Keyboard(di);
             keyboard.Properties.BufferSize = 128;
             keyboard.SetNotification(eventhandle);
             keyboard.Acquire();
+
+            System.Diagnostics.Debug.WriteLine("DirectInput Keyboard {0} {1}", ksi.Name, ksi.Productguid);
         }
 
         public void Dispose()
@@ -281,18 +283,8 @@ namespace DirectInputDevices
             return ksi.Name + ":" + ksi.Instanceguid + ":" + ksi.Productguid;
         }
 
-        public static void CreateKeyboard(InputDeviceList ilist)
-        {
-            DirectInput dinput = new DirectInput();
-
-            foreach (DeviceInstance di in dinput.GetDevices(DeviceClass.Keyboard, DeviceEnumerationFlags.AttachedOnly))
-            {
-                InputDeviceKeyboard k = new InputDeviceKeyboard(dinput, di);
-                ilist.Add(k);
-            }
-        }
-
-        public static InputDeviceKeyboard CreateKeyboard()      // direct keyboard make, not part of elite UI
+        // direct keyboard make
+        public static InputDeviceKeyboard CreateKeyboard()      
         {
             DirectInput dinput = new DirectInput();
 

@@ -15,6 +15,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DirectInputDevices
 {
@@ -23,26 +24,14 @@ namespace DirectInputDevices
     [System.Diagnostics.DebuggerDisplay("IL {inputdevices.Count}")]
     public class InputDeviceList : IEnumerable<IInputDevice>
     {
+        #region Public
+
         public event Action<List<InputDeviceEvent>> OnNewEventInThread;         // in thread when this happens (change)
 
         public bool Running => waitfordatathread != null;
 
         public InputDeviceList()            
         {
-        }
-
-        // add device, must stop, you need to restart it
-        public void Add(IInputDevice i)
-        {
-            Stop();                 
-            inputdevices.Add(i);
-        }
-
-        // remove device, must stop, you need to restart it
-        public void Remove(IInputDevice i)
-        {
-            Stop();
-            inputdevices.Remove(i);
         }
 
         public IInputDevice Find(Predicate<IInputDevice> p)
@@ -83,10 +72,10 @@ namespace DirectInputDevices
         {
             if (waitfordatathread != null)
             {
+                System.Diagnostics.Debug.WriteLine("IDL Ordered stop");
                 stophandle.Set();
                 waitfordatathread.Join();
                 waitfordatathread = null;
-                System.Diagnostics.Debug.WriteLine("IDL Stop");
             }
         }
 
@@ -100,6 +89,85 @@ namespace DirectInputDevices
             inputdevices.Clear();
         }
 
+        // add device, must stop, you need to restart it
+        public void Add(IInputDevice i)
+        {
+            Stop();
+            inputdevices.Add(i);
+        }
+
+        // remove device, must stop, you need to restart it
+        public void Remove(IInputDevice i)
+        {
+            Stop();
+            inputdevices.Remove(i);
+        }
+
+        // call to create all device types into ilist
+        // can repeatedly call to add more or remove ones
+        // true if changed list. Will stop and restart the IDL 
+        public bool AddDevices(InputDeviceIdentity.DeviceClass devclass)
+        {
+            System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);
+
+            SharpDX.DirectInput.DirectInput dinput = new SharpDX.DirectInput.DirectInput();
+
+            // convert to sharp dc
+
+            SharpDX.DirectInput.DeviceClass sharpdc = devclass == InputDeviceIdentity.DeviceClass.Controllers ? SharpDX.DirectInput.DeviceClass.GameControl :
+                                                  devclass == InputDeviceIdentity.DeviceClass.Keyboard ? SharpDX.DirectInput.DeviceClass.Keyboard :
+                                                  SharpDX.DirectInput.DeviceClass.Pointer;
+
+            var devlist = dinput.GetDevices(sharpdc, SharpDX.DirectInput.DeviceEnumerationFlags.AttachedOnly).ToList();
+
+            bool changed = false;
+
+            bool isrunning = Running;
+
+            foreach (var di in devlist)
+            {
+                if (inputdevices.Find(x => x.ID.Productguid == di.ProductGuid && x.ID.Instanceguid == di.InstanceGuid) == null)
+                {
+                    Stop();         // stop any thread
+
+                    if ( sharpdc == SharpDX.DirectInput.DeviceClass.GameControl )
+                        inputdevices.Add(new InputDeviceControllers(dinput, di));
+                    else if (sharpdc == SharpDX.DirectInput.DeviceClass.Keyboard)
+                        inputdevices.Add(new InputDeviceKeyboard(dinput, di));
+                    else if (sharpdc == SharpDX.DirectInput.DeviceClass.Pointer)
+                        inputdevices.Add(new InputDeviceMouse(dinput, di));
+
+                    changed = true;
+                }
+            }
+
+            var toremove = new List<IInputDevice>();
+
+            foreach (var id in inputdevices)
+            {
+                if (id.ID.DeviceType == devclass && devlist.Find(x => x.ProductGuid == id.ID.Productguid && x.InstanceGuid == id.ID.Instanceguid) == null)
+                {
+                    toremove.Add(id);
+                }
+            }
+
+            foreach (var x in toremove)
+            {
+                Stop();
+                inputdevices.Remove(x);
+                changed = true;
+            }
+
+            if (changed && isrunning)          // if was running, restart
+                Start();
+
+            return changed;
+        }
+
+        #endregion
+
+        #region Thread
+
         private void waitthread()
         {
             System.Threading.WaitHandle[] wh = new System.Threading.WaitHandle[inputdevices.Count+1];
@@ -107,7 +175,7 @@ namespace DirectInputDevices
                 wh[i] = inputdevices[i].Eventhandle();
             wh[inputdevices.Count] = stophandle;
 
-            System.Diagnostics.Debug.WriteLine("IDL start");
+            System.Diagnostics.Debug.WriteLine("IDL thread start");
 
             while (true)
             {
@@ -120,16 +188,23 @@ namespace DirectInputDevices
 
                 if (list != null)
                 {
-                    //System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID().Name);
+                    System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID.Name);
 
                     OnNewEventInThread?.Invoke(list);           // call in thread context
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine("IDL thread stop!");
         }
+
+        #endregion
+
+        #region Vars
 
         private System.Threading.AutoResetEvent stophandle = new System.Threading.AutoResetEvent(false);        // used by dispose to tell thread to stop
         private System.Threading.Thread waitfordatathread;      // the background worker
         private List<IInputDevice> inputdevices { get; set; } = new List<IInputDevice>();
 
+        #endregion
     }
 }

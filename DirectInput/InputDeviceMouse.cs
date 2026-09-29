@@ -29,13 +29,16 @@ namespace DirectInputDevices
         {
             // those silly foreign people call mouse something other than it in english, so we need to fix it to english
 
-            msi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, Name = "Mouse"};
+            msi = new InputDeviceIdentity() { Instanceguid = d.InstanceGuid, Productguid = d.ProductGuid, Name = "Mouse", DeviceType = InputDeviceIdentity.DeviceClass.Mouse};
 
             mouse = new SharpDX.DirectInput.Mouse(di);
             mouse.SetNotification(eventhandle);
             mouse.Acquire();
             Capabilities c = mouse.Capabilities;
             butstate = new bool[c.ButtonCount];
+
+            System.Diagnostics.Debug.WriteLine("DirectInput Mouse {0} {1}", msi.Name, msi.Productguid);
+
         }
 
         public void Dispose()
@@ -114,19 +117,6 @@ namespace DirectInputDevices
         {
             return msi.Name + ":" + msi.Instanceguid + ":" + msi.Productguid;
         }
-
-        public static void CreateMouse(InputDeviceList ilist)
-        {
-            DirectInput dinput = new DirectInput();
-
-            foreach (DeviceInstance di in dinput.GetDevices(DeviceClass.Pointer, DeviceEnumerationFlags.AttachedOnly))
-            {
-                InputDeviceMouse k = new InputDeviceMouse(dinput,di);
-                ilist.Add(k);
-            }
-
-        }
-
         private InputDeviceIdentity msi;
         private SharpDX.DirectInput.Mouse mouse;
         private bool[] butstate;
