@@ -33,7 +33,7 @@
   <ItemGroup>
     <Reference Include="QuickJSON, Version=3.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\RJKJSoft.QuickJSON.3.0.1\lib\net48\QuickJSON.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\RJKJSoft.QuickJSON.3.0.1\lib\net48\QuickJSON.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
@@ -68,7 +68,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ExtendedControls\ExtendedControls\ExtendedControls.csproj">
+    <ProjectReference Include="$(SolutionDir)\ExtendedControls\ExtendedControls\ExtendedControls.csproj">
       <Project>{2049403F-F4C7-45E6-B777-6390C78E4D2B}</Project>
       <Name>ExtendedControls</Name>
     </ProjectReference>
