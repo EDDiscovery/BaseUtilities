@@ -188,7 +188,7 @@ namespace DirectInputDevices
 
                 if (list != null)
                 {
-                    System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID.Name);
+                    //System.Diagnostics.Debug.WriteLine(Environment.TickCount + " Handle hit " + hhit + " " + inputdevices[hhit].ID.Name);
 
                     OnNewEventInThread?.Invoke(list);           // call in thread context
                 }
