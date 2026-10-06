@@ -62,7 +62,7 @@ namespace BaseUtils
         // key list
         public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
         // must have stored english in load
-        public IEnumerable<string> EnumerateEnglish { get { return originalenglish.Values; } }
+        public IEnumerable<string> EnumerateEnglish { get { return translations.Values.Select(x=>x.English); } }
 
         public bool IsDefined(string id) => translations != null && translations.ContainsKey(id);
 
@@ -73,34 +73,64 @@ namespace BaseUtils
         public bool TryGetValue(string id, out string text)
         {
             text = null;
-            return translations != null && translations.TryGetValue(id, out text);
+            if (translations.TryGetValue(id, out TranslationEntry value))
+            {
+                text = value.Foreign;
+                return true;
+            }
+            return false;
         }
 
         // requires load to have originalenglish
-        public bool TryGetOriginalEnglish(string id, out string text)
+        public bool TryGetEntry(string id, out TranslationEntry entry)
         {
-            text = null;
-            return originalenglish != null ? originalenglish.TryGetValue(id, out text) : false;
-        }
-        public bool IsDefinedEnglish(string english)
-        {
-            return originalenglish.Values.Contains(english);
-        }
-
-        // requires load to have originalsource
-        public bool TryGetSource(string id, out string file, out int lineno)
-        {
-            file = null;
-            lineno = 0;
-            return originalfile != null ? originalfile.TryGetValue(id, out file) && originalline.TryGetValue(id, out lineno) : false;
-        }
-        public string[] SourceFileList()
-        {
-            return originalfile?.Values.Distinct().ToArray() ?? null;
+            entry = null;
+            if (translations.TryGetValue(id, out TranslationEntry value))
+            {
+                entry = value;
+                return true;
+            }
+            return false;
         }
 
-        public void UnDefine(string id) { translations.Remove(id); originalenglish?.Remove(id); originalfile?.Remove(id); originalline?.Remove(id); }
-        public void ReDefine(string id, string newdefine) { translations[id] = newdefine; }        // for edtools
+        public string Language { get; private set; }
+
+        public void Delete(string id) { translations.Remove(id); }
+        public void ReDefine(string id, string newdefine) { translations[id].Foreign = newdefine; }
+
+        public string Insert(string beforeid, string english, string foreign = null)
+        {
+            Dictionary<string, TranslationEntry> nt = new Dictionary<string, TranslationEntry>();
+            string shatouse = english.CalcSha8();
+
+            foreach (var kvp in translations)
+            {
+                if (kvp.Key == beforeid)
+                {
+                    nt.Add(shatouse, new TranslationEntry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                }
+                nt.Add(kvp.Key, kvp.Value);
+            }
+
+            translations = nt;
+            return shatouse;
+        }
+        public void ChangeEnglish(string key, string newenglish)
+        {
+            Dictionary<string, TranslationEntry> nt = new Dictionary<string, TranslationEntry>();
+            foreach (var kvp in translations)
+            {
+                if (kvp.Key == key)
+                {
+                    string shatouse = newenglish.CalcSha8();
+                    nt.Add(shatouse, new TranslationEntry() { Foreign = translations[kvp.Key].Foreign, English = newenglish, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                }
+                else
+                    nt.Add(kvp.Key, kvp.Value);
+            }
+
+            translations = nt;
+        }
 
         public TranslatorMkII() // only use via debugging
         {
@@ -128,9 +158,6 @@ namespace BaseUtils
             }
 
             translations = null;        // forget any
-            originalenglish = null;
-            originalfile = null;
-            originalline = null;
 
             List<Tuple<string, string>> languages = EnumerateLanguages(txfolders);
 
@@ -153,7 +180,9 @@ namespace BaseUtils
             if (langsel == null)
                 return false;
 
-            System.Diagnostics.Debug.WriteLine("Load Language " + langsel.Item2);
+            Language = Path.GetFileNameWithoutExtension(langsel.Item2);
+
+            System.Diagnostics.Debug.WriteLine("Load Language " + Language);
             logger?.WriteLine("Read " + langsel.Item2 + " from " + langsel.Item1);
 
             string tlfile = Path.Combine(langsel.Item1, langsel.Item2);
@@ -169,18 +198,7 @@ namespace BaseUtils
             {
                 if (lr.Open(tlfile))
                 {
-                    translations = new Dictionary<string, string>();
-
-                    if (storesourceinfo)           // source info needs all of it
-                    {
-                        originalfile = new Dictionary<string, string>();
-                        originalline = new Dictionary<string, int>();
-                    }
-
-                    if (storeenglish)
-                    {
-                        originalenglish = new Dictionary<string, string>();
-                    }
+                    translations = new Dictionary<string, TranslationEntry>();
 
                     int commentblankcount = 1;
 
@@ -193,9 +211,7 @@ namespace BaseUtils
                             if (storesourceinfo)
                             {
                                 string id = "SOURCE:" + commentblankcount++;      // record the information
-                                translations[id] = line;
-                                originalfile[id] = lr.CurrentFile;
-                                originalline[id] = lr.CurrentLine;
+                                translations[id] = new TranslationEntry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
                             }
                         }
                         else if (line.StartsWith("Include", StringComparison.InvariantCultureIgnoreCase))
@@ -203,9 +219,7 @@ namespace BaseUtils
                             if (storesourceinfo)                            // we store these as comments so they can be spitted back out by translatenormalise
                             {
                                 string id = "SOURCE:" + commentblankcount++;
-                                translations[id] = line;
-                                originalfile[id] = lr.CurrentFile;
-                                originalline[id] = lr.CurrentLine;
+                                translations[id] = new TranslationEntry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
                             }
 
                             line = line.Mid(7).Trim();
@@ -289,15 +303,15 @@ namespace BaseUtils
                                         if (logger != null)
                                             logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
-                                        translations[id] = foreign;
+                                        translations[id] = new TranslationEntry() { Foreign = foreign };
 
                                         if (storeenglish)
-                                            originalenglish[id] = orgenglish;
+                                            translations[id].English = orgenglish;
 
                                         if (storesourceinfo)
                                         {
-                                            originalfile[id] = lr.CurrentFile;
-                                            originalline[id] = lr.CurrentLine;
+                                            translations[id].File = lr.CurrentFile;
+                                            translations[id].Line = lr.CurrentLine;
                                         }
                                     }
                                     else
@@ -345,7 +359,7 @@ namespace BaseUtils
         // faster load
         public bool ReadFromFile(string filename)
         {
-            translations = new Dictionary<string, string>();
+            translations = new Dictionary<string, TranslationEntry>();
             string st = FileHelpers.TryReadAllTextFromFile(filename);
             if (st != null)
             {
@@ -357,7 +371,7 @@ namespace BaseUtils
                     string value = sp.NextWord('\0');
                     sp.MoveOn(1);
                     if (value.Length > 0)
-                        translations[key] = value;
+                        translations[key] = new TranslationEntry() { Foreign = value };
                     else
                         translations[key] = null;
                 }
@@ -426,7 +440,7 @@ namespace BaseUtils
                 string key = english.CalcSha8();
                 if (OutputIDs)
                 {
-                    string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key] ?? "Null") : "Missing");
+                    string tx = "ID lookup " + key + " Value " + (translations.ContainsKey(key) ? (translations[key]?.Foreign ?? "Null") : "Missing");
                     logger?.WriteLine(tx);
                 }
 
@@ -435,17 +449,17 @@ namespace BaseUtils
                     key = english.CalcSha();
                 }
 
-                if (translations.ContainsKey(key))
-                {
-                    if (CompareTranslatedToCode && originalenglish != null && originalenglish.ContainsKey(key) && originalenglish[key] != english)
+                if ( translations.TryGetValue(key, out TranslationEntry entry))
+                { 
+                    if (CompareTranslatedToCode && entry?.English != null && entry.English != english)
                     {
-                        logger?.WriteLine($"Difference Key {key} code `{english}` translation file had `{originalenglish[key]}`");
+                        logger?.WriteLine($"Difference Key {key} code `{english}` translation file had `{entry.English}`");
                     }
 
 #if DEBUG
-                    return translations[key] ?? english.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
+                    return entry?.Foreign ?? english.QuoteFirstAlphaDigit();     // debug more we quote them to show its not translated, else in release we just print
 #else
-                    return translations[key] ?? english;
+                    return entry?.Foreign ?? english;
 #endif
                 }
                 else
@@ -453,7 +467,7 @@ namespace BaseUtils
                     logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     Debugger.TraceBreak($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     string errtext = "! " + english + " !";          // no id at all, use ! to indicate
-                    translations[key] = errtext;
+                    translations[key] = new TranslationEntry() { Foreign = errtext };
                     return errtext;
                 }
             }
@@ -563,10 +577,15 @@ namespace BaseUtils
 
         private LogToFile logger = null;
 
-        private Dictionary<string, string> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
-        private Dictionary<string, string> originalenglish = null;      // optional load - translation id -> english
-        private Dictionary<string, string> originalfile = null;         // optional load - translation id -> file
-        private Dictionary<string, int> originalline = null;            // optional load - translation id -> line
+        public class TranslationEntry
+        {
+            public string English { get; set; }
+            public string Foreign { get; set; }
+            public string File { get; set; }
+            public int Line { get; set; }
+        }
+
+        private Dictionary<string, TranslationEntry> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
         private static TranslatorMkII instance;
     }
 }
