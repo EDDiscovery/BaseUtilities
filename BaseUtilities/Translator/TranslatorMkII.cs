@@ -13,6 +13,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -26,9 +27,13 @@ public static class TranslatorExtensionsMkII
     {
         return BaseUtils.TranslatorMkII.Instance.Translate(s);
     }
-    static public string Tx(this string s, bool translate)              
+    static public string Tx(this string s, bool translate)
     {
         return translate ? BaseUtils.TranslatorMkII.Instance.Translate(s) : s;
+    }
+    static public string PTx(this string s)             // a marker to show its programatically translated later
+    {
+        return s;
     }
 }
 
@@ -40,7 +45,7 @@ public interface ITranslatableControl
 
 namespace BaseUtils
 {
-    public class TranslatorMkII
+    public class TranslatorMkII 
     {
         static public TranslatorMkII Instance
         {
@@ -60,9 +65,10 @@ namespace BaseUtils
         public bool CompareTranslatedToCode { get; set; } = false;      // if set, will moan if the translate does not match the code
 
         // key list
-        public IEnumerable<string> EnumerateKeys { get { return translations.Keys; } }
+        public IEnumerable<string> EnumerateIDs { get { return translations.Keys; } }
         // must have stored english in load
-        public IEnumerable<string> EnumerateEnglish { get { return translations.Values.Select(x=>x.English); } }
+        public IEnumerable<string> EnumerateEnglish { get { return translations.Values.Select(x => x.English); } }
+        public IEnumerable<string> Sections { get { return translations.Values.Where(x=>x.English.HasChars()).Select(x => x.Section).Distinct(); } }
 
         public bool IsDefined(string id) => translations != null && translations.ContainsKey(id);
 
@@ -73,7 +79,7 @@ namespace BaseUtils
         public bool TryGetValue(string id, out string text)
         {
             text = null;
-            if (translations.TryGetValue(id, out TranslationEntry value))
+            if (translations.TryGetValue(id, out Entry value))
             {
                 text = value.Foreign;
                 return true;
@@ -82,10 +88,10 @@ namespace BaseUtils
         }
 
         // requires load to have originalenglish
-        public bool TryGetEntry(string id, out TranslationEntry entry)
+        public bool TryGetEntry(string id, out Entry entry)
         {
             entry = null;
-            if (translations.TryGetValue(id, out TranslationEntry value))
+            if (translations.TryGetValue(id, out Entry value))
             {
                 entry = value;
                 return true;
@@ -100,14 +106,14 @@ namespace BaseUtils
 
         public string Insert(string beforeid, string english, string foreign = null)
         {
-            Dictionary<string, TranslationEntry> nt = new Dictionary<string, TranslationEntry>();
+            Dictionary<string, Entry> nt = new Dictionary<string, Entry>();
             string shatouse = english.CalcSha8();
 
             foreach (var kvp in translations)
             {
                 if (kvp.Key == beforeid)
                 {
-                    nt.Add(shatouse, new TranslationEntry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                    nt.Add(shatouse, new Entry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
                 }
                 nt.Add(kvp.Key, kvp.Value);
             }
@@ -117,13 +123,13 @@ namespace BaseUtils
         }
         public void ChangeEnglish(string key, string newenglish)
         {
-            Dictionary<string, TranslationEntry> nt = new Dictionary<string, TranslationEntry>();
+            Dictionary<string, Entry> nt = new Dictionary<string, Entry>();
             foreach (var kvp in translations)
             {
                 if (kvp.Key == key)
                 {
                     string shatouse = newenglish.CalcSha8();
-                    nt.Add(shatouse, new TranslationEntry() { Foreign = translations[kvp.Key].Foreign, English = newenglish, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                    nt.Add(shatouse, new Entry() { Foreign = translations[kvp.Key].Foreign, English = newenglish, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
                 }
                 else
                     nt.Add(kvp.Key, kvp.Value);
@@ -198,20 +204,24 @@ namespace BaseUtils
             {
                 if (lr.Open(tlfile))
                 {
-                    translations = new Dictionary<string, TranslationEntry>();
+                    translations = new Dictionary<string, Entry>();
 
                     int commentblankcount = 1;
+                    string section = "Not Set";
 
                     string line = null;
                     while ((line = lr.ReadLine()) != null)
                     {
                         line = line.Trim();
-                        if (line.Length == 0 || line.StartsWith("//") || line.StartsWith("SECTION ", StringComparison.InvariantCultureIgnoreCase))
+                        bool sectionline = line.StartsWith("SECTION ", StringComparison.InvariantCultureIgnoreCase);
+                        if (line.Length == 0 || line.StartsWith("//") || sectionline)
                         {
                             if (storesourceinfo)
                             {
+                                if (sectionline)
+                                    section = line.Substring(8).Trim();
                                 string id = "SOURCE:" + commentblankcount++;      // record the information
-                                translations[id] = new TranslationEntry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
+                                translations[id] = new Entry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine, Section = section };
                             }
                         }
                         else if (line.StartsWith("Include", StringComparison.InvariantCultureIgnoreCase))
@@ -219,7 +229,7 @@ namespace BaseUtils
                             if (storesourceinfo)                            // we store these as comments so they can be spitted back out by translatenormalise
                             {
                                 string id = "SOURCE:" + commentblankcount++;
-                                translations[id] = new TranslationEntry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
+                                translations[id] = new Entry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
                             }
 
                             line = line.Mid(7).Trim();
@@ -303,7 +313,7 @@ namespace BaseUtils
                                         if (logger != null)
                                             logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
-                                        translations[id] = new TranslationEntry() { Foreign = foreign };
+                                        translations[id] = new Entry() { Foreign = foreign };
 
                                         if (storeenglish)
                                             translations[id].English = orgenglish;
@@ -312,6 +322,7 @@ namespace BaseUtils
                                         {
                                             translations[id].File = lr.CurrentFile;
                                             translations[id].Line = lr.CurrentLine;
+                                            translations[id].Section = section;
                                         }
                                     }
                                     else
@@ -359,7 +370,7 @@ namespace BaseUtils
         // faster load
         public bool ReadFromFile(string filename)
         {
-            translations = new Dictionary<string, TranslationEntry>();
+            translations = new Dictionary<string, Entry>();
             string st = FileHelpers.TryReadAllTextFromFile(filename);
             if (st != null)
             {
@@ -371,7 +382,7 @@ namespace BaseUtils
                     string value = sp.NextWord('\0');
                     sp.MoveOn(1);
                     if (value.Length > 0)
-                        translations[key] = new TranslationEntry() { Foreign = value };
+                        translations[key] = new Entry() { Foreign = value };
                     else
                         translations[key] = null;
                 }
@@ -449,7 +460,7 @@ namespace BaseUtils
                     key = english.CalcSha();
                 }
 
-                if ( translations.TryGetValue(key, out TranslationEntry entry))
+                if ( translations.TryGetValue(key, out Entry entry))
                 { 
                     if (CompareTranslatedToCode && entry?.English != null && entry.English != english)
                     {
@@ -467,7 +478,7 @@ namespace BaseUtils
                     logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     Debugger.TraceBreak($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     string errtext = "! " + english + " !";          // no id at all, use ! to indicate
-                    translations[key] = new TranslationEntry() { Foreign = errtext };
+                    translations[key] = new Entry() { Foreign = errtext };
                     return errtext;
                 }
             }
@@ -574,18 +585,19 @@ namespace BaseUtils
             }
         }
 
-
         private LogToFile logger = null;
 
-        public class TranslationEntry
+        public class Entry
         {
             public string English { get; set; }
             public string Foreign { get; set; }
+            public string Section { get; set; }
             public string File { get; set; }
             public int Line { get; set; }
+            public bool Found { get; set; }
         }
 
-        private Dictionary<string, TranslationEntry> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
+        private Dictionary<string, Entry> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
         private static TranslatorMkII instance;
     }
 }
