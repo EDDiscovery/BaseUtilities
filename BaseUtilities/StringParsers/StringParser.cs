@@ -1058,11 +1058,15 @@ namespace BaseUtils
 
         // Move pointer to string if found
 
-        public bool Find(string s)      // move position to string, this will be the next read..
+        public bool Find(string s, bool skippast = false)      
         {
             int indexof = line.IndexOf(s, pos);
             if (indexof != -1)
+            {
                 pos = indexof;
+                if (skippast)
+                    pos += s.Length;
+            }
             return (indexof != -1);
         }
 

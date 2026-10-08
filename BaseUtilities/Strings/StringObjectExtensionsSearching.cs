@@ -21,18 +21,40 @@ using System.Text;
 
 public static partial class ObjectExtensionsStrings
 {
-    //extend for case
-    public static bool Contains(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture)
+    // these accept s = null without barfing
+
+    public static bool EqualsIIC(this string s, string other)
     {
-        return data.IndexOf(comparision, culture) >= 0;
+        return s != null && s.Equals(other, StringComparison.InvariantCultureIgnoreCase);
     }
+    public static bool StartsWithIIC(this string s, string other)
+    {
+        return s != null && s.StartsWith(other, StringComparison.InvariantCultureIgnoreCase);
+    }
+    public static bool EndsWithIIC(this string s, string other)
+    {
+        return s != null && s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
+    }
+
     public static bool ContainsIIC(this string s, string other)
     {
         return s != null && s.Contains(other, StringComparison.InvariantCultureIgnoreCase);
     }
     public static int IndexOfIIC(this string s, string other)
     {
-        return s.IndexOf(other, StringComparison.InvariantCultureIgnoreCase);
+        return s?.IndexOf(other, StringComparison.InvariantCultureIgnoreCase) ?? -1;
+    }
+
+    // extension of Contains with string comparison
+    public static bool Contains(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture)
+    {
+        return data?.IndexOf(comparision, culture) >= 0;
+    }
+
+    // a * means contains, else starts with.
+    static public bool StartsWithOrContains(this string value, string match, StringComparison c = StringComparison.InvariantCultureIgnoreCase)
+    {
+        return value != null && match.StartsWith("*") ? value.Contains(match.Substring(1), c) : value.StartsWith(match, c);
     }
 
     //Return index of (plus an offset) or length
@@ -168,8 +190,6 @@ public static partial class ObjectExtensionsStrings
 
         return null;
     }
-
-
 
 
 }

@@ -138,25 +138,6 @@ public static class ObjectExtensionsStringsCompare
 
         return total;
     }
-
-
-
-    // these accept s = null without barfing
-
-    public static bool EqualsIIC(this string s, string other)
-    {
-        return s != null && s.Equals(other, StringComparison.InvariantCultureIgnoreCase);
-    }
-    public static bool StartsWithIIC(this string s, string other)
-    {
-        return s!= null && s.StartsWith(other, StringComparison.InvariantCultureIgnoreCase);
-    }
-    public static bool EndsWithIIC(this string s, string other)
-    {
-        return s != null && s.EndsWith(other, StringComparison.InvariantCultureIgnoreCase);
-    }
-
-
 }
 
 

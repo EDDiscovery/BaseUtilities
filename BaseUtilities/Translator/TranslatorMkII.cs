@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2025-2025 EDDiscovery development team
+ * Copyright 2025-2026 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -27,7 +27,7 @@ public static class TranslatorExtensionsMkII
     {
         return BaseUtils.TranslatorMkII.Instance.Translate(s);
     }
-    static public string Tx(this string s, bool translate)
+    static public string TxCond(this string s, bool translate)
     {
         return translate ? BaseUtils.TranslatorMkII.Instance.Translate(s) : s;
     }
@@ -66,10 +66,7 @@ namespace BaseUtils
 
         // key list
         public IEnumerable<string> EnumerateIDs { get { return translations.Keys; } }
-        // must have stored english in load
-        public IEnumerable<string> EnumerateEnglish { get { return translations.Values.Select(x => x.English); } }
-        public IEnumerable<string> Sections { get { return translations.Values.Where(x=>x.English.HasChars()).Select(x => x.Section).Distinct(); } }
-
+        
         public bool IsDefined(string id) => translations != null && translations.ContainsKey(id);
 
         // recorded in translator list if store source info is on during load
@@ -101,34 +98,48 @@ namespace BaseUtils
 
         public string Language { get; private set; }
 
+        // these need the load options to have stores turned on
+        public IEnumerable<string> EnumerateEnglish { get { return translations.Values.Select(x => x.English); } }
+        public IEnumerable<string> Sections { get { return translations.Values.Where(x => x.English.HasChars()).Select(x => x.Section).Distinct(); } }
+        public IEnumerable<string> Files { get { return translations.Values.Where(x => x.English.HasChars()).Select(x => x.File).Distinct(); } }
+        public IEnumerable<string> FileNames { get { return translations.Values.Where(x => x.English.HasChars()).Select(x => Path.GetFileName(x.File)).Distinct(); } }
+
+        // alter
+
         public void Delete(string id) { translations.Remove(id); }
         public void ReDefine(string id, string newdefine) { translations[id].Foreign = newdefine; }
 
-        public string Insert(string beforeid, string english, string foreign = null)
+        public string Insert(string id, bool after, string english, string foreign = null)
         {
             Dictionary<string, Entry> nt = new Dictionary<string, Entry>();
             string shatouse = english.CalcSha8();
 
             foreach (var kvp in translations)
             {
-                if (kvp.Key == beforeid)
+                if (kvp.Key == id)
                 {
-                    nt.Add(shatouse, new Entry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                    if ( after )
+                        nt.Add(kvp.Key, kvp.Value);
+                    nt.Add(shatouse, new Entry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File, Section = translations[kvp.Key].Section });
+                    if ( !after )
+                        nt.Add(kvp.Key, kvp.Value);
                 }
-                nt.Add(kvp.Key, kvp.Value);
+                else
+                    nt.Add(kvp.Key, kvp.Value);
             }
 
             translations = nt;
             return shatouse;
         }
-        public void ChangeEnglish(string key, string newenglish)
+        public string ChangeEnglish(string key, string newenglish)
         {
             Dictionary<string, Entry> nt = new Dictionary<string, Entry>();
+            string shatouse = null;
             foreach (var kvp in translations)
             {
                 if (kvp.Key == key)
                 {
-                    string shatouse = newenglish.CalcSha8();
+                    shatouse = newenglish.CalcSha8();
                     nt.Add(shatouse, new Entry() { Foreign = translations[kvp.Key].Foreign, English = newenglish, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
                 }
                 else
@@ -136,6 +147,7 @@ namespace BaseUtils
             }
 
             translations = nt;
+            return shatouse;
         }
 
         public TranslatorMkII() // only use via debugging
@@ -316,7 +328,14 @@ namespace BaseUtils
                                         translations[id] = new Entry() { Foreign = foreign };
 
                                         if (storeenglish)
+                                        {
                                             translations[id].English = orgenglish;
+                                            if ( orgenglish.CalcSha8() != id)
+                                            {
+                                                System.Diagnostics.Trace.WriteLine("ID is wrong vs Orginal english");
+                                                id = orgenglish.CalcSha8();
+                                            }
+                                        }
 
                                         if (storesourceinfo)
                                         {
@@ -594,7 +613,6 @@ namespace BaseUtils
             public string Section { get; set; }
             public string File { get; set; }
             public int Line { get; set; }
-            public bool Found { get; set; }
         }
 
         private Dictionary<string, Entry> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string

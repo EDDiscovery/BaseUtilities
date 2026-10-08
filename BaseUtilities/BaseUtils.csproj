@@ -95,7 +95,7 @@
     <Compile Include="Strings\StringObjectExtensionsWords.cs" />
     <Compile Include="Strings\StringObjectSearchTerms.cs" />
     <Compile Include="Strings\StringObjectExtensionsWordWrap.cs" />
-    <Compile Include="Strings\StringObjectExtensionsCompare.cs" />
+    <Compile Include="Strings\StringObjectExtensionsNumerics.cs" />
     <Compile Include="Strings\StringObjectExtensionsLines.cs" />
     <Compile Include="SVG\svg.cs" />
     <Compile Include="Threads\TaskQueue.cs" />
