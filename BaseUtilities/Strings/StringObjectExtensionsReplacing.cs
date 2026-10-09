@@ -40,10 +40,12 @@ public static partial class ObjectExtensionsStrings
     }
 
     // if it starts with start, and if extra is there (configurable), replace it with replacestring..
-    public static string ReplaceIfStartsWith(this string obj, string start, string replacestring = "", bool musthaveextra = true, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+    // with optional trimstart (normally applied)
+    public static string ReplaceIfStartsWith(this string obj, string start, string replacestring = "", bool musthaveextra = true, StringComparison sc = StringComparison.InvariantCultureIgnoreCase, 
+                                                bool donttrimstart = false)
     {
         if (start != null && obj.StartsWith(start, sc) && (!musthaveextra || obj.Length > start.Length))
-            return replacestring + obj.Substring(start.Length).TrimStart();
+            return replacestring + (donttrimstart ? obj.Substring(start.Length) : obj.Substring(start.Length).TrimStart());
         else
             return obj;
     }

@@ -1005,11 +1005,12 @@ namespace BaseUtils
             }
         }
 
-#endregion
+        #endregion
 
-#region Reversing
+        #region Reversing
 
-        public bool ReverseBack( bool quotes = true, bool brackets = true)      // one or both must be true
+        // one or both must be true for the options
+        public bool ReverseBack( bool quotes = true, bool brackets = true)      
         {
             System.Diagnostics.Debug.Assert(quotes || brackets);
             int bracketlevel = 0;
@@ -1039,7 +1040,7 @@ namespace BaseUtils
                 }
                 else if (quotes && c == '"')
                 {
-                    if ( pos>0 && line[pos-1] != '\\')
+                    if ( pos==0 || line[pos-1] != '\\')     // if at the start, or if not at the start its not \"
                     {
                         inquotes = !inquotes;
 
@@ -1052,7 +1053,7 @@ namespace BaseUtils
             return false;
         }
 
-#endregion
+        #endregion
 
         #region Find/Replace
 
