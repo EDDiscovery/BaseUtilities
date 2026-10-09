@@ -31,6 +31,10 @@ public static class TranslatorExtensionsMkII
     {
         return translate ? BaseUtils.TranslatorMkII.Instance.Translate(s) : s;
     }
+    static public string TxIfDefined(this string s)
+    {
+        return BaseUtils.TranslatorMkII.Instance.IsDefined(s) ? BaseUtils.TranslatorMkII.Instance.Translate(s) : s;
+    }
     static public string PTx(this string s)             // a marker to show its programatically translated later
     {
         return s;
