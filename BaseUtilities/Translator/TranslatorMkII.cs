@@ -122,10 +122,11 @@ namespace BaseUtils
             {
                 if (kvp.Key == id)
                 {
-                    if ( after )
+                    if (after)
                         nt.Add(kvp.Key, kvp.Value);
-                    nt.Add(shatouse, new Entry() { Foreign = foreign, English = english, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File, Section = translations[kvp.Key].Section });
-                    if ( !after )
+
+                    nt.Add(shatouse, new Entry(translations[kvp.Key]) { Foreign = foreign, English = english });
+                    if (!after)
                         nt.Add(kvp.Key, kvp.Value);
                 }
                 else
@@ -135,6 +136,40 @@ namespace BaseUtils
             translations = nt;
             return shatouse;
         }
+
+        public void ChangeSectionName(string id, string sectionname)
+        {
+            List<Tuple<string,Entry>> entries = new List<Tuple<string, Entry>>();
+
+            foreach (var kvp in translations)
+            {
+                if (kvp.Key == id)
+                {
+                    bool insertit = true;
+                    for( int i = entries.Count - 1; i >=0; i--)     // search back up and if we find a SECTION before anything else we can just replace
+                    {
+                        if (IsSourceID(entries[i].Item1))
+                        {
+                            if (entries[i].Item2.Foreign.StartsWithIIC("Section"))
+                            {
+                                entries[i].Item2.Foreign = "SECTION " + sectionname;
+                                insertit = false;
+                            }
+                        }
+                        else
+                            break;
+                    }
+
+                    if ( insertit)
+                        entries.Add(Tuple.Create("SOURCE:" + commentblankcount++.ToStringInvariant(), new Entry("-", "SECTION " + sectionname, translations[kvp.Key].File, translations[kvp.Key].Line, sectionname)));
+                }
+
+                entries.Add(Tuple.Create(kvp.Key, kvp.Value));
+            }
+
+            translations = entries.ToDictionary(k=>k.Item1, k=>k.Item2);
+        }
+
         public string ChangeEnglish(string key, string newenglish)
         {
             Dictionary<string, Entry> nt = new Dictionary<string, Entry>();
@@ -144,7 +179,7 @@ namespace BaseUtils
                 if (kvp.Key == key)
                 {
                     shatouse = newenglish.CalcSha8();
-                    nt.Add(shatouse, new Entry() { Foreign = translations[kvp.Key].Foreign, English = newenglish, Line = translations[kvp.Key].Line, File = translations[kvp.Key].File });
+                    nt.Add(shatouse, new Entry(newenglish, translations[kvp.Key].Foreign, translations[kvp.Key].File, translations[kvp.Key].Line, translations[kvp.Key].Section));
                 }
                 else
                     nt.Add(kvp.Key, kvp.Value);
@@ -222,7 +257,7 @@ namespace BaseUtils
                 {
                     translations = new Dictionary<string, Entry>();
 
-                    int commentblankcount = 1;
+                    commentblankcount = 1;
                     string section = "Not Set";
 
                     string line = null;
@@ -237,7 +272,7 @@ namespace BaseUtils
                                 if (sectionline)
                                     section = line.Substring(8).Trim();
                                 string id = "SOURCE:" + commentblankcount++;      // record the information
-                                translations[id] = new Entry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine, Section = section };
+                                translations[id] = new Entry("-",line, lr.CurrentFile, lr.CurrentLine, section);
                             }
                         }
                         else if (line.StartsWith("Include", StringComparison.InvariantCultureIgnoreCase))
@@ -245,7 +280,7 @@ namespace BaseUtils
                             if (storesourceinfo)                            // we store these as comments so they can be spitted back out by translatenormalise
                             {
                                 string id = "SOURCE:" + commentblankcount++;
-                                translations[id] = new Entry() { Foreign = line, File = lr.CurrentFile, Line = lr.CurrentLine };
+                                translations[id] = new Entry("-",line, lr.CurrentFile, lr.CurrentLine, "" );
                             }
 
                             line = line.Mid(7).Trim();
@@ -329,10 +364,12 @@ namespace BaseUtils
                                         if (logger != null)
                                             logger?.WriteLine(string.Format("New {0}: \"{1}\" => \"{2}\"", id, orgenglish, foreign));
 
-                                        translations[id] = new Entry() { Foreign = foreign };
+                                        translations[id] = new Entry(foreign);
 
                                         if (storeenglish)
                                         {
+                                            //if ( orgenglish.Contains("Tab setup failure")) { }
+
                                             translations[id].English = orgenglish;
                                             if ( orgenglish.CalcSha8() != id)
                                             {
@@ -405,7 +442,7 @@ namespace BaseUtils
                     string value = sp.NextWord('\0');
                     sp.MoveOn(1);
                     if (value.Length > 0)
-                        translations[key] = new Entry() { Foreign = value };
+                        translations[key] = new Entry(value);
                     else
                         translations[key] = null;
                 }
@@ -501,7 +538,7 @@ namespace BaseUtils
                     logger?.WriteLine($"{key}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     Debugger.TraceBreak($"*** MKII Missing Translate ID:\r\n{english.CalcSha8()}: {english.EscapeControlChars().AlwaysQuoteString()} @");
                     string errtext = "! " + english + " !";          // no id at all, use ! to indicate
-                    translations[key] = new Entry() { Foreign = errtext };
+                    translations[key] = new Entry(errtext);
                     return errtext;
                 }
             }
@@ -610,6 +647,7 @@ namespace BaseUtils
 
         private LogToFile logger = null;
 
+        [System.Diagnostics.DebuggerDisplay("{System.IO.Path.GetFileNameWithoutExtension(File)}:{Line} {Section} : '{English}' = '{Foreign}`")]
         public class Entry
         {
             public string English { get; set; }
@@ -617,9 +655,33 @@ namespace BaseUtils
             public string Section { get; set; }
             public string File { get; set; }
             public int Line { get; set; }
+
+            public Entry(Entry other)
+            {
+                English = other.English;
+                Foreign = other.Foreign;
+                Section = other.Section;
+                File = other.File;
+                Line = other.Line;
+
+            }
+            public Entry(string english, string foreign, string file, int line, string section)
+            {
+                English = english;
+                Foreign = foreign;
+                Section = section;
+                File = file;
+                Line = line;
+            }
+            public Entry(string foreign)
+            {
+                Foreign = foreign;
+            }
         }
 
         private Dictionary<string, Entry> translations = null;         // translation id -> translation. Translation result can be null, which means, use the in-game english string
         private static TranslatorMkII instance;
+        private int commentblankcount;
+
     }
 }

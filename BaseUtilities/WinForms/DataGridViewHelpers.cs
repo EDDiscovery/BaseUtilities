@@ -112,7 +112,8 @@ public static partial class DataGridViewControlHelpersStaticFunc
         {
             try
             {
-                dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
+                if (dgv.Rows[rowno].Visible)                        // only if visible..
+                    dgv.FirstDisplayedScrollingRowIndex = rowno;    // SAFE VERSION
             }
             catch (Exception e)
             {
