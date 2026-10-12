@@ -250,7 +250,22 @@ namespace BaseUtils
             {
                 return ReadFromFile(tlfile);
             }
+            else
+                return LoadFile(tlfile,includesearchupdepth,includefolderreject,storeenglish,storesourceinfo);
+        }
 
+        /// <summary>
+        /// Load a tx file
+        /// </summary>
+        /// <param name="tlfile"></param>
+        /// <param name="storeenglish"></param>
+        /// <param name="storesourceinfo"></param>
+        /// <param name="includesearchupdepth"> 0 = this folder only, -1 disable ignore include, else 2 = search up 2 folders etc</param>
+        /// <param name="includefolderreject">ignore include folders with this pattern</param>
+        /// <returns></returns>
+
+        public bool LoadFile(string tlfile, int includesearchupdepth = 0, string includefolderreject = "\\bin", bool storeenglish = true, bool storesourceinfo = true)
+        {
             using (LineReader lr = new LineReader())
             {
                 if (lr.Open(tlfile))
@@ -283,43 +298,48 @@ namespace BaseUtils
                                 translations[id] = new Entry("-",line, lr.CurrentFile, lr.CurrentLine, "" );
                             }
 
-                            line = line.Mid(7).Trim();
-
-                            DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlfile));
-
-                            string filename = null;
-
-                            string fileinroot = Path.Combine(di.FullName, line);
-
-                            if (File.Exists(fileinroot))   // first we prefer files in the same folder..
-                                filename = fileinroot;
-                            else
+                            if (includesearchupdepth >= 0)       // if enabled
                             {
-                                di = di.GetDirectoryAbove(includesearchupdepth);        // then search the tree, first jump up search depth amount
+                                line = line.Mid(7).Trim();
 
-                                try
+                                DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(tlfile));
+
+                                string filename = null;
+
+                                string fileinroot = Path.Combine(di.FullName, line);
+
+                                if (File.Exists(fileinroot))   // first we prefer files in the same folder..
                                 {
-                                    FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName, line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
-
-                                    if (allFiles.Length > 0)
-                                    {
-                                        var selected = allFiles.Where((x) => !x.DirectoryName.Contains(includefolderreject));       // reject folders with this pattern..files
-                                        if (selected.Count() > 0)
-                                            filename = selected.First().FullName;
-                                    }
+                                    filename = fileinroot;
                                 }
-                                catch { }
-                            }
+                                else
+                                {
+                                    di = di.GetDirectoryAbove(includesearchupdepth);        // then search the tree, first jump up search depth amount
 
-                            if (filename == null || !lr.Open(filename))     // if no file found, or can't open..
-                            {
-                                System.Diagnostics.Debug.WriteLine("*** Cannot include " + line);
-                                logger?.WriteLine(string.Format("*** Cannot include {0}", line));
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine("Reading file " + filename);
-                                logger?.WriteLine("Readingfile " + filename);
+                                    try
+                                    {
+                                        FileInfo[] allFiles = Directory.EnumerateFiles(di.FullName, line, SearchOption.AllDirectories).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToArray();
+
+                                        if (allFiles.Length > 0)
+                                        {
+                                            var selected = allFiles.Where((x) => !x.DirectoryName.Contains(includefolderreject));       // reject folders with this pattern..files
+                                            if (selected.Count() > 0)
+                                                filename = selected.First().FullName;
+                                        }
+                                    }
+                                    catch { }
+                                }
+
+                                if (filename == null || !lr.Open(filename))     // if no file found, or can't open..
+                                {
+                                    System.Diagnostics.Debug.WriteLine("*** Cannot include " + line);
+                                    logger?.WriteLine(string.Format("*** Cannot include {0}", line));
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine("Reading file " + filename);
+                                    logger?.WriteLine("Readingfile " + filename);
+                                }
                             }
                         }
                         else
