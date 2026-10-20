@@ -151,17 +151,21 @@ namespace BaseUtils
         [System.Diagnostics.DebuggerDisplay("Cells {Cells.Count} NextCell {nextcell}")]
         public class Row
         {
-            public Row(System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns)
+            public Row(int rowindex, System.Globalization.CultureInfo culture, System.Globalization.NumberStyles ns)
             {
+                Index = rowindex;
                 Cells = new List<string>();
                 formatculture = culture;
                 numberstyles = ns;
             }
+            public List<string> Cells;
+
+            // from Row=0 onwards
+            public int Index { get; private set; }
 
             private System.Globalization.CultureInfo formatculture;
             private System.Globalization.NumberStyles numberstyles;
 
-            public List<string> Cells;
             public int nextcell = 0;        // next cell to Next()
 
             static public int CellNameToIndex(string s)
@@ -384,8 +388,8 @@ namespace BaseUtils
             CSVRead csv = new CSVRead(tr);
             csv.Delimiter = Delimiter;
 
-            Row l = new Row(FormatCulture,NumberStyle);
             int r = 0;
+            Row l = new Row(r, FormatCulture, NumberStyle);
 
             while (true)
             {
@@ -401,18 +405,19 @@ namespace BaseUtils
                     l.Cells.Add(str);
                     
                     if ( rowoutput!=null )
-                        rowoutput.Invoke(r++, l);
+                        rowoutput.Invoke(r, l);
                     else
                         Rows.Add(l);
 
-                    l = new Row(FormatCulture,NumberStyle);
+                    r++;
+                    l = new Row(r,FormatCulture,NumberStyle);
                 }
                 else if (state == CSVRead.State.EOF)
                 {
                     if (l.Cells.Count > 0)
                     {
                         if ( rowoutput != null )
-                            rowoutput?.Invoke(r++, l);
+                            rowoutput?.Invoke(r, l);
                         else
                             Rows.Add(l);
                     }
