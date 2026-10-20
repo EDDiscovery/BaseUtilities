@@ -45,6 +45,15 @@ public static partial class ObjectExtensionsStrings
         return s?.IndexOf(other, StringComparison.InvariantCultureIgnoreCase) ?? -1;
     }
 
+    // normally IIC
+    public static int EndIndexOf(this string s, string other, StringComparison culture = StringComparison.InvariantCultureIgnoreCase)
+    {
+        int pos = s?.IndexOf(other, culture) ?? -1;
+        if (pos >= 0)
+            pos += other.Length;
+        return pos;
+    }
+
     // extension of Contains with string comparison
     public static bool Contains(this string data, string comparision, StringComparison culture = StringComparison.CurrentCulture)
     {
