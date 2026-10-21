@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace BaseUtils
 {
@@ -97,5 +99,36 @@ namespace BaseUtils
         public bool More { get { return args.Length > pos; } }
         public int Left { get { return args.Length - pos; } }
         public void Remove() { if (pos < args.Length) pos++; }
+
+        // process a file thru this command interpreter to a action callback
+        public static void ProcessFile(string filepath, Action<string, CommandArgs, bool> processoption)
+        {
+            foreach (string line in File.ReadAllLines(filepath))
+            {
+                if (!line.IsEmpty())
+                {
+                    //string[] cmds = line.Split(new char[] { ' ' }, 2).Select(s => s.Trim()).ToArray();    // old version..
+                    string[] cmds = BaseUtils.StringParser.ParseWordList(line, separ: ' ').ToArray();
+                    BaseUtils.CommandArgs ca = new BaseUtils.CommandArgs(cmds);
+
+                    string option = ca.NextEmpty().ToLowerInvariant();
+                    if (!option.StartsWith("-"))
+                        option = "-" + option;
+
+                    processoption(option, ca, true);
+                }
+            }
+        }
+
+        // read command line and process thru this command interpreter to action callback
+        public static void ProcessCommandLine(Action<string, CommandArgs, bool> processoption)
+        {
+            string[] cmdlineopts = Environment.GetCommandLineArgs().ToArray();
+            BaseUtils.CommandArgs ca = new BaseUtils.CommandArgs(cmdlineopts, 1);
+            while (ca.More)
+            {
+                processoption(ca.Next().ToLowerInvariant(), ca, false);
+            }
+        }
     }
 }
