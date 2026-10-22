@@ -122,10 +122,10 @@ namespace SQLLiteExtensions
             }
         }
 
-        public void ExecuteNonQuery(string query)
+        public int ExecuteNonQuery(string query)
         {
             using (DbCommand command = CreateCommand(query))
-                command.ExecuteNonQuery();
+                return command.ExecuteNonQuery();
         }
 
         public void SetJournalMode(JournalModes jm)
