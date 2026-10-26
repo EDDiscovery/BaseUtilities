@@ -93,7 +93,14 @@ namespace BaseUtils.UnitTests
         [System.Diagnostics.DebuggerHidden()]
         public Check Contains(string s, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
         {
-            if (!Test(CheckObject is string && ((string)CheckObject).IndexOf(s,sc)>=0))      // can't be null, should use IsNull
+            if (!Test(CheckObject is string && ((string)CheckObject).IndexOf(s, sc) >= 0))      // can't be null, should use IsNull
+                System.Diagnostics.Debugger.Break();
+            return this;
+        }
+        [System.Diagnostics.DebuggerHidden()]
+        public Check Equals(string s, StringComparison sc = StringComparison.InvariantCultureIgnoreCase)
+        {
+            if (!Test(CheckObject is string && ((string)CheckObject).Equals(s,sc)))      // can't be null, should use IsNull
                 System.Diagnostics.Debugger.Break();
             return this;
         }
