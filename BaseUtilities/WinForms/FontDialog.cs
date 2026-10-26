@@ -73,6 +73,8 @@ namespace BaseUtils
 
             var fontFamilies = FontHandler.GetFontFamilies(ShowPrivateFonts);
 
+            fontFamilies.Sort(delegate (FontFamily left, FontFamily right) { return left.Name.CompareTo(right.Name); });
+
             if (fontFamilies.Find(x => x.Name == SelectedFont) == null)
             {
                 SelectedFont = fontFamilies.Find(x=>x.Name == "Arial")?.Name ?? fontFamilies[0].Name;
