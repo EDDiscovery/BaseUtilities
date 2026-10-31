@@ -142,22 +142,22 @@ namespace DirectInputDevices
                 return null;
             }
 
-            bool[] buttons = js.Buttons;
+            bool[] buttons = js.Buttons;        // buttons can return more entries than declared buttons
 
-            for (int i = 0; i < butstate.Length; i++)
+            for (int i = 0; i < Math.Min(buttons.Length,butstate.Length); i++)      // protect against going beyond butstate
             {
                 bool s = buttons[i];
                 if (s != butstate[i])
                 {
                     butstate[i] = s;
-                    //System.Diagnostics.Debug.WriteLine("But " + (i + 1) + "=" + s);
+                   // System.Diagnostics.Debug.WriteLine($"IDC Button {i + 1} = {s} : {butstate.Length} {js.Buttons.Length}");
                     events.Add(new InputDeviceEvent(this, ButtonBase + i, butstate[i], false));
                 }
             }
 
             int[] pov = js.PointOfViewControllers;
 
-            for (int i = 0; i < povvalue.Length; i++)
+            for (int i = 0; i < Math.Min(pov.Length,povvalue.Length); i++)
             {
                 if (pov[i] != povvalue[i])
                 {
@@ -169,6 +169,7 @@ namespace DirectInputDevices
                         events.Add(new InputDeviceEvent(this, POVBase + i + 1, false, false, -1)); 
                     }
 
+                  //  System.Diagnostics.Debug.WriteLine($"IDC POV {i + 1} = {pov[i]} : {povvalue.Length} {pov.Length}");
                     povvalue[i] = pov[i];
                     events.Add(new InputDeviceEvent(this, POVBase + i + 1, povvalue[i] != -1, false, povvalue[i]));
                 }
@@ -180,7 +181,8 @@ namespace DirectInputDevices
             {
                 if (axispresent[i])
                 {
-                    int value;
+                    int value = 0;
+
                     if (i == (int)Axis.X)
                         value = js.X;
                     else if (i == (int)Axis.Y)
@@ -194,7 +196,11 @@ namespace DirectInputDevices
                     else if (i == (int)Axis.RZ)
                         value = js.RotationZ;
                     else
-                        value = sliders[i - (int)Axis.U];
+                    {
+                        int index = i - (int)Axis.U;
+                        if ( index < sliders.Length)
+                            value = sliders[index];
+                    }
 
                     if (axisvalue[i] == AxisNullValue)
                     {
@@ -210,7 +216,7 @@ namespace DirectInputDevices
                             var ev = new InputDeviceEvent(this, AxisBase + i, true, true, value);
                             events.Add(ev);      // axis is always pressed
                             lastexisreporttime = curtime;
-                            //System.Diagnostics.Debug.WriteLine($"Axis event generated {Name} {EventName(ev)} {i} {diff} {axisvalue[i]}");
+                           // System.Diagnostics.Debug.WriteLine($"Axis event generated {Name} {EventName(ev)} {i} {diff} {axisvalue[i]}");
                         }
                     }
                 }
