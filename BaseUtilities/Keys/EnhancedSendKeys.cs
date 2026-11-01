@@ -357,7 +357,7 @@ namespace BaseUtils
                     SendInput();
                 else if ( pname.HasChars() )
                 {
-                    IntPtr window = UnsafeNativeMethods.GetForegroundWindowOf(pname);
+                    IntPtr window = Processes.GetMainHandleOfProcess(pname);       // protected from exceptings
 
                     //System.Diagnostics.Debug.WriteLine($"Window {window} operating");
                     if (window != (IntPtr)0)
@@ -391,26 +391,30 @@ namespace BaseUtils
 
         private static void SendInputToWindow(IntPtr ip)
         {
-            IntPtr currentfore = BaseUtils.Win32.UnsafeNativeMethods.GetForegroundWindow();
-
-            if ( currentfore != ip )        // if not selected..
+            try
             {
-                //System.Diagnostics.Debug.WriteLine("SendKeys Selecting fore window");
-                Win32.UnsafeNativeMethods.SetForegroundWindow(ip);
-                System.Threading.Thread.Sleep(60);      // 50 works, 20 does not.. seems to need a pause.. lets be cautious
+                IntPtr currentfore = BaseUtils.Win32.UnsafeNativeMethods.GetForegroundWindow();
 
-                //System.Diagnostics.Debug.WriteLine("SendKeys selecting fore window - Go");
+                if (currentfore != ip)        // if not selected..
+                {
+                    //System.Diagnostics.Debug.WriteLine("SendKeys Selecting fore window");
+                    Win32.UnsafeNativeMethods.SetForegroundWindow(ip);
+                    System.Threading.Thread.Sleep(60);      // 50 works, 20 does not.. seems to need a pause.. lets be cautious
+
+                    //System.Diagnostics.Debug.WriteLine("SendKeys selecting fore window - Go");
+                }
+                else
+                    currentfore = (IntPtr)0;       // forget it, we don't need to swap back
+
+                SendInput();
+
+                if (currentfore != (IntPtr)0)
+                {
+                    //System.Diagnostics.Debug.WriteLine("SendKeys Reselecting prev");
+                    BaseUtils.Win32.UnsafeNativeMethods.SetForegroundWindow(currentfore);
+                }
             }
-            else
-                currentfore = (IntPtr)0;       // forget it, we don't need to swap back
-
-            SendInput();
-
-            if (currentfore != (IntPtr)0)
-            {
-                //System.Diagnostics.Debug.WriteLine("SendKeys Reselecting prev");
-                BaseUtils.Win32.UnsafeNativeMethods.SetForegroundWindow(currentfore);
-            }
+            catch { }           // Don't moan, as if we can't do this, its a security things
         }
 
         // Uses User32 SendInput to send keystrokes

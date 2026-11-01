@@ -80,6 +80,51 @@ namespace BaseUtils
                 return 0;
         }
 
+        // protected against exceptions, given a name, return the process, and it must be focused
+        public static Process FindForegroundProcess(string name)
+        {
+            try
+            {
+                IntPtr handle = BaseUtils.Win32.UnsafeNativeMethods.GetForegroundWindow();
+                var foregroundprocess = Process.GetProcessesByName(name).Where(p => p.MainWindowHandle == handle).FirstOrDefault();
+                return foregroundprocess;
+            }
+            catch { }
+
+            return null;
+        }
+
+        public static IntPtr GetMainHandleOfProcess(string pname)
+        {
+            try
+            {
+                // may except
+                System.Diagnostics.Process p = System.Diagnostics.Process.GetProcessesByName(pname).FirstOrDefault();
+                if (p != null)
+                    return p.MainWindowHandle;
+            }
+            catch { }       // can except due to lots of stuff due to security etc.
+
+            return (IntPtr)0;
+        }
+
+        // protected against exceptions, given a name, return the process filename, and it must be focused
+        public static ProcessModule FindForegroundProcessModule(string name)
+        {
+            var proc = FindForegroundProcess(name);
+            if (proc != null)
+            {
+                try
+                {
+                    return proc.MainModule;        // can also except
+                }
+                catch { }
+            }
+
+            return null;
+        }
+
+
         static public string[] ListProcesses()
         {
             Process[] curprocs = Process.GetProcesses();
