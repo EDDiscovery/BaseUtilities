@@ -1009,8 +1009,11 @@ namespace BaseUtils
 
         #region Reversing
 
+        public enum ReverseResult { OK, DidNotStart, DidNotEnd };
+
+        // one or more must be there before quoted terms
         // one or both must be true for the options
-        public bool ReverseBack( bool quotes = true, bool brackets = true)      
+        public ReverseResult ReverseBack( bool quotes = true, bool brackets = true, bool muststartwith = false)      
         {
             System.Diagnostics.Debug.Assert(quotes || brackets);
             int bracketlevel = 0;
@@ -1031,26 +1034,31 @@ namespace BaseUtils
                     {
                         bracketlevel--;
                         if (bracketlevel <= 0)
-                            return true;
+                            return ReverseResult.OK;
                     }
                     else if (quotes && c == '"')
                     {
                         inquotes = true;
                     }
+                    else if (muststartwith && !char.IsWhiteSpace(c))
+                        return ReverseResult.DidNotStart;
                 }
-                else if (quotes && c == '"')
+                else
                 {
-                    if ( pos==0 || line[pos-1] != '\\')     // if at the start, or if not at the start its not \"
+                    if (quotes && c == '"')
                     {
-                        inquotes = !inquotes;
+                        if (pos == 0 || line[pos - 1] != '\\')     // if at the start, or if not at the start its not \"
+                        {
+                            inquotes = !inquotes;
 
-                        if (!inquotes && bracketlevel == 0)
-                            return true;
+                            if (!inquotes && bracketlevel == 0)
+                                return ReverseResult.OK;
+                        }
                     }
                 }
             }
 
-            return false;
+            return ReverseResult.DidNotEnd;
         }
 
         #endregion
