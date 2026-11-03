@@ -71,6 +71,7 @@
     <Compile Include="Conditions\ConditionListsCheck.cs" />
     <Compile Include="DDE\DDEServer.cs" />
     <Compile Include="DebugTraceAndLogs\Debugger.cs" />
+    <Compile Include="Drawing\BitMapHelpersCompute.cs" />
     <Compile Include="Drawing\DrawingHelpers.cs" />
     <Compile Include="Drawing\FontHandler.cs" />
     <Compile Include="Functions\FunctionHandlers.cs" />
