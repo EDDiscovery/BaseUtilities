@@ -169,6 +169,15 @@ public static partial class ObjectExtensionsStrings
         }
     }
 
+    // split by character amd trim the results
+    static public string[] SplitTrim(this string s, char splitchar)
+    {
+        string[] array = s.Split(splitchar);
+        for (int i = 0; i < array.Length; i++)
+            array[i] = array[i].Trim();
+        return array;
+    }
+
     // split into a two dimensional array by line, and then on each line by cell.  Options apply to cell split
     static public string[][] Split(this string s, string splitlinechars, string splitcellchars, StringComparison cmp = StringComparison.InvariantCultureIgnoreCase,
                                     bool emptyendifmarkeratendonline = false, bool emptyarrayifemptyonline = false)
