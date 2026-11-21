@@ -483,6 +483,7 @@ namespace BaseUtils
                 else if (value is StringParser.ConvertSymbol)    // symbol must resolve to a value or Error
                 {
                     string symname = (value as StringParser.ConvertSymbol).SymbolValue;
+                    System.Diagnostics.Trace.Assert(symname.HasChars(),"Symbol name in eval is empty or null");
 
                     if (sp.IsCharMoveOn('('))
                     {
