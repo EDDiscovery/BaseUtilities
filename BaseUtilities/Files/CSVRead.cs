@@ -286,14 +286,14 @@ namespace BaseUtils
 
         public List<Row> RowsExcludingHeaderRow { get { return (Rows != null && Rows.Count > 1) ? Rows.GetRange(1, Rows.Count - 1) : null; } }
 
-        public int CellNumberOfHeaderItem(string[] names)
+        public int CellNumberOfHeaderItem(string[] names, int rowno = 0)
         {
-            if ( Rows!=null && Rows.Count>1)
+            if (Rows != null && Rows.Count > rowno)
             {
-                for(int i = 0; i < Rows[0].Cells.Count; i++)
+                for (int i = 0; i < Rows[rowno].Cells.Count; i++)
                 {
-                    if (names.ComparisionContains(Rows[0].Cells[i], StringComparison.InvariantCultureIgnoreCase, true) >= 0)
-                    { 
+                    if (names.ComparisionContains(Rows[rowno].Cells[i], StringComparison.InvariantCultureIgnoreCase, true) >= 0)
+                    {
                         return i;
                     }
                 }
