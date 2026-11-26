@@ -475,22 +475,27 @@ namespace BaseUtils
         {
             List<Tuple<string, string>> languages = new List<Tuple<string, string>>();
 
+//            System.Diagnostics.Debug.WriteLine($"Working folder {Directory.GetCurrentDirectory()}");
+
             foreach (string folder in txfolders)
             {
                 try
                 {
-                    List<FileInfo> allFiles = Directory.EnumerateFiles(folder, "*.tlf", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList();
-                    allFiles.AddRange(Directory.EnumerateFiles(folder, "*.tlx", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList());
-                    System.Diagnostics.Debug.WriteLine("Translator Check folder " + folder);
-                    foreach (FileInfo f in allFiles)
+                    if (Directory.Exists(folder))       // stops any unness asserts
                     {
+                        List<FileInfo> allFiles = Directory.EnumerateFiles(folder, "*.tlf", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList();
+                        allFiles.AddRange(Directory.EnumerateFiles(folder, "*.tlx", SearchOption.TopDirectoryOnly).Select(f => new FileInfo(f)).OrderBy(p => p.LastWriteTime).ToList());
+                        System.Diagnostics.Debug.WriteLine("Translator Check folder " + folder);
+                        foreach (FileInfo f in allFiles)
+                        {
 #if !DEBUG
-                        if ( f.Name.Contains("example-ex"))
-                            continue;
+                            if ( f.Name.Contains("example-ex"))
+                                continue;
 #endif
 
-                        if (languages.Find(x => x.Item2.Equals(f.Name)) == null)        // if not already found this language, add
-                            languages.Add(new Tuple<string, string>(folder, f.Name));   // folder and name
+                            if (languages.Find(x => x.Item2.Equals(f.Name)) == null)        // if not already found this language, add
+                                languages.Add(new Tuple<string, string>(folder, f.Name));   // folder and name
+                        }
                     }
                 }
                 catch { }
